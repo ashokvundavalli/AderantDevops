@@ -89,6 +89,7 @@
 
 
   <Target Name="GatherProjectsToBuild">
+    <Message Text="IsDesktopBuild: $(IsDesktopBuild)" />
 
     <ItemGroup>
       <ExcludePaths Include=".git" />
@@ -213,7 +214,7 @@
           Condition="'$(UseSharedDependencyDirectory)' == 'true' And '$(NoDependencyFetch)' != 'true'">
     <!--
       We have an issue here.
-      The construction of a plan requires external files to be avaiable before the plan generation takes place.
+      The construction of a plan requires external files to be available before the plan generation takes place.
       However the fetching of external files require that we know what build tree items are out of date.
       To determine what build tree items are out of date we need the external files.
 
@@ -319,6 +320,7 @@
       <Output TaskParameter="ArtifactPaths" ItemName="LocalPackagePaths" />
     </GetArtifactPaths>
 
+    <Message Text="Collected paths for package..." />
     <Message Text="%(LocalPackagePaths.FullPath) -> %(DestinationSubDirectory)" />
 
     <!--

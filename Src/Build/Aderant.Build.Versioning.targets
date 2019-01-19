@@ -7,13 +7,12 @@
     <Language Condition="'$(Language)' == ''">CS</Language>
   </PropertyGroup>
 
-
   <PropertyGroup>
     <SetVersionAttributesDependsOn Condition="'$(IsCustomBuild)' != 'true' And '$(ProjectGuid)' != ''">
-      $(OnBeforeCompileDependsOn);
+      $(SetVersionAttributesDependsOn);
+      ReadVersionInfo;
       GenerateAssemblyInfo;
       AsemblyInfoUpdateCopyright;
-      ReadVersionInfo
     </SetVersionAttributesDependsOn>
   </PropertyGroup>
 
@@ -198,14 +197,9 @@
   </Target>
 
 
-  <Target Name="ReadVersionInfo">
+  <Target Name="ReadVersionInfo" DependsOnTargets="FindCommonAssemblyInfo">
 
-    <ItemGroup>
-      <AssemblyInfoFiles Include="$(NewCommonAssemblyInfoFile)" />
-      <AssemblyInfoFiles Include="@(Compile)" Condition="%(Filename) == 'AssemblyInfo' And %(Extension) == '.cs'" />
-    </ItemGroup>
-
-    <ReadAssemblyInfo AssemblyInfoFiles="@(AssemblyInfoFiles)">
+    <ReadAssemblyInfo AssemblyInfoFiles="@(CommonAssemblyInfoFile)">
       <Output ItemName="CommonAssemblyInformationalVersion" TaskParameter="AssemblyInformationalVersion" />
       <Output ItemName="CommonAssemblyVersion"              TaskParameter="AssemblyVersion" />
       <Output ItemName="CommonAssemblyFileVersion"          TaskParameter="AssemblyFileVersion" />

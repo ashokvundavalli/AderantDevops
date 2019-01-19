@@ -6,7 +6,6 @@ using Aderant.Build.Logging;
 using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
-using Aderant.Build.Utilities;
 
 namespace Aderant.Build.Packaging {
     class LocalArtifactFileComparer : IEqualityComparer<LocalArtifactFile> {
@@ -43,27 +42,41 @@ namespace Aderant.Build.Packaging {
 
         public string CommonOutputDirectory { get; set; }
 
+        public IReadOnlyCollection<string> AdditionalDestinationDirectories { get; set; }
+
         public IList<PathSpec> BuildRestoreOperations(string solutionRoot, string container, BuildStateFile stateFile) {
+            // Guard to ensure only one write to a destination occurs
             HashSet<string> destinationPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            //  The source/destination mapping
             List<PathSpec> copyOperations = new List<PathSpec>();
 
-            var projectOutputs = stateFile.Outputs.Where(o => string.Equals(o.Value.Directory, container, StringComparison.OrdinalIgnoreCase)).ToList();
+            var projectOutputs = stateFile.Outputs
+                .Where(o => string.Equals(o.Value.Directory, container, StringComparison.OrdinalIgnoreCase))
+                .ToList();
 
             LocalArtifactFileComparer localArtifactComparer = new LocalArtifactFileComparer();
 
             foreach (var project in projectOutputs) {
                 ErrorUtilities.IsNotNull(project.Value.OutputPath, nameof(project.Value.OutputPath));
 
-                var projectFile = NormalizePath(project);
+                string projectFile = NormalizePath(project);
 
                 // Adjust the source relative path to a solution relative path
                 string localProjectFile = Path.Combine(solutionRoot, projectFile);
-                var directoryOfProject = Path.GetDirectoryName(localProjectFile);
+                string directoryOfProject = Path.GetDirectoryName(localProjectFile);
+                string outputPath = project.Value.OutputPath.NormalizePath();
+
+                bool isTestProject = project.Value.IsTestProject;
+                if (isTestProject) {
+                    // Because web projects are test projects in some cases it is critical to not incorrectly treat them as purely test projects
+                    isTestProject = !webProjects.Contains(project.Value);
+                }
+
+                var targetDirectories = CreateDestinationDirectoryList(directoryOfProject, outputPath, isTestProject);
 
                 if (fileSystem.FileExists(localProjectFile)) {
                     logger.Info($"Calculating files to restore for project: {Path.GetFileNameWithoutExtension(project.Key)}");
-
-                    string outputPath = project.Value.OutputPath.NormalizePath();
 
                     foreach (var fileWrite in project.Value.FilesWritten) {
                         string filePath = null;
@@ -72,7 +85,7 @@ namespace Aderant.Build.Packaging {
                             // Retain the relative path of the build artifact.
                             filePath = fileWrite.Remove(index, outputPath.Length);
                         } else {
-                            logger.Info($"{localProjectFile}: '{fileWrite}' does not start with project output path '{outputPath}'.");
+                            logger.Info($"Ignored file: {localProjectFile}: '{fileWrite}' does not start with project output path '{outputPath}'.");
                         }
 
                         // Use relative path for comparison.
@@ -89,7 +102,7 @@ namespace Aderant.Build.Packaging {
                         List<LocalArtifactFile> distinctLocalSourceFiles = localSourceFiles.Distinct(localArtifactComparer).ToList();
                         if (localSourceFiles.Count > distinctLocalSourceFiles.Count) {
                             // Log duplicates.
-                            IEnumerable<LocalArtifactFile> duplicateArtifacts = localSourceFiles.GroupBy(x => x, localArtifactComparer).Where(group => group.Count() > 1).Select(group => group.Key);
+                            IEnumerable<LocalArtifactFile> duplicateArtifacts = localSourceFiles.GroupBy(x => x, localArtifactComparer).Where(group => @group.Count() > 1).Select(group => @group.Key);
 
                             string duplicates = string.Join(Environment.NewLine, duplicateArtifacts);
                             logger.Error($"File {filePath} exists in more than one artifact." + Environment.NewLine + duplicates);
@@ -99,12 +112,15 @@ namespace Aderant.Build.Packaging {
                         // There can be only one.
                         LocalArtifactFile artifactFile = distinctLocalSourceFiles.First();
 
-                        string destination = Path.GetFullPath(Path.Combine(directoryOfProject, outputPath, filePath));
-                        AddFileDestination(
-                            destinationPaths,
-                            artifactFile,
-                            destination,
-                            copyOperations);
+                        foreach (var targetDirectory in targetDirectories) {
+                            string destination = Path.GetFullPath(Path.Combine(targetDirectory, filePath));
+
+                            AddFileDestination(
+                                destinationPaths,
+                                artifactFile,
+                                destination,
+                                copyOperations);
+                        }
 
                         if (!string.IsNullOrWhiteSpace(CommonOutputDirectory)) {
                             if (webProjects.Contains(project.Value)) {
@@ -120,9 +136,24 @@ namespace Aderant.Build.Packaging {
                     throw new FileNotFoundException($"The file {localProjectFile} does not exist or cannot be accessed.", localProjectFile);
                 }
 
+
             }
 
             return copyOperations;
+        }
+
+        private List<string> CreateDestinationDirectoryList(string directoryOfProject, string outputPath, bool isTestProject) {
+            // The destination folder paths
+            var targetPaths = new List<string>();
+            targetPaths.Add(Path.GetFullPath(Path.Combine(directoryOfProject, outputPath)));
+
+            if (!isTestProject) {
+                if (AdditionalDestinationDirectories != null) {
+                    targetPaths.AddRange(AdditionalDestinationDirectories);
+                }
+            }
+
+            return targetPaths;
         }
 
         private void AddFileDestination(HashSet<string> destinationPaths, LocalArtifactFile file, string destination, List<PathSpec> copyOperations) {

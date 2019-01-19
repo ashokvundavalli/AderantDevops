@@ -41,6 +41,11 @@ namespace Aderant.Build.Packaging {
         public string CommonOutputDirectory { get; set; }
 
         /// <summary>
+        /// Additional destination directories for the artifacts.
+        /// </summary>
+        public IReadOnlyCollection<string> DestinationDirectories { get; set; }
+
+        /// <summary>
         /// Publishes build artifacts to some kind of repository.
         /// </summary>
         /// <param name="context">The build context.</param>
@@ -395,6 +400,7 @@ namespace Aderant.Build.Packaging {
 
             var fileRestore = new FileRestore(localArtifactFiles, pipelineService, fileSystem, logger);
             fileRestore.CommonOutputDirectory = CommonOutputDirectory;
+            fileRestore.AdditionalDestinationDirectories = this.DestinationDirectories;
 
             fileRestore.DetermineAdditionalRestorePaths(stateFile);
             return fileRestore.BuildRestoreOperations(solutionRoot, containerKey, stateFile);

@@ -32,6 +32,7 @@
       ZipCustomSource;
       SeedPackagePacking;
       ZipWorkflowTemplateSource;
+      RepairDirectoryLinks;
       RetrievePrebuilts;
       rmTransformTemplates;
     </RunBuildDependsOn>
@@ -106,6 +107,24 @@
   </Target>
 
 
+  <Target Name="RepairDirectoryLinks" Condition="'$(SharedDependencyDirectory)' != ''">
+    <ItemGroup>
+      <Link Include="$(SolutionRoot)\Dependencies">
+        <LinkTarget>$(SharedDependencyDirectory)</LinkTarget>
+      </Link>
+      <Link Include="$(SolutionRoot)\packages">
+        <LinkTarget>$(SharedDependencyDirectory)packages</LinkTarget>
+      </Link>
+    </ItemGroup>
+
+    <MakeSymlink
+      Condition="!Exists('%(Link.FullPath)')"
+      Link="%(Link.FullPath)"
+      Target="%(Link.LinkTarget)"
+      Type="D" />
+  </Target>
+
+
   <Target Name="BeforeRetrievePrebuilts" BeforeTargets="RetrievePrebuilts" Condition="Exists('$(SolutionDirectoryPath)link.lock')">
       <Message Text="link.lock exists in $(SolutionDirectoryPath). No server artifacts will be retrieved." Importance="high" />
   </Target>
@@ -122,7 +141,8 @@
       ContextEndpoint="$(ContextEndpoint)"
       SolutionRoot="$(SolutionRoot)"
       WorkingDirectory="$(ModuleBuildTempDirectory)"
-      CommonOutputDirectory="$(BinModuleDirectory)" />
+      CommonOutputDirectory="$(BinModuleDirectory)"
+      DestinationDirectories="$(SharedDependencyDirectory)" />
 
     <GetDependencies Condition="'$(UseSharedDependencyDirectory)' != 'true' And '$(NoDependencyFetch)' != 'true'"
       ProductManifest="$(ProductManifestPath)"
@@ -171,12 +191,17 @@
     <PropertyGroup>
       <AssemblyInfoFile>$(ModuleBuildDirectory)CommonAssemblyInfo.cs</AssemblyInfoFile>
       <AssemblyInfoFileExists Condition="Exists('$(AssemblyInfoFile)')">true</AssemblyInfoFileExists>
+      <LocalAssemblyInfoFile>$(AssemblyInfoFile).local</LocalAssemblyInfoFile>
     </PropertyGroup>
 
     <!--TF VC compatiblity-->
     <PowerShellScript
       Condition="'$(AssemblyInfoFileExists)' == 'true'"
       ScriptBlock="Set-ItemProperty $(AssemblyInfoFile) -Name IsReadOnly -Value $false" />
+
+    <!--<Copy Condition="'$(AssemblyInfoFileExists)' == 'true'"
+          SourceFiles="$(AssemblyInfoFile)"
+          DestinationFiles="$(LocalAssemblyInfoFile)" />-->
 
     <FileUpdate
       Condition="'$(AssemblyInfoFileExists)' == 'true'"

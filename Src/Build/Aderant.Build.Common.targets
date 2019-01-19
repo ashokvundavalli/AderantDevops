@@ -161,8 +161,8 @@ doc.Save(File);
     </Task>
   </UsingTask>
 
-  <!-- 
-    Import the users project into our project space if they supplied a project to call back into 
+  <!--
+    Import the users project into our project space if they supplied a project to call back into
     This makes all of the properties and tasks loaded here available to ProjectToBuild natively
   -->
   <Import Project="$(ProjectToBuild)" Condition="'$(ProjectToBuild)' != ''" />
@@ -194,7 +194,7 @@ doc.Save(File);
     ==========================================================================================
   -->
   <Target Name="SetBuildNumbers"
-    Condition="('$(IsDesktopBuild)' != 'true' Or '$(IsCustomBuild)' == 'true')">
+          Condition="('$(IsDesktopBuild)' != 'true' Or '$(IsCustomBuild)' == 'true')">
 
     <PropertyGroup>
       <VersionMajor Condition="'$(VersionMajor)' == ''">1</VersionMajor>
@@ -223,9 +223,9 @@ doc.Save(File);
     <Message Text="FileVersion = $(FileVersion)" />
   </Target>
 
-  <!-- 
+  <!--
     ===========================================================
-    Source Indexing properties 
+    Source Indexing properties
     ===========================================================
   -->
   <PropertyGroup>

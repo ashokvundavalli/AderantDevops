@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -9,11 +10,13 @@ using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
     public class ReadAssemblyInfo : Task {
+        private static ConcurrentDictionary<string, Tuple<TaskItem, TaskItem, TaskItem>> infoCache = new ConcurrentDictionary<string, Tuple<TaskItem, TaskItem, TaskItem>>(StringComparer.OrdinalIgnoreCase);
+
+        private static MethodInfo parseTextMethod;
+
         private TaskItem assemblyFileVersion;
         private TaskItem assemblyInformationalVersion;
         private TaskItem assemblyVersion;
-
-        private static MethodInfo parseTextMethod;
 
         public ReadAssemblyInfo() {
             if (parseTextMethod == null) {
@@ -22,7 +25,7 @@ namespace Aderant.Build.Tasks {
         }
 
         [Required]
-        public string[] AssemblyInfoFiles { get; set; }
+        public ITaskItem[] AssemblyInfoFiles { get; set; }
 
         [Output]
         public TaskItem AssemblyVersion {
@@ -40,15 +43,36 @@ namespace Aderant.Build.Tasks {
         }
 
         public override bool Execute() {
-            foreach (var file in AssemblyInfoFiles) {
-                if (!File.Exists(file)) {
-                    continue;
-                }
+            if (AssemblyInfoFiles == null || AssemblyInfoFiles.Length == 0) {
+                Log.LogMessage(MessageImportance.Low, "No files provided");
+                return true;
+            }
 
-                using (var reader = new StreamReader(file)) {
-                    var text = reader.ReadToEnd();
-                    ParseCSharpCode(text);
-                }
+            if (AssemblyInfoFiles.Length > 1) {
+                Log.LogError("More than 1 file provided: " + String.Join(",", AssemblyInfoFiles.Select(s => s.ItemSpec)));
+                return false;
+            }
+
+            string assemblyInfoFile = AssemblyInfoFiles[0].GetMetadata("FullPath");
+
+            if (!File.Exists(assemblyInfoFile)) {
+                return true;
+            }
+
+            Tuple<TaskItem, TaskItem, TaskItem> attributes;
+            if (infoCache.TryGetValue(assemblyInfoFile, out attributes)) {
+                Log.LogMessage(MessageImportance.Low, $"Reading attributes for {assemblyInfoFile} from cache.");
+                assemblyVersion = attributes.Item1;
+                assemblyInformationalVersion = attributes.Item2;
+                assemblyFileVersion = attributes.Item3;
+                return true;
+            }
+
+            using (var reader = new StreamReader(assemblyInfoFile)) {
+                var text = reader.ReadToEnd();
+                ParseCSharpCode(text);
+
+                infoCache[assemblyInfoFile] = Tuple.Create(AssemblyVersion, AssemblyInformationalVersion, AssemblyFileVersion);
             }
 
             return !Log.HasLoggedErrors;

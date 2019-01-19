@@ -17,12 +17,21 @@ namespace Aderant.Build.Tasks.ArtifactHandling {
 
         /// <summary>
         /// Gets or sets the optional common output directory.
+        /// This is the usually 'bin\module' by convention.
         /// </summary>
         public string CommonOutputDirectory { get; set; }
+
+        /// <summary>
+        /// Additional destination directories for the artifacts.
+        /// </summary>
+        /// <remarks>Example usage is to replicate artifacts to a shared dependency directory during a build
+        /// to ensure downstream projects have access the outputs of their predecessors</remarks>
+        public string[] DestinationDirectories { get; set; }
 
         public override bool ExecuteTask() {
             var service = new ArtifactService(PipelineService, new PhysicalFileSystem(), Logger);
             service.CommonOutputDirectory = CommonOutputDirectory;
+            service.DestinationDirectories = DestinationDirectories;
 
             string containerKey = Path.GetFileName(SolutionRoot);
 

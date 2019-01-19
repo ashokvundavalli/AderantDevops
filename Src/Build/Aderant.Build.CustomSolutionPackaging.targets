@@ -70,7 +70,7 @@ foreach(var replacement in replacements){
     Name="ZipCustomSource"
     Condition="'$(ZipSource)' != 'false' And '$(IsCustomBuild)' != 'true'"
     Outputs="$(BinModuleDirectory)Customization\%(CustomSolutionFiles.Filename).zip"
-    Inputs="@(CustomSolutionFiles)">
+    Inputs="$(MSBuildThisFileFullPath);@(CustomSolutionFiles)">
 
     <PropertyGroup>
       <ZipFileDirectory>$(BinModuleDirectory)Customization\</ZipFileDirectory>
@@ -81,19 +81,23 @@ foreach(var replacement in replacements){
       <ZipFile Include="$(ZipFileDirectory)%(CustomSolutionFiles.Filename).zip" />
     </ItemGroup>
 
+    <PropertyGroup>
+      <SourceFilesToCopyForTransformRoot>$(SolutionDirectoryPath)Src\</SourceFilesToCopyForTransformRoot>
+    </PropertyGroup>
+
     <ItemGroup>
       <SourceFilesToCopyForTransform
-        Include="$(SolutionDirectoryPath)Src\**\*"
-        Exclude="$(SolutionDirectoryPath)*ABT\**;
-                   $(SolutionDirectoryPath)Build\TestResults\**\*
-                   $(SolutionDirectoryPath)BuildTemp\**\*;
-                   $(SolutionDirectoryPath)**\obj\**;
-                   $(SolutionDirectoryPath)**\_Resharper*\**;
-                   $(SolutionDirectoryPath)**\*.g*.cs;
-                   $(SolutionDirectoryPath)**\*.pfx;
-                   $(SolutionDirectoryPath)**\*.vssscc;
-                   $(SolutionDirectoryPath)**\*.vspscc;
-                   $(SolutionDirectoryPath)**\*.DotSettings;">
+        Include="$(SourceFilesToCopyForTransformRoot)**\*"
+        Exclude="$(SourceFilesToCopyForTransformRoot)*ABT\**;
+                 $(SourceFilesToCopyForTransformRoot)Build\TestResults\**\*
+                 $(SourceFilesToCopyForTransformRoot)BuildTemp\**\*;
+                 $(SourceFilesToCopyForTransformRoot)**\obj\**;
+                 $(SourceFilesToCopyForTransformRoot)**\_Resharper*\**;
+                 $(SourceFilesToCopyForTransformRoot)**\*.g*.cs;
+                 $(SourceFilesToCopyForTransformRoot)**\*.pfx;
+                 $(SourceFilesToCopyForTransformRoot)**\*.vssscc;
+                 $(SourceFilesToCopyForTransformRoot)**\*.vspscc;
+                 $(SourceFilesToCopyForTransformRoot)**\*.DotSettings;">
         <DestinationSubDirectory>Src\</DestinationSubDirectory>
       </SourceFilesToCopyForTransform>
 
@@ -261,7 +265,7 @@ foreach(var replacement in replacements){
   </Target>
 
   <Target Name="SeedPackagePacking" Condition="'$(IsCustomBuild)' != 'true' And '$(SolutionDirectoryPath)' != ''"
-          Inputs="@(SeedPackageInputs)"
+          Inputs="$(MSBuildThisFileFullPath);@(SeedPackageInputs)"
           Outputs="$(SeedPackagesProduced)"
           DependsOnTargets="CollectPackageContent">
 
@@ -297,7 +301,7 @@ foreach(var replacement in replacements){
   <Target
     Name="ZipWorkflowTemplateSource"
     Condition="('$(IsTemplateModule)'=='true') And ('$(IsCustomBuild)'!='true')"
-    Inputs="@(TemplateSolutionFiles)"
+    Inputs="$(MSBuildThisFileFullPath);@(TemplateSolutionFiles)"
     Outputs="$(BinModuleDirectory)Workflow\Templates\%(TemplateSolutionFiles.Filename).zip">
 
     <PropertyGroup>
@@ -309,35 +313,40 @@ foreach(var replacement in replacements){
       <ZipFile Include="$(ZipFileDirectory)\%(TemplateSolutionFiles.Filename).zip" />
     </ItemGroup>
 
+    <PropertyGroup>
+      <SourceFilesToCopyForWorflowTransform>$(SolutionDirectoryPath)Src\</SourceFilesToCopyForWorflowTransform>
+    </PropertyGroup>
+
     <ItemGroup>
+      <SourceFilesToCopyForTemplateTransform Remove="@(SourceFilesToCopyForTemplateTransform)" />
       <SourceFilesToCopyForTemplateTransform
-        Include="$(SolutionDirectoryPath)Src\**\*"
-        Exclude="$(SolutionDirectoryPath)*ABT\**;
-                    $(SolutionDirectoryPath)Build\TestResults\**\*
-                    $(SolutionDirectoryPath)BuildTemp\**\*;
-                    $(SolutionDirectoryPath)**\obj\**;
-                    $(SolutionDirectoryPath)**\_Resharper*\**;
-                    $(SolutionDirectoryPath)**\*.g*.cs;
-                    $(SolutionDirectoryPath)**\*.pfx;
-                    $(SolutionDirectoryPath)**\*.vssscc;
-                    $(SolutionDirectoryPath)**\*.vspscc;
-                    $(SolutionDirectoryPath)**\*.sln.cache;
-                    $(SolutionDirectoryPath)**\*.vsmdi;
-                    $(SolutionDirectoryPath)**\*.testrunconfig;
-                    $(SolutionDirectoryPath)**\*.suo;
-                    $(SolutionDirectoryPath)**\*.sln.Debug.vsprops;
-                    $(SolutionDirectoryPath)**\TestResults\**;
-                    $(SolutionDirectoryPath)**\Release.txt;
-                    $(SolutionDirectoryPath)**\_Resharper*\**;
-                    $(SolutionDirectoryPath)**\*resharper.user;
-                    $(SolutionDirectoryPath)**\*.DotSettings;
-                    $(SolutionDirectoryPath)**\Bin;
-                    $(SolutionDirectoryPath)**\obj\**;
-                    $(SolutionDirectoryPath)CommonBuild\**;
-                    $(SolutionDirectoryPath)ThirdPartyBuild.txt;
-                    $(SolutionDirectoryPath)**\*.csproj.user;
-                    $(SolutionDirectoryPath)**\SharedBin\**;
-					          $(SolutionDirectoryPath)Src\**\Web.*\**;">
+        Include="$(SourceFilesToCopyForWorflowTransform)**\*"
+        Exclude="$(SourceFilesToCopyForWorflowTransform)*ABT\**;
+                 $(SourceFilesToCopyForWorflowTransform)Build\TestResults\**\*
+                 $(SourceFilesToCopyForWorflowTransform)BuildTemp\**\*;
+                 $(SourceFilesToCopyForWorflowTransform)**\obj\**;
+                 $(SourceFilesToCopyForWorflowTransform)**\_Resharper*\**;
+                 $(SourceFilesToCopyForWorflowTransform)**\*.g*.cs;
+                 $(SourceFilesToCopyForWorflowTransform)**\*.pfx;
+                 $(SourceFilesToCopyForWorflowTransform)**\*.vssscc;
+                 $(SourceFilesToCopyForWorflowTransform)**\*.vspscc;
+                 $(SourceFilesToCopyForWorflowTransform)**\*.sln.cache;
+                 $(SourceFilesToCopyForWorflowTransform)**\*.vsmdi;
+                 $(SourceFilesToCopyForWorflowTransform)**\*.testrunconfig;
+                 $(SourceFilesToCopyForWorflowTransform)**\*.suo;
+                 $(SourceFilesToCopyForWorflowTransform)**\*.sln.Debug.vsprops;
+                 $(SourceFilesToCopyForWorflowTransform)**\TestResults\**;
+                 $(SourceFilesToCopyForWorflowTransform)**\Release.txt;
+                 $(SourceFilesToCopyForWorflowTransform)**\_Resharper*\**;
+                 $(SourceFilesToCopyForWorflowTransform)**\*resharper.user;
+                 $(SourceFilesToCopyForWorflowTransform)**\*.DotSettings;
+                 $(SourceFilesToCopyForWorflowTransform)**\Bin;
+                 $(SourceFilesToCopyForWorflowTransform)**\obj\**;
+                 $(SourceFilesToCopyForWorflowTransform)CommonBuild\**;
+                 $(SourceFilesToCopyForWorflowTransform)ThirdPartyBuild.txt;
+                 $(SourceFilesToCopyForWorflowTransform)**\*.csproj.user;
+                 $(SourceFilesToCopyForWorflowTransform)**\SharedBin\**;
+                 $(SourceFilesToCopyForWorflowTransform)**\Web.*\**;">
         <DestinationSubDirectory>Src\</DestinationSubDirectory>
       </SourceFilesToCopyForTemplateTransform>
 

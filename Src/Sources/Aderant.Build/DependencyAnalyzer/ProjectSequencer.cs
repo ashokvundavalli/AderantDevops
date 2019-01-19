@@ -144,14 +144,14 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         private void FindStateFiles(BuildOperationContext context) {
-            var files = GetBuildStateFile(context);
+            var files = GetBuildStateFiles(context);
 
             if (files != null) {
                 stateFiles = context.StateFiles = files;
             }
         }
 
-        private List<BuildStateFile> GetBuildStateFile(BuildOperationContext context) {
+        private List<BuildStateFile> GetBuildStateFiles(BuildOperationContext context) {
             List<BuildStateFile> files = new List<BuildStateFile>();
 
             // Here we select an appropriate tree to reuse
@@ -164,7 +164,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                         BuildStateFile stateFile = null;
 
                         foreach (var file in buildStateMetadata.BuildStateFiles) {
-                            if (string.Equals(file.BucketId.Id, bucketId.Id)) {
+                            if (string.Equals(file.BucketId.Id, bucketId.Id, StringComparison.OrdinalIgnoreCase)) {
                                 stateFile = file;
                                 break;
                             }
@@ -275,6 +275,10 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
+        /// <summary>
+        /// This is a reconciliation process. Applies the data from the state file to the current project.
+        /// If the outputs look sane and safe then the project is removed from the build tree and the cached outputs are substituted in.
+        /// </summary>
         internal void ApplyStateFile(BuildStateFile stateFile, string stateFileKey, string dirtyProjects, ConfiguredProject project, ref bool hasLoggedUpToDate) {
             string solutionRoot = project.SolutionRoot;
             InputFilesDependencyAnalysisResult result = BeginTrackingInputFiles(stateFile, solutionRoot);
