@@ -320,7 +320,9 @@ foreach(var replacement in replacements){
       <SourceFilesToCopyForTemplateTransform
                     Include="%(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\*"
                     Exclude="%(_AllWorkflowDirectoriesWithMetadata.FullPath)\ABT\**;
-                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\Build\TestResults\**\*
+                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\packages\**\*;
+                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\Dependencies\**\*;
+                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\Build\TestResults\**\*;
                              %(_AllWorkflowDirectoriesWithMetadata.FullPath)\BuildTemp\**\*;
                              %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\obj\**;
                              %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\_Resharper*\**;
