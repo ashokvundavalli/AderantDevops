@@ -189,7 +189,10 @@
 
   <Target Name="AssignPropertiesForCustomSearchPaths">
     <PropertyGroup>
+      <!-- Walk up and find the solution root -->
       <RootFolder>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', 'Paket.Dependencies'))</RootFolder>
+      <RootFolder Condition="'$(RootFolder)' == ''">$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', 'dir.proj'))</RootFolder>
+
       <CopyLocalDependenciesWhenParentReferenceInGac>false</CopyLocalDependenciesWhenParentReferenceInGac>
       <DoNotCopyLocalIfInGac>true</DoNotCopyLocalIfInGac>
 

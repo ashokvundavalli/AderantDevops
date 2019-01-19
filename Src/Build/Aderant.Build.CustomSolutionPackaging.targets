@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
 
-    <!--
+  <!--
     ==========================================================================================
         Zip Source
     ==========================================================================================
@@ -89,6 +89,7 @@ foreach(var replacement in replacements){
       <SourceFilesToCopyForTransform
         Include="$(SourceFilesToCopyForTransformRoot)**\*"
         Exclude="$(SourceFilesToCopyForTransformRoot)*ABT\**;
+                 $(SourceFilesToCopyForTransformRoot)*SeedPackages\**;
                  $(SourceFilesToCopyForTransformRoot)Build\TestResults\**\*
                  $(SourceFilesToCopyForTransformRoot)BuildTemp\**\*;
                  $(SourceFilesToCopyForTransformRoot)**\obj\**;
@@ -246,7 +247,7 @@ foreach(var replacement in replacements){
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
   </Target>
 
-    <!--
+  <!--
     ==========================================================================================
         Zip seed package(s)
         This module will zip all seed package definition files grouped by folder name into zip packages and drop into .\Bin\Packages folder.
@@ -287,7 +288,7 @@ foreach(var replacement in replacements){
     <Touch AlwaysCreate="true" Files="$(SeedPackagesProduced)" Condition="'$(IsDesktopBuild)' == 'true'" />
   </Target>
 
-    <!--
+  <!--
     ==========================================================================================
         Zip Sample Workflow Solutions
     ==========================================================================================
@@ -298,58 +299,57 @@ foreach(var replacement in replacements){
       Condition="('$(IsTemplateModule)'=='true') And ('$(IsCustomBuild)'!='true')" />
   </ItemGroup>
 
-  <Target
-    Name="ZipWorkflowTemplateSource"
-    Condition="('$(IsTemplateModule)'=='true') And ('$(IsCustomBuild)'!='true')"
-    Inputs="@(TemplateSolutionFiles)"
-    Outputs="$(BinModuleDirectory)Workflow\Templates\%(TemplateSolutionFiles.Filename).zip">
 
-    <PropertyGroup>
-      <ZipFileDirectory>$(BinModuleDirectory)Workflow\Templates</ZipFileDirectory>
-    </PropertyGroup>
-
-    <ItemGroup>
-      <ZipFile Remove="@(ZipFile)" />
-      <ZipFile Include="$(ZipFileDirectory)\%(TemplateSolutionFiles.Filename).zip" />
-    </ItemGroup>
-
+  <Target Name="CollectWorkflowContent" Condition="'@(TemplateSolutionFiles)' != ''">
     <PropertyGroup>
       <SourceFilesToCopyForWorflowTransform>$(SolutionDirectoryPath)Src\</SourceFilesToCopyForWorflowTransform>
     </PropertyGroup>
 
     <ItemGroup>
-      <SourceFilesToCopyForTemplateTransform Remove="@(SourceFilesToCopyForTemplateTransform)" />
-      <SourceFilesToCopyForTemplateTransform
-        Include="$(SourceFilesToCopyForWorflowTransform)**\*"
-        Exclude="$(SourceFilesToCopyForWorflowTransform)*ABT\**;
-                 $(SourceFilesToCopyForWorflowTransform)Build\TestResults\**\*
-                 $(SourceFilesToCopyForWorflowTransform)BuildTemp\**\*;
-                 $(SourceFilesToCopyForWorflowTransform)**\obj\**;
-                 $(SourceFilesToCopyForWorflowTransform)**\_Resharper*\**;
-                 $(SourceFilesToCopyForWorflowTransform)**\*.g*.cs;
-                 $(SourceFilesToCopyForWorflowTransform)**\*.pfx;
-                 $(SourceFilesToCopyForWorflowTransform)**\*.vssscc;
-                 $(SourceFilesToCopyForWorflowTransform)**\*.vspscc;
-                 $(SourceFilesToCopyForWorflowTransform)**\*.sln.cache;
-                 $(SourceFilesToCopyForWorflowTransform)**\*.vsmdi;
-                 $(SourceFilesToCopyForWorflowTransform)**\*.testrunconfig;
-                 $(SourceFilesToCopyForWorflowTransform)**\*.suo;
-                 $(SourceFilesToCopyForWorflowTransform)**\*.sln.Debug.vsprops;
-                 $(SourceFilesToCopyForWorflowTransform)**\TestResults\**;
-                 $(SourceFilesToCopyForWorflowTransform)**\Release.txt;
-                 $(SourceFilesToCopyForWorflowTransform)**\_Resharper*\**;
-                 $(SourceFilesToCopyForWorflowTransform)**\*resharper.user;
-                 $(SourceFilesToCopyForWorflowTransform)**\*.DotSettings;
-                 $(SourceFilesToCopyForWorflowTransform)**\Bin;
-                 $(SourceFilesToCopyForWorflowTransform)**\obj\**;
-                 $(SourceFilesToCopyForWorflowTransform)CommonBuild\**;
-                 $(SourceFilesToCopyForWorflowTransform)ThirdPartyBuild.txt;
-                 $(SourceFilesToCopyForWorflowTransform)**\*.csproj.user;
-                 $(SourceFilesToCopyForWorflowTransform)**\SharedBin\**;
-                 $(SourceFilesToCopyForWorflowTransform)**\Web.*\**;">
-        <DestinationSubDirectory>Src\</DestinationSubDirectory>
-      </SourceFilesToCopyForTemplateTransform>
+      <_AllWorkflowFiles Include="$(SourceFilesToCopyForWorflowTransform)**\Workflow.xamlx" />
+      <_AllWorkflowDirectories Include="@(_AllWorkflowFiles->'%(RootDir)%(Directory)'->TrimEnd('\')->Distinct())" />
+    </ItemGroup>
 
+    <ItemGroup>
+      <_AllWorkflowDirectoriesWithMetadata Include="@(_AllWorkflowDirectories)">
+        <DestinationSubDirectory>$([System.IO.Path]::GetFileName(%(Identity)))</DestinationSubDirectory>
+      </_AllWorkflowDirectoriesWithMetadata>
+    </ItemGroup>
+
+    <ItemGroup>
+      <SourceFilesToCopyForTemplateTransform
+                    Include="%(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\*"
+                    Exclude="%(_AllWorkflowDirectoriesWithMetadata.FullPath)\ABT\**;
+                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\Build\TestResults\**\*
+                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\BuildTemp\**\*;
+                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\obj\**;
+                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\_Resharper*\**;
+                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\*.g*.cs;
+                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\*.pfx;
+                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\*.vssscc;
+                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\*.vspscc;
+                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\*.sln.cache;
+                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\*.vsmdi;
+                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\*.testrunconfig;
+                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\*.suo;
+                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\*.sln.Debug.vsprops;
+                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\TestResults\**;
+                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\Release.txt;
+                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\_Resharper*\**;
+                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\*resharper.user;
+                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\*.DotSettings;
+                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\Bin;
+                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\obj\**;
+                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\CommonBuild\**;
+                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\ThirdPartyBuild.txt;
+                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\*.csproj.user;
+                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\SharedBin\**;
+                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\Web.*\**;">
+        <DestinationSubDirectory>Src\%(DestinationSubDirectory)\</DestinationSubDirectory>
+      </SourceFilesToCopyForTemplateTransform>
+    </ItemGroup>
+
+    <ItemGroup>
       <SourceFilesToCopyForTemplateTransform Include="%(TemplateSolutionFiles.FullPath)">
         <DestinationSubDirectory></DestinationSubDirectory>
       </SourceFilesToCopyForTemplateTransform>
@@ -360,18 +360,12 @@ foreach(var replacement in replacements){
       <TempTemplateModuleSourceDirectory>$(SolutionDirectoryPath)TempTemplateTransform\Src\</TempTemplateModuleSourceDirectory>
     </PropertyGroup>
 
-    <Delete
-      Files="%(ZipFile.FullPath)"
-      Condition="Exists('%(ZipFile.FullPath)')" />
+    <RemoveDir Condition="Exists('$(TempTemplateSolutionDirectory)')"
+               Directories="$(TempTemplateSolutionDirectory)"/>
 
-    <RemoveDir
-      Condition="Exists('$(TempTemplateSolutionDirectory)')"
-      Directories="$(TempTemplateSolutionDirectory)"/>
+    <MakeDir Directories="$(TempTemplateSolutionDirectory)"/>
 
     <!-- Make a copy of the source files for the template solution transformation and zip -->
-    <MakeDir
-      Directories="$(TempTemplateSolutionDirectory)"/>
-
     <Copy
       SourceFiles="@(SourceFilesToCopyForTemplateTransform)"
       DestinationFiles="@(SourceFilesToCopyForTemplateTransform->'$(TempTemplateSolutionDirectory)%(DestinationSubDirectory)%(RecursiveDir)%(Filename)%(Extension)')"
@@ -379,12 +373,32 @@ foreach(var replacement in replacements){
       UseHardlinksIfPossible="false">
     </Copy>
 
-    <!-- Read solution file so we can get the project source-->
-    <ReadLinesFromFile File="$(TempTemplateSolutionDirectory)%(TemplateSolutionFiles.Filename)%(TemplateSolutionFiles.Extension)">
-      <Output TaskParameter="Lines"
-        ItemName="LinesFromTemplateSlnFile"/>
-    </ReadLinesFromFile>
+  </Target>
 
+
+  <Target Name="ZipWorkflowTemplateSourceCore"
+          Condition="('$(IsTemplateModule)'=='true') And ('$(IsCustomBuild)'!='true')"
+          Inputs="@(TemplateSolutionFiles)"
+          Outputs="$(BinModuleDirectory)Workflow\Templates\%(TemplateSolutionFiles.Filename).zip">
+
+    <PropertyGroup>
+      <ZipFileDirectory>$(BinModuleDirectory)Workflow\Templates</ZipFileDirectory>
+      <WorkflowTemplateSolutionFile>$(TempTemplateSolutionDirectory)%(TemplateSolutionFiles.Filename)%(TemplateSolutionFiles.Extension)</WorkflowTemplateSolutionFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ZipFile Remove="@(ZipFile)" />
+      <ZipFile Include="$(ZipFileDirectory)\%(TemplateSolutionFiles.Filename).zip" />
+    </ItemGroup>
+
+    <Delete
+      Files="%(ZipFile.FullPath)"
+      Condition="Exists('%(ZipFile.FullPath)')" />
+
+    <!-- Read solution file so we can get the project source-->
+    <ReadLinesFromFile File="$(WorkflowTemplateSolutionFile)">
+      <Output TaskParameter="Lines" ItemName="LinesFromTemplateSlnFile"/>
+    </ReadLinesFromFile>
 
     <!--  Extract the Project lines from the template solution file.
           This will give lines in this format:
@@ -419,7 +433,7 @@ foreach(var replacement in replacements){
       Expression="&quot;, &quot;.+\.csproj&quot;, &quot;.+&quot;"
       Replacement=""
       Count="1">
-      <Output ItemName ="TemplateProjects"
+      <Output ItemName="TemplateProjects"
         TaskParameter="Output" />
     </RegexReplace>
     <Message Text="&#xA;Projects in template solution:&#xA;@(TemplateProjects, '&#xA;')"/>
@@ -439,7 +453,7 @@ foreach(var replacement in replacements){
         Remove="@(TemplateZipSourceFiles)" />
 
       <TemplateZipSourceFiles
-        Include="$(TempTemplateSolutionDirectory)**\*.Template.sln;"/>
+        Include="$(WorkflowTemplateSolutionFile)" />
 
       <TemplateZipSourceFiles
         Include="$(TemplateProjectFoldersIncludeString)"
@@ -462,7 +476,6 @@ foreach(var replacement in replacements){
                   $(TempTemplateModuleSourceDirectory)**\*resharper.user;
                   $(TempTemplateModuleSourceDirectory)**\*.DotSettings;
                   $(ModuleSourceDirectory)**\*.csproj.user;" />
-
       <TemplateZipProjectFiles
         Include="$(TemplateProjectIncludeString)"/>
     </ItemGroup>
@@ -479,8 +492,14 @@ foreach(var replacement in replacements){
       WorkingDirectory="$(TempTemplateSolutionDirectory)"
       ParallelCompression="false" />
 
-    <RemoveDir
-      Directories="$(TempTemplateSolutionDirectory)"/>
+  </Target>
+
+
+  <Target
+    Name="ZipWorkflowTemplateSource"
+    DependsOnTargets="CollectWorkflowContent;ZipWorkflowTemplateSourceCore">
+
+    <RemoveDir Directories="$(TempTemplateSolutionDirectory)" />
 
   </Target>
 
