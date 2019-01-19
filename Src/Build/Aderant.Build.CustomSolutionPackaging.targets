@@ -70,7 +70,7 @@ foreach(var replacement in replacements){
     Name="ZipCustomSource"
     Condition="'$(ZipSource)' != 'false' And '$(IsCustomBuild)' != 'true'"
     Outputs="$(BinModuleDirectory)Customization\%(CustomSolutionFiles.Filename).zip"
-    Inputs="$(MSBuildThisFileFullPath);@(CustomSolutionFiles)">
+    Inputs="@(CustomSolutionFiles)">
 
     <PropertyGroup>
       <ZipFileDirectory>$(BinModuleDirectory)Customization\</ZipFileDirectory>
@@ -265,7 +265,7 @@ foreach(var replacement in replacements){
   </Target>
 
   <Target Name="SeedPackagePacking" Condition="'$(IsCustomBuild)' != 'true' And '$(SolutionDirectoryPath)' != ''"
-          Inputs="$(MSBuildThisFileFullPath);@(SeedPackageInputs)"
+          Inputs="@(SeedPackageInputs)"
           Outputs="$(SeedPackagesProduced)"
           DependsOnTargets="CollectPackageContent">
 
@@ -301,7 +301,7 @@ foreach(var replacement in replacements){
   <Target
     Name="ZipWorkflowTemplateSource"
     Condition="('$(IsTemplateModule)'=='true') And ('$(IsCustomBuild)'!='true')"
-    Inputs="$(MSBuildThisFileFullPath);@(TemplateSolutionFiles)"
+    Inputs="@(TemplateSolutionFiles)"
     Outputs="$(BinModuleDirectory)Workflow\Templates\%(TemplateSolutionFiles.Filename).zip">
 
     <PropertyGroup>
