@@ -138,7 +138,7 @@
     </PropertyGroup>
 
     <!--
-      By specifing DestinationDirectories we overwrite the common dependency
+      By specifying DestinationDirectories we overwrite the common dependency
       directory contents with objects from the cache so we do not reuse stale objects as inputs
       to child dependencies in the build.
     -->
