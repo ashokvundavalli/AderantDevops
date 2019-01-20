@@ -268,7 +268,7 @@ namespace Aderant.Build.Packaging {
 
             var filesToRestore = CalculateFilesToRestore(stateFile, solutionRoot, container, localArtifactFiles);
 
-            CopyFiles(filesToRestore, context.IsDesktopBuild);
+            CopyFiles(filesToRestore, true);
         }
 
         private void ExtractArtifactArchives(IEnumerable<string> localArtifactArchives) {
