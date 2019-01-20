@@ -17,6 +17,12 @@ namespace Aderant.TeamFoundation.Integration {
         public override Task ExecuteAsync(WebHookHandlerContext context, BuildCompletedPayload payload) {
             return Task.Run(
                 () => {
+                    // Ignore TFVC builds - the definition type is always set to XAML even when it is not actually
+                    // a XAML build.
+                    if (payload.Resource.SourceGetVersion != null && payload.Resource.SourceGetVersion.StartsWith("C", StringComparison.OrdinalIgnoreCase)) {
+                        return base.ExecuteAsync(context, payload);
+                    }
+
                     try {
                         string artifactUrl = payload.Resource.Url + "/artifacts";
 
