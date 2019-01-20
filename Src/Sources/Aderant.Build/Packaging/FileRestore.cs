@@ -112,7 +112,7 @@ namespace Aderant.Build.Packaging {
                         // There can be only one.
                         LocalArtifactFile artifactFile = distinctLocalSourceFiles.First();
 
-                        foreach (var targetDirectory in targetDirectories) {
+                        foreach (string targetDirectory in targetDirectories) {
                             string destination = Path.GetFullPath(Path.Combine(targetDirectory, filePath));
 
                             AddFileDestination(
@@ -135,8 +135,6 @@ namespace Aderant.Build.Packaging {
                 } else {
                     throw new FileNotFoundException($"The file {localProjectFile} does not exist or cannot be accessed.", localProjectFile);
                 }
-
-
             }
 
             return copyOperations;
@@ -158,7 +156,7 @@ namespace Aderant.Build.Packaging {
 
         private void AddFileDestination(HashSet<string> destinationPaths, LocalArtifactFile file, string destination, List<PathSpec> copyOperations) {
             if (destinationPaths.Add(destination)) {
-                logger.Info($"Selected artifact file: {file.FullPath}");
+                logger.Info($"Selected artifact file: '{file.FullPath}' to copy to: '{destination}'.");
                 copyOperations.Add(new PathSpec(file.FullPath, destination));
             } else {
                 logger.Warning("Double write for file: " + destination);
@@ -187,7 +185,6 @@ namespace Aderant.Build.Packaging {
                     }
                 }
             }
-
         }
     }
 }
