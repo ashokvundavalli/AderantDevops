@@ -423,7 +423,10 @@ namespace Aderant.Build.Packaging {
 
                         string[] folders = OrderBuildsByBuildNumber(directories.ToArray());
 
-                        foreach (var folder in folders) {
+                        // Limit scanning to an arbitrary number of builds so we don't spend too
+                        // long thrashing the network.
+                        // TODO: This needs improvements, we should only publish change objects to the cache
+                        foreach (var folder in folders.Take(5)) {
                             // We have to nest the state file directory as TFS won't allow duplicate artifact names
                             // For a single build we may produce 1 or more state files and so each one needs a unique artifact name
                             var stateFile = Path.Combine(folder, BuildStateWriter.CreateContainerName(bucketId), BuildStateWriter.DefaultFileName);
@@ -503,7 +506,9 @@ namespace Aderant.Build.Packaging {
 
                 int version;
                 if (Int32.TryParse(directoryName, NumberStyles.Any, CultureInfo.InvariantCulture, out version)) {
-                    numbers.Add(new KeyValuePair<int, string>(version, entry));
+                    if (version > 0) {
+                        numbers.Add(new KeyValuePair<int, string>(version, entry));
+                    }
                 }
             }
 
