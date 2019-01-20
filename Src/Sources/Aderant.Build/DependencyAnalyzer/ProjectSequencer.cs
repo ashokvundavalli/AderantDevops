@@ -285,7 +285,11 @@ namespace Aderant.Build.DependencyAnalyzer {
                     if (string.Equals(node.Directory, producer.Directory, StringComparison.OrdinalIgnoreCase)) {
                         continue;
                     }
-                    node.AddResolvedDependency(null, producer);
+
+                    // Janky hack to prevent cycles until we have a better way of abstracting this
+                    if (producer.Directory.Contains("SoftwareFactory")) {
+                        node.AddResolvedDependency(null, producer);
+                    }
                 }
             }
         }
