@@ -19,7 +19,7 @@ namespace Aderant.Build.ProjectSystem {
         /// Gets or sets the extensibility demands such as things we should always build
         /// </summary>
         public ExtensibilityImposition ExtensibilityImposition { get; set; }
-        
+
         public IReadOnlyCollection<string> MakeFiles { get; set; }
     }
 }

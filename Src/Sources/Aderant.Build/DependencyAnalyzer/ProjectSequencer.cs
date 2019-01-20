@@ -199,6 +199,10 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             var grouping = graph.ProjectsBySolutionRoot;
 
+
+            List<IArtifact> templateDependencyProviders = new List<IArtifact>();
+            List<DirectoryNode> initializationNodes = new List<DirectoryNode>();
+
             foreach (var group in grouping) {
                 List<ConfiguredProject> dirtyProjects = group.Where(g => g.IsDirty).ToList();
 
@@ -215,20 +219,73 @@ namespace Aderant.Build.DependencyAnalyzer {
                 bool hasLoggedUpToDate = false;
 
                 foreach (var project in projects.Where(p => p.IsUnderSolutionRoot(group.Key))) {
+                    // The project depends on prolog file
+                    project.AddResolvedDependency(null, initializeNode);
+
+                    // The completion of the group depends all members of the group
+                    completionNode.AddResolvedDependency(null, project);
+
                     // Push template dependencies into the prolog file to ensure it is scheduled after the dependencies are compiled
                     IReadOnlyCollection<IResolvedDependency> textTemplateDependencies = project.GetTextTemplateDependencies();
                     if (textTemplateDependencies != null) {
+                        bool hasAddedNode = false;
+
                         foreach (var dependency in textTemplateDependencies) {
+                            // Track that we need to add a transitive dependency later
+                            if (!hasAddedNode) {
+                                DirectoryNode directoryNode = initializeNode as DirectoryNode;
+                                if (directoryNode != null && !initializationNodes.Contains(initializeNode)) {
+                                    initializationNodes.Add(directoryNode);
+                                    hasAddedNode = true;
+                                }
+                            }
+
                             initializeNode.AddResolvedDependency(dependency.ExistingUnresolvedItem, dependency.ResolvedReference);
+
+                            IArtifact artifact = dependency.ResolvedReference as IArtifact;
+                            // Store the item that produces this dependency for the second pass operation
+                            if (artifact != null) {
+                                if (!templateDependencyProviders.Contains(artifact)) {
+                                    templateDependencyProviders.Add(artifact);
+                                }
+                            }
                         }
                     }
 
                     if (!changedFilesOnly) {
                         ApplyStateFile(stateFile, solutionDirectoryName, dirtyProjectsLogLine, project, ref hasLoggedUpToDate);
                     }
+                }
+            }
 
-                    project.AddResolvedDependency(null, initializeNode);
-                    completionNode.AddResolvedDependency(null, project);
+            AddTransitiveDependencies(graph, templateDependencyProviders, initializationNodes);
+        }
+
+        private static void AddTransitiveDependencies(ProjectDependencyGraph graph, List<IArtifact> templateDependencyProviders, List<DirectoryNode> initializationNodes) {
+            // Now find all completion nodes of the artifacts that are involved in T4.
+            // These will be added as transitive dependencies
+            HashSet<DirectoryNode> producers = new HashSet<DirectoryNode>();
+
+            foreach (var artifact in templateDependencyProviders) {
+                foreach (DirectoryNode directoryNode in artifact.GetDependencies().OfType<DirectoryNode>()) {
+                    foreach (IDependable graphNode in graph.Nodes) {
+                        DirectoryNode node = graphNode as DirectoryNode;
+                        if (node != null) {
+                            if (node.IsPostTargets && string.Equals(node.Directory, directoryNode.Directory, StringComparison.OrdinalIgnoreCase)) {
+                                producers.Add(node);
+                            }
+                        }
+                    }
+                }
+            }
+
+            foreach (var node in initializationNodes) {
+                foreach (var producer in producers) {
+                    // Do not add to ourselves because that would be circular
+                    if (string.Equals(node.Directory, producer.Directory, StringComparison.OrdinalIgnoreCase)) {
+                        continue;
+                    }
+                    node.AddResolvedDependency(null, producer);
                 }
             }
         }
