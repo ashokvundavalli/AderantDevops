@@ -3,7 +3,6 @@
 [string]$indent1 = "  "
 [string]$indent2 = "        "
 
-
 function Get-Branch {
     [OutputType([String])]
     [CmdletBinding()]
@@ -402,7 +401,7 @@ function AssignSwitches() {
     $switches.Branch = $Branch.IsPresent
     $switches.Downstream = $Downstream.IsPresent
 
-    if ($context.BuildMetadata.IsPullRequest) {
+    if (-not $context.IsDesktopBuild) {
         $switches.Downstream = $true
     }
 
@@ -619,7 +618,6 @@ Should not be used as it prevents incremental builds which increases build times
             $contextService.Dispose()
         }
     }
-
 }
 
 Set-Alias -Name bm -Value global:Invoke-Build2 -Scope 'Global'
