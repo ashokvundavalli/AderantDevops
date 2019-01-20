@@ -12,7 +12,7 @@ begin {
             throw "No package provided"
         }
 
-        Invoke-Tool -FileName $paket -Arguments "push file $package url http://packages.ap.aderant.com/packages/ apikey `" `"" -RequireExitCodeZero | 
+        Invoke-Tool -FileName $paket -Arguments "push file $package url http://packages.ap.aderant.com/packages/ apikey `" `"" -RequireExitCodeZero |
             ForEach-Object {
             $_
         }
@@ -35,7 +35,7 @@ process {
 
     # Try to get version number from the current git branch infomation.
     try {
-        $text = (& $gitVersion $repository /output json | Out-String )    
+        $text = (& $gitVersion $repository /output json | Out-String )
 
         $versionJson = ConvertFrom-Json $text
         $versionSem = $versionJson.FullSemVer
@@ -52,10 +52,10 @@ process {
     } catch {
         Write-Error "##vso[task.logissue type=error;] Failed to get correct version number from the git repository. Returned info from GitVersion:"
         Write-Error "$text"
-        
+
         throw "Failed to generate a version for the repository. Inspect the logs for more detail."
     }
-    
+
     Write-Host "Creating package version"
 
     # For NuGet sorting we need to remove all dashes from the package name, otherwise we can't have different release channels per branch
@@ -74,7 +74,7 @@ process {
 			# modify nuspec file to include commit hash value in the tags section (only for CI build)
 			if ($Env:BUILD_REPOSITORY_NAME) {
 				foreach ($packageFile in $packages) {
-                
+
 					$zipFilePath = [IO.Path]::ChangeExtension($packageFile.FullName, '.zip')
 					Rename-Item -Path $packageFile.FullName -NewName $zipFilePath
 					$extractedDirectoryName = $packageFile.Basename
@@ -100,24 +100,24 @@ process {
 				}
 			}
 
-            if (($Env:BUILD_SOURCEBRANCHNAME -eq "master"  -or $Env:BUILD_SOURCEBRANCH -like "*releases/*" -or $Env:BUILD_SOURCEBRANCH -like "refs/heads/dev" -or $Env:BUILD_SOURCEBRANCH -like "refs/heads/patch/81SP1" -or $Env:BUILD_SOURCEBRANCH -like "refs/heads/update/82*) -and -not $global:IsDesktopBuild) {
+            if (($Env:BUILD_SOURCEBRANCHNAME -eq "master"  -or $Env:BUILD_SOURCEBRANCH -like "*releases/*" -or $Env:BUILD_SOURCEBRANCH -like "refs/heads/dev" -or $Env:BUILD_SOURCEBRANCH -like "refs/heads/patch/81SP1" -or $Env:BUILD_SOURCEBRANCH -like "refs/heads/update/82*") -and -not $global:IsDesktopBuild) {
                 $packagingProcess = [Aderant.Build.Packaging.PackageProcessor]::new($Host.UI)
 
                 $buildNumber = ("{0} {1}" -f $Env:BUILD_REPOSITORY_NAME, $versionSem)
                 $packagingProcess.UpdateBuildNumber($buildNumber)
 
                 Write-Host "Pushing packages from: $($packResult.OutputPath)"
-                
+
                 gci -Path $packResult.OutputPath -Filter *.nupkg | Where-Object { $_.Name -NotMatch "Aderant.Database.Backup" } | % { PushPackage $_.FullName }
 
                 if ($Env:BUILD_SOURCEBRANCHNAME -eq "master") {
-                    # Associate the package to the build. This allows TFS garbage collect the outputs when the build is deleted      
+                    # Associate the package to the build. This allows TFS garbage collect the outputs when the build is deleted
                     $packagingProcess.AssociatePackagesToBuild($packages)
                 }
 
                 # Special dropping location for database backup due to the size: \\dfs.aderant.com\Packages\ExpertDatabase.
                 if ($env:BUILD_DEFINITIONNAME -contains "Database") {
-                    gci -Path $packResult.OutputPath -Filter Aderant.Database.Backup*.nupkg | % { xcopy /i /y $_.FullName "\\dfs.aderant.com\Packages\ExpertDatabase\$versionSem\" }
+                    Get-ChildItem -Path $packResult.OutputPath -Filter Aderant.Database.Backup*.nupkg | % { xcopy /i /y $_.FullName "\\dfs.aderant.com\Packages\ExpertDatabase\$versionSem\" }
                 }
             }
         }
@@ -127,6 +127,6 @@ process {
 }
 
 end {
-  
+
 }
 
