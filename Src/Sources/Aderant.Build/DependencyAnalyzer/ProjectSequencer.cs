@@ -171,7 +171,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                         }
 
                         if (stateFile != null) {
-                            logger.Info($"Using state file: {stateFile.Id} -> {stateFile.BuildId} -> {stateFile.Location}:{stateFile.BucketId.Tag}.");
+                            logger.Info($"Using state file: {stateFile.Id} -> {stateFile.BuildId} -> {stateFile.Location}:{stateFile.BucketId.Tag}");
                             files.Add(stateFile);
                         }
                     }
