@@ -1,7 +1,7 @@
-<# 
-.Synopsis 
+<#
+.Synopsis
     Acquire build artifacts from the specified drop location.
-.Description    
+.Description
     Copy the build artifacts from the specified drop location to the specified binaries directory, and exctract any archives retrieved.
 .Example
     Get-Product -binariesDirectory C:\TFS\ExpertSuite\<branch name>\Binaries -$dropRoot \\dfs.aderant.com\ExpertSuite -branch <branch name>
@@ -139,12 +139,12 @@ begin {
                 }
 
                 [System.IO.FileInfo[]]$binaries = Get-ChildItem -Path $componentPath -File
-                
+
                 Write-Host "`r`nCopying files:"
                 Write-Host ($binaries.FullName | Format-List | Out-String)
                 Write-Host 'To directory:'
                 Write-Host "$binariesDirectory`r`n"
-        
+
                 [double]$executionTime = [System.Math]::Round((Measure-Command { ForEach-Object -InputObject $binaries { Copy-Item -Path $_.FullName -Destination $binariesDirectory } }).TotalSeconds, 2)
                 Write-Host "Acquired $component in: $executionTime seconds.`r`n" -ForegroundColor Cyan
                 $totalTime = $totalTime + $executionTime
@@ -196,7 +196,7 @@ begin {
             }
 
             Add-Type -AssemblyName 'System.IO.Compression.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'
-            
+
             Write-Host "`r`nExtracting archives:"
             Write-Host ($archives.FullName | Format-List | Out-String)
             Write-Host 'To directory:'
@@ -230,7 +230,7 @@ process {
                 Write-Error "Failed to retrieve binaries for branch: '$branch'`r`n at directory: '$branchDropRoot'."
                 exit 1
             }
-            
+
             [int[]]$buildNumbers = Get-ChildItem -Path $branchDropRoot -Directory | Select-Object -ExpandProperty Name | Where-Object { $_ -match "^[\d\.]+$" }
             [int]$buildNumber = $buildNumbers | Sort-Object -Descending | Select-Object -First 1
             [string]$build = Join-Path $branchDropRoot -ChildPath $buildNumber
@@ -240,10 +240,12 @@ process {
             $totalTime = Copy-Binaries -dropRoot $build -binariesDirectory $binariesDirectory -components $components -clearBinariesDirectory
 
             # Create a link to build in the binaries directory.
-            [System.MarshalByRefObject]$shell = New-Object -ComObject 'WScript.Shell'
-            [System.MarshalByRefObject]$shortcut = $Shell.CreateShortcut((Join-Path -Path $binariesDirectory -ChildPath "Expert_Build_$buildNUmber.url"))
-            $shortcut.TargetPath = "http://tfs$($Env:USERDNSDOMAIN.ToLower()):8080/tfs/ADERANT/ExpertSuite/_build/index?buildId=$buildNUmber&_a=summary"
-            $shortcut.Save()
+            if (-not [System.Environment]::UserInteractive) {
+                [System.MarshalByRefObject]$shell = New-Object -ComObject 'WScript.Shell'
+                [System.MarshalByRefObject]$shortcut = $Shell.CreateShortcut((Join-Path -Path $binariesDirectory -ChildPath "Expert_Build_$buildNUmber.url"))
+                $shortcut.TargetPath = "http://tfs:8080/tfs/ADERANT/ExpertSuite/_build/index?buildId=$buildNUmber&_a=summary"
+                $shortcut.Save()
+            }
         }
         'PullRequest' {
             [string]$pullRequestDropRoot = Join-Path -Path $dropRoot -ChildPath "pulls\$pullRequestId"
