@@ -44,6 +44,30 @@ namespace Aderant.Build.Packaging {
 
         public IReadOnlyCollection<string> AdditionalDestinationDirectories { get; set; }
 
+        private static readonly string[] knownOutputPaths = new string[] {
+            @"Bin\Module\",
+            @"Bin\Test\"
+        };
+
+        internal static string CalculateRestorePath(string fileWrite, string outputPath) {
+            int index = fileWrite.IndexOf(outputPath, StringComparison.OrdinalIgnoreCase);
+            if (index == 0) {
+                // Retain the relative path of the build artifact.
+                return fileWrite.Remove(index, outputPath.Length);
+            }
+
+            // If the file path matches any known output paths, proceed.
+            foreach (string knownOutputPath in knownOutputPaths) {
+                index = fileWrite.IndexOf(knownOutputPath, StringComparison.OrdinalIgnoreCase);
+
+                if (index != -1) {
+                    return fileWrite.Remove(0, index + knownOutputPath.Length);
+                }
+            }
+
+            return null;
+        }
+
         public IList<PathSpec> BuildRestoreOperations(string solutionRoot, string container, BuildStateFile stateFile) {
             // Guard to ensure only one write to a destination occurs
             HashSet<string> destinationPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -73,20 +97,13 @@ namespace Aderant.Build.Packaging {
                     isTestProject = !webProjects.Contains(project.Value);
                 }
 
-                var targetDirectories = CreateDestinationDirectoryList(directoryOfProject, outputPath, isTestProject);
+                List<string> targetDirectories = CreateDestinationDirectoryList(directoryOfProject, outputPath, isTestProject);
 
                 if (fileSystem.FileExists(localProjectFile)) {
                     logger.Info($"Calculating files to restore for project: {Path.GetFileNameWithoutExtension(project.Key)}");
 
-                    foreach (var fileWrite in project.Value.FilesWritten) {
-                        string filePath = null;
-                        var index = fileWrite.IndexOf(outputPath, StringComparison.OrdinalIgnoreCase);
-                        if (index == 0) {
-                            // Retain the relative path of the build artifact.
-                            filePath = fileWrite.Remove(index, outputPath.Length);
-                        } else {
-                            logger.Info($"Ignored file: {localProjectFile}: '{fileWrite}' does not start with project output path '{outputPath}'.");
-                        }
+                    foreach (string fileWrite in project.Value.FilesWritten) {
+                        string filePath = CalculateRestorePath(fileWrite, outputPath);
 
                         // Use relative path for comparison.
                         List<LocalArtifactFile> localSourceFiles = localArtifactFiles.Where(s => s.FullPath.EndsWith(string.Concat(@"\", filePath), StringComparison.OrdinalIgnoreCase)).ToList();
@@ -120,6 +137,24 @@ namespace Aderant.Build.Packaging {
                                 artifactFile,
                                 destination,
                                 copyOperations);
+                        }
+
+                        if (string.IsNullOrWhiteSpace(filePath)) {
+                            OnDiskProjectInfo projectInfo = BuildPipelineServiceClient.Current.GetTrackedProjects(new List<Guid> {
+                                project.Value.ProjectGuid
+                            }).FirstOrDefault();
+
+                            if (projectInfo != null) {
+                                if (!string.IsNullOrWhiteSpace(projectInfo.DesktopBuildPackageLocation)) {
+                                    if (fileWrite.Equals(projectInfo.DesktopBuildPackageLocation, StringComparison.OrdinalIgnoreCase)) {
+                                        string targetPath = Path.GetFullPath(Path.Combine(directoryOfProject, fileWrite));
+
+                                        AddFileDestination(new HashSet<string> { targetPath }, artifactFile, targetPath, copyOperations);
+                                    }
+                                }
+                            }
+
+                            logger.Info($"Ignored file: {localProjectFile}: '{fileWrite}' does not start with project output path '{outputPath}'.");
                         }
 
                         if (!string.IsNullOrWhiteSpace(CommonOutputDirectory)) {

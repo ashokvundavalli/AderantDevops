@@ -87,6 +87,10 @@ namespace Aderant.Build.ProjectSystem {
             set { isWebProject = value ? Memoizer<ConfiguredProject>.True : Memoizer<ConfiguredProject>.False; }
         }
 
+        public virtual string DesktopBuildPackageLocation {
+            get { return project.Value.GetPropertyValue("DesktopBuildPackageLocation"); }
+        }
+
         public virtual bool IsTestProject {
             get {
                 var guids = ProjectTypeGuids;

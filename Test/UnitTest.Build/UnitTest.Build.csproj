@@ -115,6 +115,7 @@
     <Compile Include="BuildProjectCheckTests.cs" />
     <Compile Include="DependencyAnalyzer\BuildPlanGeneratorTests.cs" />
     <Compile Include="DependencyResolver\PaketDependenciesStructureTests.cs" />
+    <Compile Include="Packaging\FileRestoreTests.cs" />
     <Compile Include="ProjectSystem\DirectoryGrovelerTests.cs" />
     <Compile Include="FileSystemTests.cs" />
     <Compile Include="BuildPipelineServiceImplTests.cs" />

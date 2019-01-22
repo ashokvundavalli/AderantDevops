@@ -232,11 +232,18 @@ process {
             }
             
             [int[]]$buildNumbers = Get-ChildItem -Path $branchDropRoot -Directory | Select-Object -ExpandProperty Name | Where-Object { $_ -match "^[\d\.]+$" }
-            [string]$build = Join-Path $branchDropRoot -ChildPath ($buildNumbers | Sort-Object -Descending | Select-Object -First 1)
+            [int]$buildNumber = $buildNumbers | Sort-Object -Descending | Select-Object -First 1
+            [string]$build = Join-Path $branchDropRoot -ChildPath $buildNumber
 
             Write-Host "Selected build: $build"
 
             $totalTime = Copy-Binaries -dropRoot $build -binariesDirectory $binariesDirectory -components $components -clearBinariesDirectory
+
+            # Create a link to build in the binaries directory.
+            [System.MarshalByRefObject]$shell = New-Object -ComObject 'WScript.Shell'
+            [System.MarshalByRefObject]$shortcut = $Shell.CreateShortcut((Join-Path -Path $binariesDirectory -ChildPath "Expert_Build_$buildNUmber.url"))
+            $shortcut.TargetPath = "http://tfs$($Env:USERDNSDOMAIN.ToLower()):8080/tfs/ADERANT/ExpertSuite/_build/index?buildId=$buildNUmber&_a=summary"
+            $shortcut.Save()
         }
         'PullRequest' {
             [string]$pullRequestDropRoot = Join-Path -Path $dropRoot -ChildPath "pulls\$pullRequestId"
