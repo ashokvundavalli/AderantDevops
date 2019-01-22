@@ -1,22 +1,20 @@
 references: strict
+framework: net46, net45
 source http://packages.ap.aderant.com/packages/nuget
 source https://www.nuget.org/api/v2
-framework: net46, net45
-
 nuget WindowsAPICodePack-Core
 nuget Microsoft.WindowsAPICodePack-Shell
-
 nuget Moq
 nuget System.Threading.Tasks.Extensions 4.3.0
 nuget System.ValueTuple 4.4.0
-
-
 nuget Newtonsoft.Json ~> 10.0.0
 nuget Microsoft.TeamFoundationServer.ExtendedClient
 nuget Microsoft.VisualStudio.Services.Client
 nuget Microsoft.TeamFoundationServer.Client
 nuget Microsoft.Net.Http 2.2.22
-
+nuget WindowsAzure.Storage
+nuget Microsoft.Azure.ConfigurationManager
+nuget Microsoft.Azure.KeyVault.Core
 nuget Microsoft.AspNet.WebApi.WebHost
 nuget Microsoft.AspNet.WebHooks.Common
 nuget Microsoft.AspNet.WebHooks.Receivers
@@ -26,7 +24,6 @@ nuget Microsoft.AspNet.WebHooks.Receivers.VSTS
 group Analyzer
 source http://packages.ap.aderant.com/packages/nuget
 source https://www.nuget.org/api/v2
-
 nuget Microsoft.CodeAnalysis.Common <= 1.0
 nuget Microsoft.CodeAnalysis.CSharp <= 1.0
 nuget Microsoft.CodeAnalysis.CSharp.Workspaces <= 1.0

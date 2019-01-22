@@ -54,8 +54,11 @@
     <Reference Include="Microsoft.AspNet.WebHooks.Receivers.VSTS">
       <HintPath>..\..\..\packages\Microsoft.AspNet.WebHooks.Receivers.VSTS\lib\net45\Microsoft.AspNet.WebHooks.Receivers.VSTS.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Azure.KeyVault.Core, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\..\packages\Microsoft.Azure.KeyVault.Core.1.0.0\lib\net40\Microsoft.Azure.KeyVault.Core.dll</HintPath>
+    <Reference Include="Microsoft.Azure.ConfigurationManager">
+      <HintPath>..\..\..\packages\Microsoft.Azure.ConfigurationManager\lib\net452\Microsoft.Azure.ConfigurationManager.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Azure.KeyVault.Core">
+      <HintPath>..\..\..\packages\Microsoft.Azure.KeyVault.Core\lib\net452\Microsoft.Azure.KeyVault.Core.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.IdentityModel.Clients.ActiveDirectory">
       <HintPath>..\..\..\packages\Microsoft.IdentityModel.Clients.ActiveDirectory\lib\net45\Microsoft.IdentityModel.Clients.ActiveDirectory.dll</HintPath>
@@ -76,14 +79,12 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\packages\Microsoft.VisualStudio.Services.Client\lib\net45\Microsoft.VisualStudio.Services.WebApi.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.WindowsAzure.Configuration, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\..\packages\Microsoft.WindowsAzure.ConfigurationManager.3.2.3\lib\net40\Microsoft.WindowsAzure.Configuration.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.WindowsAzure.Storage, Version=9.1.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\..\packages\WindowsAzure.Storage.9.1.1\lib\net45\Microsoft.WindowsAzure.Storage.dll</HintPath>
+    <Reference Include="Microsoft.WindowsAzure.Storage, Version=4.3.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\packages\WindowsAzure.Storage\lib\net45\Microsoft.WindowsAzure.Storage.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\..\..\packages\Newtonsoft.Json.10.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\..\..\packages\Newtonsoft.Json\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
