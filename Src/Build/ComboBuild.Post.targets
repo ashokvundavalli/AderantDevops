@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-         DefaultTargets="Build"
+         DefaultTargets="EndToEnd"
          ToolsVersion="14.0">
 
   <Import Project="Aderant.Build.Common.targets" />
@@ -108,7 +108,7 @@
   <Target Name="PostBuild" />
 
 
-  <Target Name="Build" DependsOnTargets="BuildCore">
+  <Target Name="EndToEnd" DependsOnTargets="BuildCore">
   </Target>
 
 

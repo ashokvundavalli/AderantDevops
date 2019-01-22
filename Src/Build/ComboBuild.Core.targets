@@ -21,7 +21,6 @@
     <PrintBanner Text="Group $(BuildGroupId) / $(TotalNumberOfBuildGroups)" />
 
     <PropertyGroup>
-      <BuildAction>Build</BuildAction>
       <LogId>$([System.Guid]::NewGuid())</LogId>
     </PropertyGroup>
 
@@ -37,7 +36,7 @@
 
     <MSBuild Projects="@(_ProjectsInGroup)"
              StopOnFirstFailure="true"
-             Targets="$(BuildAction)"
+             Targets="%(BuildAction)"
              BuildInParallel="$(BuildInParallel)">
     </MSBuild>
 
@@ -106,10 +105,18 @@
           BinModuleDirectory=$(_SolutionRoot)\Bin\Module\;
           BinTestDirectory=$(_SolutionRoot)\Bin\Test\;
           ModuleSourceDirectory=$(_SolutionRoot)\Src\;
-          ModuleTestDirectory=$(_SolutionRoot)\Test\;
+		  ModuleTestDirectory=$(_SolutionRoot)\Test\;
           ModuleBuildDirectory=$(_SolutionRoot)\Build\;
           VariableScopeId=$(_SolutionRoot)
         </Properties>
+		
+		<!-- Set the default target metadata -->
+		<BuildAction></BuildAction>
+		
+		<!-- If it's a build system project default to the EndToEnd target -->
+		<BuildAction Condition="'%(IsProjectFile)' != 'true'">
+	      EndToEnd
+		</BuildAction>
       </ProjectsInGroup>
     </ItemGroup>
 

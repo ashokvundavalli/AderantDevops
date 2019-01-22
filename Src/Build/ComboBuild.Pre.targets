@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-         DefaultTargets="Build"
+         DefaultTargets="EndToEnd"
          ToolsVersion="14.0"
          TreatAsLocalProperty="SolutionDirectoryPath;T4TransformEnabled">
 
@@ -17,7 +17,7 @@
   <Import Project="$(SolutionDirectoryPath)Build\TFSBuild.proj" Condition="Exists('$(SolutionDirectoryPath)Build\TFSBuild.proj')" />
 
   <!-- Entry target -->
-  <Target Name="Build" DependsOnTargets="$(RunBuildDependsOn)">
+  <Target Name="EndToEnd" DependsOnTargets="$(RunBuildDependsOn)">
   </Target>
 
   <PropertyGroup>
