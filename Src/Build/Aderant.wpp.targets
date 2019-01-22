@@ -1,53 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project
-  xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-  ToolsVersion="14.0">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
+         ToolsVersion="14.0">
 
   <Import Project="$(MSBuildThisFileDirectory)\Tasks\MSBuild.Community.Tasks\MSBuild.Community.Tasks.Targets" Condition="'$(MSBuildCommunityTasksLib)' == '' And '$(BuildingInsideVisualStudio)' != 'true'" />
 
-  <UsingTask
-    TaskName="ResolveUniqueDependencies"
-    TaskFactory="CodeTaskFactory"
-    AssemblyFile="$(CodeTaskFactoryAssembly)">
-    <ParameterGroup>
-      <FilesToProcess ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
-      <DependencyDirectories ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
-      <Result ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true" />
-    </ParameterGroup>
-    <Task>
-      <Reference Include="System.Core"/>
-      <Using Namespace="System"/>
-      <Using Namespace="System.IO"/>
-      <Code>
-        <![CDATA[
-var dependencies = new List<string>(FilesToProcess.Length);
-
-foreach (ITaskItem directory in DependencyDirectories) {
-    dependencies.AddRange(Directory.GetFiles(directory.ItemSpec));
-}
-
-var uniqueFiles = new List<ITaskItem>();
-
-foreach (ITaskItem taskItem in FilesToProcess) {
-    ITaskItem item1 = taskItem;
-    if (!dependencies.Any(item => String.Equals(Path.GetFileName(item), Path.GetFileName(item1.ItemSpec), StringComparison.OrdinalIgnoreCase))) {
-
-        var fileName = taskItem.GetMetadata("FileName");
-        if (fileName.IndexOf("VisualStudio") >= 0)
-          continue;
-        if (fileName.IndexOf("UnitTest") >= 0)
-          continue;
-
-        Log.LogMessage("File {0} is a unique dependency", taskItem.ItemSpec);
-        uniqueFiles.Add(taskItem);
-    }
-}
-
-Result = uniqueFiles.ToArray();
-]]>
-      </Code>
-    </Task>
-  </UsingTask>
 
   <PropertyGroup>
     <!-- EnableExcludeFilesByExtension prevents Microsoft.Web.Publishing.targets from excluding .tt files-->
@@ -73,58 +29,15 @@ Result = uniqueFiles.ToArray();
     <Message Condition="'$(_IsWorkflowProject)' != 'true'" Importance="high" Text="Skipping web pipeline customizations as this is a workflow project" />
   </Target>
 
-
-  <Target Name="CustomAfterCollectFilesFromReference">
-    <!-- Take a copy of the dependencies -->
+  
+  <Target Name="RemoveReferenceBaggageFromWebPackage" AfterTargets="PipelineCollectFilesPhase">    
     <ItemGroup>
-      <Dependencies Include="@(ReferenceCopyLocalPaths)"
-                    Condition="'%(ReferenceCopyLocalPaths.Extension)' == '.dll' And $([System.String]::new('%(ReferenceCopyLocalPaths.Filename)').StartsWith('Aderant')) != 'true' " />
+      <FilesForPackagingFromProject Remove="@(FilesForPackagingFromProject)" Condition="%(FilesForPackagingFromProject.FromTarget) == 'CollectFilesFromReference'" />
     </ItemGroup>
-
-    <!-- Exclude all references and copy local assemblies from packaging -->
-    <ItemGroup>
-      <FilesForPackagingFromProject Remove="@(ReferenceCopyLocalPaths)" />
-    </ItemGroup>
-
-    <PropertyGroup>
-      <DependenciesZipLocation>$([System.IO.Path]::GetDirectoryName($(DesktopBuildPackageLocation)))</DependenciesZipLocation>
-      <DependenciesDirectory>$([System.IO.Path]::GetFullPath($(DependenciesZipLocation)..\..\..\Dependencies))</DependenciesDirectory>
-      <DependenciesPackagingDir>$(PackageTempRootDir)\DependenciesPackageTmp</DependenciesPackagingDir>
-    </PropertyGroup>
-
-    <Error Condition="!Exists($(DependenciesDirectory))"
-           Text="Could not determine dependency directory" />
-
-    <!-- Flatten the references we don't want folders within our zip file -->
-    <Copy SourceFiles="@(Dependencies)"
-          DestinationFolder="$(DependenciesPackagingDir)\%(RecursiveDir)" />
-
-    <ItemGroup>
-      <DependenciesForPackaging Include="$(DependenciesPackagingDir)\**\*.dll" />
-    </ItemGroup>
-
-    <!--
-      From the references and dependencies of the web project find any assembly that is not in the Dependency directory. These could be dependencies from
-      NuGet which aren't part of the standard dependency system and so we need to bundle these along side the zip.
-    -->
-    <ResolveUniqueDependencies
-        FilesToProcess="@(DependenciesForPackaging)"
-        DependencyDirectories="$(DependenciesDirectory)">
-      <Output TaskParameter="Result"
-              ItemName="ResolvedDependenciesForPackaging" />
-    </ResolveUniqueDependencies>
-
-    <!-- Add all web dependencies into a separate zip -->
-    <MSBuild.Community.Tasks.Zip
-      Condition="'@(ResolvedDependenciesForPackaging)' != ''"
-      ParallelCompression="false"
-      Files="@(ResolvedDependenciesForPackaging)"
-      ZipFileName="$(DependenciesZipLocation)\$(WebPublishPipelineProjectName).dependencies.zip"
-      WorkingDirectory="$(DependenciesPackagingDir)" />
-
-    <RemoveDir Directories="$(DependenciesPackagingDir)" />
   </Target>
 
+  <!-- Override the standard target so we don't collect any baggage -->
+  <Target Name="CollectFilesFromReference" />  
 
   <!-- CollectFilesFrom_binDeployableAssemblies is the last step in PublishPipelineCollectFilesCore from Microsoft.Web.Publishing.OnlyFilesToRunTheApp.targets-->
   <Target Name="CollectFilesFromContentCleanUp" AfterTargets="CollectFilesFrom_binDeployableAssemblies">
