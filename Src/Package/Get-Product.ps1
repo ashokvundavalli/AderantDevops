@@ -240,7 +240,7 @@ process {
             $totalTime = Copy-Binaries -dropRoot $build -binariesDirectory $binariesDirectory -components $components -clearBinariesDirectory
 
             # Create a link to build in the binaries directory.
-            if (-not [System.Environment]::UserInteractive) {
+            if ([System.Environment]::UserInteractive) {
                 [System.MarshalByRefObject]$shell = New-Object -ComObject 'WScript.Shell'
                 [System.MarshalByRefObject]$shortcut = $Shell.CreateShortcut((Join-Path -Path $binariesDirectory -ChildPath "Expert_Build_$buildNUmber.url"))
                 $shortcut.TargetPath = "http://tfs:8080/tfs/ADERANT/ExpertSuite/_build/index?buildId=$buildNUmber&_a=summary"
