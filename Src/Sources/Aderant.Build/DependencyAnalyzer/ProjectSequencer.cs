@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -539,18 +538,23 @@ namespace Aderant.Build.DependencyAnalyzer {
                 List<ConfiguredProject> configuredProjects = grouping.ToList();
 
                 // A forced build is queued if any project within the directory container is also requiring a build
-                ConfiguredProject dirtyProject = configuredProjects.FirstOrDefault(g => g.IsDirty);
-                if (dirtyProject != null) {
-                    foreach (ConfiguredProject project in configuredProjects) {
-                        if (project.IsWebProject && !project.IsWorkflowProject()) {
-                            logger.Info($"Quirking! Web project: '{project.FullPath}' requires forced build as: '{dirtyProject.FullPath}' is modified.");
-                            // Web projects always need to be built as they have paths that reference content that needs to be deployed
-                            // during the build.
-                            // E.g script tags require that a file exists on disk. It's more reliable to have
-                            // web pipeline restore this content for us than try and restore it as part of the generic build reuse process.
-                            // <script type="text/javascript" src="../Scripts/ThirdParty.Jquery/jquery-2.2.4.js"></script>
-                            MarkDirty("", project, BuildReasonTypes.Forced);
-                        }
+                List<ConfiguredProject> dirtyProjects = configuredProjects.Where(g => g.IsDirty).ToList();
+
+                if (dirtyProjects.Count == 0) {
+                    return;
+                }
+
+                bool buildWorkflowProjects = dirtyProjects.Any(x => x.IsTestProject);
+
+                foreach (ConfiguredProject project in configuredProjects) {
+                    if (project.IsWebProject && (buildWorkflowProjects || !project.IsWorkflowProject())) {
+                        logger.Info($"Web project: '{project.FullPath}' requires forced build as: '{string.Join(", ", dirtyProjects)}' {(dirtyProjects.Count == 1 ? "is" : "are")} modified.");
+                        // Web projects always need to be built as they have paths that reference content that needs to be deployed
+                        // during the build.
+                        // E.g script tags require that a file exists on disk. It's more reliable to have
+                        // web pipeline restore this content for us than try and restore it as part of the generic build reuse process.
+                        // <script type="text/javascript" src="../Scripts/ThirdParty.Jquery/jquery-2.2.4.js"></script>
+                        MarkDirty("Dank workarounds", project, BuildReasonTypes.Forced);
                     }
                 }
             }
