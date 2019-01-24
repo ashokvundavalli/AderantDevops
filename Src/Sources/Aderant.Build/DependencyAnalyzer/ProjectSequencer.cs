@@ -534,8 +534,6 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             ILookup<string, ConfiguredProject> lookup = graph.ProjectsBySolutionRoot;
 
-            System.Diagnostics.Debugger.Launch();
-
             foreach (IGrouping<string, ConfiguredProject> grouping in lookup) {
                 List<ConfiguredProject> configuredProjects = grouping.ToList();
 
