@@ -20,6 +20,7 @@ function Get-Product {
     param (
         [Parameter(Mandatory=$false, ParameterSetName = "Branch", Position = 0)][ValidateNotNullOrEmpty()][string]$branch,
         [Parameter(Mandatory=$false, ParameterSetName = "PullRequest")][Alias("pr")][int]$pullRequestId,
+        [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$binariesDirectory,
         [string[]]$components = @('Product'),
         [switch]$createBackup
     )
@@ -27,15 +28,19 @@ function Get-Product {
     [string]$getProduct = Join-Path -Path $ShellContext.PackageScriptsDirectory -ChildPath 'Get-Product.ps1'
     [string]$dropRoot = '\\dfs.aderant.com\expert-ci'
 
+    if ([string]::IsNullOrWhiteSpace($binariesDirectory)) {
+        $binariesDirectory = $ShellContext.BranchBinariesDirectory
+    }
+
     switch ($PSCmdlet.ParameterSetName) {
         'Branch' {
-            & $getProduct -binariesDirectory $ShellContext.BranchBinariesDirectory -dropRoot $dropRoot -branch $branch -components $components
+            & $getProduct -binariesDirectory $binariesDirectory -dropRoot $dropRoot -branch $branch -components $components
         }
         'PullRequest' {
-            & $getProduct -binariesDirectory $ShellContext.BranchBinariesDirectory -dropRoot $dropRoot -pullRequestId $pullRequestId -components $components
+            & $getProduct -binariesDirectory $binariesDirectory -dropRoot $dropRoot -pullRequestId $pullRequestId -components $components
         }
         'master' {
-            & $getProduct -binariesDirectory $ShellContext.BranchBinariesDirectory -dropRoot $dropRoot -branch 'master' -components $components
+            & $getProduct -binariesDirectory $binariesDirectory -dropRoot $dropRoot -branch 'master' -components $components
         }
     }
 
@@ -45,7 +50,7 @@ function Get-Product {
         if (-not (Test-Path $backupPath)) {
             New-Item -ItemType Directory -Path $backupPath
         }
-        Invoke-Expression "robocopy.exe $ShellContext.BranchBinariesDirectory $backupPath /MIR /SEC /TEE /R:2 /XD $ShellContext.BranchBinariesDirectory\ExpertSource\Customization" | Out-Null
+        Invoke-Expression "robocopy.exe $binariesDirectory $backupPath /MIR /SEC /TEE /R:2 /XD $binariesDirectory\ExpertSource\Customization" | Out-Null
         Write-Host "Backup complete."
     }
 }
