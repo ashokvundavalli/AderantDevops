@@ -40,7 +40,7 @@
              BuildInParallel="$(BuildInParallel)">
     </MSBuild>
 
-    <Message Text="##vso[task.logdetail id=$(LogId);progress=100;state=Succeeded;Result=Succeeded]Build group $(BuildGroupId) finished"
+    <Message Text="##vso[task.logdetail id=$(LogId);progress=100;state=Completed;Result=Succeeded]Build group $(BuildGroupId) finished"
              Condition="'$(IsDesktopBuild)' != 'true'" />
 
     <OnError ExecuteTargets="SetResumePoint" />
@@ -126,6 +126,9 @@
   <Target Name="SetResumePoint">
 
     <Message Text="Setting resume point to group $(BuildGroupId)" />
+	
+	<Message Text="##vso[task.logdetail id=$(LogId);progress=100;state=Completed;Result=Failed]Build group $(BuildGroupId) failed. @(_ProjectsInGroup)"
+             Condition="'$(IsDesktopBuild)' != 'true'" />
 
     <XmlPoke XmlInputPath="$(BuildPlanFile)"
              Namespaces="&lt;Namespace Prefix='n' Uri='http://schemas.microsoft.com/developer/msbuild/2003' Name='_' /&gt;"
