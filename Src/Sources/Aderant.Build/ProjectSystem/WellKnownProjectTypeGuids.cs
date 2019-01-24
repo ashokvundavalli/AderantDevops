@@ -9,7 +9,7 @@ namespace Aderant.Build.ProjectSystem {
             new Guid("{F85E285D-A4E0-4152-9332-AB1D724D3325}"),
             new Guid("{E53F8FEA-EAE0-44A6-8774-FFD645390401}"),
             new Guid("{E3E379DF-F4C6-4180-9B81-6769533ABE47}"),
-            new Guid("{349C5851-65DF-11DA-9384-00065B846F21}"),
+            new Guid("{349C5851-65DF-11DA-9384-00065B846F21}")
         };
 
         public static Guid WorkflowFoundation { get; } = new Guid("{32f31d43-81cc-4c15-9de6-3fc5453562b6}");

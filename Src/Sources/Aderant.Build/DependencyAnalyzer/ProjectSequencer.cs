@@ -534,6 +534,8 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             ILookup<string, ConfiguredProject> lookup = graph.ProjectsBySolutionRoot;
 
+            System.Diagnostics.Debugger.Launch();
+
             foreach (IGrouping<string, ConfiguredProject> grouping in lookup) {
                 List<ConfiguredProject> configuredProjects = grouping.ToList();
 
@@ -541,7 +543,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 List<ConfiguredProject> dirtyProjects = configuredProjects.Where(g => g.IsDirty).ToList();
 
                 if (dirtyProjects.Count == 0) {
-                    return;
+                    continue;
                 }
 
                 bool buildWorkflowProjects = dirtyProjects.Any(x => x.IsTestProject);
