@@ -278,11 +278,6 @@ namespace Aderant.Build.Packaging {
                 archive => {
                     string destination = Path.GetDirectoryName(archive);
 
-                    if (fileSystem.DirectoryExists(destination)) {
-                        logger.Info($"Removing directory: {destination} prior to archive extraction.");
-                        fileSystem.DeleteDirectory(destination, true);
-                    }
-
                     logger.Info("Extracting {0} -> {1}", archive, destination);
                     fileSystem.ExtractZipToDirectory(archive, destination);
                 });
