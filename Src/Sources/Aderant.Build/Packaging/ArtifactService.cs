@@ -254,7 +254,7 @@ namespace Aderant.Build.Packaging {
         /// Fetches prebuilt objects
         /// </summary>
         public void Resolve(BuildOperationContext context, string containerKey, string solutionRoot, string workingDirectory) {
-            var paths = BuildArtifactResolveOperation(context, containerKey, workingDirectory);
+            List<ArtifactPathSpec> paths = BuildArtifactResolveOperation(context, containerKey, workingDirectory);
             RunResolveOperation(context, solutionRoot, containerKey, paths);
         }
 
@@ -277,6 +277,11 @@ namespace Aderant.Build.Packaging {
                 new ParallelOptions { MaxDegreeOfParallelism = ParallelismHelper.MaxDegreeOfParallelism },
                 archive => {
                     string destination = Path.GetDirectoryName(archive);
+
+                    if (fileSystem.DirectoryExists(destination)) {
+                        logger.Info($"Removing directory: {destination} prior to archive extraction.");
+                        fileSystem.DeleteDirectory(destination, true);
+                    }
 
                     logger.Info("Extracting {0} -> {1}", archive, destination);
                     fileSystem.ExtractZipToDirectory(archive, destination);
@@ -304,33 +309,29 @@ namespace Aderant.Build.Packaging {
         }
 
         internal List<ArtifactPathSpec> BuildArtifactResolveOperation(BuildOperationContext context, string containerKey, string workingDirectory) {
-            var result = new ArtifactResolveOperation();
-
             List<ArtifactPathSpec> paths = new List<ArtifactPathSpec>();
-            result.Paths = paths;
 
             if (context.StateFiles != null) {
                 BuildStateFile stateFile = context.GetStateFile(containerKey);
-
-                ICollection<ArtifactManifest> artifactManifests;
-
+                
                 if (stateFile != null) {
                     if (!string.Equals(stateFile.BucketId.Tag, containerKey, StringComparison.OrdinalIgnoreCase)) {
                         throw new InvalidOperationException($"Unexpected state file returned. Expected {containerKey} but found {stateFile.BucketId.Tag}");
                     }
                 }
 
+                ICollection<ArtifactManifest> artifactManifests;
                 if (stateFile != null && stateFile.GetArtifacts(containerKey, out artifactManifests)) {
-                    foreach (var artifactManifest in artifactManifests) {
+                    foreach (ArtifactManifest artifactManifest in artifactManifests) {
                         string artifactFolder = Path.Combine(stateFile.Location, artifactManifest.Id);
-
-                        bool exists = fileSystem.DirectoryExists(artifactFolder);
-
+                        
                         var spec = new ArtifactPathSpec {
                             ArtifactId = artifactManifest.Id,
                             Source = artifactFolder,
                             Destination = Path.Combine(workingDirectory, artifactManifest.Id),
                         };
+
+                        bool exists = fileSystem.DirectoryExists(artifactFolder);
 
                         if (exists) {
                             spec.State = ArtifactState.Valid;
