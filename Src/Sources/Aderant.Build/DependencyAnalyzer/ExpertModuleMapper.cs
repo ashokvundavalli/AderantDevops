@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -45,6 +45,8 @@ namespace Aderant.Build.DependencyAnalyzer {
                         moduleElement.Add(new XAttribute("Path", module.Branch));
                     }
                 }
+
+                moduleElement.Add(new XAttribute("ExcludeFromPackaging", module.ExcludeFromPackaging));
 
                 IEnumerable<XAttribute> customAttributes = module.CustomAttributes;
                 if (customAttributes != null) {
@@ -137,7 +139,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        public void Map(ExpertModule expertModule) {
+        internal void Map(ExpertModule expertModule) {
             SetPropertyValue("Name", value => expertModule.Name = value);
 
             SetPropertyValue("AssemblyVersion", value => expertModule.AssemblyVersion = value);
@@ -156,12 +158,23 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             SetPropertyValue("ExcludeFromPackaging", value => expertModule.ExcludeFromPackaging = ToBoolean(value));
 
+            SetPropertyValue("Branch", value => expertModule.Branch = value);
+
+            bool isBranch = !string.IsNullOrWhiteSpace(expertModule.Branch);
+
             SetPropertyValue("GetAction", value => {
                 if (!string.IsNullOrEmpty(value)) {
                     expertModule.GetAction = (GetAction)Enum.Parse(typeof(GetAction), value.Replace("_", "-"), true);
-                }
 
+                    if (expertModule.GetAction == GetAction.NuGet && isBranch) {
+                        throw new InvalidOperationException($"Module: '{expertModule.Name}' GetAction cannot be NuGet as it has a branch specified.");
+                    }
+                }
             });
+
+            if (expertModule.GetAction == GetAction.None && !string.IsNullOrWhiteSpace(expertModule.Branch)) {
+                expertModule.GetAction = GetAction.Branch;
+            }
 
             if (expertModule.ModuleType == ModuleType.ThirdParty) {
                 expertModule.RepositoryType = RepositoryType.NuGet;

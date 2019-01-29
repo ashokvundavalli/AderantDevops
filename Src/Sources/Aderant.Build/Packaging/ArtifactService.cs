@@ -84,7 +84,7 @@ namespace Aderant.Build.Packaging {
             IEnumerable<ProjectOutputSnapshot> snapshot = pipelineService.GetProjectOutputs(container);
 
             AutoPackager builder = new AutoPackager(logger);
-            IEnumerable<ArtifactPackageDefinition> definitions = builder.CreatePackages(snapshot, packages.Where(p => !p.IsAutomaticallyGenerated), autoPackages);
+            IEnumerable<ArtifactPackageDefinition> definitions = builder.CreatePackages(snapshot, packages.Where(p => !p.IsAutomaticallyGenerated).ToList(), autoPackages);
 
             ProcessDefinitionFiles(false, context, container, definitions, copyList, buildArtifacts);
             TrackSnapshots(snapshots);

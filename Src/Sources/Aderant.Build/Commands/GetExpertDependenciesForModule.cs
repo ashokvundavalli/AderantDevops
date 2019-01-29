@@ -71,7 +71,7 @@ namespace Aderant.Build.Commands {
                 DropPath = ParameterHelper.GetDropPath(null, SessionState);
             }
 
-            ResolverRequest request = new ResolverRequest(Logger, ModulesRootPath) {
+            ResolverRequest request = new ResolverRequest(Logger) {
                 Force = Force,
                 Update = Update
             };

@@ -29,7 +29,7 @@ namespace UnitTest.Build {
 
             var resolver = new Resolver(new NullLogger(), new IDependencyResolver[] { resolverImpl });
 
-            var request = new ResolverRequest(new NullLogger(), fs, ExpertModule.Create(XElement.Parse("<Module Name=\'MyModule\' AssemblyVersion=\'5.3.1.0\' GetAction=\'NuGet\' />")));
+            var request = new ResolverRequest(NullLogger.Default, ExpertModule.Create(XElement.Parse("<Module Name=\'MyModule\' AssemblyVersion=\'5.3.1.0\' GetAction=\'NuGet\' />")));
 
             resolver.ResolveDependencies(request);
 

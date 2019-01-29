@@ -126,7 +126,7 @@ namespace UnitTest.Build {
             resolver.FolderDependencySystem = buildFolders.Object;
             resolver.AddDependencySource("Foo", ExpertModuleResolver.DropLocation);
 
-            ResolverRequest request = new ResolverRequest(new NullLogger(), (IFileSystem2)null, expertManifest.GetAll().ToArray());
+            ResolverRequest request = new ResolverRequest(NullLogger.Default, expertManifest.GetAll().ToArray());
 
             ((IDependencyResolver)resolver).Resolve(request, requirements);
 
