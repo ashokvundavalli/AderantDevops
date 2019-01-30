@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer;
@@ -39,20 +38,19 @@ namespace UnitTest.Build {
             var module = new ExpertModule(XElement.Parse(@"<Module Name='UIAutomation.Framework' 
 AssemblyVersion='5.3.1.0' 
 GetAction='specificdroplocation' 
-Path='\\dfs.aderant.com\packages\Infrastructure\Automation\UIAutomation' 
-ExcludeFromPackaging='true'
-CustomAttribute='true' />"));
+Path='\\na.aderant.com\packages\Infrastructure\Automation\UIAutomation' 
+ExcludeFromPackaging='true' />"));
+
             Assert.AreEqual("5.3.1.0", module.AssemblyVersion);
-            Assert.AreEqual(@"\\dfs.aderant.com\packages\Infrastructure\Automation\UIAutomation", module.Branch);
+            Assert.AreEqual(@"\\na.aderant.com\packages\Infrastructure\Automation\UIAutomation", module.Branch);
             Assert.AreEqual(GetAction.SpecificDropLocation, module.GetAction);
-            Assert.AreEqual(true, module.ExcludeFromPackaging);
             Assert.AreEqual(1, module.CustomAttributes.Count);
 
             ExpertModuleMapper mapper = new ExpertModuleMapper();
 
             XElement element = mapper.Save(new[] { module }, true);
 
-            XAttribute attribute = element.Element("Module").Attribute("CustomAttribute");
+            XAttribute attribute = element.Element("Module").Attribute("ExcludeFromPackaging");
 
             Assert.IsNotNull(attribute);
             Assert.AreEqual(true, bool.Parse(attribute.Value));
@@ -281,16 +279,10 @@ CustomAttribute='true' />"));
         }
 
         [TestMethod]
-        public void SpecifyingBranchWithNoGetActionSetsGetAction() {
-            ExpertModule module = ExpertModule.Create(XElement.Parse(@"<Module Name='Marketing.Help' Branch='Main' />"));
-
-            Assert.AreEqual(GetAction.Branch, module.GetAction);
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(InvalidOperationException))]
         public void When_branch_is_set_repository_cannot_be_nuget() {
-            ExpertModule.Create(XElement.Parse(@"<Module Name='Marketing.Help' GetAction='NuGet' Branch='Main' />"));
+            var module = ExpertModule.Create(XElement.Parse(@"<Module Name='Marketing.Help' Branch='Main' />"));
+
+            Assert.AreEqual(module.GetAction, GetAction.Branch);
         }
 
         [TestMethod]

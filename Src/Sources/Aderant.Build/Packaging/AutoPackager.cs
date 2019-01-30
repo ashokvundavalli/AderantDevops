@@ -30,10 +30,10 @@ namespace Aderant.Build.Packaging {
                     logger.Warning($"! Project {project.ProjectFile} output path ends with two path separators: '{projectOutputPath}'. Normalize this path.");
                 }
 
-                foreach (string file in project.FilesWritten) {
+                foreach (var file in project.FilesWritten) {
                     string outputRelativePath = null;
 
-                    int pos = file.IndexOf(projectOutputPath, StringComparison.OrdinalIgnoreCase);
+                    var pos = file.IndexOf(projectOutputPath, StringComparison.OrdinalIgnoreCase);
                     if (pos >= 0) {
                         outputRelativePath = file.Remove(pos, projectOutputPath.Length);
                     }
@@ -48,25 +48,32 @@ namespace Aderant.Build.Packaging {
 
             var packageQueue = filesToPackage.ToList();
 
-            for (int i = packageQueue.Count - 1; i >= 0; i--) {
-                PathSpec file = packageQueue[i];
+            for (var i = packageQueue.Count - 1; i >= 0; i--) {
+                var file = packageQueue[i];
 
-                if (filesProducedByProjects.Any(x => x.Equals(file.Location, StringComparison.OrdinalIgnoreCase))) {
-                    if (!artifactItems.Contains(file)) {
-                        logger.Info(file.Location);
-                        artifactItems.Add(file);
+                foreach (var output in filesProducedByProjects) {
+                    if (string.Equals(file.Destination, output, StringComparison.OrdinalIgnoreCase)) {
 
-                        packageQueue.RemoveAt(i);
-                    }
-                } else {
-                    if (PackageOtherExtensions(file)) {
-                        artifactItems.Add(file);
-                        packageQueue.RemoveAt(i);
+                        if (!artifactItems.Contains(file)) {
+                            logger.Info(file.Location);
+                            artifactItems.Add(file);
+
+                            packageQueue.RemoveAt(i);
+                        }
                     }
                 }
             }
 
-            foreach (PathSpec item in packageQueue) {
+            for (var i = packageQueue.Count - 1; i >= 0; i--) {
+                var file = packageQueue[i];
+
+                if (PackageOtherExtensions(file)) {
+                    artifactItems.Add(file);
+                    packageQueue.RemoveAt(i);
+                }
+            }
+
+            foreach (var item in packageQueue) {
                 logger.Warning("File was not packaged: " + item.Location);
             }
 
@@ -83,14 +90,14 @@ namespace Aderant.Build.Packaging {
             return false;
         }
 
-        public IEnumerable<ArtifactPackageDefinition> CreatePackages(IEnumerable<ProjectOutputSnapshot> snapshots, IList<ArtifactPackageDefinition> packages, IList<ArtifactPackageDefinition> autoPackages) {
+        public IEnumerable<ArtifactPackageDefinition> CreatePackages(IEnumerable<ProjectOutputSnapshot> snapshots, IEnumerable<ArtifactPackageDefinition> packages, IEnumerable<ArtifactPackageDefinition> autoPackages) {
             foreach (var artifactPackageDefinition in autoPackages) {
                 if (packages.Any(s => string.Equals(s.Id, artifactPackageDefinition.Id, StringComparison.OrdinalIgnoreCase))) {
                     throw new InvalidOperationException("A generated package cannot have the same name as a custom package. The package name is: " + artifactPackageDefinition.Id);
                 }
             }
 
-            List<PathSpec> allFiles = packages.SelectMany(s => s.GetFiles()).ToList();
+            var allFiles = packages.SelectMany(s => s.GetFiles()).ToList();
 
             foreach (var autoPackage in autoPackages.OrderBy(d => d.Id, StringComparer.OrdinalIgnoreCase)) {
                 var packageContent = FilterGeneratedPackage(snapshots, autoPackage, allFiles);

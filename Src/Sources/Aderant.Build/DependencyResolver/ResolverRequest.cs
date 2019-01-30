@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using Aderant.Build.DependencyAnalyzer;
@@ -12,6 +13,7 @@ namespace Aderant.Build.DependencyResolver {
         private readonly ILogger logger;
         private List<ModuleState<ExpertModule>> modules = new List<ModuleState<ExpertModule>>();
         private string dependenciesDirectory;
+        private IFileSystem2 physicalFileSystem;
         private bool requiresThirdPartyReplication;
 
         public ILogger Logger {
@@ -22,9 +24,15 @@ namespace Aderant.Build.DependencyResolver {
         /// Initializes a new instance of the <see cref="ResolverRequest"/> class.
         /// </summary>
         /// <param name="logger">The logger.</param>
+        /// <param name="modulesRootPath"></param>
         /// <param name="modules">The modules.</param>
-        public ResolverRequest(ILogger logger, params ExpertModule[] modules) {
+        public ResolverRequest(ILogger logger, string modulesRootPath, params ExpertModule[] modules)
+            : this(logger, new PhysicalFileSystem(modulesRootPath), modules) {
+        }
+
+        internal ResolverRequest(ILogger logger, IFileSystem2 physicalFileSystem, params ExpertModule[] modules) {
             this.logger = logger;
+            this.physicalFileSystem = physicalFileSystem;
 
             if (modules != null) {
                 var sortedModules = new SortedSet<ExpertModule>(modules);
