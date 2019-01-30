@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$Repository,
     [string]$Configuration = "Release",
     [string]$Platform = "AnyCPU",
@@ -8,7 +8,8 @@ param(
     [switch]$DatabaseBuildPipeline,
     [bool]$CodeCoverage,
     [switch]$Integration,
-    [switch]$Automation
+    [switch]$Automation,
+	[switch]$DisplayCodeCoverage
 )
 
 [string]$inputRepository = $Repository
@@ -299,7 +300,7 @@ function LoadAgentSdk() {
 # Applies a common build number, executes unit tests and packages the assemblies as a NuGet
 # package
 #=================================================================================================
-task EndToEnd -Jobs Init, Clean, GetDependencies, BuildCore, Test, Package, {
+task EndToEnd -Jobs Init, Clean, GetDependencies, BuildCore, Test, Package, CodeCoverageAlert, {
     # End of all tasks. Print out current build flavor: Debug or Release.
     Write-Host "Finished build in $global:buildFlavor. Use the -debug or -release to switch." -foregroundcolor Green
 }
@@ -481,6 +482,145 @@ task Init {
     }
 
     Write-Info "Established build environment"
+}
+
+function GenerateCodeCoverageChart {
+	param($codeCoverageResults)
+
+	[void][Reflection.Assembly]::Load("System.Windows.Forms.DataVisualization, Version=3.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35")
+
+	#Chart frame
+	$codeCoverageChart = New-object System.Windows.Forms.DataVisualization.Charting.Chart
+	$codeCoverageChart.Width = 1200
+	$codeCoverageChart.Height = 500
+	$codeCoverageChart.BackColor = [System.Drawing.Color]::White
+ 
+	#Chart Header 
+	[void]$codeCoverageChart.Titles.Add("Code Coverage Trending Chart")
+	$codeCoverageChart.Titles[0].Font = "segoeuilight,20pt"
+	$codeCoverageChart.Titles[0].Alignment = "TopCenter"
+
+	#ChartArea
+	$ca = New-Object System.Windows.Forms.DataVisualization.Charting.ChartArea
+	$ca.Name = "CodeCoverageChartArea"
+	$ca.AxisY.Maximum = 100
+	$ca.AxisY.Minimum = 0
+	$ca.AxisY.Interval = 20
+	$ca.AxisX.Interval = 1
+	$ca.AxisX.MajorGrid.LineWidth = 0
+	$ca.AxisY.MajorGrid.LineColor = [System.Drawing.Color]::LightGray
+	$codeCoverageChart.ChartAreas.Add($ca)
+
+	#Chart Series
+	[void]$codeCoverageChart.Series.Add("CodeCoverage")
+	$codeCoverageChart.Series["CodeCoverage"].BorderWidth = 3
+	$codeCoverageChart.Series["CodeCoverage"].ChartType = [System.Windows.Forms.DataVisualization.Charting.SeriesChartType]::Line
+
+	#Trending Line
+	$values = $codeCoverageResults | select -Last 10
+	$dateList = @(foreach ($codeCoverageResult in $values) {$codeCoverageResult.Date})
+	$valueList = @(foreach ($codeCoverageResult in $values) {$codeCoverageResult.Value})
+	$branchList = @(foreach ($codeCoverageResult in $values) {$codeCoverageResult.Branch})
+	$codeCoverageChart.Series["CodeCoverage"].Points.DataBindXY($dateList, $valueList)
+	for ($i = 0; $i -lt $values.Length; $i++) {
+		$codeCoverageChart.Series["CodeCoverage"].Points[$i].Label= $valueList[$i]+"% at " + $branchList[$i] +" branch"
+	}
+
+	$chartImage = "$Repository\Build\CodeCoverageTrendingChart.png"
+	$codeCoverageChart.SaveImage($chartImage, "png")
+
+	return $chartImage
+}
+
+[string]$LocalCodeCoverageFile = "$Repository\Build\CodeCoverageValues.csv"
+task CodeCoverageAlert -If ($IsDesktopBuild -and [System.IO.File]::Exists($LocalCodeCoverageFile) ) {
+	$codeCoverageResults = Import-Csv $LocalCodeCoverageFile
+	if ($codeCoverageResults.count -gt 1) {
+		$codeCoverageChart = GenerateCodeCoverageChart $codeCoverageResults
+
+		[array]::Reverse($codeCoverageResults)
+		for ($i = 1; $i -lt $codeCoverageResults.Length; $i++) {
+			if ($codeCoverageResults[$i].Branch -eq $codeCoverageResults[0].Branch) {
+			Write-Host "The code coverage at $($codeCoverageResults[$i].Branch) branch was $($codeCoverageResults[$i].Value)% on $($codeCoverageResults[$i].Date)." -foregroundcolor Yellow
+			}
+			break
+		}
+		
+		if ($codeCoverageResults[0].Value -gt $codeCoverageResults[1].Value) {
+			Write-Host "
+Hooray! The code coverage has increased from $($codeCoverageResults[1].Value)% at $($codeCoverageResults[1].Branch) branch on $($codeCoverageResults[1].Date) to $($codeCoverageResults[0].Value)% at $($codeCoverageResults[0].Branch) branch!
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░▄▄▄▄▄▄▄░░░░░░░░░
+░░░░░░░░░▄▀▀▀░░░░░░░▀▄░░░░░░░
+░░░░░░░▄▀░░░░░░░░░░░░▀▄░░░░░░
+░░░░░░▄▀░░░░░░░░░░▄▀▀▄▀▄░░░░░
+░░░░▄▀░░░░░░░░░░▄▀░░██▄▀▄░░░░
+░░░▄▀░░▄▀▀▀▄░░░░█░░░▀▀░█▀▄░░░
+░░░█░░█▄▄░░░█░░░▀▄░░░░░▐░█░░░
+░░▐▌░░█▀▀░░▄▀░░░░░▀▄▄▄▄▀░░█░░
+░░▐▌░░█░░░▄▀░░░░░░░░░░░░░░█░░
+░░▐▌░░░▀▀▀░░░░░░░░░░░░░░░░▐▌░
+░░▐▌░░░░░░░░░░░░░░░▄░░░░░░▐▌░
+░░▐▌░░░░░░░░░▄░░░░░█░░░░░░▐▌░
+░░░█░░░░░░░░░▀█▄░░▄█░░░░░░▐▌░
+░░░▐▌░░░░░░░░░░▀▀▀▀░░░░░░░▐▌░
+░░░░█░░░░░░░░░░░░░░░░░░░░░█░░
+░░░░▐▌▀▄░░░░░░░░░░░░░░░░░▐▌░░
+░░░░░█░░▀░░░░░░░░░░░░░░░░▀░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+" -foregroundcolor Yellow
+		} elseif ($codeCoverageResults[0].Value -eq $codeCoverageResults[1].Value) {
+			Write-Host "
+Whoops, the code coverage $($codeCoverageResults[0].Value)% at $($codeCoverageResults[0].Branch) branch is the same as it at $($codeCoverageResults[1].Branch) branch on $($codeCoverageResults[1].Date).
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░▄▄▄▄▄▄▄░░░░░░░░░
+░░░░░░░░░▄▀▀▀░░░░░░░▀▄░░░░░░░
+░░░░░░░▄▀░░░░░░░░░░░░▀▄░░░░░░
+░░░░░░▄▀░░░░░░░░░░▄▀▀▄▀▄░░░░░
+░░░░▄▀░░░░░░░░░░▄▀░░██▄▀▄░░░░
+░░░▄▀░░▄▀▀▀▄░░░░█░░░▀▀░█▀▄░░░
+░░░█░░█▄▄░░░█░░░▀▄░░░░░▐░█░░░
+░░▐▌░░█▀▀░░▄▀░░░░░▀▄▄▄▄▀░░█░░
+░░▐▌░░█░░░▄▀░░░░░░░░░░░░░░█░░
+░░▐▌░░░▀▀▀░░░░░░░░░░░░░░░░▐▌░
+░░▐▌░░░░░░░░░░░▀▀▀▀░░░░░░░▐▌░
+░░▐▌░░░░░░░░░░░░░░░░░░░░░░▐▌░
+░░░█░░░░░░░░░░░░░░░░░░░░░░▐▌░
+░░░▐▌░░░░░░░░░░░░░░░░░░░░░▐▌░
+░░░░█░░░░░░░░░░░░░░░░░░░░░█░░
+░░░░▐▌▀▄░░░░░░░░░░░░░░░░░▐▌░░
+░░░░░█░░▀░░░░░░░░░░░░░░░░▀░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+" -foregroundcolor Yellow
+		} else {
+			Write-Host "
+Oh no, the code coverage has dropped from $($codeCoverageResults[1].Value)% at $($codeCoverageResults[1].Branch) branch on $($codeCoverageResults[1].Date) to $($codeCoverageResults[0].Value)% at $($codeCoverageResults[0].Branch) branch!
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░▄▄▄▄▄▄▄░░░░░░░░░
+░░░░░░░░░▄▀▀▀░░░░░░░▀▄░░░░░░░
+░░░░░░░▄▀░░░░░░░░░░░░▀▄░░░░░░
+░░░░░░▄▀░░░░░░░░░░▄▀▀▄▀▄░░░░░
+░░░░▄▀░░░░░░░░░░▄▀░░██▄▀▄░░░░
+░░░▄▀░░▄▀▀▀▄░░░░█░░░▀▀░█▀▄░░░
+░░░█░░█▄▄░░░█░░░▀▄░░░░░▐░█░░░
+░░▐▌░░█▀▀░░▄▀░░░░░▀▄▄▄▄▀░░█░░
+░░▐▌░░█░░░▄▀░░░░░░░░░░░░░░█░░
+░░▐▌░░░▀▀▀░░░░░░░░░░░░░░░░▐▌░
+░░▐▌░░░░░░░░░░▄▀▀▀▀▄░░░░░░▐▌░
+░░▐▌░░░░░░░░░░█░░░░█░░░░░░▐▌░
+░░░█░░░░░░░░░░▀░░░░▀░░░░░░▐▌░
+░░░▐▌░░░░░░░░░░░░░░░░░░░░░▐▌░
+░░░░█░░░░░░░░░░░░░░░░░░░░░█░░
+░░░░▐▌▀▄░░░░░░░░░░░░░░░░░▐▌░░
+░░░░░█░░▀░░░░░░░░░░░░░░░░▀░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+" -foregroundcolor Yellow
+		}
+
+		if ($DisplayCodeCoverage.IsPresent) {
+			start $codeCoverageChart
+		}
+	}
 }
 
 function Enter-BuildTask {
