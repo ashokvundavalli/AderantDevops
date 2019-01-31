@@ -14,6 +14,9 @@ namespace Aderant.Build.Commands {
         [Parameter(Mandatory = false, Position = 0)]
         public string[] Directories { get; set; }
 
+        [Parameter(Mandatory = false, Position = 1, HelpMessage = "Specifies if the full project path should be printed.")]
+        public bool ShowPath { get; set; }
+
         protected override void ProcessRecord() {
             base.ProcessRecord();
 
@@ -21,7 +24,9 @@ namespace Aderant.Build.Commands {
                 Directories = new[] { SessionState.Path.CurrentFileSystemLocation.Path };
             }
 
-            var projectTree = ProjectTree.CreateDefaultImplementation(new PowerShellLogger(this.Host));
+            var logger = new PowerShellLogger(this.Host);
+
+            var projectTree = ProjectTree.CreateDefaultImplementation(logger);
             var collector = new BuildDependenciesCollector();
             collector.ProjectConfiguration = ConfigurationToBuild.Default;
 
@@ -30,11 +35,17 @@ namespace Aderant.Build.Commands {
                 new[] { @"\__" });
 
             projectTree.CollectBuildDependencies(collector).Wait();
+
             var buildDependencyGraph = projectTree.CreateBuildDependencyGraph(collector);
 
-            var groups = buildDependencyGraph.GetBuildGroups(buildDependencyGraph.GetDependencyOrder());
+            var projectDependencyGraph = new ProjectDependencyGraph(buildDependencyGraph);
 
-            string treeText = ProjectSequencer.PrintBuildTree(groups);
+            var fs = new ProjectSequencer(logger, new PhysicalFileSystem());
+            fs.Sequence(false, false, null, projectDependencyGraph);
+
+            var groups = projectDependencyGraph.GetBuildGroups(projectDependencyGraph.GetDependencyOrder());
+
+            string treeText = ProjectSequencer.PrintBuildTree(groups, ShowPath);
 
             Host.UI.Write(treeText);
         }

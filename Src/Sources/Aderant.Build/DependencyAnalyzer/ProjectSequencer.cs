@@ -41,6 +41,16 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// </summary>
         public string MetaprojectXml { get; set; }
 
+        internal static void WriteBuildTree(IFileSystem fileSystem, BuildOperationContext context, string treeText) {
+            string treeFile = Path.Combine(context.BuildRoot, "BuildTree.txt");
+
+            if (fileSystem.FileExists(treeFile)) {
+                fileSystem.DeleteFile(treeFile);
+            }
+
+            fileSystem.WriteAllText(treeFile, treeText);
+        }
+
         public BuildPlan CreatePlan(BuildOperationContext context, OrchestrationFiles files, DependencyGraph graph) {
             isDesktopBuild = context.IsDesktopBuild;
 
@@ -62,7 +72,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             // Ensure that any further usages of graph refer to our wrapper
             graph = projectGraph;
 
-            AddInitializeAndCompletionNodes(context.Switches.ChangedFilesOnly, files.MakeFiles, projectGraph);
+            Sequence(context.Switches.ChangedFilesOnly, true, files.MakeFiles, projectGraph);
 
             var projectsInDependencyOrder = projectGraph.GetDependencyOrder();
 
@@ -105,9 +115,11 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             var groups = projectGraph.GetBuildGroups(filteredProjects);
 
-            var treeText = PrintBuildTree(groups);
+            string treeText = PrintBuildTree(groups, true);
             if (logger != null) {
                 logger.Info(treeText);
+
+                WriteBuildTree(fileSystem, context, treeText);
             }
 
             if (isDesktopBuild) {
@@ -181,7 +193,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             return files;
         }
 
-        private void AddInitializeAndCompletionNodes(bool changedFilesOnly, IReadOnlyCollection<string> makeFiles, ProjectDependencyGraph graph) {
+        public void Sequence(bool changedFilesOnly, bool considerStateFiles, IReadOnlyCollection<string> makeFiles, ProjectDependencyGraph graph) {
             var projects = graph.Nodes
                 .OfType<ConfiguredProject>()
                 .ToList();
@@ -198,7 +210,6 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             var grouping = graph.ProjectsBySolutionRoot;
 
-
             List<IArtifact> templateDependencyProviders = new List<IArtifact>();
             List<DirectoryNode> initializationNodes = new List<DirectoryNode>();
 
@@ -213,7 +224,10 @@ namespace Aderant.Build.DependencyAnalyzer {
                 IArtifact completionNode;
                 AddDirectoryNodes(graph, solutionDirectoryName, group.Key, out initializeNode, out completionNode);
 
-                var stateFile = SelectStateFile(solutionDirectoryName);
+                BuildStateFile stateFile = null;
+                if (considerStateFiles) {
+                    stateFile = SelectStateFile(solutionDirectoryName);
+                }
 
                 bool hasLoggedUpToDate = false;
 
@@ -252,7 +266,9 @@ namespace Aderant.Build.DependencyAnalyzer {
                     }
 
                     if (!changedFilesOnly) {
-                        ApplyStateFile(stateFile, solutionDirectoryName, dirtyProjectsLogLine, project, ref hasLoggedUpToDate);
+                        if (considerStateFiles) {
+                            ApplyStateFile(stateFile, solutionDirectoryName, dirtyProjectsLogLine, project, ref hasLoggedUpToDate);
+                        }
                     }
                 }
             }
@@ -337,7 +353,8 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         /// <summary>
         /// This is a reconciliation process. Applies the data from the state file to the current project.
-        /// If the outputs look sane and safe then the project is removed from the build tree and the cached outputs are substituted in.
+        /// If the outputs look sane and safe then the project is removed from the build tree and the cached outputs are
+        /// substituted in.
         /// </summary>
         internal void ApplyStateFile(BuildStateFile stateFile, string stateFileKey, string dirtyProjects, ConfiguredProject project, ref bool hasLoggedUpToDate) {
             string solutionRoot = project.SolutionRoot;
@@ -538,23 +555,18 @@ namespace Aderant.Build.DependencyAnalyzer {
                 List<ConfiguredProject> configuredProjects = grouping.ToList();
 
                 // A forced build is queued if any project within the directory container is also requiring a build
-                List<ConfiguredProject> dirtyProjects = configuredProjects.Where(g => g.IsDirty).ToList();
-
-                if (dirtyProjects.Count == 0) {
-                    continue;
-                }
-
-                bool buildWorkflowProjects = dirtyProjects.Any(x => x.IsTestProject);
-
-                foreach (ConfiguredProject project in configuredProjects) {
-                    if (project.IsWebProject && (buildWorkflowProjects || !project.IsWorkflowProject())) {
-                        logger.Info($"Web project: '{project.FullPath}' requires forced build as: '{string.Join(", ", dirtyProjects)}' {(dirtyProjects.Count == 1 ? "is" : "are")} modified.");
-                        // Web projects always need to be built as they have paths that reference content that needs to be deployed
-                        // during the build.
-                        // E.g script tags require that a file exists on disk. It's more reliable to have
-                        // web pipeline restore this content for us than try and restore it as part of the generic build reuse process.
-                        // <script type="text/javascript" src="../Scripts/ThirdParty.Jquery/jquery-2.2.4.js"></script>
-                        MarkDirty("Dank workarounds", project, BuildReasonTypes.Forced);
+                ConfiguredProject dirtyProject = configuredProjects.FirstOrDefault(g => g.IsDirty);
+                if (dirtyProject != null) {
+                    foreach (ConfiguredProject project in configuredProjects) {
+                        if (project.IsWebProject && !project.IsWorkflowProject()) {
+                            logger.Info($"Quirking! Web project: '{project.FullPath}' requires forced build as: '{dirtyProject.FullPath}' is modified.");
+                            // Web projects always need to be built as they have paths that reference content that needs to be deployed
+                            // during the build.
+                            // E.g script tags require that a file exists on disk. It's more reliable to have
+                            // web pipeline restore this content for us than try and restore it as part of the generic build reuse process.
+                            // <script type="text/javascript" src="../Scripts/ThirdParty.Jquery/jquery-2.2.4.js"></script>
+                            MarkDirty("", project, BuildReasonTypes.Forced);
+                        }
                     }
                 }
             }
@@ -590,15 +602,16 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        private static List<TreePrinter.Node> DescribeChanges(IDependable dependable) {
+        private static List<TreePrinter.Node> DescribeChanges(IDependable dependable, bool showPath) {
             ConfiguredProject configuredProject = dependable as ConfiguredProject;
 
             if (configuredProject != null) {
                 if (configuredProject.IncludeInBuild || configuredProject.IsDirty) {
 
-                    var children = new List<TreePrinter.Node> {
-                        new TreePrinter.Node { Name = "Path: " + configuredProject.FullPath, },
-                    };
+                    var children = new List<TreePrinter.Node>();
+                    if (showPath) {
+                        children.Add(new TreePrinter.Node { Name = "Path: " + configuredProject.FullPath, });
+                    }
 
                     if (configuredProject.DirtyFiles != null) {
                         children.Add(
@@ -673,7 +686,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        internal static string PrintBuildTree(IReadOnlyList<IReadOnlyList<IDependable>> groups) {
+        internal static string PrintBuildTree(IReadOnlyList<IReadOnlyList<IDependable>> groups, bool showPath) {
             var topLevelNodes = new List<TreePrinter.Node>();
 
             int i = 0;
@@ -684,7 +697,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     s =>
                         new TreePrinter.Node {
                             Name = s.Id,
-                            Children = DescribeChanges(s)
+                            Children = DescribeChanges(s, showPath)
                         }).ToList();
                 i++;
 
