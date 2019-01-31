@@ -52,7 +52,7 @@
     <!-- Defines the dynamic project file which contains all projects within this build -->
     <BuildPlan Condition="'$(BuildPlan)' == ''">$(SolutionRoot)BuildPlan.proj</BuildPlan>
 
-    <CopyToDropEnabled Condition="'$(CopyToDropEnabled)' != '' And '$(IsDesktopBuild)' != 'true'">true</CopyToDropEnabled>
+    <CopyToDropEnabled Condition="'$(IsDesktopBuild)' != 'true'">true</CopyToDropEnabled>
     <PackageProduct Condition="'$(CopyToDropEnabled)' == 'true'">true</PackageProduct>
   </PropertyGroup>
 
