@@ -170,6 +170,7 @@
     <Error Condition="!Exists('$(BuildPlan)')" Text="$(BuildPlan) does not exist." />
 
     <Message Condition="'$(IsDesktopBuild)' == 'false'" Text="##vso[task.uploadfile]$(BuildPlan)" />
+    <Message Condition="'$(IsDesktopBuild)' == 'false'" Text="##vso[task.uploadfile]$(SolutionRoot)BuildTree.txt" />
   </Target>
 
 

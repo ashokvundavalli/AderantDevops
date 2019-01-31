@@ -41,6 +41,16 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// </summary>
         public string MetaprojectXml { get; set; }
 
+        internal static void WriteBuildTree(IFileSystem fileSystem, BuildOperationContext context, string treeText) {
+            string treeFile = Path.Combine(context.BuildRoot, "BuildTree.txt");
+
+            if (fileSystem.FileExists(treeFile)) {
+                fileSystem.DeleteFile(treeFile);
+            }
+
+            fileSystem.WriteAllText(treeFile, treeText);
+        }
+
         public BuildPlan CreatePlan(BuildOperationContext context, OrchestrationFiles files, DependencyGraph graph) {
             isDesktopBuild = context.IsDesktopBuild;
 
@@ -105,9 +115,11 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             var groups = projectGraph.GetBuildGroups(filteredProjects);
 
-            var treeText = PrintBuildTree(groups, true);
+            string treeText = PrintBuildTree(groups, true);
             if (logger != null) {
                 logger.Info(treeText);
+
+                WriteBuildTree(fileSystem, context, treeText);
             }
 
             if (isDesktopBuild) {
