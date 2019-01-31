@@ -232,7 +232,7 @@
 
     <!--Adding additional dependencies searching locations. -->
     <PropertyGroup>
-      <AssemblySearchPaths Condition="'$(ExpertSourceDirectory)' != ''">$(AlternativeOutputDirectory);$(ExpertSourceDirectory);$(ExpertSourceDirectory)StoredProcedures;$(AssemblySearchPaths);</AssemblySearchPaths>
+      <AssemblySearchPaths Condition="'$(ExpertSourceDirectory)' != ''">$(ExpertSourceDirectory);$(ExpertSourceDirectory)StoredProcedures;$(AssemblySearchPaths);</AssemblySearchPaths>
     </PropertyGroup>
 
     <!-- Check if any project references need to be fixed. -->
@@ -412,6 +412,11 @@
                          CreateHardLinksForCopyAdditionalFilesIfPossible=true;
                          CopyOutputSymbolsToOutputDirectory=false;
                          _DocumentationFileProduced=false" />
+						 
+	  <Copy	                  
+      Condition="'$(IncludeOutputInUpdatePackage)' == 'true' And '$(PackageFileName)' != ''"
+      SourceFiles="$(PackageFileName)" 
+      DestinationFolder="$(UpdateStagingDirectory)" />
 
     <PropertyGroup>
       <RelativeArtifactStagingDirectory>$([MSBuild]::MakeRelative($(MSBuildProjectDirectory), $(AlternativeOutputDirectory)))</RelativeArtifactStagingDirectory>
