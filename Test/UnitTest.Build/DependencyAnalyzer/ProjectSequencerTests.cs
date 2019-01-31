@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
 using Aderant.Build.Model;
@@ -12,6 +14,8 @@ using Moq;
 namespace UnitTest.Build.DependencyAnalyzer {
     [TestClass]
     public class ProjectSequencerTests {
+
+        public TestContext TestContext { get; set; }
 
         [TestMethod]
         public async Task MarkDirtyTest() {
@@ -166,6 +170,20 @@ namespace UnitTest.Build.DependencyAnalyzer {
             Assert.AreEqual(p1.BuildReason.Flags, BuildReasonTypes.ProjectOutputNotFound);
             Assert.IsTrue(p1.IsDirty);
         }
-    }
 
+        [TestMethod]
+        public void WriteBuildTreeProducesFile() {
+            IFileSystem fileSystem = new PhysicalFileSystem();
+            BuildOperationContext context = new BuildOperationContext {
+                BuildRoot = TestContext.DeploymentDirectory
+            };
+
+            ProjectSequencer.WriteBuildTree(fileSystem, context, Resources.BuildTree);
+
+            string output = Path.Combine(TestContext.DeploymentDirectory, "BuildTree.txt");
+
+            Assert.IsTrue(fileSystem.FileExists(output));
+            Assert.AreEqual(Resources.BuildTree, fileSystem.ReadAllText(output));
+        }
+    }
 }

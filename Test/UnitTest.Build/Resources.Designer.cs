@@ -70,6 +70,26 @@ namespace UnitTest.Build {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Group 0
+        /// └─AderantExpertLauncher.Pre
+        ///Group 1
+        /// ├─ExpertLauncher
+        /// │  ├─Path: C:\Git\ExpertSuite\AderantExpertLauncher\Src\Aderant.ExpertLauncherProtocol\Aderant.ExpertLauncher.csproj
+        /// │  └─Flags: CachedBuildNotFound
+        /// └─Aderant.ExpertLauncherCO
+        ///    ├─Path: C:\Git\ExpertSuite\AderantExpertLauncher\Src\AderantExpertLauncherProtocolCO\Aderant.ExpertLauncherCO.csproj
+        ///    └─Flags: CachedBuildNotFound
+        ///Group 2
+        /// ├─ExpertLauncherMsiPerMachine
+        /// │  ├─Path: C:\Git\ExpertSuite\AderantExpertLauncher\Src\ExpertLau [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string BuildTree {
+            get {
+                return ResourceManager.GetString("BuildTree", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
         ///&lt;Project ToolsVersion=&quot;12.0&quot; DefaultTargets=&quot;Build&quot; xmlns=&quot;http://schemas.microsoft.com/developer/msbuild/2003&quot;&gt;
         ///  &lt;Import Project=&quot;$(MSBuildToolsPath)\Microsoft.CSharp.targets&quot; /&gt;
