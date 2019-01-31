@@ -62,7 +62,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             // Ensure that any further usages of graph refer to our wrapper
             graph = projectGraph;
 
-            AddInitializeAndCompletionNodes(context.Switches.ChangedFilesOnly, files.MakeFiles, projectGraph);
+            Sequence(context.Switches.ChangedFilesOnly, true, files.MakeFiles, projectGraph);
 
             var projectsInDependencyOrder = projectGraph.GetDependencyOrder();
 
@@ -105,7 +105,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             var groups = projectGraph.GetBuildGroups(filteredProjects);
 
-            var treeText = PrintBuildTree(groups);
+            var treeText = PrintBuildTree(groups, true);
             if (logger != null) {
                 logger.Info(treeText);
             }
@@ -181,7 +181,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             return files;
         }
 
-        private void AddInitializeAndCompletionNodes(bool changedFilesOnly, IReadOnlyCollection<string> makeFiles, ProjectDependencyGraph graph) {
+        public void Sequence(bool changedFilesOnly, bool considerStateFiles, IReadOnlyCollection<string> makeFiles, ProjectDependencyGraph graph) {
             var projects = graph.Nodes
                 .OfType<ConfiguredProject>()
                 .ToList();
@@ -198,7 +198,6 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             var grouping = graph.ProjectsBySolutionRoot;
 
-
             List<IArtifact> templateDependencyProviders = new List<IArtifact>();
             List<DirectoryNode> initializationNodes = new List<DirectoryNode>();
 
@@ -213,7 +212,10 @@ namespace Aderant.Build.DependencyAnalyzer {
                 IArtifact completionNode;
                 AddDirectoryNodes(graph, solutionDirectoryName, group.Key, out initializeNode, out completionNode);
 
-                var stateFile = SelectStateFile(solutionDirectoryName);
+                BuildStateFile stateFile = null;
+                if (considerStateFiles) {
+                    stateFile = SelectStateFile(solutionDirectoryName);
+                }
 
                 bool hasLoggedUpToDate = false;
 
@@ -252,7 +254,9 @@ namespace Aderant.Build.DependencyAnalyzer {
                     }
 
                     if (!changedFilesOnly) {
-                        ApplyStateFile(stateFile, solutionDirectoryName, dirtyProjectsLogLine, project, ref hasLoggedUpToDate);
+                        if (considerStateFiles) {
+                            ApplyStateFile(stateFile, solutionDirectoryName, dirtyProjectsLogLine, project, ref hasLoggedUpToDate);
+                        }
                     }
                 }
             }
@@ -590,15 +594,16 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        private static List<TreePrinter.Node> DescribeChanges(IDependable dependable) {
+        private static List<TreePrinter.Node> DescribeChanges(IDependable dependable, bool showPath) {
             ConfiguredProject configuredProject = dependable as ConfiguredProject;
 
             if (configuredProject != null) {
                 if (configuredProject.IncludeInBuild || configuredProject.IsDirty) {
 
-                    var children = new List<TreePrinter.Node> {
-                        new TreePrinter.Node { Name = "Path: " + configuredProject.FullPath, },
-                    };
+                    var children = new List<TreePrinter.Node>();
+                    if (showPath) {
+                        children.Add(new TreePrinter.Node { Name = "Path: " + configuredProject.FullPath, });
+                    }
 
                     if (configuredProject.DirtyFiles != null) {
                         children.Add(
@@ -673,7 +678,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        internal static string PrintBuildTree(IReadOnlyList<IReadOnlyList<IDependable>> groups) {
+        internal static string PrintBuildTree(IReadOnlyList<IReadOnlyList<IDependable>> groups, bool showPath) {
             var topLevelNodes = new List<TreePrinter.Node>();
 
             int i = 0;
@@ -684,7 +689,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     s =>
                         new TreePrinter.Node {
                             Name = s.Id,
-                            Children = DescribeChanges(s)
+                            Children = DescribeChanges(s, showPath)
                         }).ToList();
                 i++;
 
