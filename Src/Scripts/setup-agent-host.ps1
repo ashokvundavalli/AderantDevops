@@ -1,7 +1,7 @@
 ﻿[CmdletBinding()]
 param(
     [Parameter(Mandatory=$false)][int]$agentsToProvision = 0,
-    [Switch]$removeAllAgents = $true,
+    [bool]$removeAllAgents = $true,
     [Parameter(Mandatory=$false)][string]$agentArchive,
     [Parameter(Mandatory=$false)][string]$tfsHost = "http://tfs:8080/tfs",
     [Parameter(Mandatory=$false)][string]$agentPool,
