@@ -382,7 +382,7 @@
 
   </Target>
 
-  <Target Name="ReplicateOutputs" AfterTargets="CopyFilesToOutputDirectory" Condition="'$(AlternativeOutputDirectory)' != ''">
+  <Target Name="ReplicateOutputs" AfterTargets="AfterBuild" Condition="'$(AlternativeOutputDirectory)' != ''">
 
     <Delete Files="@(IntermediateAssembly->'$(AlternativeOutputDirectory)%(Filename)%(Extension)')"
             ContinueOnError="true" />
@@ -412,10 +412,10 @@
                          CreateHardLinksForCopyAdditionalFilesIfPossible=true;
                          CopyOutputSymbolsToOutputDirectory=false;
                          _DocumentationFileProduced=false" />
-						 
-	  <Copy	                  
+
+    <Copy
       Condition="'$(IncludeOutputInUpdatePackage)' == 'true' And '$(PackageFileName)' != ''"
-      SourceFiles="$(PackageFileName)" 
+      SourceFiles="$(PackageFileName)"
       DestinationFolder="$(UpdateStagingDirectory)" />
 
     <PropertyGroup>
