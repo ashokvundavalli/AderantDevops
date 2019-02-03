@@ -38,7 +38,7 @@ function Get-BuildManifest {
     )
 
     process {
-        return (Invoke-WebRequest -Uri "http://tfs.$($env:USERDNSDOMAIN.ToLower()):8080/tfs/ADERANT/44f228f7-b636-4bd3-99ee-eb2f1570d768/316b9ba9-3a49-47b2-992e-a9a2a2835b3f/_api/_versioncontrol/itemContent?repositoryId=e6138670-7236-4e80-aa7c-6417eea253f5&path=%2FBuild%2F$($manifest)&version=GB$($branch)&contentOnly=false&__v=5" -UseBasicParsing -UseDefaultCredentials).Content
+        return (Invoke-WebRequest -Uri "http://tfs:8080/tfs/ADERANT/44f228f7-b636-4bd3-99ee-eb2f1570d768/316b9ba9-3a49-47b2-992e-a9a2a2835b3f/_api/_versioncontrol/itemContent?repositoryId=e6138670-7236-4e80-aa7c-6417eea253f5&path=%2FBuild%2F$($manifest)&version=GB$($branch)&contentOnly=false&__v=5" -UseBasicParsing -UseDefaultCredentials).Content
     }
 }
 
@@ -67,7 +67,6 @@ function ApplyBranchConfig($context, [string]$root, [switch]$EnableConfigDownloa
             Get-BuildDirectory
             $config = Get-Content -Raw -LiteralPath (Join-Path -Path $global:BranchConfigPath -ChildPath "BranchConfig.xml")
         } else {
-            # ToDo: Change 'monotest' to 'master' once the BranchConfig.xml file exists.
             [string]$branch = Get-Branch -root $root
 
             $config = Get-BuildManifest -manifest 'BranchConfig.xml' -branch $branch
@@ -345,7 +344,7 @@ function ExpandPaths {
     $resolvedPaths = @()
     foreach ($path in $paths) {
         # Check current location
-        $testedPath = ''
+        [string]$testedPath = $null
         if (Test-Path($path)) {
             $testedPath = Resolve-Path $path
         } elseif (-not [string]::IsNullOrWhiteSpace($rootPath)) {
@@ -356,7 +355,7 @@ function ExpandPaths {
             }
         }
 
-        if ($testedPath -eq '' -And $includePaths) {
+        if ($null -eq $testedPath -And $includePaths) {
             $includePaths.ForEach({
                 $currentPath = $_
                 $currentPath = Join-Path -Path $currentPath -ChildPath $path
@@ -366,7 +365,7 @@ function ExpandPaths {
             })
         }
 
-        if ($testedPath -ne '') {
+        if ($null -ne $testedPath) {
             $resolvedPaths += Resolve-Path $testedPath
         } else {
             Write-Error "Can't resolve path: $path"
@@ -378,14 +377,22 @@ function ExpandPaths {
 
 function AssignIncludeExclude {
     param(
-        [Parameter(Mandatory=$false)][string[]]$include,
+        [Parameter(Mandatory=$false)][System.Collections.ArrayList]$include,
         [Parameter(Mandatory=$false)][string[]]$exclude,
-        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$rootPath
+        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$rootPath,
+        [Parameter(Mandatory=$false)][string]$gitDirectory
     )
 
     if ($null -eq $include) {
-        $include = @()
-        $include += $rootPath
+        Write-Debug 'No includes specified - root path set to current directory.'
+        $include = @($rootPath)
+    } else {
+        if (-not [string]::IsNullOrEmpty($gitDirectory) -and $rootPath -ne $gitDirectory) {
+            if (-not ($include -contains $rootPath)) {
+                Write-Debug 'Including current directory in build.'
+                [Void]$include.Add($rootPath)
+            }
+        }
     }
 
     $context.Include = ExpandPaths $include
@@ -528,9 +535,9 @@ Should not be used as it prevents incremental builds which increases build times
 
     $context.BuildSystemDirectory = "$PSScriptRoot\..\..\..\"
 
-    AssignIncludeExclude -include $Include -exclude $Exclude -rootPath $repositoryPath
-
     [string]$root = FindGitDir -context $context -searchDirectory $repositoryPath
+    AssignIncludeExclude -include $Include -exclude $Exclude -rootPath $repositoryPath -gitDirectory $root
+
     $context.BuildRoot = $root
 
     GetSourceTreeMetadata -context $context -repositoryPath $root
