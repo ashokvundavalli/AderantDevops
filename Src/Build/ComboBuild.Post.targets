@@ -14,7 +14,7 @@
       CollectTestAssemblies;
     </RunTestsDependsOn>
 
-    <BuildCoreDependsOn>
+    <EndToEndDependsOn>
       ValidateRequiredProperties;
       RefreshVersionVariables;
       <!--RunTests;
@@ -28,7 +28,7 @@
       SignInstallers;
       PackageArtifactsCore;
       CreateDependencyLinks;
-    </BuildCoreDependsOn>
+    </EndToEndDependsOn>
 
     <PackageArtifactsDependsOn>
       $(PackageArtifactsDependsOn);
@@ -108,11 +108,7 @@
   <Target Name="PostBuild" />
 
 
-  <Target Name="EndToEnd" DependsOnTargets="BuildCore">
-  </Target>
-
-
-  <Target Name="BuildCore" DependsOnTargets="$(BuildCoreDependsOn)">
+  <Target Name="EndToEnd" DependsOnTargets="$(EndToEndDependsOn)">
   </Target>
 
 
@@ -125,10 +121,13 @@
   <Target Name="OnAfterBuild" />
   <Target Name="PostBuild" />
 
-  <Target Name="RunBuildExtensions" DependsOnTargets="PostBuild;OnAfterBuild" />
+  <Target Name="RunBuildExtensions">
+    <Message Text="Executing custom targets: $(RunUserTargets)" />
+    <CallTarget Targets="PostBuild;OnAfterBuild" />
+  </Target>
 
   <!-- Pull the entry targets into our context. This lets us call into PostBuild for people who want to customize the workflow -->
-  <Import Project="$(SolutionDirectoryPath)Build\TFSBuild.proj" Condition="Exists('$(SolutionDirectoryPath)Build\TFSBuild.proj')" />
-  <Import Project="$(SolutionDirectoryPath)packaging.targets" Condition="Exists('$(SolutionDirectoryPath)packaging.targets')" />
+  <Import Project="$(SolutionDirectoryPath)Build\TFSBuild.proj" Condition="'$(RunUserTargets)' != 'false' And Exists('$(SolutionDirectoryPath)Build\TFSBuild.proj')" />
+  <Import Project="$(SolutionDirectoryPath)packaging.targets" Condition="'$(RunUserTargets)' != 'false' And Exists('$(SolutionDirectoryPath)packaging.targets')" />
 
 </Project>

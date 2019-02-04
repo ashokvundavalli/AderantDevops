@@ -35,7 +35,7 @@
 
     <DependencyManifest>$(ProjectDir)..\..\Build\DependencyManifest.xml</DependencyManifest>
     <DependencyManifestContent>$([System.IO.File]::ReadAllText('$(DependencyManifest)'))</DependencyManifestContent>
-    <Pattern>="((Aderant.Web|Web|Mobile)\..*?)"</Pattern>
+    <Pattern>="((Aderant.Web|Web|Mobile)..*?)"</Pattern>
     <!--
       Extract the web modules referenced in the dependency manifest
       The extracted result looks like ="Web.Foundation"
@@ -70,8 +70,8 @@
       <Type>Content</Type>
     </ExternalContent>
 
-
-    <ThirdPartyContent Include="$(DependenciesDirectory)ThirdParty.*\**\*.js">
+    <ThirdPartyContent Condition="'$(UseThirdPartyFromDependenciesDirectory)' != 'false'"
+                       Include="$(DependenciesDirectory)ThirdParty.*\**\*.js">
       <RelativePath>Scripts\%(RecursiveDir)</RelativePath>
       <Type>Content</Type>
     </ThirdPartyContent>
@@ -100,7 +100,8 @@
       <Type>Content</Type>
     </ExternalContent>
 
-    <ThirdPartyContent Include="$(DependenciesDirectory)ThirdParty.*\**\*"
+    <ThirdPartyContent Condition="'$(UseThirdPartyFromDependenciesDirectory)' != 'false'"
+                       Include="$(DependenciesDirectory)ThirdParty.*\**\*"
                        Exclude="$(DependenciesDirectory)ThirdParty.*\**\*.js;
                                 $(DependenciesDirectory)ThirdParty.*\**\*.d.ts">
       <RelativePath>Content\Includes\%(RecursiveDir)</RelativePath>
@@ -126,7 +127,8 @@
       <Type>Content</Type>
     </ExternalContent>
 
-    <ExternalContent Condition="'$(IsGitRepo)' != 'True'" Include="$(DependenciesDirectory)Web.*\ViewModels\**\*.d.ts"
+    <ExternalContent Condition="'$(IsGitRepo)' != 'True'"
+                     Include="$(DependenciesDirectory)Web.*\ViewModels\**\*.d.ts"
                      Exclude="$(DependenciesDirectory)Web.*\ViewModels\Web.SMB\**\*.d.ts">
       <Type>TypeScript</Type>
     </ExternalContent>
@@ -136,7 +138,7 @@
   <!-- Views -->
   <ItemGroup Condition=" '$(EnableContentLink)' == 'true' ">
     <ExternalContent Include="$(DependenciesDirectory)Web.*\Views\**\Shared\**\*.cshtml">
-      <RelativePath>Views/Shared</RelativePath>
+      <RelativePath>Views\Shared</RelativePath>
       <Type>Content</Type>
     </ExternalContent>
   </ItemGroup>
@@ -227,9 +229,6 @@
   </ItemGroup>
 
 
-
-
-
   <Target Name="CollectLinkedContentFiles" BeforeTargets="CopyLinkedContentFiles">
 
     <ItemGroup>
@@ -249,8 +248,8 @@
   F5 experience -->
   <Target Name="CopyLinkedContentFiles"
           DependsOnTargets="CollectLinkedContentFiles"
-          Condition="'$(LinkedBuild)' != 'true' And '$(EnableContentLink)' == 'true'"
-          BeforeTargets="PreComputeCompileTypeScript;Build;CopyAllFilesToSingleFolderForMsdeploy;PreAutoParameterizationWebConfigConnectionStrings"
+
+          BeforeTargets="PreComputeCompileTypeScript;Build;CopyAllFilesToSingleFolderForMsdeploy"
           Inputs="@(ContentToCopy)"
           Outputs="@(ContentToCopy->'$(ProjectDir)%(Link)')">
 
@@ -283,26 +282,25 @@
     <ItemGroup>
       <CustomTSConfigs
         Include="$(ProjectDir)**\*custom.tsconfig.json"
-        Exclude="$(ProjectDir)**\obj\**;
+        Exclude="$(ProjectDir)**\PackageTmp\**;
+                 $(ProjectDir)**\obj\**;
                  $(ProjectDir)**\bin\**;"/>
     </ItemGroup>
 
     <Exec Condition="'@(CustomTSConfigs)' != ''" Command="&quot;$(MSBuildProgramFiles32)\Microsoft SDKs\TypeScript\$(TypeScriptToolsVersion)\tsc.exe&quot; --project %(CustomTSConfigs.FullPath) "/>
  </Target>
 
-  <!-- Suppress the TypeScript compile phase if we are building a linked project -->
-  <!--<Target Name="CompileTypeScript" Condition="'$(LinkedBuild)' == 'true'" />-->
-
   <!--
     Debugging
     msbuild Web.Foundation.csproj /target:_ItemGroupDebug
   -->
   <Target Name="_ItemGroupDebug">
-    <!--<Message Text="AssemblyName: $(AssemblyName) (Enable content link: $(EnableContentLink))" />
+    <Message Text="AssemblyName: $(AssemblyName) (Enable content link: $(EnableContentLink))" />
     <Message Text="$([System.IO.Path]::GetFullPath('$(DependenciesDirectory)'))" />
     <Message Text="$([System.IO.Path]::GetFullPath('$(ProjectDir)'))" />
-    <Message Text="Referenced web module: %(ReferencedWebModules.Identity)" />-->
-    <!--<Message Condition="'%(AllDependencyContent.IsReferenced)' == 'true'" Text="
+    <Message Text="Referenced web modules: '%(ReferencedWebModules.Identity)'" />
+    <Message Condition="'%(AllDependencyContent.IsReferenced)' == 'true'"
+Text="
 Identity:                 %(AllDependencyContent.Identity)
 RecursiveDir:             %(AllDependencyContent.RecursiveDir)
 FullPath:                 %(AllDependencyContent.FullPath)
@@ -318,14 +316,9 @@ GitModule:                %(AllDependencyContent.GitModule)
 Module:                   %(AllDependencyContent.Module)
 Type:                     %(AllDependencyContent.Type)" />
 
-    <Message Text="
-WebModuleText:            $(WebModuleText) "
-    />-->
+    <Message Text="WebModuleText: $(WebModuleText)" />
 
-
-
-
-    <!--<Message Text="ExternalTypeScript: %(ExternalTypeScript.RelativePath)%(Filename)%(Extension)" />
-    <Message Text="AspxContent: %(AspxContent.RelativePath)%(Filename)%(Extension)" />-->
+    <Message Text="ExternalTypeScript: %(ExternalTypeScript.RelativePath)%(Filename)%(Extension)" />
+    <Message Text="AspxContent: %(AspxContent.RelativePath)%(Filename)%(Extension)" />
   </Target>
 </Project>

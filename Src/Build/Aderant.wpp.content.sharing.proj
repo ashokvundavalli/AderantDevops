@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <UsingTask
+        TaskName="WriteSharedContentFile"
+        TaskFactory="CodeTaskFactory"
+        AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+    <ParameterGroup>
+      <OutputFile ParameterType="System.String" Required="true" />
+      <PathPropertyName ParameterType="System.String" Required="true" />
+
+      <ProjectRootDirectory ParameterType="System.String" Required="true" />
+
+      <ProjectItems ParameterType="Microsoft.Build.Framework.ITaskItem[]" />
+    </ParameterGroup>
+
+    <Task>
+      <Reference Include="System.Xml" />
+      <Using Namespace="System" />
+      <Using Namespace="System.Xml" />
+      <Code Type="Fragment" Language="cs">
+<![CDATA[
+          var ns = "http://schemas.microsoft.com/developer/msbuild/2003";
+
+          XmlWriterSettings settings = new XmlWriterSettings
+          {
+            Indent = true
+          };
+
+          string pathVariable = @"(" + PathPropertyName + ")";
+
+          using (var w = XmlWriter.Create(OutputFile, settings)) {
+              w.WriteStartElement("Project", ns);
+
+              w.WriteStartElement("PropertyGroup");
+              w.WriteStartElement(PathPropertyName);
+              w.WriteAttributeString("Condition", string.Format("'$" + "({0})' == ''", PathPropertyName));
+              w.WriteString(string.Format("$" + "({0})\\", "MSBuildThisFileDirectory"));
+              w.WriteEndElement();
+              w.WriteEndElement();
+
+              w.WriteStartElement("ItemGroup");
+
+              foreach (var file in ProjectItems) {
+                string fileAndExtension = file.GetMetadata("Filename") + file.GetMetadata("Extension");
+                string fileRelativePath = file.GetMetadata("RelativeDir").Replace(ProjectRootDirectory, "") + fileAndExtension;
+
+                var type = file.GetMetadata("Type");
+
+                w.WriteStartElement(type);
+                w.WriteAttributeString("Include", "$" + pathVariable + fileRelativePath);
+
+                w.WriteStartElement("Link");
+                w.WriteString(fileRelativePath);
+                w.WriteEndElement();
+
+                w.WriteStartElement("Visible");
+                w.WriteString("true");
+                w.WriteEndElement();
+
+                w.WriteEndElement();
+              }
+
+              w.WriteEndElement();
+
+              w.WriteEndElement();
+          }
+]]>
+      </Code>
+    </Task>
+  </UsingTask>
+
+
+  <Target Name="WriteContentFile" AfterTargets="AfterBuild">
+
+    <PropertyGroup>
+      <ScriptsDirectory>$(MSBuildProjectDirectory)\</ScriptsDirectory>
+      <ScriptsDirectory Condition="'$(ScriptsDirectory)' != '' and !HasTrailingSlash('$(ScriptsDirectory)')">$(ScriptsDirectory)\</ScriptsDirectory>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectItems Include="$(ScriptsDirectory)Scripts\**\*.js"
+                    Exclude="$(ScriptsDirectory)Scripts\**\ThirdParty.*\**">
+        <Type>Content</Type>
+      </ProjectItems>
+      <ProjectItems Include="$(ScriptsDirectory)Scripts\**\*.html">
+        <Type>Content</Type>
+      </ProjectItems>
+
+      <ProjectItems Include="$(ScriptsDirectory)Scripts\**\*.d.ts"
+                    Exclude="$(ScriptsDirectory)Scripts\**\ThirdParty.*\**">
+        <Type>TypeScriptCompile</Type>
+      </ProjectItems>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectItems Include="$(ScriptsDirectory)Content\**\*"
+                    Exclude="$(ScriptsDirectory)Content\**\ThirdParty.*\**">
+        <Type>Content</Type>
+      </ProjectItems>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectItems Include="$(ScriptsDirectory)ViewModels\**\*.js"
+                    Exclude="$(ScriptsDirectory)ViewModels\**\ThirdParty.*\**">
+        <Type>Content</Type>
+      </ProjectItems>
+      <ProjectItems Include="$(ScriptsDirectory)ViewModels\**\*.d.ts"
+                    Exclude="$(ScriptsDirectory)ViewModels\**\ThirdParty.*\**">
+        <Type>TypeScriptCompile</Type>
+      </ProjectItems>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectItems Include="$(ScriptsDirectory)Views\Shared\**\*.cshtml">
+        <Type>Content</Type>
+      </ProjectItems>
+    </ItemGroup>
+
+    <WriteSharedContentFile
+      OutputFile="$(MSBuildProjectFullPath).shared"
+      PathPropertyName="$(MSBuildProjectName.Replace('.', ''))Path"
+      ProjectRootDirectory="$(ScriptsDirectory)"
+      ProjectItems="@(ProjectItems)" />
+
+  </Target>
+
+</Project>
