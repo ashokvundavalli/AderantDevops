@@ -240,6 +240,8 @@ namespace Aderant.Build.ProjectSystem {
                 }
 
                 loadedConfiguredProjects.TryAdd(configuredProject.ProjectGuid, configuredProject);
+            } else {
+                logger.Info($"The project {configuredProject.FullPath} is not configured to build.");
             }
         }
 

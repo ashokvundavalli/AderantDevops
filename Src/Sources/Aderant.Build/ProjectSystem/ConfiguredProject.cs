@@ -290,9 +290,9 @@ namespace Aderant.Build.ProjectSystem {
                     }
                 }
 
-                if (IncludeInBuild) {
-                    Tree.AddConfiguredProject(this);
+                Tree.AddConfiguredProject(this);
 
+                if (IncludeInBuild) {
                     SetOutputPath();
                 }
             } else {
