@@ -8,6 +8,7 @@ namespace Aderant.Build.PipelineService {
     public class BuildPipelineServiceHost : IDisposable {
 
         private static string pipeId;
+        private BuildPipelineServiceImpl dataService;
 
         ServiceHost host;
 
@@ -17,7 +18,8 @@ namespace Aderant.Build.PipelineService {
         }
 
         public BuildOperationContext CurrentContext {
-            get { return ((BuildPipelineServiceImpl)host.SingletonInstance).GetContext(); }
+            get { return dataService.GetContext(); }
+            set { dataService.Publish(value); }
         }
 
         public static string PipeId {
@@ -36,6 +38,8 @@ namespace Aderant.Build.PipelineService {
                 // ignored
             } finally {
                 host = null;
+                dataService = null;
+                Environment.SetEnvironmentVariable(WellKnownProperties.ContextEndpoint, null, EnvironmentVariableTarget.Process);
             }
         }
 
@@ -43,8 +47,10 @@ namespace Aderant.Build.PipelineService {
             if (host == null) {
                 var address = CreateServerUri(pipeId, "0");
 
-                host = new ServiceHost(new BuildPipelineServiceImpl(), address);
-                var namedPipeBinding = CreateServerBinding();
+                dataService = new BuildPipelineServiceImpl();
+                host = new ServiceHost(dataService, address);
+
+                var namedPipeBinding = CreateNamedPipeBinding();
 
                 var endpoint = host.AddServiceEndpoint(typeof(IBuildPipelineService), namedPipeBinding, address);
                 endpoint.Behaviors.Add(new ProtoEndpointBehavior());
@@ -54,6 +60,8 @@ namespace Aderant.Build.PipelineService {
                 PipeId = pipeId;
                 ServerUri = address;
 
+                // Always set this as we might be invoked from an external application (like PowerShell) several times and so
+                // need to update the value
                 Environment.SetEnvironmentVariable(WellKnownProperties.ContextEndpoint, pipeId, EnvironmentVariableTarget.Process);
             }
         }
@@ -64,19 +72,11 @@ namespace Aderant.Build.PipelineService {
             }
         }
 
-        public void Publish(BuildOperationContext context) {
-            ErrorUtilities.IsNotNull(PipeId, nameof(PipeId));
-
-            using (var proxy = BuildPipelineServiceClient.Current) {
-                proxy.Publish(context);
-            }
-        }
-
         internal static Uri CreateServerUri(string namedPipeProcessToken, string namedPipeIdToken) {
             return CreateServerUri(namedPipeProcessToken, namedPipeIdToken, Environment.MachineName);
         }
 
-        internal static Uri CreateServerUri(string namedPipeProcessToken, string namedPipeIdToken, string machineName) {
+        private static Uri CreateServerUri(string namedPipeProcessToken, string namedPipeIdToken, string machineName) {
             string endpoint = string.Format(
                 CultureInfo.InvariantCulture,
                 "{0}://{1}/{2}/{3}",
@@ -101,7 +101,7 @@ namespace Aderant.Build.PipelineService {
             return new Uri(endpoint);
         }
 
-        internal static Binding CreateServerBinding() {
+        internal static Binding CreateNamedPipeBinding() {
             return new NetNamedPipeBinding {
                 MaxReceivedMessageSize = Int32.MaxValue,
                 MaxBufferSize = Int32.MaxValue,

@@ -10,7 +10,7 @@ using Aderant.Build.ProjectSystem.StateTracking;
 
 namespace Aderant.Build.PipelineService {
     /// <summary>
-    /// Proxy for <see cref="IBuildPipelineService" />.
+    /// Technology agnostic proxy for <see cref="IBuildPipelineService" />.
     /// </summary>
     internal class BuildPipelineServiceClient : IBuildPipelineService {
 
@@ -29,115 +29,144 @@ namespace Aderant.Build.PipelineService {
             this.dataCollectionServiceUri = dataCollectionServiceUri;
         }
 
-        internal BuildPipelineServiceProxy Proxy { get; set; }
-
-        public static IBuildPipelineService Current {
-            get {
-                var tlsProxy = threadSpecificProxy;
-                if (tlsProxy == null) {
-                    return threadSpecificProxy = CreateFromPipeId(BuildPipelineServiceHost.PipeId);
-                }
-
-                return tlsProxy;
-            }
-        }
+        /// <summary>
+        /// The wrapped data service proxy
+        /// </summary>
+        internal BuildPipelineServiceProxy InnerProxy { get; set; }
 
         public void AssociateArtifacts(IEnumerable<BuildArtifact> artifacts) {
-            InvokeServiceAction(() => Proxy.AssociateArtifacts(artifacts));
+            InvokeServiceAction(() => InnerProxy.ChannelContract.AssociateArtifacts(artifacts));
         }
 
         public BuildArtifact[] GetAssociatedArtifacts() {
-            return InvokeServiceAction(() => Proxy.GetAssociatedArtifacts());
+            return InvokeServiceAction(() => InnerProxy.ChannelContract.GetAssociatedArtifacts());
         }
 
         public void Publish(BuildOperationContext context) {
-            InvokeServiceAction(() => Proxy.Publish(context));
+            InvokeServiceAction(() => InnerProxy.ChannelContract.Publish(context));
         }
 
         public BuildOperationContext GetContext() {
-            return InvokeServiceAction(() => Proxy.GetContext());
+            return InvokeServiceAction(() => InnerProxy.ChannelContract.GetContext());
         }
 
         public void RecordProjectOutputs(ProjectOutputSnapshot snapshot) {
-            InvokeServiceAction(() => Proxy.RecordProjectOutputs(snapshot));
+            InvokeServiceAction(() => InnerProxy.ChannelContract.RecordProjectOutputs(snapshot));
         }
 
         public IEnumerable<ProjectOutputSnapshot> GetProjectOutputs(string container) {
-            return InvokeServiceAction(() => Proxy.GetProjectOutputs(container));
+            return InvokeServiceAction(() => InnerProxy.ChannelContract.GetProjectOutputs(container));
         }
 
         public IEnumerable<ProjectOutputSnapshot> GetProjectSnapshots() {
-            return InvokeServiceAction(() => Proxy.GetProjectSnapshots());
+            return InvokeServiceAction(() => InnerProxy.ChannelContract.GetProjectSnapshots());
         }
 
         public void RecordArtifacts(string container, IEnumerable<ArtifactManifest> manifests) {
-            InvokeServiceAction(() => Proxy.RecordArtifacts(container, manifests));
+            InvokeServiceAction(() => InnerProxy.ChannelContract.RecordArtifacts(container, manifests));
         }
 
         public void PutVariable(string scope, string variableName, string value) {
-            InvokeServiceAction(() => Proxy.PutVariable(scope, variableName, value));
+            InvokeServiceAction(() => InnerProxy.ChannelContract.PutVariable(scope, variableName, value));
         }
 
         public string GetVariable(string scope, string variableName) {
-            return InvokeServiceAction(() => Proxy.GetVariable(scope, variableName));
+            return InvokeServiceAction(() => InnerProxy.ChannelContract.GetVariable(scope, variableName));
         }
 
         public void TrackProject(OnDiskProjectInfo onDiskProject) {
-            InvokeServiceAction(() => Proxy.TrackProject(onDiskProject));
+            InvokeServiceAction(() => InnerProxy.ChannelContract.TrackProject(onDiskProject));
         }
 
         public IEnumerable<OnDiskProjectInfo> GetTrackedProjects() {
-            return InvokeServiceAction(() => Proxy.GetTrackedProjects());
+            return InvokeServiceAction(() => InnerProxy.ChannelContract.GetTrackedProjects());
         }
 
         public IEnumerable<OnDiskProjectInfo> GetTrackedProjects(IEnumerable<Guid> ids) {
-            return InvokeServiceAction(() => Proxy.GetTrackedProjects(ids));
+            return InvokeServiceAction(() => InnerProxy.ChannelContract.GetTrackedProjects(ids));
         }
 
         public IEnumerable<ArtifactManifest> GetArtifactsForContainer(string container) {
-            return InvokeServiceAction(() => Proxy.GetArtifactsForContainer(container));
+            return InvokeServiceAction(() => InnerProxy.ChannelContract.GetArtifactsForContainer(container));
         }
 
         public object[] Ping() {
-            return InvokeServiceAction(() => Proxy.Ping());
+            return InvokeServiceAction(() => InnerProxy.ChannelContract.Ping());
         }
 
         public void SetStatus(string status, string reason) {
-            InvokeServiceAction(() => Proxy.SetStatus(status, reason));
+            InvokeServiceAction(() => InnerProxy.ChannelContract.SetStatus(status, reason));
         }
 
         public void TrackInputFileDependencies(string solutionRoot, IReadOnlyCollection<TrackedInputFile> fileDependencies) {
-            InvokeServiceAction(() => Proxy.TrackInputFileDependencies(solutionRoot, fileDependencies));
+            InvokeServiceAction(() => InnerProxy.ChannelContract.TrackInputFileDependencies(solutionRoot, fileDependencies));
         }
 
         public IReadOnlyCollection<TrackedInputFile> ClaimTrackedInputFiles(string tag) {
-            return InvokeServiceAction(() => Proxy.ClaimTrackedInputFiles(tag));
+            return InvokeServiceAction(() => InnerProxy.ChannelContract.ClaimTrackedInputFiles(tag));
+        }
+
+        public void AddDirectoryMetadata(BuildDirectoryContribution buildDirectoryContribution) {
+            InvokeServiceAction(() => InnerProxy.ChannelContract.AddDirectoryMetadata(buildDirectoryContribution));
+        }
+
+        public IReadOnlyCollection<BuildDirectoryContribution> GetDirectoryMetadata() {
+            return InvokeServiceAction(() => InnerProxy.ChannelContract.GetDirectoryMetadata());
         }
 
         public void Dispose() {
-            var proxy = Proxy;
+            var proxy = InnerProxy;
 
             if (proxy != null) {
-                IDisposable disposable = proxy;
-                disposable.Dispose();
+                try {
+                    IDisposable disposable = proxy;
+                    disposable.Dispose();
+                } catch {
+
+                }
             }
 
             threadSpecificProxy = null;
         }
 
         /// <summary>
+        /// Returns a proxy to communicate with a data collection service.
+        /// </summary>
+        public static IBuildPipelineService GetProxy(string id) {
+            return CreateFromPipeId(id);
+        }
+
+        /// <summary>
+        /// Returns a proxy to communicate with the ambient data collection service for the current build environment.
+        /// </summary>
+        public static IBuildPipelineService GetCurrentProxy() {
+            var tlsProxy = threadSpecificProxy;
+            if (tlsProxy == null) {
+                var proxy = GetProxy(BuildPipelineServiceHost.PipeId);
+                return threadSpecificProxy = proxy;
+            }
+
+            return tlsProxy;
+        }
+
+        /// <summary>
         /// Convenience factory method for creating a client from a partial named pipe address
         /// </summary>
         /// <param name="pipeId"></param>
-        internal static IBuildPipelineService CreateFromPipeId(string pipeId) {
-            return new BuildPipelineServiceClient(BuildPipelineServiceHost.CreateServerUri(pipeId, "0").AbsoluteUri);
+        private static IBuildPipelineService CreateFromPipeId(string pipeId) {
+            var client = new BuildPipelineServiceClient(BuildPipelineServiceHost.CreateServerUri(pipeId, "0").AbsoluteUri);
+            return client;
         }
 
         private T InvokeServiceAction<T>(Func<T> action) {
             EnsureInitialized();
 
-            if (Proxy != null && Proxy.State == CommunicationState.Opened) {
-                return action();
+            if (InnerProxy != null && InnerProxy.State == CommunicationState.Opened) {
+                try {
+                    return action();
+                } catch (FaultException ex) {
+                    throw ExceptionConverter.ConvertException(ex);
+                }
             }
 
             throw new CommunicationException("Proxy is communication state is invalid");
@@ -146,9 +175,13 @@ namespace Aderant.Build.PipelineService {
         private void InvokeServiceAction(Action action) {
             EnsureInitialized();
 
-            if (Proxy != null && Proxy.State == CommunicationState.Opened) {
-                action();
-                return;
+            if (InnerProxy != null && InnerProxy.State == CommunicationState.Opened) {
+                try {
+                    action();
+                    return;
+                } catch (FaultException ex) {
+                    throw ExceptionConverter.ConvertException(ex);
+                }
             }
 
             throw new CommunicationException("Proxy is communication state is invalid");
@@ -170,7 +203,7 @@ namespace Aderant.Build.PipelineService {
         }
 
         private void InitializeInternal() {
-            Binding binding = BuildPipelineServiceHost.CreateServerBinding();
+            Binding binding = BuildPipelineServiceHost.CreateNamedPipeBinding();
             EndpointAddress address = new EndpointAddress(new Uri(dataCollectionServiceUri));
 
             Stopwatch stopwatch = new Stopwatch();
@@ -180,7 +213,7 @@ namespace Aderant.Build.PipelineService {
             Exception ex;
             bool connectionValid;
 
-            const long timeout = 60000;
+            var timeout = TimeSpan.FromSeconds(60).TotalMilliseconds;
 
             do {
                 connectionValid = TestConnection(binding, address, out proxy, out ex);
@@ -197,7 +230,7 @@ namespace Aderant.Build.PipelineService {
                 throw new BuildPlatformException(string.Format("Could not connect to data service within the available time {0}. Reason:{1}", timeout, ex.Message), ex);
             }
 
-            Proxy = proxy;
+            InnerProxy = proxy;
         }
 
         private bool TestConnection(Binding binding, EndpointAddress address, out BuildPipelineServiceProxy proxy, out Exception exception) {
@@ -212,7 +245,7 @@ namespace Aderant.Build.PipelineService {
                     return true;
                 }
 
-                proxy.Ping();
+                proxy.ChannelContract.Ping();
 
                 lastSeenConnectionUri = dataCollectionServiceUri;
 
@@ -223,4 +256,5 @@ namespace Aderant.Build.PipelineService {
             }
         }
     }
+
 }

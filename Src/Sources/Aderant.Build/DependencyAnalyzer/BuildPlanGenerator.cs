@@ -28,6 +28,8 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         public string MetaprojectXml { get; set; }
 
+        public event EventHandler<ItemGroupItemMaterializedEventArgs> ItemGroupItemMaterialized;
+
         public Project GenerateProject(IReadOnlyList<IReadOnlyList<IDependable>> projectGroups, OrchestrationFiles orchestrationFiles, string buildFrom) {
             CaptureCommandLine();
 
@@ -224,6 +226,8 @@ namespace Aderant.Build.DependencyAnalyzer {
                     }
                 }
 
+                OnItemGroupItemMaterialized(new ItemGroupItemMaterializedEventArgs(project, propertiesForProjectInstance));
+
                 project[PropertiesKey] = propertiesForProjectInstance.ToString();
 
                 return project;
@@ -252,7 +256,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     ["IsPostTargets"] = node.IsPostTargets ? bool.TrueString : bool.FalseString,
                     ["IsPreTargets"] = !node.IsPostTargets ? bool.TrueString : bool.FalseString,
                     ["IsProjectFile"] = bool.FalseString,
-                    ["ProjectInstanceId"] = projectInstanceId.ToString("D")
+                    ["ProjectInstanceId"] = projectInstanceId.ToString("D"),
                 };
 
                 // Perf optimization, we can disable T4 if we haven't seen any projects under this solution path
@@ -261,6 +265,10 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
 
                 properties["ProjectInstanceId"] = projectInstanceId.ToString("D");
+                properties["RunUserTargets"] = node.AddedByDependencyAnalysis ? bool.FalseString : bool.TrueString;
+
+                OnItemGroupItemMaterialized(new ItemGroupItemMaterializedEventArgs(item, properties));
+
                 item[PropertiesKey] = properties.ToString();
 
                 return item;
@@ -378,6 +386,20 @@ namespace Aderant.Build.DependencyAnalyzer {
             propertiesList.Add("SolutionName", Path.GetFileNameWithoutExtension(visualStudioProject.SolutionFile));
 
             propertiesList.Add("BuildingSolutionFile", bool.FalseString);
+        }
+
+        protected virtual void OnItemGroupItemMaterialized(ItemGroupItemMaterializedEventArgs e) {
+            ItemGroupItemMaterialized?.Invoke(this, e);
+        }
+    }
+
+    internal class ItemGroupItemMaterializedEventArgs {
+        public ItemGroupItem ItemGroupItem { get; }
+        public PropertyList Properties { get; }
+
+        public ItemGroupItemMaterializedEventArgs(ItemGroupItem itemGroupItem, PropertyList properties) {
+            ItemGroupItem = itemGroupItem;
+            Properties = properties;
         }
     }
 }

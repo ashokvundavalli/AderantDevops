@@ -206,12 +206,11 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
             }
 
-            SynthesizeNodesForAllDirectories(makeFiles, graph);
+            var initializationNodes = SynthesizeNodesForAllDirectories(makeFiles, graph);
 
             var grouping = graph.ProjectsBySolutionRoot;
 
             List<IArtifact> templateDependencyProviders = new List<IArtifact>();
-            List<DirectoryNode> initializationNodes = new List<DirectoryNode>();
 
             foreach (var group in grouping) {
                 List<ConfiguredProject> dirtyProjects = group.Where(g => g.IsDirty).ToList();
@@ -220,8 +219,8 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 string solutionDirectoryName = PathUtility.GetFileName(group.Key);
 
-                IArtifact initializeNode;
-                IArtifact completionNode;
+                DirectoryNode initializeNode;
+                DirectoryNode completionNode;
                 AddDirectoryNodes(graph, solutionDirectoryName, group.Key, out initializeNode, out completionNode);
 
                 BuildStateFile stateFile = null;
@@ -232,6 +231,19 @@ namespace Aderant.Build.DependencyAnalyzer {
                 bool hasLoggedUpToDate = false;
 
                 foreach (var project in projects.Where(p => p.IsUnderSolutionRoot(group.Key))) {
+                    foreach (var startingNode in initializationNodes) {
+                        if (startingNode != initializeNode) {
+                            project.AddResolvedDependency(null, startingNode);
+
+                            if (startingNode.GetDependencies().Contains(initializeNode)) {
+                                // Prevent artificial creation of a circular reference
+                                continue;
+                            }
+
+                            initializeNode.AddResolvedDependency(null, startingNode);
+                        }
+                    }
+
                     // The project depends on prolog file
                     project.AddResolvedDependency(null, initializeNode);
 
@@ -246,7 +258,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                         foreach (var dependency in textTemplateDependencies) {
                             // Track that we need to add a transitive dependency later
                             if (!hasAddedNode) {
-                                DirectoryNode directoryNode = initializeNode as DirectoryNode;
+                                DirectoryNode directoryNode = initializeNode;
                                 if (directoryNode != null && !initializationNodes.Contains(initializeNode)) {
                                     initializationNodes.Add(directoryNode);
                                     hasAddedNode = true;
@@ -314,26 +326,45 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// We want to run any custom directory targets as these may invoke actions we cannot gain insight into and so need to
         /// schedule them as part of the sequence.
         /// </summary>
-        private static void SynthesizeNodesForAllDirectories(IReadOnlyCollection<string> makeFiles, DependencyGraph graph) {
-            if (makeFiles != null) {
-                foreach (var makeFile in makeFiles) {
-                    if (!string.IsNullOrWhiteSpace(makeFile)) {
-                        var directoryAboveMakeFile = makeFile.Replace(@"Build\TFSBuild.proj", string.Empty, StringComparison.OrdinalIgnoreCase).TrimEnd(Path.DirectorySeparatorChar);
-                        string solutionDirectoryName = PathUtility.GetFileName(directoryAboveMakeFile);
+        private List<DirectoryNode> SynthesizeNodesForAllDirectories(IReadOnlyCollection<string> makeFiles, DependencyGraph graph) {
+            var makeFileWithMetadatas = PipelineService.GetDirectoryMetadata();
 
-                        IArtifact initializeNode;
-                        IArtifact completionNode;
-                        AddDirectoryNodes(graph, solutionDirectoryName, directoryAboveMakeFile, out initializeNode, out completionNode);
+            List<string> list = new List<string>(makeFiles);
+            foreach (var file in makeFileWithMetadatas) {
+                if (!list.Contains(file.File, StringComparer.OrdinalIgnoreCase)) {
+                    list.Add(file.File);
+                }
+            }
+
+            List<DirectoryNode> initializationNodes = new List<DirectoryNode>();
+
+            foreach (var makeFile in list) {
+                if (!string.IsNullOrWhiteSpace(makeFile)) {
+                    var directoryAboveMakeFile = makeFile.Replace(@"Build\TFSBuild.proj", string.Empty, StringComparison.OrdinalIgnoreCase).TrimTrailingSlashes();
+                    string solutionDirectoryName = PathUtility.GetFileName(directoryAboveMakeFile);
+
+                    DirectoryNode initializeNode;
+                    DirectoryNode completionNode;
+                    AddDirectoryNodes(graph, solutionDirectoryName, directoryAboveMakeFile, out initializeNode, out completionNode);
+
+                    initializationNodes.Add(initializeNode);
+
+                    var makeFileWithMetadata = makeFileWithMetadatas.FirstOrDefault(s => string.Equals(s.File, makeFile, StringComparison.OrdinalIgnoreCase));
+                    if (makeFileWithMetadata != null) {
+                        initializeNode.AddedByDependencyAnalysis = true;
+                        completionNode.AddedByDependencyAnalysis = true;
                     }
                 }
             }
+
+            return initializationNodes;
         }
 
-        private static void AddDirectoryNodes(DependencyGraph graph, string nodeName, string nodeFullPath, out IArtifact initializeNode, out IArtifact completionNode) {
+        private static void AddDirectoryNodes(DependencyGraph graph, string nodeName, string nodeFullPath, out DirectoryNode initializeNode, out DirectoryNode completionNode) {
             // Create a new node that represents the start of a directory
             initializeNode = new DirectoryNode(nodeName, nodeFullPath, false);
 
-            var existing = graph.GetNodeById(initializeNode.Id) as IArtifact;
+            var existing = graph.GetNodeById<DirectoryNode>(initializeNode.Id);
             if (existing == null) {
                 graph.Add(initializeNode);
             } else {
@@ -342,7 +373,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             // Create a new node that represents the completion of a directory
             completionNode = new DirectoryNode(nodeName, nodeFullPath, true);
-            existing = graph.GetNodeById(completionNode.Id) as IArtifact;
+            existing = graph.GetNodeById<DirectoryNode>(completionNode.Id);
             if (existing == null) {
                 graph.Add(completionNode);
                 completionNode.AddResolvedDependency(null, initializeNode);
@@ -558,14 +589,16 @@ namespace Aderant.Build.DependencyAnalyzer {
                 ConfiguredProject dirtyProject = configuredProjects.FirstOrDefault(g => g.IsDirty);
                 if (dirtyProject != null) {
                     foreach (ConfiguredProject project in configuredProjects) {
-                        if (project.IsWebProject && !project.IsWorkflowProject()) {
-                            logger.Info($"Quirking! Web project: '{project.FullPath}' requires forced build as: '{dirtyProject.FullPath}' is modified.");
-                            // Web projects always need to be built as they have paths that reference content that needs to be deployed
-                            // during the build.
-                            // E.g script tags require that a file exists on disk. It's more reliable to have
-                            // web pipeline restore this content for us than try and restore it as part of the generic build reuse process.
-                            // <script type="text/javascript" src="../Scripts/ThirdParty.Jquery/jquery-2.2.4.js"></script>
-                            MarkDirty("", project, BuildReasonTypes.Forced);
+                        if (project.IncludeInBuild) {
+                            if (project.IsWebProject && !project.IsWorkflowProject()) {
+                                logger.Info($"Quirking! Web project: '{project.FullPath}' requires forced build as: '{dirtyProject.FullPath}' is modified.");
+                                // Web projects always need to be built as they have paths that reference content that needs to be deployed
+                                // during the build.
+                                // E.g script tags require that a file exists on disk. It's more reliable to have
+                                // web pipeline restore this content for us than try and restore it as part of the generic build reuse process.
+                                // <script type="text/javascript" src="../Scripts/ThirdParty.Jquery/jquery-2.2.4.js"></script>
+                                MarkDirty("", project, BuildReasonTypes.Forced);
+                            }
                         }
                     }
                 }
@@ -577,6 +610,10 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             if (desktopBuild) {
                 if (configuredProject != null) {
+                    if (!configuredProject.IncludeInBuild) {
+                        return false;
+                    }
+
                     if (configuredProject.IsDirty && configuredProject.BuildReason.Flags == BuildReasonTypes.CachedBuildNotFound) {
                         return false;
                     }

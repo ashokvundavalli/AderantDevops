@@ -20,6 +20,12 @@ namespace Aderant.Build.DependencyAnalyzer.Model {
         /// </summary>
         public string Directory { get; private set; }
 
+        /// <summary>
+        /// Sets a value indicating if this node was created during tree analysis.
+        /// If false then the user explicitly added this directory as a target.
+        /// </summary>
+        public bool AddedByDependencyAnalysis { get; set; }
+
         private static string CreateName(string name, bool isPostTargets) {
             if (isPostTargets) {
                 name += ".Post";

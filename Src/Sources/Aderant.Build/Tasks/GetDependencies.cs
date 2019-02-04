@@ -1,5 +1,7 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyResolver;
@@ -11,6 +13,7 @@ using Microsoft.Build.Utilities;
 namespace Aderant.Build.Tasks {
     public class GetDependencies : Task, ICancelableTask {
         private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+        private HashSet<string> enabledResolvers;
 
         public string ModulesRootPath { get; set; }
 
@@ -46,6 +49,11 @@ namespace Aderant.Build.Tasks {
         /// <value>The type of the build.</value>
         public string BuildType { get; set; }
 
+        public string[] EnabledResolvers {
+            get { return enabledResolvers.ToArray(); }
+            set { this.enabledResolvers = new HashSet<string>(value, StringComparer.OrdinalIgnoreCase); }
+        }
+
         public override bool Execute() {
             ModulesRootPath = Path.GetFullPath(ModulesRootPath);
 
@@ -78,7 +86,16 @@ namespace Aderant.Build.Tasks {
             ExpertModuleResolver moduleResolver = new ExpertModuleResolver(new PhysicalFileSystem(ModulesRootPath));
             moduleResolver.AddDependencySource(DropPath, ExpertModuleResolver.DropLocation);
 
-            Resolver resolver = new Resolver(logger, moduleResolver, new NupkgResolver());
+            List<IDependencyResolver> resolvers = new List<IDependencyResolver>();
+            if (IncludeResolver(nameof(ExpertModuleResolver))) {
+                resolvers.Add(moduleResolver);
+            }
+
+            if (IncludeResolver(nameof(NupkgResolver))) {
+                resolvers.Add(new NupkgResolver());
+            }
+
+            Resolver resolver = new Resolver(logger, resolvers.ToArray());
             resolver.ResolveDependencies(request, cancellationTokenSource.Token);
 
             return !Log.HasLoggedErrors;
@@ -92,6 +109,19 @@ namespace Aderant.Build.Tasks {
                 // Signal the cancellation token that we want to abort the async task
                 cancellationTokenSource.Cancel();
             }
+        }
+
+        private bool IncludeResolver(string name) {
+            if (enabledResolvers == null) {
+                return true;
+            }
+
+            var includeResolver = enabledResolvers != null && enabledResolvers.Contains(name);
+            if (!includeResolver) {
+                Log.LogMessage($"Resolver '{name}' is not enabled.");
+            }
+
+            return includeResolver;
         }
 
         private void LogParameters() {

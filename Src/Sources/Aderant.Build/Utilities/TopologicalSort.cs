@@ -2,15 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Aderant.Build.DependencyAnalyzer;
 
 namespace Aderant.Build.Utilities {
-
-    internal static class TopologicalSortExtensions {
-        public static IReadOnlyList<TNode> TopologicalSort<TNode>(this IEnumerable<TNode> nodes, Func<TNode, IEnumerable<TNode>> successors) {
-            return Aderant.Build.Utilities.TopologicalSort.IterativeSort(nodes, successors);
-        }
-    }
 
     /// <summary>
     /// A helper class that contains a topological sort algorithm.

@@ -389,11 +389,11 @@ namespace Aderant.Build {
         [DataMember]
         public string[] FilesWritten { get; set; }
 
-        [DataMember()]
+        [DataMember]
         public string OutputPath {
             get { return outputPath; }
             set {
-                value = value.NormalizePath();
+                value = value.NormalizeTrailingSlashes();
                 outputPath = value;
             }
         }

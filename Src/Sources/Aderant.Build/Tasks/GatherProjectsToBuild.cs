@@ -39,6 +39,7 @@ namespace Aderant.Build.Tasks {
             groveler = new DirectoryGroveler(new PhysicalFileSystem());
             groveler.Logger = new BuildTaskLogger(Log);
             groveler.Grovel(Context.Include, ExcludedPaths);
+            groveler.ExpandBuildTree(PipelineService);
 
             return !Log.HasLoggedErrors;
         }

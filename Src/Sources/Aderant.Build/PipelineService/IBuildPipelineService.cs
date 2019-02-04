@@ -8,8 +8,11 @@ using Aderant.Build.ProjectSystem.StateTracking;
 namespace Aderant.Build.PipelineService {
 
     [ServiceContract]
-    internal interface IBuildPipelineService : IArtifactService, IInputFileTrackingService, IDisposable {
+    internal interface IBuildPipelineService : IArtifactService, IInputFileTrackingService, IProjectTrackingService, IDirectoryMetadataService, IDisposable {
 
+        /// <summary>
+        /// Ensures the service is reachable.
+        /// </summary>
         [OperationContract]
         object[] Ping();
 
@@ -34,12 +37,31 @@ namespace Aderant.Build.PipelineService {
         [OperationContract]
         IEnumerable<ProjectOutputSnapshot> GetProjectSnapshots();
 
+        /// <summary>
+        /// Places a variable into the build property bag.
+        /// </summary>
         [OperationContract]
         void PutVariable(string scope, string variableName, string value);
 
+        /// <summary>
+        /// Interrogates the build property bag for variable in the provided scope.
+        /// </summary>
         [OperationContract]
         string GetVariable(string scope, string variableName);
 
+        [OperationContract]
+        void SetStatus(string status, string reason);
+
+
+    }
+
+    [ServiceContract]
+    internal interface IProjectTrackingService {
+        /// <summary>
+        /// Makes the build aware of a project and stores a minimal set of information about the project.
+        /// The data this stores can be useful in later phases of the pipeline where you need to interrogate a project but don't
+        /// want to pay the performance cost of loading the project file again.
+        /// </summary>
         [OperationContract]
         void TrackProject(OnDiskProjectInfo onDiskProject);
 
@@ -48,17 +70,31 @@ namespace Aderant.Build.PipelineService {
 
         [OperationContract(Name = "GetTrackedProjects2")]
         IEnumerable<OnDiskProjectInfo> GetTrackedProjects(IEnumerable<Guid> ids);
+    }
+
+    [ServiceContract]
+    internal interface IDirectoryMetadataService {
 
         [OperationContract]
-        void SetStatus(string status, string reason);
+        void AddDirectoryMetadata(BuildDirectoryContribution buildDirectoryContribution);
+
+        [OperationContract]
+        IReadOnlyCollection<BuildDirectoryContribution> GetDirectoryMetadata();
     }
 
     [ServiceContract]
     internal interface IInputFileTrackingService {
 
+        /// <summary>
+        /// Notifies the service it should track a set of files.
+        /// </summary>
         [OperationContract]
         void TrackInputFileDependencies(string solutionRoot, IReadOnlyCollection<TrackedInputFile> fileDependencies);
 
+        /// <summary>
+        /// Retrieves a collection of tracked files from the service. If the service has any files for the given key
+        /// they are removed from the internal buffer.
+        /// </summary>
         [OperationContract]
         IReadOnlyCollection<TrackedInputFile> ClaimTrackedInputFiles(string tag);
     }

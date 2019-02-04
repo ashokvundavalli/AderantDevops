@@ -87,8 +87,8 @@ namespace Aderant.Build.DependencyAnalyzer {
             artifacts.Add(artifact);
         }
 
-        public IDependable GetNodeById(string id) {
-            return Nodes.FirstOrDefault(s => string.Equals(s.Id, id, StringComparison.OrdinalIgnoreCase));
+        public T GetNodeById<T>(string id) where T : class, IArtifact {
+            return Nodes.FirstOrDefault(s => string.Equals(s.Id, id, StringComparison.OrdinalIgnoreCase)) as T;
         }
     }
 }
