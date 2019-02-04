@@ -2,16 +2,19 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Management.Automation;
+using System.Xml.Linq;
+using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
+using Aderant.Build.PipelineService;
 
 namespace Aderant.Build.ProjectSystem {
 
     internal class DirectoryGroveler {
-        private readonly IFileSystem physicalFileSystem;
 
         private readonly SortedSet<string> directoriesInBuild = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly SortedSet<string> extensibilityFiles = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly SortedSet<string> makeFiles = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly IFileSystem physicalFileSystem;
         private readonly SortedSet<string> projectFiles = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
         public DirectoryGroveler(IFileSystem physicalFileSystem) {
@@ -80,6 +83,27 @@ namespace Aderant.Build.ProjectSystem {
                 PreviouslySeenDirectories = seenDirectories,
             }.TraverseDirectoriesAndFindFiles(root, extensions);
         }
+
+        public void ExpandBuildTree(IDirectoryMetadataService pipelineService) {
+            foreach (string directory in DirectoriesInBuild) {
+                var file = Path.Combine(directory, "Build", DependencyManifest.DependencyManifestFileName);
+
+                if (physicalFileSystem.FileExists(file)) {
+                    var manifest = new DependencyManifest(file, XDocument.Parse(physicalFileSystem.ReadAllText(file)));
+
+                    foreach (ExpertModule module in manifest.ReferencedModules) {
+                        string moduleName = module.Name;
+
+                        // Construct a path that represents a possible directory that also needs to be built.
+                        // We will check if it actually exists, or is needed later in the processing
+                        pipelineService.AddDirectoryMetadata(
+                            new BuildDirectoryContribution(Path.Combine(Directory.GetParent(directory.TrimTrailingSlashes()).FullName, moduleName, "Build", "TFSBuild.proj")) {
+                                DependencyFile = file
+                            });
+                    }
+                }
+            }
+        }
     }
 
     internal class Traverse {
@@ -87,7 +111,6 @@ namespace Aderant.Build.ProjectSystem {
 
         public Traverse(IFileSystem physicalFileSystem) {
             this.physicalFileSystem = physicalFileSystem;
-
         }
 
         public IReadOnlyCollection<string> ExcludeFilterPatterns { get; set; }
@@ -119,11 +142,17 @@ namespace Aderant.Build.ProjectSystem {
                     if (PreviouslySeenDirectories != null) {
                         PreviouslySeenDirectories.Add(directory);
                     }
+
                     continue;
                 }
 
                 foreach (var extension in extensions) {
-                    files.AddRange(physicalFileSystem.GetFiles(directory, extension, false));
+                    var filesFromDirectory = physicalFileSystem.GetFiles(directory, extension, false);
+                    foreach (var file in filesFromDirectory) {
+                        if (!DoesPathContainExcludeFilterSegment(file, ExcludeFilterPatterns)) {
+                            files.Add(file);
+                        }
+                    }
                 }
 
                 if (PreviouslySeenDirectories != null) {
