@@ -279,7 +279,7 @@ namespace Aderant.Build.Packaging {
                     string destination = Path.GetDirectoryName(archive);
 
                     logger.Info("Extracting {0} -> {1}", archive, destination);
-                    fileSystem.ExtractZipToDirectory(archive, destination);
+                    fileSystem.ExtractZipToDirectory(archive, destination, true);
                 });
         }
 
@@ -308,7 +308,7 @@ namespace Aderant.Build.Packaging {
 
             if (context.StateFiles != null) {
                 BuildStateFile stateFile = context.GetStateFile(containerKey);
-                
+
                 if (stateFile != null) {
                     if (!string.Equals(stateFile.BucketId.Tag, containerKey, StringComparison.OrdinalIgnoreCase)) {
                         throw new InvalidOperationException($"Unexpected state file returned. Expected {containerKey} but found {stateFile.BucketId.Tag}");
@@ -319,7 +319,7 @@ namespace Aderant.Build.Packaging {
                 if (stateFile != null && stateFile.GetArtifacts(containerKey, out artifactManifests)) {
                     foreach (ArtifactManifest artifactManifest in artifactManifests) {
                         string artifactFolder = Path.Combine(stateFile.Location, artifactManifest.Id);
-                        
+
                         var spec = new ArtifactPathSpec {
                             ArtifactId = artifactManifest.Id,
                             Source = artifactFolder,
