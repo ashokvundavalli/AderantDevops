@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Microsoft.Build.Utilities;
 
@@ -16,7 +14,7 @@ namespace Aderant.Build.MSBuild {
 
         private Stack<XElement> elementStack = new Stack<XElement>();
         private List<string> visited = new List<string>();
-        
+
         /// <summary>
         /// Initializes a new instance of the <see cref="TargetXmlEmitter" /> class.
         /// </summary>
@@ -164,7 +162,7 @@ namespace Aderant.Build.MSBuild {
                 visited.Add(target.Name);
             }
 
-            // If we enter here already with a item on the stack we must add the item to the root, not as a child of the current item otherwise 
+            // If we enter here already with a item on the stack we must add the item to the root, not as a child of the current item otherwise
             // we will have nested targets which is not allowed.
             XElement currentTarget = null;
             if (elementStack.Count == 1) {
