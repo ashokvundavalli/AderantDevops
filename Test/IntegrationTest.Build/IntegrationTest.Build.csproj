@@ -111,6 +111,7 @@
     <Compile Include="ProjectTreeTests.cs" />
     <Compile Include="Tasks\CheckForDoubleWrites\CheckForDoubleWritesTests.cs" />
     <Compile Include="Tasks\PowerShellScript\PowerShellScriptTests.cs" />
+    <Compile Include="Tasks\MakeSymlink\MakeSymlinkTests.cs" />
     <Compile Include="Tasks\RetrieveArtifacts\RetrieveArtifactsTests.cs" />
     <Compile Include="Tasks\GenerateArchivesTest.cs" />
     <Compile Include="VersionControl\GitVersionControlTests.cs" />
@@ -146,6 +147,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="EndToEnd\Resources\Source\ModuleA\dir.props">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Tasks\MakeSymlink\test.targets">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <None Include="VersionControl\Resources\CommitGraphWalking.ps1" />

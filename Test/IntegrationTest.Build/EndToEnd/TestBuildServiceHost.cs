@@ -73,7 +73,7 @@ namespace IntegrationTest.Build.EndToEnd {
                 context = CreateContext(properties);
 
                 StartService();
-                service.Publish(context);
+                service.CurrentContext = context;
 
                 client = new BuildPipelineServiceClient(service.ServerUri.AbsoluteUri);
 
@@ -124,7 +124,7 @@ namespace IntegrationTest.Build.EndToEnd {
 
             context.BuildStateMetadata = buildStateMetadata;
 
-            service.Publish(context);
+            service.CurrentContext = context;
         }
 
         private SourceTreeMetadata GetSourceTreeMetadata() {

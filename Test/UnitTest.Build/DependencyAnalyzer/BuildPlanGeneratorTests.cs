@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.Model;
 using Aderant.Build.MSBuild;
 using Aderant.Build.ProjectSystem;
@@ -80,6 +81,36 @@ namespace UnitTest.Build.DependencyAnalyzer {
 
             Assert.IsTrue(list.ContainsKey("SolutionDirectoryPath"));
             Assert.IsTrue(list.ContainsValue(@"abc\"));
+        }
+
+
+        [TestMethod]
+        public void Run_user_targets_is_added_to_directory_nodes() {
+            var mock = new Mock<IFileSystem2>();
+            var project = new BuildPlanGenerator(mock.Object);
+
+            var items = new List<List<IDependable>> {
+                new List<IDependable> {
+                    new DirectoryNode("Foo", "", false)
+                }
+            };
+
+            PropertyList list = null;
+            project.ItemGroupItemMaterialized += (sender, args) => { list = args.Properties; };
+
+            Project generateProject = project.GenerateProject(
+                items,
+                new OrchestrationFiles {
+                    BeforeProjectFile = "A",
+                    AfterProjectFile = "B"
+                },
+                null);
+
+            generateProject.CreateXml();
+
+            Assert.IsNotNull(list);
+            Assert.IsTrue(list.ContainsKey("RunUserTargets"));
+            Assert.IsTrue(string.Equals(list["RunUserTargets"], "true", StringComparison.OrdinalIgnoreCase));
         }
     }
 }
