@@ -319,7 +319,7 @@ foreach(var replacement in replacements){
     <ItemGroup>
       <SourceFilesToCopyForTemplateTransform
                     Include="%(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\*"
-                    Exclude="%(_AllWorkflowDirectoriesWithMetadata.FullPath)\ABT\**;
+                    Exclude="%(_AllWorkflowDirectoriesWithMetadata.FullPath)\bin\**;
                              %(_AllWorkflowDirectoriesWithMetadata.FullPath)\packages\**\*;
                              %(_AllWorkflowDirectoriesWithMetadata.FullPath)\Dependencies\**\*;
                              %(_AllWorkflowDirectoriesWithMetadata.FullPath)\Build\TestResults\**\*;
@@ -340,10 +340,8 @@ foreach(var replacement in replacements){
                              %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\_Resharper*\**;
                              %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\*resharper.user;
                              %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\*.DotSettings;
-                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\Bin;
                              %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\obj\**;
                              %(_AllWorkflowDirectoriesWithMetadata.FullPath)\CommonBuild\**;
-                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\ThirdPartyBuild.txt;
                              %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\*.csproj.user;
                              %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\SharedBin\**;
                              %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\Web.*\**;">
