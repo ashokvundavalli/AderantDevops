@@ -54,6 +54,8 @@
 
     <CopyToDropEnabled Condition="'$(CopyToDropEnabled)' == '' And '$(IsDesktopBuild)' != 'true'">true</CopyToDropEnabled>
     <PackageProduct Condition="'$(CopyToDropEnabled)' == 'true'">true</PackageProduct>
+
+    <ParametersFile>$(SolutionRoot)Build\Parameters.props</ParametersFile>
   </PropertyGroup>
 
   <Import Project="Aderant.Build.Common.targets" />
@@ -61,6 +63,8 @@
   <Import Project="Aderant.Build.Testing.targets" />
   <Import Project="Aderant.Build.ServerImage.targets" />
   <!--<Import Project="Aderant.Build.IntegrationTesting.targets" />-->
+
+  <Import Project="$(ParametersFile)" Condition="Exists($(ParametersFile))" />
 
   <PropertyGroup>
     <BuildAndPackageDependsOn>
@@ -234,7 +238,8 @@
       ModulesRootPath="$(SolutionRoot)"
       DependenciesDirectory="$(SharedDependencyDirectory)"
       DropPath="$(XamlBuildDropLocation)"
-      ModulesInBuild="@(DirectoriesInBuild)" />
+      ModulesInBuild="@(DirectoriesInBuild)"
+      EnabledResolvers="@(EnabledResolvers)" />
 
     <MakeSymlink
       Link="%(DirectoriesInBuild.FullPath)\Dependencies"
