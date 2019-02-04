@@ -25,10 +25,6 @@ namespace Aderant.Build.MSBuild {
 
         public string Condition { get; set; }
 
-        public bool ContainsKey(string key) {
-            return metadata.ContainsKey(key);
-        }
-
         public bool TryGetValue(string key, out string value) {
             return metadata.TryGetValue(key, out value);
         }

@@ -99,7 +99,7 @@ namespace Aderant.Build.MSBuild {
         public override void Visit(MSBuildTask msBuildTask) {
             XElement element = new XElement(
                 Xmlns + "MSBuild",
-                new XAttribute("Projects", msBuildTask.Projects),
+                new XAttribute("Projects", msBuildTask.Projects ?? string.Empty),
                 new XAttribute("BuildInParallel", msBuildTask.BuildInParallel),
                 new XAttribute("StopOnFirstFailure", msBuildTask.StopOnFirstFailure.ToString()));
 
