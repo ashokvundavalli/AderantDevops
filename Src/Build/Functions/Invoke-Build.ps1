@@ -557,7 +557,7 @@ Should not be used as it prevents incremental builds which increases build times
         $contextService = [Aderant.Build.PipelineService.BuildPipelineServiceHost]::new()
         $contextService.StartService($contextEndpoint)
         Write-Debug "Service running on uri: $($contextService.ServerUri)"
-        $contextService.Publish($context)
+        $contextService.CurrentContext = $context
 
         $args = CreateToolArgumentString $context $RemainingArgs
 
@@ -582,6 +582,7 @@ Should not be used as it prevents incremental builds which increases build times
         }
     } catch {
         $succeeded = $false
+        Write-Error $PSItem.Tostring()
     } finally {
         $host.UI.RawUI.ForegroundColor = $currentColor
 
