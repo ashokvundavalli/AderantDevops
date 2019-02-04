@@ -1,4 +1,5 @@
-﻿using Aderant.Build;
+﻿using System.IO;
+using Aderant.Build;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTest.Build {
@@ -57,6 +58,28 @@ namespace UnitTest.Build {
 
             Assert.AreEqual(@"C:\B\737\1\s", parentDirectory);
         }
-    }
 
+        [TestMethod]
+        public void NormalizeTrailingSlashes() {
+            string result = PathUtility.NormalizeTrailingSlashes(@"Bin\Module\\\");
+
+            Assert.AreEqual(@"Bin\Module\\", result);
+        }
+
+        [TestMethod]
+        public void GetFileName() {
+            string result = PathUtility.GetFileName(@"Bin\Module\");
+            string result1 = Path.GetFileName(@"Bin\Module\");
+
+            Assert.AreEqual("Module", result);
+            Assert.AreEqual("", result1);
+        }
+
+        [TestMethod]
+        public void SystemIOGetFileName_is_broken() {
+            string result = Path.GetFileName(@"Bin\Module\");
+
+            Assert.AreEqual("", result);
+        }
+    }
 }

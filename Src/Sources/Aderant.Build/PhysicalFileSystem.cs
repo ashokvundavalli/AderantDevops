@@ -304,31 +304,6 @@ namespace Aderant.Build {
             return Enumerable.Empty<string>();
         }
 
-        private string SearchForFile(string startingDirectory, string fileName, SearchOptions searchOptions) {
-            // Canonicalize our starting location
-            string lookInDirectory = Path.GetFullPath(startingDirectory);
-
-            do {
-                // Construct the path that we will use to test against
-                string possibleFileDirectory = Path.Combine(lookInDirectory, fileName);
-
-                // If we successfully locate the file in the directory that we're
-                // looking in, simply return that location. Otherwise we'll
-                // keep moving up the tree.
-                if (this.FileExists(possibleFileDirectory) || searchOptions.ConsiderDirectories && DirectoryExists(possibleFileDirectory)) {
-                    // We've found the file, return the directory we found it in
-                    return lookInDirectory;
-                } else {
-                    // GetDirectoryName will return null when we reach the root
-                    // terminating our search
-                    lookInDirectory = Path.GetDirectoryName(lookInDirectory);
-                }
-            } while (lookInDirectory != null);
-
-            // When we didn't find the location, then return an empty string
-            return string.Empty;
-        }
-
         private string AddFileCore(string path, Action<Stream> writeToStream) {
             EnsureDirectory(Path.GetDirectoryName(path));
 
@@ -448,8 +423,28 @@ namespace Aderant.Build {
             return bulkCopy;
         }
 
-        public void ExtractZipToDirectory(string sourceArchiveFileName, string destination) {
-            ZipFile.ExtractToDirectory(sourceArchiveFileName, destination);
+        public void ExtractZipToDirectory(string sourceArchiveFileName, string destination, bool overwrite = false) {
+            using (ZipArchive zipArchive = ZipFile.OpenRead(sourceArchiveFileName)) {
+                ExtractToDirectory(zipArchive, destination, overwrite);
+            }
+        }
+
+        private static void ExtractToDirectory(ZipArchive archive, string destinationDirectoryName, bool overwrite) {
+            if (!overwrite) {
+                archive.ExtractToDirectory(destinationDirectoryName);
+                return;
+            }
+
+            foreach (ZipArchiveEntry file in archive.Entries) {
+                string completeFileName = Path.Combine(destinationDirectoryName, file.FullName);
+                if (file.Name == "") {
+                    // Assuming Empty for Directory
+                    Directory.CreateDirectory(Path.GetDirectoryName(completeFileName));
+                    continue;
+                }
+
+                file.ExtractToFile(completeFileName, true);
+            }
         }
 
         public bool IsSymlink(string directory) {
@@ -470,10 +465,5 @@ namespace Aderant.Build {
                 throw new InvalidOperationException($"Failed to create link {fileDestination} ==> {fileLocation}");
             }
         }
-    }
-
-    internal struct SearchOptions {
-        public IEnumerable<string> CeilingDirectories { get; set; }
-        public bool ConsiderDirectories { get; set; }
     }
 }

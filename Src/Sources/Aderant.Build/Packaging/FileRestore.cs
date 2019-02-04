@@ -56,6 +56,7 @@ namespace Aderant.Build.Packaging {
                 return fileWrite.Remove(index, outputPath.Length);
             }
 
+            // TODO: Remove this
             // If the file path matches any known output paths, proceed.
             foreach (string knownOutputPath in knownOutputPaths) {
                 index = fileWrite.IndexOf(knownOutputPath, StringComparison.OrdinalIgnoreCase);
@@ -89,7 +90,7 @@ namespace Aderant.Build.Packaging {
                 // Adjust the source relative path to a solution relative path
                 string localProjectFile = Path.Combine(solutionRoot, projectFile);
                 string directoryOfProject = Path.GetDirectoryName(localProjectFile);
-                string outputPath = project.Value.OutputPath.NormalizePath();
+                string outputPath = project.Value.OutputPath.NormalizeTrailingSlashes();
 
                 bool isTestProject = project.Value.IsTestProject;
                 if (isTestProject) {
@@ -140,7 +141,7 @@ namespace Aderant.Build.Packaging {
                         }
 
                         if (string.IsNullOrWhiteSpace(filePath)) {
-                            OnDiskProjectInfo projectInfo = BuildPipelineServiceClient.Current.GetTrackedProjects(new List<Guid> {
+                            OnDiskProjectInfo projectInfo = pipelineService.GetTrackedProjects(new List<Guid> {
                                 project.Value.ProjectGuid
                             }).FirstOrDefault();
 
@@ -149,7 +150,7 @@ namespace Aderant.Build.Packaging {
                                     if (fileWrite.Equals(projectInfo.DesktopBuildPackageLocation, StringComparison.OrdinalIgnoreCase)) {
                                         string targetPath = Path.GetFullPath(Path.Combine(directoryOfProject, fileWrite));
 
-                                        AddFileDestination(new HashSet<string> { targetPath }, artifactFile, targetPath, copyOperations);
+                                        AddFileDestination(destinationPaths, artifactFile, targetPath, copyOperations);
                                     }
                                 }
                             }
@@ -189,9 +190,12 @@ namespace Aderant.Build.Packaging {
             return targetPaths;
         }
 
+        /// <param name="destinationPaths">A set of paths to write files to. Used to prevent double writes</param>
+        /// <param name="file">The file downloaded from the artifact cache</param>
+        /// <param name="destination">The destination for <paramref name="file"/></param>
+        /// <param name="copyOperations">The copy operations</param>
         private void AddFileDestination(HashSet<string> destinationPaths, LocalArtifactFile file, string destination, List<PathSpec> copyOperations) {
             if (destinationPaths.Add(destination)) {
-                logger.Info($"Selected artifact file: '{file.FullPath}' to copy to: '{destination}'.");
                 copyOperations.Add(new PathSpec(file.FullPath, destination));
             } else {
                 logger.Warning("Double write for file: " + destination);

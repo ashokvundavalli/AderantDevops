@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Globalization;
 using System.IO;
-using System.IO.IsolatedStorage;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace Aderant.Build {
     public static class PathUtility {
@@ -126,7 +123,7 @@ namespace Aderant.Build {
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        public static string NormalizePath(this string path) {
+        public static string NormalizeTrailingSlashes(this string path) {
             if (path != null && path.EndsWith(@"\\")) {
                 //logger.Warning($"! Project {project.ProjectFile} output path ends with two path separators: '{projectOutputPath}'. Normalize this path.");
                 // Normalize path as sometimes it ends with two slashes
@@ -134,6 +131,13 @@ namespace Aderant.Build {
             }
 
             return path;
+        }
+
+        /// <summary>
+        /// Trims trailing path separators
+        /// </summary>
+        public static string TrimTrailingSlashes(this string path) {
+            return path.TrimEnd(Path.DirectorySeparatorChar).TrimEnd(Path.AltDirectorySeparatorChar);
         }
 
         /// <summary>
