@@ -434,7 +434,7 @@
     <Compile Include="DependencyResolver\VersionRequirement.cs" />
     <Compile Include="VisualStudioEnvironmentContext.cs" />
     <Compile Include="UpgradeTemplateBuildProcess.cs" />
-    <Compile Include="WebArchiveFileSystem.cs" />
+    <Compile Include="Legacy\WebArchiveFileSystem.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Assets\OpenTypeStd\FuturaStd-Bold.otf" />

@@ -2,7 +2,7 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <Target Name="GenerateSharedContentFile">
-    <MSBuild Projects="@(SharedContentContributors)"
+    <MSBuild Projects="@(SharedContentProducers)"
              Targets="WriteContentFile" />
   </Target>
 
@@ -10,7 +10,7 @@
   <Import Project="$(DirPropFile)" Condition="'$(DirPropFile)' != ''" />
 
   <Target Name="ExtractBuildCachePackages">
-    <CallTarget Targets="RestoreContent" Condition="'@(BuildCacheZipFiles)' != ''" />
+    <CallTarget Targets="RestoreContent" Condition="'@(BuildCacheZipFilesToRestore)' != ''" />
   </Target>
 
   <PropertyGroup>
@@ -22,8 +22,8 @@
   </PropertyGroup>
 
 
-  <Target Name="ExtractBuildCachePackagesCore">
-    <Error Text="Item does not exist: %(Identity)" Condition="!Exists(%(BuildCacheZipFiles.FullPath))" />
+  <Target Name="ExtractBuildCachePackagesCore" Condition="'$(IsBuildCacheEnabled)' != 'false'">
+    <Error Text="Item does not exist: %(Identity)" Condition="!Exists(%(BuildCacheZipFilesToRestore.FullPath))" />
 
     <!-- 7zip doesn't support rewriting archive paths.
          Web artifacts are packaged using MSDeploy which we customize to put content into a zip entry 'Content\PackageTmp'
@@ -33,11 +33,11 @@
          This is a performance optimization as it means we don't need to unzip and then merge two directories -->
     <MakeSymlink
       CreateLinkParent="true"
-      Link="$(ModuleBuildTempDirectory)%(BuildCacheZipFiles.ArchivePathToExtract)"
-      Target="%(BuildCacheZipFiles.Destination)"
+      Link="$(ModuleBuildTempDirectory)%(BuildCacheZipFilesToRestore.ArchivePathToExtract)"
+      Target="%(BuildCacheZipFilesToRestore.Destination)"
       Type="J" />
 
-    <Exec Command='"$(BuildToolsDirectory)7z.exe" x "%(BuildCacheZipFiles.FullPath)" %(BuildCacheZipFiles.ArchivePathToExtract) -aos -bd -bb -o$(ModuleBuildTempDirectory)'
+    <Exec Command='"$(BuildToolsDirectory)7z.exe" x "%(BuildCacheZipFilesToRestore.FullPath)" %(BuildCacheZipFilesToRestore.ArchivePathToExtract) -aos -bd -bb -o$(ModuleBuildTempDirectory)'
           WorkingDirectory="$([System.IO.Path]::GetDirectoryName($(DirPropFile)))" />
   </Target>
 

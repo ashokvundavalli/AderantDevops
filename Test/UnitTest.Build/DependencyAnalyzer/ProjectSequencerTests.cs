@@ -2,10 +2,13 @@
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.Logging;
 using Aderant.Build.Model;
+using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -103,7 +106,8 @@ namespace UnitTest.Build.DependencyAnalyzer {
 
             var g = new ProjectDependencyGraph(p1);
 
-            IReadOnlyCollection<IDependable> buildList = sequencer.GetProjectsBuildList(g,
+            IReadOnlyCollection<IDependable> buildList = sequencer.GetProjectsBuildList(
+                g,
                 g.GetDependencyOrder(),
                 orchestrationFiles,
                 ChangesToConsider.None,
@@ -169,6 +173,65 @@ namespace UnitTest.Build.DependencyAnalyzer {
 
             Assert.AreEqual(p1.BuildReason.Flags, BuildReasonTypes.ProjectOutputNotFound);
             Assert.IsTrue(p1.IsDirty);
+        }
+
+        [TestMethod]
+        public void AddedByDependencyAnalysis_is_false_when_user_selects_that_directory_to_build() {
+            var sequencer = new ProjectSequencer(new NullLogger(), new Mock<IFileSystem>().Object);
+
+            var ps = new Mock<IBuildPipelineService>();
+            // Simulate the "Bar" directory being added by expanding the build tree via
+            // analysis
+            ps.Setup(s => s.GetContributors()).Returns(
+                new[] {
+                    new BuildDirectoryContribution("Temp\\Bar\\" + WellKnownPaths.EntryPointFilePath) {
+                        DependencyFile = "Temp\\Bar\\Build\\" + DependencyManifest.DependencyManifestFileName,
+                        DependencyManifest = new DependencyManifest(
+                            "Bar",
+                            XDocument.Parse(Resources.DependencyManifest))
+                    },
+                });
+
+            sequencer.PipelineService = ps.Object;
+
+            List<DirectoryNode> nodes = sequencer.SynthesizeNodesForAllDirectories(
+                new[] {
+                    @"Temp\Foo\" + WellKnownPaths.EntryPointFilePath,
+                    // User also specifies Bar to build, so this nullifies the expansion added by GetContributors
+                    @"Temp\Bar\" + WellKnownPaths.EntryPointFilePath,
+                },
+                new ProjectDependencyGraph());
+
+            Assert.IsTrue(nodes.All(s => s.AddedByDependencyAnalysis == false));
+        }
+
+        [TestMethod]
+        public void AddedByDependencyAnalysis_is_true_when_user_selects_that_directory_to_build() {
+            var sequencer = new ProjectSequencer(new NullLogger(), new Mock<IFileSystem>().Object);
+
+            var ps = new Mock<IBuildPipelineService>();
+            // Simulate the "Bar" directory being added by expanding the build tree via
+            // analysis
+            ps.Setup(s => s.GetContributors()).Returns(
+                new[] {
+                    new BuildDirectoryContribution("Temp\\Bar\\" + WellKnownPaths.EntryPointFilePath) {
+                        DependencyFile = "Temp\\Bar\\Build\\" + DependencyManifest.DependencyManifestFileName,
+                        DependencyManifest = new DependencyManifest(
+                            "Bar",
+                            XDocument.Parse(Resources.DependencyManifest))
+                    },
+                });
+
+            sequencer.PipelineService = ps.Object;
+
+            List<DirectoryNode> nodes = sequencer.SynthesizeNodesForAllDirectories(
+                new[] {
+                    @"Temp\Foo\" + WellKnownPaths.EntryPointFilePath,
+                },
+                new ProjectDependencyGraph());
+
+            Assert.IsNotNull(nodes.SingleOrDefault(s => s.DirectoryName == "Foo" && !s.AddedByDependencyAnalysis));
+            Assert.IsNotNull(nodes.SingleOrDefault(s => s.DirectoryName == "Bar" && s.AddedByDependencyAnalysis));
         }
 
         [TestMethod]

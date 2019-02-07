@@ -148,11 +148,11 @@ namespace Aderant.Build.PipelineService {
             }
         }
 
-        public void AddDirectoryMetadata(BuildDirectoryContribution buildDirectoryContribution) {
+        public void AddBuildDirectoryContributor(BuildDirectoryContribution buildDirectoryContribution) {
             this.directoryMetadata.Add(buildDirectoryContribution);
         }
 
-        public IReadOnlyCollection<BuildDirectoryContribution> GetDirectoryMetadata() {
+        public IReadOnlyCollection<BuildDirectoryContribution> GetContributors() {
             return directoryMetadata;
         }
     }

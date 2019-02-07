@@ -208,34 +208,4 @@ SRCSRV: end ------------------------------------------------</value>
   <data name="buildstate" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>resources\buildstate.json;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
-  <data name="BuildTree" xml:space="preserve">
-    <value>Group 0
- └─AderantExpertLauncher.Pre
-Group 1
- ├─ExpertLauncher
- │  ├─Path: C:\Git\ExpertSuite\AderantExpertLauncher\Src\Aderant.ExpertLauncherProtocol\Aderant.ExpertLauncher.csproj
- │  └─Flags: CachedBuildNotFound
- └─Aderant.ExpertLauncherCO
-    ├─Path: C:\Git\ExpertSuite\AderantExpertLauncher\Src\AderantExpertLauncherProtocolCO\Aderant.ExpertLauncherCO.csproj
-    └─Flags: CachedBuildNotFound
-Group 2
- ├─ExpertLauncherMsiPerMachine
- │  ├─Path: C:\Git\ExpertSuite\AderantExpertLauncher\Src\ExpertLauncherMsiPerMachine\ExpertLauncherMsiPerMachine.wixproj
- │  └─Flags: CachedBuildNotFound
- ├─UnitTest.ExpertLauncher
- │  ├─Path: C:\Git\ExpertSuite\AderantExpertLauncher\Test\UnitTest.ExpertLauncher\UnitTest.ExpertLauncher.csproj
- │  └─Flags: CachedBuildNotFound
- └─Aderant.ApplicationLauncher
-    ├─Path: C:\Git\ExpertSuite\AderantExpertLauncher\Src\Aderant.DefaultApplicationLauncher\Aderant.ApplicationLauncher.csproj
-    └─Flags: CachedBuildNotFound
-Group 3
- ├─Aderant.ApplicationLauncher.UnitTest
- │  ├─Path: C:\Git\ExpertSuite\AderantExpertLauncher\Test\UnitTest.ApplicationLauncher\UnitTest.ApplicationLauncher.csproj
- │  └─Flags: CachedBuildNotFound
- └─Aderant.SampleLaunchable
-    ├─Path: C:\Git\ExpertSuite\AderantExpertLauncher\Test\SampleLaunchable\SampleLaunchable.csproj
-    └─Flags: CachedBuildNotFound
-Group 4
- └─AderantExpertLauncher.Post</value>
-  </data>
 </root>

@@ -114,6 +114,11 @@
     <Compile Include="BuildMetadataTests.cs" />
     <Compile Include="BuildProjectCheckTests.cs" />
     <Compile Include="DependencyAnalyzer\BuildPlanGeneratorTests.cs" />
+    <Compile Include="DependencyAnalyzer\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="DependencyResolver\PaketDependenciesStructureTests.cs" />
     <Compile Include="DirectoryMetadataServiceTests.cs" />
     <Compile Include="Packaging\FileRestoreTests.cs" />
@@ -229,6 +234,8 @@
     <None Include="Resources\buildstate.json" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="DependencyAnalyzer\Resources\BuildTree.txt" />
+    <Content Include="DependencyAnalyzer\Resources\DependencyManifest.xml" />
     <Content Include="MSBuild\SolutionConfigurationContentsGeneratorTests\Sample.sln">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -266,6 +273,10 @@
     <Content Include="Resources\CSharpProject.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="DependencyAnalyzer\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
     <EmbeddedResource Include="DependencyResolver\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>

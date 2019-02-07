@@ -1,4 +1,5 @@
 ﻿using System.Runtime.Serialization;
+using Aderant.Build.DependencyAnalyzer;
 using ProtoBuf;
 
 namespace Aderant.Build {
@@ -23,5 +24,9 @@ namespace Aderant.Build {
         /// The dependency file from the contributor
         /// </summary>
         public string DependencyFile { get; set; }
+
+        [IgnoreDataMember]
+        [ProtoIgnore]
+        public DependencyManifest DependencyManifest { get; set; }
     }
 }

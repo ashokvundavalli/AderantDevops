@@ -107,7 +107,6 @@
       <ExcludePaths Include="Tests.UIAutomation\" />
 
       <!--Need to teach the system that this provides the t4 engine-->
-      <ExcludePaths Include="Build.T4Task\" />
 
       <ExcludePaths Include="TempTransform\" />
       <ExcludePaths Include="Tests.Load\" />

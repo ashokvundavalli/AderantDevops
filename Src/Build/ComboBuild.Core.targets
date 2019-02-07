@@ -57,6 +57,11 @@
       <Output TaskParameter="Value" PropertyName="_GitDir" />
     </GetOrPutContextVariable>
 
+    <GetOrPutContextVariable
+      VariableName="IsBuildCacheEnabled">
+      <Output TaskParameter="Value" PropertyName="IsBuildCacheEnabled" />
+    </GetOrPutContextVariable>
+
     <!-- Properties available to both projects files and orchestration participants -->
     <PropertyGroup>
       <!--
@@ -78,7 +83,8 @@
         AlternativeOutputDirectory=$(SharedDependencyDirectory);
         ArtifactStagingDirectory=$(ArtifactStagingDirectory);
         RunCodeAnalysisOnThisProject=false;
-        _GitDir=$(_GitDir)
+        _GitDir=$(_GitDir);
+        IsBuildCacheEnabled=$(IsBuildCacheEnabled)
       </PropertiesCommonToAllProjects>
     </PropertyGroup>
 
@@ -109,10 +115,10 @@
           ModuleBuildDirectory=$(_SolutionRoot)\Build\;
           VariableScopeId=$(_SolutionRoot)
         </Properties>
-		
+
 		<!-- Set the default target metadata -->
 		<BuildAction></BuildAction>
-		
+
 		<!-- If it's a build system project default to the EndToEnd target -->
 		<BuildAction Condition="'%(IsProjectFile)' != 'true'">
 	      EndToEnd
@@ -126,7 +132,7 @@
   <Target Name="SetResumePoint">
 
     <Message Text="Setting resume point to group $(BuildGroupId)" />
-	
+
 	<Message Text="##vso[task.logdetail id=$(LogId);progress=100;state=Completed;Result=Failed]Build group $(BuildGroupId) failed. @(_ProjectsInGroup)"
              Condition="'$(IsDesktopBuild)' != 'true'" />
 

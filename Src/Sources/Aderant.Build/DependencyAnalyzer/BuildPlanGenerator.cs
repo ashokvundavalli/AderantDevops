@@ -30,7 +30,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         public event EventHandler<ItemGroupItemMaterializedEventArgs> ItemGroupItemMaterialized;
 
-        public Project GenerateProject(IReadOnlyList<IReadOnlyList<IDependable>> projectGroups, OrchestrationFiles orchestrationFiles, string buildFrom) {
+        public Project GenerateProject(IReadOnlyList<IReadOnlyList<IDependable>> projectGroups, OrchestrationFiles orchestrationFiles, string buildFrom = null) {
             CaptureCommandLine();
 
             Project project = new Project();
@@ -289,7 +289,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         internal PropertyList AddBuildProperties(PropertyList propertiesForProjectInstance, IFileSystem fileSystem, string solutionDirectoryPath) {
-            string responseFile = Path.Combine(solutionDirectoryPath, "Build", Path.ChangeExtension(Constants.EntryPointFile, "rsp"));
+            string responseFile = Path.Combine(solutionDirectoryPath, "Build", Path.ChangeExtension(WellKnownPaths.EntryPointFileName, "rsp"));
 
             PropertyList properties = null;
 

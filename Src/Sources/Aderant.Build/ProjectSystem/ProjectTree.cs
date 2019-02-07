@@ -44,9 +44,6 @@ namespace Aderant.Build.ProjectSystem {
         private Dictionary<Guid, ProjectInSolution> projectsByGuid = new Dictionary<Guid, ProjectInSolution>();
         private Dictionary<Guid, string> projectToSolutionMap = new Dictionary<Guid, string>();
 
-        // Tracks the solution files and what project guids they think they are tracking.
-        private Dictionary<Guid, string> solutionProjectView = new Dictionary<Guid, string>();
-
 
         public ProjectTree() {
 
@@ -158,7 +155,7 @@ namespace Aderant.Build.ProjectSystem {
 
             foreach (var project in LoadedConfiguredProjects) {
                 try {
-                    BuildCurrentSolutionConfigurationXml(collector.ProjectConfiguration);
+                    GenerateCurrentSolutionConfigurationXml(collector.ProjectConfiguration);
 
                     await project.CollectBuildDependencies(collector);
                 } catch (Exception ex) {
@@ -168,7 +165,7 @@ namespace Aderant.Build.ProjectSystem {
             }
         }
 
-        private void BuildCurrentSolutionConfigurationXml(ConfigurationToBuild collectorProjectConfiguration) {
+        private void GenerateCurrentSolutionConfigurationXml(ConfigurationToBuild collectorProjectConfiguration) {
             var projectsInSolutions = projectsByGuid.Values;
 
             var generator = new SolutionConfigurationContentsGenerator(collectorProjectConfiguration);
@@ -182,6 +179,8 @@ namespace Aderant.Build.ProjectSystem {
 
                 try {
                     project.AnalyzeBuildDependencies(collector);
+                    //PipelineService.BuildPipelineServiceClient.GetCurrentProxy().GetContributors()
+
                 } catch (Exception ex) {
                     logger.LogErrorFromException(ex, false, false);
                     throw;

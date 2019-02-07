@@ -5,14 +5,10 @@
         /// </summary>
         public static string BuildInfrastructureDirectory = "Build.Infrastructure";
 
-        public static string EntryPointFile = "TFSBuild.proj";
-
         /// <summary>
         /// The modules directory
         /// </summary>
         public static string ModulesDirectory = "Modules";
-
-        public static string BranchNameVariable = "$(BranchName)";
 
         public static string NugetServerApiKey = "abc";
 
@@ -27,5 +23,17 @@
         public static string DefaultNuGetServer = "https://www.nuget.org/api/v2";
 
         internal static string MainDependencyGroup = Paket.Constants.MainDependencyGroup.ToString();
+    }
+
+    public static class WellKnownPaths {
+        /// <summary>
+        /// Defines the file that marks a directory as a build contributor.
+        /// </summary>
+        public static string EntryPointFileName = "TFSBuild.proj";
+
+        /// <summary>
+        /// Defines the directory prefix and file that marks a directory as a build contributor.
+        /// </summary>
+        public static string EntryPointFilePath = "Build\\" + EntryPointFileName;
     }
 }

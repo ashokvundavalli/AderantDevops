@@ -8,7 +8,7 @@ using Aderant.Build.ProjectSystem.StateTracking;
 namespace Aderant.Build.PipelineService {
 
     [ServiceContract]
-    internal interface IBuildPipelineService : IArtifactService, IInputFileTrackingService, IProjectTrackingService, IDirectoryMetadataService, IDisposable {
+    internal interface IBuildPipelineService : IArtifactService, IInputFileTrackingService, IProjectTrackingService, IBuildTreeContributorService, IDisposable {
 
         /// <summary>
         /// Ensures the service is reachable.
@@ -73,13 +73,13 @@ namespace Aderant.Build.PipelineService {
     }
 
     [ServiceContract]
-    internal interface IDirectoryMetadataService {
+    internal interface IBuildTreeContributorService {
 
         [OperationContract]
-        void AddDirectoryMetadata(BuildDirectoryContribution buildDirectoryContribution);
+        void AddBuildDirectoryContributor(BuildDirectoryContribution buildDirectoryContribution);
 
         [OperationContract]
-        IReadOnlyCollection<BuildDirectoryContribution> GetDirectoryMetadata();
+        IReadOnlyCollection<BuildDirectoryContribution> GetContributors();
     }
 
     [ServiceContract]

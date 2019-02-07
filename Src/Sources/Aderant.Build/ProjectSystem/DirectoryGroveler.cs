@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Management.Automation;
 using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer;
@@ -55,7 +56,7 @@ namespace Aderant.Build.ProjectSystem {
             foreach (var path in filePathCollector) {
                 string fileName = Path.GetFileName(path);
 
-                if (string.Equals(fileName, "TFSBuild.proj")) {
+                if (string.Equals(fileName, WellKnownPaths.EntryPointFileName)) {
                     makeFiles.Add(path);
                     directoriesInBuild.Add(Path.GetFullPath(Path.GetDirectoryName(path) + "\\..\\"));
                     continue;
@@ -74,7 +75,7 @@ namespace Aderant.Build.ProjectSystem {
             string[] extensions = new[] {
                 "*.csproj",
                 "*.wixproj",
-                "TFSBuild.proj",
+                WellKnownPaths.EntryPointFileName,
                 "dir.props",
             };
 
@@ -84,7 +85,12 @@ namespace Aderant.Build.ProjectSystem {
             }.TraverseDirectoriesAndFindFiles(root, extensions);
         }
 
-        public void ExpandBuildTree(IDirectoryMetadataService pipelineService) {
+        /// <summary>
+        /// Expands the scope of the build tree by pulling in directories that are referenced by other sources of dependency information
+        /// </summary>
+        public void ExpandBuildTree(IBuildTreeContributorService pipelineService) {
+            HashSet<string> contributorsAdded = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
             foreach (string directory in DirectoriesInBuild) {
                 var file = Path.Combine(directory, "Build", DependencyManifest.DependencyManifestFileName);
 
@@ -96,10 +102,18 @@ namespace Aderant.Build.ProjectSystem {
 
                         // Construct a path that represents a possible directory that also needs to be built.
                         // We will check if it actually exists, or is needed later in the processing
-                        pipelineService.AddDirectoryMetadata(
-                            new BuildDirectoryContribution(Path.Combine(Directory.GetParent(directory.TrimTrailingSlashes()).FullName, moduleName, "Build", "TFSBuild.proj")) {
-                                DependencyFile = file
-                            });
+                        string contributorRoot = Path.Combine(Directory.GetParent(directory.TrimTrailingSlashes()).FullName, moduleName, "Build");
+
+                        if (!contributorsAdded.Contains(contributorRoot)) {
+                            string contributorMakeFile = Path.Combine(contributorRoot, WellKnownPaths.EntryPointFileName);
+
+                            pipelineService.AddBuildDirectoryContributor(
+                                new BuildDirectoryContribution(contributorMakeFile) {
+                                    DependencyFile = file
+                                });
+
+                            contributorsAdded.Add(contributorRoot);
+                        }
                     }
                 }
             }

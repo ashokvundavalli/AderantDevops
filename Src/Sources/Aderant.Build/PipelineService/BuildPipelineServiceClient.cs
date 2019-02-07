@@ -106,12 +106,12 @@ namespace Aderant.Build.PipelineService {
             return InvokeServiceAction(() => InnerProxy.ChannelContract.ClaimTrackedInputFiles(tag));
         }
 
-        public void AddDirectoryMetadata(BuildDirectoryContribution buildDirectoryContribution) {
-            InvokeServiceAction(() => InnerProxy.ChannelContract.AddDirectoryMetadata(buildDirectoryContribution));
+        public void AddBuildDirectoryContributor(BuildDirectoryContribution buildDirectoryContribution) {
+            InvokeServiceAction(() => InnerProxy.ChannelContract.AddBuildDirectoryContributor(buildDirectoryContribution));
         }
 
-        public IReadOnlyCollection<BuildDirectoryContribution> GetDirectoryMetadata() {
-            return InvokeServiceAction(() => InnerProxy.ChannelContract.GetDirectoryMetadata());
+        public IReadOnlyCollection<BuildDirectoryContribution> GetContributors() {
+            return InvokeServiceAction(() => InnerProxy.ChannelContract.GetContributors());
         }
 
         public void Dispose() {

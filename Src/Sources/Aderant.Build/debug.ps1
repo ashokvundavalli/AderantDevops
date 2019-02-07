@@ -2,15 +2,5 @@
 # Used as a debugging aid as the number of args to pass to sucessfully boot up the build system can
 
 
-cd C:\Source\ExpertSuite\WebCore
-bm . -Include ..\Office\, ..\Case\ -NoDependencyFetch
-
-#bm -downstream -transitive /p:VisualStudioVersion=14.0 /p:PackageArtifacts=true /p:T4TransformEnabled=false /p:RetrievePrebuilts=false
-
- #bm -Include C:\tfs\ExpertSuite\Dev\vnext\Modules\ -Resume
-
-#bm -WhatIf -JustMyChanges -downstream -transitive #-NoBuildCache
-#bm -DirectoriesToBuild C:\tfs\ExpertSuite\Dev\vnext\Modules\SDK.Workflow\  -WhatIf
-
-
-#C:\Source\Build.Infrastructure\Src\Package\GetProduct.ps1 -productManifestPath C:\Source\ExpertSuite\ExpertManifest.xml -dropRoot \\dfs.aderant.com\ExpertSuite\dev\vnext -binariesDirectory C:\Source\ExpertSuite\_as\_product -getDebugFiles:1
+cd C:\Source\ExpertSuite\
+bm -include .\Billing\ -NoBuildCache

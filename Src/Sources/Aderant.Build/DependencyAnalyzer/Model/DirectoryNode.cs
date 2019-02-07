@@ -8,9 +8,18 @@ namespace Aderant.Build.DependencyAnalyzer.Model {
         public DirectoryNode(string id, string directory, bool isPostTargets) {
             IsPostTargets = isPostTargets;
             Directory = directory;
+            this.DirectoryName = id;
             Id = CreateName(id, isPostTargets);
         }
 
+        /// <summary>
+        /// Gets the name of the directory.
+        /// </summary>
+        public string DirectoryName { get; }
+
+        /// <summary>
+        /// Gets the build instance unique id for this instance.
+        /// </summary>
         public override string Id { get; }
 
         public bool IsPostTargets { get; }

@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.Logging;
 using Aderant.Build.Model;
@@ -41,20 +43,10 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// </summary>
         public string MetaprojectXml { get; set; }
 
-        internal static void WriteBuildTree(IFileSystem fileSystem, BuildOperationContext context, string treeText) {
-            string treeFile = Path.Combine(context.BuildRoot, "BuildTree.txt");
-
-            if (fileSystem.FileExists(treeFile)) {
-                fileSystem.DeleteFile(treeFile);
-            }
-
-            fileSystem.WriteAllText(treeFile, treeText);
-        }
-
         public BuildPlan CreatePlan(BuildOperationContext context, OrchestrationFiles files, DependencyGraph graph) {
             isDesktopBuild = context.IsDesktopBuild;
 
-            bool assumeNoBuildCache = false;
+            bool isBuildCacheEnabled = true;
 
             if (context.StateFiles == null) {
                 FindStateFiles(context);
@@ -64,9 +56,11 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
 
                 if (context.StateFiles == null || context.StateFiles.Count == 0) {
-                    assumeNoBuildCache = true;
+                    isBuildCacheEnabled = false;
                 }
             }
+
+            context.Variables["IsBuildCacheEnabled"] = isBuildCacheEnabled.ToString();
 
             var projectGraph = new ProjectDependencyGraph(graph);
             // Ensure that any further usages of graph refer to our wrapper
@@ -82,7 +76,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 ConfiguredProject configuredProject = dependable as ConfiguredProject;
 
                 if (configuredProject != null) {
-                    if (assumeNoBuildCache) {
+                    if (isBuildCacheEnabled == false) {
                         // No cache so mark everything as changed
                         configuredProject.IsDirty = true;
                         configuredProject.SetReason(BuildReasonTypes.Forced | BuildReasonTypes.CachedBuildNotFound);
@@ -133,6 +127,16 @@ namespace Aderant.Build.DependencyAnalyzer {
             return new BuildPlan(project) {
                 DirectoriesInBuild = directoriesInBuild,
             };
+        }
+
+        internal static void WriteBuildTree(IFileSystem fileSystem, BuildOperationContext context, string treeText) {
+            string treeFile = Path.Combine(context.BuildRoot, "BuildTree.txt");
+
+            if (fileSystem.FileExists(treeFile)) {
+                fileSystem.DeleteFile(treeFile);
+            }
+
+            fileSystem.WriteAllText(treeFile, treeText);
         }
 
         private void EvictNotExistentProjects(BuildOperationContext context) {
@@ -233,14 +237,14 @@ namespace Aderant.Build.DependencyAnalyzer {
                 foreach (var project in projects.Where(p => p.IsUnderSolutionRoot(group.Key))) {
                     foreach (var startingNode in initializationNodes) {
                         if (startingNode != initializeNode) {
-                            project.AddResolvedDependency(null, startingNode);
+                            //project.AddResolvedDependency(null, startingNode);
 
                             if (startingNode.GetDependencies().Contains(initializeNode)) {
                                 // Prevent artificial creation of a circular reference
                                 continue;
                             }
 
-                            initializeNode.AddResolvedDependency(null, startingNode);
+                            //initializeNode.AddResolvedDependency(null, startingNode);
                         }
                     }
 
@@ -326,38 +330,84 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// We want to run any custom directory targets as these may invoke actions we cannot gain insight into and so need to
         /// schedule them as part of the sequence.
         /// </summary>
-        private List<DirectoryNode> SynthesizeNodesForAllDirectories(IReadOnlyCollection<string> makeFiles, DependencyGraph graph) {
-            var makeFileWithMetadatas = PipelineService.GetDirectoryMetadata();
+        internal List<DirectoryNode> SynthesizeNodesForAllDirectories(IReadOnlyCollection<string> makeFiles, DependencyGraph graph) {
+            var contributions = PipelineService.GetContributors();
 
             List<string> list = new List<string>(makeFiles);
-            foreach (var file in makeFileWithMetadatas) {
-                if (!list.Contains(file.File, StringComparer.OrdinalIgnoreCase)) {
-                    list.Add(file.File);
+            foreach (var contribution in contributions) {
+                if (!list.Contains(contribution.File, StringComparer.OrdinalIgnoreCase)) {
+                    list.Add(contribution.File);
                 }
             }
 
             List<DirectoryNode> initializationNodes = new List<DirectoryNode>();
+            List<DirectoryNode> completionNodes = new List<DirectoryNode>();
+
+            Dictionary<string, DependencyManifest> manifestMap = new Dictionary<string, DependencyManifest>();
 
             foreach (var makeFile in list) {
                 if (!string.IsNullOrWhiteSpace(makeFile)) {
-                    var directoryAboveMakeFile = makeFile.Replace(@"Build\TFSBuild.proj", string.Empty, StringComparison.OrdinalIgnoreCase).TrimTrailingSlashes();
-                    string solutionDirectoryName = PathUtility.GetFileName(directoryAboveMakeFile);
+                    var directoryAboveMakeFile = makeFile.Replace(WellKnownPaths.EntryPointFilePath, string.Empty, StringComparison.OrdinalIgnoreCase).TrimTrailingSlashes();
+                    string nodeName = PathUtility.GetFileName(directoryAboveMakeFile);
 
                     DirectoryNode initializeNode;
                     DirectoryNode completionNode;
-                    AddDirectoryNodes(graph, solutionDirectoryName, directoryAboveMakeFile, out initializeNode, out completionNode);
+                    AddDirectoryNodes(graph, nodeName, directoryAboveMakeFile, out initializeNode, out completionNode);
 
                     initializationNodes.Add(initializeNode);
+                    completionNodes.Add(completionNode);
 
-                    var makeFileWithMetadata = makeFileWithMetadatas.FirstOrDefault(s => string.Equals(s.File, makeFile, StringComparison.OrdinalIgnoreCase));
-                    if (makeFileWithMetadata != null) {
-                        initializeNode.AddedByDependencyAnalysis = true;
-                        completionNode.AddedByDependencyAnalysis = true;
+                    // Check if this item was added by the user or by the system. This information is used later to determine if
+                    // we need to run user steps (like solution packaging etc) or if these can be skipped
+                    var contribution = contributions.FirstOrDefault(s => string.Equals(s.File, makeFile, StringComparison.OrdinalIgnoreCase));
+                    if (contribution != null) {
+
+                        // Ensure the user did not explicitly as this directory to be built
+                        if (!makeFiles.Contains(contribution.File)) {
+                            initializeNode.AddedByDependencyAnalysis = true;
+                            completionNode.AddedByDependencyAnalysis = true;
+
+                            if (contribution.DependencyManifest != null) {
+                                manifestMap[contribution.DependencyFile] = contribution.DependencyManifest;
+                            }
+                        }
                     }
                 }
             }
 
+            SetupDirectoryDependencies(initializationNodes, completionNodes, manifestMap);
+
             return initializationNodes;
+        }
+
+        private void SetupDirectoryDependencies(List<DirectoryNode> nodes, List<DirectoryNode> completionNodes, Dictionary<string, DependencyManifest> manifestMap) {
+            foreach (var node in nodes) {
+                string manifestFilePath = Path.Combine(node.Directory, "Build", DependencyManifest.DependencyManifestFileName);
+
+                DependencyManifest manifest;
+                if (!manifestMap.TryGetValue(manifestFilePath, out manifest)) {
+                    if (fileSystem.FileExists(manifestFilePath)) {
+                        manifest = new DependencyManifest("", XDocument.Parse(fileSystem.ReadAllText(manifestFilePath)));
+                    }
+                }
+
+                if (manifest == null) {
+                    continue;
+                }
+
+                foreach (var item in manifest.ReferencedModules) {
+                    var nameToTreatAsDependency = item.CustomAttributes
+                        .FirstOrDefault(s => string.Equals(s.Name.LocalName, "TreatAsDependency", StringComparison.OrdinalIgnoreCase) && string.Equals(s.Value, "true", StringComparison.OrdinalIgnoreCase));
+
+                    if (nameToTreatAsDependency != null) {
+                        DirectoryNode dependency = completionNodes.FirstOrDefault(s => string.Equals(s.DirectoryName, item.Name, StringComparison.OrdinalIgnoreCase) && s.IsPostTargets);
+
+                        if (dependency != null) {
+                            node.AddResolvedDependency(null, dependency);
+                        }
+                    }
+                }
+            }
         }
 
         private static void AddDirectoryNodes(DependencyGraph graph, string nodeName, string nodeFullPath, out DirectoryNode initializeNode, out DirectoryNode completionNode) {
@@ -577,6 +627,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         private void MarkWebProjectsDirty(ProjectDependencyGraph graph) {
+            //return;
             // TODO: Remove this hack as it costs too much perf
             // We need a way to trigger the content deployment of web projects
 

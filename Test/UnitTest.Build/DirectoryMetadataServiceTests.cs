@@ -16,8 +16,8 @@ namespace UnitTest.Build {
                 host.StartService(id);
 
                 using (var impl = BuildPipelineServiceClient.GetProxy(id)) {
-                    impl.AddDirectoryMetadata(new BuildDirectoryContribution("A"));
-                    IReadOnlyCollection<BuildDirectoryContribution> metadata = impl.GetDirectoryMetadata();
+                    impl.AddBuildDirectoryContributor(new BuildDirectoryContribution("A"));
+                    IReadOnlyCollection<BuildDirectoryContribution> metadata = impl.GetContributors();
 
                     Assert.AreEqual(1, metadata.Count);
                 }
