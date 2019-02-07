@@ -179,8 +179,6 @@ namespace Aderant.Build.ProjectSystem {
 
                 try {
                     project.AnalyzeBuildDependencies(collector);
-                    //PipelineService.BuildPipelineServiceClient.GetCurrentProxy().GetContributors()
-
                 } catch (Exception ex) {
                     logger.LogErrorFromException(ex, false, false);
                     throw;
