@@ -380,7 +380,7 @@
     </PropertyGroup>
 
     <Exec
-      Condition="Exists($(FactoryResourceGenerator))"
+      Condition="Exists('$(FactoryResourceGenerator)')"
       Command="&quot;$(FactoryResourceGenerator)&quot; /v:+ /SuppressHeader /f:$(ExpertSourceDirectory) /of:$(ExpertSourceDirectory)Factory.bin"
       IgnoreExitCode="false" />
 
@@ -405,6 +405,28 @@
   <Target Name="CleanBinariesBeforePackaging">
   </Target>
 
+
+  <Target Name="RunDeploymentCheck" Condition="'$(IsDesktopBuild)' != 'true'">
+
+    <PropertyGroup>
+      <DeploymentCheck Condition="'$(DeploymentCheck)' == ''">$(LocalExpertBinariesDirectory)Test\DeploymentCheck\DeploymentCheck.exe</DeploymentCheck>
+      <ErrorMessage>Failed to validate role manifests; please refer to the RunDeploymentCheck section of the build log.</ErrorMessage>
+    </PropertyGroup>
+
+    <Exec Condition="Exists('$(DeploymentCheck)')"
+      Command="&quot;$(DeploymentCheck)&quot; $(TargetName) $(ExpertSourceDirectory)"
+      IgnoreExitCode="false" />
+
+    <OnError ExecuteTargets="PrintErrorMessage" />
+
+  </Target>
+
+
+  <Target Name="PrintErrorMessage">
+    <Message Text ="##vso[task.logissue type=error]$(ErrorMessage)" />
+  </Target>
+
+
   <PropertyGroup>
     <PackageProductDependsOn>
       GetFilesForPackage;
@@ -412,6 +434,7 @@
       GenerateFactory;
       ArchiveArtifacts;
       CleanBinariesBeforePackaging;
+      RunDeploymentCheck;
     </PackageProductDependsOn>
   </PropertyGroup>
 
