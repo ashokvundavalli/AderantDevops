@@ -111,18 +111,15 @@
           BinModuleDirectory=$(_SolutionRoot)\Bin\Module\;
           BinTestDirectory=$(_SolutionRoot)\Bin\Test\;
           ModuleSourceDirectory=$(_SolutionRoot)\Src\;
-		  ModuleTestDirectory=$(_SolutionRoot)\Test\;
+          ModuleTestDirectory=$(_SolutionRoot)\Test\;
           ModuleBuildDirectory=$(_SolutionRoot)\Build\;
           VariableScopeId=$(_SolutionRoot)
         </Properties>
 
-		<!-- Set the default target metadata -->
-		<BuildAction></BuildAction>
-
-		<!-- If it's a build system project default to the EndToEnd target -->
-		<BuildAction Condition="'%(IsProjectFile)' != 'true'">
-	      EndToEnd
-		</BuildAction>
+        <!-- Set the default target metadata -->
+        <BuildAction></BuildAction>
+        <!-- If it's a build system project default to the EndToEnd target -->
+        <BuildAction Condition="'%(IsProjectFile)' != 'true'">EndToEnd</BuildAction>
       </ProjectsInGroup>
     </ItemGroup>
 
@@ -133,7 +130,7 @@
 
     <Message Text="Setting resume point to group $(BuildGroupId)" />
 
-	<Message Text="##vso[task.logdetail id=$(LogId);progress=100;state=Completed;Result=Failed]Build group $(BuildGroupId) failed. @(_ProjectsInGroup)"
+  <Message Text="##vso[task.logdetail id=$(LogId);progress=100;state=Completed;Result=Failed]Build group $(BuildGroupId) failed. @(_ProjectsInGroup)"
              Condition="'$(IsDesktopBuild)' != 'true'" />
 
     <XmlPoke XmlInputPath="$(BuildPlanFile)"
