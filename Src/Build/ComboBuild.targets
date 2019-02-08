@@ -414,7 +414,7 @@
     </PropertyGroup>
 
     <Exec Condition="Exists('$(DeploymentCheck)')"
-      Command="&quot;$(DeploymentCheck)&quot; $(TargetName) $(ExpertSourceDirectory)"
+      Command="&quot;$(DeploymentCheck)&quot; ValidateRoleManifests $(ExpertSourceDirectory)"
       IgnoreExitCode="false" />
 
     <OnError ExecuteTargets="PrintErrorMessage" />
