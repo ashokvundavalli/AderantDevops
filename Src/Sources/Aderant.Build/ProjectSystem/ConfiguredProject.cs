@@ -87,10 +87,6 @@ namespace Aderant.Build.ProjectSystem {
             set { isWebProject = value ? Memoizer<ConfiguredProject>.True : Memoizer<ConfiguredProject>.False; }
         }
 
-        public virtual string DesktopBuildPackageLocation {
-            get { return project.Value.GetPropertyValue("DesktopBuildPackageLocation"); }
-        }
-
         public virtual bool IsTestProject {
             get {
                 var guids = ProjectTypeGuids;
@@ -415,10 +411,9 @@ namespace Aderant.Build.ProjectSystem {
                     textTemplateDependencies = new List<IResolvedDependency>();
                 }
 
-                //if (textTemplateDependencies.Any(s => s.ResolvedReference == resolvedDependency.Artifact)) {
-//
-              //  }
-                textTemplateDependencies.Add(resolvedDependency);
+                if (textTemplateDependencies.All(r => r.ResolvedReference != resolvedDependency.ResolvedReference)) {
+                    textTemplateDependencies.Add(resolvedDependency);
+                }
             }
         }
 

@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Management.Automation;
 
 namespace Aderant.Build {
     public static class PathUtility {
@@ -53,7 +55,8 @@ namespace Aderant.Build {
         /// Should <i>not</i> include a filename as the last segment will be interpreted as a directory.
         /// </param>
         /// <param name="path">
-        /// The path we need to make relative to basePath.  The path can be either absolute path or a relative path in which case it is relative to the base path.
+        /// The path we need to make relative to basePath.  The path can be either absolute path or a relative path in which case
+        /// it is relative to the base path.
         /// If the path cannot be made relative to the base path (for example, it is on another drive), it is returned verbatim.
         /// If the basePath is an empty string, returns the path.
         /// </param>
@@ -145,6 +148,40 @@ namespace Aderant.Build {
         /// </summary>
         public static string GetFileName(string fullPath) {
             return Path.GetFileName(fullPath.TrimEnd(Path.DirectorySeparatorChar));
+        }
+
+        /// <summary>
+        /// Test if the provided path is excluded by a set of filter patterns.
+        /// Wildcards supported.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="excludeFilterPatterns"></param>
+        /// <returns></returns>
+        public static bool IsPathExcludedByFilters(string path, IReadOnlyList<string> excludeFilterPatterns) {
+            if (excludeFilterPatterns != null) {
+                for (var i = 0; i < excludeFilterPatterns.Count; i++) {
+                    var pattern = excludeFilterPatterns[i];
+                    string resolvedPath = pattern;
+
+                    if (pattern.Contains("..")) {
+                        resolvedPath = Path.GetFullPath(pattern);
+                    }
+
+                    if (WildcardPattern.ContainsWildcardCharacters(resolvedPath)) {
+                        WildcardPattern wildcardPattern = new WildcardPattern(resolvedPath, WildcardOptions.IgnoreCase);
+
+                        if (wildcardPattern.IsMatch(path)) {
+                            return true;
+                        }
+                    }
+
+                    if (path.IndexOf(resolvedPath, StringComparison.OrdinalIgnoreCase) >= 0) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
     }
 }

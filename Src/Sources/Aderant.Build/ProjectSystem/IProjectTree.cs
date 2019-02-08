@@ -1,9 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Aderant.Build.DependencyAnalyzer;
-using Aderant.Build.MSBuild;
 using Aderant.Build.PipelineService;
-using Aderant.Build.Tasks;
 
 namespace Aderant.Build.ProjectSystem {
 
@@ -16,6 +14,11 @@ namespace Aderant.Build.ProjectSystem {
 
         ISolutionManager SolutionManager { get; }
 
+        /// <summary>
+        /// Convenience method.
+        /// </summary>
+        /// <param name="directory"></param>
+        /// <param name="excludeFilterPatterns"></param>
         void LoadProjects(string directory, IReadOnlyCollection<string> excludeFilterPatterns);
 
         void LoadProjects(IReadOnlyCollection<string> directories, IReadOnlyCollection<string> excludeFilterPatterns);

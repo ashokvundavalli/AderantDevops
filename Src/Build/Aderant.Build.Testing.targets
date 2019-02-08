@@ -37,6 +37,7 @@
     </ItemGroup>
 
     <PropertyGroup>
+      <UnitTestAssemblies>@(TestAssemblies->'"%(FullPath)"', ',')</UnitTestAssemblies>
       <VsTestWorkingDirectory>$(SolutionRoot)</VsTestWorkingDirectory>
 
       <CodeCoverage Condition="'$(CodeCoverage)' == ''">false</CodeCoverage>
@@ -117,7 +118,6 @@
 
 
   <Target Name="RunTestAssemblies" Inputs="@(_Assemblies)" Outputs="%(_Assemblies.TestRunDirectory);%(_Assemblies.Platform)">
-
 
     <PropertyGroup>
       <PlatformSwitch>/Platform:%(_Assemblies.Platform)</PlatformSwitch>

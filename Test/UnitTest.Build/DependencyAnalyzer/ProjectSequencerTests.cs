@@ -119,41 +119,6 @@ namespace UnitTest.Build.DependencyAnalyzer {
         }
 
         [TestMethod]
-        public void Web_projects_are_always_built() {
-            var tree = new Mock<IProjectTree>();
-
-            var p1 = new TestConfiguredProject(tree.Object) {
-                outputAssembly = "A",
-                IsDirty = false,
-                IncludeInBuild = false,
-                IsWebProject = true,
-                SolutionFile = "A\\MySolution.sln",
-            };
-
-            var p2 = new TestConfiguredProject(tree.Object) {
-                outputAssembly = "A",
-                IsDirty = false,
-                IncludeInBuild = false,
-                IsWebProject = true,
-                SolutionFile = "B\\MySolution.sln",
-            };
-
-            var sequencer = new ProjectSequencer(NullLogger.Default, null);
-            var g = new ProjectDependencyGraph(p1, p2);
-
-            IReadOnlyCollection<IDependable> buildList = sequencer.GetProjectsBuildList(
-                g,
-                g.GetDependencyOrder(),
-                null,
-                ChangesToConsider.None,
-                DependencyRelationshipProcessing.None);
-
-            Assert.AreEqual(2, buildList.Count);
-            Assert.IsTrue(p1.IncludeInBuild);
-            Assert.IsTrue(p1.IsDirty);
-        }
-
-        [TestMethod]
         public void When_there_are_no_objects_in_the_build_cache_the_project_is_dirty() {
             var tree = new Mock<IProjectTree>();
 

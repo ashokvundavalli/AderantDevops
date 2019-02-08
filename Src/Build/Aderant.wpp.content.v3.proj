@@ -262,18 +262,23 @@
 
   </Target>
 
+
+  <ItemGroup>
+    <!--Exclude any .less files beginning with an '_' from being compiled as a convention, also exclude all less files from the obj directories -->
+    <LessFiles Include="$(ProjectDir)\Content\*.less"
+               Exclude="$(ProjectDir)\Content\_*.less" />
+  </ItemGroup>
+
+
   <Target Name="CompileLess"
+          Inputs="@(LessFiles)"
+          Outputs="@(LessFiles->'%(RecursiveDir)%(Filename).css')"
           AfterTargets="CopyLinkedContentFiles"
           Condition="'$(EnableLESSCompile)' == 'True'">
-    <ItemGroup>
-
-      <!--Exclude any .less files beginning with an '_' from being compiled as a convention, also exclude all less files from the obj directories -->
-      <LessFiles Include="$(ProjectDir)\Content\*.less"
-                 Exclude="$(ProjectDir)\Content\_*.less" />
-    </ItemGroup>
 
     <CompileLess
       LessFiles="@(LessFiles)" />
+
   </Target>
 
   <Target Name="custom-tsconfig-->tsc"

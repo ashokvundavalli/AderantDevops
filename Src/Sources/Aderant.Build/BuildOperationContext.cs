@@ -170,6 +170,9 @@ namespace Aderant.Build {
             set { sourceTreeMetadata = value; }
         }
 
+        /// <summary>
+        /// Information from the build cache that is applicable to the current tree.
+        /// </summary>
         public BuildStateMetadata BuildStateMetadata {
             get { return buildStateMetadata; }
             set { buildStateMetadata = value; }
@@ -182,7 +185,7 @@ namespace Aderant.Build {
 
         /// <summary>
         /// The state file this build is using (if any).
-        /// This indicates if we are reusing an existing build.
+        /// A non-null value here indicates if we are reusing an existing build.
         /// </summary>
         public List<BuildStateFile> StateFiles {
             get { return stateFiles; }
@@ -505,6 +508,9 @@ namespace Aderant.Build {
             return null;
         }
 
+        /// <summary>
+        /// Returns the directory build tree directory identifiers (SHA1).
+        /// </summary>
         public IReadOnlyCollection<BucketId> GetBuckets() {
             return BucketIds.Where(b => !b.IsRoot).ToList();
         }

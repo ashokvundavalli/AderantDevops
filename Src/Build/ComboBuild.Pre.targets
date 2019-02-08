@@ -148,6 +148,12 @@
   <Target Name="RetrievePrebuilts" Condition="'$(RetrievePrebuilts)' != 'false' And !Exists('$(SolutionDirectoryPath)link.lock')">
     <Message Text="$(ModuleName): Restoring objects from build cache" />
 
+    <ItemGroup>
+      <ExtensibilityFiles Include="$(SolutionRoot)\**\dir.props"
+                          Exclude="$(SolutionRoot)\packages\**;
+                                   $(DependenciesDirectory)\**"/>
+    </ItemGroup>
+
     <!--
       By specifying DestinationDirectories we overwrite the common dependency
       directory contents with objects from the cache so we do not reuse stale objects as inputs
@@ -158,7 +164,8 @@
       SolutionRoot="$(SolutionRoot)"
       WorkingDirectory="$(ModuleBuildTempDirectory)"
       CommonOutputDirectory="$(BinModuleDirectory)"
-      DestinationDirectories="$(SharedDependencyDirectory)" />
+      CommonDependencyDirectory="$(SharedDependencyDirectory)"
+      ExtensibilityFiles="@(ExtensibilityFiles)" />
 
     <CallTarget Targets="RunDirPropsFile" />
 
@@ -173,12 +180,6 @@
 
 
   <Target Name="RunDirPropsFile">
-
-    <ItemGroup>
-      <ExtensibilityFiles Include="$(SolutionRoot)\**\dir.props"
-                          Exclude="$(SolutionRoot)\packages\**;
-                                   $(DependenciesDirectory)\**"/>
-    </ItemGroup>
 
     <MSBuild Condition="@(ExtensibilityFiles) != ''"
       Projects="$(MSBuildThisFileFullPath)"

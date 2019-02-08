@@ -43,7 +43,9 @@ namespace Aderant.Build.Packaging {
         /// <summary>
         /// Additional destination directories for the artifacts.
         /// </summary>
-        public IReadOnlyCollection<string> DestinationDirectories { get; set; }
+        public string CommonDependencyDirectory { get; set; }
+
+        public IReadOnlyCollection<string> StagingDirectoryWhitelist { get; set; }
 
         /// <summary>
         /// Publishes build artifacts to some kind of repository.
@@ -167,8 +169,6 @@ namespace Aderant.Build.Packaging {
             return MergeExistingOutputs(context, container, snapshotList);
         }
 
-
-
         private static List<ProjectOutputSnapshot> MergeExistingOutputs(BuildOperationContext context, string container, List<ProjectOutputSnapshot> snapshots) {
             // Takes the existing (cached build) state and applies to the current state
             var previousBuild = context.GetStateFile(container);
@@ -190,7 +190,6 @@ namespace Aderant.Build.Packaging {
 
             foreach (var group in duplicates) {
                 foreach (var g in group) {
-
                     if (sb == null) {
                         sb = new StringBuilder();
                         sb.AppendLine($"Files with the same destination path within artifact {artifactId} exist. Refine the globbing expression or place the files into separate directories.");
@@ -350,9 +349,13 @@ namespace Aderant.Build.Packaging {
                 pathSpecs.AddRange(artifactContents.Select(x => new PathSpec(x, x.Replace(item.Source, item.Destination, StringComparison.OrdinalIgnoreCase))));
             }
 
-            logger.Info("Performing copy for FetchArtifacts");
-
+            bool hasLogged = false;
             for (var i = pathSpecs.Count - 1; i >= 0; i--) {
+                if (!hasLogged) {
+                    logger.Info("Performing copy for FetchArtifacts");
+                    hasLogged = true;
+                }
+
                 PathSpec pathSpec = pathSpecs[i];
                 var originFile = Path.Combine(pathSpec.Destination + ".origin.txt");
 
@@ -395,8 +398,10 @@ namespace Aderant.Build.Packaging {
             }
 
             var fileRestore = new FileRestore(localArtifactFiles, pipelineService, fileSystem, logger);
+
             fileRestore.CommonOutputDirectory = CommonOutputDirectory;
-            fileRestore.AdditionalDestinationDirectories = this.DestinationDirectories;
+            fileRestore.CommonDependencyDirectory = CommonDependencyDirectory;
+            fileRestore.StagingDirectoryWhitelist = StagingDirectoryWhitelist;
 
             fileRestore.DetermineAdditionalRestorePaths(stateFile);
             return fileRestore.BuildRestoreOperations(solutionRoot, containerKey, stateFile);
@@ -421,7 +426,7 @@ namespace Aderant.Build.Packaging {
 
                         // Limit scanning to an arbitrary number of builds so we don't spend too
                         // long thrashing the network.
-                        // TODO: This needs improvements, we should only publish change objects to the cache
+                        // TODO: This needs improvements, we should only publish changed objects to the cache
                         foreach (var folder in folders.Take(5)) {
                             // We have to nest the state file directory as TFS won't allow duplicate artifact names
                             // For a single build we may produce 1 or more state files and so each one needs a unique artifact name

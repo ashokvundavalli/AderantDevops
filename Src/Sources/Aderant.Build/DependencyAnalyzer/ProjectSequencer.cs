@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -14,6 +13,7 @@ using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.Utilities;
+using Aderant.Build.VersionControl;
 using Aderant.Build.VersionControl.Model;
 
 namespace Aderant.Build.DependencyAnalyzer {
@@ -23,6 +23,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         private readonly IFileSystem fileSystem;
         private readonly ILogger logger;
         private bool isDesktopBuild;
+        private List<BucketId> missingIds;
         private List<BuildStateFile> stateFiles;
         private TrackedInputFilesController trackedInputFilesCheck;
         private Dictionary<string, InputFilesDependencyAnalysisResult> trackedInputs = new Dictionary<string, InputFilesDependencyAnalysisResult>(StringComparer.OrdinalIgnoreCase);
@@ -167,34 +168,31 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         private List<BuildStateFile> GetBuildStateFiles(BuildOperationContext context) {
-            List<BuildStateFile> files = new List<BuildStateFile>();
+            IList<BuildStateFile> files = new List<BuildStateFile>();
 
             // Here we select an appropriate tree to reuse
             var buildStateMetadata = context.BuildStateMetadata;
 
+            int bucketCount = -1;
+
             if (buildStateMetadata != null && context.SourceTreeMetadata != null) {
                 if (buildStateMetadata.BuildStateFiles != null) {
-                    foreach (var bucketId in context.SourceTreeMetadata.GetBuckets()) {
+                    IReadOnlyCollection<BucketId> buckets = context.SourceTreeMetadata.GetBuckets();
+                    files = buildStateMetadata.QueryCacheForBuckets(buckets, out missingIds);
 
-                        BuildStateFile stateFile = null;
+                    foreach (var stateFile in files) {
+                        logger.Info($"Using state file: {stateFile.Id} -> {stateFile.BuildId} -> {stateFile.Location}:{stateFile.BucketId.Tag}");
+                    }
 
-                        foreach (var file in buildStateMetadata.BuildStateFiles) {
-                            if (string.Equals(file.BucketId.Id, bucketId.Id, StringComparison.OrdinalIgnoreCase)) {
-                                stateFile = file;
-                                break;
-                            }
-                        }
-
-                        if (stateFile != null) {
-                            logger.Info($"Using state file: {stateFile.Id} -> {stateFile.BuildId} -> {stateFile.Location}:{stateFile.BucketId.Tag}");
-                            files.Add(stateFile);
-                        }
+                    foreach (var missingId in missingIds) {
+                        logger.Info($"No state file: {missingId.Id} -> {missingId.Tag}");
                     }
                 }
+
+                logger.Info($"Found {files.Count}/{bucketCount} state files.");
             }
 
-            logger.Info($"Found {files.Count} state files.");
-            return files;
+            return files.ToList();
         }
 
         public void Sequence(bool changedFilesOnly, bool considerStateFiles, IReadOnlyCollection<string> makeFiles, ProjectDependencyGraph graph) {
@@ -210,7 +208,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
             }
 
-            var initializationNodes = SynthesizeNodesForAllDirectories(makeFiles, graph);
+            var startNodes = SynthesizeNodesForAllDirectories(makeFiles, graph);
 
             var grouping = graph.ProjectsBySolutionRoot;
 
@@ -223,9 +221,9 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 string solutionDirectoryName = PathUtility.GetFileName(group.Key);
 
-                DirectoryNode initializeNode;
-                DirectoryNode completionNode;
-                AddDirectoryNodes(graph, solutionDirectoryName, group.Key, out initializeNode, out completionNode);
+                DirectoryNode startNode;
+                DirectoryNode endNode;
+                AddDirectoryNodes(graph, solutionDirectoryName, group.Key, out startNode, out endNode);
 
                 BuildStateFile stateFile = null;
                 if (considerStateFiles) {
@@ -235,24 +233,11 @@ namespace Aderant.Build.DependencyAnalyzer {
                 bool hasLoggedUpToDate = false;
 
                 foreach (var project in projects.Where(p => p.IsUnderSolutionRoot(group.Key))) {
-                    foreach (var startingNode in initializationNodes) {
-                        if (startingNode != initializeNode) {
-                            //project.AddResolvedDependency(null, startingNode);
-
-                            if (startingNode.GetDependencies().Contains(initializeNode)) {
-                                // Prevent artificial creation of a circular reference
-                                continue;
-                            }
-
-                            //initializeNode.AddResolvedDependency(null, startingNode);
-                        }
-                    }
-
                     // The project depends on prolog file
-                    project.AddResolvedDependency(null, initializeNode);
+                    project.AddResolvedDependency(null, startNode);
 
                     // The completion of the group depends all members of the group
-                    completionNode.AddResolvedDependency(null, project);
+                    endNode.AddResolvedDependency(null, project);
 
                     // Push template dependencies into the prolog file to ensure it is scheduled after the dependencies are compiled
                     IReadOnlyCollection<IResolvedDependency> textTemplateDependencies = project.GetTextTemplateDependencies();
@@ -262,14 +247,14 @@ namespace Aderant.Build.DependencyAnalyzer {
                         foreach (var dependency in textTemplateDependencies) {
                             // Track that we need to add a transitive dependency later
                             if (!hasAddedNode) {
-                                DirectoryNode directoryNode = initializeNode;
-                                if (directoryNode != null && !initializationNodes.Contains(initializeNode)) {
-                                    initializationNodes.Add(directoryNode);
+                                DirectoryNode directoryNode = startNode;
+                                if (directoryNode != null && !startNodes.Contains(startNode)) {
+                                    startNodes.Add(directoryNode);
                                     hasAddedNode = true;
                                 }
                             }
 
-                            initializeNode.AddResolvedDependency(dependency.ExistingUnresolvedItem, dependency.ResolvedReference);
+                            startNode.AddResolvedDependency(dependency.ExistingUnresolvedItem, dependency.ResolvedReference);
 
                             IArtifact artifact = dependency.ResolvedReference as IArtifact;
                             // Store the item that produces this dependency for the second pass operation
@@ -289,10 +274,12 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
             }
 
-            AddTransitiveDependencies(graph, templateDependencyProviders, initializationNodes);
+            AddTransitiveDependencies(graph, templateDependencyProviders, startNodes);
         }
 
-        private static void AddTransitiveDependencies(ProjectDependencyGraph graph, List<IArtifact> templateDependencyProviders, List<DirectoryNode> initializationNodes) {
+        private static void AddTransitiveDependencies(ProjectDependencyGraph graph, List<IArtifact> templateDependencyProviders, List<DirectoryNode> startNodes) {
+            //System.Diagnostics.Debugger.Launch();
+
             // Now find all completion nodes of the artifacts that are involved in T4.
             // These will be added as transitive dependencies
             HashSet<DirectoryNode> producers = new HashSet<DirectoryNode>();
@@ -310,7 +297,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
             }
 
-            foreach (var node in initializationNodes) {
+            foreach (var node in startNodes) {
                 foreach (var producer in producers) {
                     // Do not add to ourselves because that would be circular
                     if (string.Equals(node.Directory, producer.Directory, StringComparison.OrdinalIgnoreCase)) {
@@ -319,7 +306,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                     // Janky hack to prevent cycles until we have a better way of abstracting this
                     if (producer.Directory.Contains("SoftwareFactory")) {
-                        node.AddResolvedDependency(null, producer);
+                        //node.AddResolvedDependency(null, producer);
                     }
                 }
             }
@@ -331,17 +318,20 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// schedule them as part of the sequence.
         /// </summary>
         internal List<DirectoryNode> SynthesizeNodesForAllDirectories(IReadOnlyCollection<string> makeFiles, DependencyGraph graph) {
-            var contributions = PipelineService.GetContributors();
+            var list = new List<string>(makeFiles ?? Enumerable.Empty<string>());
 
-            List<string> list = new List<string>(makeFiles);
-            foreach (var contribution in contributions) {
-                if (!list.Contains(contribution.File, StringComparer.OrdinalIgnoreCase)) {
-                    list.Add(contribution.File);
+            IReadOnlyCollection<BuildDirectoryContribution> contributions = null;
+            if (PipelineService != null) {
+                contributions = PipelineService.GetContributors();
+                foreach (var contribution in contributions) {
+                    if (!list.Contains(contribution.File, StringComparer.OrdinalIgnoreCase)) {
+                        list.Add(contribution.File);
+                    }
                 }
             }
 
-            List<DirectoryNode> initializationNodes = new List<DirectoryNode>();
-            List<DirectoryNode> completionNodes = new List<DirectoryNode>();
+            List<DirectoryNode> startNodes = new List<DirectoryNode>();
+            List<DirectoryNode> endNodes = new List<DirectoryNode>();
 
             Dictionary<string, DependencyManifest> manifestMap = new Dictionary<string, DependencyManifest>();
 
@@ -350,38 +340,40 @@ namespace Aderant.Build.DependencyAnalyzer {
                     var directoryAboveMakeFile = makeFile.Replace(WellKnownPaths.EntryPointFilePath, string.Empty, StringComparison.OrdinalIgnoreCase).TrimTrailingSlashes();
                     string nodeName = PathUtility.GetFileName(directoryAboveMakeFile);
 
-                    DirectoryNode initializeNode;
-                    DirectoryNode completionNode;
-                    AddDirectoryNodes(graph, nodeName, directoryAboveMakeFile, out initializeNode, out completionNode);
+                    DirectoryNode startNode;
+                    DirectoryNode endNode;
+                    AddDirectoryNodes(graph, nodeName, directoryAboveMakeFile, out startNode, out endNode);
 
-                    initializationNodes.Add(initializeNode);
-                    completionNodes.Add(completionNode);
+                    startNodes.Add(startNode);
+                    endNodes.Add(endNode);
 
                     // Check if this item was added by the user or by the system. This information is used later to determine if
                     // we need to run user steps (like solution packaging etc) or if these can be skipped
-                    var contribution = contributions.FirstOrDefault(s => string.Equals(s.File, makeFile, StringComparison.OrdinalIgnoreCase));
-                    if (contribution != null) {
+                    if (contributions != null) {
+                        var contribution = contributions.FirstOrDefault(s => string.Equals(s.File, makeFile, StringComparison.OrdinalIgnoreCase));
+                        if (contribution != null) {
 
-                        // Ensure the user did not explicitly as this directory to be built
-                        if (!makeFiles.Contains(contribution.File)) {
-                            initializeNode.AddedByDependencyAnalysis = true;
-                            completionNode.AddedByDependencyAnalysis = true;
+                            // Ensure the user did not explicitly as this directory to be built
+                            if (!makeFiles.Contains(contribution.File)) {
+                                startNode.AddedByDependencyAnalysis = true;
+                                endNode.AddedByDependencyAnalysis = true;
 
-                            if (contribution.DependencyManifest != null) {
-                                manifestMap[contribution.DependencyFile] = contribution.DependencyManifest;
+                                if (contribution.DependencyManifest != null) {
+                                    manifestMap[contribution.DependencyFile] = contribution.DependencyManifest;
+                                }
                             }
                         }
                     }
                 }
             }
 
-            SetupDirectoryDependencies(initializationNodes, completionNodes, manifestMap);
+            SetupDirectoryDependencies(startNodes, endNodes, manifestMap);
 
-            return initializationNodes;
+            return startNodes;
         }
 
-        private void SetupDirectoryDependencies(List<DirectoryNode> nodes, List<DirectoryNode> completionNodes, Dictionary<string, DependencyManifest> manifestMap) {
-            foreach (var node in nodes) {
+        private void SetupDirectoryDependencies(List<DirectoryNode> startNodes, List<DirectoryNode> endNodes, Dictionary<string, DependencyManifest> manifestMap) {
+            foreach (var node in startNodes) {
                 string manifestFilePath = Path.Combine(node.Directory, "Build", DependencyManifest.DependencyManifestFileName);
 
                 DependencyManifest manifest;
@@ -400,7 +392,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                         .FirstOrDefault(s => string.Equals(s.Name.LocalName, "TreatAsDependency", StringComparison.OrdinalIgnoreCase) && string.Equals(s.Value, "true", StringComparison.OrdinalIgnoreCase));
 
                     if (nameToTreatAsDependency != null) {
-                        DirectoryNode dependency = completionNodes.FirstOrDefault(s => string.Equals(s.DirectoryName, item.Name, StringComparison.OrdinalIgnoreCase) && s.IsPostTargets);
+                        DirectoryNode dependency = endNodes.FirstOrDefault(s => string.Equals(s.DirectoryName, item.Name, StringComparison.OrdinalIgnoreCase) && s.IsPostTargets);
 
                         if (dependency != null) {
                             node.AddResolvedDependency(null, dependency);
@@ -410,25 +402,25 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        private static void AddDirectoryNodes(DependencyGraph graph, string nodeName, string nodeFullPath, out DirectoryNode initializeNode, out DirectoryNode completionNode) {
+        private static void AddDirectoryNodes(DependencyGraph graph, string nodeName, string nodeFullPath, out DirectoryNode startNode, out DirectoryNode endNode) {
             // Create a new node that represents the start of a directory
-            initializeNode = new DirectoryNode(nodeName, nodeFullPath, false);
+            startNode = new DirectoryNode(nodeName, nodeFullPath, false);
 
-            var existing = graph.GetNodeById<DirectoryNode>(initializeNode.Id);
+            var existing = graph.GetNodeById<DirectoryNode>(startNode.Id);
             if (existing == null) {
-                graph.Add(initializeNode);
+                graph.Add(startNode);
             } else {
-                initializeNode = existing;
+                startNode = existing;
             }
 
             // Create a new node that represents the completion of a directory
-            completionNode = new DirectoryNode(nodeName, nodeFullPath, true);
-            existing = graph.GetNodeById<DirectoryNode>(completionNode.Id);
+            endNode = new DirectoryNode(nodeName, nodeFullPath, true);
+            existing = graph.GetNodeById<DirectoryNode>(endNode.Id);
             if (existing == null) {
-                graph.Add(completionNode);
-                completionNode.AddResolvedDependency(null, initializeNode);
+                graph.Add(endNode);
+                endNode.AddResolvedDependency(null, startNode);
             } else {
-                completionNode = existing;
+                endNode = existing;
             }
         }
 
@@ -600,8 +592,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             // Get all the dirty projects due to user's modification.
             var dirtyProjects = visualStudioProjects.Where(p => IncludeProject(isDesktopBuild, p)).Select(x => x.Id).ToList();
 
-            MarkWebProjectsDirty(graph);
-
             HashSet<string> h = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             h.UnionWith(dirtyProjects);
 
@@ -624,36 +614,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             return filteredProjects;
-        }
-
-        private void MarkWebProjectsDirty(ProjectDependencyGraph graph) {
-            //return;
-            // TODO: Remove this hack as it costs too much perf
-            // We need a way to trigger the content deployment of web projects
-
-            ILookup<string, ConfiguredProject> lookup = graph.ProjectsBySolutionRoot;
-
-            foreach (IGrouping<string, ConfiguredProject> grouping in lookup) {
-                List<ConfiguredProject> configuredProjects = grouping.ToList();
-
-                // A forced build is queued if any project within the directory container is also requiring a build
-                ConfiguredProject dirtyProject = configuredProjects.FirstOrDefault(g => g.IsDirty);
-                if (dirtyProject != null) {
-                    foreach (ConfiguredProject project in configuredProjects) {
-                        if (project.IncludeInBuild) {
-                            if (project.IsWebProject && !project.IsWorkflowProject()) {
-                                logger.Info($"Quirking! Web project: '{project.FullPath}' requires forced build as: '{dirtyProject.FullPath}' is modified.");
-                                // Web projects always need to be built as they have paths that reference content that needs to be deployed
-                                // during the build.
-                                // E.g script tags require that a file exists on disk. It's more reliable to have
-                                // web pipeline restore this content for us than try and restore it as part of the generic build reuse process.
-                                // <script type="text/javascript" src="../Scripts/ThirdParty.Jquery/jquery-2.2.4.js"></script>
-                                MarkDirty("", project, BuildReasonTypes.Forced);
-                            }
-                        }
-                    }
-                }
-            }
         }
 
         private static bool IncludeProject(bool desktopBuild, IDependable x) {

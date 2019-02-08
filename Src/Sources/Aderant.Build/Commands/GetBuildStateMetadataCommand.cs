@@ -12,7 +12,7 @@ namespace Aderant.Build.Commands {
         [Parameter(Mandatory = false, HelpMessage = "Specifies the SHA1 hashes to query in the cache.")]
         public string[] BucketIds { get; set; }
 
-        [Parameter(Mandatory = true, HelpMessage = "Specifies the build cache root URI (currently a file path)")]
+        [Parameter(Mandatory = true, HelpMessage = "Specifies the build cache root URI (e.g. a directory path)")]
         public string DropLocation { get; set; }
 
         protected override void ProcessRecord() {

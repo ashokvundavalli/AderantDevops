@@ -120,6 +120,7 @@
     <Compile Include="DependencyAnalyzer\TextTemplates\Tokenizer.cs" />
     <Compile Include="BuildDirectoryContribution.cs" />
     <Compile Include="IO\JunctionNativeMethods.cs" />
+    <Compile Include="IO\Traverse.cs" />
     <Compile Include="Utilities\TopologicalSort.cs" />
     <Compile Include="DependencyResolver\Models\PaketDependenciesStructure.cs" />
     <Compile Include="Packaging\FileRestore.cs" />

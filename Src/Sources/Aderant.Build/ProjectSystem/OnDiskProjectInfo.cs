@@ -27,9 +27,6 @@ namespace Aderant.Build.ProjectSystem {
         [DataMember]
         public bool? IsWebProject { get; set; }
 
-        [DataMember]
-        public string DesktopBuildPackageLocation { get; set; }
-
         /// <summary>
         /// Stashes the data needed for TrackProject(...) in resume scenarios
         /// </summary>
@@ -39,14 +36,12 @@ namespace Aderant.Build.ProjectSystem {
             project[nameof(ConfiguredProject.ProjectGuid)] = visualStudioProject.ProjectGuid.ToString("D");
             project[nameof(ConfiguredProject.SolutionRoot)] = visualStudioProject.SolutionRoot;
             project[nameof(ConfiguredProject.OutputPath)] = visualStudioProject.OutputPath;
-            project[nameof(ConfiguredProject.DesktopBuildPackageLocation)] = visualStudioProject.DesktopBuildPackageLocation;
         }
 
         public static OnDiskProjectInfo CreateFromSerializedValues(IDictionary<string, string> item) {
             string guidValue = GetValueOrDefault(nameof(ConfiguredProject.ProjectGuid), item);
             string solutionRoot = GetValueOrDefault(nameof(ConfiguredProject.SolutionRoot), item);
             string outputPath = GetValueOrDefault(nameof(ConfiguredProject.OutputPath), item);
-            string desktopBuildPackageLocation = GetValueOrDefault(nameof(ConfiguredProject.DesktopBuildPackageLocation), item);
 
             if (string.IsNullOrEmpty(guidValue)) {
                 throw new ArgumentNullException("Project Guid metadata item not present");
@@ -64,7 +59,6 @@ namespace Aderant.Build.ProjectSystem {
                 ProjectGuid = new Guid(guidValue),
                 OutputPath = outputPath,
                 SolutionRoot = solutionRoot,
-                DesktopBuildPackageLocation = desktopBuildPackageLocation
             };
         }
 
