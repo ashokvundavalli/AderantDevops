@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
 
   <!--
@@ -73,6 +73,10 @@ foreach(var replacement in replacements){
     Inputs="@(CustomSolutionFiles)"
     Outputs="$(BinModuleDirectory)Customization\%(CustomSolutionFiles.Filename).zip">
 
+    <PropertyGroup>
+      <ZipFileDirectory>$(BinModuleDirectory)Customization\</ZipFileDirectory>
+    </PropertyGroup>
+
     <!-- Read solution file so we can get the project source-->
     <ReadLinesFromFile File="%(CustomSolutionFiles.FullPath)">
       <Output TaskParameter="Lines" ItemName="LinesFromSlnFile" />
@@ -92,14 +96,13 @@ foreach(var replacement in replacements){
     <Message Text="Projects lines custom solution:" />
     <Message Text=" -> %(ProjectLines.Identity)" />
 
-
     <PropertyGroup>
       <In>@(ProjectLines)</In>
       <!-- Extract the solution relative project refernces from the solution text
            This will give this format:
            Src\Aderant.BusinessEntity\Aderant.BusinessEntity.csproj
       -->
-      <ProjectsInCustomSolution>$([System.Text.RegularExpressions.Regex]::Match('$(In)', '(?&lt;=\,).*?(?=\,)'))</ProjectsInCustomSolution>
+      <ProjectsInCustomSolution>$([System.Text.RegularExpressions.Regex]::Matches('$(In)', '(?&lt;=\,).*?(?=\,)'))</ProjectsInCustomSolution>
       <ProjectsInCustomSolution>$(ProjectsInCustomSolution.Replace('"', ''))</ProjectsInCustomSolution>
     </PropertyGroup>
 
@@ -113,13 +116,18 @@ foreach(var replacement in replacements){
     <Message Text="Projects in custom solution:" />
     <Message Text=" -> %(CustomProjects.Identity)" />
 
-    <PropertyGroup>
-      <ZipFileDirectory>$(BinModuleDirectory)Customization\</ZipFileDirectory>
-    </PropertyGroup>
+    <ItemGroup>
+      <CustomProjectsPathsWithoutMetadata Include="@(CustomProjects->'%(Root)%(RelativeDir)'->TrimEnd('\'))" Condition="'%(RelativeDir)' != ''"/>
+    </ItemGroup>
 
     <ItemGroup>
-      <CustomProjectsFullPath Include="@(CustomProjects->'%(Root)%(RelativeDir)')" />
+      <CustomProjectDirectories Include="@(CustomProjectsPathsWithoutMetadata)">
+        <DestinationSubDirectory>$([System.IO.Path]::GetFileName('%(Identity)'))</DestinationSubDirectory>
+      </CustomProjectDirectories>
     </ItemGroup>
+
+    <Message Text="Custom project paths:" />
+    <Message Text=" -> %(CustomProjectDirectories.FullPath)" />
 
     <ItemGroup>
       <ZipFile Remove="@(ZipFile)" />
@@ -127,19 +135,20 @@ foreach(var replacement in replacements){
     </ItemGroup>
 
     <CreateItem
-      Include="%(CustomProjectsFullPath.FullPath)**\*"
-      Exclude="%(CustomProjectsFullPath.FullPath)*ABT\**;
-               %(CustomProjectsFullPath.FullPath)*SeedPackages\**;
-               %(CustomProjectsFullPath.FullPath)Build\TestResults\**\*
-               %(CustomProjectsFullPath.FullPath)BuildTemp\**\*;
-               %(CustomProjectsFullPath.FullPath)**\obj\**;
-               %(CustomProjectsFullPath.FullPath)**\_Resharper*\**;
-               %(CustomProjectsFullPath.FullPath)**\*.g*.cs;
-               %(CustomProjectsFullPath.FullPath)**\*.pfx;
-               %(CustomProjectsFullPath.FullPath)**\*.vssscc;
-               %(CustomProjectsFullPath.FullPath)**\*.vspscc;
-               %(CustomProjectsFullPath.FullPath)**\*.DotSettings;"
-      AdditionalMetadata="DestinationSubDirectory=Src\">
+      Include="%(CustomProjectDirectories.FullPath)\**\*"
+      Exclude="%(CustomProjectDirectories.FullPath)\*ABT\**;
+               %(CustomProjectDirectories.FullPath)\*SeedPackages\**;
+               %(CustomProjectDirectories.FullPath)\Build\TestResults\**\*
+               %(CustomProjectDirectories.FullPath)\BuildTemp\**\*;
+               %(CustomProjectDirectories.FullPath)\**\obj\**;
+               %(CustomProjectDirectories.FullPath)\**\_Resharper*\**;
+               %(CustomProjectDirectories.FullPath)\**\*.g*.cs;
+               %(CustomProjectDirectories.FullPath)\**\*.pfx;
+               %(CustomProjectDirectories.FullPath)\**\*.vssscc;
+               %(CustomProjectDirectories.FullPath)\**\*.vspscc;
+               %(CustomProjectDirectories.FullPath)\**\*.DotSettings;"
+         PreserveExistingMetadata="true"
+         AdditionalMetadata="DestinationSubDirectory=Src\%(DestinationSubDirectory)\">
       <Output TaskParameter="Include" ItemName="SourceFilesToCopyForTransform" />
     </CreateItem>
 
@@ -151,7 +160,7 @@ foreach(var replacement in replacements){
       </SourceFilesToCopyForTransform>
 
       <SourceFilesToCopyForTransform Include="%(CustomSolutionFiles.FullPath)">
-        <DestinationSubDirectory></DestinationSubDirectory>
+        <DestinationSubDirectory />
       </SourceFilesToCopyForTransform>
     </ItemGroup>
 

@@ -72,8 +72,8 @@ namespace Aderant.Build.Tasks {
                     var filters = ExcludedPaths.Select(s => s.TrimTrailingSlashes()).ToList();
                     unassignedBuckets = unassignedBuckets.Where(s => !PathUtility.IsPathExcludedByFilters(s.Tag, filters)).ToList();
 
-                    var message = string.Join(Environment.NewLine + "-> ", unassignedBuckets.Select(s => s.Tag));
-                    Log.LogMessage(MessageImportance.High, $"There are no cached builds for these directories {message}. They will be added to this build.");
+                    var message = string.Join(Environment.NewLine, unassignedBuckets.Select(s => "-> " + s.Tag));
+                    Log.LogMessage(MessageImportance.High, $"There are no cached builds for these directories. They will be added to this build."  + message);
                 }
 
                 foreach (var id in unassignedBuckets) {

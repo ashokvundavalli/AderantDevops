@@ -178,6 +178,9 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (buildStateMetadata != null && context.SourceTreeMetadata != null) {
                 if (buildStateMetadata.BuildStateFiles != null) {
                     IReadOnlyCollection<BucketId> buckets = context.SourceTreeMetadata.GetBuckets();
+
+                    bucketCount = buckets.Count;
+
                     files = buildStateMetadata.QueryCacheForBuckets(buckets, out missingIds);
 
                     foreach (var stateFile in files) {
@@ -278,8 +281,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         private static void AddTransitiveDependencies(ProjectDependencyGraph graph, List<IArtifact> templateDependencyProviders, List<DirectoryNode> startNodes) {
-            //System.Diagnostics.Debugger.Launch();
-
             // Now find all completion nodes of the artifacts that are involved in T4.
             // These will be added as transitive dependencies
             HashSet<DirectoryNode> producers = new HashSet<DirectoryNode>();
@@ -337,29 +338,31 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             foreach (var makeFile in list) {
                 if (!string.IsNullOrWhiteSpace(makeFile)) {
-                    var directoryAboveMakeFile = makeFile.Replace(WellKnownPaths.EntryPointFilePath, string.Empty, StringComparison.OrdinalIgnoreCase).TrimTrailingSlashes();
-                    string nodeName = PathUtility.GetFileName(directoryAboveMakeFile);
+                    if (fileSystem.FileExists(makeFile)) {
+                        var directoryAboveMakeFile = makeFile.Replace(WellKnownPaths.EntryPointFilePath, string.Empty, StringComparison.OrdinalIgnoreCase).TrimTrailingSlashes();
+                        string nodeName = PathUtility.GetFileName(directoryAboveMakeFile);
 
-                    DirectoryNode startNode;
-                    DirectoryNode endNode;
-                    AddDirectoryNodes(graph, nodeName, directoryAboveMakeFile, out startNode, out endNode);
+                        DirectoryNode startNode;
+                        DirectoryNode endNode;
+                        AddDirectoryNodes(graph, nodeName, directoryAboveMakeFile, out startNode, out endNode);
 
-                    startNodes.Add(startNode);
-                    endNodes.Add(endNode);
+                        startNodes.Add(startNode);
+                        endNodes.Add(endNode);
 
-                    // Check if this item was added by the user or by the system. This information is used later to determine if
-                    // we need to run user steps (like solution packaging etc) or if these can be skipped
-                    if (contributions != null) {
-                        var contribution = contributions.FirstOrDefault(s => string.Equals(s.File, makeFile, StringComparison.OrdinalIgnoreCase));
-                        if (contribution != null) {
+                        // Check if this item was added by the user or by the system. This information is used later to determine if
+                        // we need to run user steps (like solution packaging etc) or if these can be skipped
+                        if (contributions != null) {
+                            var contribution = contributions.FirstOrDefault(s => string.Equals(s.File, makeFile, StringComparison.OrdinalIgnoreCase));
+                            if (contribution != null) {
 
-                            // Ensure the user did not explicitly as this directory to be built
-                            if (!makeFiles.Contains(contribution.File)) {
-                                startNode.AddedByDependencyAnalysis = true;
-                                endNode.AddedByDependencyAnalysis = true;
+                                // Ensure the user did not explicitly as this directory to be built
+                                if (!makeFiles.Contains(contribution.File)) {
+                                    startNode.AddedByDependencyAnalysis = true;
+                                    endNode.AddedByDependencyAnalysis = true;
 
-                                if (contribution.DependencyManifest != null) {
-                                    manifestMap[contribution.DependencyFile] = contribution.DependencyManifest;
+                                    if (contribution.DependencyManifest != null) {
+                                        manifestMap[contribution.DependencyFile] = contribution.DependencyManifest;
+                                    }
                                 }
                             }
                         }
