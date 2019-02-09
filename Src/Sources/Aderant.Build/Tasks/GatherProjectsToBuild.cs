@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Aderant.Build.Logging;
@@ -33,9 +34,15 @@ namespace Aderant.Build.Tasks {
         }
 
         public override bool ExecuteTask() {
+            if (Context.Exclude != null) {
+                ExcludedPaths = Context.Exclude.Union(ExcludedPaths ?? Enumerable.Empty<string>(), StringComparer.OrdinalIgnoreCase)
+                    .Except(Context.Include, StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+            }
+
             if (ExcludedPaths != null) {
                 ExcludedPaths = ExcludedPaths.Select(PathUtility.GetFullPath).ToArray();
-                Log.LogMessage("Excluding paths: " + string.Join(",", ExcludedPaths));
+                Log.LogMessage("Excluding paths: " + Environment.NewLine + string.Join(Environment.NewLine + "-> ", ExcludedPaths));
             }
 
             groveler = new DirectoryGroveler(new PhysicalFileSystem());
@@ -43,7 +50,10 @@ namespace Aderant.Build.Tasks {
 
             List<string> inputDirectories = ExpandInputDirectories(Context.BuildRoot, Context.Include);
             groveler.Grovel(inputDirectories, ExcludedPaths);
-            groveler.ExpandBuildTree(PipelineService);
+
+            if (!Context.Switches.RestrictToProvidedPaths) {
+                groveler.ExpandBuildTree(PipelineService);
+            }
 
             return !Log.HasLoggedErrors;
         }
@@ -62,7 +72,7 @@ namespace Aderant.Build.Tasks {
                     var filters = ExcludedPaths.Select(s => s.TrimTrailingSlashes()).ToList();
                     unassignedBuckets = unassignedBuckets.Where(s => !PathUtility.IsPathExcludedByFilters(s.Tag, filters)).ToList();
 
-                    var message = string.Join(",", unassignedBuckets.Select(s => s.Tag));
+                    var message = string.Join(Environment.NewLine + "-> ", unassignedBuckets.Select(s => s.Tag));
                     Log.LogMessage(MessageImportance.High, $"There are no cached builds for these directories {message}. They will be added to this build.");
                 }
 

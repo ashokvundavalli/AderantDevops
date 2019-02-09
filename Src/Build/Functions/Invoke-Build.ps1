@@ -344,7 +344,7 @@ function ExpandPaths {
     $resolvedPaths = @()
     foreach ($path in $paths) {
         # Check current location
-        [string]$testedPath = $null
+        $testedPath = $null
         if (Test-Path($path)) {
             $testedPath = Resolve-Path $path
         } elseif (-not [string]::IsNullOrWhiteSpace($rootPath)) {
@@ -377,8 +377,8 @@ function ExpandPaths {
 
 function AssignIncludeExclude {
     param(
-        [Parameter(Mandatory=$false)][System.Collections.ArrayList]$include,
-        [Parameter(Mandatory=$false)][string[]]$exclude,
+        [Parameter(Mandatory=$false)]$include,
+        [Parameter(Mandatory=$false)]$exclude,
         [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$rootPath,
         [Parameter(Mandatory=$false)][string]$gitDirectory
     )
@@ -390,7 +390,7 @@ function AssignIncludeExclude {
         if (-not [string]::IsNullOrEmpty($gitDirectory) -and $rootPath -ne $gitDirectory) {
             if (-not ($include -contains $rootPath)) {
                 Write-Debug 'Including current directory in build.'
-                [Void]$include.Add($rootPath)
+                $include += $rootPath
             }
         }
     }
@@ -418,6 +418,7 @@ function AssignSwitches() {
     $switches.Resume = $Resume.IsPresent
     $switches.SkipCompile = $SkipCompile.IsPresent
     $switches.ChangedFilesOnly = $ChangedFilesOnly.IsPresent
+    $switches.RestrictToProvidedPaths = $RestrictToProvidedPaths.IsPresent
 
     if ($PSCmdLet.MyInvocation.BoundParameters.ContainsKey("WhatIf")) {
         $script:Target = "CreatePlan"
@@ -430,6 +431,12 @@ function AssignSwitches() {
     $context.Switches = $switches
 }
 
+<#
+.SYNOPSIS
+    .
+.DESCRIPTION
+    .
+#>
 # This file is run by an CI agent. The CI agent PowerShell runner does not subscribe to Write-Information.
 function global:Invoke-Build2 {
     [CmdletBinding(DefaultParameterSetName="Build", SupportsShouldProcess=$true)]
@@ -446,24 +453,38 @@ function global:Invoke-Build2 {
         [Parameter()]
         [switch]$Transitive,
 
-        [Parameter(HelpMessage = "Destroys all intermediate objects.
-Returns the source tree to a pristine state.
-Should not be used as it prevents incremental builds which increases build times.")]
+        [Parameter()]
+        <#
+        Returns the source tree to a pristine state by destroying all intermediate objects.
+        Generally this parameter should not be used as it prevents incremental builds which increases build times.
+        #>
         [switch]$Clean,
 
         [Parameter()]
         [switch]$Release,
 
-        [Parameter(HelpMessage = "Resumes the build from the last failure point.")]
+        <#
+        Resumes the build from the last failure point.
+        #>
+        [Parameter()]
         [switch]$Resume,
 
+        <#
+        Runs the only directory build targets. Skips all targets that produce assemblies.
+        #>
         [Parameter()]
         [switch]$SkipCompile,
 
-        [Parameter(HelpMessage = "Includes the product packaging steps. This will produce the package which can be used to install the product.")]
+        <#
+        Includes the product packaging steps. This will produce the package which can be used to install the product.
+        #>
+        [Parameter()]
         [switch]$PackageProduct,
 
-        [Parameter(HelpMessage = "Disables the use of the build cache.")]
+        <#
+        Disables the use of the build cache.
+        #>
+        [Parameter()]
         [switch]$NoBuildCache,
 
         [Parameter(HelpMessage = "Enables integration tests.")]
@@ -475,29 +496,63 @@ Should not be used as it prevents incremental builds which increases build times
         [Parameter(HelpMessage = "Displays HTML code coverage report.")]
         [switch]$DisplayCodeCoverage,
 
-        [Parameter(HelpMessage = "Runs the target with the provided name")]
+        <#
+        Runs the target with the provided name.
+        #>
+        [Parameter()]
         [string]$Target = "BuildAndPackage",
 
-        [Parameter(HelpMessage = "Includes solutions and projects found under these paths into the build tree. Supports wildcards.")]
+        <#
+        Includes solutions and projects found under these paths into the build tree. Supports wildcards and relative paths.
+        #>
+        [Parameter()]
         [string[]]$Include = $null,
 
-        [Parameter(HelpMessage = "Excludes solutions and projects found under these paths into the build tree. Supports wildcards.")]
+        <#
+        Excludes solutions and projects found under these paths into the build tree. Supports wildcards and relative paths.
+        #>
+        [Parameter()]
         [string[]]$Exclude = $null,
 
-        [Parameter(HelpMessage = "Only files that have modifications are considered.")]
+        <#
+        Only files that have modifications are considered.
+        #>
+        [Parameter()]
         [Alias("JustMyChanges")]
         [switch]$ChangedFilesOnly,
 
-        [Parameter(HelpMessage = "Disables the text transformation process.")]
+        <#
+        Disables the text transformation process.
+        #>
+        [Parameter()]
         [switch]$NoTextTemplateTransform,
 
-        [Parameter(HelpMessage = " Specifies the maximum number of concurrent processes to sbuild with.")]
+        <#
+        Specifies the maximum number of concurrent processes to build with.
+        #>
+        [Parameter()]
         [int]$MaxCpuCount,
 
-        [Parameter(HelpMessage = "Disables fetching of dependencies. Used to bypass the default behaviour of keeping you up to date.")]
+        <#
+        Disables fetching of dependencies. Used to bypass the default behaviour of keeping you up to date.
+        #>
+        [Parameter()]
         [switch]$NoDependencyFetch,
 
-        [Parameter(HelpMessage = "Instructs the console logger to be quiet.")]
+        <#
+        Instructs the build to not expand the build tree.
+        The build will attempt to automatically resolve dependencies between modules by examining
+        the projects and manifests which specify dependencies along the provided input paths.
+        Should the specified inputs require additional dependencies then they are added to the build tree
+        automatically. To suppress this behaviour and restict the build tree to just the paths provided specify this parameter.
+        #>
+        [Parameter()]
+        [switch]$RestrictToProvidedPaths,
+
+        <#
+        Instructs the console logger to be quiet.
+        #>
+        [Parameter()]
         [switch]$MinimalConsoleLogging,
 
         [Parameter(HelpMessage = "Enables fetching build configuration files from TFS.")]

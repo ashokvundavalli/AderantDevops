@@ -543,6 +543,8 @@ namespace Aderant.Build {
 
         [DataMember]
         public bool SkipCompile { get; set; }
-    }
 
+        [DataMember]
+        public bool RestrictToProvidedPaths { get; set; }
+    }
 }

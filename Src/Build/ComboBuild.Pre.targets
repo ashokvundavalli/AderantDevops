@@ -26,7 +26,6 @@
     These targets make up the steps needed to package artifacts shipped as part of the product.
     These can be skipped if this file is scheduled to satisfy a build tree and wasn't scheduled explicity by the user -->
     <TargetsForCustomizationFiles Condition="'$(RunUserTargets)' != 'false'">
-      PrepareZipCustomSource;
       ZipCustomSource;
       SeedPackagePacking;
       ZipWorkflowTemplateSource
