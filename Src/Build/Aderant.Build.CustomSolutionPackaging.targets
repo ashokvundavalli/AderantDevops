@@ -122,6 +122,7 @@ foreach(var replacement in replacements){
 
     <ItemGroup>
       <CustomProjectDirectories Include="@(CustomProjectsPathsWithoutMetadata)">
+        <!-- The name of the project directory: Aderant.BusinessEntity -->
         <DestinationSubDirectory>$([System.IO.Path]::GetFileName('%(Identity)'))</DestinationSubDirectory>
       </CustomProjectDirectories>
     </ItemGroup>

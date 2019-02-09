@@ -272,7 +272,7 @@
 
   <Target Name="CompileLess"
           Inputs="@(LessFiles)"
-          Outputs="@(LessFiles->'%(RecursiveDir)%(Filename).css')"
+          Outputs="@(LessFiles->'%(RelativeDir)%(Filename).css')"
           AfterTargets="CopyLinkedContentFiles"
           Condition="'$(EnableLESSCompile)' == 'True'">
 

@@ -1,5 +1,5 @@
-﻿using System;
-using System.Text;
+﻿using System.Text;
+using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
@@ -29,7 +29,7 @@ namespace Aderant.Build.Tasks {
             sb.AppendLine();
             sb.Append(footer);
 
-            Log.LogMessage(sb.ToString());
+            Log.LogMessage(MessageImportance.High, sb.ToString());
 
             return true;
         }

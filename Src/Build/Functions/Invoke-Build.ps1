@@ -177,7 +177,7 @@ function CreateToolArgumentString($context, $remainingArgs) {
         }
 
         if ($MinimalConsoleLogging.IsPresent) {
-            $set.Add("/NoConsoleLogger")
+            $set.Add("/clp:verbosity=minimal")
         }
 
         if ($null -ne $context.BuildMetadata) {
@@ -628,7 +628,7 @@ function global:Invoke-Build2 {
             $Target = "CreatePlan"
         }
 
-        Run-MSBuild "$($context.BuildScriptsDirectory)ComboBuild.targets" "/target:$($Target) /verbosity:normal /fl /flp:logfile=$($context.LogFile);Encoding=UTF-8 /p:ContextEndpoint=$contextEndpoint $args"
+        Run-MSBuild "$($context.BuildScriptsDirectory)ComboBuild.targets" "/target:$($Target) /fl /flp:logfile=$($context.LogFile);Encoding=UTF-8 /p:ContextEndpoint=$contextEndpoint $args"
 
         $succeeded = $true
 
