@@ -248,7 +248,6 @@
   F5 experience -->
   <Target Name="CopyLinkedContentFiles"
           DependsOnTargets="CollectLinkedContentFiles"
-
           BeforeTargets="PreComputeCompileTypeScript;Build;CopyAllFilesToSingleFolderForMsdeploy"
           Inputs="@(ContentToCopy)"
           Outputs="@(ContentToCopy->'$(ProjectDir)%(Link)')">

@@ -8,9 +8,8 @@
     <ParameterGroup>
       <OutputFile ParameterType="System.String" Required="true" />
       <PathPropertyName ParameterType="System.String" Required="true" />
-
       <ProjectRootDirectory ParameterType="System.String" Required="true" />
-
+      <MSBuildProjectName ParameterType="System.String" Required="true" />
       <ProjectItems ParameterType="Microsoft.Build.Framework.ITaskItem[]" />
     </ParameterGroup>
 
@@ -20,51 +19,58 @@
       <Using Namespace="System.Xml" />
       <Code Type="Fragment" Language="cs">
 <![CDATA[
-          var ns = "http://schemas.microsoft.com/developer/msbuild/2003";
+        var ns = "http://schemas.microsoft.com/developer/msbuild/2003";
 
-          XmlWriterSettings settings = new XmlWriterSettings
-          {
-            Indent = true
-          };
+        XmlWriterSettings settings = new XmlWriterSettings
+        {
+          Indent = true
+        };
 
-          string pathVariable = @"(" + PathPropertyName + ")";
+        string pathVariable = @"(" + PathPropertyName + ")";
 
-          using (var w = XmlWriter.Create(OutputFile, settings)) {
-              w.WriteStartElement("Project", ns);
+        using (var w = XmlWriter.Create(OutputFile, settings)) {
+            w.WriteStartElement("Project", ns);
 
-              w.WriteStartElement("PropertyGroup");
-              w.WriteStartElement(PathPropertyName);
-              w.WriteAttributeString("Condition", string.Format("'$" + "({0})' == ''", PathPropertyName));
-              w.WriteString(string.Format("$" + "({0})\\", "MSBuildThisFileDirectory"));
-              w.WriteEndElement();
-              w.WriteEndElement();
+            w.WriteStartElement("PropertyGroup");
+            w.WriteStartElement(PathPropertyName);
+            w.WriteAttributeString("Condition", string.Format("'$" + "({0})' == ''", PathPropertyName));
+            w.WriteString(string.Format("$" + "({0})\\", "MSBuildThisFileDirectory"));
+            w.WriteEndElement();
+            w.WriteEndElement();
 
-              w.WriteStartElement("ItemGroup");
+            w.WriteStartElement("ItemGroup");
 
-              foreach (var file in ProjectItems) {
-                string fileAndExtension = file.GetMetadata("Filename") + file.GetMetadata("Extension");
-                string fileRelativePath = file.GetMetadata("RelativeDir").Replace(ProjectRootDirectory, "") + fileAndExtension;
+            foreach (var file in ProjectItems) {
+              var type = file.GetMetadata("Type");
+              var includeProjectName = file.GetMetadata("IncludeProjectName");
 
-                var type = file.GetMetadata("Type");
+              string fileAndExtension = file.GetMetadata("Filename") + file.GetMetadata("Extension");
+              string fileRelativePath = file.GetMetadata("RelativeDir").Replace(ProjectRootDirectory, "") + fileAndExtension;
 
-                w.WriteStartElement(type);
-                w.WriteAttributeString("Include", "$" + pathVariable + fileRelativePath);
-
-                w.WriteStartElement("Link");
-                w.WriteString(fileRelativePath);
-                w.WriteEndElement();
-
-                w.WriteStartElement("Visible");
-                w.WriteString("true");
-                w.WriteEndElement();
-
-                w.WriteEndElement();
+              var linkPath = fileRelativePath;
+              if (string.Equals("false", includeProjectName, StringComparison.OrdinalIgnoreCase)) {
+                linkPath = linkPath.Replace(MSBuildProjectName, "");
               }
+              linkPath = linkPath.Replace(@"\\", @"\");
 
+              w.WriteStartElement(type);
+              w.WriteAttributeString("Include", "$" + pathVariable + fileRelativePath);
+
+              w.WriteStartElement("Link");
+              w.WriteString(linkPath);
+              w.WriteEndElement();
+
+              w.WriteStartElement("Visible");
+              w.WriteString("true");
               w.WriteEndElement();
 
               w.WriteEndElement();
-          }
+            }
+
+            w.WriteEndElement();
+
+            w.WriteEndElement();
+        }
 ]]>
       </Code>
     </Task>
@@ -138,6 +144,7 @@
 
       <ProjectItems Include="$(ScriptsDirectory)ManualLogOn\$(MSBuildProjectName)\**\*">
         <RelativePath>ManualLogOn</RelativePath>
+        <IncludeProjectName>false</IncludeProjectName>
         <Type>Content</Type>
       </ProjectItems>
     </ItemGroup>
@@ -146,6 +153,7 @@
       OutputFile="$(MSBuildProjectFullPath).shared"
       PathPropertyName="$(MSBuildProjectName.Replace('.', ''))Path"
       ProjectRootDirectory="$(ScriptsDirectory)"
+      MSBuildProjectName="$(MSBuildProjectName)"
       ProjectItems="@(ProjectItems)" />
 
   </Target>
