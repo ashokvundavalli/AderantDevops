@@ -671,6 +671,8 @@ function global:Invoke-Build2 {
                 throw "Build did not succeed: $($context.BuildStatusReason)"
             }
         } else {
+            [System.Environment]::SetEnvironmentVariable("SKIP_BUILD_SYSTEM_COMPILE", "true", [System.EnvironmentVariableTarget]::Process)
+
             Write-Host "[" -NoNewline
             Write-Host ($status.ToUpper()) -NoNewline -ForegroundColor Green
             Write-Host "]"

@@ -38,11 +38,16 @@
     <VsCommonTools Condition="'$(VS120COMNTOOLS)' != ''">$(VS120COMNTOOLS)</VsCommonTools>
     <VsCommonTools Condition="'$(VS140COMNTOOLS)' != ''">$(VS140COMNTOOLS)</VsCommonTools>
 
+    <VS2017Enterprise>C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\Tools\</VS2017Enterprise>
+    <VsCommonTools Condition="Exists('$(VS2017Enterprise)')">$(VS2017Enterprise)</VsCommonTools>
+
     <CodeTaskFactoryAssembly Condition="'$(VisualStudioVersion)' == '12.0'">$(MSBuildToolsPath)\Microsoft.Build.Tasks.v$(MSBuildToolsVersion).dll</CodeTaskFactoryAssembly>
     <CodeTaskFactoryAssembly Condition="'$(VisualStudioVersion)' == '14.0'">$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll</CodeTaskFactoryAssembly>
     <CodeTaskFactoryAssembly Condition="'$(VisualStudioVersion)' == '15.0'">$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll</CodeTaskFactoryAssembly>
 
     <MSBuildCommunityTasksPath Condition="'$(MSBuildCommunityTasksPath)' == ''">$(MSBuildThisFileDirectory)\Tasks\MSBuild.Community.Tasks\</MSBuildCommunityTasksPath>
+
+    <CompileBuildSystem Condition="'$(SKIP_BUILD_SYSTEM_COMPILE)' != ''">false</CompileBuildSystem>
   </PropertyGroup>
 
   <Import Project="Aderant.Build.tasks" Condition="'$(IsCustomBuild)' != 'true'" />
