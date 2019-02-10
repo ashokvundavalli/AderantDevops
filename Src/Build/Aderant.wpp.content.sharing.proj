@@ -19,6 +19,10 @@
       <Using Namespace="System.Xml" />
       <Code Type="Fragment" Language="cs">
 <![CDATA[
+        if (ProjectItems == null || ProjectItems.Length == 0) {
+          throw new ArgumentException("No items provided to content writer");
+        }
+
         var ns = "http://schemas.microsoft.com/developer/msbuild/2003";
 
         XmlWriterSettings settings = new XmlWriterSettings
@@ -77,24 +81,25 @@
   </UsingTask>
 
 
-  <Target Name="WriteContentFile" AfterTargets="AfterBuild">
-
+  <Target Name="CollectProjectContentItems">
     <PropertyGroup>
       <ScriptsDirectory>$(MSBuildProjectDirectory)\</ScriptsDirectory>
       <ScriptsDirectory Condition="'$(ScriptsDirectory)' != '' and !HasTrailingSlash('$(ScriptsDirectory)')">$(ScriptsDirectory)\</ScriptsDirectory>
+      <OptionalNameFilter Condition="'$(OptionalNameFilter)' == ''">*</OptionalNameFilter>
+      <OptionalNameFilter Condition="'$(UseProjectNameWhenCollectingSharedContent)' == ''">$(MSBuildProjectName)</OptionalNameFilter>
     </PropertyGroup>
 
     <!--Scripts-->
     <ItemGroup>
-      <ProjectItems Include="$(ScriptsDirectory)Scripts\$(MSBuildProjectName)\**\*.js"
+      <ProjectItems Include="$(ScriptsDirectory)Scripts\$(OptionalNameFilter)\**\*.js"
                     Exclude="$(ScriptsDirectory)Scripts\**\ThirdParty.*\**">
         <Type>Content</Type>
       </ProjectItems>
-      <ProjectItems Include="$(ScriptsDirectory)Scripts\$(MSBuildProjectName)\**\*.html">
+      <ProjectItems Include="$(ScriptsDirectory)Scripts\$(OptionalNameFilter)\**\*.html">
         <Type>Content</Type>
       </ProjectItems>
 
-      <ProjectItems Include="$(ScriptsDirectory)Scripts\$(MSBuildProjectName)\**\*.d.ts"
+      <ProjectItems Include="$(ScriptsDirectory)Scripts\$(OptionalNameFilter)\**\*.d.ts"
                     Exclude="$(ScriptsDirectory)Scripts\**\ThirdParty.*\**">
         <Type>TypeScriptCompile</Type>
       </ProjectItems>
@@ -102,7 +107,7 @@
 
     <!-- Content -->
     <ItemGroup>
-      <ProjectItems Include="$(ScriptsDirectory)Content\$(MSBuildProjectName)\**\*"
+      <ProjectItems Include="$(ScriptsDirectory)Content\$(OptionalNameFilter)\**\*"
                     Exclude="$(ScriptsDirectory)Content\**\ThirdParty.*\**">
         <Type>Content</Type>
       </ProjectItems>
@@ -110,11 +115,11 @@
 
     <!--ViewModels-->
     <ItemGroup>
-      <ProjectItems Include="$(ScriptsDirectory)ViewModels\$(MSBuildProjectName)\**\*.js"
+      <ProjectItems Include="$(ScriptsDirectory)ViewModels\$(OptionalNameFilter)\**\*.js"
                     Exclude="$(ScriptsDirectory)ViewModels\**\ThirdParty.*\**">
         <Type>Content</Type>
       </ProjectItems>
-      <ProjectItems Include="$(ScriptsDirectory)ViewModels\$(MSBuildProjectName)\**\*.d.ts"
+      <ProjectItems Include="$(ScriptsDirectory)ViewModels\$(OptionalNameFilter)\**\*.d.ts"
                     Exclude="$(ScriptsDirectory)ViewModels\**\ThirdParty.*\**">
         <Type>TypeScriptCompile</Type>
       </ProjectItems>
@@ -122,15 +127,15 @@
 
     <!-- Helpers -->
     <ItemGroup>
-      <ProjectItems Include="$(ScriptsDirectory)Helpers\$(MSBuildProjectName)\**\*.xml;
-                             $(ScriptsDirectory)Helpers\$(MSBuildProjectName)\**\*.xml">
+      <ProjectItems Include="$(ScriptsDirectory)Helpers\$(OptionalNameFilter)\**\*.xml;
+                             $(ScriptsDirectory)Helpers\$(OptionalNameFilter)\**\*.xml">
         <RelativePath>Helpers</RelativePath>
         <Type>Content</Type>
       </ProjectItems>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectItems Include="$(ScriptsDirectory)Views\Shared\$(MSBuildProjectName)\**\*.cshtml">
+      <ProjectItems Include="$(ScriptsDirectory)Views\Shared\$(OptionalNameFilter)\**\*.cshtml">
         <Type>Content</Type>
       </ProjectItems>
     </ItemGroup>
@@ -142,12 +147,17 @@
         <Type>Content</Type>
       </ProjectItems>
 
-      <ProjectItems Include="$(ScriptsDirectory)ManualLogOn\$(MSBuildProjectName)\**\*">
+      <ProjectItems Include="$(ScriptsDirectory)ManualLogOn\$(OptionalNameFilter)\**\*">
         <RelativePath>ManualLogOn</RelativePath>
         <IncludeProjectName>false</IncludeProjectName>
         <Type>Content</Type>
       </ProjectItems>
     </ItemGroup>
+
+  </Target>
+
+
+  <Target Name="WriteContentFile" AfterTargets="AfterBuild" DependsOnTargets="CollectProjectContentItems">
 
     <WriteSharedContentFile
       OutputFile="$(MSBuildProjectFullPath).shared"
