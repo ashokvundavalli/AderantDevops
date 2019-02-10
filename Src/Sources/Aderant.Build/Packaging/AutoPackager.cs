@@ -81,7 +81,7 @@ namespace Aderant.Build.Packaging {
         }
 
         private static bool PackageOtherExtensions(PathSpec file) {
-            foreach (var extension in new[] { ".zip", ".msi" }) {
+            foreach (var extension in new[] { ".zip", ".msi", ".role.xml" }) {
                 if (file.Location.EndsWith(extension, StringComparison.OrdinalIgnoreCase)) {
                     return true;
                 }
