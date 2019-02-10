@@ -78,41 +78,66 @@
       <ScriptsDirectory Condition="'$(ScriptsDirectory)' != '' and !HasTrailingSlash('$(ScriptsDirectory)')">$(ScriptsDirectory)\</ScriptsDirectory>
     </PropertyGroup>
 
+    <!--Scripts-->
     <ItemGroup>
-      <ProjectItems Include="$(ScriptsDirectory)Scripts\**\*.js"
+      <ProjectItems Include="$(ScriptsDirectory)Scripts\$(MSBuildProjectName)\**\*.js"
                     Exclude="$(ScriptsDirectory)Scripts\**\ThirdParty.*\**">
         <Type>Content</Type>
       </ProjectItems>
-      <ProjectItems Include="$(ScriptsDirectory)Scripts\**\*.html">
+      <ProjectItems Include="$(ScriptsDirectory)Scripts\$(MSBuildProjectName)\**\*.html">
         <Type>Content</Type>
       </ProjectItems>
 
-      <ProjectItems Include="$(ScriptsDirectory)Scripts\**\*.d.ts"
+      <ProjectItems Include="$(ScriptsDirectory)Scripts\$(MSBuildProjectName)\**\*.d.ts"
                     Exclude="$(ScriptsDirectory)Scripts\**\ThirdParty.*\**">
         <Type>TypeScriptCompile</Type>
       </ProjectItems>
     </ItemGroup>
 
+    <!-- Content -->
     <ItemGroup>
-      <ProjectItems Include="$(ScriptsDirectory)Content\**\*"
+      <ProjectItems Include="$(ScriptsDirectory)Content\$(MSBuildProjectName)\**\*"
                     Exclude="$(ScriptsDirectory)Content\**\ThirdParty.*\**">
         <Type>Content</Type>
       </ProjectItems>
     </ItemGroup>
 
+    <!--ViewModels-->
     <ItemGroup>
-      <ProjectItems Include="$(ScriptsDirectory)ViewModels\**\*.js"
+      <ProjectItems Include="$(ScriptsDirectory)ViewModels\$(MSBuildProjectName)\**\*.js"
                     Exclude="$(ScriptsDirectory)ViewModels\**\ThirdParty.*\**">
         <Type>Content</Type>
       </ProjectItems>
-      <ProjectItems Include="$(ScriptsDirectory)ViewModels\**\*.d.ts"
+      <ProjectItems Include="$(ScriptsDirectory)ViewModels\$(MSBuildProjectName)\**\*.d.ts"
                     Exclude="$(ScriptsDirectory)ViewModels\**\ThirdParty.*\**">
         <Type>TypeScriptCompile</Type>
       </ProjectItems>
     </ItemGroup>
 
+    <!-- Helpers -->
     <ItemGroup>
-      <ProjectItems Include="$(ScriptsDirectory)Views\Shared\**\*.cshtml">
+      <ProjectItems Include="$(ScriptsDirectory)Helpers\$(MSBuildProjectName)\**\*.xml;
+                             $(ScriptsDirectory)Helpers\$(MSBuildProjectName)\**\*.xml">
+        <RelativePath>Helpers</RelativePath>
+        <Type>Content</Type>
+      </ProjectItems>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectItems Include="$(ScriptsDirectory)Views\Shared\$(MSBuildProjectName)\**\*.cshtml">
+        <Type>Content</Type>
+      </ProjectItems>
+    </ItemGroup>
+
+    <!--Authentication-->
+    <ItemGroup Condition="'$(IncludeAuthenticationFiles)' == 'true'">
+      <ProjectItems Include="$(ScriptsDirectory)Authentication\**\*">
+        <RelativePath>Authentication</RelativePath>
+        <Type>Content</Type>
+      </ProjectItems>
+
+      <ProjectItems Include="$(ScriptsDirectory)ManualLogOn\$(MSBuildProjectName)\**\*">
+        <RelativePath>ManualLogOn</RelativePath>
         <Type>Content</Type>
       </ProjectItems>
     </ItemGroup>
