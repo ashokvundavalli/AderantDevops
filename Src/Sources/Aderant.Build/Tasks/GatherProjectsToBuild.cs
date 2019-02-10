@@ -48,7 +48,13 @@ namespace Aderant.Build.Tasks {
             groveler = new DirectoryGroveler(new PhysicalFileSystem());
             groveler.Logger = new BuildTaskLogger(Log);
 
-            List<string> inputDirectories = ExpandInputDirectories(Context.BuildRoot, Context.Include);
+            List<string> inputDirectories = new List<string>(Context.Include);
+            if (!Context.Switches.RestrictToProvidedPaths) {
+                inputDirectories.AddRange(GetDirectoriesWithNoCachedBuild(Context.BuildRoot, inputDirectories));
+            } else {
+                Log.LogMessage("Build will not expand build tree.");
+            }
+
             groveler.Grovel(inputDirectories, ExcludedPaths);
 
             if (!Context.Switches.RestrictToProvidedPaths) {
@@ -58,7 +64,7 @@ namespace Aderant.Build.Tasks {
             return !Log.HasLoggedErrors;
         }
 
-        private List<string> ExpandInputDirectories(string buildRoot, string[] contextInclude) {
+        private List<string> GetDirectoriesWithNoCachedBuild(string buildRoot, List<string> contextInclude) {
             var buildStateMetadata = Context.BuildStateMetadata;
             var contextBuildMetadata = Context.SourceTreeMetadata;
 
@@ -72,8 +78,8 @@ namespace Aderant.Build.Tasks {
                     var filters = ExcludedPaths.Select(s => s.TrimTrailingSlashes()).ToList();
                     unassignedBuckets = unassignedBuckets.Where(s => !PathUtility.IsPathExcludedByFilters(s.Tag, filters)).ToList();
 
-                    var message = string.Join(Environment.NewLine, unassignedBuckets.Select(s => "-> " + s.Tag));
-                    Log.LogMessage(MessageImportance.High, $"There are no cached builds for these directories. They will be added to this build."  + message);
+                    var message = string.Join(Environment.NewLine + "-> ", unassignedBuckets.Select(s => s.Tag));
+                    Log.LogMessage(MessageImportance.High, "There are no cached builds for these directories. They will be added to this build." + Environment.NewLine + message);
                 }
 
                 foreach (var id in unassignedBuckets) {
