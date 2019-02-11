@@ -69,6 +69,27 @@ namespace UnitTest.Build.Packaging {
         }
 
         [TestMethod]
+        public void Can_add_file_in_sub_directory_to_package_with_PathSpec_destination_containing_sub_directory_while_project_output_snapshot_does_not() {
+            var builder = new AutoPackager(NullLogger.Default);
+
+            var filesToPackage = new PathSpec[] {
+                new PathSpec(@"Test\ABC.dll", @"Test\ABC.dll"),
+            };
+
+            var snapshot = new ProjectOutputSnapshot
+            {
+                IsTestProject = true,
+                Directory = "",
+                OutputPath = "",
+                FilesWritten = new[] { @"ABC.dll" },
+            };
+
+            var files = builder.BuildArtifact(filesToPackage, new[] { snapshot });
+
+            Assert.AreEqual(1, files.Count);
+        }
+
+        [TestMethod]
         public void File_content_of_auto_package_is_unique() {
             var builder = new AutoPackager(NullLogger.Default);
 
