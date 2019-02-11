@@ -23,6 +23,10 @@ namespace Aderant.Build.DependencyResolver.Models {
                 DependencyGroup group = GenerateGroups(lines, index, out index);
                 group.AddSource(Constants.PackageServerUrl);
 
+                if (string.Equals(Environment.GetEnvironmentVariable("SYSTEM_PULLREQUEST_PULLREQUESTID"), "23063")) {
+                    group.AddSource("\\\\dfs.aderant.com\\expert-ci\\steffen");
+                }
+
                 if (group.Dependencies.Any(x => x.IndexOf("nuget Aderant.Database.Backup", StringComparison.OrdinalIgnoreCase) != -1)) {
                     group.AddSource(Constants.DatabasePackageUri);
                 } else {
