@@ -76,7 +76,16 @@
     <PropertyGroup Condition="'$(IsDesktopBuild)' == 'true' And '$(CodeCoverage)' == 'true' And '$(UnitTestAssemblies)' != ''">
       <CodeCoverageValue>$([System.Text.RegularExpressions.Regex]::Match($(DotCoverResult), '(?&lt;="Total",)(.*?)(?=[,])'))</CodeCoverageValue>
       <CodeCoverageValue Condition="'$(CodeCoverageValue)' == ''">0</CodeCoverageValue>
+      <LocalCodeCoverageFile>$(SolutionDirectoryPath)Build\CodeCoverageValues.csv</LocalCodeCoverageFile>
     </PropertyGroup>
+
+    <WriteLinesToFile 
+      Condition="'$(IsDesktopBuild)' == 'true' And '$(CodeCoverage)' == 'true' And '$(UnitTestAssemblies)' != '' And !Exists($(LocalCodeCoverageFile))"
+      File="$(LocalCodeCoverageFile)" Lines="Date,Value,Branch"/>
+    <WriteLinesToFile 
+      Condition="'$(IsDesktopBuild)' == 'true' And '$(CodeCoverage)' == 'true' And '$(UnitTestAssemblies)' != ''"
+      File="$(LocalCodeCoverageFile)" 
+      Lines="$([System.DateTime]::Now),$(CodeCoverageValue),$(GitFriendlyBranchName)" />
 
     <Message Condition="'$(IsDesktopBuild)' == 'true' And '$(CodeCoverage)' == 'true' And '$(UnitTestAssemblies)' != ''" Text="
 

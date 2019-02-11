@@ -20,6 +20,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{A35EFF81
 		Src\Build\Aderant.CSharp.targets = Src\Build\Aderant.CSharp.targets
 		Src\Build\Aderant.CustomAfterMicrosoftCommon.targets = Src\Build\Aderant.CustomAfterMicrosoftCommon.targets
 		Src\Build\Aderant.wpp.content.proj = Src\Build\Aderant.wpp.content.proj
+		Src\Build\Aderant.wpp.content.v2.proj = Src\Build\Aderant.wpp.content.v2.proj
 		Src\Build\Aderant.wpp.targets = Src\Build\Aderant.wpp.targets
 		Src\Build\Bootstrap.ps1 = Src\Build\Bootstrap.ps1
 		Src\Build\Build-Libraries.ps1 = Src\Build\Build-Libraries.ps1

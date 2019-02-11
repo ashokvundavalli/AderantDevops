@@ -245,7 +245,8 @@ namespace Willys.LsaSecurity
             $ProgressPreference = "SilentlyContinue"
 
             try {
-                Invoke-WebRequest -Uri http://go.microsoft.com/fwlink/?LinkID=851123 -OutFile "vsts.agent.zip" -UseBasicParsing
+                $agentArchive = "$env:SystemDrive\Scripts\vsts-agent.zip"        
+                Invoke-WebRequest "https://vstsagentpackage.azureedge.net/agent/2.141.2/vsts-agent-win-x64-2.141.2.zip" -OutFile $agentArchive -UseBasicParsing
             } finally {
                 $ProgressPreference = $currentProgressPreference
             }

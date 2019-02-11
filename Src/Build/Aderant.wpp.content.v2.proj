@@ -160,10 +160,11 @@
 
       <RegexEscapedIdentity>$([System.Text.RegularExpressions.Regex]::Escape('%(Module)'))</RegexEscapedIdentity>
       <RegexEscapedPresentation>$([System.Text.RegularExpressions.Regex]::Escape('Web.Presentation'))</RegexEscapedPresentation>
+      <RegexEscapedOffice>$([System.Text.RegularExpressions.Regex]::Escape('Web.Office'))</RegexEscapedOffice>
       <RegexEscapedFoundation>$([System.Text.RegularExpressions.Regex]::Escape('Web.Foundation'))</RegexEscapedFoundation>
       <RegexEscapedOTG>$([System.Text.RegularExpressions.Regex]::Escape('Web.OTG'))</RegexEscapedOTG>
       <RegexContentPattern>%(RegexEscapedIdentity)(.*)(%(RegexEscapedIdentity))</RegexContentPattern>
-      <RegexContentPattern Condition="'%(Module)' == 'Web.Core'">%(RegexEscapedIdentity)(.*)(%(RegexEscapedIdentity)|%(RegexEscapedPresentation)|%(RegexEscapedFoundation)|%(RegexEscapedOTG))</RegexContentPattern>
+      <RegexContentPattern Condition="'%(Module)' == 'Web.Core'">%(RegexEscapedIdentity)(.*)(%(RegexEscapedIdentity)|%(RegexEscapedOffice)|%(RegexEscapedPresentation)|%(RegexEscapedFoundation)|%(RegexEscapedOTG))</RegexContentPattern>
       
 
       <!-- Test if this is direct or transitive content like Modules\Web.SMB\Dependencies\Web.Presentation\Scripts\Web.Foundation\add2home.js -->

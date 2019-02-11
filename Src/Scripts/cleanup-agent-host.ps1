@@ -57,9 +57,11 @@ foreach ($dir in $directoriesToRemove) {
 
 # Should a human run this script, don't nuke their environment
 if (-not [System.Environment]::UserInteractive) {
-    Get-PSDrive -PSProvider FileSystem | Select-Object -Property Root | ForEach-Object {$machineWideDirectories += $_.Root + "ExpertShare"}
+    if ($null -eq $env:AgentPool -or $env:AgentPool -eq 'Default') {
+        $machineWideDirectories += (Get-PSDrive -PSProvider FileSystem | Select-Object -Property { [System.IO.Path]::Combine($_.Root, "ExpertShare") }) 
+    }
 
-    # Yay for people who check in PostBuild events :)
+    # Yay for checked in PostBuild events :)
     machineWideDirectories += "C:\tfs"
 }
 

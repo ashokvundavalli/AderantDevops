@@ -197,7 +197,7 @@ begin {
     function CreateServerImage() {
         [string]$deploymentEngine = Join-Path -Path $binariesDirectory -ChildPath "DeploymentEngine.exe"
         [string]$serverImageDirectory = Join-Path -Path $binariesDirectory -ChildPath "ExpertServerImage"
-        [string]$parameters = "CreateServerImage /source:'$expertSourceDirectory' /image:'$serverImageDirectory\Bin\Module' /name:ExpertServerImage /skh"
+        [string]$parameters = "CreateServerImage /source:'$expertSourceDirectory' /image:'$serverImageDirectory\Bin\Module' /name:ExpertServerImage /skh /removefiles"
 
         # Copy dependencies required to run DeploymentEngine
         [string[]]$dependencies = @(
