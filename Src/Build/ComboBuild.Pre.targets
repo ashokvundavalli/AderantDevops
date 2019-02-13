@@ -199,17 +199,22 @@
     <Message Text="VersionRevision:       $(VersionRevision)" />
 
     <ItemGroup>
-      <DirProject Include="$(MSBuildThisFileDirectory)\dir.proj;
-                           $(MSBuildThisFileDirectory)\Aderant.wpp.content.proj;
-                           $(MSBuildThisFileDirectory)\Aderant.wpp.content.v3.proj;
-                           $(MSBuildThisFileDirectory)\Aderant.wpp.content.sharing.proj" />
+      <BuildExtensionFiles Include="$(MSBuildThisFileDirectory)\dir.proj">
+        <Destination></Destination>
+      </BuildExtensionFiles>
+      <BuildExtensionFiles Include="$(MSBuildThisFileDirectory)\Aderant.wpp.content.v3.proj">
+        <Destination>Build\wpp</Destination>
+      </BuildExtensionFiles>
+      <BuildExtensionFiles Include="$(MSBuildThisFileDirectory)\Aderant.wpp.common.targets">
+        <Destination>Build\wpp</Destination>
+      </BuildExtensionFiles>
     </ItemGroup>
 
-    <Copy SourceFiles="@(DirProject)"
-      DestinationFolder="$(SolutionRoot)"
-      UseHardlinksIfPossible="true"
-      OverwriteReadOnlyFiles="true"
-      SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BuildExtensionFiles)"
+          DestinationFiles="@(BuildExtensionFiles-> '$(SolutionRoot)\%(Destination)\%(Filename)%(Extension)')"
+          UseHardlinksIfPossible="true"
+          OverwriteReadOnlyFiles="true"
+          SkipUnchangedFiles="true" />
 
   </Target>
 

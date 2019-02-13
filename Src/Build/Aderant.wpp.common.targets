@@ -1,0 +1,258 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <Import Project="$(MSBuildThisFileDirectory)Aderant.wpp.content.v3.proj" Condition="'$(IsWebOrMobile)' == 'true' And '$(WebDependencyVersion)' == '3'" />
+
+  <UsingTask
+        TaskName="WriteSharedContentFile"
+        TaskFactory="CodeTaskFactory"
+        AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+    <ParameterGroup>
+      <OutputFile ParameterType="System.String" Required="true" />
+      <PathPropertyName ParameterType="System.String" Required="true" />
+      <ProjectRootDirectory ParameterType="System.String" Required="true" />
+      <MSBuildProjectName ParameterType="System.String" Required="true" />
+      <ProjectItems ParameterType="Microsoft.Build.Framework.ITaskItem[]" />
+      <AssetFilter ParameterType="Microsoft.Build.Framework.ITaskItem[]" />
+    </ParameterGroup>
+
+    <Task>
+      <Reference Include="System.Xml" />
+      <Using Namespace="System" />
+      <Using Namespace="System.Xml" />
+      <Code Type="Fragment" Language="cs">
+<![CDATA[
+        if (ProjectItems == null || ProjectItems.Length == 0) {
+            throw new ArgumentException("No items provided to content writer");
+        }
+
+        var ns = "http://schemas.microsoft.com/developer/msbuild/2003";
+
+        XmlWriterSettings settings = new XmlWriterSettings {
+            Indent = true
+        };
+
+        string pathVariable = @"(" + PathPropertyName + ")";
+
+        using (var w = XmlWriter.Create(OutputFile, settings)) {
+            w.WriteStartElement("Project", ns);
+
+            w.WriteStartElement("Import");
+            w.WriteAttributeString("Project", "SharedItems.proj");
+            w.WriteAttributeString("Condition", "Exists('SharedItems.proj')");
+            w.WriteEndElement();
+
+            w.WriteStartElement("PropertyGroup");
+            w.WriteStartElement(PathPropertyName);
+            w.WriteAttributeString("Condition", string.Format("'$" + "({0})' == ''", PathPropertyName));
+            w.WriteString(string.Format("$" + "({0})\\", "MSBuildThisFileDirectory"));
+            w.WriteEndElement();
+            w.WriteEndElement();
+
+            w.WriteStartElement("ItemGroup");
+
+            foreach (var file in ProjectItems) {
+                var link = file.GetMetadata("Link");
+
+                var type = file.GetMetadata("Type");
+                if (string.IsNullOrWhiteSpace(type)) {
+                    type = "Content";
+                }
+
+                var includeProjectName = file.GetMetadata("IncludeProjectName");
+                string fileAndExtension = file.GetMetadata("Filename") + file.GetMetadata("Extension");
+                string fileRelativePath = file.GetMetadata("RelativeDir").Replace(ProjectRootDirectory, "") + fileAndExtension;
+
+                // If the link metadata is not defined then synthesize it
+                if (string.IsNullOrWhiteSpace(link)) {
+                    link = fileRelativePath;
+                    if (string.Equals("false", includeProjectName, StringComparison.OrdinalIgnoreCase)) {
+                        link = link.Replace(MSBuildProjectName, "");
+                    }
+                    link = link.Replace(@"\\", @"\");
+                }
+
+                w.WriteStartElement(type);
+                w.WriteAttributeString("Include", "$" + pathVariable + fileRelativePath);
+
+                w.WriteStartElement("Link");
+                w.WriteString(link);
+                w.WriteEndElement();
+
+                //w.WriteComment("\r\nRecursiveDir:" + file.GetMetadata("RecursiveDir") + "\r\nRelativeDir:" + file.GetMetadata("RelativeDir") + "\r\nLink:" + link);
+
+                w.WriteStartElement("Visible");
+                w.WriteString("true");
+                w.WriteEndElement();
+
+                w.WriteEndElement();
+            }
+
+            w.WriteEndElement();
+
+            w.WriteEndElement();
+        }
+]]>
+      </Code>
+    </Task>
+  </UsingTask>
+
+
+  <Target Name="CollectProjectContentItems">
+    <PropertyGroup>
+      <ScriptsDirectory>$(MSBuildProjectDirectory)\</ScriptsDirectory>
+      <ScriptsDirectory Condition="'$(ScriptsDirectory)' != '' and !HasTrailingSlash('$(ScriptsDirectory)')">$(ScriptsDirectory)\</ScriptsDirectory>
+      <OptionalNameFilter Condition="'$(OptionalNameFilter)' == ''">*</OptionalNameFilter>
+      <OptionalNameFilter Condition="'$(UseProjectNameWhenCollectingSharedContent)' == ''">$(MSBuildProjectName)</OptionalNameFilter>
+      <IncludeJSFiles Condition="'$(IncludeJSFiles)' == ''">true</IncludeJSFiles>
+    </PropertyGroup>
+
+    <!--Scripts-->
+    <ItemGroup>
+      <ProjectItems Condition="'$(IncludeJSFiles)' == 'true'"
+                    Include="$(ScriptsDirectory)Scripts\$(OptionalNameFilter)\**\*.js"
+                    Exclude="$(ScriptsDirectory)Scripts\**\ThirdParty.*\**">
+        <Type>Content</Type>
+      </ProjectItems>
+      <ProjectItems Include="$(ScriptsDirectory)Scripts\$(OptionalNameFilter)\**\*.html">
+        <Type>Content</Type>
+      </ProjectItems>
+
+      <ProjectItems Include="$(ScriptsDirectory)Scripts\$(OptionalNameFilter)\**\*.d.ts"
+                    Exclude="$(ScriptsDirectory)Scripts\**\ThirdParty.*\**">
+        <Type>TypeScriptCompile</Type>
+      </ProjectItems>
+    </ItemGroup>
+
+    <!-- Content -->
+    <ItemGroup>
+      <ProjectItems Include="$(ScriptsDirectory)Content\$(OptionalNameFilter)\**\*"
+                    Exclude="$(ScriptsDirectory)Content\**\ThirdParty.*\**">
+        <Type>Content</Type>
+      </ProjectItems>
+    </ItemGroup>
+
+    <!--ViewModels-->
+    <ItemGroup>
+      <ProjectItems Include="$(ScriptsDirectory)ViewModels\$(OptionalNameFilter)\**\*.d.ts"
+                    Exclude="$(ScriptsDirectory)ViewModels\**\ThirdParty.*\**">
+        <Type>TypeScriptCompile</Type>
+      </ProjectItems>
+    </ItemGroup>
+
+    <!-- Helpers -->
+    <ItemGroup>
+      <ProjectItems Include="$(ScriptsDirectory)Helpers\$(OptionalNameFilter)\**\*.xml;
+                             $(ScriptsDirectory)Helpers\$(OptionalNameFilter)\**\*.xml">
+        <Link>Helpers\%(RecursiveDir)%(Filename)%(Extension)</Link>
+        <Type>Content</Type>
+      </ProjectItems>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectItems Include="$(ScriptsDirectory)Views\Shared\$(OptionalNameFilter)\**\*.cshtml">
+        <Type>Content</Type>
+      </ProjectItems>
+    </ItemGroup>
+
+    <!--Authentication-->
+    <ItemGroup Condition="'$(IncludeAuthenticationFiles)' == 'true'">
+      <ProjectItems Include="$(ScriptsDirectory)Authentication\**\*">
+        <Link>Authentication\%(RecursiveDir)%(Filename)%(Extension)</Link>
+        <Type>Content</Type>
+      </ProjectItems>
+
+      <ProjectItems Include="$(ScriptsDirectory)ManualLogOn\$(OptionalNameFilter)\**\*">
+        <Link>ManualLogOn\%(RecursiveDir)%(Filename)%(Extension)</Link>
+        <IncludeProjectName>false</IncludeProjectName>
+        <Type>Content</Type>
+      </ProjectItems>
+    </ItemGroup>
+
+    <!-- Pull in other custom content -->
+    <ItemGroup>
+      <ProjectItems Include="@(Content)" Condition="'%(Content.AddToProjectItems)' == 'true'" />
+    </ItemGroup>
+  </Target>
+
+
+  <Target Name="WriteContentFile"
+          Condition="'$(OutputSharedWebContentFile)' == 'true'"
+          AfterTargets="AfterBuild"
+          DependsOnTargets="CollectProjectContentItems">
+
+    <WriteSharedContentFile
+      OutputFile="$(MSBuildProjectFullPath).shared"
+      PathPropertyName="$(MSBuildProjectName.Replace('.', ''))Path"
+      ProjectRootDirectory="$(ScriptsDirectory)"
+      MSBuildProjectName="$(MSBuildProjectName)"
+      ProjectItems="@(ProjectItems)" />
+
+  </Target>
+
+
+  <Target Name="CollectLinkedContentFiles" BeforeTargets="CopyLinkedContentFiles">
+
+    <ItemGroup>
+      <ContentToCopy Include="@(Content->HasMetadata('Link'))">
+        <OriginalItemSpec>%(FullPath)</OriginalItemSpec>
+      </ContentToCopy>
+
+      <ContentToCopy Include="@(TypeScriptCompile->HasMetadata('Link'))">
+        <OriginalItemSpec>%(FullPath)</OriginalItemSpec>
+      </ContentToCopy>
+    </ItemGroup>
+
+  </Target>
+
+
+  <!-- Maintains the  F5 experience -->
+  <Target Name="CopyLinkedContentFiles"
+          DependsOnTargets="CollectLinkedContentFiles"
+          BeforeTargets="PreComputeCompileTypeScript;Build;CopyAllFilesToSingleFolderForMsdeploy"
+          Inputs="@(ContentToCopy)"
+          Outputs="@(ContentToCopy->'$(ProjectDir)%(Link)')">
+
+    <!-- Only copy files with the Link attribute set -->
+    <Copy SourceFiles="@(ContentToCopy->'%(OriginalItemSpec)')"
+          DestinationFiles="@(ContentToCopy->'$(ProjectDir)%(Link)')"
+          SkipUnchangedFiles="true"
+          OverwriteReadOnlyFiles="true"
+          UseHardlinksIfPossible="true" />
+
+  </Target>
+
+
+  <ItemGroup>
+    <!--Exclude any .less files beginning with an '_' from being compiled as a convention, also exclude all less files from the obj directories -->
+    <LessFiles Include="$(ProjectDir)\Content\*.less"
+               Exclude="$(ProjectDir)\Content\_*.less" />
+  </ItemGroup>
+
+
+  <Target Name="CompileLess"
+          Inputs="@(LessFiles)"
+          Outputs="@(LessFiles->'%(RelativeDir)%(Filename).css')"
+          AfterTargets="CopyLinkedContentFiles"
+          Condition="'$(EnableLESSCompile)' == 'True'">
+
+    <CompileLess LessFiles="@(LessFiles)" />
+
+  </Target>
+
+  <Target Name="custom-tsconfig-->tsc"
+          Condition="'$(BuildingInsideVisualStudio)' != 'true'"
+          AfterTargets="CompileTypeScriptWithTSConfig">
+
+    <ItemGroup>
+      <CustomTSConfigs
+        Include="$(ProjectDir)**\*custom.tsconfig.json"
+        Exclude="$(ProjectDir)**\PackageTmp\**;
+                 $(ProjectDir)**\obj\**;
+                 $(ProjectDir)**\bin\**;"/>
+    </ItemGroup>
+
+    <Exec Condition="'@(CustomTSConfigs)' != ''" Command="&quot;$(MSBuildProgramFiles32)\Microsoft SDKs\TypeScript\$(TypeScriptToolsVersion)\tsc.exe&quot; --project %(CustomTSConfigs.FullPath) "/>
+  </Target>
+
+</Project>

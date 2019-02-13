@@ -15,12 +15,7 @@
     <Analyzer Include="$(PackagesDirectory)\Aderant.Build.Analyzer\analyzers\dotnet\cs\*.dll" />
   </ItemGroup>
 
-  <!--WebDependency-->
-  <Import Project="$(MSBuildThisFileDirectory)\Aderant.wpp.content.proj" Condition="'$(IsWebOrMobile)' == 'true' And '$(WebDependencyVersion)' == ''" />
-  <Import Project="$(MSBuildThisFileDirectory)\Aderant.wpp.content.v3.proj" Condition="'$(IsWebOrMobile)' == 'true' And '$(WebDependencyVersion)' == '3'" />
-
-  <!-- Controls if the targets that facililate content sharing for web projects should be imported -->
-  <Import Project="$(MSBuildThisFileDirectory)\Aderant.wpp.content.sharing.proj" Condition="'$(OutputSharedWebContentFile)' == 'true'" />
+  <Import Project="$(MSBuildThisFileDirectory)\Build\wpp\Aderant.wpp.common.targets" Condition="'$(IsWebOrMobile)' == 'true'" />
 
   <!--TSLint-->
   <Import Project="$(PackagesDirectory)\development\TSLint.MSBuild\build\TSLint.MSBuild.targets" Condition="'$(RunTSLint)' == 'true' And '$(IsWeb)' == 'true'" />

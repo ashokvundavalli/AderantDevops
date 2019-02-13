@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!--WebDependencyVersion 3-->
-<Project
-  xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-  ToolsVersion="14.0">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <Import Project="Aderant.wpp.common.targets" Condition="'$(WppTargetsImported)' != 'true'" />
 
   <PropertyGroup>
     <DependenciesDirectory Condition="'$(DependenciesDirectory)' == ''">$(MSBuildThisFileDirectory)</DependenciesDirectory>
@@ -228,71 +228,6 @@
     </TypeScriptCompile>
   </ItemGroup>
 
-
-  <Target Name="CollectLinkedContentFiles" BeforeTargets="CopyLinkedContentFiles">
-
-    <ItemGroup>
-      <ContentToCopy Include="@(Content->HasMetadata('Link'))">
-        <OriginalItemSpec>%(FullPath)</OriginalItemSpec>
-      </ContentToCopy>
-
-      <ContentToCopy Include="@(TypeScriptCompile->HasMetadata('Link'))">
-        <OriginalItemSpec>%(FullPath)</OriginalItemSpec>
-      </ContentToCopy>
-    </ItemGroup>
-
-  </Target>
-
-
-  <!-- Maintains the
-  F5 experience -->
-  <Target Name="CopyLinkedContentFiles"
-          DependsOnTargets="CollectLinkedContentFiles"
-          BeforeTargets="PreComputeCompileTypeScript;Build;CopyAllFilesToSingleFolderForMsdeploy"
-          Inputs="@(ContentToCopy)"
-          Outputs="@(ContentToCopy->'$(ProjectDir)%(Link)')">
-
-    <!-- Only copy files with the Link attribute set -->
-    <Copy SourceFiles="@(ContentToCopy->'%(OriginalItemSpec)')"
-          DestinationFiles="@(ContentToCopy->'$(ProjectDir)%(Link)')"
-          SkipUnchangedFiles="true"
-          OverwriteReadOnlyFiles="true"
-          UseHardlinksIfPossible="true" />
-
-  </Target>
-
-
-  <ItemGroup>
-    <!--Exclude any .less files beginning with an '_' from being compiled as a convention, also exclude all less files from the obj directories -->
-    <LessFiles Include="$(ProjectDir)\Content\*.less"
-               Exclude="$(ProjectDir)\Content\_*.less" />
-  </ItemGroup>
-
-
-  <Target Name="CompileLess"
-          Inputs="@(LessFiles)"
-          Outputs="@(LessFiles->'%(RelativeDir)%(Filename).css')"
-          AfterTargets="CopyLinkedContentFiles"
-          Condition="'$(EnableLESSCompile)' == 'True'">
-
-    <CompileLess
-      LessFiles="@(LessFiles)" />
-
-  </Target>
-
-  <Target Name="custom-tsconfig-->tsc"
-          Condition="'$(BuildingInsideVisualStudio)' != 'true'"
-          AfterTargets="CompileTypeScriptWithTSConfig">
-    <ItemGroup>
-      <CustomTSConfigs
-        Include="$(ProjectDir)**\*custom.tsconfig.json"
-        Exclude="$(ProjectDir)**\PackageTmp\**;
-                 $(ProjectDir)**\obj\**;
-                 $(ProjectDir)**\bin\**;"/>
-    </ItemGroup>
-
-    <Exec Condition="'@(CustomTSConfigs)' != ''" Command="&quot;$(MSBuildProgramFiles32)\Microsoft SDKs\TypeScript\$(TypeScriptToolsVersion)\tsc.exe&quot; --project %(CustomTSConfigs.FullPath) "/>
- </Target>
 
   <!--
     Debugging
