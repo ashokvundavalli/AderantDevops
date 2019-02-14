@@ -33,7 +33,7 @@ namespace Aderant.Build.Tasks {
         internal static BuildOperationContext InternalContext { get; set; }
 
         internal IBuildPipelineService PipelineService {
-            get { return Service ?? (Service = BuildPipelineServiceClient.CreateFromPipeId(ContextEndpoint ?? BuildPipelineServiceHost.PipeId)); }
+            get { return Service ?? (Service = BuildPipelineServiceClient.GetProxy(ContextEndpoint ?? BuildPipelineServiceHost.PipeId)); }
         }
 
         internal IBuildPipelineService Service {

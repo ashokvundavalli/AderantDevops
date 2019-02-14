@@ -24,7 +24,7 @@ namespace Aderant.Build.Packaging {
                 string outputPath = project.OutputPath;
 
                 // Normalize path as sometimes it ends with two slashes
-                string projectOutputPath = outputPath.NormalizePath();
+                string projectOutputPath = outputPath.NormalizeTrailingSlashes();
 
                 if (outputPath != projectOutputPath) {
                     logger.Warning($"! Project {project.ProjectFile} output path ends with two path separators: '{projectOutputPath}'. Normalize this path.");

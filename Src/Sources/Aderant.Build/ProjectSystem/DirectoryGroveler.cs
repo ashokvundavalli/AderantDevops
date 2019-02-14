@@ -1,17 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Management.Automation;
+using System.Linq;
+using System.Xml.Linq;
+using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.IO;
 using Aderant.Build.Logging;
+using Aderant.Build.PipelineService;
 
 namespace Aderant.Build.ProjectSystem {
 
     internal class DirectoryGroveler {
-        private readonly IFileSystem physicalFileSystem;
 
         private readonly SortedSet<string> directoriesInBuild = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly SortedSet<string> extensibilityFiles = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly SortedSet<string> makeFiles = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly IFileSystem physicalFileSystem;
         private readonly SortedSet<string> projectFiles = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
         public DirectoryGroveler(IFileSystem physicalFileSystem) {
@@ -36,7 +40,10 @@ namespace Aderant.Build.ProjectSystem {
 
         public BuildTaskLogger Logger { get; set; }
 
-        public void Grovel(string[] contextInclude, string[] excludePaths) {
+        /// <summary>
+        /// Begins looking buildable items under the paths provided by <see cref="contextInclude"/>
+        /// </summary>
+        public void Grovel(IReadOnlyList<string> contextInclude, IReadOnlyList<string> excludePaths) {
             var filePathCollector = new List<string>();
 
             var seenDirectories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -52,7 +59,7 @@ namespace Aderant.Build.ProjectSystem {
             foreach (var path in filePathCollector) {
                 string fileName = Path.GetFileName(path);
 
-                if (string.Equals(fileName, "TFSBuild.proj")) {
+                if (string.Equals(fileName, WellKnownPaths.EntryPointFileName)) {
                     makeFiles.Add(path);
                     directoriesInBuild.Add(Path.GetFullPath(Path.GetDirectoryName(path) + "\\..\\"));
                     continue;
@@ -67,97 +74,56 @@ namespace Aderant.Build.ProjectSystem {
             }
         }
 
-        internal IEnumerable<string> GrovelForFiles(string root, IReadOnlyCollection<string> excludeFilterPatterns, HashSet<string> seenDirectories = null) {
+        /// <summary>
+        /// Internal API.
+        /// </summary>
+        internal IEnumerable<string> GrovelForFiles(string root, IReadOnlyList<string> excludeFilterPatterns, HashSet<string> seenDirectories = null) {
             string[] extensions = new[] {
                 "*.csproj",
                 "*.wixproj",
-                "TFSBuild.proj",
+                WellKnownPaths.EntryPointFileName,
                 "dir.props",
             };
 
-            return new Traverse(physicalFileSystem) {
+            return new DirectoryScanner(physicalFileSystem) {
                 ExcludeFilterPatterns = excludeFilterPatterns,
                 PreviouslySeenDirectories = seenDirectories,
             }.TraverseDirectoriesAndFindFiles(root, extensions);
         }
-    }
 
-    internal class Traverse {
-        private readonly IFileSystem physicalFileSystem;
+        /// <summary>
+        /// Expands the scope of the build tree by pulling in directories that are referenced by other sources of dependency information
+        /// </summary>
+        public void ExpandBuildTree(IBuildTreeContributorService pipelineService) {
+            HashSet<string> contributorsAdded = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        public Traverse(IFileSystem physicalFileSystem) {
-            this.physicalFileSystem = physicalFileSystem;
+            foreach (string directory in DirectoriesInBuild) {
+                var file = Path.Combine(directory, "Build", DependencyManifest.DependencyManifestFileName);
 
-        }
+                if (physicalFileSystem.FileExists(file)) {
+                    var manifest = new DependencyManifest(file, XDocument.Parse(physicalFileSystem.ReadAllText(file)));
 
-        public IReadOnlyCollection<string> ExcludeFilterPatterns { get; set; }
-        public HashSet<string> PreviouslySeenDirectories { get; set; }
+                    foreach (ExpertModule module in manifest.ReferencedModules) {
+                        string moduleName = module.Name;
 
-        public IEnumerable<string> TraverseDirectoriesAndFindFiles(string root, string[] extensions) {
-            var files = new List<string>();
+                        // Construct a path that represents a possible directory that also needs to be built.
+                        // We will check if it actually exists, or is needed later in the processing
+                        string contributorRoot = Path.Combine(Directory.GetParent(directory.TrimTrailingSlashes()).FullName, moduleName, "Build");
 
-            TraverseDirectoriesAndFindFilesInternal(root, extensions, files);
+                        if (!contributorsAdded.Contains(contributorRoot)) {
+                            string contributorMakeFile = Path.Combine(contributorRoot, WellKnownPaths.EntryPointFileName);
 
-            return files;
-        }
+                            pipelineService.AddBuildDirectoryContributor(
+                                new BuildDirectoryContribution(contributorMakeFile) {
+                                    DependencyFile = file
+                                });
 
-        private void TraverseDirectoriesAndFindFilesInternal(string root, string[] extensions, List<string> files) {
-            IEnumerable<string> directories = physicalFileSystem.GetDirectories(root);
-
-            foreach (var directory in directories) {
-                if (PreviouslySeenDirectories != null && PreviouslySeenDirectories.Contains(directory)) {
-                    continue;
-                }
-
-                var skip = DoesPathContainExcludeFilterSegment(directory, ExcludeFilterPatterns);
-
-                if (!skip) {
-                    skip = physicalFileSystem.IsSymlink(directory);
-                }
-
-                if (skip) {
-                    if (PreviouslySeenDirectories != null) {
-                        PreviouslySeenDirectories.Add(directory);
-                    }
-                    continue;
-                }
-
-                foreach (var extension in extensions) {
-                    files.AddRange(physicalFileSystem.GetFiles(directory, extension, false));
-                }
-
-                if (PreviouslySeenDirectories != null) {
-                    PreviouslySeenDirectories.Add(directory);
-                }
-
-                TraverseDirectoriesAndFindFilesInternal(directory, extensions, files);
-            }
-        }
-
-        internal static bool DoesPathContainExcludeFilterSegment(string path, IReadOnlyCollection<string> excludeFilterPatterns) {
-            if (excludeFilterPatterns != null) {
-                foreach (var pattern in excludeFilterPatterns) {
-                    string resolvedPath = pattern;
-
-                    if (pattern.Contains("..")) {
-                        resolvedPath = Path.GetFullPath(pattern);
-                    }
-
-                    if (WildcardPattern.ContainsWildcardCharacters(resolvedPath)) {
-                        WildcardPattern wildcardPattern = new WildcardPattern(resolvedPath, WildcardOptions.IgnoreCase);
-
-                        if (wildcardPattern.IsMatch(path)) {
-                            return true;
+                            contributorsAdded.Add(contributorRoot);
                         }
                     }
-
-                    if (path.IndexOf(resolvedPath, StringComparison.OrdinalIgnoreCase) >= 0) {
-                        return true;
-                    }
                 }
             }
-
-            return false;
         }
     }
+
 }

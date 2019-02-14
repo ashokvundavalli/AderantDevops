@@ -118,6 +118,9 @@
     <Compile Include="DependencyAnalyzer\TextTemplates\Location.cs" />
     <Compile Include="DependencyAnalyzer\TextTemplates\ParserException.cs" />
     <Compile Include="DependencyAnalyzer\TextTemplates\Tokenizer.cs" />
+    <Compile Include="BuildDirectoryContribution.cs" />
+    <Compile Include="IO\JunctionNativeMethods.cs" />
+    <Compile Include="IO\Traverse.cs" />
     <Compile Include="Utilities\TopologicalSort.cs" />
     <Compile Include="DependencyResolver\Models\PaketDependenciesStructure.cs" />
     <Compile Include="Packaging\FileRestore.cs" />
@@ -256,7 +259,7 @@
     <Compile Include="Tasks\GenerateBuildPlan.cs" />
     <Compile Include="Commands\BuildCmdlet.cs" />
     <Compile Include="Commands\GetExpertDependenciesForModule.cs" />
-    <Compile Include="Commands\PushPaketTemplates.cs" />
+    <Compile Include="Commands\Legacy\PushPaketTemplates.cs" />
     <Compile Include="BuildNotFoundException.cs" />
     <Compile Include="DependencyAnalyzer\ExpertModuleExtensions.cs" />
     <Compile Include="DependencyResolver\FolderBasedRequirement.cs" />
@@ -384,14 +387,14 @@
     <Compile Include="Commands\Legacy\CopyBinToEnvironment.cs" />
     <Compile Include="Process\DefinitionParametersConfigurator.cs" />
     <Compile Include="Commands\Legacy\GetExpertBranches.cs" />
-    <Compile Include="Commands\GetDependencies.cs" />
+    <Compile Include="Commands\Legacy\GetDependencies.cs" />
     <Compile Include="Commands\GetDependencyGraph.cs" />
     <Compile Include="Commands\GetBuildDependencyTreeCommand.cs" />
-    <Compile Include="Commands\GetDependsOn.cs" />
-    <Compile Include="Commands\GetDownstreamExpertModules.cs" />
-    <Compile Include="Commands\GetExpertModule.cs" />
-    <Compile Include="Commands\GetExpertModules.cs" />
-    <Compile Include="Commands\NewExpertBuildDefinition.cs" />
+    <Compile Include="Commands\Legacy\GetDependsOn.cs" />
+    <Compile Include="Commands\Legacy\GetDownstreamExpertModules.cs" />
+    <Compile Include="Commands\Legacy\GetExpertModule.cs" />
+    <Compile Include="Commands\Legacy\GetExpertModules.cs" />
+    <Compile Include="Commands\Legacy\NewExpertBuildDefinition.cs" />
     <Compile Include="Commands\Legacy\SortModulesByBuildOrder.cs" />
     <Compile Include="DependencyAnalyzer\CircularDependencyException.cs" />
     <Compile Include="DependencyAnalyzer\DependencyBuilder.cs" />
@@ -428,11 +431,11 @@
     <Compile Include="Tasks\GetAssemblyPlatform.cs" />
     <Compile Include="Commands\Legacy\ProjectFileFolderSync.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Commands\WebPackageExtract.cs" />
+    <Compile Include="Commands\Legacy\WebPackageExtract.cs" />
     <Compile Include="DependencyResolver\VersionRequirement.cs" />
     <Compile Include="VisualStudioEnvironmentContext.cs" />
     <Compile Include="UpgradeTemplateBuildProcess.cs" />
-    <Compile Include="WebArchiveFileSystem.cs" />
+    <Compile Include="Legacy\WebArchiveFileSystem.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Assets\OpenTypeStd\FuturaStd-Bold.otf" />

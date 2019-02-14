@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using System.Xml;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.IO;
 using Aderant.Build.Logging;
 using Aderant.Build.Model;
 using Aderant.Build.PipelineService;
@@ -31,10 +32,22 @@ namespace Aderant.Build.ProjectSystem {
         private readonly ConcurrentDictionary<Guid, ConfiguredProject> loadedConfiguredProjects = new ConcurrentDictionary<Guid, ConfiguredProject>();
         private readonly ILogger logger = NullLogger.Default;
 
+        string[] directoryFilter = new[] {
+            "packages",
+            "dependencies",
+        };
+
+        string[] extensions = new[] {
+            "*.csproj",
+            "*.wixproj",
+        };
+
         private ConcurrentBag<UnconfiguredProject> loadedUnconfiguredProjects;
 
         // Holds any projects which we cannot load a solution for
         private ConcurrentBag<ConfiguredProject> orphanedProjects = new ConcurrentBag<ConfiguredProject>();
+
+        private ProjectCollection projectCollection;
 
         // First level cache for parsed solution information
         // Also stores the data needed to create the "CurrentSolutionConfigurationContents" object that
@@ -43,9 +56,6 @@ namespace Aderant.Build.ProjectSystem {
         // and attempts to assign platforms and targets to project references, even if you are not building them.
         private Dictionary<Guid, ProjectInSolution> projectsByGuid = new Dictionary<Guid, ProjectInSolution>();
         private Dictionary<Guid, string> projectToSolutionMap = new Dictionary<Guid, string>();
-
-        // Tracks the solution files and what project guids they think they are tracking.
-        private Dictionary<Guid, string> solutionProjectView = new Dictionary<Guid, string>();
 
 
         public ProjectTree() {
@@ -74,6 +84,8 @@ namespace Aderant.Build.ProjectSystem {
         [Import(AllowDefault = true)]
         public ExportFactory<ISequencer> SequencerFactory { get; set; }
 
+        public string MetaprojectXml { get; private set; }
+
         public IReadOnlyCollection<UnconfiguredProject> LoadedUnconfiguredProjects {
             get { return loadedUnconfiguredProjects; }
         }
@@ -94,34 +106,15 @@ namespace Aderant.Build.ProjectSystem {
         public void LoadProjects(IReadOnlyCollection<string> directories, IReadOnlyCollection<string> excludeFilterPatterns) {
             EnsureUnconfiguredProjects();
 
-            ConcurrentDictionary<string, byte> files = new ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
-
             logger.Info("Raw scanning paths: " + string.Join(",", directories));
 
-            if (excludeFilterPatterns != null) {
-                excludeFilterPatterns = excludeFilterPatterns.Select(PathUtility.GetFullPath).ToList();
+            DirectoryGroveler groveler = new DirectoryGroveler(Services.FileSystem);
+            groveler.Grovel(directories.ToList(), excludeFilterPatterns.ToList());
 
-                logger.Info("Excluding paths: " + string.Join(",", excludeFilterPatterns));
-            }
-
-            Parallel.ForEach(
-                directories,
-                new ParallelOptions {
-                    MaxDegreeOfParallelism = ParallelismHelper.MaxDegreeOfParallelism
-                },
-                (path) => {
-                    foreach (var file in GrovelForFiles(path, excludeFilterPatterns)) {
-                        files.TryAdd(file, 0);
-                    }
-                });
-
-
-            projectCollection = new ProjectCollection();
-            projectCollection.SkipEvaluation = true;
-
+            projectCollection = new ProjectCollection { SkipEvaluation = true };
             ActionBlock<string> parseBlock = new ActionBlock<string>(s => LoadAndParseProjectFile(s), new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = ParallelismHelper.MaxDegreeOfParallelism });
 
-            foreach (var file in files.Keys) {
+            foreach (var file in groveler.ProjectFiles) {
                 parseBlock.Post(file);
             }
 
@@ -158,7 +151,7 @@ namespace Aderant.Build.ProjectSystem {
 
             foreach (var project in LoadedConfiguredProjects) {
                 try {
-                    BuildCurrentSolutionConfigurationXml(collector.ProjectConfiguration);
+                    GenerateCurrentSolutionConfigurationXml(collector.ProjectConfiguration);
 
                     await project.CollectBuildDependencies(collector);
                 } catch (Exception ex) {
@@ -167,15 +160,6 @@ namespace Aderant.Build.ProjectSystem {
                 }
             }
         }
-
-        private void BuildCurrentSolutionConfigurationXml(ConfigurationToBuild collectorProjectConfiguration) {
-            var projectsInSolutions = projectsByGuid.Values;
-
-            var generator = new SolutionConfigurationContentsGenerator(collectorProjectConfiguration);
-            MetaprojectXml = generator.CreateSolutionProject(projectsInSolutions);
-        }
-
-        public string MetaprojectXml { get; private set; }
 
         public DependencyGraph CreateBuildDependencyGraph(BuildDependenciesCollector collector) {
             foreach (var project in LoadedConfiguredProjects) {
@@ -224,14 +208,6 @@ namespace Aderant.Build.ProjectSystem {
             }
         }
 
-        private void LoadProjects(IReadOnlyCollection<string> analysisContextProjectFiles) {
-            EnsureUnconfiguredProjects();
-
-            foreach (string projectFile in analysisContextProjectFiles) {
-                LoadAndParseProjectFile(projectFile);
-            }
-        }
-
         public void AddConfiguredProject(ConfiguredProject configuredProject) {
             if (configuredProject.IncludeInBuild) {
                 ConfiguredProject existing;
@@ -240,6 +216,8 @@ namespace Aderant.Build.ProjectSystem {
                 }
 
                 loadedConfiguredProjects.TryAdd(configuredProject.ProjectGuid, configuredProject);
+            } else {
+                logger.Info($"The project {configuredProject.FullPath} is not configured to build.");
             }
         }
 
@@ -283,12 +261,12 @@ namespace Aderant.Build.ProjectSystem {
                             var parser = InitializeSolutionParser();
                             ParseResult parseResult = parser.Parse(file);
 
-                            foreach (var p in parseResult.ProjectsByGuid) {
-                                if (p.Value.ProjectType == SolutionProjectType.SolutionFolder) {
+                            foreach (var kvp in parseResult.ProjectsByGuid) {
+                                if (kvp.Value.ProjectType == SolutionProjectType.SolutionFolder) {
                                     continue;
                                 }
 
-                                Guid key = p.Key;
+                                Guid key = kvp.Key;
 
                                 if (!projectToSolutionMap.ContainsKey(key)) {
                                     projectToSolutionMap.Add(key, parseResult.SolutionFile);
@@ -298,7 +276,7 @@ namespace Aderant.Build.ProjectSystem {
                                 }
 
                                 if (!projectsByGuid.ContainsKey(key)) {
-                                    projectsByGuid.Add(key, p.Value);
+                                    projectsByGuid.Add(key, kvp.Value);
                                 }
                             }
 
@@ -329,31 +307,34 @@ namespace Aderant.Build.ProjectSystem {
             return new SolutionSearchResult(solutionFile, projectInSolution);
         }
 
+        private void GenerateCurrentSolutionConfigurationXml(ConfigurationToBuild collectorProjectConfiguration) {
+            var projectsInSolutions = projectsByGuid.Values;
+
+            var generator = new SolutionConfigurationContentsGenerator(collectorProjectConfiguration);
+            MetaprojectXml = generator.CreateSolutionProject(projectsInSolutions);
+        }
+
+        private void LoadProjects(IReadOnlyCollection<string> analysisContextProjectFiles) {
+            EnsureUnconfiguredProjects();
+
+            foreach (string projectFile in analysisContextProjectFiles) {
+                LoadAndParseProjectFile(projectFile);
+            }
+        }
+
         private void EnsureUnconfiguredProjects() {
             if (loadedUnconfiguredProjects == null) {
                 loadedUnconfiguredProjects = new ConcurrentBag<UnconfiguredProject>();
             }
         }
 
-        internal IEnumerable<string> GrovelForFiles(string directory, IReadOnlyCollection<string> excludeFilterPatterns) {
+        private IEnumerable<string> GrovelForFiles(string directory, IReadOnlyList<string> excludeFilterPatterns) {
             var filePathCollector = new List<string>();
 
             GetFilesWithExtensionRecursive(filePathCollector, directory);
 
-            return filePathCollector.Where(s => !Traverse.DoesPathContainExcludeFilterSegment(s, excludeFilterPatterns));
+            return filePathCollector.Where(s => !PathUtility.IsPathExcludedByFilters(s, excludeFilterPatterns));
         }
-
-        string[] extensions = new[] {
-            "*.csproj",
-            "*.wixproj",
-        };
-
-        string[] directoryFilter = new[] {
-            "packages",
-            "dependencies",
-        };
-
-        private ProjectCollection projectCollection;
 
         private void GetFilesWithExtensionRecursive(List<string> filePathCollector, string directory) {
             // For performance reasons it is important to avoid known symlink directories so here we do not traverse into them
@@ -385,28 +366,13 @@ namespace Aderant.Build.ProjectSystem {
         private IEnumerable<IArtifact> CreateBuildDependencyGraphInternal() {
             List<IArtifact> graph = new List<IArtifact>();
 
-            var comparer = DependencyEqualityComparer.Default;
-
-            // This HashSet is not used for anything?
-            HashSet<IDependable> allDependencies = new HashSet<IDependable>(comparer);
-
-            ProcessProjects(allDependencies, graph);
+            foreach (var project in LoadedConfiguredProjects) {
+                graph.Add(project);
+            }
 
             return graph;
         }
 
-        private void ProcessProjects(HashSet<IDependable> allDependencies, List<IArtifact> graph) {
-            foreach (var project in LoadedConfiguredProjects) {
-
-                IReadOnlyCollection<IDependable> dependables = project.GetDependencies();
-
-                foreach (var dependency in dependables) {
-                    allDependencies.Add(dependency);
-                }
-
-                graph.Add(project);
-            }
-        }
 
         private SolutionFileParser InitializeSolutionParser() {
             var parser = new SolutionFileParser();
@@ -416,7 +382,6 @@ namespace Aderant.Build.ProjectSystem {
         private void LoadAndParseProjectFile(string file) {
             using (Stream stream = Services.FileSystem.OpenFile(file)) {
                 using (var reader = XmlReader.Create(stream)) {
-
                     UnconfiguredProject unconfiguredProject;
 
                     using (var exportLifetimeContext = UnconfiguredProjectFactory.CreateExport()) {

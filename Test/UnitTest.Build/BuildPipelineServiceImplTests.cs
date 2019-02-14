@@ -8,16 +8,16 @@ namespace UnitTest.Build {
     [TestClass]
     public class BuildPipelineServiceImplTests {
 
-
         [TestMethod]
         public void Put_and_claim_tracked_files_over_wcf() {
             const string key = "some_key";
 
+            var id = DateTime.Now.Ticks.ToString();
+
             using (var host = new BuildPipelineServiceHost()) {
-                host.StartService(DateTime.Now.Ticks.ToString());
+                host.StartService(id);
 
-                using (var impl = BuildPipelineServiceClient.Current) {
-
+                using (var impl = BuildPipelineServiceClient.GetProxy(id)) {
                     impl.TrackInputFileDependencies(key, new List<TrackedInputFile> { new TrackedInputFile("") });
 
                     IReadOnlyCollection<TrackedInputFile> files1 = impl.ClaimTrackedInputFiles(key);
@@ -32,4 +32,5 @@ namespace UnitTest.Build {
             }
         }
     }
+
 }

@@ -140,7 +140,7 @@ namespace Aderant.Build.Tasks {
         }
 
         private IBuildPipelineService GetProxy() {
-            return BuildPipelineServiceClient.Current;
+            return BuildPipelineServiceClient.GetCurrentProxy();
         }
     }
 

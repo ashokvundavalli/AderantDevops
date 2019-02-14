@@ -1,22 +1,71 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-         ToolsVersion="14.0">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <Import Project="$(MSBuildThisFileDirectory)\Tasks\MSBuild.Community.Tasks\MSBuild.Community.Tasks.Targets" Condition="'$(MSBuildCommunityTasksLib)' == '' And '$(BuildingInsideVisualStudio)' != 'true'" />
 
-
   <PropertyGroup>
+    <WppTargetsImported>true</WppTargetsImported>
+
+    <!-- This is the target file to customize how we deploy the files, here we customize the standard MSDeploy packaging -->
+    <DeployTargetFile>$(MSBuildThisFileDirectory)Aderant.wpp.deploy.targets</DeployTargetFile>
+
     <!-- EnableExcludeFilesByExtension prevents Microsoft.Web.Publishing.targets from excluding .tt files-->
-    <EnableExcludeFilesByExtension>false</EnableExcludeFilesByExtension>
+    <EnableExcludeFilesByExtension Condition="'$(EnableExcludeFilesByExtension)' == ''">true</EnableExcludeFilesByExtension>
     <FilesToIncludeForPublish>OnlyFilesToRunTheApp</FilesToIncludeForPublish>
     <GenerateSampleDeployScript>false</GenerateSampleDeployScript>
     <PublishParametersFile>false</PublishParametersFile>
     <PackageParametersFile>false</PackageParametersFile>
-    <DeployOnBuild>true</DeployOnBuild>
-
+    <DeployOnBuild Condition="'$(DeployOnBuild)' == ''">true</DeployOnBuild>
     <DefaultPackageOutputDir>$(BinModuleDirectory)</DefaultPackageOutputDir>
     <DesktopBuildPackageLocation>$(BinModuleDirectory)</DesktopBuildPackageLocation>
+
+    <AutoParameterizationWebConfigConnectionStrings>false</AutoParameterizationWebConfigConnectionStrings>
+    <InsertAdditionalWebCofigConnectionStrings>false</InsertAdditionalWebCofigConnectionStrings>
   </PropertyGroup>
+
+
+  <PropertyGroup>
+    <ExcludeFilesByExtensionDependsOn>
+      $(ExcludeFilesByExtensionDependsOn);
+      GenerateWebPublishExtnsionsToExcludeItem
+    </ExcludeFilesByExtensionDependsOn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <ExcludeFilesFromPackageDependsOn>
+      $(ExcludeFilesFromPackageDependsOn);
+      GenerateExcludeFromPackageFiles;
+      ExcludeFilesByName;
+      ExcludeTestFiles;
+    </ExcludeFilesFromPackageDependsOn>
+  </PropertyGroup>
+
+
+  <Target Name="GenerateExcludeFromPackageFiles">
+    <ItemGroup>
+      <ExcludeFromPackageFiles Condition="'$(EnableDefaultPackagingExclusions)' == 'true'"
+                               Include="$(MSBuildProjectDirectory)\Scripts\ThirdParty.*\**\*;
+                                        $(MSBuildProjectDirectory)\Scripts\Web.Foundation\**\*;
+                                        $(MSBuildProjectDirectory)\Scripts\Web.Presentation\**\" />
+    </ItemGroup>
+  </Target>
+
+
+  <Target Name="GenerateWebPublishExtnsionsToExcludeItem">
+    <ItemGroup>
+      <!--The standard item group contains .tt which we want to preserve -->
+      <WebPublishExtnsionsToExcludeItem Remove="@(WebPublishExtensionsToExclude)" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <!-- Yes this group is actually misspelt in the Microsoft targets file -->
+      <WebPublishExtnsionsToExcludeItem Include=".exe" />
+      <WebPublishExtnsionsToExcludeItem Include=".gitignore" />
+      <WebPublishExtnsionsToExcludeItem Include=".less" />
+      <WebPublishExtnsionsToExcludeItem Include=".d.ts" />
+      <WebPublishExtnsionsToExcludeItem Include=".map" />
+    </ItemGroup>
+  </Target>
 
 
   <Target Name="IsWorkflowProject" BeforeTargets="AfterCollectFilesFromReference">
@@ -29,43 +78,68 @@
     <Message Condition="'$(_IsWorkflowProject)' != 'true'" Importance="high" Text="Skipping web pipeline customizations as this is a workflow project" />
   </Target>
 
-  
-  <Target Name="RemoveReferenceBaggageFromWebPackage" AfterTargets="PipelineCollectFilesPhase">    
+
+  <Target Name="RemoveReferenceBaggageFromWebPackage" AfterTargets="PipelineCollectFilesPhase">
     <ItemGroup>
       <FilesForPackagingFromProject Remove="@(FilesForPackagingFromProject)" Condition="%(FilesForPackagingFromProject.FromTarget) == 'CollectFilesFromReference'" />
     </ItemGroup>
   </Target>
 
-  <!-- Override the standard target so we don't collect any baggage -->
-  <Target Name="CollectFilesFromReference" />  
 
-  <!-- CollectFilesFrom_binDeployableAssemblies is the last step in PublishPipelineCollectFilesCore from Microsoft.Web.Publishing.OnlyFilesToRunTheApp.targets-->
-  <Target Name="CollectFilesFromContentCleanUp" AfterTargets="CollectFilesFrom_binDeployableAssemblies">
-    <!-- Exclude all environment specific files from packaging -->
+
+
+
+  <!-- Exclude all environment specific files from packaging -->
+  <ItemGroup>
+    <WebPublishFilesToExcludeItem Include="instance.config" />
+    <WebPublishFilesToExcludeItem Include="bindings.config" />
+    <WebPublishFilesToExcludeItem Include="clients.config" />
+    <WebPublishFilesToExcludeItem Include="extensions.config" />
+    <WebPublishFilesToExcludeItem Include="packages.config" />
+    <WebPublishFilesToExcludeItem Include="BuildInfo.config" />
+    <WebPublishFilesToExcludeItem Include="FrameworkKey.snk" />
+    <WebPublishFilesToExcludeItem Include="tsconfig.json" />
+    <WebPublishFilesToExcludeItem Include="tslint.json" />
+    <WebPublishFilesToExcludeItem Include="bundle.custom.tsconfig.json" />
+  </ItemGroup>
+
+
+  <Target Name="ExcludeFilesByName"
+          Outputs="%(WebPublishFilesToExcludeItem.Identity)">
+
+    <!-- this target will execute once per value in @(WebPublishFilesToExcludeItem) -->
+    <PropertyGroup>
+      <_FileToExclude>%(WebPublishFilesToExcludeItem.Identity)</_FileToExclude>
+    </PropertyGroup>
+
+    <FindInList CaseSensitive="false"
+                ItemSpecToFind="$(_FileToExclude)"
+                MatchFileNameOnly="true"
+                List="@(FilesForPackagingFromProject)">
+      <Output TaskParameter="ItemFound" ItemName="_PackageFileToExcludeItem" />
+    </FindInList>
+
     <ItemGroup>
-      <ExcludeSpec Include="instance.config" />
-      <ExcludeSpec Include="bindings.config" />
-      <ExcludeSpec Include="clients.config" />
-      <ExcludeSpec Include="extensions.config" />
-      <ExcludeSpec Include="packages.config" />
-      <ExcludeSpec Include="BuildInfo.config" />
-      <ExcludeSpec Include="FrameworkKey.snk" />
-    </ItemGroup>
-
-    <Aderant.Build.Tasks.FilterItemGroup
-      ItemGroup="@(FilesForPackagingFromProject)"
-      ExcludeFilterSpec="@(ExcludeSpec)"
-      FilterType="FileName">
-      <Output ItemName="FilteredFilesForPackagingFromProject" TaskParameter="Result" />
-    </Aderant.Build.Tasks.FilterItemGroup>
-
-    <ItemGroup>
-     <FilesForPackagingFromProject Remove="@(FilesForPackagingFromProject)" />
-     <FilesForPackagingFromProject Include="@(FilteredFilesForPackagingFromProject)" />
+      <FilesForPackagingFromProject Remove="@(_PackageFileToExcludeItem)" />
     </ItemGroup>
 
   </Target>
 
+
+  <Target Name="ExcludeTestFiles">
+
+    <FindUnderPath Files="@(FilesForPackagingFromProject)"
+                   Path="$(MSBuildProjectDirectory)\Tests">
+      <Output TaskParameter="InPath" ItemName="FilesFoundInPath" />
+    </FindUnderPath>
+
+    <Message Text="Excluding test files from web package $(MSBuildProjectDirectory) -> @(FilesFoundInPath)" />
+
+    <ItemGroup>
+      <FilesForPackagingFromProject Remove="@(FilesFoundInPath)" />
+    </ItemGroup>
+
+  </Target>
 
 
   <!-- This target replaces the full path to source that MSDeploy typically uses -->
@@ -79,7 +153,9 @@
     </PackageDependsOn>
   </PropertyGroup>
 
+
   <Target Name="AddReplaceRuleForAppPath" Condition="'$(EnableAddReplaceToUpdatePackagePath)'=='true'">
+
     <PropertyGroup>
       <_PkgPathFull>$([System.IO.Path]::GetFullPath($(WPPAllFilesInSingleFolder)))</_PkgPathFull>
     </PropertyGroup>
@@ -96,13 +172,16 @@
         <Replace>$(PackagePath)</Replace>
       </MsDeployReplaceRules>
     </ItemGroup>
+
   </Target>
 
+
   <Target Name="DeleteManifest" AfterTargets="PackageUsingManifest">
-    <!-- Remove Web.xyz.SourceManifest.xml from the output directory as we don't need it -->
+
+    <!-- Remove Web.xyz.SourceManifest.xml from the output directory as we don't need it --><!--
     <Delete Files="$(PackageSourceManifest)"
             Condition="'$(PackageSourceManifest)' != ''"
-            ContinueOnError="true" />
+            ContinueOnError="true" />-->
   </Target>
 
 
@@ -117,5 +196,73 @@
           SkipUnchangedFiles="true" />
 
   </Target>
+
+
+  <Target Name="CollectLinkedContentFiles" BeforeTargets="CopyLinkedContentFiles">
+
+    <ItemGroup>
+      <ContentToCopy Include="@(Content->HasMetadata('Link'))">
+        <OriginalItemSpec>%(FullPath)</OriginalItemSpec>
+      </ContentToCopy>
+
+      <ContentToCopy Include="@(TypeScriptCompile->HasMetadata('Link'))">
+        <OriginalItemSpec>%(FullPath)</OriginalItemSpec>
+      </ContentToCopy>
+    </ItemGroup>
+
+  </Target>
+
+
+  <!-- Maintains the F5 experience -->
+  <Target Name="CopyLinkedContentFiles"
+          DependsOnTargets="CollectLinkedContentFiles"
+          BeforeTargets="PreComputeCompileTypeScript;Build;CopyAllFilesToSingleFolderForMsdeploy"
+          Inputs="@(ContentToCopy)"
+          Outputs="@(ContentToCopy->'$(ProjectDir)%(Link)')">
+
+    <!-- Only copy files with the Link attribute set -->
+    <Copy SourceFiles="@(ContentToCopy->'%(OriginalItemSpec)')"
+          DestinationFiles="@(ContentToCopy->'$(ProjectDir)%(Link)')"
+          SkipUnchangedFiles="true"
+          OverwriteReadOnlyFiles="true"
+          UseHardlinksIfPossible="true" />
+
+  </Target>
+
+
+  <ItemGroup>
+    <!--Exclude any .less files beginning with an '_' from being compiled as a convention, also exclude all less files from the obj directories -->
+    <LessFiles Include="$(ProjectDir)\Content\*.less"
+               Exclude="$(ProjectDir)\Content\_*.less" />
+  </ItemGroup>
+
+
+  <Target Name="CompileLess"
+          Inputs="@(LessFiles)"
+          Outputs="@(LessFiles->'%(RelativeDir)%(Filename).css')"
+          AfterTargets="CopyLinkedContentFiles"
+          Condition="'$(EnableLESSCompile)' == 'True'">
+
+    <CompileLess
+      LessFiles="@(LessFiles)" />
+
+  </Target>
+
+
+  <Target Name="custom-tsconfig-->tsc"
+          Condition="'$(BuildingInsideVisualStudio)' != 'true'"
+          AfterTargets="CompileTypeScriptWithTSConfig">
+
+    <ItemGroup>
+      <CustomTSConfigs
+        Include="$(ProjectDir)**\*custom.tsconfig.json"
+        Exclude="$(ProjectDir)**\PackageTmp\**;
+                 $(ProjectDir)**\obj\**;
+                 $(ProjectDir)**\bin\**;"/>
+    </ItemGroup>
+
+    <Exec Condition="'@(CustomTSConfigs)' != ''" Command="&quot;$(MSBuildProgramFiles32)\Microsoft SDKs\TypeScript\$(TypeScriptToolsVersion)\tsc.exe&quot; --project %(CustomTSConfigs.FullPath) "/>
+
+ </Target>
 
 </Project>

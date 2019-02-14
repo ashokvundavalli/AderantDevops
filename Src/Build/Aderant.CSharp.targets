@@ -164,13 +164,9 @@
 
     <!-- Perf optimization: Cache the paths so we don't constantly go back to disk to re-discover the same information -->
     <StringCache Key="$(NugetPackageCacheKey)">
-      <Output TaskParameter="Value" PropertyName="_PackageDirectories" />
+      <Output TaskParameter="Value" PropertyName="_PackageDirectoriesAsSingleItem" />
       <Output TaskParameter="HasValueForKey" PropertyName="_PackageDirectoriesHasValue" />
     </StringCache>
-
-    <ItemGroup>
-      <_PackageDirectories Include="$(_PackageDirectories)" />
-    </ItemGroup>
 
     <ItemGroup Condition="'$(_PackageDirectoriesHasValue)' != 'true'">
       <_AllFiles Include="$(RootFolder)\packages\**\lib\*.dll"/>
@@ -180,8 +176,8 @@
     <StringCache Condition="'$(_PackageDirectoriesHasValue)' != 'true'"
                  Key="$(NugetPackageCacheKey)"
                  Value="@(_PackageDirectories)">
-      <!--Output value always as there is a cache miss the first time-->
-      <Output TaskParameter="Value" PropertyName="_PackageDirectories" />
+      <!--Always output the value to avoid cache miss the first time-->
+      <Output TaskParameter="Value" PropertyName="_PackageDirectoriesAsSingleItem" />
     </StringCache>
 
   </Target>
@@ -220,12 +216,17 @@
         (9) Look in the application's output folder (like bin\debug)
     -->
 
+    <ItemGroup>
+      <AssemblySearchDirectories Include="$([MSBuild]::Unescape($(_PackageDirectoriesAsSingleItem)))" />
+    </ItemGroup>
+
     <PropertyGroup>
+      <!-- Create the assembly search paths property. This defines where\how references are resolved -->
       <!--This path order places out search paths first-->
       <AssemblySearchPaths>
         $(AlternativeOutputDirectory);
         $(RootFolder)\Dependencies\;
-        $(_PackageDirectories);
+        @(AssemblySearchDirectories);
         $(AssemblySearchPaths);
       </AssemblySearchPaths>
     </PropertyGroup>

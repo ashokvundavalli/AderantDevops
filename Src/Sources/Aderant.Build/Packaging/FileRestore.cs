@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Management.Automation;
 using Aderant.Build.Logging;
 using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem;
@@ -42,7 +43,8 @@ namespace Aderant.Build.Packaging {
 
         public string CommonOutputDirectory { get; set; }
 
-        public IReadOnlyCollection<string> AdditionalDestinationDirectories { get; set; }
+        public string CommonDependencyDirectory { get; set; }
+        public IReadOnlyCollection<string> StagingDirectoryWhitelist { get; set; }
 
         private static readonly string[] knownOutputPaths = new string[] {
             @"Bin\Module\",
@@ -56,6 +58,7 @@ namespace Aderant.Build.Packaging {
                 return fileWrite.Remove(index, outputPath.Length);
             }
 
+            // TODO: Remove this
             // If the file path matches any known output paths, proceed.
             foreach (string knownOutputPath in knownOutputPaths) {
                 index = fileWrite.IndexOf(knownOutputPath, StringComparison.OrdinalIgnoreCase);
@@ -70,7 +73,7 @@ namespace Aderant.Build.Packaging {
 
         public IList<PathSpec> BuildRestoreOperations(string solutionRoot, string container, BuildStateFile stateFile) {
             // Guard to ensure only one write to a destination occurs
-            HashSet<string> destinationPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            HashSet<string> seenDestinationPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             //  The source/destination mapping
             List<PathSpec> copyOperations = new List<PathSpec>();
@@ -89,7 +92,7 @@ namespace Aderant.Build.Packaging {
                 // Adjust the source relative path to a solution relative path
                 string localProjectFile = Path.Combine(solutionRoot, projectFile);
                 string directoryOfProject = Path.GetDirectoryName(localProjectFile);
-                string outputPath = project.Value.OutputPath.NormalizePath();
+                string outputPath = project.Value.OutputPath.NormalizeTrailingSlashes();
 
                 bool isTestProject = project.Value.IsTestProject;
                 if (isTestProject) {
@@ -112,7 +115,6 @@ namespace Aderant.Build.Packaging {
                             if (filePath != null) {
                                 logger.Warning($"{localProjectFile}: Could not locate '{filePath}' in build cache.");
                             }
-
                             continue;
                         }
 
@@ -129,42 +131,31 @@ namespace Aderant.Build.Packaging {
                         // There can be only one.
                         LocalArtifactFile artifactFile = distinctLocalSourceFiles.First();
 
+                        CheckWhitelistForFile(filePath, targetDirectories);
+
+                        int copyCount = copyOperations.Count;
                         foreach (string targetDirectory in targetDirectories) {
                             string destination = Path.GetFullPath(Path.Combine(targetDirectory, filePath));
 
                             AddFileDestination(
-                                destinationPaths,
+                                seenDestinationPaths,
                                 artifactFile,
                                 destination,
                                 copyOperations);
                         }
 
-                        if (string.IsNullOrWhiteSpace(filePath)) {
-                            OnDiskProjectInfo projectInfo = BuildPipelineServiceClient.Current.GetTrackedProjects(new List<Guid> {
-                                project.Value.ProjectGuid
-                            }).FirstOrDefault();
-
-                            if (projectInfo != null) {
-                                if (!string.IsNullOrWhiteSpace(projectInfo.DesktopBuildPackageLocation)) {
-                                    if (fileWrite.Equals(projectInfo.DesktopBuildPackageLocation, StringComparison.OrdinalIgnoreCase)) {
-                                        string targetPath = Path.GetFullPath(Path.Combine(directoryOfProject, fileWrite));
-
-                                        AddFileDestination(new HashSet<string> { targetPath }, artifactFile, targetPath, copyOperations);
-                                    }
-                                }
-                            }
-
-                            logger.Info($"Ignored file: {localProjectFile}: '{fileWrite}' does not start with project output path '{outputPath}'.");
-                        }
-
                         if (!string.IsNullOrWhiteSpace(CommonOutputDirectory)) {
                             if (webProjects.Contains(project.Value)) {
                                 AddFileDestination(
-                                    destinationPaths,
+                                    seenDestinationPaths,
                                     artifactFile,
                                     Path.GetFullPath(Path.Combine(CommonOutputDirectory, filePath)),
                                     copyOperations);
                             }
+                        }
+
+                        if (copyOperations.Count == copyCount) {
+                            logger.Info($"Ignored file: {localProjectFile}: '{fileWrite}'");
                         }
                     }
                 } else {
@@ -175,23 +166,43 @@ namespace Aderant.Build.Packaging {
             return copyOperations;
         }
 
+        // Test if the user has explicitly allowed the file via customization
+        private void CheckWhitelistForFile(string filePath, List<string> targetDirectories) {
+            if (StagingDirectoryWhitelist != null && !string.IsNullOrWhiteSpace(CommonDependencyDirectory)) {
+                foreach (var item in StagingDirectoryWhitelist) {
+                    if (WildcardPattern.ContainsWildcardCharacters(item)) {
+                        WildcardPattern pattern = WildcardPattern.Get(item, WildcardOptions.IgnoreCase);
+
+                        if (pattern.IsMatch(filePath)) {
+                            logger.Debug("File '{0}' was included because of: {1}", filePath, pattern);
+                            targetDirectories.Add(CommonDependencyDirectory);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
         private List<string> CreateDestinationDirectoryList(string directoryOfProject, string outputPath, bool isTestProject) {
             // The destination folder paths
             var targetPaths = new List<string>();
             targetPaths.Add(Path.GetFullPath(Path.Combine(directoryOfProject, outputPath)));
 
             if (!isTestProject) {
-                if (AdditionalDestinationDirectories != null) {
-                    targetPaths.AddRange(AdditionalDestinationDirectories);
+                if (CommonDependencyDirectory != null) {
+                    targetPaths.Add(CommonDependencyDirectory);
                 }
             }
 
             return targetPaths;
         }
 
+        /// <param name="destinationPaths">The complete set of paths to written to. Used to prevent double writes.</param>
+        /// <param name="file">The file downloaded from the artifact cache.</param>
+        /// <param name="destination">The destination for <paramref name="file"/></param>
+        /// <param name="copyOperations">The copy operations</param>
         private void AddFileDestination(HashSet<string> destinationPaths, LocalArtifactFile file, string destination, List<PathSpec> copyOperations) {
             if (destinationPaths.Add(destination)) {
-                logger.Info($"Selected artifact file: '{file.FullPath}' to copy to: '{destination}'.");
                 copyOperations.Add(new PathSpec(file.FullPath, destination));
             } else {
                 logger.Warning("Double write for file: " + destination);

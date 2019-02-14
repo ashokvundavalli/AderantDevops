@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <Target Name="GenerateSharedContentFile">
+    <MSBuild Projects="@(SharedContentProducers)"
+             Targets="WriteContentFile" />
+  </Target>
+
+  <!-- Defines a set of targets for customizing the artifact restore process -->
+  <Import Project="$(DirPropFile)" Condition="'$(DirPropFile)' != ''" />
+
+  <Target Name="ExtractBuildCachePackages">
+    <CallTarget Targets="RestoreContent" Condition="'@(BuildCacheZipFilesToRestore)' != ''" />
+  </Target>
+
+  <PropertyGroup>
+    <ContentRestoreProcessDependsOn>
+      $(ContentRestoreProcessDependsOn);
+      ExtractBuildCachePackagesCore;
+      GenerateSharedContentFile
+    </ContentRestoreProcessDependsOn>
+  </PropertyGroup>
+
+
+  <Target Name="ExtractBuildCachePackagesCore" Condition="'$(IsBuildCacheEnabled)' != 'false'">
+    <Error Text="Item does not exist: %(Identity)" Condition="!Exists(%(BuildCacheZipFilesToRestore.FullPath))" />
+
+    <!-- 7zip doesn't support rewriting archive paths.
+         Web artifacts are packaged using MSDeploy which we customize to put content into a zip entry 'Content\PackageTmp'
+         Because we want to extract this file over the top of the source web app that created it we have a problem
+         as 7zip would plkace the content into Content\PackageTmp.
+         To workaround this we create a junction to the place we want to extract to.
+         This is a performance optimization as it means we don't need to unzip and then merge two directories -->
+    <MakeSymlink
+      CreateLinkParent="true"
+      Link="$(ModuleBuildTempDirectory)%(BuildCacheZipFilesToRestore.ArchivePathToExtract)"
+      Target="%(BuildCacheZipFilesToRestore.Destination)"
+      Type="J" />
+
+    <Exec Command='"$(BuildToolsDirectory)7z.exe" x "%(BuildCacheZipFilesToRestore.FullPath)" %(BuildCacheZipFilesToRestore.ArchivePathToExtract) -aos -bd -bb -o$(ModuleBuildTempDirectory)'
+          WorkingDirectory="$([System.IO.Path]::GetDirectoryName($(DirPropFile)))" />
+  </Target>
+
+  <Target Name="RestoreContent" DependsOnTargets="$(ContentRestoreProcessDependsOn)" />
+
+</Project>

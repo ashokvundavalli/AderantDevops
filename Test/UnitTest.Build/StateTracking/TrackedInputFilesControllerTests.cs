@@ -79,7 +79,7 @@ namespace UnitTest.Build.StateTracking {
 
         public XmlReader ProjectReader { get; set; }
 
-        protected override Project LoadProject(string directoryPropertiesFile, ProjectCollection collection) {
+        protected virtual Project LoadProject(string directoryPropertiesFile, ProjectCollection collection) {
             // LoadProject from reader breaks MSBuildThisFile*
             // https://github.com/Microsoft/msbuild/issues/3030
             return collection.LoadProject(ProjectReader);

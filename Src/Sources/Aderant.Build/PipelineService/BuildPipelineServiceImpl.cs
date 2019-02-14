@@ -24,6 +24,7 @@ namespace Aderant.Build.PipelineService {
         private BuildOperationContext ctx;
         private List<OnDiskProjectInfo> projects = new List<OnDiskProjectInfo>();
         private Dictionary<string, IReadOnlyCollection<TrackedInputFile>> trackedDependenciesBySolutionRoot = new Dictionary<string, IReadOnlyCollection<TrackedInputFile>>(StringComparer.OrdinalIgnoreCase);
+        private List<BuildDirectoryContribution> directoryMetadata = new List<BuildDirectoryContribution>();
 
         internal ProjectTreeOutputSnapshot Outputs { get; } = new ProjectTreeOutputSnapshot();
 
@@ -108,10 +109,17 @@ namespace Aderant.Build.PipelineService {
             }
         }
 
+        /// <summary>
+        /// Notifies the service it should track a set of files.
+        /// </summary>
         public void TrackInputFileDependencies(string solutionRoot, IReadOnlyCollection<TrackedInputFile> fileDependencies) {
             trackedDependenciesBySolutionRoot[solutionRoot] = fileDependencies;
         }
 
+        /// <summary>
+        /// Retrieves a collection of tracked files from the service. If the service has any files for the given key
+        /// they are removed from the internal buffer.
+        /// </summary>
         public IReadOnlyCollection<TrackedInputFile> ClaimTrackedInputFiles(string tag) {
             IReadOnlyCollection<TrackedInputFile> trackedFiles;
             if (trackedDependenciesBySolutionRoot.TryGetValue(tag, out trackedFiles)) {
@@ -138,6 +146,14 @@ namespace Aderant.Build.PipelineService {
             if (artifacts == null) {
                 artifacts = new ArtifactCollection();
             }
+        }
+
+        public void AddBuildDirectoryContributor(BuildDirectoryContribution buildDirectoryContribution) {
+            this.directoryMetadata.Add(buildDirectoryContribution);
+        }
+
+        public IReadOnlyCollection<BuildDirectoryContribution> GetContributors() {
+            return directoryMetadata;
         }
     }
 }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Aderant.Build.Logging;
-using Microsoft.Build.Evaluation;
+using Aderant.Build.Tasks.ArtifactHandling;
 using Microsoft.Build.Execution;
 using Microsoft.Build.Framework;
 using ILogger = Aderant.Build.Logging.ILogger;
@@ -111,69 +111,37 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
         internal IReadOnlyCollection<TrackedInputFile> GetFilesToTrack(string directoryPropertiesFile, string directory) {
             var globalProps = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { { "SolutionRoot", directory } };
+            string target = "GenerateTrackedInputFiles";
 
-            using (var collection = new ProjectCollection(globalProps)) {
-                collection.IsBuildEnabled = true;
+            bool targetExists;
+            var result = MSBuildEngine.DefaultEngine.BuildProjectFile(directoryPropertiesFile, target, out targetExists, globalProps);
 
-                Project project = LoadProject(directoryPropertiesFile, collection);
+            if (targetExists && result != null && result.HasResultsForTarget(target)) {
+                TargetResult targetResult = result.ResultsByTarget[target];
 
-                ProjectInstance projectInstance = project.CreateProjectInstance(ProjectInstanceSettings.None);
+                List<TrackedInputFile> filesToTrack = new List<TrackedInputFile>();
 
-                const string target = "GenerateTrackedInputFiles";
+                foreach (ITaskItem item in targetResult.Items) {
+                    string itemFullPath = item.GetMetadata("FullPath");
 
-                if (projectInstance.Targets.ContainsKey(target)) {
-                    logger.Info($"Evaluating target {target} in {directoryPropertiesFile}");
-
-                    using (BuildManager manager = new BuildManager()) {
-                        var result = manager.Build(
-                            new BuildParameters(collection) { EnableNodeReuse = false },
-                            new BuildRequestData(
-                                projectInstance,
-                                new[] { target },
-                                null,
-                                BuildRequestDataFlags.ProvideProjectStateAfterBuild));
-
-                        if (result.OverallResult == BuildResultCode.Failure) {
-                            throw new Exception("Failed to evaluate: " + target, result.Exception);
-                        }
-
-                        if (result.HasResultsForTarget(target)) {
-                            TargetResult targetResult = result.ResultsByTarget[target];
-
-                            List<TrackedInputFile> filesToTrack = new List<TrackedInputFile>();
-
-                            foreach (ITaskItem item in targetResult.Items) {
-                                string itemFullPath = item.GetMetadata("FullPath");
-
-                                // If globbing evaluation failed, then ignore the path
-                                if (!itemFullPath.Contains("**")) {
-                                    if (fileSystem.FileExists(itemFullPath)) {
-                                        var hash = fileSystem.ComputeSha1Hash(itemFullPath);
-                                        filesToTrack.Add(new TrackedInputFile(itemFullPath) { Sha1 = hash });
-                                    }
-                                }
-                            }
-
-                            return filesToTrack;
+                    // If globbing evaluation failed, then ignore the path
+                    if (!itemFullPath.Contains("**")) {
+                        if (fileSystem.FileExists(itemFullPath)) {
+                            var hash = fileSystem.ComputeSha1Hash(itemFullPath);
+                            filesToTrack.Add(new TrackedInputFile(itemFullPath) { Sha1 = hash });
                         }
                     }
                 }
+
+                return filesToTrack;
             }
 
             return null;
-        }
-
-        protected virtual Project LoadProject(string directoryPropertiesFile, ProjectCollection collection) {
-            return collection.LoadProject(directoryPropertiesFile);
         }
     }
 
     internal class InputFilesDependencyAnalysisResult {
         public InputFilesDependencyAnalysisResult() {
-        }
-
-        public InputFilesDependencyAnalysisResult(bool isUpToDate)
-            : this(isUpToDate, null) {
         }
 
         public InputFilesDependencyAnalysisResult(bool isUpToDate, IReadOnlyCollection<TrackedInputFile> trackedInputFiles) {

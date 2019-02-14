@@ -9,16 +9,28 @@
   <Import Project="Aderant.TextTransform.targets" />
   <Import Project="Aderant.Build.CustomSolutionPackaging.targets" />
   <Import Project="Aderant.Build.Clean.targets" />
+  <Import Project="Aderant.ArtifactRestore.targets" />
 
   <!--
        Pull the entry targets into our context.
        This lets us call into it and lets people who want to customize the workflow change stuff in here
   -->
-  <Import Project="$(SolutionDirectoryPath)Build\TFSBuild.proj" Condition="Exists('$(SolutionDirectoryPath)Build\TFSBuild.proj')" />
+  <Import Project="$(SolutionDirectoryPath)Build\TFSBuild.proj" Condition="'$(RunUserTargets)' != 'false' And Exists('$(SolutionDirectoryPath)Build\TFSBuild.proj')" />
 
   <!-- Entry target -->
   <Target Name="EndToEnd" DependsOnTargets="$(RunBuildDependsOn)">
   </Target>
+
+  <PropertyGroup>
+    <!--
+    These targets make up the steps needed to package artifacts shipped as part of the product.
+    These can be skipped if this file is scheduled to satisfy a build tree and wasn't scheduled explicity by the user -->
+    <TargetsForCustomizationFiles Condition="'$(RunUserTargets)' != 'false' Or '$(IsDesktopBuild)' == 'false'">
+      ZipCustomSource;
+      SeedPackagePacking;
+      ZipWorkflowTemplateSource
+    </TargetsForCustomizationFiles>
+  </PropertyGroup>
 
   <PropertyGroup>
     <RunBuildDependsOn>
@@ -28,22 +40,19 @@
       DeployPerDirectoryFiles;
       UpdateCommonAssemblyInfo;
       UpdateContext;
-      PrepareZipCustomSource;
-      ZipCustomSource;
-      SeedPackagePacking;
-      ZipWorkflowTemplateSource;
+      $(TargetsForCustomizationFiles);
       RepairDirectoryLinks;
       RetrievePrebuilts;
       rmTransformTemplates;
     </RunBuildDependsOn>
   </PropertyGroup>
 
-
   <PropertyGroup>
-    <BuildProperties Condition="'$(IsWebModule)' == 'true'">$(BuildProperties);WebPublishPipelineCustomizeTargetFile=$(MSBuildThisFileDirectory)\Aderant.wpp.targets;</BuildProperties>
-
     <ModuleBuildTempDirectory Condition="'$(ModuleBuildTempDirectory)' == ''">$(SolutionDirectoryPath)_tmp\</ModuleBuildTempDirectory>
     <rmBCItemTransformTemplatesEnabled Condition="$(T4TransformEnabled) == 'true'">true</rmBCItemTransformTemplatesEnabled>
+
+    <!-- If we are skipping user targets then disable T4 - except for CI -->
+    <rmBCItemTransformTemplatesEnabled Condition="$(RunUserTargets) == 'false' And '$(IsDesktopBuild)' != 'false'">false</rmBCItemTransformTemplatesEnabled>
   </PropertyGroup>
 
   <!-- Clean -->
@@ -55,6 +64,8 @@
     Configures the environment to run text templates
   -->
   <Target Name="rmBeforeTransformTemplates">
+
+
     <PropertyGroup>
       <rmT4AssemblyReferencePaths>$(SolutionDirectoryPath)Dependencies\</rmT4AssemblyReferencePaths>
       <rmT4AssemblyReferencePaths Condition="Exists('$(OutDir)')">$(rmT4AssemblyReferencePaths);$(OutDir);</rmT4AssemblyReferencePaths>
@@ -106,10 +117,14 @@
     <Error Condition="'$(CustomAfterMicrosoftCommonTargets)' == '' And '$(IsCustomBuild)' != 'true'" Text="No custom Microsoft common targets file set." />
   </Target>
 
+  <PropertyGroup>
+    <DependenciesDirectory>$(SolutionDirectoryPath)\Dependencies</DependenciesDirectory>
+  </PropertyGroup>
+
 
   <Target Name="RepairDirectoryLinks" Condition="'$(SharedDependencyDirectory)' != ''">
     <ItemGroup>
-      <Link Include="$(SolutionRoot)\Dependencies">
+      <Link Include="$(DependenciesDirectory)">
         <LinkTarget>$(SharedDependencyDirectory)</LinkTarget>
       </Link>
       <Link Include="$(SolutionRoot)\packages">
@@ -129,13 +144,14 @@
       <Message Text="link.lock exists in $(SolutionDirectoryPath). No server artifacts will be retrieved." Importance="high" />
   </Target>
 
-
   <Target Name="RetrievePrebuilts" Condition="'$(RetrievePrebuilts)' != 'false' And !Exists('$(SolutionDirectoryPath)link.lock')">
     <Message Text="$(ModuleName): Restoring objects from build cache" />
 
-    <PropertyGroup>
-      <DependenciesDirectory>$(SolutionDirectoryPath)\Dependencies</DependenciesDirectory>
-    </PropertyGroup>
+    <ItemGroup>
+      <ExtensibilityFiles Include="$(SolutionRoot)\**\dir.props"
+                          Exclude="$(SolutionRoot)\packages\**;
+                                   $(DependenciesDirectory)\**"/>
+    </ItemGroup>
 
     <!--
       By specifying DestinationDirectories we overwrite the common dependency
@@ -147,7 +163,10 @@
       SolutionRoot="$(SolutionRoot)"
       WorkingDirectory="$(ModuleBuildTempDirectory)"
       CommonOutputDirectory="$(BinModuleDirectory)"
-      DestinationDirectories="$(SharedDependencyDirectory)" />
+      CommonDependencyDirectory="$(SharedDependencyDirectory)"
+      ExtensibilityFiles="@(ExtensibilityFiles)" />
+
+    <CallTarget Targets="RunDirPropsFile" />
 
     <GetDependencies Condition="'$(UseSharedDependencyDirectory)' != 'true' And '$(NoDependencyFetch)' != 'true'"
       ProductManifest="$(ProductManifestPath)"
@@ -155,6 +174,16 @@
       ModuleName="$(SolutionRoot)"
       DependenciesDirectory="$(DependenciesDirectory)"
       DropPath="$(XamlBuildDropLocation)" />
+
+  </Target>
+
+
+  <Target Name="RunDirPropsFile">
+
+    <MSBuild Condition="@(ExtensibilityFiles) != ''"
+      Projects="$(MSBuildThisFileFullPath)"
+      Properties="DirPropFile=%(ExtensibilityFiles.FullPath)"
+      Targets="ExtractBuildCachePackages" />
 
   </Target>
 
@@ -170,16 +199,22 @@
     <Message Text="VersionRevision:       $(VersionRevision)" />
 
     <ItemGroup>
-      <DirProject Include="$(MSBuildThisFileDirectory)\dir.proj;
-                           $(MSBuildThisFileDirectory)\Aderant.wpp.content.proj;
-                           $(MSBuildThisFileDirectory)\Aderant.wpp.content.v2.proj" />
+      <BuildExtensionFiles Include="$(MSBuildThisFileDirectory)\dir.proj">
+        <Destination></Destination>
+      </BuildExtensionFiles>
+      <BuildExtensionFiles Include="$(MSBuildThisFileDirectory)\Aderant.wpp.content.v3.proj">
+        <Destination>Build\wpp</Destination>
+      </BuildExtensionFiles>
+      <BuildExtensionFiles Include="$(MSBuildThisFileDirectory)\Aderant.wpp.common.targets">
+        <Destination>Build\wpp</Destination>
+      </BuildExtensionFiles>
     </ItemGroup>
 
-    <Copy SourceFiles="@(DirProject)"
-      DestinationFolder="$(SolutionRoot)"
-      UseHardlinksIfPossible="true"
-      OverwriteReadOnlyFiles="true"
-      SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BuildExtensionFiles)"
+          DestinationFiles="@(BuildExtensionFiles-> '$(SolutionRoot)\%(Destination)\%(Filename)%(Extension)')"
+          UseHardlinksIfPossible="true"
+          OverwriteReadOnlyFiles="true"
+          SkipUnchangedFiles="true" />
 
   </Target>
 

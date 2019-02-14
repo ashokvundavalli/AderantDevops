@@ -18,14 +18,14 @@
     <ItemGroup>
       <Folders Include="$(SolutionDirectoryPath)Bin\" />
       <Folders Include="$(SolutionDirectoryPath)BuildTemp\" />
+      <Folders Include="$(ModuleBuildTempDirectory)\" />
       <Folders Include="$(SolutionDirectoryPath)Src\" />
-      <Folders Include="$(SolutionDirectoryPath)BuildTemp\" />
       <Folders Include="$(SolutionDirectoryPath)CommonBuild\" />
       <Folders Include="$(SolutionDirectoryPath)TestResults\" />
     </ItemGroup>
 
     <Error Condition="!HasTrailingSlash('%(Folders.FullPath)')"
-      Text="All paths in the Folders item group must end with a trailing slash" />
+           Text="All paths in the Folders item group must end with a trailing slash" />
 
     <ItemGroup>
       <!-- (?i) means case insensitive -->
@@ -54,8 +54,6 @@
       ContinueOnError="true" />
 
     <MakeDir Directories="$(BinModuleDirectory)" />
-
-    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
   </Target>
 
 

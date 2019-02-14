@@ -1,16 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
 using System.ServiceModel;
 using System.ServiceModel.Channels;
-using Aderant.Build.Packaging;
-using Aderant.Build.ProjectSystem;
-using Aderant.Build.ProjectSystem.StateTracking;
 using ProtoBuf.ServiceModel;
 
 namespace Aderant.Build.PipelineService {
-    internal class BuildPipelineServiceProxy : ClientBase<IBuildPipelineService>, IBuildPipelineService {
+
+    /// <summary>
+    /// Technology specific (WCF) proxy for the build data service
+    /// </summary>
+    internal class BuildPipelineServiceProxy : ClientBase<IBuildPipelineService> {
 
         static BuildPipelineServiceProxy() {
             CacheSetting = CacheSetting.AlwaysOn;
@@ -21,99 +21,11 @@ namespace Aderant.Build.PipelineService {
             Endpoint.Behaviors.Add(new ProtoEndpointBehavior());
         }
 
-        public void Publish(BuildOperationContext context) {
-            DoOperationWithFaultHandling(() => { Channel.Publish(context); });
-        }
-
-        public BuildOperationContext GetContext() {
-            return DoOperationWithFaultHandling(() => Channel.GetContext());
-        }
-
-        public void RecordProjectOutputs(ProjectOutputSnapshot snapshot) {
-            DoOperationWithFaultHandling(() => { Channel.RecordProjectOutputs(snapshot); });
-        }
-
-        public IEnumerable<ProjectOutputSnapshot> GetProjectOutputs(string container) {
-            return DoOperationWithFaultHandling(() => Channel.GetProjectOutputs(container));
-        }
-
-        public IEnumerable<ProjectOutputSnapshot> GetProjectSnapshots() {
-            return DoOperationWithFaultHandling(() => Channel.GetProjectSnapshots());
-        }
-
-        public void RecordArtifacts(string container, IEnumerable<ArtifactManifest> manifests) {
-            ErrorUtilities.IsNotNull(container, nameof(container));
-            DoOperationWithFaultHandling(() => { Channel.RecordArtifacts(container, manifests); });
-        }
-
-        public void PutVariable(string scope, string variableName, string value) {
-            ErrorUtilities.IsNotNull(scope, nameof(scope));
-            DoOperationWithFaultHandling(() => { Channel.PutVariable(scope, variableName, value); });
-        }
-
-        public string GetVariable(string scope, string variableName) {
-            ErrorUtilities.IsNotNull(scope, nameof(scope));
-            return DoOperationWithFaultHandling(() => Channel.GetVariable(scope, variableName));
-        }
-
-        public void TrackProject(OnDiskProjectInfo onDiskProject) {
-            ErrorUtilities.IsNotNull(onDiskProject.FullPath, nameof(onDiskProject.FullPath));
-            DoOperationWithFaultHandling(() => { Channel.TrackProject(onDiskProject); });
-        }
-
-        public IEnumerable<OnDiskProjectInfo> GetTrackedProjects() {
-            return DoOperationWithFaultHandling(() => Channel.GetTrackedProjects());
-        }
-
-        public IEnumerable<OnDiskProjectInfo> GetTrackedProjects(IEnumerable<Guid> ids) {
-            return DoOperationWithFaultHandling(() => Channel.GetTrackedProjects(ids));
-        }
-
-        public IEnumerable<ArtifactManifest> GetArtifactsForContainer(string container) {
-            ErrorUtilities.IsNotNull(container, nameof(container));
-            return DoOperationWithFaultHandling(() => Channel.GetArtifactsForContainer(container));
-        }
-
-        public void AssociateArtifacts(IEnumerable<BuildArtifact> artifacts) {
-            ErrorUtilities.IsNotNull(artifacts, nameof(artifacts));
-            DoOperationWithFaultHandling(() => { Channel.AssociateArtifacts(artifacts); });
-        }
-
-        public BuildArtifact[] GetAssociatedArtifacts() {
-            return DoOperationWithFaultHandling(() => Channel.GetAssociatedArtifacts());
-
-        }
-
-        public object[] Ping() {
-            return DoOperationWithFaultHandling(() => Channel.Ping());
-        }
-
-        public void SetStatus(string status, string reason) {
-            DoOperationWithFaultHandling(() => Channel.SetStatus(status, reason));
-        }
-
-        public void TrackInputFileDependencies(string solutionRoot, IReadOnlyCollection<TrackedInputFile> fileDependencies) {
-            DoOperationWithFaultHandling(() => Channel.TrackInputFileDependencies(solutionRoot, fileDependencies));
-        }
-
-        public IReadOnlyCollection<TrackedInputFile> ClaimTrackedInputFiles(string tag) {
-            return DoOperationWithFaultHandling(() => Channel.ClaimTrackedInputFiles(tag));
-        }
-
-        private T DoOperationWithFaultHandling<T>(Func<T> func) {
-            try {
-                return func();
-            } catch (FaultException ex) {
-                throw ExceptionConverter.ConvertException(ex);
-            }
-        }
-
-        private void DoOperationWithFaultHandling(Action func) {
-            try {
-                func();
-            } catch (FaultException ex) {
-                throw ExceptionConverter.ConvertException(ex);
-            }
+        /// <summary>
+        /// Exposes the underlying channel contract.
+        /// </summary>
+        public IBuildPipelineService ChannelContract {
+            get { return base.Channel; }
         }
     }
 

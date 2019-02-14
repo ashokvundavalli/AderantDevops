@@ -64,7 +64,7 @@ namespace Aderant.Build {
         /// </summary>
         ActionBlock<PathSpec> BulkCopy(IEnumerable<PathSpec> pathSpecs, bool overwrite, bool useSymlinks = false, bool useHardlinks = false);
 
-        void ExtractZipToDirectory(string sourceArchiveFileName, string destination);
+        void ExtractZipToDirectory(string sourceArchiveFileName, string destination, bool overwrite = false);
 
         bool IsSymlink(string directory);
     }

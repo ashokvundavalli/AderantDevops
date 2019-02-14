@@ -3,10 +3,10 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
+using Aderant.Build.IO;
 using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks {
-
     public class MakeSymlink : Microsoft.Build.Utilities.Task {
 
         [Required]
@@ -20,11 +20,15 @@ namespace Aderant.Build.Tasks {
         public string Type { get; set; }
 
         /// <summary>
+        /// Creates the directory specified by <see cref="Link"/> if it does not exist.
+        /// </summary>
+        public bool CreateLinkParent { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether to fail if the link is directory.
         /// People like to check in a dependencies or package folder which breaks us so we fail if we bump into one of these gems.
         /// </summary>
         public bool FailIfLinkIsDirectoryWithContent { get; set; }
-
 
         public override bool Execute() {
             if (!ValidateIsAdmin()) {
@@ -32,6 +36,8 @@ namespace Aderant.Build.Tasks {
             }
 
             NativeMethods.SymbolicLink link = NativeMethods.SymbolicLink.SYMBOLIC_LINK_FLAG_DIRECTORY;
+
+            bool useJunction = false;
 
             if (!string.IsNullOrEmpty(Type)) {
                 switch (Char.ToLowerInvariant(Type[0])) {
@@ -41,6 +47,10 @@ namespace Aderant.Build.Tasks {
                     case 'd':
                         link = NativeMethods.SymbolicLink.SYMBOLIC_LINK_FLAG_DIRECTORY;
                         break;
+                    case 'j': {
+                        useJunction = true;
+                        break;
+                    }
                 }
             }
 
@@ -65,12 +75,22 @@ namespace Aderant.Build.Tasks {
                     info.Delete(true);
                 }
 
-                Log.LogMessage("Creating symlink {0} <=====> {1}", Link, Target);
+                if (CreateLinkParent && (useJunction || link == NativeMethods.SymbolicLink.SYMBOLIC_LINK_FLAG_DIRECTORY)) {
+                    var parentDirectory = info.Parent;
+                    if (parentDirectory != null && !parentDirectory.Exists) {
+                        Log.LogMessage(MessageImportance.Low, "Creating directory: " + parentDirectory.FullName);
+                        parentDirectory.Create();
+                    }
+                }
 
-
-
-                if (!NativeMethods.CreateSymbolicLink(Link, Target, (uint)link)) {
-                    Log.LogError($"Error: Unable to create symbolic link '{Link}'. (Error Code: {Marshal.GetLastWin32Error()})");
+                if (useJunction) {
+                    Log.LogMessage("Creating junction {0} <=====> {1}", Link, Target);
+                    JunctionNativeMethods.CreateJunction(Target, Link, false);
+                } else {
+                    Log.LogMessage("Creating symlink {0} <=====> {1}", Link, Target);
+                    if (!NativeMethods.CreateSymbolicLink(Link, Target, (uint)link)) {
+                        Log.LogError($"Error: Unable to create symbolic link '{Link}'. (Error Code: {Marshal.GetLastWin32Error()})");
+                    }
                 }
             } catch (Exception ex) {
                 Log.LogErrorFromException(ex);
@@ -80,14 +100,14 @@ namespace Aderant.Build.Tasks {
             return !Log.HasLoggedErrors;
         }
 
+
+
         private bool ValidateIsAdmin() {
             using (WindowsIdentity identity = WindowsIdentity.GetCurrent()) {
-                if (identity != null) {
-                    WindowsPrincipal principal = new WindowsPrincipal(identity);
-                    if (!principal.IsInRole(WindowsBuiltInRole.Administrator)) {
-                        Log.LogError("Cannot create symlinks. Process must be run with Administrator rights");
-                        return false;
-                    }
+                WindowsPrincipal principal = new WindowsPrincipal(identity);
+                if (!principal.IsInRole(WindowsBuiltInRole.Administrator)) {
+                    Log.LogError("Cannot create symlinks. Process must be run with Administrator rights");
+                    return false;
                 }
             }
             return true;

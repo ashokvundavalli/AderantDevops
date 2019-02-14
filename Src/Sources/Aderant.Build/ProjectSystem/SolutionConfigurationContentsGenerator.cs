@@ -4,6 +4,16 @@ using System.Xml;
 using Microsoft.Build.Construction;
 
 namespace Aderant.Build.ProjectSystem {
+    /// <summary>
+    /// Some steps in the standard MS pipeline rely on a SLN 'metaproj' to work.
+    /// This takes care of emitting a document those pipeline tasks need.
+    /// </summary>
+    /// <remarks>
+    /// Creates the the "CurrentSolutionConfigurationContents" object that
+    /// MSBuild uses when building from a solution. Unfortunately the build engine doesn't let us build just projects
+    /// due to the way that AssignProjectConfiguration in Microsoft.Common.CurrentVersion.targets assumes that you are coming from a solution
+    /// and attempts to assign platforms and targets to project references, even if you are not building them.
+    /// </remarks>
     internal class SolutionConfigurationContentsGenerator {
         private readonly ConfigurationToBuild configurationToBuild;
 

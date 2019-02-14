@@ -9,10 +9,10 @@ namespace Aderant.Build.Commands {
     [OutputType(typeof(BuildStateMetadata))]
     public class GetBuildStateMetadataCommand : PSCmdlet {
 
-        [Parameter(Mandatory = false)]
+        [Parameter(Mandatory = false, HelpMessage = "Specifies the SHA1 hashes to query in the cache.")]
         public string[] BucketIds { get; set; }
 
-        [Parameter(Mandatory = true)]
+        [Parameter(Mandatory = true, HelpMessage = "Specifies the build cache root URI (e.g. a directory path)")]
         public string DropLocation { get; set; }
 
         protected override void ProcessRecord() {

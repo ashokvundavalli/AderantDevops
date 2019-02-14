@@ -123,6 +123,16 @@ namespace UnitTest.Build {
             Assert.AreEqual("Abc", instance.Location);
         }
 
+        [TestMethod]
+        public void BuildDirectoryContribution() {
+            var metadata = new BuildDirectoryContribution("Abc");
+
+            var instance = RoundTrip(metadata);
+
+            Assert.IsNotNull(instance);
+            Assert.AreEqual("Abc", instance.File);
+        }
+
         private static T RoundTrip<T>(T artifact) {
             return ProtoDeserialize<T>(ProtoSerialize(artifact));
         }

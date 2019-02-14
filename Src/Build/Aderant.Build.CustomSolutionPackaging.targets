@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
 
   <!--
@@ -12,9 +12,9 @@
     Condition="'$(ZipSource)' != 'false' And '$(IsCustomBuild)' != 'true'">
 
     <ItemGroup>
-      <CustomSolutionFiles
-        Include="$(SolutionDirectoryPath)\*.Custom.sln" />
+      <CustomSolutionFiles Include="$(SolutionDirectoryPath)\*.Custom.sln" />
     </ItemGroup>
+
   </Target>
 
 
@@ -68,40 +68,92 @@ foreach(var replacement in replacements){
 
   <Target
     Name="ZipCustomSource"
+    DependsOnTargets="PrepareZipCustomSource;"
     Condition="'$(ZipSource)' != 'false' And '$(IsCustomBuild)' != 'true'"
-    Outputs="$(BinModuleDirectory)Customization\%(CustomSolutionFiles.Filename).zip"
-    Inputs="@(CustomSolutionFiles)">
+    Inputs="@(CustomSolutionFiles)"
+    Outputs="$(BinModuleDirectory)Customization\%(CustomSolutionFiles.Filename).zip">
 
     <PropertyGroup>
       <ZipFileDirectory>$(BinModuleDirectory)Customization\</ZipFileDirectory>
     </PropertyGroup>
+
+    <!-- Read solution file so we can get the project source-->
+    <ReadLinesFromFile File="%(CustomSolutionFiles.FullPath)">
+      <Output TaskParameter="Lines" ItemName="LinesFromSlnFile" />
+    </ReadLinesFromFile>
+
+
+    <!--  Extract the Project lines from the custom solution file.
+          This will give lines in this format:
+          Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.BusinessEntity", "Src\Aderant.BusinessEntity\Aderant.BusinessEntity.csproj", "{E3D98E07-D681-488E-8932-0C96EFEA490E}"
+    -->
+    <RegexMatch
+      Input="@(LinesFromSlnFile)"
+      Expression="Project\(&quot;.+&quot;\) = &quot;(.+)&quot;, &quot;.+\.csproj">
+      <Output TaskParameter="Output" ItemName="ProjectLines" />
+    </RegexMatch>
+
+    <Message Text="Projects lines custom solution:" />
+    <Message Text=" -> %(ProjectLines.Identity)" />
+
+    <PropertyGroup>
+      <In>@(ProjectLines)</In>
+      <!-- Extract the solution relative project refernces from the solution text
+           This will give this format:
+           Src\Aderant.BusinessEntity\Aderant.BusinessEntity.csproj
+      -->
+      <ProjectsInCustomSolution>$([System.Text.RegularExpressions.Regex]::Matches('$(In)', '(?&lt;=\,).*?(?=\,)'))</ProjectsInCustomSolution>
+      <ProjectsInCustomSolution>$(ProjectsInCustomSolution.Replace('"', ''))</ProjectsInCustomSolution>
+    </PropertyGroup>
+
+    <!-- Create a list of paths to each project -->
+    <ItemGroup>
+      <CustomProjects Include="$([MSBuild]::Unescape($(ProjectsInCustomSolution)))">
+        <Root>%(CustomSolutionFiles.RelativeDir)</Root>
+      </CustomProjects>
+    </ItemGroup>
+
+    <Message Text="Projects in custom solution:" />
+    <Message Text=" -> %(CustomProjects.Identity)" />
+
+    <ItemGroup>
+      <CustomProjectsPathsWithoutMetadata Include="@(CustomProjects->'%(Root)%(RelativeDir)'->TrimEnd('\'))" Condition="'%(RelativeDir)' != ''"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <CustomProjectDirectories Include="@(CustomProjectsPathsWithoutMetadata)">
+        <!-- The name of the project directory: Aderant.BusinessEntity -->
+        <DestinationSubDirectory>$([System.IO.Path]::GetFileName('%(Identity)'))</DestinationSubDirectory>
+      </CustomProjectDirectories>
+    </ItemGroup>
+
+    <Message Text="Custom project paths:" />
+    <Message Text=" -> %(CustomProjectDirectories.FullPath)" />
 
     <ItemGroup>
       <ZipFile Remove="@(ZipFile)" />
       <ZipFile Include="$(ZipFileDirectory)%(CustomSolutionFiles.Filename).zip" />
     </ItemGroup>
 
-    <PropertyGroup>
-      <SourceFilesToCopyForTransformRoot>$(SolutionDirectoryPath)Src\</SourceFilesToCopyForTransformRoot>
-    </PropertyGroup>
+    <CreateItem
+      Include="%(CustomProjectDirectories.FullPath)\**\*"
+      Exclude="%(CustomProjectDirectories.FullPath)\*ABT\**;
+               %(CustomProjectDirectories.FullPath)\*SeedPackages\**;
+               %(CustomProjectDirectories.FullPath)\Build\TestResults\**\*
+               %(CustomProjectDirectories.FullPath)\BuildTemp\**\*;
+               %(CustomProjectDirectories.FullPath)\**\obj\**;
+               %(CustomProjectDirectories.FullPath)\**\_Resharper*\**;
+               %(CustomProjectDirectories.FullPath)\**\*.g*.cs;
+               %(CustomProjectDirectories.FullPath)\**\*.pfx;
+               %(CustomProjectDirectories.FullPath)\**\*.vssscc;
+               %(CustomProjectDirectories.FullPath)\**\*.vspscc;
+               %(CustomProjectDirectories.FullPath)\**\*.DotSettings;"
+         PreserveExistingMetadata="true"
+         AdditionalMetadata="DestinationSubDirectory=Src\%(DestinationSubDirectory)\">
+      <Output TaskParameter="Include" ItemName="SourceFilesToCopyForTransform" />
+    </CreateItem>
 
     <ItemGroup>
-      <SourceFilesToCopyForTransform
-        Include="$(SourceFilesToCopyForTransformRoot)**\*"
-        Exclude="$(SourceFilesToCopyForTransformRoot)*ABT\**;
-                 $(SourceFilesToCopyForTransformRoot)*SeedPackages\**;
-                 $(SourceFilesToCopyForTransformRoot)Build\TestResults\**\*
-                 $(SourceFilesToCopyForTransformRoot)BuildTemp\**\*;
-                 $(SourceFilesToCopyForTransformRoot)**\obj\**;
-                 $(SourceFilesToCopyForTransformRoot)**\_Resharper*\**;
-                 $(SourceFilesToCopyForTransformRoot)**\*.g*.cs;
-                 $(SourceFilesToCopyForTransformRoot)**\*.pfx;
-                 $(SourceFilesToCopyForTransformRoot)**\*.vssscc;
-                 $(SourceFilesToCopyForTransformRoot)**\*.vspscc;
-                 $(SourceFilesToCopyForTransformRoot)**\*.DotSettings;">
-        <DestinationSubDirectory>Src\</DestinationSubDirectory>
-      </SourceFilesToCopyForTransform>
-
       <SourceFilesToCopyForTransform
         Include="$(SolutionDirectoryPath)Build\**\*"
         Exclude="$(SolutionDirectoryPath)Build\Build.Infrastructure\**\*">
@@ -109,7 +161,7 @@ foreach(var replacement in replacements){
       </SourceFilesToCopyForTransform>
 
       <SourceFilesToCopyForTransform Include="%(CustomSolutionFiles.FullPath)">
-        <DestinationSubDirectory></DestinationSubDirectory>
+        <DestinationSubDirectory />
       </SourceFilesToCopyForTransform>
     </ItemGroup>
 
@@ -138,59 +190,6 @@ foreach(var replacement in replacements){
       SkipUnchangedFiles="true">
     </Copy>
 
-
-    <!-- Read solution file so we can get the project source-->
-    <ReadLinesFromFile File="$(TempSolutionDirectory)%(CustomSolutionFiles.Filename)%(CustomSolutionFiles.Extension)">
-      <Output TaskParameter="Lines"
-        ItemName="LinesFromSlnFile"/>
-    </ReadLinesFromFile>
-
-
-    <!--  Extract the Project lines from the custom solution file.
-          This will give lines in this format:
-          Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.BusinessEntity", "Src\Aderant.BusinessEntity\Aderant.BusinessEntity.csproj", "{E3D98E07-D681-488E-8932-0C96EFEA490E}"
-    -->
-    <RegexMatch Input="@(LinesFromSlnFile)"
-      Expression="Project\(&quot;.+&quot;\) = &quot;(.+)&quot;, &quot;.+\.csproj">
-      <Output ItemName="ProjectLines"
-        TaskParameter="Output"/>
-    </RegexMatch>
-    <Message Text="&#xA;Project lines in custom solution:&#xA;@(ProjectLines, '&#xA;')"/>
-
-
-    <!--  Remove text before custom project name
-          This will leave us with:
-          Aderant.BusinessEntity", "Src\Aderant.BusinessEntity\Aderant.BusinessEntity.csproj", "{E3D98E07-D681-488E-8932-0C96EFEA490E}"
-    -->
-    <RegexReplace Input="@(ProjectLines)"
-      Expression="Project\(&quot;.+&quot;\) = &quot;"
-      Replacement=""
-      Count="1">
-      <Output ItemName="SlnProjects"
-        TaskParameter="Output" />
-    </RegexReplace>
-
-
-    <!-- Remove text after custom project name
-          This will leave us with the project name:
-          Aderant.BusinessEntity
-    -->
-    <RegexReplace Input="@(SlnProjects)"
-      Expression="&quot;, &quot;.+\.csproj&quot;, &quot;.+&quot;"
-      Replacement=""
-      Count="1">
-      <Output ItemName ="CustomProjects"
-        TaskParameter="Output" />
-    </RegexReplace>
-    <Message Text="&#xA;Projects in custom solution:&#xA;@(CustomProjects, '&#xA;')"/>
-
-
-    <!-- Create property that lists the project folders as an MSBuild include string-->
-    <PropertyGroup>
-      <ProjectFoldersIncludeString>$(TempModuleSourceDirectory)@(CustomProjects,'\**\*;$(TempModuleSourceDirectory)')\**\*;</ProjectFoldersIncludeString>
-    </PropertyGroup>
-    <Message Text="&#xA;ProjectFoldersIncludeString = $(ProjectFoldersIncludeString)&#xA;"/>
-
     <!-- Update the source with the specified transformations file -->
     <SourceTransformationTask
       Condition="($(CustomSolutionTransformsFile) != '')"
@@ -206,7 +205,7 @@ foreach(var replacement in replacements){
         Include="$(TempSolutionDirectory)**\*.Custom.sln;"/>
 
       <ZipSourceFiles
-        Include="$(ProjectFoldersIncludeString)"
+        Include="$(TempModuleSourceDirectory)**\*"
         Exclude="$(TempModuleSourceDirectory)**\*.sln;
                  $(TempModuleSourceDirectory)**\*.vssscc;
                  $(TempModuleSourceDirectory)**\*.vspscc;
@@ -229,7 +228,8 @@ foreach(var replacement in replacements){
         Include="$(TempModuleBuildDirectory)*.*;" />
       <ZipSourceFiles
         Include="$(CustomBuildFilesDirectory)*.*;"
-        Exclude="$(CustomBuildFilesDirectory)**\*.pfx; $(CustomBuildFilesDirectory)**\Aderant.CodeSigning*; "/>
+        Exclude="$(CustomBuildFilesDirectory)**\*.pfx;
+                 $(CustomBuildFilesDirectory)**\Aderant.CodeSigning*; "/>
     </ItemGroup>
 
     <MakeDir
@@ -244,7 +244,6 @@ foreach(var replacement in replacements){
     <RemoveDir
       Directories="$(TempSolutionDirectory)"/>
 
-    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
   </Target>
 
   <!--
@@ -319,7 +318,7 @@ foreach(var replacement in replacements){
     <ItemGroup>
       <SourceFilesToCopyForTemplateTransform
                     Include="%(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\*"
-                    Exclude="%(_AllWorkflowDirectoriesWithMetadata.FullPath)\ABT\**;
+                    Exclude="%(_AllWorkflowDirectoriesWithMetadata.FullPath)\bin\**;
                              %(_AllWorkflowDirectoriesWithMetadata.FullPath)\packages\**\*;
                              %(_AllWorkflowDirectoriesWithMetadata.FullPath)\Dependencies\**\*;
                              %(_AllWorkflowDirectoriesWithMetadata.FullPath)\Build\TestResults\**\*;
@@ -340,10 +339,8 @@ foreach(var replacement in replacements){
                              %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\_Resharper*\**;
                              %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\*resharper.user;
                              %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\*.DotSettings;
-                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\Bin;
                              %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\obj\**;
                              %(_AllWorkflowDirectoriesWithMetadata.FullPath)\CommonBuild\**;
-                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\ThirdPartyBuild.txt;
                              %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\*.csproj.user;
                              %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\SharedBin\**;
                              %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\Web.*\**;">

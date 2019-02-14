@@ -18,12 +18,11 @@ namespace Aderant.Build {
     [Export(typeof(IFileSystem))]
     [Export("FileSystemService")]
     public class PhysicalFileSystem : IFileSystem2 {
-        delegate bool CreateSymlinkLink(string lpSymlinkFileName, string lpTargetFileName, uint dwFlags);
-
-        private ILogger logger;
         private static CreateSymlinkLink createSymlinkLink = NativeMethods.CreateSymbolicLink;
 
         private static CreateSymlinkLink createHardlink = (newFileName, target, flags) => NativeMethods.CreateHardLink(newFileName, target, IntPtr.Zero);
+
+        private ILogger logger;
 
         [ImportingConstructor]
         public PhysicalFileSystem() {
@@ -237,7 +236,7 @@ namespace Aderant.Build {
         }
 
         public void CopyFile(string source, string destination) {
-           CopyFile(source, destination, false);
+            CopyFile(source, destination, false);
         }
 
         public void CopyFile(string source, string destination, bool overwrite) {
@@ -245,10 +244,6 @@ namespace Aderant.Build {
             EnsureDirectory(Path.GetDirectoryName(destination));
 
             CopyFileInternal(source, destination, overwrite);
-        }
-
-        private static void CopyFileInternal(string source, string destination, bool overwrite) {
-            File.Copy(source, destination, overwrite);
         }
 
         public virtual void CopyDirectory(string source, string destination) {
@@ -281,6 +276,70 @@ namespace Aderant.Build {
             }
         }
 
+        public ActionBlock<PathSpec> BulkCopy(IEnumerable<PathSpec> pathSpecs, bool overwrite, bool useSymlinks = false, bool useHardlinks = false) {
+            ExecutionDataflowBlockOptions actionBlockOptions = new ExecutionDataflowBlockOptions {
+                MaxDegreeOfParallelism = Environment.ProcessorCount,
+            };
+
+            HashSet<string> knownPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            CreateSymlinkLink link = null;
+            if (useSymlinks) {
+                link = createSymlinkLink;
+            } else if (useHardlinks) {
+                link = createHardlink;
+            }
+
+            ActionBlock<PathSpec> bulkCopy = new ActionBlock<PathSpec>(
+                async file => {
+                    // Break from synchronous thread context of caller to get onto thread pool thread.
+                    await Task.Yield();
+
+                    string destination = Path.GetDirectoryName(file.Destination);
+
+                    lock (knownPaths) {
+                        if (!knownPaths.Contains(destination)) {
+                            EnsureDirectoryInternal(destination);
+                            knownPaths.Add(destination);
+                        }
+                    }
+
+                    if (link != null) {
+                        TryCopyViaLink(file.Location, file.Destination, link);
+                    } else {
+                        CopyFileInternal(file.Location, file.Destination, overwrite);
+                    }
+                },
+                actionBlockOptions);
+
+            foreach (PathSpec pathSpec in pathSpecs) {
+                bulkCopy.Post(pathSpec);
+            }
+
+            bulkCopy.Complete();
+
+            return bulkCopy;
+        }
+
+        public void ExtractZipToDirectory(string sourceArchiveFileName, string destination, bool overwrite = false) {
+            using (ZipArchive zipArchive = ZipFile.OpenRead(sourceArchiveFileName)) {
+                ExtractToDirectory(zipArchive, destination, overwrite);
+            }
+        }
+
+        public bool IsSymlink(string directory) {
+            DirectoryInfo directoryInfo = new DirectoryInfo(directory);
+            if (directoryInfo.Exists) {
+                return directoryInfo.Attributes.HasFlag(FileAttributes.ReparsePoint);
+            }
+
+            return false;
+        }
+
+        private static void CopyFileInternal(string source, string destination, bool overwrite) {
+            File.Copy(source, destination, overwrite);
+        }
+
         private IEnumerable<string> SearchByPattern(string startingDirectory, string filter, IReadOnlyCollection<string> ceilingDirectories) {
             // Canonicalize our starting location
             string lookInDirectory = Path.GetFullPath(startingDirectory);
@@ -302,31 +361,6 @@ namespace Aderant.Build {
             } while (lookInDirectory != null);
 
             return Enumerable.Empty<string>();
-        }
-
-        private string SearchForFile(string startingDirectory, string fileName, SearchOptions searchOptions) {
-            // Canonicalize our starting location
-            string lookInDirectory = Path.GetFullPath(startingDirectory);
-
-            do {
-                // Construct the path that we will use to test against
-                string possibleFileDirectory = Path.Combine(lookInDirectory, fileName);
-
-                // If we successfully locate the file in the directory that we're
-                // looking in, simply return that location. Otherwise we'll
-                // keep moving up the tree.
-                if (this.FileExists(possibleFileDirectory) || searchOptions.ConsiderDirectories && DirectoryExists(possibleFileDirectory)) {
-                    // We've found the file, return the directory we found it in
-                    return lookInDirectory;
-                } else {
-                    // GetDirectoryName will return null when we reach the root
-                    // terminating our search
-                    lookInDirectory = Path.GetDirectoryName(lookInDirectory);
-                }
-            } while (lookInDirectory != null);
-
-            // When we didn't find the location, then return an empty string
-            return string.Empty;
         }
 
         private string AddFileCore(string path, Action<Stream> writeToStream) {
@@ -404,61 +438,32 @@ namespace Aderant.Build {
             }
         }
 
-        public ActionBlock<PathSpec> BulkCopy(IEnumerable<PathSpec> pathSpecs, bool overwrite, bool useSymlinks = false, bool useHardlinks = false) {
-            ExecutionDataflowBlockOptions actionBlockOptions = new ExecutionDataflowBlockOptions {
-                MaxDegreeOfParallelism = Environment.ProcessorCount,
-            };
-
-            HashSet<string> knownPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-            CreateSymlinkLink link = null;
-            if (useSymlinks) {
-                link = createSymlinkLink;
-            } else if (useHardlinks) {
-                link = createHardlink;
+        private void ExtractToDirectory(ZipArchive archive, string destinationDirectoryName, bool overwrite) {
+            if (!overwrite) {
+                archive.ExtractToDirectory(destinationDirectoryName);
+                return;
             }
 
-            ActionBlock<PathSpec> bulkCopy = new ActionBlock<PathSpec>(
-                async file => {
-                    // Break from synchronous thread context of caller to get onto thread pool thread.
-                    await Task.Yield();
+            Dictionary<string, byte> directoriesKnownToExist = new Dictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
 
-                    string destination = Path.GetDirectoryName(file.Destination);
+            foreach (ZipArchiveEntry file in archive.Entries) {
+                string completeFileName = Path.Combine(destinationDirectoryName, file.FullName);
 
-                    lock (knownPaths) {
-                        if (!knownPaths.Contains(destination)) {
-                            EnsureDirectoryInternal(destination);
-                            knownPaths.Add(destination);
-                        }
+                var destinationFolder = Path.GetDirectoryName(completeFileName);
+
+                if (!string.IsNullOrEmpty(destinationFolder) && !directoriesKnownToExist.ContainsKey(destinationFolder)) {
+                    if (!DirectoryExists(destinationFolder)) {
+                        Directory.CreateDirectory(destinationFolder);
                     }
 
-                    if (link != null) {
-                        TryCopyViaLink(file.Location, file.Destination, link);
-                    } else {
-                        CopyFileInternal(file.Location, file.Destination, overwrite);
-                    }
-                }, actionBlockOptions);
+                    // It's very common for a lot of files to be copied to the same folder.
+                    // Eg., "c:\foo\a"->"c:\bar\a", "c:\foo\b"->"c:\bar\b" and so forth.
+                    // We don't want to check whether this folder exists for every single file we copy. So store which we've checked.
+                    directoriesKnownToExist.Add(destinationFolder, 0);
+                }
 
-            foreach (PathSpec pathSpec in pathSpecs) {
-                bulkCopy.Post(pathSpec);
+                file.ExtractToFile(completeFileName, true);
             }
-
-            bulkCopy.Complete();
-
-            return bulkCopy;
-        }
-
-        public void ExtractZipToDirectory(string sourceArchiveFileName, string destination) {
-            ZipFile.ExtractToDirectory(sourceArchiveFileName, destination);
-        }
-
-        public bool IsSymlink(string directory) {
-            DirectoryInfo directoryInfo = new DirectoryInfo(directory);
-            if (directoryInfo.Exists) {
-                return directoryInfo.Attributes.HasFlag(FileAttributes.ReparsePoint);
-            }
-
-            return false;
         }
 
         private void TryCopyViaLink(string fileLocation, string fileDestination, CreateSymlinkLink createLink) {
@@ -470,10 +475,7 @@ namespace Aderant.Build {
                 throw new InvalidOperationException($"Failed to create link {fileDestination} ==> {fileLocation}");
             }
         }
-    }
 
-    internal struct SearchOptions {
-        public IEnumerable<string> CeilingDirectories { get; set; }
-        public bool ConsiderDirectories { get; set; }
+        delegate bool CreateSymlinkLink(string lpSymlinkFileName, string lpTargetFileName, uint dwFlags);
     }
 }
