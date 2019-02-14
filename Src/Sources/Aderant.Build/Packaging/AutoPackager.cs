@@ -52,12 +52,10 @@ namespace Aderant.Build.Packaging {
                 var file = packageQueue[i];
 
                 foreach (var output in filesProducedByProjects) {
-                    if (string.Equals(file.Destination, output, StringComparison.OrdinalIgnoreCase)) {
-
+                    if (file.Destination.EndsWith(output,StringComparison.OrdinalIgnoreCase)) {
                         if (!artifactItems.Contains(file)) {
                             logger.Info(file.Location);
                             artifactItems.Add(file);
-
                             packageQueue.RemoveAt(i);
                         }
                     }
