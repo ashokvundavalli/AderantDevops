@@ -48,14 +48,14 @@ namespace Aderant.Build.Tasks {
             groveler = new DirectoryGroveler(new PhysicalFileSystem());
             groveler.Logger = new BuildTaskLogger(Log);
 
-            List<string> inputDirectories = new List<string>(Context.Include);
+            HashSet<string> inputDirectories = new HashSet<string>(Context.Include, StringComparer.OrdinalIgnoreCase);
             if (!Context.Switches.RestrictToProvidedPaths) {
-                inputDirectories.AddRange(GetDirectoriesWithNoCachedBuild(Context.BuildRoot, inputDirectories));
+                GetDirectoriesWithNoCachedBuild(Context.BuildRoot, inputDirectories).ForEach(s => inputDirectories.Add(s));
             } else {
                 Log.LogMessage("Build will not expand build tree.");
             }
 
-            groveler.Grovel(inputDirectories, ExcludedPaths);
+            groveler.Grovel(inputDirectories.ToArray(), ExcludedPaths);
 
             if (!Context.Switches.RestrictToProvidedPaths) {
                 groveler.ExpandBuildTree(PipelineService);
@@ -64,7 +64,7 @@ namespace Aderant.Build.Tasks {
             return !Log.HasLoggedErrors;
         }
 
-        private List<string> GetDirectoriesWithNoCachedBuild(string buildRoot, List<string> contextInclude) {
+        private List<string> GetDirectoriesWithNoCachedBuild(string buildRoot, HashSet<string> contextInclude) {
             var buildStateMetadata = Context.BuildStateMetadata;
             var contextBuildMetadata = Context.SourceTreeMetadata;
 
@@ -78,7 +78,7 @@ namespace Aderant.Build.Tasks {
                     var filters = ExcludedPaths.Select(s => s.TrimTrailingSlashes()).ToList();
                     unassignedBuckets = unassignedBuckets.Where(s => !PathUtility.IsPathExcludedByFilters(s.Tag, filters)).ToList();
 
-                    var message = string.Join(Environment.NewLine + "-> ", unassignedBuckets.Select(s => s.Tag));
+                    var message = string.Join(Environment.NewLine + "-> ", unassignedBuckets.Select(s => s.Tag.PadRight(20) + " Hash: " + s.Id));
                     Log.LogMessage(MessageImportance.High, "There are no cached builds for these directories. They will be added to this build." + Environment.NewLine + message);
                 }
 
