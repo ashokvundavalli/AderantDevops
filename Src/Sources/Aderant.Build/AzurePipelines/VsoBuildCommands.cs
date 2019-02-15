@@ -4,12 +4,12 @@ using System.Globalization;
 using System.Linq;
 using Aderant.Build.Logging;
 
-namespace Aderant.Build.TeamFoundation {
+namespace Aderant.Build.AzurePipelines {
     /// <summary>
-    /// Responsible for issuing TF Build agent commands (see
+    /// Responsible for issuing Azure Pipelines agent commands (see
     /// <see href="https://github.com/Microsoft/vsts-tasks/blob/master/docs/authoring/commands.md" />).
     /// </summary>
-    internal sealed class VsoBuildCommandBuilder {
+    internal sealed class VsoCommandBuilder {
 
         private const string MessagePrefix = "##vso[";
 
@@ -17,17 +17,35 @@ namespace Aderant.Build.TeamFoundation {
         private Action<string> logger;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="VsoBuildCommandBuilder" /> class.
+        /// Initializes a new instance of the <see cref="VsoCommandBuilder" /> class.
         /// </summary>
-        public VsoBuildCommandBuilder(ILogger logger)
+        public VsoCommandBuilder(ILogger logger)
             : this(message => logger.Info(message)) {
         }
 
-        public VsoBuildCommandBuilder(Action<string> logger) {
+        public VsoCommandBuilder(Action<string> logger) {
             this.logger = logger;
         }
 
-        public VsoBuildCommandBuilder() {
+        public VsoCommandBuilder() {
+        }
+
+        public static bool? IsAzurePipelines {
+            get { return !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BUILD_BUILDID")); }
+        }
+
+        /// <summary>
+        /// Formats a string to output a warning to Azure Pipelines. Low allocation.
+        /// </summary>
+        public static string FormatWarning(string message) {
+            return WriteLoggingCommand("task.logissue", "type=warning", message);
+        }
+
+        /// <summary>
+        /// Formats a string to output an error to Azure Pipelines. Low allocation.
+        /// </summary>
+        public static string FormatError(string message){
+            return WriteLoggingCommand("task.logissue", "type=error", message);
         }
 
         /// <summary>
@@ -53,6 +71,7 @@ namespace Aderant.Build.TeamFoundation {
             properties.Add("type", "warning");
             return WriteLoggingCommand("task.logissue", properties, message);
         }
+
 
         /// <summary>
         /// Log an error to timeline record of current task.
@@ -140,13 +159,17 @@ namespace Aderant.Build.TeamFoundation {
         private string WriteLoggingCommand(string actionName, Dictionary<string, string> properties, string value) {
             var props = string.Join(string.Empty, properties.Select(pair => { return string.Format(CultureInfo.InvariantCulture, "{0}={1};", pair.Key, pair.Value); }));
 
-            var commandText = string.Format("{0}{1} {2}{3}{4}", MessagePrefix, actionName, props, MessagePostfix, value);
+            var commandText = WriteLoggingCommand(actionName, props, value);
 
             if (logger != null) {
                 logger(commandText);
             }
 
             return commandText;
+        }
+
+        private static string WriteLoggingCommand(string actionName, string props, string value) {
+            return string.Format("{0}{1} {2}{3}", MessagePrefix, actionName, props, MessagePostfix) + value;
         }
     }
 }

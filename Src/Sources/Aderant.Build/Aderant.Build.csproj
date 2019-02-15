@@ -307,7 +307,7 @@
     <Compile Include="Tasks\GetAssembliesWithTraits.cs" />
     <Compile Include="Tasks\GetFileVersionInfo.cs" />
     <Compile Include="Tasks\WriteLinesToFile.cs" />
-    <Compile Include="TeamFoundation\VsoBuildArtifactType.cs" />
+    <Compile Include="AzurePipelines\VsoBuildArtifactType.cs" />
     <Compile Include="Packaging\VersionTracker.cs" />
     <Compile Include="Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -352,8 +352,8 @@
     <Compile Include="Tasks\ThirdPartyPackager.cs" />
     <Compile Include="DependencyResolver\UpdateAction.cs" />
     <Compile Include="Packaging\NuGet\WellKnownTokens.cs" />
-    <Compile Include="TeamFoundation\VsoBuildCommands.cs" />
-    <Compile Include="TeamFoundation\VsoBuildMessageData.cs" />
+    <Compile Include="AzurePipelines\VsoBuildCommands.cs" />
+    <Compile Include="AzurePipelines\VsoBuildMessageData.cs" />
     <Compile Include="VersionControl\Model\ISourceChange.cs" />
     <Compile Include="VersionControl\Model\SourceChange.cs" />
     <Compile Include="Versioning\DotNetAnalyzer.cs" />

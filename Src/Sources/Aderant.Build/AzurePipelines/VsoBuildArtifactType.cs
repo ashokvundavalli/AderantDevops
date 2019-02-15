@@ -1,7 +1,7 @@
 ﻿using System.Runtime.Serialization;
 using ProtoBuf;
 
-namespace Aderant.Build.TeamFoundation {
+namespace Aderant.Build.AzurePipelines {
     /// <summary>
     /// Provides the type of a TF Build artifact.
     /// </summary>

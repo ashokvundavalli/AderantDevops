@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using Aderant.Build.AzurePipelines;
 using Aderant.Build.Logging;
 using Aderant.Build.Packaging;
 using Aderant.Build.PipelineService;
-using Aderant.Build.TeamFoundation;
 using Aderant.Build.VersionControl;
 
 namespace Aderant.Build.ProjectSystem.StateTracking {

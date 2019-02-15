@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 
-namespace Aderant.Build.TeamFoundation {
+namespace Aderant.Build.AzurePipelines {
     /// <summary>
-    /// Provides optional data associated with a TF Build logging message.
+    /// Provides optional data associated with a Azure Pipelines logging message.
     /// </summary>
     internal sealed class VsoBuildMessageData {
         /// <summary>

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.Serialization;
-using Aderant.Build.TeamFoundation;
+using Aderant.Build.AzurePipelines;
 using Aderant.Build.Utilities;
 using ProtoBuf;
 

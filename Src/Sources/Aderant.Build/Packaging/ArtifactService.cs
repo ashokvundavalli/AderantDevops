@@ -7,11 +7,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using Aderant.Build.AzurePipelines;
 using Aderant.Build.Logging;
 using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
-using Aderant.Build.TeamFoundation;
 using Aderant.Build.Utilities;
 using Aderant.Build.VersionControl;
 
@@ -564,7 +564,7 @@ namespace Aderant.Build.Packaging {
                 artifactsWithStoragePaths.Add(buildArtifact);
             }
 
-            var commandBuilder = new VsoBuildCommandBuilder();
+            var commandBuilder = new VsoCommandBuilder();
 
             // Ordering is an attempt to make sure we upload files first then the state files
             var instructions = new PublishCommands {
