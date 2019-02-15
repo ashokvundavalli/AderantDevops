@@ -64,8 +64,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             context.Variables["IsBuildCacheEnabled"] = isBuildCacheEnabled.ToString();
 
             var projectGraph = new ProjectDependencyGraph(graph);
-            // Ensure that any further usages of graph refer to our wrapper
-            graph = projectGraph;
 
             Sequence(context.Switches.ChangedFilesOnly, true, files.MakeFiles, projectGraph);
 
@@ -102,11 +100,14 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             // According to options, find out which projects are selected to build.
             var filteredProjects = GetProjectsBuildList(
-                projectGraph,
                 projectsInDependencyOrder,
                 files,
                 context.GetChangeConsiderationMode(),
                 context.GetRelationshipProcessingMode());
+
+            if (filteredProjects.Count != projectsInDependencyOrder.Count) {
+                FixupGraphAfterCacheSubstitution(projectsInDependencyOrder, filteredProjects);
+            }
 
             var groups = projectGraph.GetBuildGroups(filteredProjects);
 
@@ -128,6 +129,30 @@ namespace Aderant.Build.DependencyAnalyzer {
             return new BuildPlan(project) {
                 DirectoriesInBuild = directoriesInBuild,
             };
+        }
+
+        /// <summary>
+        /// Fixes the dependency graph.
+        /// <see cref="DependencyGraph.GetBuildGroups"/> will incorrectly group the graph when nodes are removed due to cache
+        /// substitution or if a project is flagged to not build because not all are provided to GetBuildGroups
+        /// (as they are not in the set returned by <see cref="GetProjectsBuildList"/>.
+        /// To fix this we add a synthetic dependency to on all nodes not building to all projects but only if the node itself has
+        /// no items being built. This will introduce cycles but it doesn't matter as we have already sorted the graph but we just
+        /// need to fix the grouping.
+        /// </summary>
+        private static void FixupGraphAfterCacheSubstitution(IReadOnlyList<IDependable> projectsInDependencyOrder, IReadOnlyList<IDependable> filteredProjects) {
+            foreach (var node in projectsInDependencyOrder.OfType<DirectoryNode>()) {
+                if (!node.IsPostTargets && !node.IsBuildingAnyProjects) {
+                    for (var i = 0; i < filteredProjects.Count; i++) {
+                        IDependable dependable = filteredProjects[i];
+                        ConfiguredProject artifact = dependable as ConfiguredProject;
+
+                        if (artifact != null) {
+                            artifact.AddResolvedDependency(null, node);
+                        }
+                    }
+                }
+            }
         }
 
         internal static void WriteBuildTree(IFileSystem fileSystem, BuildOperationContext context, string treeText) {
@@ -215,8 +240,6 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             var grouping = graph.ProjectsBySolutionRoot;
 
-            List<IArtifact> templateDependencyProviders = new List<IArtifact>();
-
             foreach (var group in grouping) {
                 List<ConfiguredProject> dirtyProjects = group.Where(g => g.IsDirty).ToList();
 
@@ -248,7 +271,6 @@ namespace Aderant.Build.DependencyAnalyzer {
                         bool hasAddedNode = false;
 
                         foreach (var dependency in textTemplateDependencies) {
-                            // Track that we need to add a transitive dependency later
                             if (!hasAddedNode) {
                                 DirectoryNode directoryNode = startNode;
                                 if (directoryNode != null && !startNodes.Contains(startNode)) {
@@ -258,59 +280,27 @@ namespace Aderant.Build.DependencyAnalyzer {
                             }
 
                             startNode.AddResolvedDependency(dependency.ExistingUnresolvedItem, dependency.ResolvedReference);
-
-                            IArtifact artifact = dependency.ResolvedReference as IArtifact;
-                            // Store the item that produces this dependency for the second pass operation
-                            if (artifact != null) {
-                                if (!templateDependencyProviders.Contains(artifact)) {
-                                    templateDependencyProviders.Add(artifact);
-                                }
-                            }
                         }
                     }
 
                     if (!changedFilesOnly) {
                         if (considerStateFiles) {
                             ApplyStateFile(stateFile, solutionDirectoryName, dirtyProjectsLogLine, project, ref hasLoggedUpToDate);
-                        }
-                    }
-                }
-            }
 
-            AddTransitiveDependencies(graph, templateDependencyProviders, startNodes);
-        }
-
-        private static void AddTransitiveDependencies(ProjectDependencyGraph graph, List<IArtifact> templateDependencyProviders, List<DirectoryNode> startNodes) {
-            // Now find all completion nodes of the artifacts that are involved in T4.
-            // These will be added as transitive dependencies
-            HashSet<DirectoryNode> producers = new HashSet<DirectoryNode>();
-
-            foreach (var artifact in templateDependencyProviders) {
-                foreach (DirectoryNode directoryNode in artifact.GetDependencies().OfType<DirectoryNode>()) {
-                    foreach (IDependable graphNode in graph.Nodes) {
-                        DirectoryNode node = graphNode as DirectoryNode;
-                        if (node != null) {
-                            if (node.IsPostTargets && string.Equals(node.Directory, directoryNode.Directory, StringComparison.OrdinalIgnoreCase)) {
-                                producers.Add(node);
+                            if (project.IsDirty) {
+                                startNode.IsBuildingAnyProjects = true;
                             }
                         }
                     }
                 }
             }
 
-            foreach (var node in startNodes) {
-                foreach (var producer in producers) {
-                    // Do not add to ourselves because that would be circular
-                    if (string.Equals(node.Directory, producer.Directory, StringComparison.OrdinalIgnoreCase)) {
-                        continue;
-                    }
+            graph.ComputeReverseReferencesMap();
 
-                    // Janky hack to prevent cycles until we have a better way of abstracting this
-                    if (producer.Directory.Contains("SoftwareFactory")) {
-                        //node.AddResolvedDependency(null, producer);
-                    }
-                }
-            }
+            AddTransitiveDependencies(graph, startNodes);
+        }
+
+        private static void AddTransitiveDependencies(ProjectDependencyGraph graph, List<DirectoryNode> startNodes) {
         }
 
         /// <summary>
@@ -566,7 +556,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <summary>
         /// According to options, find out which projects are selected to build.
         /// </summary>
-        /// <param name="graph">The dependency graph</param>
         /// <param name="visualStudioProjects">All the projects list.</param>
         /// <param name="orchestrationFiles">File metadata for the target files that will orchestrate the build</param>
         /// <param name="changesToConsider">Build the current branch, the changed files since forking from master, or all?</param>
@@ -575,7 +564,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// downstream projects, or none?
         /// </param>
         internal IReadOnlyList<IDependable> GetProjectsBuildList(
-            ProjectDependencyGraph graph,
             IReadOnlyList<IDependable> visualStudioProjects,
             OrchestrationFiles orchestrationFiles,
             ChangesToConsider changesToConsider,

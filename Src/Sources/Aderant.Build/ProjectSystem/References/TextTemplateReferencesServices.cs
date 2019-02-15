@@ -51,8 +51,8 @@ namespace Aderant.Build.ProjectSystem.References {
             if (unresolved.IsForTextTemplate) {
                 if (aliasMap != null) {
                     string projectPath;
-                    if (aliasMap.TryGetValue(unresolved.Id, out projectPath)) {
 
+                    if (aliasMap.TryGetValue(unresolved.Id, out projectPath)) {
                         var project = projects.FirstOrDefault(s => s.FullPath.IndexOf(projectPath, StringComparison.OrdinalIgnoreCase) >= 0);
                         if (project != null) {
                             return project;

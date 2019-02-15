@@ -164,7 +164,7 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         public override string Id {
-            get { return GetAssemblyName(); }
+            get { return FullPath + ":" + GetAssemblyName(); }
         }
 
         public bool IsOfficeProject {
@@ -417,7 +417,7 @@ namespace Aderant.Build.ProjectSystem {
             }
         }
 
-        public void CalculateDirtyStateFromChanges(IReadOnlyCollection<ISourceChange> changes) {
+        public void CalculateDirtyStateFromChanges(IList<ISourceChange> changes) {
             MarkThisFileDirty(changes);
 
             if (IsDirty && dirtyFiles != null) {
@@ -432,8 +432,21 @@ namespace Aderant.Build.ProjectSystem {
             items.AddRange(project.Value.GetItems("None"));
             items.AddRange(project.Value.GetItems("XamlAppdef"));
 
+            int abort = -1;
+
             foreach (var item in items) {
-                foreach (var file in changes) {
+                if (abort > 0) {
+                    break;
+                }
+
+                if (abort < 0 && changes.Count > 100) {
+                    abort = 1;
+                } else {
+                    abort = 0;
+                }
+
+                for (var changeNum = changes.Count - 1; changeNum >= 0; changeNum--) {
+                    var file = changes[changeNum];
                     string value = item.GetMetadataValue("FullPath");
 
                     if (string.Equals(value, file.FullPath, StringComparison.OrdinalIgnoreCase)) {
@@ -444,6 +457,15 @@ namespace Aderant.Build.ProjectSystem {
                         }
 
                         dirtyFiles.Add(file.Path);
+
+                        changes.RemoveAt(changeNum);
+
+                        // If we have more than a few changes then abort early so we don't
+                        // burn too much CPU when collecting this data. As long as we collect
+                        // at least one match it's good enough.
+                        if (abort > 0) {
+                            break;
+                        }
                     }
                 }
             }
@@ -454,7 +476,7 @@ namespace Aderant.Build.ProjectSystem {
             this.SetReason(BuildReasonTypes.ProjectItemChanged);
         }
 
-        private void MarkThisFileDirty(IReadOnlyCollection<ISourceChange> changes) {
+        private void MarkThisFileDirty(ICollection<ISourceChange> changes) {
             foreach (var change in changes) {
                 if (string.Equals(FullPath, change.FullPath, StringComparison.OrdinalIgnoreCase)) {
                     MarkDirty();

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Aderant.Build.Model;
 using Aderant.Build.Utilities;
@@ -25,7 +26,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         /// <summary>
-        /// Returns the objects grouped into sets that do not depend on each other. Assumes the list is sorted.
+        /// Groups the input into sets that do not depend on each other. Assumes the input is sorted.
         /// </summary>
         /// <param name="projects"></param>
         public IReadOnlyList<IReadOnlyList<IDependable>> GetBuildGroups(IReadOnlyList<IDependable> projects) {

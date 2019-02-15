@@ -107,7 +107,6 @@ namespace UnitTest.Build.DependencyAnalyzer {
             var g = new ProjectDependencyGraph(p1);
 
             IReadOnlyCollection<IDependable> buildList = sequencer.GetProjectsBuildList(
-                g,
                 g.GetDependencyOrder(),
                 orchestrationFiles,
                 ChangesToConsider.None,

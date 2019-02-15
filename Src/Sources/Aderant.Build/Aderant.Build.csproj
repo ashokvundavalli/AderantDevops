@@ -171,7 +171,6 @@
     <Compile Include="ProjectSystem\StateTracking\ProjectOutputSnapshotFactory.cs" />
     <Compile Include="ProjectSystem\BuildDependenciesCollector.cs" />
     <Compile Include="ErrorUtilities.cs" />
-    <Compile Include="DependencyEqualityComparer.cs" />
     <Compile Include="ProjectSystem\IProjectTree.cs" />
     <Compile Include="ProjectSystem\IProjectTreeInternal.cs" />
     <Compile Include="ProjectSystem\ISolutionManager.cs" />
@@ -250,7 +249,6 @@
     <Compile Include="BuildSummary.cs" />
     <Compile Include="BuildMetadata.cs" />
     <Compile Include="BuildOperationContext.cs" />
-    <Compile Include="DependencyResolver\Parser\DependencyManifestParser.cs" />
     <Compile Include="Services\ServiceContainer.cs" />
     <Compile Include="ProjectSystem\DependencyRelationshipProcessing.cs" />
     <Compile Include="ProjectSystem\OrchestrationFiles.cs" />

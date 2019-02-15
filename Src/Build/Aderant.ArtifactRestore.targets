@@ -22,7 +22,10 @@
   </PropertyGroup>
 
 
-  <Target Name="ExtractBuildCachePackagesCore" Condition="'$(IsBuildCacheEnabled)' != 'false'">
+  <!-- Uses target batching to run this once per zip -->
+  <Target Name="ExtractBuildCachePackagesCore" Condition="'$(IsBuildCacheEnabled)' != 'false'"
+          Outputs="%(BuildCacheZipFilesToRestore.Identity)">
+
     <Error Text="Item does not exist: %(Identity)" Condition="!Exists(%(BuildCacheZipFilesToRestore.FullPath))" />
 
     <!-- 7zip doesn't support rewriting archive paths.

@@ -16,6 +16,7 @@ using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem.SolutionParser;
 using Aderant.Build.Services;
 using Aderant.Build.Utilities;
+using Aderant.Build.VersionControl.Model;
 using Microsoft.Build.Construction;
 using Microsoft.Build.Evaluation;
 
@@ -162,6 +163,11 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         public DependencyGraph CreateBuildDependencyGraph(BuildDependenciesCollector collector) {
+            List<ISourceChange> changes = null;
+            if (collector.SourceChanges != null) {
+                changes = collector.SourceChanges.ToList();
+            }
+
             foreach (var project in LoadedConfiguredProjects) {
 
                 try {
@@ -171,8 +177,8 @@ namespace Aderant.Build.ProjectSystem {
                     throw;
                 }
 
-                if (collector.SourceChanges != null) {
-                    project.CalculateDirtyStateFromChanges(collector.SourceChanges);
+                if (changes != null) {
+                    project.CalculateDirtyStateFromChanges(changes);
                 }
             }
 

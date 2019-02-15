@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
 
-  <!-- 
+  <!--
     ***********************************************************************
     ***  RM.TransformTemplates.Targets                                  ***
     ***  Please retain formatting, one attribute per line, and split    ***
-    ***  delimited values over several lines.                           ***                                  
+    ***  delimited values over several lines.                           ***
     ***********************************************************************
   -->
 
@@ -32,7 +32,7 @@
         <Using Namespace="System.Linq"/>
         <Using Namespace="System.Xml.Linq"/>
         <Code>
-<![CDATA[    
+<![CDATA[
     string file = System.IO.Directory.GetFileSystemEntries(Directory, "Microsoft.TextTemplating.Build.Tasks.dll", System.IO.SearchOption.AllDirectories).FirstOrDefault();
     if (file != null) {
         System.Reflection.Assembly.LoadFrom(file);
@@ -51,10 +51,10 @@
         <CreateItem Include="$(SolutionRoot)\TimeEntryService\**\*.tt"
                     AdditionalMetadata="Generator=TextTemplatingFileGenerator">
             <Output TaskParameter="Include" ItemName="rmT4TextTemplates" />
-        </CreateItem>    
+        </CreateItem>
     -->
   </Target>
-    
+
 
 
   <!--
@@ -69,9 +69,9 @@
 
     <TransformTask Condition="'$(ExpertSourceDirectory)' == ''">$(SolutionDirectoryPath)Dependencies\$(TransformTask)</TransformTask>
     <TransformTask Condition="'$(ExpertSourceDirectory)' != ''">$(ExpertSourceDirectory)$(TransformTask)</TransformTask>
-	
+
     <rmT4TemplateIncludeFolders Condition="('$(rmT4TemplateIncludeFolders)'=='')">$(SolutionDirectoryPath)Dependencies</rmT4TemplateIncludeFolders>
-    
+
     <rmTransformTemplatesWorkerDependsOn>
       rmBeforeTransformTemplates;
       rmT4AssemblyReferencePaths;
@@ -81,13 +81,13 @@
 
   <UsingTask AssemblyFile="$(TransformTask)" TaskName="Aderant.TextTransform.Tasks.Transform" />
 
-  <Target Name="rmTransformTemplates" 
-          DependsOnTargets="$(rmTransformTemplatesDependsOn)"> 
+  <Target Name="rmTransformTemplates"
+          DependsOnTargets="$(rmTransformTemplatesDependsOn)">
     <CallTarget Targets="rmTransformTemplatesWorker"/>
   </Target>
 
-  <Target Name="rmTransformTemplatesWorker" 
-          Condition="('$(rmBCItemTransformTemplatesEnabled)'=='true')" 
+  <Target Name="rmTransformTemplatesWorker"
+          Condition="('$(rmBCItemTransformTemplatesEnabled)'=='true')"
           DependsOnTargets="$(rmTransformTemplatesWorkerDependsOn)">
 
     <Error
@@ -98,7 +98,7 @@
       Text="Missing required item group 'rmT4DslDirectiveProcessors'" />
     <Error
       Condition="('@(rmT4TextTemplates)'=='') And ('$(IsCustomBuild)' != 'true')"
-      Text="Missing required item group 'rmT4TextTemplates'" />    
+      Text="Missing required item group 'rmT4TextTemplates'" />
 
     <Message Text="rmT4DslDirectiveProcessors" />
     <Message Text="Processor --> %(Identity) @(rmT4DslDirectiveProcessors)" />
@@ -116,12 +116,12 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
     </ItemGroup>
 
     <LoadTextTemplatingTask Directory="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(MSBuildToolsVersion)\TextTemplating" />
-	
+
     <ItemGroup>
       <SearchPaths Include="$(AlternativeOutputDirectory)" />
       <SearchPaths Include="$(ExpertSourceDirectory)" />
     </ItemGroup>
-	
+
     <PropertyGroup>
       <EnvironmentVariableProperties Condition="'$(EnvironmentVariableProperties)' == ''">ExpertSourceDirectory=$(ExpertSourceDirectory);ArtifactStaging=$(AlternativeOutputDirectory)</EnvironmentVariableProperties>
 
@@ -150,9 +150,9 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
       TempDirectoryOverride="$(ModuleBuildTempDirectory)"
       SearchPaths="@(SearchPaths)"
       EnvironmentVariables="$(EnvironmentVariableProperties)">
-      
+
       <Output ItemName="GeneratedFiles"
-         TaskParameter="GeneratedFiles" />
+              TaskParameter="GeneratedFiles" />
       <Output ItemName="NonGeneratedFiles"
               TaskParameter="NonGeneratedFiles" />
     </Aderant.TextTransform.Tasks.Transform>
@@ -170,7 +170,7 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
         MinimalRebuildFromTracking="$(TransformOutOfDateOnly)"
         OverwriteReadOnlyOutputFiles="true"
         TempDirectoryOverride="$(ModuleBuildTempDirectory)">
-        
+
       <Output ItemName="GeneratedFiles"
               TaskParameter="GeneratedFiles" />
       <Output ItemName="NonGeneratedFiles"
@@ -185,9 +185,9 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
     *************************************************************************************************************
   -->
   <Target Name="rmT4AssemblyReferencePaths">
-    
+
     <Error Condition="'$(VSSDKPath)' == ''" Text="Visual Studio SDK path not found" />
-    
+
     <!-- Path to reference dlls required by DSLs -->
     <PropertyGroup>
       <VSSDKPath>$(VSSDKPath)VisualStudioIntegration\Common\Assemblies\v4.0\</VSSDKPath>
@@ -205,9 +205,9 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
 		<SoftwareFactoryPath Condition="'$(ExpertSourceDirectory)' == ''">$(SolutionDirectoryPath)Dependencies\</SoftwareFactoryPath>
 		<SoftwareFactoryPath Condition="'$(ExpertSourceDirectory)' != ''">$(ExpertSourceDirectory)</SoftwareFactoryPath>
 	</PropertyGroup>
-	
+
     <PropertyGroup>
-      <rmSoftwareFactoryCommonDll>$(SoftwareFactoryPath)Aderant.Framework.SoftwareFactory.Common.dll</rmSoftwareFactoryCommonDll>	  
+      <rmSoftwareFactoryCommonDll>$(SoftwareFactoryPath)Aderant.Framework.SoftwareFactory.Common.dll</rmSoftwareFactoryCommonDll>
     </PropertyGroup>
 
     <Microsoft.Build.Tasks.GetAssemblyIdentity
@@ -222,7 +222,7 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
       <rmSoftwareFactoryVersion>%(rmSoftwareFactoryCommonDllIdentity.Version)</rmSoftwareFactoryVersion>
     </PropertyGroup>
 
-    <ItemGroup>      
+    <ItemGroup>
       <rmT4DslDirectiveProcessors Include="DslDirectiveProcessor">
         <Class>Microsoft.VisualStudio.Modeling.DslDefinition.DslDirectiveProcessor</Class>
         <CodeBase>$(VSSDKPath)\Microsoft.VisualStudio.Modeling.Sdk.DslDefinition.$(MSBuildToolsVersion).dll</CodeBase>
@@ -233,7 +233,7 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
         <Class>Aderant.Framework.SoftwareFactory.Domain.DomainModelDslDirectiveProcessor</Class>
         <CodeBase>$(SoftwareFactoryPath)Aderant.Framework.SoftwareFactory.Domain.dll</CodeBase>
       </rmT4DslDirectiveProcessors>
-        
+
       <rmT4DslDirectiveProcessors Condition="'$(rmSoftwareFactoryVersion)' != ''"
                                   Include="ServiceDslDirectiveProcessor">
         <Class>Aderant.Framework.SoftwareFactory.Service.ServiceDslDirectiveProcessor</Class>

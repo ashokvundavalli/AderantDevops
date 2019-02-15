@@ -35,6 +35,12 @@ namespace Aderant.Build.DependencyAnalyzer.Model {
         /// </summary>
         public bool AddedByDependencyAnalysis { get; set; }
 
+        /// <summary>
+        /// Indicates if this node has any children that are being built.
+        /// Used to determine if a graph fix up is required.
+        /// </summary>
+        public bool IsBuildingAnyProjects { get; set; }
+
         private static string CreateName(string name, bool isPostTargets) {
             if (isPostTargets) {
                 name += ".Post";

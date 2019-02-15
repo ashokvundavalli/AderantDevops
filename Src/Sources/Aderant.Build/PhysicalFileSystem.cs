@@ -29,7 +29,7 @@ namespace Aderant.Build {
         }
 
         /// <summary>
-        /// Creates a new instance a a PhysicalFileSystem at the given root directory.
+        /// Creates a new instance rooted at the given directory.
         /// </summary>
         /// <param name="root">The root directory</param>
         public PhysicalFileSystem(string root)
@@ -37,10 +37,6 @@ namespace Aderant.Build {
         }
 
         public PhysicalFileSystem(string root, ILogger logger) {
-            if (string.IsNullOrEmpty(root)) {
-                throw new ArgumentException("Argument cannot be null or empty", nameof(root));
-            }
-
             this.Root = root;
             this.logger = logger;
         }
@@ -305,7 +301,14 @@ namespace Aderant.Build {
                     }
 
                     if (link != null) {
-                        TryCopyViaLink(file.Location, file.Destination, link);
+                        try {
+                            TryCopyViaLink(file.Location, file.Destination, link);
+                        } catch (UnauthorizedAccessException) {
+                            logger?.Warning("File " + file.Destination + " is in use or can not be accessed. Trying to rename.");
+
+                            MoveFile(file.Destination, file.Destination + ".__LOCKED");
+                            TryCopyViaLink(file.Location, file.Destination, link);
+                        }
                     } else {
                         CopyFileInternal(file.Location, file.Destination, overwrite);
                     }

@@ -114,6 +114,7 @@
     <Compile Include="BuildMetadataTests.cs" />
     <Compile Include="BuildProjectCheckTests.cs" />
     <Compile Include="DependencyAnalyzer\BuildPlanGeneratorTests.cs" />
+    <Compile Include="DependencyAnalyzer\ProjectDependencyGraphTests.cs" />
     <Compile Include="DependencyAnalyzer\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
