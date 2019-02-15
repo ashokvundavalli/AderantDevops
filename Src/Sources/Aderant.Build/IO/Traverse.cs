@@ -21,7 +21,8 @@ namespace Aderant.Build.IO {
         }
 
         private void TraverseDirectoriesAndFindFilesInternal(string root, string[] extensions, List<string> files) {
-            IEnumerable<string> directories = physicalFileSystem.GetDirectories(root);
+            List<string> directories = new List<string> { root };
+            directories.AddRange(physicalFileSystem.GetDirectories(root));
 
             foreach (var directory in directories) {
                 if (PreviouslySeenDirectories != null && PreviouslySeenDirectories.Contains(directory)) {
