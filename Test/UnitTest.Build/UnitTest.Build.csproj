@@ -123,6 +123,7 @@
     <Compile Include="DependencyResolver\PaketDependenciesStructureTests.cs" />
     <Compile Include="DirectoryMetadataServiceTests.cs" />
     <Compile Include="Packaging\FileRestoreTests.cs" />
+    <Compile Include="ProjectSystem\ConfiguredProjectTests.cs" />
     <Compile Include="ProjectSystem\DirectoryGrovelerTests.cs" />
     <Compile Include="FileSystemTests.cs" />
     <Compile Include="BuildPipelineServiceImplTests.cs" />

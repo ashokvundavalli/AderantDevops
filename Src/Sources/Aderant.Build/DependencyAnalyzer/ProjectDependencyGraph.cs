@@ -13,6 +13,7 @@ namespace Aderant.Build.DependencyAnalyzer {
     internal class ProjectDependencyGraph : DependencyGraph {
         private ILookup<string, ConfiguredProject> projectsBySolutionRoot;
         private Dictionary<string, HashSet<string>> reverseReferencesMap;
+        private Dictionary<string, ConfiguredProject> projectMap;
 
         public ProjectDependencyGraph(DependencyGraph graph)
             : base(graph.Nodes) {
@@ -22,11 +23,36 @@ namespace Aderant.Build.DependencyAnalyzer {
             : base(graph) {
         }
 
+        /// <summary>
+        /// All projects grouped by their directory root. Lazily computed.
+        /// </summary>
         public ILookup<string, ConfiguredProject> ProjectsBySolutionRoot {
             get {
-                return projectsBySolutionRoot ?? (projectsBySolutionRoot = Nodes
-                           .OfType<ConfiguredProject>()
-                           .ToLookup(g => g.SolutionRoot, g => g, StringComparer.OrdinalIgnoreCase));
+                return projectsBySolutionRoot ?? (projectsBySolutionRoot = Projects.ToLookup(g => g.SolutionRoot, g => g, StringComparer.OrdinalIgnoreCase));
+            }
+        }
+
+        /// <summary>
+        /// All projects within the graph. Lazily computed.
+        /// </summary>
+        public IReadOnlyCollection<ConfiguredProject> Projects {
+            get {
+                ComputeProjectMap();
+                return projectMap.Values;
+            }
+        }
+
+        private void ComputeProjectMap() {
+            if (projectMap == null) {
+                Dictionary<string, ConfiguredProject> dictionary = new Dictionary<string, ConfiguredProject>(StringComparer.OrdinalIgnoreCase);
+                foreach (var node in Nodes) {
+                    var project = node as ConfiguredProject;
+                    if (project != null) {
+                        dictionary.Add(project.Id, project);
+                    }
+                }
+
+                projectMap = dictionary;
             }
         }
 
@@ -34,8 +60,8 @@ namespace Aderant.Build.DependencyAnalyzer {
             base.Add(artifact);
 
             projectsBySolutionRoot = null;
+            projectMap = null;
         }
-
 
         /// <summary>
         /// Reverse dependencies means you want a list of artifacts that depend on a given artifact.
@@ -45,7 +71,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 d => d.Id,
                 d => d.GetDependencies());
 
-            this.reverseReferencesMap = new Dictionary<string, HashSet<string>>();
+            reverseReferencesMap = new Dictionary<string, HashSet<string>>();
 
             foreach (var kvp in referencesMap) {
                 var references = kvp.Value;
@@ -79,6 +105,15 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             return new HashSet<string>();
+        }
+
+        public ConfiguredProject GetProject(string id) {
+            ComputeProjectMap();
+
+            ConfiguredProject project;
+            projectMap.TryGetValue(id, out project);
+
+            return project;
         }
     }
 }

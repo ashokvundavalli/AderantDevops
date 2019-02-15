@@ -432,6 +432,13 @@ namespace Aderant.Build.ProjectSystem {
         /// </summary>
         string MetaprojectXml { get; set; }
 
-        BuildPlan CreatePlan(BuildOperationContext context, OrchestrationFiles files, DependencyGraph graph);
+        /// <summary>
+        /// Creates the super project used to run the build.
+        /// </summary>
+        /// <param name="context">The current context.</param>
+        /// <param name="files">The extensibility files used to influence the build.</param>
+        /// <param name="graph">The projects in the build.</param>
+        /// <param name="considerStateFiles">Should the plan use data from the build cache when producing the plan.</param>
+        BuildPlan CreatePlan(BuildOperationContext context, OrchestrationFiles files, DependencyGraph graph, bool considerStateFiles = true);
     }
 }

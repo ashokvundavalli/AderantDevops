@@ -44,7 +44,8 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// </summary>
         public string MetaprojectXml { get; set; }
 
-        public BuildPlan CreatePlan(BuildOperationContext context, OrchestrationFiles files, DependencyGraph graph) {
+
+        public BuildPlan CreatePlan(BuildOperationContext context, OrchestrationFiles files, DependencyGraph graph, bool considerStateFiles = true) {
             isDesktopBuild = context.IsDesktopBuild;
 
             bool isBuildCacheEnabled = true;
@@ -65,7 +66,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             var projectGraph = new ProjectDependencyGraph(graph);
 
-            Sequence(context.Switches.ChangedFilesOnly, true, files.MakeFiles, projectGraph);
+            Sequence(context.Switches.ChangedFilesOnly, considerStateFiles, files.MakeFiles, projectGraph);
 
             var projectsInDependencyOrder = projectGraph.GetDependencyOrder();
 
@@ -100,6 +101,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             // According to options, find out which projects are selected to build.
             var filteredProjects = GetProjectsBuildList(
+                projectGraph,
                 projectsInDependencyOrder,
                 files,
                 context.GetChangeConsiderationMode(),
@@ -158,11 +160,12 @@ namespace Aderant.Build.DependencyAnalyzer {
         internal static void WriteBuildTree(IFileSystem fileSystem, BuildOperationContext context, string treeText) {
             string treeFile = Path.Combine(context.BuildRoot, "BuildTree.txt");
 
-            if (fileSystem.FileExists(treeFile)) {
-                fileSystem.DeleteFile(treeFile);
+            if (fileSystem != null) {
+                if (fileSystem.FileExists(treeFile)) {
+                    fileSystem.DeleteFile(treeFile);
+                }
+                fileSystem.WriteAllText(treeFile, treeText);
             }
-
-            fileSystem.WriteAllText(treeFile, treeText);
         }
 
         private void EvictNotExistentProjects(BuildOperationContext context) {
@@ -223,10 +226,32 @@ namespace Aderant.Build.DependencyAnalyzer {
             return files.ToList();
         }
 
+        private void MarkWebProjectsDirty(ProjectDependencyGraph graph) {
+            // Web projects always need to be built as they have paths that reference content that needs to be deployed
+            // during the build.
+            // E.g script tags require that a file exists on disk. It's more reliable to have
+            // web pipeline restore this content for us than try and restore it as part of the generic build reuse process.
+            // Here a process optimization occurs, if we have a unit test project that is dirty we also dirty and related projects.
+            // While this situation should not occur we want to avoid build failures if a test is scheduled to be built but any related
+            // web projects are not.
+            foreach (var item in graph.Projects) {
+                if (!item.IsWorkflowProject() && item.IsWebProject && !item.IsDirty) {
+                    IReadOnlyCollection<string> projectIds = graph.GetProjectsThatDirectlyDependOnThisProject(item.Id);
+
+                    foreach (var id in projectIds) {
+                        ConfiguredProject project = graph.GetProject(id);
+                        if (project != null) {
+                            if (project.IsWebProject && !project.IsDirty) {
+                                MarkDirty(project, BuildReasonTypes.Forced, "");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         public void Sequence(bool changedFilesOnly, bool considerStateFiles, IReadOnlyCollection<string> makeFiles, ProjectDependencyGraph graph) {
-            var projects = graph.Nodes
-                .OfType<ConfiguredProject>()
-                .ToList();
+            var projects = graph.Projects;
 
             if (changedFilesOnly) {
                 foreach (var project in projects) {
@@ -245,7 +270,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 string dirtyProjectsLogLine = string.Join(", ", dirtyProjects.Select(s => s.Id));
 
-                string solutionDirectoryName = PathUtility.GetFileName(group.Key);
+                string solutionDirectoryName = PathUtility.GetFileName(group.Key ?? "");
 
                 DirectoryNode startNode;
                 DirectoryNode endNode;
@@ -429,7 +454,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             bool upToDate = result.IsUpToDate.GetValueOrDefault(true);
             bool hasTrackedFiles = result.TrackedFiles != null && result.TrackedFiles.Any();
             if (!upToDate && hasTrackedFiles) {
-                MarkDirty("", project, BuildReasonTypes.InputsChanged);
+                MarkDirty(project, BuildReasonTypes.InputsChanged, "");
                 return;
             }
 
@@ -463,7 +488,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                                 return;
                             }
 
-                            MarkDirty(dirtyProjects, project, BuildReasonTypes.OutputNotFoundInCachedBuild);
+                            MarkDirty(project, BuildReasonTypes.OutputNotFoundInCachedBuild, dirtyProjects);
                             return;
                         }
                     }
@@ -471,11 +496,11 @@ namespace Aderant.Build.DependencyAnalyzer {
                     logger.Info($"No artifacts exist for '{stateFileKey}' or there are no project outputs.");
                 }
 
-                MarkDirty(dirtyProjects, project, BuildReasonTypes.ProjectOutputNotFound);
+                MarkDirty(project, BuildReasonTypes.ProjectOutputNotFound, dirtyProjects);
                 return;
             }
 
-            MarkDirty(dirtyProjects, project, BuildReasonTypes.CachedBuildNotFound);
+            MarkDirty(project, BuildReasonTypes.CachedBuildNotFound, dirtyProjects);
         }
 
         private InputFilesDependencyAnalysisResult BeginTrackingInputFiles(BuildStateFile stateFile, string solutionRoot) {
@@ -547,7 +572,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             return null;
         }
 
-        private static void MarkDirty(string reasonDescription, ConfiguredProject project, BuildReasonTypes reasonTypes) {
+        private static void MarkDirty(ConfiguredProject project, BuildReasonTypes reasonTypes, string reasonDescription) {
             project.IsDirty = true;
             project.IncludeInBuild = true;
             project.SetReason(reasonTypes, reasonDescription);
@@ -556,6 +581,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <summary>
         /// According to options, find out which projects are selected to build.
         /// </summary>
+        /// <param name="studioProjects"></param>
         /// <param name="visualStudioProjects">All the projects list.</param>
         /// <param name="orchestrationFiles">File metadata for the target files that will orchestrate the build</param>
         /// <param name="changesToConsider">Build the current branch, the changed files since forking from master, or all?</param>
@@ -564,6 +590,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// downstream projects, or none?
         /// </param>
         internal IReadOnlyList<IDependable> GetProjectsBuildList(
+            ProjectDependencyGraph studioProjects,
             IReadOnlyList<IDependable> visualStudioProjects,
             OrchestrationFiles orchestrationFiles,
             ChangesToConsider changesToConsider,
@@ -582,6 +609,8 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             // Get all the dirty projects due to user's modification.
             var dirtyProjects = visualStudioProjects.Where(p => IncludeProject(isDesktopBuild, p)).Select(x => x.Id).ToList();
+
+            MarkWebProjectsDirty(studioProjects);
 
             HashSet<string> h = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             h.UnionWith(dirtyProjects);
@@ -696,7 +725,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     var intersect = dependencies.Intersect(projectsToFind, StringComparer.OrdinalIgnoreCase).ToList();
 
                     if (intersect.Any()) {
-                        MarkDirty("", configuredProject, BuildReasonTypes.DependencyChanged);
+                        MarkDirty(configuredProject, BuildReasonTypes.DependencyChanged, "");
 
                         configuredProject.BuildReason.ChangedDependentProjects = intersect;
 

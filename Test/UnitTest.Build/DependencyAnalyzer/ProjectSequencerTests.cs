@@ -11,6 +11,7 @@ using Aderant.Build.Model;
 using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
+using Microsoft.TeamFoundation.Framework.Client.Catalog.Objects;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
@@ -84,6 +85,39 @@ namespace UnitTest.Build.DependencyAnalyzer {
             Assert.IsFalse(m3.IsDirty);
         }
 
+
+        [TestMethod]
+        public void When_a_test_project_is_dirty_any_related_web_projects_are_included_in_build() {
+            var p1 = new TestConfiguredProject(null) {
+                outputAssembly = "UnitTest1",
+                IsDirty = true,
+                IncludeInBuild = true,
+                IsWebProject = false,
+                ProjectTypeGuids = new []{WellKnownProjectTypeGuids.TestProject}
+            };
+
+            var p2 = new TestConfiguredProject(null) {
+                outputAssembly = "MyWebApp1",
+                IsDirty = false,
+                IncludeInBuild = true,
+                IsWebProject = true,
+                ProjectTypeGuids = new[] { WellKnownProjectTypeGuids.TestProject }
+            };
+
+            p1.AddResolvedDependency(null, p2);
+
+            var graph = new ProjectDependencyGraph(p1, p2);
+            var ctx = new BuildOperationContext {
+                BuildRoot = "",
+                Switches = new BuildSwitches()
+            };
+
+            var sequencer = new ProjectSequencer(NullLogger.Default, null);
+            sequencer.CreatePlan(ctx, new OrchestrationFiles(), graph, false);
+
+            Assert.IsTrue(p2.IsDirty, "This project should be included in the build as the test project is being built.");
+        }
+
         [TestMethod]
         public void ApplyExtensibilityImposition_sets_include_in_build() {
             var tree = new Mock<IProjectTree>();
@@ -107,6 +141,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
             var g = new ProjectDependencyGraph(p1);
 
             IReadOnlyCollection<IDependable> buildList = sequencer.GetProjectsBuildList(
+                g,
                 g.GetDependencyOrder(),
                 orchestrationFiles,
                 ChangesToConsider.None,

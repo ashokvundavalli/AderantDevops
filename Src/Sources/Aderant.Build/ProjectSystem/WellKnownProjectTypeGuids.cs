@@ -20,7 +20,7 @@ namespace Aderant.Build.ProjectSystem {
     internal static class ConfiguredProjectExtensions {
 
         public static bool IsWorkflowProject(this ConfiguredProject project) {
-            return project.ProjectTypeGuids.Contains(WellKnownProjectTypeGuids.WorkflowFoundation);
+            return project.ProjectTypeGuids != null && project.ProjectTypeGuids.Contains(WellKnownProjectTypeGuids.WorkflowFoundation);
         }
     }
 }

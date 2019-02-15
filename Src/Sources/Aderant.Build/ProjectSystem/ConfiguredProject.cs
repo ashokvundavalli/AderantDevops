@@ -23,6 +23,38 @@ namespace Aderant.Build.ProjectSystem {
     [ExportMetadata("Scope", nameof(ConfiguredProject))]
     [DebuggerDisplay("{ProjectGuid}::{FullPath}")]
     internal class ConfiguredProject : AbstractArtifact, IReference, IBuildDependencyProjectReference, IAssemblyReference {
+        private static Memoizer<ConfiguredProject, bool> isWebProjectMemoizer = new Memoizer<ConfiguredProject, bool>(
+            configuredProject => {
+                var guids = configuredProject.ProjectTypeGuids;
+                if (guids != null) {
+                    return guids.Intersect(WellKnownProjectTypeGuids.WebProjectGuids).Any();
+                }
+
+                return false;
+            });
+
+        private static Memoizer<ConfiguredProject, IReadOnlyList<Guid>> extractTypeGuidsMemoizer = new Memoizer<ConfiguredProject, IReadOnlyList<Guid>>(
+            args => {
+                var propertyElement = args.project.Value.GetPropertyValue("ProjectTypeGuids");
+
+                if (!string.IsNullOrEmpty(propertyElement)) {
+                    var guids = propertyElement.Split(';');
+
+                    List<Guid> guidList = new List<Guid>();
+
+                    foreach (var guidString in guids) {
+                        Guid result;
+                        if (Guid.TryParse(guidString, out result)) {
+                            guidList.Add(result);
+                        }
+                    }
+
+                    return guidList;
+                }
+
+                return new Guid[0];
+            });
+
         private List<string> dirtyFiles;
 
         private Memoizer<ConfiguredProject, IReadOnlyList<Guid>> extractTypeGuids;
@@ -30,6 +62,22 @@ namespace Aderant.Build.ProjectSystem {
 
         private Lazy<Project> project;
         private Memoizer<ConfiguredProject, Guid> projectGuid;
+
+        private Memoizer<ConfiguredProject, Guid> projectGuidMemoizer =
+            new Memoizer<ConfiguredProject, Guid>(
+                arg => {
+                    var propertyElement = arg.project.Value.GetPropertyValue("ProjectGuid");
+                    if (propertyElement != null) {
+                        try {
+                            return Guid.Parse(propertyElement);
+                        } catch (FormatException ex) {
+                            throw new FormatException(ex.Message + " " + propertyElement + " in " + arg.FullPath, ex);
+                        }
+                    }
+
+                    return Guid.Empty;
+                });
+
         private List<IResolvedDependency> textTemplateDependencies;
 
         [ImportingConstructor]
@@ -72,7 +120,7 @@ namespace Aderant.Build.ProjectSystem {
             get { return project.Value.GetPropertyValue("OutputType"); }
         }
 
-        public IReadOnlyList<Guid> ProjectTypeGuids {
+        public virtual IReadOnlyList<Guid> ProjectTypeGuids {
             get {
                 if (extractTypeGuids != null) {
                     return extractTypeGuids.Evaluate(this);
@@ -80,6 +128,7 @@ namespace Aderant.Build.ProjectSystem {
 
                 return new Guid[0];
             }
+            set { extractTypeGuids = new Memoizer<ConfiguredProject, IReadOnlyList<Guid>>(cfg => value); }
         }
 
         public virtual bool IsWebProject {
@@ -159,14 +208,6 @@ namespace Aderant.Build.ProjectSystem {
         /// </summary>
         public bool UseCommonOutputDirectory { get; set; }
 
-        public virtual Guid ProjectGuid {
-            get { return projectGuid.Evaluate(this); }
-        }
-
-        public override string Id {
-            get { return FullPath + ":" + GetAssemblyName(); }
-        }
-
         public bool IsOfficeProject {
             get {
                 var guids = ProjectTypeGuids;
@@ -175,6 +216,7 @@ namespace Aderant.Build.ProjectSystem {
                         return true;
                     }
                 }
+
                 return false;
             }
         }
@@ -186,6 +228,14 @@ namespace Aderant.Build.ProjectSystem {
             get { return IsWebProject; }
         }
 
+        public virtual Guid ProjectGuid {
+            get { return projectGuid.Evaluate(this); }
+        }
+
+        public override string Id {
+            get { return FullPath + ":" + GetAssemblyName(); }
+        }
+
         public string GetAssemblyName() {
             return OutputAssembly;
         }
@@ -195,52 +245,9 @@ namespace Aderant.Build.ProjectSystem {
 
             project = InitializeProject(projectElement);
 
-            extractTypeGuids = new Memoizer<ConfiguredProject, IReadOnlyList<Guid>>(
-                configuredProject => {
-                    var propertyElement = project.Value.GetPropertyValue("ProjectTypeGuids");
-
-                    if (!string.IsNullOrEmpty(propertyElement)) {
-                        var guids = propertyElement.Split(';');
-
-                        List<Guid> guidList = new List<Guid>();
-
-                        foreach (var guidString in guids) {
-                            Guid result;
-                            if (Guid.TryParse(guidString, out result)) {
-                                guidList.Add(result);
-                            }
-                        }
-
-                        return guidList;
-                    }
-
-                    return new Guid[0];
-                });
-
-            isWebProject = new Memoizer<ConfiguredProject, bool>(
-                configuredProject => {
-                    var guids = ProjectTypeGuids;
-                    if (guids != null) {
-                        return guids.Intersect(WellKnownProjectTypeGuids.WebProjectGuids).Any();
-                    }
-
-                    return false;
-                });
-
-            projectGuid = new Memoizer<ConfiguredProject, Guid>(
-                configuredProject => {
-
-                    var propertyElement = project.Value.GetPropertyValue("ProjectGuid");
-                    if (propertyElement != null) {
-                        try {
-                            return Guid.Parse(propertyElement);
-                        } catch (FormatException ex) {
-                            throw new FormatException(ex.Message + " " + propertyElement + " in " + FullPath, ex);
-                        }
-                    }
-
-                    return Guid.Empty;
-                });
+            extractTypeGuids = extractTypeGuidsMemoizer;
+            isWebProject = isWebProjectMemoizer;
+            projectGuid = projectGuidMemoizer;
         }
 
         protected virtual Lazy<Project> InitializeProject(Lazy<ProjectRootElement> projectElement) {
@@ -248,7 +255,7 @@ namespace Aderant.Build.ProjectSystem {
                 () => {
                     IDictionary<string, string> globalProperties = new Dictionary<string, string> {
                         { "WebDependencyVersion", "-1" },
-                        { "SolutionDir", ""}
+                        { "SolutionDir", "" }
                     };
 
                     return new Project(projectElement.Value, globalProperties, null, CreateProjectCollection(), ProjectLoadSettings.IgnoreMissingImports);
@@ -369,7 +376,7 @@ namespace Aderant.Build.ProjectSystem {
             // Force MEF import
             var services = Services;
 
-            var aliasMap =  collector.ExtensibilityImposition?.AliasMap;
+            var aliasMap = collector.ExtensibilityImposition?.AliasMap;
 
             if (services.ProjectReferences != null) {
                 var results = services.ProjectReferences.GetResolvedReferences(collector.UnresolvedReferences, null);

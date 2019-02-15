@@ -7,7 +7,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build.ConfiguredProjectTests {
     [TestClass]
-
     public class ConfiguredProjectTests {
 
         public TestContext TestContext { get; set; }
