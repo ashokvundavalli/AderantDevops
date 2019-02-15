@@ -36,6 +36,9 @@ namespace Aderant.Build.Tasks.ArtifactHandling {
 
         public ITaskItem[] ExtensibilityFiles { get; set; }
 
+        [Output]
+        public bool ArtifactRestoreSkipped { get; set; }
+
         public override bool ExecuteTask() {
             var service = new ArtifactService(PipelineService, new PhysicalFileSystem(), Logger);
             service.CommonOutputDirectory = CommonOutputDirectory;
@@ -49,6 +52,7 @@ namespace Aderant.Build.Tasks.ArtifactHandling {
 
             service.StagingDirectoryWhitelist = GetStagingDirectoryWhitelist();
             service.Resolve(Context, containerKey, SolutionRoot, WorkingDirectory);
+            ArtifactRestoreSkipped = service.ArtifactRestoreSkipped;
 
             return !Log.HasLoggedErrors;
         }

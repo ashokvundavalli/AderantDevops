@@ -154,11 +154,8 @@
   </Target>
 
 
-  <Target Name="RetrievePrebuilts" Condition="'$(RetrievePrebuilts)' != 'false' And !Exists('$(SolutionDirectoryPath)link.lock')"
-    DependsOnTargets="CollectExtensibilityFiles">
-
+  <Target Name="RunRetrieveArtifacts" Condition="'$(RetrievePrebuilts)' != 'false'">
     <Message Text="$(ModuleName): Restoring objects from build cache" />
-
     <!--
       By specifying DestinationDirectories we overwrite the common dependency
       directory contents with objects from the cache so we do not reuse stale objects as inputs
@@ -170,7 +167,15 @@
       WorkingDirectory="$(ModuleBuildTempDirectory)"
       CommonOutputDirectory="$(BinModuleDirectory)"
       CommonDependencyDirectory="$(SharedDependencyDirectory)"
-      ExtensibilityFiles="@(ExtensibilityFiles)" />
+      ExtensibilityFiles="@(ExtensibilityFiles)">
+      <Output TaskParameter="ArtifactRestoreSkipped" PropertyName="ArtifactRestoreSkipped" />
+    </RetrieveArtifacts>
+
+  </Target>
+
+
+  <Target Name="RetrievePrebuilts" Condition="'$(RetrievePrebuilts)' != 'false' And !Exists('$(SolutionDirectoryPath)link.lock')"
+          DependsOnTargets="CollectExtensibilityFiles;RunRetrieveArtifacts">
 
     <CallTarget Targets="RunExtensibilityFiles" />
 
@@ -185,10 +190,11 @@
 
 
   <Target Name="RunExtensibilityFiles">
-    <MSBuild Condition="@(ExtensibilityFiles) != ''"
-      Projects="$(MSBuildThisFileFullPath)"
-      Properties="DirPropFile=%(ExtensibilityFiles.FullPath)"
-      Targets="ExtractBuildCachePackages" />
+
+    <MSBuild Condition="@(ExtensibilityFiles) != '' And '$(ArtifactRestoreSkipped)' != 'true'"
+             Projects="$(MSBuildThisFileFullPath)"
+             Properties="DirPropFile=%(ExtensibilityFiles.FullPath)"
+             Targets="ExtractBuildCachePackages" />
 
   </Target>
 

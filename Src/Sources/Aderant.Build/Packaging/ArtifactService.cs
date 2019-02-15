@@ -393,6 +393,7 @@ namespace Aderant.Build.Packaging {
 
             List<PathSpec> copyOperations = new List<PathSpec>();
             if (localArtifactFiles.Count == 0) {
+                ArtifactRestoreSkipped = true;
                 logger.Info("No artifacts to restore from: " + solutionRoot);
                 return copyOperations;
             }
@@ -406,6 +407,11 @@ namespace Aderant.Build.Packaging {
             fileRestore.DetermineAdditionalRestorePaths(stateFile);
             return fileRestore.BuildRestoreOperations(solutionRoot, containerKey, stateFile);
         }
+
+        /// <summary>
+        /// Gets a value that indicates if the restore operation occurred.
+        /// </summary>
+        public bool ArtifactRestoreSkipped { get; set; }
 
         public BuildStateMetadata GetBuildStateMetadata(string[] bucketIds, string dropLocation) {
             logger.Info($"Querying prebuilt artifacts from: {dropLocation}");
