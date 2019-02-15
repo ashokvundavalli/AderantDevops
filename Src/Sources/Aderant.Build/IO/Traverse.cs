@@ -21,7 +21,12 @@ namespace Aderant.Build.IO {
         }
 
         private void TraverseDirectoriesAndFindFilesInternal(string root, string[] extensions, List<string> files) {
-            List<string> directories = new List<string> { root };
+            // This algorithm can result in a stack overflow if PreviouslySeenDirectories is not supplied
+            List<string> directories = new List<string>();
+            if (!string.IsNullOrEmpty(root)) {
+                directories.Add(root);
+            }
+
             directories.AddRange(physicalFileSystem.GetDirectories(root));
 
             foreach (var directory in directories) {
