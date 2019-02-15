@@ -87,7 +87,7 @@ namespace Aderant.Build.ProjectSystem {
 
             return new DirectoryScanner(physicalFileSystem) {
                 ExcludeFilterPatterns = excludeFilterPatterns,
-                PreviouslySeenDirectories = seenDirectories,
+                PreviouslySeenDirectories = seenDirectories ?? new HashSet<string>(),
             }.TraverseDirectoriesAndFindFiles(root, extensions);
         }
 
