@@ -144,14 +144,20 @@
       <Message Text="link.lock exists in $(SolutionDirectoryPath). No server artifacts will be retrieved." Importance="high" />
   </Target>
 
-  <Target Name="RetrievePrebuilts" Condition="'$(RetrievePrebuilts)' != 'false' And !Exists('$(SolutionDirectoryPath)link.lock')">
-    <Message Text="$(ModuleName): Restoring objects from build cache" />
 
+  <Target Name="CollectExtensibilityFiles">
     <ItemGroup>
       <ExtensibilityFiles Include="$(SolutionRoot)\**\dir.props"
-                          Exclude="$(SolutionRoot)\packages\**;
+        Exclude="$(SolutionRoot)\packages\**;
                                    $(DependenciesDirectory)\**"/>
     </ItemGroup>
+  </Target>
+
+
+  <Target Name="RetrievePrebuilts" Condition="'$(RetrievePrebuilts)' != 'false' And !Exists('$(SolutionDirectoryPath)link.lock')"
+    DependsOnTargets="CollectExtensibilityFiles">
+
+    <Message Text="$(ModuleName): Restoring objects from build cache" />
 
     <!--
       By specifying DestinationDirectories we overwrite the common dependency
@@ -166,7 +172,7 @@
       CommonDependencyDirectory="$(SharedDependencyDirectory)"
       ExtensibilityFiles="@(ExtensibilityFiles)" />
 
-    <CallTarget Targets="RunDirPropsFile" />
+    <CallTarget Targets="RunExtensibilityFiles" />
 
     <GetDependencies Condition="'$(UseSharedDependencyDirectory)' != 'true' And '$(NoDependencyFetch)' != 'true'"
       ProductManifest="$(ProductManifestPath)"
@@ -178,8 +184,7 @@
   </Target>
 
 
-  <Target Name="RunDirPropsFile">
-
+  <Target Name="RunExtensibilityFiles">
     <MSBuild Condition="@(ExtensibilityFiles) != ''"
       Projects="$(MSBuildThisFileFullPath)"
       Properties="DirPropFile=%(ExtensibilityFiles.FullPath)"
