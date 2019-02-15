@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Aderant.Build;
 using Aderant.Build.ProjectSystem;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
