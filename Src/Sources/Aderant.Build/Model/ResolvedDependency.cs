@@ -1,6 +1,9 @@
-﻿using Aderant.Build.ProjectSystem.References;
+﻿using System.Diagnostics;
+using Aderant.Build.ProjectSystem.References;
 
 namespace Aderant.Build.Model {
+
+    [DebuggerDisplay("String value is {" + nameof(DebuggerDisplay) + "}")]
     public class ResolvedDependency<TUnresolved, TResolved> : IResolvedDependency
         where TUnresolved : class, IUnresolvedDependency
         where TResolved : class, IDependable {
@@ -9,6 +12,17 @@ namespace Aderant.Build.Model {
             ExistingUnresolvedItem = unresolved;
             ResolvedReference = resolved;
             Artifact = artifact;
+        }
+
+        private string DebuggerDisplay {
+            [DebuggerStepThrough]
+            get {
+                if (ExistingUnresolvedItem != null) {
+                    return $"{ExistingUnresolvedItem.GetType().Name} {ExistingUnresolvedItem.Id} => {ResolvedReference.Id}";
+                }
+
+                return $"{ResolvedReference.Id}";
+            }
         }
 
         public TUnresolved ExistingUnresolvedItem { get; protected set; }
@@ -35,9 +49,9 @@ namespace Aderant.Build.Model {
         IDependable ResolvedReference { get; }
     }
 
-    public static class ResolvedDependency {
+    internal static class ResolvedDependency {
         public static ResolvedDependency<TUnresolved, TResolved> Create<TUnresolved, TResolved>(IArtifact artifact, TResolved target, TUnresolved unresolvedDependency)
-            where TUnresolved : class ,IUnresolvedDependency
+            where TUnresolved : class, IUnresolvedDependency
             where TResolved : class, IDependable {
 
             return new ResolvedDependency<TUnresolved, TResolved>(artifact, target, unresolvedDependency);
