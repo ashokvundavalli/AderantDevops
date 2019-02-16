@@ -296,7 +296,6 @@
     <Compile Include="Tasks\CoberturaReportConverter.cs" />
     <Compile Include="SeedPackageValidation\Error.cs" />
     <Compile Include="Tasks\GetPropertiesFromContext.cs" />
-    <Compile Include="Tasks\FilterItemGroup.cs" />
     <Compile Include="SeedPackageValidation\FirmRuleVersionError.cs" />
     <Compile Include="Tasks\ReadAssemblyInfo.cs" />
     <Compile Include="Tasks\GitVersion.cs" />

@@ -34,4 +34,15 @@ namespace Aderant.Build.Tasks {
             return true;
         }
     }
+
+    public sealed class SetProgress : BuildOperationContextTask {
+        public string CurrentOperation { get; set; }
+        public string Activity { get; set; }
+        public string StatusDescription { get; set; }
+
+        public override bool ExecuteTask() {
+            System.Threading.Tasks.Task.Run(() => { PipelineService.SetProgress(CurrentOperation, Activity, StatusDescription); });
+            return !Log.HasLoggedErrors;
+        }
+    }
 }

@@ -44,12 +44,12 @@
     <UsingTask TaskName="Aderant.Build.Tasks.GetAssembliesWithTraits"                             AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.GetFileVersionInfo"                                  AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.CheckFreeSpace"                                      AssemblyFile="$(BuildAssembly)" />
-    <UsingTask TaskName="Aderant.Build.Tasks.FilterItemGroup"                                     AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.GitVersion"                                          AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.Hash"                                                AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.WriteLinesToFile"                                    AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.ReadAssemblyInfo"                                    AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.PrintBanner"                                         AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.SetProgress"                                         AssemblyFile="$(BuildAssembly)" />
 
     <UsingTask TaskName="Aderant.Build.Tasks.PowerShellScript"                                    AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.CheckForDoubleWrites"                                AssemblyFile="$(BuildAssembly)" />
