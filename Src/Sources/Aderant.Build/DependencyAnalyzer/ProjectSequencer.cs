@@ -790,5 +790,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         AlwaysBuild = 32,
         Forced = 64,
         InputsChanged = 128,
+        ProjectChanged = 256,
     }
 }

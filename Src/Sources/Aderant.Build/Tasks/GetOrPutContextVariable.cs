@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks {
     public sealed class GetOrPutContextVariable : BuildOperationContextTask {
+        private static ConcurrentDictionary<string, string> lookupCache = new ConcurrentDictionary<string, string>();
 
         private static char[] splitChar = new char[] { '=' };
 
@@ -13,19 +16,25 @@ namespace Aderant.Build.Tasks {
         [Output]
         public string Value { get; set; }
 
-        public ITaskItem[] Data { get; set; }
+        public ITaskItem[] Properties { get; set; }
+
+        /// <summary>
+        /// Gets the value from thread safe local storage rather than the build service for improved lookup performance.
+        /// </summary>
+        public bool AllowInProcLookup { get; set; }
 
         public override bool ExecuteTask() {
             if (!string.IsNullOrEmpty(VariableName)) {
                 if (string.IsNullOrEmpty(Value)) {
                     Value = GetExistingVariable();
+
                     Log.LogMessage($"Retrieved variable: {VariableName} with value {Value}");
                     return !Log.HasLoggedErrors;
                 }
             }
 
-            if (Data != null) {
-                foreach (var item in Data) {
+            if (Properties != null) {
+                foreach (var item in Properties) {
                     string[] parts = item.ItemSpec.Split(splitChar, StringSplitOptions.RemoveEmptyEntries);
 
                     if (parts.Length == 2) {
@@ -50,8 +59,17 @@ namespace Aderant.Build.Tasks {
             Log.LogMessage(MessageImportance.Low, "Looking up variable: " + VariableName);
 
             if (string.IsNullOrEmpty(Scope)) {
+
                 string value;
+                if (AllowInProcLookup) {
+                    if (lookupCache.TryGetValue(VariableName, out value)) {
+                        // Cache hit
+                        return value;
+                    }
+                }
+
                 if (Context.Variables.TryGetValue(VariableName, out value)) {
+                    lookupCache.TryAdd(VariableName, value);
                     return value;
                 }
             } else {

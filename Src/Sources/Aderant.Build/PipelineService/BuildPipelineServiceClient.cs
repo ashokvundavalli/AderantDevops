@@ -98,6 +98,13 @@ namespace Aderant.Build.PipelineService {
             InvokeServiceAction(() => InnerProxy.ChannelContract.SetStatus(status, reason));
         }
 
+        /// <summary>
+        /// Notifies listeners of build progress.
+        /// </summary>
+        public void SetProgress(string currentOperation, string activity, string statusDescription) {
+            InvokeServiceAction(() => InnerProxy.ChannelContract.SetProgress(currentOperation, activity, statusDescription));
+        }
+
         public void TrackInputFileDependencies(string solutionRoot, IReadOnlyCollection<TrackedInputFile> fileDependencies) {
             InvokeServiceAction(() => InnerProxy.ChannelContract.TrackInputFileDependencies(solutionRoot, fileDependencies));
         }

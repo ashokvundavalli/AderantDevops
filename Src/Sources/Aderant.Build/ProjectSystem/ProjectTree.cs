@@ -120,7 +120,11 @@ namespace Aderant.Build.ProjectSystem {
             }
 
             parseBlock.Complete();
-            parseBlock.Completion.GetAwaiter().GetResult();
+
+            parseBlock.Completion
+                .ConfigureAwait(false)
+                .GetAwaiter()
+                .GetResult();
         }
 
         public async Task CollectBuildDependencies(BuildDependenciesCollector collector) {

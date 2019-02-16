@@ -52,8 +52,13 @@ namespace Aderant.Build.PipelineService {
         [OperationContract]
         void SetStatus(string status, string reason);
 
-
+        /// <param name="currentOperation">The current operation of the many required to accomplish the activity (such as "copying foo.txt")</param>
+        /// <param name="activity">Gets the Id of the activity to which this record corresponds. Used as a 'key' for the linking of subordinate activities.</param>
+        /// <param name="statusDescription">The current status of the operation, e.g., "35 of 50 items Copied." or "95% completed." or "100 files purged.".</param>
+        [OperationContract]
+        void SetProgress(string currentOperation, string activity, string statusDescription);
     }
+
 
     [ServiceContract]
     internal interface IProjectTrackingService {

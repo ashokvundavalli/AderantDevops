@@ -254,7 +254,9 @@
                  $(MSBuildProjectDirectory)\**\bin\**;"/>
     </ItemGroup>
 
-    <Exec Condition="'@(CustomTSConfigs)' != ''" Command="&quot;$(MSBuildProgramFiles32)\Microsoft SDKs\TypeScript\$(TypeScriptToolsVersion)\tsc.exe&quot; --project %(CustomTSConfigs.FullPath) "/>
+    <Exec Condition="'@(CustomTSConfigs)' != ''"
+          Command="&quot;$(MSBuildProgramFiles32)\Microsoft SDKs\TypeScript\$(TypeScriptToolsVersion)\tsc.exe&quot; --project %(CustomTSConfigs.FullPath)"
+          YieldDuringToolExecution="true" />
   </Target>
 
 

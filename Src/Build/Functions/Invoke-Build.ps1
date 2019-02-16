@@ -1,4 +1,5 @@
 ﻿$InformationPreference = 'Continue'
+$titleEventSource = "ProgressChanged"
 
 [string]$indent1 = "  "
 [string]$indent2 = "        "
@@ -269,9 +270,16 @@ function GetSourceTreeMetadata($context, $repositoryPath) {
     if ($context.IsDesktopBuild) {
         if ($null -ne $context.SourceTreeMetadata.Changes -and $context.SourceTreeMetadata.Changes.Count -gt 0) {
             Write-Information "$indent1 Changes..."
+            $i = 0
             foreach ($change in $context.SourceTreeMetadata.Changes) {
+                $i++
                 if ($change.Status -ne "Untracked") {
                     Write-Information "$indent2 $($change.Path):$($change.Status)"
+                }
+
+                if ($i -gt 100) {
+                    Write-Information "$indent2 ..."
+                    break
                 }
             }
         }
@@ -429,6 +437,14 @@ function AssignSwitches() {
     }
 
     $context.Switches = $switches
+}
+
+function RegisterChangeEvents($service) {
+    $inputObject = $contextService.ConsoleAdapter
+
+    Register-ObjectEvent -InputObject $inputObject -SourceIdentifier $titleEventSource -EventName "ProgressChanged" -Action {
+        $Host.UI.RawUI.WindowTitle = ($Event.SourceArgs.CurrentOperation + " " +  $Event.SourceArgs.StatusDescription)
+    } | Out-Null
 }
 
 <#
@@ -617,6 +633,8 @@ function global:Invoke-Build2 {
         $contextEndpoint = [DateTime]::UtcNow.ToFileTimeUtc().ToString()
 
         $contextService = [Aderant.Build.PipelineService.BuildPipelineServiceHost]::new()
+        RegisterChangeEvents $contextService
+
         $contextService.StartService($contextEndpoint)
         Write-Debug "Service running on uri: $($contextService.ServerUri)"
         $contextService.CurrentContext = $context
@@ -646,6 +664,8 @@ function global:Invoke-Build2 {
         $succeeded = $false
         Write-Error $PSItem.Tostring()
     } finally {
+        Get-EventSubscriber -SourceIdentifier $titleEventSource | Unregister-Event
+
         $host.UI.RawUI.ForegroundColor = $currentColor
 
         if (-not $context.IsDesktopBuild) {

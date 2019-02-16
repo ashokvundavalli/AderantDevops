@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Globalization;
+using System.Management.Automation;
 using System.ServiceModel;
 using System.ServiceModel.Channels;
 using ProtoBuf.ServiceModel;
+using ProgressRecord = System.Management.Automation.ProgressRecord;
 
 namespace Aderant.Build.PipelineService {
     public class BuildPipelineServiceHost : IDisposable {
@@ -11,10 +13,27 @@ namespace Aderant.Build.PipelineService {
         private BuildPipelineServiceImpl dataService;
 
         ServiceHost host;
+        private IConsoleAdapter consoleAdapter;
 
-        public BuildPipelineServiceHost() {
+        public BuildPipelineServiceHost()
+            : this(null) {
+        }
+
+        public BuildPipelineServiceHost(EventHandler<ProgressRecord> progressHandler) {
             // Tear down any previous state (we never want to reconnect to the existing endpoint)
             pipeId = null;
+
+            consoleAdapter = new ConsoleAdapter();
+            if (progressHandler != null) {
+                consoleAdapter.ProgressChanged += progressHandler;
+            }
+        }
+
+        /// <summary>
+        /// Exposed as passing action delegates in PowerShell is too awkward for subscribing to events.
+        /// </summary>
+        public IConsoleAdapter ConsoleAdapter {
+            get { return consoleAdapter; }
         }
 
         public BuildOperationContext CurrentContext {
@@ -47,7 +66,7 @@ namespace Aderant.Build.PipelineService {
             if (host == null) {
                 var address = CreateServerUri(pipeId, "0");
 
-                dataService = new BuildPipelineServiceImpl();
+                dataService = new BuildPipelineServiceImpl(consoleAdapter);
                 host = new ServiceHost(dataService, address);
 
                 var namedPipeBinding = CreateNamedPipeBinding();
@@ -115,4 +134,26 @@ namespace Aderant.Build.PipelineService {
             };
         }
     }
+
+    internal class ConsoleAdapter : IConsoleAdapter {
+        public event EventHandler<ProgressRecord> ProgressChanged;
+
+        public void RaiseProgressChanged(string currentOperation, string activity, string statusDescription) {
+
+            OnProgressChanged(new ProgressRecord(0, activity, statusDescription) {
+                CurrentOperation = currentOperation
+            });
+        }
+
+        protected virtual void OnProgressChanged(ProgressRecord e) {
+            ProgressChanged?.Invoke(this, e);
+        }
+    }
+
+    public interface IConsoleAdapter {
+        event EventHandler<ProgressRecord> ProgressChanged;
+
+        void RaiseProgressChanged(string currentOperation, string activity, string statusDescription);
+    }
 }
+

@@ -297,7 +297,10 @@ namespace Aderant.Build.Packaging {
                 logger.Info("Copying: {0} -> {1}", file.Location, file.Destination);
             }
 
-            bulkCopy.Completion.GetAwaiter().GetResult();
+            bulkCopy.Completion
+                .ConfigureAwait(false)
+                .GetAwaiter()
+                .GetResult();
 
             return bulkCopy;
         }
@@ -382,7 +385,10 @@ namespace Aderant.Build.Packaging {
 
             if (pathSpecs.Count > 0) {
                 ActionBlock<PathSpec> bulkCopy = fileSystem.BulkCopy(pathSpecs, true, false, false);
-                bulkCopy.Completion.GetAwaiter().GetResult();
+                bulkCopy.Completion
+                    .ConfigureAwait(false)
+                    .GetAwaiter()
+                    .GetResult();
             }
 
             return pathSpecs.Select(s => s.Destination);

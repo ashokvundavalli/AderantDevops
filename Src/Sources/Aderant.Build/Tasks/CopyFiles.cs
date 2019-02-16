@@ -41,26 +41,36 @@ namespace Aderant.Build.Tasks {
                 return false;
             }
 
-            List<PathSpec> copySpecs = new List<PathSpec>();
+            try {
+                BuildEngine4.Yield();
 
-            var seenDestinations = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                List<PathSpec> copySpecs = new List<PathSpec>();
 
-            for (var i = 0; i < SourceFiles.Length; i++) {
-                var sourceFile = SourceFiles[i];
-                var destinationFile = DestinationFiles[i];
+                var seenDestinations = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-                var add = seenDestinations.Add(destinationFile.ItemSpec);
-                if (add) {
-                    var copyItem = new PathSpec(sourceFile.ItemSpec, destinationFile.ItemSpec);
-                    copySpecs.Add(copyItem);
-                } else {
-                    Log.LogWarning("The file {0} -> {1} was ignored as it would result in a double write.", sourceFile.ItemSpec, destinationFile.ItemSpec);
+                for (var i = 0; i < SourceFiles.Length; i++) {
+                    var sourceFile = SourceFiles[i];
+                    var destinationFile = DestinationFiles[i];
+
+                    var add = seenDestinations.Add(destinationFile.ItemSpec);
+                    if (add) {
+                        var copyItem = new PathSpec(sourceFile.ItemSpec, destinationFile.ItemSpec);
+                        copySpecs.Add(copyItem);
+                    } else {
+                        Log.LogWarning("The file {0} -> {1} was ignored as it would result in a double write.", sourceFile.ItemSpec, destinationFile.ItemSpec);
+                    }
                 }
+
+                ActionBlock<PathSpec> bulkCopy = fileSystem.BulkCopy(copySpecs, Overwrite, UseSymlinks, UseHardlinks);
+
+                bulkCopy
+                    .Completion
+                    .ConfigureAwait(false)
+                    .GetAwaiter()
+                    .GetResult();
+            } finally {
+                BuildEngine4.Reacquire();
             }
-
-            ActionBlock<PathSpec> bulkCopy = fileSystem.BulkCopy(copySpecs, Overwrite, UseSymlinks, UseHardlinks);
-
-            bulkCopy.Completion.GetAwaiter().GetResult();
 
             return !Log.HasLoggedErrors;
         }
@@ -74,7 +84,7 @@ namespace Aderant.Build.Tasks {
             if (DestinationFiles != null && DestinationFiles.Length != SourceFiles.Length) {
                 // The two vectors must have the same length
                 Log.LogError(
-                    "{2} refers to {0} item(s), and {3} refers to {1} item(s).They must have the same number of items.",
+                    "{2} refers to {0} item(s), and {3} refers to {1} item(s). They must have the same number of items.",
                     DestinationFiles.Length,
                     SourceFiles.Length,
                     "DestinationFiles",

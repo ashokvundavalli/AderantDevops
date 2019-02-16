@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel;
+using System.Threading.Tasks;
 using Aderant.Build.Packaging;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
@@ -16,15 +17,24 @@ namespace Aderant.Build.PipelineService {
         ConcurrencyMode = ConcurrencyMode.Single,
         MaxItemsInObjectGraph = Int32.MaxValue)]
     internal class BuildPipelineServiceImpl : IBuildPipelineService {
+        // The adapter used for writing to the host UI
+        private readonly IConsoleAdapter consoleAdapter;
 
         private ArtifactCollection artifacts;
 
         private List<BuildArtifact> associatedArtifacts = new List<BuildArtifact>();
 
         private BuildOperationContext ctx;
+        private List<BuildDirectoryContribution> directoryMetadata = new List<BuildDirectoryContribution>();
         private List<OnDiskProjectInfo> projects = new List<OnDiskProjectInfo>();
         private Dictionary<string, IReadOnlyCollection<TrackedInputFile>> trackedDependenciesBySolutionRoot = new Dictionary<string, IReadOnlyCollection<TrackedInputFile>>(StringComparer.OrdinalIgnoreCase);
-        private List<BuildDirectoryContribution> directoryMetadata = new List<BuildDirectoryContribution>();
+
+        public BuildPipelineServiceImpl() {
+        }
+
+        public BuildPipelineServiceImpl(IConsoleAdapter consoleAdapter) {
+            this.consoleAdapter = consoleAdapter;
+        }
 
         internal ProjectTreeOutputSnapshot Outputs { get; } = new ProjectTreeOutputSnapshot();
 
@@ -109,6 +119,17 @@ namespace Aderant.Build.PipelineService {
             }
         }
 
+        public void SetProgress(string currentOperation, string activity, string statusDescription) {
+            if (consoleAdapter != null) {
+                Task.Run(
+                    () => {
+                        if (consoleAdapter != null) {
+                            consoleAdapter.RaiseProgressChanged(currentOperation, activity, statusDescription);
+                        }
+                    });
+            }
+        }
+
         /// <summary>
         /// Notifies the service it should track a set of files.
         /// </summary>
@@ -142,18 +163,18 @@ namespace Aderant.Build.PipelineService {
         public void Dispose() {
         }
 
-        private void InitArtifacts() {
-            if (artifacts == null) {
-                artifacts = new ArtifactCollection();
-            }
-        }
-
         public void AddBuildDirectoryContributor(BuildDirectoryContribution buildDirectoryContribution) {
-            this.directoryMetadata.Add(buildDirectoryContribution);
+            directoryMetadata.Add(buildDirectoryContribution);
         }
 
         public IReadOnlyCollection<BuildDirectoryContribution> GetContributors() {
             return directoryMetadata;
+        }
+
+        private void InitArtifacts() {
+            if (artifacts == null) {
+                artifacts = new ArtifactCollection();
+            }
         }
     }
 }

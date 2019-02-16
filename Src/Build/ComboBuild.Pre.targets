@@ -49,10 +49,11 @@
 
   <PropertyGroup>
     <ModuleBuildTempDirectory Condition="'$(ModuleBuildTempDirectory)' == ''">$(SolutionDirectoryPath)_tmp\</ModuleBuildTempDirectory>
-    <rmBCItemTransformTemplatesEnabled Condition="$(T4TransformEnabled) == 'true'">true</rmBCItemTransformTemplatesEnabled>
+    <rmBCItemTransformTemplatesEnabled Condition="'$(T4TransformEnabled)' == 'true'">true</rmBCItemTransformTemplatesEnabled>
 
-    <!-- If we are skipping user targets then disable T4 - except for CI -->
-    <rmBCItemTransformTemplatesEnabled Condition="$(RunUserTargets) == 'false' And '$(IsDesktopBuild)' != 'false'">false</rmBCItemTransformTemplatesEnabled>
+    <!-- If we are skipping user targets then disable T4 - except for CI --><!--
+    TODO: Sort this out
+    <rmBCItemTransformTemplatesEnabled Condition="'$(RunUserTargets)' == 'false' And '$(IsDesktopBuild)' != 'false'">false</rmBCItemTransformTemplatesEnabled>-->
   </PropertyGroup>
 
   <!-- Clean -->
@@ -202,7 +203,7 @@
   <Target Name="DeployPerDirectoryFiles" Condition="'$(SolutionRoot)' != ''">
 
     <Message Text="SolutionDirectoryPath: $(SolutionDirectoryPath)" />
-    <Message Text="T4TransformEnabled:    $(T4TransformEnabled)" />
+    <Message Text="T4TransformEnabled:    $(rmBCItemTransformTemplatesEnabled)" />
     <Message Text="ZipCustomSource:       $(ZipCustomSource)" />
     <Message Text="VersionMajor:          $(VersionMajor)" />
     <Message Text="VersionMinor:          $(VersionMinor)" />
@@ -279,7 +280,7 @@
     <GetOrPutContextVariable
       ContextEndpoint="$(ContextEndpoint)"
       Scope="$(VariableScopeId)"
-      Data="FileVersion=$(FileVersion);AssemblyVersion=$(AssemblyVersion);ModuleName=$(ModuleName)" />
+      Properties="FileVersion=$(FileVersion);AssemblyVersion=$(AssemblyVersion);ModuleName=$(ModuleName)" />
 
   </Target>
 

@@ -457,7 +457,7 @@ namespace Aderant.Build.ProjectSystem {
                     string value = item.GetMetadataValue("FullPath");
 
                     if (string.Equals(value, file.FullPath, StringComparison.OrdinalIgnoreCase)) {
-                        MarkDirty();
+                        MarkDirty(BuildReasonTypes.ProjectItemChanged);
 
                         if (dirtyFiles == null) {
                             dirtyFiles = new List<string>();
@@ -478,15 +478,15 @@ namespace Aderant.Build.ProjectSystem {
             }
         }
 
-        private void MarkDirty() {
+        private void MarkDirty(BuildReasonTypes type) {
             IsDirty = true;
-            this.SetReason(BuildReasonTypes.ProjectItemChanged);
+            this.SetReason(type);
         }
 
         private void MarkThisFileDirty(ICollection<ISourceChange> changes) {
             foreach (var change in changes) {
                 if (string.Equals(FullPath, change.FullPath, StringComparison.OrdinalIgnoreCase)) {
-                    MarkDirty();
+                    MarkDirty(BuildReasonTypes.ProjectChanged);
                     return;
                 }
             }
