@@ -3,6 +3,10 @@
 
   <Import Project="$(MSBuildThisFileDirectory)Aderant.wpp.content.v3.proj" Condition="'$(IsWebOrMobile)' == 'true' And '$(WebDependencyVersion)' == '3'" />
 
+  <PropertyGroup>
+    <WppCommonTargetsImported>true</WppCommonTargetsImported>
+  </PropertyGroup>
+
   <UsingTask
         TaskName="WriteSharedContentFile"
         TaskFactory="CodeTaskFactory"
@@ -192,7 +196,6 @@
 
 
   <Target Name="CollectLinkedContentFiles" BeforeTargets="CopyLinkedContentFiles">
-
     <ItemGroup>
       <ContentToCopy Include="@(Content->HasMetadata('Link'))">
         <OriginalItemSpec>%(FullPath)</OriginalItemSpec>
@@ -202,7 +205,6 @@
         <OriginalItemSpec>%(FullPath)</OriginalItemSpec>
       </ContentToCopy>
     </ItemGroup>
-
   </Target>
 
 
@@ -211,11 +213,11 @@
           DependsOnTargets="CollectLinkedContentFiles"
           BeforeTargets="PreComputeCompileTypeScript;Build;CopyAllFilesToSingleFolderForMsdeploy"
           Inputs="@(ContentToCopy)"
-          Outputs="@(ContentToCopy->'$(ProjectDir)%(Link)')">
+          Outputs="@(ContentToCopy->'$(MSBuildProjectDirectory)\%(Link)')">
 
     <!-- Only copy files with the Link attribute set -->
     <Copy SourceFiles="@(ContentToCopy->'%(OriginalItemSpec)')"
-          DestinationFiles="@(ContentToCopy->'$(ProjectDir)%(Link)')"
+          DestinationFiles="@(ContentToCopy->'$(MSBuildProjectDirectory)\%(Link)')"
           SkipUnchangedFiles="true"
           OverwriteReadOnlyFiles="true"
           UseHardlinksIfPossible="true" />
@@ -225,8 +227,8 @@
 
   <ItemGroup>
     <!--Exclude any .less files beginning with an '_' from being compiled as a convention, also exclude all less files from the obj directories -->
-    <LessFiles Include="$(ProjectDir)\Content\*.less"
-               Exclude="$(ProjectDir)\Content\_*.less" />
+    <LessFiles Include="$(MSBuildProjectDirectory)\Content\*.less"
+               Exclude="$(MSBuildProjectDirectory)\Content\_*.less" />
   </ItemGroup>
 
 
@@ -246,13 +248,14 @@
 
     <ItemGroup>
       <CustomTSConfigs
-        Include="$(ProjectDir)**\*custom.tsconfig.json"
-        Exclude="$(ProjectDir)**\PackageTmp\**;
-                 $(ProjectDir)**\obj\**;
-                 $(ProjectDir)**\bin\**;"/>
+        Include="$(MSBuildProjectDirectory)\**\*custom.tsconfig.json"
+        Exclude="$(MSBuildProjectDirectory)\**\PackageTmp\**;
+                 $(MSBuildProjectDirectory)\**\obj\**;
+                 $(MSBuildProjectDirectory)\**\bin\**;"/>
     </ItemGroup>
 
     <Exec Condition="'@(CustomTSConfigs)' != ''" Command="&quot;$(MSBuildProgramFiles32)\Microsoft SDKs\TypeScript\$(TypeScriptToolsVersion)\tsc.exe&quot; --project %(CustomTSConfigs.FullPath) "/>
   </Target>
+
 
 </Project>

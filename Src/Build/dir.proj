@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" InitialTargets="_DirDebug">
 
   <PropertyGroup>
-    <PackagesDirectory Condition="'$(PackagesDirectory)' == ''">$(MSBuildThisFileDirectory)\packages</PackagesDirectory>
+    <PackagesDirectory Condition="'$(PackagesDirectory)' == ''">$(MSBuildThisFileDirectory)packages\</PackagesDirectory>
     <ThisProject>$([System.IO.Path]::GetFileName($(MSBuildProjectFullPath)))</ThisProject>
     <IsWeb>$(ThisProject.StartsWith('Web.'))</IsWeb>
     <IsMobile>$(ThisProject.StartsWith('Mobile.'))</IsMobile>
@@ -12,16 +12,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Analyzer Include="$(PackagesDirectory)\Aderant.Build.Analyzer\analyzers\dotnet\cs\*.dll" />
+    <Analyzer Include="$(PackagesDirectory)Aderant.Build.Analyzer\analyzers\dotnet\cs\*.dll" />
   </ItemGroup>
 
-  <Import Project="$(MSBuildThisFileDirectory)\Build\wpp\Aderant.wpp.common.targets" Condition="'$(IsWebOrMobile)' == 'true'" />
+  <Import Project="$(MSBuildThisFileDirectory)Build\wpp\Aderant.wpp.common.targets" Condition="'$(IsWebOrMobile)' == 'true'" />
 
   <!--TSLint-->
-  <Import Project="$(PackagesDirectory)\development\TSLint.MSBuild\build\TSLint.MSBuild.targets" Condition="'$(RunTSLint)' == 'true' And '$(IsWeb)' == 'true'" />
+  <Import Project="$(PackagesDirectory)development\TSLint.MSBuild\build\TSLint.MSBuild.targets" Condition="'$(RunTSLint)' == 'true' And '$(IsWeb)' == 'true'" />
   <PropertyGroup Condition="'$(IsWeb)' == 'true'">
     <TSLintConfig>$(MSBuildProjectDirectory)\tslint.json</TSLintConfig>
-    <TSLintCli>$(PackagesDirectory)\Aderant.Build.Analyzer\tslint\node_modules\tslint\bin\tslint</TSLintCli>
+    <TSLintCli>$(PackagesDirectory)Aderant.Build.Analyzer\tslint\node_modules\tslint\bin\tslint</TSLintCli>
     <TSLintBreakBuildOnError>true</TSLintBreakBuildOnError>
   </PropertyGroup>
 
@@ -223,14 +223,20 @@ public class SymlinkTimestampUpdate : Task, ITask {
     msbuild Web.Foundation.csproj /target:_DirDebug
   -->
   <Target Name="_DirDebug">
-    <!--<Message Text="
-IsWeb:               $(IsWeb)
-IsMobile:            $(IsMobile)
-IsWebOrMobile:       $(IsWebOrMobile)
-             "/>
-    <Message Condition="'$(IsWebOrMobile)' == 'true' And '$(WebDependencyVersion)' == ''" Text="
-Loaded WebDependencyVersion 2"/>
-    <Message Condition="'$(IsWebOrMobile)' == 'true' And '$(WebDependencyVersion)' == '3'" Text="
-Loaded WebDependencyVersion 3"/>-->
+      <Message Text="
+MSBuildProjectDirectory:  $(MSBuildProjectDirectory)
+PackagesDirectory:        $(PackagesDirectory)
+DependenciesDirectory:    $(DependenciesDirectory)
+IsWeb:                    $(IsWeb)
+IsMobile:                 $(IsMobile)
+IsWebOrMobile:            $(IsWebOrMobile)
+WebDependencyVersion:     $(WebDependencyVersion)
+WppCommonTargetsImported: $(WppCommonTargetsImported)
+WppV3TargetsImported:     $(WppV3TargetsImported)
+WebPublishPipelineCustomizeTargetFile: $(WebPublishPipelineCustomizeTargetFile)
+"/>
+
+     <Message Text="@(AllDependencyContent)" />
+
   </Target>
 </Project>

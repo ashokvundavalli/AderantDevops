@@ -2,17 +2,14 @@
 <!--WebDependencyVersion 3-->
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-  <Import Project="Aderant.wpp.common.targets" Condition="'$(WppTargetsImported)' != 'true'" />
-
   <PropertyGroup>
-    <DependenciesDirectory Condition="'$(DependenciesDirectory)' == ''">$(MSBuildThisFileDirectory)</DependenciesDirectory>
+    <WppV3TargetsImported>true</WppV3TargetsImported>
+    <DependenciesDirectory Condition="'$(DependenciesDirectory)' == ''">$(MSBuildProjectDirectory)\..\Dependencies\</DependenciesDirectory>
     <DependenciesDirectory>$([System.IO.Path]::GetFullPath('$(DependenciesDirectory)'))</DependenciesDirectory>
     <DependenciesDirectory Condition="!HasTrailingSlash('$(DependenciesDirectory)')">$(DependenciesDirectory)\</DependenciesDirectory>
-    <PackagesDirectory>$([System.IO.Path]::GetFullPath('$(DependenciesDirectory)..\packages\'))</PackagesDirectory>
-    <ModulesDirectory Condition="'$(ModulesDirectory)' == ''">$([System.IO.Path]::GetFullPath('$(DependenciesDirectory)..\..\'))</ModulesDirectory>
-    <!-- only works for TFS modules right now -->
-    <ResponseFile>$(SolutionDir)\Build\TFSBuild.rsp</ResponseFile>
 
+    <PackagesDirectory Condition="'$(PackagesDirectory)' == ''">$([System.IO.Path]::GetFullPath('$(DependenciesDirectory)..\packages'))</PackagesDirectory>
+    <PackagesDirectory Condition="!HasTrailingSlash('$(PackagesDirectory)')">$(PackagesDirectory)\</PackagesDirectory>
   </PropertyGroup>
 
   <!--
@@ -33,7 +30,7 @@
     <EnableContentLink Condition="'$(EnableContentLink)' == ''">true</EnableContentLink>
     <EnableContentLink Condition="'$(ProjectTypeGuids.ToUpper().Contains($(UnitTestProjectGuid)))' == 'true'">false</EnableContentLink>
 
-    <DependencyManifest>$(ProjectDir)..\..\Build\DependencyManifest.xml</DependencyManifest>
+    <DependencyManifest>$(MSBuildProjectDirectory)\..\..\Build\DependencyManifest.xml</DependencyManifest>
     <DependencyManifestContent>$([System.IO.File]::ReadAllText('$(DependencyManifest)'))</DependencyManifestContent>
     <Pattern>="((Aderant.Web|Web|Mobile)..*?)"</Pattern>
     <!--
@@ -42,8 +39,6 @@
     -->
     <WebModuleText>$([System.Text.RegularExpressions.Regex]::Matches($(DependencyManifestContent), $(Pattern)))</WebModuleText>
     <WebModuleText>$(WebModuleText.Replace('=', '').Replace('"', ''))</WebModuleText>
-
-    <RegexEscapedDependencyPath>$([System.Text.RegularExpressions.Regex]::Escape('$(DependenciesDirectory)'))</RegexEscapedDependencyPath>
   </PropertyGroup>
 
 
@@ -211,7 +206,7 @@
       <ProjectRelativePath Condition="%(RelativePath) != ''">%(RelativePath)\%(Module)\%(Filename)%(Extension)</ProjectRelativePath>
     </DependencyContent>
 
-    <Content  Include="@(DependencyContent->WithMetadataValue('Type', 'Content'))">
+    <Content Include="@(DependencyContent->WithMetadataValue('Type', 'Content'))">
       <Link Condition="%(ProjectRelativePath) != ''">%(ProjectRelativePath)</Link>
       <Visible Condition="%(ProjectRelativePath) != ''">true</Visible>
     </Content>
@@ -235,9 +230,11 @@
   -->
   <Target Name="_ItemGroupDebug">
     <Message Text="AssemblyName: $(AssemblyName) (Enable content link: $(EnableContentLink))" />
-    <Message Text="$([System.IO.Path]::GetFullPath('$(DependenciesDirectory)'))" />
-    <Message Text="$([System.IO.Path]::GetFullPath('$(ProjectDir)'))" />
+    <Message Text="DependenciesDirectory: '$(DependenciesDirectory)'" />
+    <Message Text="PackagesDirectory: '$(PackagesDirectory)'" />
+    <Message Text="ProjectDir: '$(ProjectDir)'" />
     <Message Text="Referenced web modules: '%(ReferencedWebModules.Identity)'" />
+
     <Message Condition="'%(AllDependencyContent.IsReferenced)' == 'true'"
 Text="
 Identity:                 %(AllDependencyContent.Identity)
