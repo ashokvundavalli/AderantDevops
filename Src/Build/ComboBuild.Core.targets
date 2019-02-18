@@ -18,11 +18,15 @@
   -->
   <Target Name="DispatchToInnerBuild" DependsOnTargets="$(DispatchToInnerBuildDependsOn)">
 
-    <PrintBanner Text="Group $(BuildGroupId) / $(TotalNumberOfBuildGroups)" />
-
     <PropertyGroup>
       <LogId>$([System.Guid]::NewGuid())</LogId>
     </PropertyGroup>
+
+    <PrintBanner Text="Group $(BuildGroupId) / $(TotalNumberOfBuildGroups)" />
+    <SetProgress
+      CurrentOperation="Building"
+      Activity="$(LogId)"
+      StatusDescription="Group $(BuildGroupId) / $(TotalNumberOfBuildGroups)" />
 
     <ItemGroup>
       <_ProjectsInGroup Include="@(ProjectsInGroup)" Condition="'$(switch-skip-compile)' == 'true' And '%(ProjectsInGroup.IsProjectFile)' != 'true'" />
@@ -53,11 +57,13 @@
     </ItemGroup>
 
     <GetOrPutContextVariable
+      AllowInProcLookup="true"
       VariableName="_GitDir">
       <Output TaskParameter="Value" PropertyName="_GitDir" />
     </GetOrPutContextVariable>
 
     <GetOrPutContextVariable
+      AllowInProcLookup="true"
       VariableName="IsBuildCacheEnabled">
       <Output TaskParameter="Value" PropertyName="IsBuildCacheEnabled" />
     </GetOrPutContextVariable>
