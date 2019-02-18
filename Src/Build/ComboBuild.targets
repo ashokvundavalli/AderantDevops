@@ -85,10 +85,19 @@
   </PropertyGroup>
 
 
-  <Target Name="CleanStagingDirectory" Condition="'$(IsDesktopBuild)' == 'false'">
-    <RemoveDir Directories="$(ArtifactStagingDirectory)" />
+  <Target Name="RemoveLockedFilesFromLastBuild">
+    <ItemGroup>
+      <LockedFiles Include="$(ArtifactStagingDirectory)**\*.__LOCKED" />
+    </ItemGroup>
+    <Delete Files="@(LockedFiles)" />
+  </Target>
 
-    <MakeDir Directories="$(UpdateStagingDirectory)" />
+
+  <Target Name="CleanStagingDirectory" DependsOnTargets="RemoveLockedFilesFromLastBuild">
+    <RemoveDir Condition="'$(IsDesktopBuild)' == 'false'"
+               Directories="$(ArtifactStagingDirectory)" />
+    <MakeDir Condition="'$(IsDesktopBuild)' == 'false'"
+             Directories="$(UpdateStagingDirectory)" />
   </Target>
 
 
@@ -383,9 +392,12 @@
       <FactoryResourceGenerator>$(ExpertSourceDirectory)FactoryResourceGenerator.exe</FactoryResourceGenerator>
     </PropertyGroup>
 
+    <Error Condition="!Exists('$(FactoryResourceGenerator)')" Text="The file $(FactoryResourceGenerator) does not exist" />
+
     <Exec
-      Condition="Exists('$(FactoryResourceGenerator)')"
       Command="&quot;$(FactoryResourceGenerator)&quot; /v:+ /SuppressHeader /f:$(ExpertSourceDirectory) /of:$(ExpertSourceDirectory)Factory.bin"
+      WorkingDirectory="$(ExpertSourceDirectory)"
+      YieldDuringToolExecution="true"
       IgnoreExitCode="false" />
 
   </Target>
