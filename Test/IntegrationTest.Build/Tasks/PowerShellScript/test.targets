@@ -1,4 +1,4 @@
-﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" 
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
          ToolsVersion="14.0">
 
 
@@ -7,10 +7,12 @@
       LogScript="false"
       ScriptBlock='
 $ErrorActionPreference = "Stop"
+$InformationPreference = "Continue"
 Write-Host "AAAA"
 Write-Output "BBBB"
 Write-Debug "CCCC"
 Write-Warning "DDDD"
+Write-Information "EEEE"
 '
       OnErrorReason="Test failure" />
   </Target>

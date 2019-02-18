@@ -11,7 +11,8 @@ namespace IntegrationTest.Build.Tasks.PowerShellScript {
             Assert.IsFalse(Logger.HasRaisedErrors);
 
             CollectionAssert.Contains(LogLines, "    AAAA\r\n", "Write-Host message was not captured");
-            CollectionAssert.Contains(LogLines, "    BBBB\r\n", "Write-Information message was not captured");
+            CollectionAssert.Contains(LogLines, "    BBBB\r\n", "Write-Output message was not captured");
+            CollectionAssert.Contains(LogLines, "    EEEE\r\n", "Write-Information message was not captured");
             Assert.IsNotNull(LogLines.Find(s => s.Contains("warning : DDDD")));
         }
     }
