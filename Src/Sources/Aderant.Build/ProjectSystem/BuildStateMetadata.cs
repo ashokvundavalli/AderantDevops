@@ -20,6 +20,10 @@ namespace Aderant.Build.ProjectSystem {
             unassignedBuckets = new List<BucketId>();
             var assignedBuckets = new List<BuildStateFile>();
 
+            if (BuildStateFiles == null) {
+                return assignedBuckets;
+            }
+
             foreach (var bucketId in bucketIds) {
                 BuildStateFile stateFile = null;
 
