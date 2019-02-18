@@ -49,6 +49,16 @@
                                         $(MSBuildProjectDirectory)\Scripts\Web.Foundation\**\*;
                                         $(MSBuildProjectDirectory)\Scripts\Web.Presentation\**\" />
     </ItemGroup>
+
+    <ItemGroup>
+      <ExcludeFromPackageFiles Include="$(MSBuildProjectDirectory)\**\ThirdParty.*\**\*.dll;
+                                        $(MSBuildProjectDirectory)\**\ThirdParty.*\**\*.exe;
+                                        $(MSBuildProjectDirectory)\**\ThirdParty.*\**\*.pdb;
+                                        $(MSBuildProjectDirectory)\**\ThirdParty.*\**\*license.txt;
+                                        $(MSBuildProjectDirectory)\**\ThirdParty.*\**\*licenses.txt;
+                                        $(MSBuildProjectDirectory)\**\ThirdParty.*\**\acknowledgements.txt;
+                                        $(MSBuildProjectDirectory)\**\ThirdParty.*\**\EULA.*" />
+    </ItemGroup>
   </Target>
 
 
@@ -174,11 +184,10 @@
 
 
   <Target Name="DeleteManifest" AfterTargets="PackageUsingManifest">
-
-    <!-- Remove Web.xyz.SourceManifest.xml from the output directory as we don't need it --><!--
+    <!-- Remove Web.xyz.SourceManifest.xml from the output directory as we don't need it -->
     <Delete Files="$(PackageSourceManifest)"
             Condition="'$(PackageSourceManifest)' != ''"
-            ContinueOnError="true" />-->
+            ContinueOnError="true" />
   </Target>
 
 

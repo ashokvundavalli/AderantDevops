@@ -14,6 +14,7 @@ namespace IntegrationTest.Build {
     [DeploymentItem("TestDeployment\\")]
     [DeploymentItem("Tasks\\", "Tasks\\")]
     [DeploymentItem("EndToEnd\\", "EndToEnd\\")]
+    [DeploymentItem("Packaging\\", "Packaging\\")]
     public abstract class MSBuildIntegrationTestBase {
 
         public TestContext TestContext { get; set; }
@@ -69,7 +70,7 @@ namespace IntegrationTest.Build {
                     Result = result;
 
                     if (BuildMustSucceed) {
-                        if (Environment.UserInteractive) {
+                        if (BuildResultCode.Failure == result.OverallResult && Environment.UserInteractive) {
                             Process.Start("notepad++", LogFile);
                         }
 

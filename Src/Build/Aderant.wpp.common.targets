@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
 
   <Import Project="$(MSBuildThisFileDirectory)Aderant.wpp.content.v3.proj" Condition="'$(IsWebOrMobile)' == 'true' And '$(WebDependencyVersion)' == '3'" />
 
@@ -15,7 +15,6 @@
       <OutputFile ParameterType="System.String" Required="true" />
       <PathPropertyName ParameterType="System.String" Required="true" />
       <ProjectRootDirectory ParameterType="System.String" Required="true" />
-      <MSBuildProjectName ParameterType="System.String" Required="true" />
       <ProjectItems ParameterType="Microsoft.Build.Framework.ITaskItem[]" />
       <AssetFilter ParameterType="Microsoft.Build.Framework.ITaskItem[]" />
     </ParameterGroup>
@@ -25,10 +24,12 @@
       <Using Namespace="System" />
       <Using Namespace="System.Xml" />
       <Code Type="Fragment" Language="cs">
-<![CDATA[
+        <![CDATA[
         if (ProjectItems == null || ProjectItems.Length == 0) {
             throw new ArgumentException("No items provided to content writer");
         }
+
+        Log.LogMessage("Writing " + ProjectItems.Length + " items....");
 
         var ns = "http://schemas.microsoft.com/developer/msbuild/2003";
 
@@ -49,6 +50,10 @@
             w.WriteStartElement("PropertyGroup");
             w.WriteStartElement(PathPropertyName);
             w.WriteAttributeString("Condition", string.Format("'$" + "({0})' == ''", PathPropertyName));
+
+            // Need to uglify this string as we want the property expression, not the evalauted property value as
+            // if would always point to THIS file which wouldn't be useful. THis happens as the engine swaps the value as
+            // this code is just a property expression itself
             w.WriteString(string.Format("$" + "({0})\\", "MSBuildThisFileDirectory"));
             w.WriteEndElement();
             w.WriteEndElement();
@@ -63,18 +68,8 @@
                     type = "Content";
                 }
 
-                var includeProjectName = file.GetMetadata("IncludeProjectName");
                 string fileAndExtension = file.GetMetadata("Filename") + file.GetMetadata("Extension");
                 string fileRelativePath = file.GetMetadata("RelativeDir").Replace(ProjectRootDirectory, "") + fileAndExtension;
-
-                // If the link metadata is not defined then synthesize it
-                if (string.IsNullOrWhiteSpace(link)) {
-                    link = fileRelativePath;
-                    if (string.Equals("false", includeProjectName, StringComparison.OrdinalIgnoreCase)) {
-                        link = link.Replace(MSBuildProjectName, "");
-                    }
-                    link = link.Replace(@"\\", @"\");
-                }
 
                 w.WriteStartElement(type);
                 w.WriteAttributeString("Include", "$" + pathVariable + fileRelativePath);
@@ -83,7 +78,12 @@
                 w.WriteString(link);
                 w.WriteEndElement();
 
-                //w.WriteComment("\r\nRecursiveDir:" + file.GetMetadata("RecursiveDir") + "\r\nRelativeDir:" + file.GetMetadata("RelativeDir") + "\r\nLink:" + link);
+                string comment = "";
+                var names = file.MetadataNames;
+                foreach (var name in names) {
+                  comment += "\r\n" + (string)name + ":" + file.GetMetadata((string)name);
+                }
+                w.WriteComment(comment);
 
                 w.WriteStartElement("Visible");
                 w.WriteString("true");
@@ -93,7 +93,6 @@
             }
 
             w.WriteEndElement();
-
             w.WriteEndElement();
         }
 ]]>
@@ -102,94 +101,112 @@
   </UsingTask>
 
 
-  <Target Name="CollectProjectContentItems">
+  <Target Name="CollectSharedProjectItems">
     <PropertyGroup>
-      <ScriptsDirectory>$(MSBuildProjectDirectory)\</ScriptsDirectory>
+      <ScriptsDirectory Condition="'$(ScriptsDirectory)' == ''">$(MSBuildProjectDirectory)\</ScriptsDirectory>
       <ScriptsDirectory Condition="'$(ScriptsDirectory)' != '' and !HasTrailingSlash('$(ScriptsDirectory)')">$(ScriptsDirectory)\</ScriptsDirectory>
-      <OptionalNameFilter Condition="'$(OptionalNameFilter)' == ''">*</OptionalNameFilter>
-      <OptionalNameFilter Condition="'$(UseProjectNameWhenCollectingSharedContent)' == ''">$(MSBuildProjectName)</OptionalNameFilter>
+      <GlobExpression Condition="'$(GlobExpression)' == ''">**\</GlobExpression>
+
+      <WebProjectName Condition="'$(WebProjectName)' == ''">$(MSBuildProjectName)</WebProjectName>
+      <GlobExpression Condition="'$(UseProjectNameWhenCollectingSharedContent)' == ''">$(WebProjectName)\**</GlobExpression>
+
       <IncludeJSFiles Condition="'$(IncludeJSFiles)' == ''">true</IncludeJSFiles>
     </PropertyGroup>
 
     <!--Scripts-->
     <ItemGroup>
-      <ProjectItems Condition="'$(IncludeJSFiles)' == 'true'"
-                    Include="$(ScriptsDirectory)Scripts\$(OptionalNameFilter)\**\*.js"
-                    Exclude="$(ScriptsDirectory)Scripts\**\ThirdParty.*\**">
+      <_FilesForSharedProject Condition="'$(IncludeJSFiles)' == 'true'"
+                              Include="$(ScriptsDirectory)Scripts\$(GlobExpression)*.js"
+                              Exclude="$(ScriptsDirectory)Scripts\**\ThirdParty.*\**">
+        <Link>Scripts\</Link>
         <Type>Content</Type>
-      </ProjectItems>
-      <ProjectItems Include="$(ScriptsDirectory)Scripts\$(OptionalNameFilter)\**\*.html">
-        <Type>Content</Type>
-      </ProjectItems>
+      </_FilesForSharedProject>
+    </ItemGroup>
 
-      <ProjectItems Include="$(ScriptsDirectory)Scripts\$(OptionalNameFilter)\**\*.d.ts"
-                    Exclude="$(ScriptsDirectory)Scripts\**\ThirdParty.*\**">
+    <ItemGroup>
+      <_FilesForSharedProject Include="$(ScriptsDirectory)Scripts\$(GlobExpression)*.d.ts"
+                              Exclude="$(ScriptsDirectory)Scripts\**\ThirdParty.*\**">
+        <Link>Scripts\</Link>
         <Type>TypeScriptCompile</Type>
-      </ProjectItems>
+      </_FilesForSharedProject>
+    </ItemGroup>
+
+    <ItemGroup>
+      <_FilesForSharedProject Include="$(ScriptsDirectory)Scripts\$(GlobExpression)*.html">
+        <Link>Scripts\</Link>
+        <Type>Content</Type>
+      </_FilesForSharedProject>
     </ItemGroup>
 
     <!-- Content -->
     <ItemGroup>
-      <ProjectItems Include="$(ScriptsDirectory)Content\$(OptionalNameFilter)\**\*"
-                    Exclude="$(ScriptsDirectory)Content\**\ThirdParty.*\**">
+      <_FilesForSharedProject Include="$(ScriptsDirectory)Content\$(GlobExpression)*"
+                              Exclude="$(ScriptsDirectory)Content\**\ThirdParty.*\**">
+        <Link>Content\</Link>
         <Type>Content</Type>
-      </ProjectItems>
+      </_FilesForSharedProject>
     </ItemGroup>
 
-    <!--ViewModels-->
+    <!-- ViewModels -->
     <ItemGroup>
-      <ProjectItems Include="$(ScriptsDirectory)ViewModels\$(OptionalNameFilter)\**\*.d.ts"
-                    Exclude="$(ScriptsDirectory)ViewModels\**\ThirdParty.*\**">
+      <_FilesForSharedProject Include="$(ScriptsDirectory)ViewModels\$(GlobExpression)*.d.ts"
+                              Exclude="$(ScriptsDirectory)ViewModels\**\ThirdParty.*\**">
+        <Link>ViewModels\</Link>
         <Type>TypeScriptCompile</Type>
-      </ProjectItems>
+      </_FilesForSharedProject>
     </ItemGroup>
 
     <!-- Helpers -->
     <ItemGroup>
-      <ProjectItems Include="$(ScriptsDirectory)Helpers\$(OptionalNameFilter)\**\*.xml;
-                             $(ScriptsDirectory)Helpers\$(OptionalNameFilter)\**\*.xml">
-        <Link>Helpers\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <_FilesForSharedProject Include="$(ScriptsDirectory)Helpers\$(GlobExpression)*.xml">
+        <Link>Helpers\</Link>
         <Type>Content</Type>
-      </ProjectItems>
+      </_FilesForSharedProject>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectItems Include="$(ScriptsDirectory)Views\Shared\$(OptionalNameFilter)\**\*.cshtml">
+      <_FilesForSharedProject Include="$(ScriptsDirectory)Views\Shared\$(GlobExpression)\*.cshtml">
+        <Link>Views\Shared\</Link>
         <Type>Content</Type>
-      </ProjectItems>
+      </_FilesForSharedProject>
     </ItemGroup>
 
-    <!--Authentication-->
     <ItemGroup Condition="'$(IncludeAuthenticationFiles)' == 'true'">
-      <ProjectItems Include="$(ScriptsDirectory)Authentication\**\*">
-        <Link>Authentication\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <_FilesForSharedProject Include="$(ScriptsDirectory)Authentication\**\*">
+        <Link>Authentication\</Link>
         <Type>Content</Type>
-      </ProjectItems>
+      </_FilesForSharedProject>
 
-      <ProjectItems Include="$(ScriptsDirectory)ManualLogOn\$(OptionalNameFilter)\**\*">
-        <Link>ManualLogOn\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <_FilesForSharedProject Include="$(ScriptsDirectory)ManualLogOn\$(GlobExpression)*">
+        <Link>ManualLogOn\</Link>
         <IncludeProjectName>false</IncludeProjectName>
         <Type>Content</Type>
-      </ProjectItems>
+      </_FilesForSharedProject>
     </ItemGroup>
 
     <!-- Pull in other custom content -->
     <ItemGroup>
-      <ProjectItems Include="@(Content)" Condition="'%(Content.AddToProjectItems)' == 'true'" />
+      <_FilesForSharedProject Include="@(Content)" Condition="'%(Content.AddToProjectItems)' == 'true'" />
     </ItemGroup>
+
+    <ItemGroup>
+      <ProjectItems Include="@(_FilesForSharedProject->Distinct())" Condition="'$(UseProjectNameWhenCollectingSharedContent)' == 'false' Or $([System.String]::Copy('%(RecursiveDir)').Contains($(WebProjectName)))">
+        <Link>%(_FilesForSharedProject.Link)%(_FilesForSharedProject.RecursiveDir)%(_FilesForSharedProject.Filename)%(_FilesForSharedProject.Extension)</Link>
+      </ProjectItems>
+    </ItemGroup>
+
   </Target>
 
 
   <Target Name="WriteContentFile"
           Condition="'$(OutputSharedWebContentFile)' == 'true'"
           AfterTargets="AfterBuild"
-          DependsOnTargets="CollectProjectContentItems">
+          DependsOnTargets="CollectSharedProjectItems">
 
     <WriteSharedContentFile
       OutputFile="$(MSBuildProjectFullPath).shared"
       PathPropertyName="$(MSBuildProjectName.Replace('.', ''))Path"
       ProjectRootDirectory="$(ScriptsDirectory)"
-      MSBuildProjectName="$(MSBuildProjectName)"
       ProjectItems="@(ProjectItems)" />
 
   </Target>

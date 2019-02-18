@@ -3,6 +3,7 @@
   <Import Project="Aderant.Build.Common.targets" />
 
   <Import Project="Tasks\**\test.targets" />
+  <Import Project="Packaging\**\test.targets" />
   <Import Project="EndToEnd\test.targets" />
 
   <ItemGroup>
