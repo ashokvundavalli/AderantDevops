@@ -41,7 +41,8 @@
       Type="J" />
 
     <Exec Command='"$(BuildToolsDirectory)7z.exe" x "%(BuildCacheZipFilesToRestore.FullPath)" %(BuildCacheZipFilesToRestore.ArchivePathToExtract) -aos -bd -bb -o$(ModuleBuildTempDirectory)'
-          WorkingDirectory="$([System.IO.Path]::GetDirectoryName($(DirPropFile)))" />
+          WorkingDirectory="$([System.IO.Path]::GetDirectoryName($(DirPropFile)))"
+          YieldDuringToolExecution="true" />
 
     <RemoveDir Directories="$(ModuleBuildTempDirectory)%(BuildCacheZipFilesToRestore.ArchivePathToExtract)" />
   </Target>
