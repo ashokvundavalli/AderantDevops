@@ -1,5 +1,4 @@
-﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" 
-         ToolsVersion="14.0">
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <Target Name="CheckCertificate">
     <CheckCertificate Thumbprint="1c2a3e8f5e969fd0a526f917100f6231faacb460" />
