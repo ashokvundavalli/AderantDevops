@@ -145,13 +145,11 @@ namespace Aderant.Build.Packaging {
                         }
 
                         if (!string.IsNullOrWhiteSpace(CommonOutputDirectory)) {
-                            if (webProjects.Contains(project.Value)) {
-                                AddFileDestination(
-                                    seenDestinationPaths,
-                                    artifactFile,
-                                    Path.GetFullPath(Path.Combine(CommonOutputDirectory, filePath)),
-                                    copyOperations);
-                            }
+                            AddFileDestination(
+                                seenDestinationPaths,
+                                artifactFile,
+                                Path.GetFullPath(Path.Combine(CommonOutputDirectory, filePath)),
+                                copyOperations);
                         }
 
                         if (copyOperations.Count == copyCount) {
