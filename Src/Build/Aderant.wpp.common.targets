@@ -200,7 +200,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <_FilesForSharedProject Include="$(ScriptsDirectory)Views\Shared\$(GlobExpression)\*.cshtml">
+      <_FilesForSharedProject Include="$(ScriptsDirectory)Views\Shared\$(GlobExpression)*.cshtml"
+                              Exclude="$(ScriptsDirectory)Views\Shared\_Layout.cshtml">
         <Link>Views\Shared\</Link>
         <Type>Content</Type>
       </_FilesForSharedProject>

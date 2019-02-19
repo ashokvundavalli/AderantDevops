@@ -22,6 +22,17 @@ namespace IntegrationTest.Build.Packaging.Web {
         }
 
         [TestMethod]
+        public void _Layout_cshtml_is_not_collected() {
+            RunTarget("PackageWeb", new Dictionary<string, string> { { "UseProjectNameWhenCollectingSharedContent", "false" } });
+
+            TargetResult targetResult = Result.ResultsByTarget["PackageWeb"];
+
+            var items = targetResult.Items;
+
+            Assert.IsTrue(items.All(s => s.GetMetadata("Filename") != "_Layout.cshtml"));
+        }
+
+        [TestMethod]
         public void CollectSharedProjectItems_returns_subset_items_when_filtering() {
             RunTarget(
                 "PackageWeb",
