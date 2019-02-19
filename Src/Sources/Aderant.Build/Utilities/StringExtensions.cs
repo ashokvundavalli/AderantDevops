@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace Aderant.Build.Utilities {
@@ -37,6 +38,10 @@ namespace Aderant.Build.Utilities {
             result.Append(s, pos, s.Length - pos);
 
             return result.ToString();
+        }
+
+        public static string[] ToStringArray(this string str) {
+            return new[] { str };
         }
     }
 }

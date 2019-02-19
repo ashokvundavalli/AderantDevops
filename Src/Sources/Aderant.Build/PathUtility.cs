@@ -128,8 +128,6 @@ namespace Aderant.Build {
         /// <returns></returns>
         public static string NormalizeTrailingSlashes(this string path) {
             if (path != null && path.EndsWith(@"\\")) {
-                //logger.Warning($"! Project {project.ProjectFile} output path ends with two path separators: '{projectOutputPath}'. Normalize this path.");
-                // Normalize path as sometimes it ends with two slashes
                 return path.Replace(@"\\", @"\");
             }
 
@@ -137,10 +135,17 @@ namespace Aderant.Build {
         }
 
         /// <summary>
-        /// Trims trailing path separators
+        /// Trims trailing path separators.
         /// </summary>
         public static string TrimTrailingSlashes(this string path) {
             return path.TrimEnd(Path.DirectorySeparatorChar).TrimEnd(Path.AltDirectorySeparatorChar);
+        }
+
+        /// <summary>
+        /// Trims leading path separators.
+        /// </summary>
+        public static string TrimLeadingSlashes(string path) {
+            return path.TrimStart(Path.DirectorySeparatorChar).TrimEnd(Path.AltDirectorySeparatorChar);
         }
 
         /// <summary>

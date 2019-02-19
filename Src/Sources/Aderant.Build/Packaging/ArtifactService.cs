@@ -395,7 +395,7 @@ namespace Aderant.Build.Packaging {
         }
 
         internal IList<PathSpec> CalculateFilesToRestore(BuildStateFile stateFile, string solutionRoot, string containerKey, IEnumerable<string> artifacts) {
-            var localArtifactFiles = artifacts.Select(path => new LocalArtifactFile(Path.GetFileName(path), path)).ToList();
+            var localArtifactFiles = artifacts.Select(path => new LocalArtifactFile(path)).ToList();
 
             List<PathSpec> copyOperations = new List<PathSpec>();
             if (localArtifactFiles.Count == 0) {
@@ -410,7 +410,6 @@ namespace Aderant.Build.Packaging {
             fileRestore.CommonDependencyDirectory = CommonDependencyDirectory;
             fileRestore.StagingDirectoryWhitelist = StagingDirectoryWhitelist;
 
-            fileRestore.DetermineAdditionalRestorePaths(stateFile);
             return fileRestore.BuildRestoreOperations(solutionRoot, containerKey, stateFile);
         }
 
@@ -607,20 +606,17 @@ namespace Aderant.Build.Packaging {
 
     [DebuggerDisplay("FileName: {FileName} FullPath: {FullPath}")]
     internal class LocalArtifactFile {
-        public string FileName { get; set; }
-        public string FullPath { get; set; }
+        public string FileName { get; }
+        public string FullPath { get; }
 
-        public LocalArtifactFile(string fileName, string fullPath) {
-            if (string.IsNullOrWhiteSpace(fileName)) {
-                throw new ArgumentException("Value cannot be null or whitespace.", nameof(fileName));
-            }
-
+        public LocalArtifactFile(string fullPath) {
             if (string.IsNullOrWhiteSpace(fullPath)) {
                 throw new ArgumentException("Value cannot be null or whitespace.", nameof(fullPath));
             }
 
-            FileName = fileName;
-            FullPath = fullPath;
+            this.FileName = Path.GetFileName(fullPath);
+            this.FullPath = fullPath;
+
         }
 
         public override int GetHashCode() {
@@ -663,7 +659,4 @@ namespace Aderant.Build.Packaging {
         public string Destination { get; set; }
     }
 
-    internal class ArtifactResolveOperation {
-        public List<ArtifactPathSpec> Paths { get; set; }
-    }
 }

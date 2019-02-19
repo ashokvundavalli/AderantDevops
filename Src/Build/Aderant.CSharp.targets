@@ -417,11 +417,20 @@
     <Copy
       Condition="'$(IncludeOutputInUpdatePackage)' == 'true' And '$(PackageFileName)' != ''"
       SourceFiles="$(PackageFileName)"
-      DestinationFolder="$(UpdateStagingDirectory)" />
+      DestinationFolder="$(UpdateStagingDirectory)"
+      OverwriteReadOnlyFiles="$(OverwriteReadOnlyFiles)"
+      Retries="$(CopyRetryCount)"
+      RetryDelayMilliseconds="$(CopyRetryDelayMilliseconds)"/>
 
     <PropertyGroup>
       <RelativeArtifactStagingDirectory>$([MSBuild]::MakeRelative($(MSBuildProjectDirectory), $(AlternativeOutputDirectory)))</RelativeArtifactStagingDirectory>
+      <RelativeArtifactStagingDirectory Condition="!Exists('$(RelativeArtifactStagingDirectory)')"></RelativeArtifactStagingDirectory>
+
+      <!--Ignore file writes from web projects -->
+      <RelativePackagesDirectory>$([MSBuild]::MakeRelative($(MSBuildProjectDirectory), '..\..\packages'))</RelativePackagesDirectory>
+      <RelativePackagesDirectory Condition="!Exists('$(RelativePackagesDirectory)')"></RelativePackagesDirectory>
     </PropertyGroup>
+
 
     <RecordProjectOutputs
       ContextEndpoint="$(ContextEndpoint)"
@@ -431,9 +440,8 @@
       TestProjectType="$(TestProjectType)"
       References="@(Reference)"
       ProjectFile="$(MSBuildProjectFullPath)"
-      IntermediateDirectory="$(IntermediateOutputPath)"
+      IntermediateDirectories="$(IntermediateOutputPath);$(RelativeArtifactStagingDirectory);$(RelativePackagesDirectory)"
       OutputPath="$(OutDir)"
-      ArtifactStagingDirectory="$(RelativeArtifactStagingDirectory)"
       FileWrites="@(FileWrites);$(PackageFileName)" />
 
   </Target>

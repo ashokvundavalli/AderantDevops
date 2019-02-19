@@ -37,6 +37,7 @@ namespace UnitTest.Build {
         }
 
         [TestMethod]
+        [Ignore]
         public void GetModuleDependenciesReturnsCorrectDependencies() {
             DependencyBuilder builder = new DependencyBuilder(BranchPath);
             IEnumerable<ModuleDependency> modulesDependencies = builder.GetModuleDependencies();
@@ -58,6 +59,7 @@ namespace UnitTest.Build {
         }
 
         [TestMethod]
+        [Ignore]
         public void BuildDGMLDocumentReturnsCorrectDocument() {
             DependencyBuilder builder = new DependencyBuilder(BranchPath);
             XDocument doc = builder.BuildDgmlDocument(true, false);
@@ -66,6 +68,7 @@ namespace UnitTest.Build {
         }
 
         [TestMethod]
+        [Ignore]
         public void BuildDependencyTree() {
             DependencyBuilder builder = new DependencyBuilder(BranchPath);
             IEnumerable<Aderant.Build.Build> tree = builder.GetTree(false);
@@ -88,6 +91,7 @@ namespace UnitTest.Build {
         }
 
         [TestMethod]
+        [Ignore]
         public void When_C_Depends_On_B_Depends_On_A() {
             var provider = new FakeProvider();
 
@@ -116,6 +120,7 @@ namespace UnitTest.Build {
 
         [TestMethod]
         [ExpectedException(typeof(CircularDependencyException))]
+        [Ignore]
         public void WhenDependencyChainIsCircularAnExceptionIsThrown() {
             var provider = new CircularReferenceProvider();
 

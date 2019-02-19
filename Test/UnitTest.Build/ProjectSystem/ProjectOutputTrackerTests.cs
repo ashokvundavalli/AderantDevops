@@ -2,6 +2,7 @@
 using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
+using Aderant.Build.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTest.Build.ProjectSystem {
@@ -48,7 +49,7 @@ namespace UnitTest.Build.ProjectSystem {
 
         [TestMethod]
         public void RecordOutputs_removes_obj_files() {
-            var outputs = ProjectOutputSnapshotBuilder.RecordProjectOutputs(Guid.NewGuid(), "", "Foo", new[] { @"obj/baz.dll" }, @"..\..\bin", "obj");
+            var outputs = ProjectOutputSnapshotBuilder.RecordProjectOutputs(Guid.NewGuid(), "", "Foo", new[] { @"obj/baz.dll" }, @"..\..\bin", "obj".ToStringArray());
 
             Assert.AreEqual(0, outputs.FilesWritten.Length);
         }
@@ -56,14 +57,14 @@ namespace UnitTest.Build.ProjectSystem {
         [TestMethod]
         public void RecordOutputs_keeps_output() {
 
-            var outputFilesSnapshot = ProjectOutputSnapshotBuilder.RecordProjectOutputs(Guid.NewGuid(), "", "Foo", new[] { "obj/baz.dll", "baz.dll" }, @"..\..\bin", "obj");
+            var outputFilesSnapshot = ProjectOutputSnapshotBuilder.RecordProjectOutputs(Guid.NewGuid(), "", "Foo", new[] { "obj/baz.dll", "baz.dll" }, @"..\..\bin", "obj".ToStringArray());
 
             Assert.AreEqual(1, outputFilesSnapshot.FilesWritten.Length);
         }
 
         [TestMethod]
         public void RecordOutputs_is_deterministic() {
-            var snapshot = ProjectOutputSnapshotBuilder.RecordProjectOutputs(Guid.NewGuid(), "", "Foo", new[] { "B", "10000", "A", "001", "Z", "1" }, @"..\..\bin", "obj");
+            var snapshot = ProjectOutputSnapshotBuilder.RecordProjectOutputs(Guid.NewGuid(), "", "Foo", new[] { "B", "10000", "A", "001", "Z", "1" }, @"..\..\bin", "obj".ToStringArray());
 
             Assert.AreEqual("001", snapshot.FilesWritten[0]);
             Assert.AreEqual("1", snapshot.FilesWritten[1]);
@@ -75,7 +76,7 @@ namespace UnitTest.Build.ProjectSystem {
 
         [TestMethod]
         public void FileWrites_are_cleaned() {
-            var snapshot = ProjectOutputSnapshotBuilder.RecordProjectOutputs(Guid.NewGuid(), "", "Foo", new[] { @"foo\\bin\\baz.dll" }, @"..\..\bin", "obj");
+            var snapshot = ProjectOutputSnapshotBuilder.RecordProjectOutputs(Guid.NewGuid(), "", "Foo", new[] { @"foo\\bin\\baz.dll" }, @"..\..\bin", "obj".ToStringArray());
 
             Assert.AreEqual(@"foo\bin\baz.dll", snapshot.FilesWritten[0]);
         }
@@ -86,11 +87,9 @@ namespace UnitTest.Build.ProjectSystem {
                 Guid.NewGuid(),
                 "",
                 "C:\\B\\516\\2\\s\\Services.Communication\\Src\\Aderant.Notification\\Aderant.Notification.cspoj",
-                new[] {
-                    "C:\\B\\516\\2\\s\\Services.Communication\\Bin\\Module\\Aderant.Notification.Api.zip"
-                },
+                "C:\\B\\516\\2\\s\\Services.Communication\\Bin\\Module\\Aderant.Notification.Api.zip".ToStringArray(),
                 "..\\..\\bin",
-                "obj");
+                "obj".ToStringArray());
 
             Assert.AreEqual(@"..\..\Bin\Module\Aderant.Notification.Api.zip", snapshot.FilesWritten[0]);
         }

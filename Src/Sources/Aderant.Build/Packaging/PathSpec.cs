@@ -7,7 +7,6 @@ namespace Aderant.Build.Packaging {
     [DebuggerDisplay("{Location} => {Destination}")]
     [Serializable]
     public struct PathSpec {
-        private static readonly PathSpec empty = new PathSpec(string.Empty, string.Empty);
 
         public PathSpec(string location, string destination) {
             this.Location = location;
@@ -25,10 +24,6 @@ namespace Aderant.Build.Packaging {
         /// </summary>
         /// <value>The location.</value>
         public string Location { get; }
-
-        public static PathSpec Empty {
-            get { return empty; }
-        }
 
         public override bool Equals(object obj) {
             if (!(obj is PathSpec)) {

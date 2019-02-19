@@ -11,10 +11,32 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
     internal class ProjectOutputSnapshotBuilder {
 
         public string SourcesDirectory { get; set; }
+
+        /// <summary>
+        /// The source tree path to the project file.
+        /// </summary>
         public string ProjectFile { get; set; }
+
+        /// <summary>
+        /// The files written by this project during the build.
+        /// File paths are expected to be project relative.
+        /// </summary>
         public string[] FileWrites { get; set; }
+
+        /// <summary>
+        /// The output path of the project.
+        /// Expected to ne project file relative.
+        /// </summary>
         public string OutputPath { get; set; }
-        public string IntermediateDirectory { get; set; }
+
+        /// <summary>
+        /// The MSBuild intermediates directory for the project. This is the the compiler scratch pad.
+        /// </summary>
+        public string[] IntermediateDirectories { get; set; }
+
+        /// <summary>
+        /// The type of the project such as C#, Workflow, ASP.NET etc.
+        /// </summary>
         public IReadOnlyCollection<string> ProjectTypeGuids { get; set; }
 
         /// <summary>
@@ -27,8 +49,6 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         /// </summary>
         public string[] References { get; set; }
 
-        public string ArtifactStagingDirectory { get; set; }
-
         public ProjectOutputSnapshot BuildSnapshot(Guid projectGuid) {
             string projectFile = ProjectFile;
 
@@ -40,10 +60,11 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
             bool isTestProject = IsTestProject();
 
+
             var snapshot = new ProjectOutputSnapshot {
                 ProjectFile = projectFile,
                 ProjectGuid = projectGuid,
-                FilesWritten = RemoveIntermediateObjects(CleanFileWrites(FileWrites), new[] { IntermediateDirectory, ArtifactStagingDirectory }),
+                FilesWritten = RemoveIntermediateObjects(CleanFileWrites(FileWrites), IntermediateDirectories),
                 OutputPath = OutputPath,
                 Origin = "ThisBuild",
                 Directory = GetDirectory(SourcesDirectory),
@@ -138,7 +159,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             string projectFile,
             string[] projectOutputs,
             string outputPath,
-            string intermediateDirectory,
+            string[] intermediateDirectories,
             IReadOnlyCollection<string> projectTypeGuids = null,
             string testProjectType = null,
             string[] references = null) {
@@ -150,7 +171,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                 ProjectFile = projectFile,
                 FileWrites = projectOutputs,
                 OutputPath = outputPath,
-                IntermediateDirectory = intermediateDirectory,
+                IntermediateDirectories = intermediateDirectories,
                 ProjectTypeGuids = projectTypeGuids,
                 TestProjectType = testProjectType,
                 References = references,

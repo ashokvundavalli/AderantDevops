@@ -10,6 +10,7 @@ namespace Aderant.Build.Tasks {
     /// </summary>
     public class RecordProjectOutputs : BuildOperationContextTask {
 
+
         [Required]
         public string ProjectFile { get; set; }
 
@@ -17,7 +18,7 @@ namespace Aderant.Build.Tasks {
         public string SolutionRoot { get; set; }
 
         [Required]
-        public string IntermediateDirectory { get; set; }
+        public string[] IntermediateDirectories { get; set; }
 
         [Required]
         public ITaskItem OutputPath { get; set; }
@@ -33,19 +34,16 @@ namespace Aderant.Build.Tasks {
 
         public string[] References { get; set; }
 
-        public string ArtifactStagingDirectory { get; set; }
-
         public override bool ExecuteTask() {
             var builder = new ProjectOutputSnapshotBuilder {
                 SourcesDirectory = SolutionRoot,
                 ProjectFile = ProjectFile,
                 FileWrites = FileWrites,
                 OutputPath = OutputPath.ItemSpec,
-                IntermediateDirectory = IntermediateDirectory,
+                IntermediateDirectories = IntermediateDirectories,
                 ProjectTypeGuids = ProjectTypeGuids,
                 TestProjectType = TestProjectType,
                 References = References,
-                ArtifactStagingDirectory = ArtifactStagingDirectory,
             };
 
             var snapshot = builder.BuildSnapshot(Guid.Parse(ProjectGuid));
