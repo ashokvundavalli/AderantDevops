@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Aderant.Build.AzurePipelines;
@@ -418,7 +419,7 @@ namespace Aderant.Build.Packaging {
         /// </summary>
         public bool ArtifactRestoreSkipped { get; set; }
 
-        public BuildStateMetadata GetBuildStateMetadata(string[] bucketIds, string dropLocation) {
+        public BuildStateMetadata GetBuildStateMetadata(string[] bucketIds, string dropLocation, CancellationToken token = default(CancellationToken)) {
             logger.Info($"Querying prebuilt artifacts from: {dropLocation}");
 
             using (PerformanceTimer.Start(duration => logger.Info($"{nameof(GetBuildStateMetadata)} completed in: {duration} ms"))) {
@@ -428,6 +429,8 @@ namespace Aderant.Build.Packaging {
                 metadata.BuildStateFiles = files;
 
                 foreach (var bucketId in bucketIds) {
+                    token.ThrowIfCancellationRequested();
+
                     string bucketPath = Path.Combine(dropLocation, BucketId.CreateDirectorySegment(bucketId));
 
                     if (fileSystem.DirectoryExists(bucketPath)) {
@@ -439,6 +442,8 @@ namespace Aderant.Build.Packaging {
                         // long thrashing the network.
                         // TODO: This needs improvements, we should only publish changed objects to the cache
                         foreach (var folder in folders.Take(5)) {
+                            token.ThrowIfCancellationRequested();
+
                             // We have to nest the state file directory as TFS won't allow duplicate artifact names
                             // For a single build we may produce 1 or more state files and so each one needs a unique artifact name
                             var stateFile = Path.Combine(folder, BuildStateWriter.CreateContainerName(bucketId), BuildStateWriter.DefaultFileName);

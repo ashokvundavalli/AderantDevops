@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
+using System.Threading;
 using Aderant.Build.VersionControl.Model;
 using LibGit2Sharp;
 using FileStatus = Aderant.Build.VersionControl.Model.FileStatus;
@@ -17,7 +18,7 @@ namespace Aderant.Build.VersionControl {
         /// <summary>
         /// Gets the changed files between two branches as well as the artifact bucket cache key
         /// </summary>
-        public SourceTreeMetadata GetMetadata(string repositoryPath, string fromBranch, string toBranch, bool includeLocalChanges = false) {
+        public SourceTreeMetadata GetMetadata(string repositoryPath, string fromBranch, string toBranch, bool includeLocalChanges = false, CancellationToken cancellationToken = default(CancellationToken)) {
             var info = new SourceTreeMetadata();
 
             HashSet<BucketId> bucketKeys = new HashSet<BucketId>();
@@ -53,7 +54,7 @@ namespace Aderant.Build.VersionControl {
                 if (string.IsNullOrWhiteSpace(toBranch)) {
                     // Lookup the branch history and find the joint commit and its branch.
                     string commonAncestor;
-                    oldCommit = FindMostLikelyReusableBucket(repository, newCommit, out commonAncestor);
+                    oldCommit = FindMostLikelyReusableBucket(repository, newCommit, out commonAncestor, cancellationToken);
                     info.CommonAncestor = commonAncestor;
                 } else {
                     oldCommit = GetTip(toBranch, repository);
@@ -122,7 +123,7 @@ namespace Aderant.Build.VersionControl {
         /// The joint point where the commit is also reachable from somewhere else. The first branch name is returned in
         /// the out parameter branchCanonicalName.
         /// </returns>
-        private Commit FindMostLikelyReusableBucket(Repository repository, Commit currentTree, out string commonBranch) {
+        private Commit FindMostLikelyReusableBucket(Repository repository, Commit currentTree, out string commonBranch, CancellationToken cancellationToken) {
             var refs = GetRefsToSearchForCommit(repository);
 
             Commit commit = currentTree.Parents.FirstOrDefault();
@@ -131,6 +132,8 @@ namespace Aderant.Build.VersionControl {
             int i = 0;
             // Recursively walk through the parents.
             while (commit != null) {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 i++;
 
                 interestingCommit[0] = commit;
