@@ -101,7 +101,7 @@
   </UsingTask>
 
 
-  <Target Name="CollectSharedProjectItems">
+  <Target Name="CollectSharedProjectItems" Returns="@(ProjectItems)">
     <PropertyGroup>
       <ScriptsDirectory Condition="'$(ScriptsDirectory)' == ''">$(MSBuildProjectDirectory)\</ScriptsDirectory>
       <ScriptsDirectory Condition="'$(ScriptsDirectory)' != '' and !HasTrailingSlash('$(ScriptsDirectory)')">$(ScriptsDirectory)\</ScriptsDirectory>
