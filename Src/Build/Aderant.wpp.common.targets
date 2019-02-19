@@ -78,12 +78,12 @@
                 w.WriteString(link);
                 w.WriteEndElement();
 
-                string comment = "";
-                var names = file.MetadataNames;
-                foreach (var name in names) {
-                  comment += "\r\n" + (string)name + ":" + file.GetMetadata((string)name);
-                }
-                w.WriteComment(comment);
+                //string comment = "";
+                //var names = file.MetadataNames;
+                //foreach (var name in names) {
+                //  comment += "\r\n" + (string)name + ":" + file.GetMetadata((string)name);
+                //}
+                //w.WriteComment(comment);
 
                 w.WriteStartElement("Visible");
                 w.WriteString("true");
@@ -154,6 +154,13 @@
         <Link>ViewModels\</Link>
         <Type>TypeScriptCompile</Type>
       </_FilesForSharedProject>
+
+      <_FilesForSharedProject Condition="'$(IncludeJSFiles)' == 'true'"
+                              Include="$(ScriptsDirectory)ViewModels\$(GlobExpression)*.js"
+                              Exclude="$(ScriptsDirectory)ViewModels\**\ThirdParty.*\**">
+        <Link>ViewModels\</Link>
+        <Type>TypeScriptCompile</Type>
+      </_FilesForSharedProject>
     </ItemGroup>
 
     <!-- Helpers -->
@@ -186,7 +193,7 @@
 
     <!-- Pull in other custom content -->
     <ItemGroup>
-      <_FilesForSharedProject Include="@(Content)" Condition="'%(Content.AddToProjectItems)' == 'true'" />
+      <ProjectItems Include="@(Content)" Condition="'%(Content.AddToProjectItems)' == 'true'" />
     </ItemGroup>
 
     <ItemGroup>
@@ -209,10 +216,15 @@
       ProjectRootDirectory="$(ScriptsDirectory)"
       ProjectItems="@(ProjectItems)" />
 
+    <ItemGroup>
+      <!-- Remove items which we will never again use - they just sit around taking up memory otherwise -->
+      <ProjectItems Remove="@(ProjectItems)" />
+    </ItemGroup>
+
   </Target>
 
 
-  <Target Name="CollectLinkedContentFiles" BeforeTargets="CopyLinkedContentFiles">
+  <Target Name="CollectLinkedContentFiles" BeforeTargets="CopyLinkedContentFiles" Returns="@(ContentToCopy)">
     <ItemGroup>
       <ContentToCopy Include="@(Content->HasMetadata('Link'))">
         <OriginalItemSpec>%(FullPath)</OriginalItemSpec>
@@ -238,6 +250,11 @@
           SkipUnchangedFiles="true"
           OverwriteReadOnlyFiles="true"
           UseHardlinksIfPossible="true" />
+
+    <ItemGroup>
+      <!-- Remove items which we will never again use - they just sit around taking up memory otherwise -->
+      <ContentToCopy Remove="@(ContentToCopy)" />
+    </ItemGroup>
 
   </Target>
 
