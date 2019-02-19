@@ -13,8 +13,10 @@
         AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
     <ParameterGroup>
       <OutputFile ParameterType="System.String" Required="true" />
+      <OutputXml ParameterType="System.String" Required="false"  Output="true" />
       <PathPropertyName ParameterType="System.String" Required="true" />
       <ProjectRootDirectory ParameterType="System.String" Required="true" />
+      <MSBuildProjectName ParameterType="System.String" Required="true" />
       <ProjectItems ParameterType="Microsoft.Build.Framework.ITaskItem[]" />
       <AssetFilter ParameterType="Microsoft.Build.Framework.ITaskItem[]" />
     </ParameterGroup>
@@ -22,6 +24,7 @@
     <Task>
       <Reference Include="System.Xml" />
       <Using Namespace="System" />
+      <Using Namespace="System.Text" />
       <Using Namespace="System.Xml" />
       <Code Type="Fragment" Language="cs">
         <![CDATA[
@@ -39,7 +42,18 @@
 
         string pathVariable = @"(" + PathPropertyName + ")";
 
-        using (var w = XmlWriter.Create(OutputFile, settings)) {
+        XmlWriter writer = null;
+
+        StringBuilder sb = null;
+
+        if (OutputXml != "true") {
+            writer = XmlWriter.Create(OutputFile, settings);
+        } else {
+            sb = new StringBuilder();
+            writer = XmlWriter.Create(sb, settings);
+        }
+
+        using (var w = writer) {
             w.WriteStartElement("Project", ns);
 
             w.WriteStartElement("Import");
@@ -52,7 +66,7 @@
             w.WriteAttributeString("Condition", string.Format("'$" + "({0})' == ''", PathPropertyName));
 
             // Need to uglify this string as we want the property expression, not the evalauted property value as
-            // if would always point to THIS file which wouldn't be useful. THis happens as the engine swaps the value as
+            // if would always point to THIS file which wouldn't be useful. This happens as the engine swaps the value as
             // this code is just a property expression itself
             w.WriteString(string.Format("$" + "({0})\\", "MSBuildThisFileDirectory"));
             w.WriteEndElement();
@@ -63,13 +77,23 @@
             foreach (var file in ProjectItems) {
                 var link = file.GetMetadata("Link");
 
+                if (string.IsNullOrWhiteSpace(link)) {
+                    throw new ArgumentException("The link metdata is not defined for item: " + file.ItemSpec);
+                }
+
                 var type = file.GetMetadata("Type");
                 if (string.IsNullOrWhiteSpace(type)) {
                     type = "Content";
                 }
 
+                var removeProjectName = file.GetMetadata("RemoveProjectName");
                 string fileAndExtension = file.GetMetadata("Filename") + file.GetMetadata("Extension");
                 string fileRelativePath = file.GetMetadata("RelativeDir").Replace(ProjectRootDirectory, "") + fileAndExtension;
+
+                if (string.Equals("true", removeProjectName, StringComparison.OrdinalIgnoreCase)) {
+                    link = link.Replace(MSBuildProjectName, "");
+                }
+                link = link.Replace(@"\\", @"\");
 
                 w.WriteStartElement(type);
                 w.WriteAttributeString("Include", "$" + pathVariable + fileRelativePath);
@@ -94,6 +118,10 @@
 
             w.WriteEndElement();
             w.WriteEndElement();
+        }
+
+        if (sb != null) {
+            OutputXml = sb.ToString();
         }
 ]]>
       </Code>
@@ -186,7 +214,7 @@
 
       <_FilesForSharedProject Include="$(ScriptsDirectory)ManualLogOn\$(GlobExpression)*">
         <Link>ManualLogOn\</Link>
-        <IncludeProjectName>false</IncludeProjectName>
+        <RemoveProjectName>true</RemoveProjectName>
         <Type>Content</Type>
       </_FilesForSharedProject>
     </ItemGroup>
@@ -208,18 +236,30 @@
   <Target Name="WriteContentFile"
           Condition="'$(OutputSharedWebContentFile)' == 'true'"
           AfterTargets="AfterBuild"
-          DependsOnTargets="CollectSharedProjectItems">
-
-    <WriteSharedContentFile
-      OutputFile="$(MSBuildProjectFullPath).shared"
-      PathPropertyName="$(MSBuildProjectName.Replace('.', ''))Path"
-      ProjectRootDirectory="$(ScriptsDirectory)"
-      ProjectItems="@(ProjectItems)" />
+          DependsOnTargets="CollectSharedProjectItems;WriteContentFileCore">
 
     <ItemGroup>
       <!-- Remove items which we will never again use - they just sit around taking up memory otherwise -->
       <ProjectItems Remove="@(ProjectItems)" />
     </ItemGroup>
+
+  </Target>
+
+
+  <Target Name="WriteContentFileCore"  DependsOnTargets="CollectSharedProjectItems">
+    <PropertyGroup>
+      <OutputSharedContentFileXml Condition="'$(OutputSharedContentFileXml)' == ''">false</OutputSharedContentFileXml>
+    </PropertyGroup>
+
+    <WriteSharedContentFile
+      PathPropertyName="$(MSBuildProjectName.Replace('.', ''))Path"
+      ProjectRootDirectory="$(ScriptsDirectory)"
+      MSBuildProjectName="$(WebProjectName)"
+      OutputFile="$(MSBuildProjectFullPath).shared"
+      OutputXml="$(OutputSharedContentFileXml)"
+      ProjectItems="@(ProjectItems)">
+      <Output TaskParameter="OutputXml" PropertyName="SharedContentFileXml" />
+    </WriteSharedContentFile>
 
   </Target>
 
@@ -237,7 +277,7 @@
   </Target>
 
 
-  <!-- Maintains the  F5 experience -->
+  <!-- Maintains the F5 experience -->
   <Target Name="CopyLinkedContentFiles"
           DependsOnTargets="CollectLinkedContentFiles"
           BeforeTargets="PreComputeCompileTypeScript;Build;CopyAllFilesToSingleFolderForMsdeploy"

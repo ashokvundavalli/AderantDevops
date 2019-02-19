@@ -3,10 +3,13 @@
   <Import Project="..\..\Aderant.wpp.common.targets" />
 
   <PropertyGroup>
-    <ScriptsDirectory>$(MSBuildThisFileDirectory)Web.Site1</ScriptsDirectory>
+    <ScriptsDirectory Condition="'$(ScriptsDirectory)' == ''">$(MSBuildThisFileDirectory)Web.Site1</ScriptsDirectory>
   </PropertyGroup>
 
   <Target Name="PackageWeb" Returns="@(ProjectItems)" DependsOnTargets="CollectSharedProjectItems">
+  </Target>
+
+  <Target Name="WriteContentFileXml" Returns="@(ProjectItems);$(SharedContentFileXml)" DependsOnTargets="WriteContentFileCore">
   </Target>
 
 </Project>

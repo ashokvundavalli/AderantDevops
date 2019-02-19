@@ -167,6 +167,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <SubType>Designer</SubType>
     </Content>
+    <Content Include="Packaging\Web\Web.Site1\ManualLogOn\Web.Site1\Web.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <None Include="VersionControl\Resources\CommitGraphWalking.ps1" />
     <Compile Include="VersionControl\ShaTests.cs" />
     <Compile Include="WarningRatchetTests.cs" />
