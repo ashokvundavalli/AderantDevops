@@ -133,7 +133,13 @@ namespace Aderant.Build.ProjectSystem {
 
         public virtual bool IsWebProject {
             get { return isWebProject.Evaluate(this); }
-            set { isWebProject = value ? Memoizer<ConfiguredProject>.True : Memoizer<ConfiguredProject>.False; }
+            set {
+                if (value) {
+                    isWebProject = Memoizer<ConfiguredProject>.True;
+                } else {
+                    isWebProject = Memoizer<ConfiguredProject>.False;
+                }
+            }
         }
 
         public virtual bool IsTestProject {
@@ -243,11 +249,13 @@ namespace Aderant.Build.ProjectSystem {
         public void Initialize(Lazy<ProjectRootElement> projectElement, string fullPath) {
             FullPath = fullPath;
 
-            project = InitializeProject(projectElement);
+            if (projectElement != null) {
+                project = InitializeProject(projectElement);
 
-            extractTypeGuids = extractTypeGuidsMemoizer;
-            isWebProject = isWebProjectMemoizer;
-            projectGuid = projectGuidMemoizer;
+                extractTypeGuids = extractTypeGuidsMemoizer;
+                isWebProject = isWebProjectMemoizer;
+                projectGuid = projectGuidMemoizer;
+            }
         }
 
         protected virtual Lazy<Project> InitializeProject(Lazy<ProjectRootElement> projectElement) {

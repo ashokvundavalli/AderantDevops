@@ -37,6 +37,48 @@ namespace UnitTest.Build.DependencyAnalyzer {
         }
 
         [TestMethod]
+        public void AlwaysBuild_flag_adds_rebuild_target() {
+            var mock = new Mock<IFileSystem2>();
+            mock.Setup(s => s.Root).Returns("");
+
+            var project = new BuildPlanGenerator(mock.Object);
+
+            var configuredProject = new TestConfiguredProject(null) {
+                SolutionFile = "A.sln",
+                IncludeInBuild = true,
+                OutputPath = @"..\..\Foo\Bar",
+                IsWebProject = false,
+                ProjectTypeGuids = new[] {
+                    WellKnownProjectTypeGuids.TestProject
+                },
+                BuildReason = new BuildReason { Flags = BuildReasonTypes.AlwaysBuild }
+            };
+
+            configuredProject.Initialize(null, "some_file.csproj");
+
+            var items = new List<List<IDependable>> {
+                new List<IDependable> {
+                   configuredProject
+                }
+            };
+
+            project.ItemGroupItemMaterialized += (sender, args) => {
+                var argsItemGroupItem = args.ItemGroupItem;
+                Assert.AreEqual("Rebuild", argsItemGroupItem["Targets"]);
+            };
+
+            Project generateProject = project.GenerateProject(
+                items,
+                new OrchestrationFiles
+                {
+                    BeforeProjectFile = "A",
+                    AfterProjectFile = "B"
+                });
+
+            generateProject.CreateXml();
+        }
+
+        [TestMethod]
         public void SetUseCommonOutputDirectory_groups_by_solution_root() {
             var projects = new ConfiguredProject[] {
                 new TestConfiguredProject(null) { SolutionFile = "A.sln", OutputPath = @"..\..\Foo\Bar" },

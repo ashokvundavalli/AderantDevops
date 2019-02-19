@@ -194,6 +194,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     return null;
                 }
 
+
                 propertiesForProjectInstance = AddSolutionConfigurationProperties(visualStudioProject, propertiesForProjectInstance);
                 propertiesForProjectInstance["Id"] = projectInstanceId.ToString("D");
 
@@ -208,13 +209,20 @@ namespace Aderant.Build.DependencyAnalyzer {
                 ItemGroupItem project = new ItemGroupItem(visualStudioProject.FullPath) {
                     ["Id"] = projectInstanceId.ToString("D"),
                     [BuildGroupId] = buildGroup.ToString(CultureInfo.InvariantCulture),
-                    ["Configuration"] = visualStudioProject.BuildConfiguration.ConfigurationName,
-                    ["Platform"] = visualStudioProject.BuildConfiguration.PlatformName,
-                    ["AdditionalProperties"] = $"Configuration={visualStudioProject.BuildConfiguration.ConfigurationName}; Platform={visualStudioProject.BuildConfiguration.PlatformName}",
                     ["IsWebProject"] = visualStudioProject.IsWebProject.ToString(),
                     // Indicates this file is not part of the build system
                     ["IsProjectFile"] = bool.TrueString,
                 };
+
+                if (visualStudioProject.BuildConfiguration != null) {
+                    project["Configuration"] = visualStudioProject.BuildConfiguration.ConfigurationName;
+                    project["Platform"] = visualStudioProject.BuildConfiguration.PlatformName;
+                    project["AdditionalProperties"] = $"Configuration={visualStudioProject.BuildConfiguration.ConfigurationName}; Platform={visualStudioProject.BuildConfiguration.PlatformName}";
+                }
+
+                if (visualStudioProject.BuildReason != null && visualStudioProject.BuildReason.Flags.HasFlag(BuildReasonTypes.AlwaysBuild)) {
+                    project["Targets"] = "Rebuild";
+                }
 
                 AddProjectOutputToUpdatePackage(propertiesForProjectInstance, visualStudioProject);
 
@@ -311,6 +319,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             return propertiesForProjectInstance;
         }
+
         private static void AddDefault(string key, string value, PropertyList propertiesForProjectInstance, PropertyList properties) {
             if (properties == null || !properties.ContainsKey(key)) {
                 propertiesForProjectInstance.Add(key, value);
@@ -394,12 +403,13 @@ namespace Aderant.Build.DependencyAnalyzer {
     }
 
     internal class ItemGroupItemMaterializedEventArgs {
-        public ItemGroupItem ItemGroupItem { get; }
-        public PropertyList Properties { get; }
 
         public ItemGroupItemMaterializedEventArgs(ItemGroupItem itemGroupItem, PropertyList properties) {
             ItemGroupItem = itemGroupItem;
             Properties = properties;
         }
+
+        public ItemGroupItem ItemGroupItem { get; }
+        public PropertyList Properties { get; }
     }
 }

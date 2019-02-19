@@ -144,6 +144,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
                 g,
                 g.GetDependencyOrder(),
                 orchestrationFiles,
+                false,
                 ChangesToConsider.None,
                 DependencyRelationshipProcessing.None);
 

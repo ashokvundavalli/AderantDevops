@@ -104,6 +104,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 projectGraph,
                 projectsInDependencyOrder,
                 files,
+                context.Switches.ExcludeTestProjects,
                 context.GetChangeConsiderationMode(),
                 context.GetRelationshipProcessingMode());
 
@@ -584,6 +585,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <param name="studioProjects"></param>
         /// <param name="visualStudioProjects">All the projects list.</param>
         /// <param name="orchestrationFiles">File metadata for the target files that will orchestrate the build</param>
+        /// <param name="switchesExcludeTestProjects"></param>
         /// <param name="changesToConsider">Build the current branch, the changed files since forking from master, or all?</param>
         /// <param name="dependencyProcessing">
         /// Build the directly affected downstream projects, or recursively search for all
@@ -593,6 +595,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             ProjectDependencyGraph studioProjects,
             IReadOnlyList<IDependable> visualStudioProjects,
             OrchestrationFiles orchestrationFiles,
+            bool excludeTestProjects,
             ChangesToConsider changesToConsider,
             DependencyRelationshipProcessing dependencyProcessing) {
 
@@ -608,7 +611,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             // Get all the dirty projects due to user's modification.
-            var dirtyProjects = visualStudioProjects.Where(p => IncludeProject(isDesktopBuild, p)).Select(x => x.Id).ToList();
+            var dirtyProjects = visualStudioProjects.Where(p => IncludeProject(isDesktopBuild, excludeTestProjects, p)).Select(x => x.Id).ToList();
 
             MarkWebProjectsDirty(studioProjects);
 
@@ -636,13 +639,20 @@ namespace Aderant.Build.DependencyAnalyzer {
             return filteredProjects;
         }
 
-        private static bool IncludeProject(bool desktopBuild, IDependable x) {
+        private static bool IncludeProject(bool desktopBuild, bool excludeTestProjects, IDependable x) {
             var configuredProject = x as ConfiguredProject;
 
             if (desktopBuild) {
                 if (configuredProject != null) {
                     if (!configuredProject.IncludeInBuild) {
                         return false;
+                    }
+
+                    if (excludeTestProjects) {
+                        // Web projects are also test projects so don't be too aggressive here.
+                        if (configuredProject.IsTestProject && !configuredProject.IsWebProject) {
+                            return false;
+                        }
                     }
 
                     if (configuredProject.IsDirty && configuredProject.BuildReason.Flags == BuildReasonTypes.CachedBuildNotFound) {

@@ -9,8 +9,8 @@ namespace Aderant.Build.Utilities {
             : base(function, argComparer) {
         }
 
-        public static Memoizer<TArg> True { get; set; } = new Memoizer<TArg>(arg => true);
-        public static Memoizer<TArg> False { get; set; } = new Memoizer<TArg>(arg => false);
+        public static Memoizer<TArg> True { get; } = new Memoizer<TArg>(arg => true);
+        public static Memoizer<TArg> False { get; } = new Memoizer<TArg>(arg => false);
     }
 
     /// <summary>
