@@ -46,26 +46,11 @@ namespace Aderant.Build.Packaging {
         public string CommonDependencyDirectory { get; set; }
         public IReadOnlyCollection<string> StagingDirectoryWhitelist { get; set; }
 
-        private static readonly string[] knownOutputPaths = new string[] {
-            @"Bin\Module\",
-            @"Bin\Test\"
-        };
-
         internal static string CalculateRestorePath(string fileWrite, string outputPath) {
             int index = fileWrite.IndexOf(outputPath, StringComparison.OrdinalIgnoreCase);
             if (index == 0) {
                 // Retain the relative path of the build artifact.
                 return fileWrite.Remove(index, outputPath.Length);
-            }
-
-            // TODO: Remove this
-            // If the file path matches any known output paths, proceed.
-            foreach (string knownOutputPath in knownOutputPaths) {
-                index = fileWrite.IndexOf(knownOutputPath, StringComparison.OrdinalIgnoreCase);
-
-                if (index != -1) {
-                    return fileWrite.Remove(0, index + knownOutputPath.Length);
-                }
             }
 
             return null;
@@ -145,11 +130,13 @@ namespace Aderant.Build.Packaging {
                         }
 
                         if (!string.IsNullOrWhiteSpace(CommonOutputDirectory)) {
-                            AddFileDestination(
-                                seenDestinationPaths,
-                                artifactFile,
-                                Path.GetFullPath(Path.Combine(CommonOutputDirectory, filePath)),
-                                copyOperations);
+                            if (webProjects.Contains(project.Value)) {
+                                AddFileDestination(
+                                    seenDestinationPaths,
+                                    artifactFile,
+                                    Path.GetFullPath(Path.Combine(CommonOutputDirectory, filePath)),
+                                    copyOperations);
+                            }
                         }
 
                         if (copyOperations.Count == copyCount) {
