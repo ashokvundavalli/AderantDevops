@@ -8,6 +8,8 @@
 
   <PropertyGroup>
     <DispatchToInnerBuildDependsOn>
+      $(DispatchToInnerBuildDependsOn);
+      GetContextVariables;
       AssignProjectProperties
     </DispatchToInnerBuildDependsOn>
   </PropertyGroup>
@@ -40,7 +42,7 @@
 
     <MSBuild Projects="@(_ProjectsInGroup)"
              StopOnFirstFailure="true"
-             Targets="%(BuildAction)"
+             Targets="%(_ProjectsInGroup.Targets)"
              BuildInParallel="$(BuildInParallel)">
     </MSBuild>
 
@@ -51,11 +53,7 @@
   </Target>
 
 
-  <Target Name="CreateProjectGroup" Returns="@(ProjectsInGroup)">
-    <ItemGroup>
-      <ProjectsInGroup Include="@(ProjectsToBuild->WithMetadataValue('BuildGroupId', '$(BuildGroupId)'))" />
-    </ItemGroup>
-
+  <Target Name="GetContextVariables">
     <GetOrPutContextVariable
       AllowInProcLookup="true"
       VariableName="_GitDir">
@@ -67,6 +65,13 @@
       VariableName="IsBuildCacheEnabled">
       <Output TaskParameter="Value" PropertyName="IsBuildCacheEnabled" />
     </GetOrPutContextVariable>
+  </Target>
+
+
+  <Target Name="CreateProjectGroup" Returns="@(ProjectsInGroup)">
+    <ItemGroup>
+      <ProjectsInGroup Include="@(ProjectsToBuild->WithMetadataValue('BuildGroupId', '$(BuildGroupId)'))" />
+    </ItemGroup>
 
     <!-- Properties available to both projects files and orchestration participants -->
     <PropertyGroup>
@@ -99,20 +104,21 @@
 
   <Target Name="AssignProjectProperties" Inputs="%(ProjectsInGroup.Properties)" Outputs="%(Identity)._" DependsOnTargets="CreateProjectGroup">
 
-    <!-- Parse the scalar property list into an item group -->
+    <!--Parse the scalar property list into an item group-->
     <CreateItem Include="_ParsedPropertyList" AdditionalMetadata="%(ProjectsInGroup.Properties)">
-      <Output TaskParameter="Include" ItemName="_ParsedPropertyList" />
+      <Output TaskParameter="Include" ItemName="_ProjectProperties" />
     </CreateItem>
 
+    <!-- Extract the solution root value -->
     <PropertyGroup>
-      <_SolutionRoot>%(_ParsedPropertyList.SolutionRoot)</_SolutionRoot>
+      <_SolutionRoot>@(_ProjectProperties->Metadata('SolutionRoot'))</_SolutionRoot>
     </PropertyGroup>
 
     <ItemGroup>
       <ProjectsInGroup>
         <Properties>
-          %(ProjectsInGroup.Properties);       <!-- Include the original properties list -->
           $(PropertiesCommonToAllProjects);    <!-- Include global (non-project specific) properties -->
+          %(ProjectsInGroup.Properties);       <!-- Include the original properties list -->
           SolutionRoot=$(_SolutionRoot);       <!-- Merge in build system properties that hang off SolutionRoot -->
           BinModuleDirectory=$(_SolutionRoot)\Bin\Module\;
           BinTestDirectory=$(_SolutionRoot)\Bin\Test\;
@@ -122,10 +128,8 @@
           VariableScopeId=$(_SolutionRoot)
         </Properties>
 
-        <!-- Set the default target metadata -->
-        <BuildAction></BuildAction>
         <!-- If it's a build system project default to the EndToEnd target -->
-        <BuildAction Condition="'%(IsProjectFile)' != 'true'">EndToEnd</BuildAction>
+        <Targets Condition="'%(IsProjectFile)' != 'true'">EndToEnd</Targets>
       </ProjectsInGroup>
     </ItemGroup>
 
@@ -136,7 +140,7 @@
 
     <Message Text="Setting resume point to group $(BuildGroupId)" />
 
-  <Message Text="##vso[task.logdetail id=$(LogId);progress=100;state=Completed;Result=Failed]Build group $(BuildGroupId) failed. @(_ProjectsInGroup)"
+    <Message Text="##vso[task.logdetail id=$(LogId);progress=100;state=Completed;Result=Failed]Build group $(BuildGroupId) failed. @(_ProjectsInGroup)"
              Condition="'$(IsDesktopBuild)' != 'true'" />
 
     <XmlPoke XmlInputPath="$(BuildPlanFile)"
