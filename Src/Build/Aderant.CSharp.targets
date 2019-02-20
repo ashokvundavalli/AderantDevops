@@ -222,9 +222,10 @@
 
     <PropertyGroup>
       <!-- Create the assembly search paths property. This defines where\how references are resolved -->
-      <!--This path order places out search paths first-->
+      <!--This path order places our search paths first-->
       <AssemblySearchPaths>
         $(AlternativeOutputDirectory);
+        $(AlternativeOutputDirectory)StoredProcedures;
         $(RootFolder)\Dependencies\;
         @(AssemblySearchDirectories);
         $(AssemblySearchPaths);
