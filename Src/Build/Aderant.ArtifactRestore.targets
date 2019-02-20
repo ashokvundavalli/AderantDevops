@@ -58,7 +58,7 @@
 
     <!-- Replicate the core compiled asset -->
     <CopyFiles SourceFiles="@(WebAssemblies)"
-               DestinationFolder="$(AlternativeOutputDirectory)"
+               DestinationFiles="@(WebAssemblies->'$(AlternativeOutputDirectory)%(RecursiveDir)%(Filename)%(Extension)')"
                UseHardlinks="true" />
   </Target>
 
