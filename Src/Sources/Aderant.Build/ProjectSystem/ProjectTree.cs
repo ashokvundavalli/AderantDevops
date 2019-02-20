@@ -146,7 +146,7 @@ namespace Aderant.Build.ProjectSystem {
             if (LoadedUnconfiguredProjects != null) {
                 ErrorUtilities.IsNotNull(collector.ProjectConfiguration, nameof(collector.ProjectConfiguration));
 
-                using (PerformanceTimer.Start(ms => logger.Info("Loading projects completed in: " + ms))) {
+                using (PerformanceTimer.Start(ms => logger?.Info("Loading projects completed in: " + ms))) {
                     foreach (var unconfiguredProject in LoadedUnconfiguredProjects) {
                         cancellationToken.ThrowIfCancellationRequested();
 
@@ -172,7 +172,7 @@ namespace Aderant.Build.ProjectSystem {
                 }
             }
 
-            using (PerformanceTimer.Start(ms => logger.Info("Build dependencies collected in: " + ms))) {
+            using (PerformanceTimer.Start(ms => logger.Info("Build tree dependencies collected in: " + ms))) {
                 foreach (var project in LoadedConfiguredProjects) {
                     try {
                         GenerateCurrentSolutionConfigurationXml(collector.ProjectConfiguration);
