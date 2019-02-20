@@ -57,9 +57,9 @@
     </ItemGroup>
 
     <!-- Replicate the core compiled asset -->
-    <Copy SourceFiles="@(WebAssemblies)"
-          DestinationFolder="$(AlternativeOutputDirectory)"
-          UseHardlinksIfPossible="true" />
+    <CopyFiles SourceFiles="@(WebAssemblies)"
+               DestinationFolder="$(AlternativeOutputDirectory)"
+               UseHardlinks="true" />
   </Target>
 
   <Target Name="RestoreContent" DependsOnTargets="$(ContentRestoreProcessDependsOn)" />

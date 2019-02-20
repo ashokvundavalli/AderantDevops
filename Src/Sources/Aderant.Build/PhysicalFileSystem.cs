@@ -343,29 +343,6 @@ namespace Aderant.Build {
             File.Copy(source, destination, overwrite);
         }
 
-        private IEnumerable<string> SearchByPattern(string startingDirectory, string filter, IReadOnlyCollection<string> ceilingDirectories) {
-            // Canonicalize our starting location
-            string lookInDirectory = Path.GetFullPath(startingDirectory);
-
-            do {
-                IEnumerable<string> entries = this.GetFiles(lookInDirectory, filter, false);
-
-                // If we successfully locate the file in the directory that we're
-                // looking in, simply return that location. Otherwise we'll
-                // keep moving up the tree.
-                if (entries.Any()) {
-                    // We've found the file, return the directory we found it in
-                    return entries;
-                } else {
-                    // GetDirectoryName will return null when we reach the root
-                    // terminating our search
-                    lookInDirectory = Path.GetDirectoryName(lookInDirectory);
-                }
-            } while (lookInDirectory != null);
-
-            return Enumerable.Empty<string>();
-        }
-
         private string AddFileCore(string path, Action<Stream> writeToStream) {
             EnsureDirectory(Path.GetDirectoryName(path));
 
@@ -470,6 +447,17 @@ namespace Aderant.Build {
         }
 
         private void TryCopyViaLink(string fileLocation, string fileDestination, CreateSymlinkLink createLink) {
+            string[] links = NativeMethods.GetFileSiblingHardLinks(fileLocation);
+
+            if (links != null && links.Length > 1) {
+                // Test if source and destination are already the same file.
+                foreach (var link in links) {
+                    if (string.Equals(link, fileDestination, StringComparison.OrdinalIgnoreCase)) {
+                        return;
+                    }
+                }
+            }
+
             // CreateHardLink and CreateSymbolicLink cannot overwrite an existing file or link
             // so we need to delete the existing entry before we create the hard or symbolic link.
             DeleteFile(fileDestination);
