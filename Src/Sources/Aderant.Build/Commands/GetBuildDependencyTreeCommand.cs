@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
+using System.Threading;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
 using Aderant.Build.ProjectSystem;
@@ -10,6 +11,7 @@ namespace Aderant.Build.Commands {
 
     [Cmdlet("Get", "BuildDependencyTree")]
     public class GetBuildDependencyTreeCommand : PSCmdlet {
+        private CancellationTokenSource cts;
 
         [Parameter(Mandatory = false, Position = 0)]
         public string[] Directories { get; set; }
@@ -24,6 +26,8 @@ namespace Aderant.Build.Commands {
                 Directories = new[] { SessionState.Path.CurrentFileSystemLocation.Path };
             }
 
+            cts = new CancellationTokenSource();
+
             var logger = new PowerShellLogger(this.Host);
 
             var projectTree = ProjectTree.CreateDefaultImplementation(logger);
@@ -32,9 +36,9 @@ namespace Aderant.Build.Commands {
 
             projectTree.LoadProjects(
                 Directories,
-                new[] { @"\__" });
+                new[] { @"\__" }, cts.Token);
 
-            projectTree.CollectBuildDependencies(collector).Wait();
+            projectTree.CollectBuildDependencies(collector, cts.Token).Wait();
 
             var buildDependencyGraph = projectTree.CreateBuildDependencyGraph(collector);
 
@@ -48,6 +52,11 @@ namespace Aderant.Build.Commands {
             string treeText = ProjectSequencer.PrintBuildTree(groups, ShowPath);
 
             Host.UI.Write(treeText);
+        }
+
+        protected override void StopProcessing() {
+            cts.Cancel();
+            base.StopProcessing();
         }
     }
 }

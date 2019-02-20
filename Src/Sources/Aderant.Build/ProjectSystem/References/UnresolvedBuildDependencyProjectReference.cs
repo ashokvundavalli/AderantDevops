@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 
 namespace Aderant.Build.ProjectSystem.References {
     [DebuggerDisplay("UnresolvedBuildDependencyProjectReference: {Id}")]
-    internal class UnresolvedBuildDependencyProjectReference : UnresolvedReferenceBase<IUnresolvedBuildDependencyProjectReference, IBuildDependencyProjectReference, UnresolvedP2PReferenceMoniker>, IUnresolvedBuildDependencyProjectReference {        
+    internal class UnresolvedBuildDependencyProjectReference : UnresolvedReferenceBase<IUnresolvedBuildDependencyProjectReference, IBuildDependencyProjectReference, UnresolvedP2PReferenceMoniker>, IUnresolvedBuildDependencyProjectReference {
+        private string fileName;
 
         public UnresolvedBuildDependencyProjectReference(BuildDependencyProjectReferencesService service, UnresolvedP2PReferenceMoniker moniker)
             : base(service, moniker) {
@@ -21,6 +23,14 @@ namespace Aderant.Build.ProjectSystem.References {
 
         public string ProjectPath {
             get { return Moniker.ProjectPath; }
+        }
+
+        /// <summary>
+        /// The file name portion of <see cref="ProjectPath"/>.
+        /// Computed lazily.
+        /// </summary>
+        public string ProjectFileName {
+            get { return fileName ?? (fileName = Path.GetFileName(ProjectPath)); }
         }
 
         public override string Id {

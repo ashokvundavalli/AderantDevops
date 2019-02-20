@@ -23,6 +23,7 @@ namespace Aderant.Build.ProjectSystem {
     [ExportMetadata("Scope", nameof(ConfiguredProject))]
     [DebuggerDisplay("{ProjectGuid}::{FullPath}")]
     internal class ConfiguredProject : AbstractArtifact, IReference, IBuildDependencyProjectReference, IAssemblyReference {
+
         private static Memoizer<ConfiguredProject, bool> isWebProjectMemoizer = new Memoizer<ConfiguredProject, bool>(
             configuredProject => {
                 var guids = configuredProject.ProjectTypeGuids;
@@ -32,6 +33,11 @@ namespace Aderant.Build.ProjectSystem {
 
                 return false;
             });
+
+
+        private static Memoizer<ConfiguredProject, string> outputPathMemoizer = new Memoizer<ConfiguredProject, string>(configuredProject => configuredProject.project.Value.GetPropertyValue("OutputType"));
+
+        private static Memoizer<ConfiguredProject, string> outputAssemblyMemoizer = new Memoizer<ConfiguredProject, string>(configuredProject => configuredProject.project.Value.GetPropertyValue("AssemblyName"));
 
         private static Memoizer<ConfiguredProject, IReadOnlyList<Guid>> extractTypeGuidsMemoizer = new Memoizer<ConfiguredProject, IReadOnlyList<Guid>>(
             args => {
@@ -55,9 +61,15 @@ namespace Aderant.Build.ProjectSystem {
                 return new Guid[0];
             });
 
+        private static IDictionary<string, string> globalProperties = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+            { "WebDependencyVersion", "-1" },
+            { "SolutionDir", "" }
+        };
+
         private List<string> dirtyFiles;
 
         private Memoizer<ConfiguredProject, IReadOnlyList<Guid>> extractTypeGuids;
+        private string fileName;
         private Memoizer<ConfiguredProject, bool> isWebProject;
 
         private Lazy<Project> project;
@@ -113,11 +125,23 @@ namespace Aderant.Build.ProjectSystem {
         public IProjectTree Tree { get; }
 
         public virtual string OutputAssembly {
-            get { return project.Value.GetPropertyValue("AssemblyName"); }
+            get {
+                if (outputPathMemoizer != null) {
+                    return outputAssemblyMemoizer.Evaluate(this);
+                }
+
+                return null;
+            }
         }
 
         public virtual string OutputType {
-            get { return project.Value.GetPropertyValue("OutputType"); }
+            get {
+                if (outputPathMemoizer != null) {
+                    return outputPathMemoizer.Evaluate(this);
+                }
+
+                return null;
+            }
         }
 
         public virtual IReadOnlyList<Guid> ProjectTypeGuids {
@@ -234,6 +258,19 @@ namespace Aderant.Build.ProjectSystem {
             get { return IsWebProject; }
         }
 
+        /// <summary>
+        /// The file name portion of <see cref="FullPath" />.
+        /// Computed lazily.
+        /// </summary>
+        public string FileName {
+            get { return fileName ?? (fileName = Path.GetFileName(FullPath)); }
+        }
+
+        /// <summary>
+        /// A project collection to associate with this instance.
+        /// </summary>
+        internal ProjectCollection ProjectCollection { get; set; }
+
         public virtual Guid ProjectGuid {
             get { return projectGuid.Evaluate(this); }
         }
@@ -259,18 +296,14 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         protected virtual Lazy<Project> InitializeProject(Lazy<ProjectRootElement> projectElement) {
-            return new Lazy<Project>(
-                () => {
-                    IDictionary<string, string> globalProperties = new Dictionary<string, string> {
-                        { "WebDependencyVersion", "-1" },
-                        { "SolutionDir", "" }
-                    };
-
-                    return new Project(projectElement.Value, globalProperties, null, CreateProjectCollection(), ProjectLoadSettings.IgnoreMissingImports);
-                });
+            return new Lazy<Project>(() => new Project(projectElement.Value, globalProperties, null, CreateProjectCollection(), ProjectLoadSettings.IgnoreMissingImports));
         }
 
-        private static ProjectCollection CreateProjectCollection() {
+        private ProjectCollection CreateProjectCollection() {
+            if (ProjectCollection != null) {
+                return ProjectCollection;
+            }
+
             var collection = new ProjectCollection {
                 IsBuildEnabled = false,
                 DisableMarkDirty = true,

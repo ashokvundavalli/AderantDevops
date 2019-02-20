@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Xml;
-using System.Xml.Linq;
 using Aderant.Build.Utilities;
 using Microsoft.Build.Construction;
 using Microsoft.Build.Evaluation;
@@ -12,9 +12,24 @@ using Microsoft.Build.Evaluation;
 namespace Aderant.Build.ProjectSystem {
     [Export(typeof(UnconfiguredProject))]
     internal class UnconfiguredProject {
+
+        private static readonly Memoizer<UnconfiguredProject, Guid> projectGuidMemoizer = new Memoizer<UnconfiguredProject, Guid>(
+            project => {
+                foreach (var propertyElement in project.projectElement.Value.Properties) {
+                    if (propertyElement.Name == "ProjectGuid") {
+                        if (propertyElement.Value != null) {
+                            return Guid.Parse(propertyElement.Value);
+                        }
+                    }
+                }
+
+                return Guid.Empty;
+            }
+        );
+
+        private bool isTemplateProject;
         private Lazy<ProjectRootElement> projectElement;
         private Memoizer<UnconfiguredProject, Guid> projectGuid;
-        private bool isTemplateProject;
 
         public UnconfiguredProject() {
         }
@@ -27,6 +42,9 @@ namespace Aderant.Build.ProjectSystem {
         internal ExportFactory<ConfiguredProject> ConfiguredProjectFactory { get; set; }
 
         public string FullPath { get; private set; }
+
+
+        public ProjectCollection ProjectCollection { get; set; }
 
         public bool IsTemplateProject() {
             if (isTemplateProject) {
@@ -54,7 +72,6 @@ namespace Aderant.Build.ProjectSystem {
                     if (ProjectCollection == null) {
                         // Create a project collection for each project since the toolset might change depending on the type of project
                         projectCollection = CreateProjectCollection();
-                        projectCollection.SkipEvaluation = true;
                     } else {
                         projectCollection = ProjectCollection;
                     }
@@ -73,40 +90,53 @@ namespace Aderant.Build.ProjectSystem {
                         element = ProjectRootElement.Create(xmlReader, projectCollection);
                     }
 
-                    if (!string.IsNullOrEmpty(FullPath)) {
-                        element.FullPath = projectLocation;
-                    } else {
-                        element.FullPath = Path.GetRandomFileName();
-                    }
+                    RemoveImports(element);
+
+                    AssignPath(projectLocation, element);
 
                     return element;
 
-                }, LazyThreadSafetyMode.PublicationOnly);
+                },
+                LazyThreadSafetyMode.PublicationOnly);
 
-
-            this.projectGuid = new Memoizer<UnconfiguredProject, Guid>(
-                project => {
-                    foreach (var propertyElement in project.projectElement.Value.Properties) {
-                        if (propertyElement.Name == "ProjectGuid") {
-                            if (propertyElement.Value != null) {
-                                return Guid.Parse(propertyElement.Value);
-                            }
-                        }
-                    }
-                    return Guid.Empty;
-                }, EqualityComparer<object>.Default);
+            projectGuid = projectGuidMemoizer;
         }
 
-        public ProjectCollection ProjectCollection { get; set; }
+        private void AssignPath(string projectLocation, ProjectRootElement element) {
+            if (!string.IsNullOrEmpty(FullPath)) {
+                element.FullPath = projectLocation;
+            } else {
+                element.FullPath = Path.GetRandomFileName();
+            }
+        }
+
+        private static void RemoveImports(ProjectRootElement element) {
+            // PERF: We don't care about any imports, just the base project data
+            var imports = element.Imports.ToList();
+            foreach (var import in imports) {
+                element.RemoveChild(import);
+            }
+        }
 
         private ProjectCollection CreateProjectCollection() {
             ProjectCollection projectCollection = new ProjectCollection();
+            projectCollection.SkipEvaluation = true;
+            projectCollection.IsBuildEnabled = false;
             return projectCollection;
         }
 
         public virtual ConfiguredProject LoadConfiguredProject(IProjectTree projectTree) {
             var result = ConfiguredProjectFactory.CreateExport();
             var configuredProject = result.Value;
+
+            IProjectTreeInternal projectTreeInternal = projectTree as IProjectTreeInternal;
+            if (projectTreeInternal != null) {
+                ProjectCollection projectCollection = projectTreeInternal.GetProjectCollection();
+
+                if (projectCollection != null) {
+                    configuredProject.ProjectCollection = projectCollection;
+                }
+            }
 
             configuredProject.Initialize(projectElement, FullPath);
             return configuredProject;

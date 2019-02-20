@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
@@ -14,10 +15,11 @@ namespace Aderant.Build.ProjectSystem.References {
     internal class BuildDependencyProjectReferencesService : ResolvableReferencesProviderBase<IUnresolvedBuildDependencyProjectReference, IBuildDependencyProjectReference>, IBuildDependencyProjectReferencesService {
         private readonly ILogger logger;
 
-        static List<Guid> projectReferenceGuidsInError = new List<Guid>();
+        static ConcurrentBag<Guid> projectReferenceGuidsInError = new ConcurrentBag<Guid>();
+        private IReadOnlyCollection<ConfiguredProject> projects;
 
         public static void ClearProjectReferenceGuidsInError() {
-            projectReferenceGuidsInError = new List<Guid>();
+            projectReferenceGuidsInError = new ConcurrentBag<Guid>();
         }
 
         [ImportingConstructor]
@@ -27,11 +29,21 @@ namespace Aderant.Build.ProjectSystem.References {
         }
 
         protected override IBuildDependencyProjectReference CreateResolvedReference(IReadOnlyCollection<IUnresolvedReference> references, IUnresolvedBuildDependencyProjectReference unresolved, Dictionary<string, string> aliasMap) {
-            var projects = this.ConfiguredProject.Tree.LoadedConfiguredProjects;
+            if (projects == null) {
+                projects = ConfiguredProject.Tree.LoadedConfiguredProjects;
+            }
 
             try {
                 ConfiguredProject dependency = projects.SingleOrDefault(project => project.ProjectGuid == unresolved.ProjectGuid);
                 if (dependency != null) {
+
+                    // Sanity check. Ensure the resolved reference at least looks like the correct project.
+                    if (unresolved.ProjectFileName != dependency.FileName) {
+                        LogMangled(unresolved, dependency);
+
+                        // Invalidate the bad reference.
+                        dependency = null;
+                    }
                     return dependency;
                 }
 
@@ -53,13 +65,17 @@ namespace Aderant.Build.ProjectSystem.References {
             var resolvedReference = projects.SingleOrDefault(s => string.Equals(s.FullPath, fullPathToOtherProject, StringComparison.OrdinalIgnoreCase));
 
             if (resolvedReference != null) {
-                if (!projectReferenceGuidsInError.Contains(unresolved.ProjectGuid)) {
-                    logger.Warning($"The ProjectReference GUID {unresolved.ProjectGuid} in {this.ConfiguredProject.FullPath} for {unresolved.ProjectPath} does not match the target project of {resolvedReference.ProjectGuid}. Update the Project element to use the correct GUID to prevent the build from selecting the wrong project.");
-                    projectReferenceGuidsInError.Add(unresolved.ProjectGuid);
-                }
+                LogMangled(unresolved, resolvedReference);
             }
 
             return resolvedReference;
+        }
+
+        private void LogMangled(IUnresolvedBuildDependencyProjectReference unresolved, ConfiguredProject resolvedReference) {
+            if (!projectReferenceGuidsInError.Contains(unresolved.ProjectGuid)) {
+                logger.Warning($"The ProjectReference GUID {unresolved.ProjectGuid} in {this.ConfiguredProject.FullPath} for {unresolved.ProjectPath} does not match the target project of {resolvedReference.ProjectGuid}. Update the Project element to use the correct GUID to prevent the build from selecting the wrong project.");
+                projectReferenceGuidsInError.Add(unresolved.ProjectGuid);
+            }
         }
 
         protected override IUnresolvedBuildDependencyProjectReference CreateUnresolvedReference(ProjectItem projectItem) {

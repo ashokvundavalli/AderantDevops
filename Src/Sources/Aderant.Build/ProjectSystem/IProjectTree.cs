@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.PipelineService;
+using Microsoft.Build.Evaluation;
 
 namespace Aderant.Build.ProjectSystem {
 
@@ -21,7 +23,7 @@ namespace Aderant.Build.ProjectSystem {
         /// <param name="excludeFilterPatterns"></param>
         void LoadProjects(string directory, IReadOnlyCollection<string> excludeFilterPatterns);
 
-        void LoadProjects(IReadOnlyCollection<string> directories, IReadOnlyCollection<string> excludeFilterPatterns);
+        void LoadProjects(IReadOnlyCollection<string> directories, IReadOnlyCollection<string> excludeFilterPatterns, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// Adds a configured project to this tree.
@@ -32,7 +34,7 @@ namespace Aderant.Build.ProjectSystem {
         /// <summary>
         /// Collects the build dependencies required to build the artifacts in this result.
         /// </summary>
-        Task CollectBuildDependencies(BuildDependenciesCollector collector);
+        Task CollectBuildDependencies(BuildDependenciesCollector collector, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// Analyzes the build dependencies to produce a high level representation of the build order.

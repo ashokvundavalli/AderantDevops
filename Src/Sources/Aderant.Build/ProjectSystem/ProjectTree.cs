@@ -5,11 +5,11 @@ using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using System.Xml;
 using Aderant.Build.DependencyAnalyzer;
-using Aderant.Build.IO;
 using Aderant.Build.Logging;
 using Aderant.Build.Model;
 using Aderant.Build.PipelineService;
@@ -104,16 +104,30 @@ namespace Aderant.Build.ProjectSystem {
             LoadProjects(new[] { directory }, excludeFilterPatterns);
         }
 
-        public void LoadProjects(IReadOnlyCollection<string> directories, IReadOnlyCollection<string> excludeFilterPatterns) {
+        public void LoadProjects(IReadOnlyCollection<string> directories, IReadOnlyCollection<string> excludeFilterPatterns, CancellationToken cancellationToken = default(CancellationToken)) {
+            UnloadAllProjects();
+
             EnsureUnconfiguredProjects();
 
             logger.Info("Raw scanning paths: " + string.Join(",", directories));
 
-            DirectoryGroveler groveler = new DirectoryGroveler(Services.FileSystem);
-            groveler.Grovel(directories.ToList(), excludeFilterPatterns.ToList());
+            DirectoryGroveler groveler;
+            using (PerformanceTimer.Start((duration) => logger.Info("Directory scanning completed in: " + duration))) {
+                groveler = new DirectoryGroveler(Services.FileSystem);
+                groveler.Grovel(directories.ToList(), excludeFilterPatterns.ToList());
+            }
 
-            projectCollection = new ProjectCollection { SkipEvaluation = true };
-            ActionBlock<string> parseBlock = new ActionBlock<string>(s => LoadAndParseProjectFile(s), new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = ParallelismHelper.MaxDegreeOfParallelism });
+            projectCollection = new ProjectCollection {
+                SkipEvaluation = true,
+                IsBuildEnabled = false
+            };
+
+            ActionBlock<string> parseBlock = new ActionBlock<string>(
+                s => LoadAndParseProjectFile(s),
+                new ExecutionDataflowBlockOptions {
+                    MaxDegreeOfParallelism = ParallelismHelper.MaxDegreeOfParallelism,
+                    CancellationToken = cancellationToken
+                });
 
             foreach (var file in groveler.ProjectFiles) {
                 parseBlock.Post(file);
@@ -127,43 +141,62 @@ namespace Aderant.Build.ProjectSystem {
                 .GetResult();
         }
 
-        public async Task CollectBuildDependencies(BuildDependenciesCollector collector) {
+        public async Task CollectBuildDependencies(BuildDependenciesCollector collector, CancellationToken cancellationToken = default(CancellationToken)) {
             // Null checked to allow unit testing where projects are inserted directly
             if (LoadedUnconfiguredProjects != null) {
                 ErrorUtilities.IsNotNull(collector.ProjectConfiguration, nameof(collector.ProjectConfiguration));
 
-                foreach (var unconfiguredProject in LoadedUnconfiguredProjects) {
-                    try {
-                        if (!unconfiguredProject.IsTemplateProject()) {
-                            ConfiguredProject project = unconfiguredProject.LoadConfiguredProject(this);
-                            project.AssignProjectConfiguration(collector.ProjectConfiguration);
-                        } else {
-                            if (logger != null) {
-                                logger.Info("Ignored template project: {0}", unconfiguredProject.FullPath);
-                            }
-                        }
-                    } catch (Exception ex) {
-                        if (logger != null) {
-                            logger.Error("Project {0} failed to load. {1}", unconfiguredProject.FullPath, ex.Message);
-                        }
+                using (PerformanceTimer.Start(ms => logger.Info("Loading projects completed in: " + ms))) {
+                    foreach (var unconfiguredProject in LoadedUnconfiguredProjects) {
+                        cancellationToken.ThrowIfCancellationRequested();
 
-                        if (ex is DuplicateGuidException) {
-                            throw;
+                        try {
+                            if (!unconfiguredProject.IsTemplateProject()) {
+                                ConfiguredProject project = unconfiguredProject.LoadConfiguredProject(this);
+                                project.AssignProjectConfiguration(collector.ProjectConfiguration);
+                            } else {
+                                if (logger != null) {
+                                    logger.Info("Ignored template project: {0}", unconfiguredProject.FullPath);
+                                }
+                            }
+                        } catch (Exception ex) {
+                            if (logger != null) {
+                                logger.Error("Project {0} failed to load. {1}", unconfiguredProject.FullPath, ex.Message);
+                            }
+
+                            if (ex is DuplicateGuidException) {
+                                throw;
+                            }
                         }
                     }
                 }
             }
 
-            foreach (var project in LoadedConfiguredProjects) {
-                try {
-                    GenerateCurrentSolutionConfigurationXml(collector.ProjectConfiguration);
+            using (PerformanceTimer.Start(ms => logger.Info("Build dependencies collected in: " + ms))) {
+                foreach (var project in LoadedConfiguredProjects) {
+                    try {
+                        GenerateCurrentSolutionConfigurationXml(collector.ProjectConfiguration);
 
-                    await project.CollectBuildDependencies(collector);
-                } catch (Exception ex) {
-                    logger.LogErrorFromException(ex, false, false);
-                    throw;
+                        await project.CollectBuildDependencies(collector);
+
+                    } catch (Exception ex) {
+                        logger.LogErrorFromException(ex, false, false);
+                        throw;
+                    }
                 }
             }
+
+            UnloadAllProjects();
+        }
+
+        private void UnloadAllProjects() {
+            if (projectCollection != null) {
+                projectCollection.UnloadAllProjects();
+            }
+
+            projectCollection = null;
+
+            GetProjectCollection().UnloadAllProjects();
         }
 
         public DependencyGraph CreateBuildDependencyGraph(BuildDependenciesCollector collector) {
@@ -237,6 +270,10 @@ namespace Aderant.Build.ProjectSystem {
             this.orphanedProjects.Add(configuredProject);
         }
 
+        public ProjectCollection GetProjectCollection() {
+            return ProjectCollection.GlobalProjectCollection;
+        }
+
         public SolutionSearchResult GetSolutionForProject(string projectFilePath, Guid projectGuid) {
             ProjectInSolution projectInSolution;
             projectsByGuid.TryGetValue(projectGuid, out projectInSolution);
@@ -261,6 +298,14 @@ namespace Aderant.Build.ProjectSystem {
                         foreach (var file in files) {
                             if (file.EndsWith(".Custom.sln", StringComparison.InvariantCultureIgnoreCase)) {
                                 continue;
+                            }
+
+                            // If there a sln next to a workflow project then we need to be careful. We don't want to load the workflow solution
+                            // and use that as the solution.
+                            if (file.Contains("Workflow")) {
+                                if (Services.FileSystem.GetFiles(Path.GetDirectoryName(file), "*.xamlx", false).Any()) {
+                                    continue;
+                                }
                             }
 
                             if (projectToSolutionMap.Values.FirstOrDefault(s => string.Equals(s, file, StringComparison.OrdinalIgnoreCase)) != null) {
