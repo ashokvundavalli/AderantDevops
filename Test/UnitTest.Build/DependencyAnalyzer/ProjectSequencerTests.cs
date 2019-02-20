@@ -125,7 +125,8 @@ namespace UnitTest.Build.DependencyAnalyzer {
             var p1 = new TestConfiguredProject(tree.Object) {
                 outputAssembly = "A",
                 IsDirty = false,
-                IncludeInBuild = false
+                IncludeInBuild = false,
+                IsWebProject = false,
             };
             p1.Initialize(null, @"X:\MyProject.proj");
 
