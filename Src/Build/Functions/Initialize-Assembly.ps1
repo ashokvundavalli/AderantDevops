@@ -125,6 +125,11 @@ function global:UpdateOrBuildAssembly {
             # Type not found - we need to bootstrap
         }
 
+        if ($PSVersionTable.PSVersion.Major -lt 5 -or ($PSVersionTable.PSVersion.Major -eq 5 -and $PSVersionTable.PSVersion.Minor -lt 1)) {
+            Write-Error "PowerShell version is lower than the minimum required version of 5.1 to compile Aderant.Build. Please update PowerShell."
+            exit 1
+        }
+
         if ($Update) {
             if ($Host.Name.Contains("ISE")) {
                 # ISE logs stderror as fatal. Git logs stuff to stderror and thus if any git output occurs the import will fail inside the ISE
