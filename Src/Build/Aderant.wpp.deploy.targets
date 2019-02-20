@@ -6,10 +6,7 @@
     <Message Text="Suppressed" />
   </Target>
 
-
-  <!-- Override the standard target so we don't collect any baggage -->
-  <Target Name="CollectFilesFrom_SourceItemsToCopyToOutputDirectory">
-    <Message Text="Suppressed" />
-  </Target>
+  <!-- MSBuild does not support dynamic target names. To workaround this we conditionally import this target to suppress built in targets -->
+  <Import Project="Web\Web.Publishing.targets" Condition="'$(CollectFilesFrom_SourceItemsToCopyToOutputDirectoryEnabled)' != 'true'" />
 
 </Project>
