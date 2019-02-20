@@ -28,6 +28,12 @@
 
     <Error Text="Item does not exist: %(Identity)" Condition="!Exists(%(BuildCacheZipFilesToRestore.FullPath))" />
 
+    <PropertyGroup>
+      <_ZipFullPath>%(BuildCacheZipFilesToRestore.FullPath)</_ZipFullPath>
+      <_ArchivePathToExtract>%(BuildCacheZipFilesToRestore.ArchivePathToExtract)</_ArchivePathToExtract>
+      <_ArchiveDestination>%(BuildCacheZipFilesToRestore.Destination)</_ArchiveDestination>
+    </PropertyGroup>
+
     <!-- 7zip doesn't support rewriting archive paths.
          Web artifacts are packaged using MSDeploy which we customize to put content into a zip entry 'Content\PackageTmp'
          Because we want to extract this file over the top of the source web app that created it we have a problem
@@ -36,15 +42,24 @@
          This is a performance optimization as it means we don't need to unzip and then merge two directories. -->
     <MakeSymlink
       CreateLinkParent="true"
-      Link="$(ModuleBuildTempDirectory)%(BuildCacheZipFilesToRestore.ArchivePathToExtract)"
+      Link="$(ModuleBuildTempDirectory)$(_ArchivePathToExtract)"
       Target="%(BuildCacheZipFilesToRestore.Destination)"
       Type="J" />
 
-    <Exec Command='"$(BuildToolsDirectory)7z.exe" x "%(BuildCacheZipFilesToRestore.FullPath)" %(BuildCacheZipFilesToRestore.ArchivePathToExtract) -aos -bd -bb -o$(ModuleBuildTempDirectory)'
+    <Exec Command='"$(BuildToolsDirectory)7z.exe" x "$(_ZipFullPath)" $(_ArchivePathToExtract) -aos -bd -bb -o$(ModuleBuildTempDirectory)'
           WorkingDirectory="$([System.IO.Path]::GetDirectoryName($(DirPropFile)))"
           YieldDuringToolExecution="true" />
 
-    <RemoveDir Directories="$(ModuleBuildTempDirectory)%(BuildCacheZipFilesToRestore.ArchivePathToExtract)" />
+    <RemoveDir Directories="$(ModuleBuildTempDirectory)$(_ArchivePathToExtract)" />
+
+    <ItemGroup>
+      <WebAssemblies Include="$(_ArchiveDestination)\bin\Web.*dll" />
+    </ItemGroup>
+
+    <!-- Replicate the core compiled asset -->
+    <Copy SourceFiles="@(WebAssemblies)"
+          DestinationFolder="$(AlternativeOutputDirectory)"
+          UseHardlinksIfPossible="true" />
   </Target>
 
   <Target Name="RestoreContent" DependsOnTargets="$(ContentRestoreProcessDependsOn)" />
