@@ -31,13 +31,15 @@
 
       <PadLeft>$([System.String]::new(' ', $(D3)))</PadLeft>
       <PadRight>$([System.String]::new(' ', $(D4)))</PadRight>
+      <HappyCat>😸</HappyCat>
+      <Icecream>🍦</Icecream>
     </PropertyGroup>
 
     <PrintBanner Text="Group $(BuildGroupId) / $(TotalNumberOfBuildGroups)" />
     <SetProgress
       CurrentOperation="Building Group"
       Activity="$(LogId)"
-      StatusDescription="$(BuildGroupId) / $(TotalNumberOfBuildGroups) $(PadLeft) 😸 $(PadRight) 🍦" />
+      StatusDescription="$(BuildGroupId) / $(TotalNumberOfBuildGroups) $(PadLeft) $(HappyCat) $(PadRight) $(Icecream)" />
 
     <ItemGroup>
       <_ProjectsInGroup Include="@(ProjectsInGroup)" Condition="'$(switch-skip-compile)' == 'true' And '%(ProjectsInGroup.IsProjectFile)' != 'true'" />
@@ -55,6 +57,12 @@
              UnloadProjectsOnCompletion="true"
              BuildInParallel="$(BuildInParallel)">
     </MSBuild>
+
+    <SetProgress
+      Condition="'$(BuildGroupId)' == '$(TotalNumberOfBuildGroups)'"
+      CurrentOperation="Building Group"
+      Activity="$(LogId)"
+      StatusDescription="$(BuildGroupId) / $(TotalNumberOfBuildGroups) $(PadLeft) $(HappyCat)" />
 
     <Message Text="##vso[task.logdetail id=$(LogId);progress=100;state=Completed;Result=Succeeded]Build group $(BuildGroupId) finished"
              Condition="'$(IsDesktopBuild)' != 'true'" />
