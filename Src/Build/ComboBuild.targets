@@ -289,6 +289,8 @@
     ==========================================================================================
   -->
   <Target Name="ExecutePlan">
+    <Message Text="##vso[build.addbuildtag]$(BUILD_SOURCEBRANCHNAME)" Condition="'$(BUILD_REASON)' != 'PullRequest'" />
+
     <PropertyGroup>
       <CommonBuildProperties>
         BuildInParallel=true;
