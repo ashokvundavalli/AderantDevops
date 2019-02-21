@@ -18,7 +18,7 @@
 .Parameter components
     The list of components to retrieve from the drop location. Defaults to 'Product'.
 #>
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess=$true)]
 param(
     [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$binariesDirectory,
     [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$dropRoot,
@@ -28,8 +28,8 @@ param(
 )
 
 begin {
-    $ErrorActionPreference = 'Stop'
     Set-StrictMode -Version 'Latest'
+    $ErrorActionPreference = 'Stop'
 
     Write-Host "Running '$($MyInvocation.MyCommand.Name.Replace(`".ps1`", `"`"))' with the following parameters:" -ForegroundColor Cyan
 
@@ -233,6 +233,12 @@ process {
 
             [int[]]$buildNumbers = Get-ChildItem -Path $branchDropRoot -Directory | Select-Object -ExpandProperty Name | Where-Object { $_ -match "^[\d\.]+$" }
             [int]$buildNumber = $buildNumbers | Sort-Object -Descending | Select-Object -First 1
+
+            if (-not $PSCmdlet.ShouldProcess('Selected build number')) {
+                return $buildNumber
+                exit 0
+            }
+
             [string]$build = Join-Path $branchDropRoot -ChildPath $buildNumber
 
             Write-Host "Selected build: $build"
@@ -260,10 +266,6 @@ process {
     }
 
     $totalTime = $totalTime + (Export-Archives -binariesDirectory $binariesDirectory)
-}
-
-end {
     Write-Host "`r`nProduct retrieved in $totalTime seconds.`r`n" -ForegroundColor Cyan
-
     exit 0
 }

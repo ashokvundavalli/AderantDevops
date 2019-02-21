@@ -22,7 +22,8 @@ function Get-Product {
         [Parameter(Mandatory=$false, ParameterSetName = "PullRequest")][Alias("pr")][int]$pullRequestId,
         [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$binariesDirectory,
         [string[]]$components = @('Product'),
-        [switch]$createBackup
+        [switch]$createBackup,
+        [switch]$buildNumber
     )
 
     [string]$getProduct = Join-Path -Path $ShellContext.PackageScriptsDirectory -ChildPath 'Get-Product.ps1'
@@ -34,17 +35,17 @@ function Get-Product {
 
     switch ($PSCmdlet.ParameterSetName) {
         'Branch' {
-            & $getProduct -binariesDirectory $binariesDirectory -dropRoot $dropRoot -branch $branch -components $components
+            & $getProduct -binariesDirectory $binariesDirectory -dropRoot $dropRoot -branch $branch -components $components -WhatIf:$($buildNumber.IsPresent)
         }
         'PullRequest' {
-            & $getProduct -binariesDirectory $binariesDirectory -dropRoot $dropRoot -pullRequestId $pullRequestId -components $components
+            & $getProduct -binariesDirectory $binariesDirectory -dropRoot $dropRoot -pullRequestId $pullRequestId -components $components -WhatIf:$($buildNumber.IsPresent)
         }
         'master' {
-            & $getProduct -binariesDirectory $binariesDirectory -dropRoot $dropRoot -branch 'master' -components $components
+            & $getProduct -binariesDirectory $binariesDirectory -dropRoot $dropRoot -branch 'master' -components $components -WhatIf:$($buildNumber.IsPresent)
         }
     }
 
-    if ($createBackup.IsPresent) {
+    if (-not $buildNumber.IsPresent -and $createBackup.IsPresent) {
         Write-Host "Creating backup of Binaries folder."
         $backupPath = $ShellContext.BranchLocalDirectory + "\BinariesBackup"
         if (-not (Test-Path $backupPath)) {
