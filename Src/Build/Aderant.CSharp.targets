@@ -232,6 +232,14 @@
       </AssemblySearchPaths>
     </PropertyGroup>
 
+    <PropertyGroup>
+      <!--PERF: Avoid looking for winmd files. -->
+      <AllowedReferenceAssemblyFileExtensions>
+        .dll;
+        .exe
+      </AllowedReferenceAssemblyFileExtensions>
+    </PropertyGroup>
+
     <!--Adding additional dependencies searching locations. -->
     <PropertyGroup>
       <AssemblySearchPaths Condition="'$(ExpertSourceDirectory)' != ''">$(ExpertSourceDirectory);$(ExpertSourceDirectory)StoredProcedures;$(AssemblySearchPaths);</AssemblySearchPaths>

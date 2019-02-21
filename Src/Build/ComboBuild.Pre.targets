@@ -141,41 +141,46 @@
   </Target>
 
 
-  <Target Name="BeforeRetrievePrebuilts" BeforeTargets="RetrievePrebuilts" Condition="Exists('$(SolutionDirectoryPath)link.lock')">
-      <Message Text="link.lock exists in $(SolutionDirectoryPath). No server artifacts will be retrieved." Importance="high" />
-  </Target>
-
-
   <Target Name="CollectExtensibilityFiles">
     <ItemGroup>
       <ExtensibilityFiles Include="$(SolutionRoot)\**\dir.props"
-        Exclude="$(SolutionRoot)\packages\**;
-                                   $(DependenciesDirectory)\**"/>
+                          Exclude="$(SolutionRoot)\packages\**;
+                                   $(DependenciesDirectory)\**" />
     </ItemGroup>
   </Target>
 
 
-  <Target Name="RunRetrieveArtifacts" Condition="'$(RetrievePrebuilts)' != 'false'">
+  <Target Name="RunRetrieveArtifacts" Condition="'$(RetrievePrebuilts)' != 'false'" DependsOnTargets="CollectExtensibilityFiles">
     <Message Text="$(ModuleName): Restoring objects from build cache" />
     <!--
       By specifying DestinationDirectories we overwrite the common dependency
       directory contents with objects from the cache so we do not reuse stale objects as inputs
       to child dependencies in the build.
     -->
+
+    <MSBuild Condition="@(ExtensibilityFiles) != ''"
+      Projects="$(MSBuildThisFileDirectory)Aderant.BuildExtensions.targets"
+      Targets="GetStagingDirectoryWhitelist"
+      Properties="ExtensibilityFile=%(ExtensibilityFiles.FullPath)"
+      UnloadProjectsOnCompletion="true"
+      ContinueOnError="true">
+      <Output TaskParameter="TargetOutputs" ItemName="StagingDirectoryWhitelist" />
+    </MSBuild>
+
     <RetrieveArtifacts
       ContextEndpoint="$(ContextEndpoint)"
       SolutionRoot="$(SolutionRoot)"
       WorkingDirectory="$(ModuleBuildTempDirectory)"
       CommonOutputDirectory="$(BinModuleDirectory)"
       CommonDependencyDirectory="$(SharedDependencyDirectory)"
-      ExtensibilityFiles="@(ExtensibilityFiles)">
+      StagingDirectoryWhitelist="@(StagingDirectoryWhitelist)">
       <Output TaskParameter="ArtifactRestoreSkipped" PropertyName="ArtifactRestoreSkipped" />
     </RetrieveArtifacts>
 
   </Target>
 
 
-  <Target Name="RetrievePrebuilts" Condition="'$(RetrievePrebuilts)' != 'false' And !Exists('$(SolutionDirectoryPath)link.lock')"
+  <Target Name="RetrievePrebuilts" Condition="'$(RetrievePrebuilts)' != 'false'"
           DependsOnTargets="CollectExtensibilityFiles;RunRetrieveArtifacts">
 
     <CallTarget Targets="RunExtensibilityFiles" />

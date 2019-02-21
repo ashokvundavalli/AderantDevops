@@ -5,7 +5,6 @@ using System.Threading;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
 using Aderant.Build.ProjectSystem;
-using Aderant.Build.Utilities;
 
 namespace Aderant.Build.Commands {
 
@@ -22,8 +21,14 @@ namespace Aderant.Build.Commands {
         protected override void ProcessRecord() {
             base.ProcessRecord();
 
+            List<string> resolvedPaths = new List<string>();
+
             if (Directories == null || Directories.Length == 0) {
                 Directories = new[] { SessionState.Path.CurrentFileSystemLocation.Path };
+            }
+
+            foreach (var path in Directories) {
+                resolvedPaths.AddRange(SessionState.Path.GetResolvedPSPathFromPSPath(path).Select(s => s.Path));
             }
 
             cts = new CancellationTokenSource();
@@ -35,10 +40,11 @@ namespace Aderant.Build.Commands {
             collector.ProjectConfiguration = ConfigurationToBuild.Default;
 
             projectTree.LoadProjects(
-                Directories,
-                new[] { @"\__" }, cts.Token);
+                resolvedPaths,
+                new[] { @"\__" },
+                cts.Token);
 
-            projectTree.CollectBuildDependencies(collector, cts.Token).Wait();
+            projectTree.CollectBuildDependencies(collector, cts.Token).Wait(cts.Token);
 
             var buildDependencyGraph = projectTree.CreateBuildDependencyGraph(collector);
 

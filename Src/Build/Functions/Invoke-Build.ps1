@@ -427,6 +427,7 @@ function AssignSwitches() {
     $switches.SkipCompile = $SkipCompile.IsPresent
     $switches.ChangedFilesOnly = $ChangedFilesOnly.IsPresent
     $switches.RestrictToProvidedPaths = $RestrictToProvidedPaths.IsPresent
+    $switches.ExcludeTestProjects = $ExcludeTestProjects.IsPresent
 
     if ($PSCmdLet.MyInvocation.BoundParameters.ContainsKey("WhatIf")) {
         $script:Target = "CreatePlan"
@@ -563,7 +564,14 @@ function global:Invoke-Build2 {
         automatically. To suppress this behaviour and restict the build tree to just the paths provided specify this parameter.
         #>
         [Parameter()]
+        [Alias("NoExpand")]
         [switch]$RestrictToProvidedPaths,
+
+        <#
+        Instructs the build to not build anything identified as a test project.
+        #>
+        [Parameter()]
+        [switch]$ExcludeTestProjects,
 
         <#
         Instructs the console logger to be quiet.
