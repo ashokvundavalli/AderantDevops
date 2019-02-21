@@ -79,10 +79,14 @@ namespace Aderant.Build.ProjectSystem.References {
         }
 
         protected override IUnresolvedBuildDependencyProjectReference CreateUnresolvedReference(ProjectItem projectItem) {
-            var moniker = UnresolvedP2PReferenceMoniker.Create(projectItem);
-
-            var reference = new UnresolvedBuildDependencyProjectReference(this, moniker);
-            return reference;
+            try {
+                var moniker = UnresolvedP2PReferenceMoniker.Create(projectItem);
+                var reference = new UnresolvedBuildDependencyProjectReference(this, moniker);
+                return reference;
+            } catch (FormatException) {
+                logger.Error($"Exception while creating a unresolved reference from {projectItem.Project.FullPath}.");
+                throw;
+            }
         }
     }
 }
