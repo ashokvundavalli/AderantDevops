@@ -159,29 +159,42 @@ namespace Aderant.Build.VersionControl {
             return null;
         }
 
-        private static List<Reference> GetRefsToSearchForCommit(Repository repository) {
-            List<string> search = new List<string> {
-                "refs/heads/patch/*",
-                "refs/heads/releases/*",
-                "refs/heads/master"
-            };
+        private static string[] globs = new[] {
+            "update/*",
+            "patch/*",
+            "releases/*",
+            "master"
+        };
 
-            // For non-pull request CI builds the branch is checked out at a particular commit
-            // and we need to include /remotes/origin/ in the ref spec (I don't know why)
-            if (repository.Info.IsHeadDetached) {
-                search = new List<string> {
-                    "refs/remotes/origin/patch/*",
-                    "refs/remotes/origin/releases/*",
-                    "refs/remotes/origin/master",
-                };
+        private static List<Reference> GetRefsToSearchForCommit(Repository repository) {
+            bool isHeadDetached = repository.Info.IsHeadDetached;
+
+            var patterns = new List<string>();
+
+            if (repository.Head.TrackedBranch != null) {
+                string name = repository.Head.TrackedBranch.UpstreamBranchCanonicalName;
+                patterns.Add(name);
             }
+
+            patterns.AddRange(globs);
 
             List<Reference> refs = new List<Reference>();
-            foreach (var pattern in search) {
-                refs.AddRange(repository.Refs.FromGlob(pattern));
+            foreach (var pattern in patterns) {
+                // For non-pull request CI builds the branch is checked out at a particular commit
+                // and we need to include /remotes/origin/ in the ref spec (I don't know why)
+                string finalGlob = pattern;
+
+                if (isHeadDetached) {
+                    finalGlob = "refs/remotes/origin/" + pattern;
+                } else {
+                    if (!pattern.StartsWith("refs/")) {
+                        finalGlob = "refs/heads/" + pattern;
+                    }
+                }
+                refs.AddRange(repository.Refs.FromGlob(finalGlob));
             }
 
-            return refs;
+            return refs.Distinct().ToList();
         }
 
         private static Commit GetTip(string refName, Repository repository) {
