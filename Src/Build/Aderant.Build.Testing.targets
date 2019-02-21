@@ -11,9 +11,11 @@
     </RunTestsDependsOn>
   </PropertyGroup>
 
+
   <Target Name="RunTests"
-          Condition="'$(RunTests)' != 'false' And '@(ImpactedTestAssemblies)' != ''"
+          Condition="'$(RunTests)' != 'false'"
           DependsOnTargets="$(RunTestsDependsOn)">
+
   </Target>
 
 
@@ -32,7 +34,8 @@
   <Target Name="SetupTestProperties">
     <!-- Collect all assemblies to use as test dependencies -->
     <ItemGroup>
-      <AllStagedDlls Include="$(ArtifactStagingDirectory)**\*.dll"/>
+      <AllStagedDlls Include="$(ArtifactStagingDirectory)**\*.dll"
+                     Exclude="$(ArtifactStagingDirectory)_artifacts\**" />
       <AllDirectoriesWithDlls Include="@(AllStagedDlls->'%(RootDir)%(Directory)'->Distinct())"/>
     </ItemGroup>
 
@@ -84,12 +87,17 @@
     </ItemGroup>
 
     <FindInList
+      Condition="'@(ImpactedTestAssemblies->Count())' != '0'"
       MatchFileNameOnly="true"
       CaseSensitive="false"
       List="@(CandidateTestAssemblies)"
       ItemSpecToFind="%(ImpactedTestAssemblies.Identity)">
       <Output TaskParameter="ItemFound" ItemName="TestAssemblies" />
     </FindInList>
+
+    <ItemGroup Condition="'@(ImpactedTestAssemblies->Count())' == '0' And '$(IsDesktopBuild)' == 'true'">
+      <TestAssemblies Include="@(CandidateTestAssemblies)" />
+    </ItemGroup>
 
     <!-- Determine if we can run the tests using the 64-bit test runner -->
     <GetAssemblyPlatform
@@ -140,10 +148,8 @@ $workingDirectory = "$(SolutionRoot)"
 $isDesktopBuild = $$(IsDesktopBuild)
 $referencePaths = $(AllDirectoriesWithDlls)
 $testFiles = $(UnitTestAssemblies)
-$referencesToFind = $$(AssemblyPlatformDataKey).ReferencesToFind
 
-Write-Information $referencesToFind
-. Testing\RunTests.ps1 -PathToTestTool $testTool -ToolArgs $testToolArgs -WorkingDirectory $workingDirectory -SolutionRoot $testRunDirectory -IsDesktopBuild:$isDesktopBuild -ReferencePaths $referencePaths -TestAssemblies $testFiles -ReferencesToFind $referencesToFind'
+. Testing\RunTests.ps1 -PathToTestTool $testTool -ToolArgs $testToolArgs -WorkingDirectory $workingDirectory -SolutionRoot $testRunDirectory -IsDesktopBuild:$isDesktopBuild -ReferencePaths $referencePaths -TestAssemblies $testFiles'
       OnErrorReason="Test failure"
       TaskObjects="$(AssemblyPlatformDataKey)" />
 

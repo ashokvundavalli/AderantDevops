@@ -142,7 +142,7 @@
 
   </Target>
 
-  <Target Name="CreatePlan">
+  <Target Name="CreatePlan" DependsOnTargets="GatherProjectsToBuild">
 
     <!--
     ==========================================================================================

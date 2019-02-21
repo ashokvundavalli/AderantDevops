@@ -75,9 +75,6 @@ namespace Aderant.Build.Tasks {
         [Output]
         public string AssemblyPlatformDataKey { get; private set; } = "GetAssemblyPlatformData";
 
-        [Output]
-        public string[] ReferencesToFind { get; private set; }
-
         public override bool Execute() {
             if (assemblies == null) {
                 return true;
@@ -96,8 +93,6 @@ namespace Aderant.Build.Tasks {
 
             List<ITaskItem> failedItems = new List<ITaskItem>();
 
-            List<string> assemblyReferencesToFind = new List<string>();
-
             while (scanQueue.Count > 0) {
                 var item = scanQueue.Dequeue();
 
@@ -113,11 +108,10 @@ namespace Aderant.Build.Tasks {
 
                     if (ShouldAnalyze(analyzedAssemblies, hash, item)) {
                         try {
-                            AssemblyName[] referencedAssemblies;
                             ProcessorArchitecture[] referenceArchitectures;
                             ImageFileMachine imageFileMachine;
                             Exception exception;
-                            PortableExecutableKinds peKind = inspector.Inspect(item.ItemSpec, out referencedAssemblies, out referenceArchitectures, out imageFileMachine, out exception);
+                            PortableExecutableKinds peKind = inspector.Inspect(item.ItemSpec, out referenceArchitectures, out imageFileMachine, out exception);
 
                             if ((peKind & PortableExecutableKinds.Required32Bit) != 0) {
                                 item.SetMetadata("Platform", "x86");
@@ -128,10 +122,6 @@ namespace Aderant.Build.Tasks {
                                 MustRun32Bit = true;
                             } else {
                                 item.SetMetadata("Platform", "x64");
-                            }
-
-                            if (referencedAssemblies != null) {
-                                assemblyReferencesToFind.AddRange(referencedAssemblies.Select(s => s.Name));
                             }
 
                             if (referenceArchitectures != null) {
@@ -176,8 +166,6 @@ namespace Aderant.Build.Tasks {
                     });
             }
 
-            this.ReferencesToFind = assemblyReferencesToFind.ToArray();
-
             BuildEngine4.UnregisterTaskObject(AssemblyPlatformDataKey, RegisteredTaskObjectLifetime.Build);
 
             // Stash the object for downstream tasks
@@ -185,7 +173,6 @@ namespace Aderant.Build.Tasks {
                 AssemblyPlatformDataKey,
                 new AssemblyPlatformData {
                     Assemblies = Assemblies,
-                    ReferencesToFind = ReferencesToFind,
                 },
                 RegisteredTaskObjectLifetime.Build,
                 false);
@@ -250,7 +237,6 @@ namespace Aderant.Build.Tasks {
 
     public class AssemblyPlatformData {
         public ITaskItem[] Assemblies { get; set; }
-        public string[] ReferencesToFind { get; set; }
     }
 
     internal class AssemblyInspector : MarshalByRefObject {
@@ -261,15 +247,13 @@ namespace Aderant.Build.Tasks {
         public TaskLoggingHelper Logger { get; set; }
 
         /// <param name="assembly"></param>
-        /// <param name="referencesToFind"></param>
         /// <param name="referenceArchitectures">
         /// The architectures this assembly has references to Islamic, Romanesque, Bauhaus
         /// etc.
         /// </param>
         /// <param name="imageFileMachine"></param>
         /// <param name="exception"></param>
-        public PortableExecutableKinds Inspect(string assembly, out AssemblyName[] referencesToFind, out ProcessorArchitecture[] referenceArchitectures, out ImageFileMachine imageFileMachine, out Exception exception) {
-            referencesToFind = null;
+        public PortableExecutableKinds Inspect(string assembly, out ProcessorArchitecture[] referenceArchitectures, out ImageFileMachine imageFileMachine, out Exception exception) {
             referenceArchitectures = null;
             exception = null;
 
@@ -297,10 +281,6 @@ namespace Aderant.Build.Tasks {
 
             try {
                 var references = asm.GetReferencedAssemblies();
-
-                if (ShouldDeployMissingReferences(asm)) {
-                    referencesToFind = references;
-                }
 
                 if (fileMap != null) {
                     referenceArchitectures = GetReferenceArchitectures(references);
