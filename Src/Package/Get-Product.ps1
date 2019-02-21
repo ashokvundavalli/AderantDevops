@@ -234,7 +234,8 @@ process {
             [int[]]$buildNumbers = Get-ChildItem -Path $branchDropRoot -Directory | Select-Object -ExpandProperty Name | Where-Object { $_ -match "^[\d\.]+$" }
             [int]$buildNumber = $buildNumbers | Sort-Object -Descending | Select-Object -First 1
 
-            if (-not $PSCmdlet.ShouldProcess('Selected build number')) {
+            if (-not $PSCmdlet.ShouldProcess('Build number')) {
+                Write-Host "Build number: $buildNumber"
                 return $buildNumber
                 exit 0
             }
