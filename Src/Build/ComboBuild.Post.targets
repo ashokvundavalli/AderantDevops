@@ -27,7 +27,6 @@
       RunBuildExtensions;
       SignInstallers;
       PackageArtifactsCore;
-      CreateDependencyLinks;
     </EndToEndDependsOn>
 
     <PackageArtifactsDependsOn>
@@ -93,16 +92,6 @@
       FileVersion="$(FileVersion)" />
 
   </Target>
-
-
-  <Target Name="CreateDependencyLinks" Condition="'$(IsDesktopBuild)' == 'true'">
-
-    <CreateDependencyLinks
-      SolutionRoot="$(SolutionRoot)"
-      ContextEndpoint="$(ContextEndpoint)" />
-
-  </Target>
-
 
   <!-- Stub for customizers to override -->
   <Target Name="PostBuild" />

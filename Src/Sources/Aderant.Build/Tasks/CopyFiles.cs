@@ -1,20 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks.Dataflow;
 using Aderant.Build.Packaging;
+using Microsoft.Build.Evaluation;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
 
     /// <summary>
-    /// Similar in spirit to the Copy task provided by MSBuild but uses an action block for parallel IO for improved performance.
+    /// Similar in spirit to the Copy task provided by MSBuild but uses an action block for parallel IO for improved
+    /// performance.
     /// </summary>
     public class CopyFiles : Task {
-        private PhysicalFileSystem fileSystem;
+        private IFileSystem fileSystem;
 
-        public CopyFiles() {
-            fileSystem = new PhysicalFileSystem();
+        public CopyFiles()
+            : this(new PhysicalFileSystem()) {
+        }
+
+        internal CopyFiles(IFileSystem fileSystem) {
+            this.fileSystem = fileSystem;
         }
 
         [Required]
@@ -33,11 +40,11 @@ namespace Aderant.Build.Tasks {
 
         public override bool Execute() {
             if (SourceFiles == null || SourceFiles.Length == 0) {
-                DestinationFiles = new TaskItem[0];
+                DestinationFiles = new ITaskItem[0];
                 return true;
             }
 
-            if (!ValidateInputs()) {
+            if (!ValidateInputs() || !InitializeDestinationFiles()) {
                 return false;
             }
 
@@ -63,16 +70,41 @@ namespace Aderant.Build.Tasks {
 
                 ActionBlock<PathSpec> bulkCopy = fileSystem.BulkCopy(copySpecs, Overwrite, UseSymlinks, UseHardlinks);
 
-                bulkCopy
-                    .Completion
-                    .ConfigureAwait(false)
-                    .GetAwaiter()
-                    .GetResult();
+                // Unit testing guard
+                if (bulkCopy != null) {
+                    bulkCopy
+                        .Completion
+                        .ConfigureAwait(false)
+                        .GetAwaiter()
+                        .GetResult();
+                }
             } finally {
                 BuildEngine4.Reacquire();
             }
 
             return !Log.HasLoggedErrors;
+        }
+
+        private bool InitializeDestinationFiles() {
+            if (DestinationFiles == null) {
+                DestinationFiles = new ITaskItem[SourceFiles.Length];
+
+                for (int i = 0; i < SourceFiles.Length; i++) {
+                    string unescapedString;
+                    try {
+                        unescapedString = Path.Combine(DestinationFolder.ItemSpec, Path.GetFileName(SourceFiles[i].ItemSpec));
+                    } catch (ArgumentException ex) {
+                        Log.LogError("Unable to copy file \"{0}\" to \"{1}\". {2}", SourceFiles[i].ItemSpec, DestinationFolder.ItemSpec, ex.Message);
+                        DestinationFiles = new ITaskItem[0];
+                        return false;
+                    }
+
+                    DestinationFiles[i] = new TaskItem(ProjectCollection.Escape(unescapedString));
+                    SourceFiles[i].CopyMetadataTo(DestinationFiles[i]);
+                }
+            }
+
+            return true;
         }
 
         private bool ValidateInputs() {

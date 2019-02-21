@@ -50,6 +50,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\packages\Microsoft.VisualStudio.Services.Client\lib\net45\Microsoft.VisualStudio.Services.WebApi.dll</HintPath>
     </Reference>
+    <Reference Include="Moq, Version=4.10.0.0, Culture=neutral, PublicKeyToken=69f491c39445e920, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\packages\Moq\lib\net45\Moq.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\packages\Newtonsoft.Json\lib\net45\Newtonsoft.Json.dll</HintPath>
@@ -121,6 +125,7 @@
     <Compile Include="Packaging\Web\WebPackagingTests.cs" />
     <Compile Include="ProjectTreeTests.cs" />
     <Compile Include="Tasks\CheckForDoubleWrites\CheckForDoubleWritesTests.cs" />
+    <Compile Include="Tasks\CopyFiles\CopyFilesTests.cs" />
     <Compile Include="Tasks\PowerShellScript\PowerShellScriptTests.cs" />
     <Compile Include="Tasks\MakeSymlink\MakeSymlinkTests.cs" />
     <Compile Include="Tasks\RetrieveArtifacts\RetrieveArtifactsTests.cs" />

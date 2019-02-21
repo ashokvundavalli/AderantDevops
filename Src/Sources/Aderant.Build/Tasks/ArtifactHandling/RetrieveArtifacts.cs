@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using Aderant.Build.Packaging;
 using Microsoft.Build.Evaluation;
 using Microsoft.Build.Execution;
@@ -34,7 +34,7 @@ namespace Aderant.Build.Tasks.ArtifactHandling {
         /// </remarks>
         public string CommonDependencyDirectory { get; set; }
 
-        public ITaskItem[] ExtensibilityFiles { get; set; }
+        public ITaskItem[] StagingDirectoryWhitelist { get; set; }
 
         [Output]
         public bool ArtifactRestoreSkipped { get; set; }
@@ -50,38 +50,17 @@ namespace Aderant.Build.Tasks.ArtifactHandling {
                 throw new InvalidOperationException($"The container key {containerKey} cannot be a path.");
             }
 
-            service.StagingDirectoryWhitelist = GetStagingDirectoryWhitelist();
+            if (StagingDirectoryWhitelist != null) {
+                var whitelist = StagingDirectoryWhitelist.Select(s => s.ItemSpec).ToArray();
+                service.StagingDirectoryWhitelist = whitelist;
+
+                Log.LogMessage("The following items are in the replication whitelist: " + string.Join(";", whitelist));
+            }
+
             service.Resolve(Context, containerKey, SolutionRoot, WorkingDirectory);
             ArtifactRestoreSkipped = service.ArtifactRestoreSkipped;
 
             return !Log.HasLoggedErrors;
-        }
-
-        private List<string> GetStagingDirectoryWhitelist() {
-            List<string> whitelist = new List<string>();
-
-            if (ExtensibilityFiles != null) {
-                foreach (var file in ExtensibilityFiles) {
-                    string fullPath = file.GetMetadata("FullPath");
-
-                    if (File.Exists(fullPath)) {
-                        string target = "GetStagingDirectoryWhitelist";
-
-                        bool targetExists;
-                        var results = MSBuildEngine.DefaultEngine.BuildProjectFile(fullPath, target, out targetExists);
-
-                        if (targetExists && results != null && results.HasResultsForTarget(target)) {
-                            ITaskItem[] taskItems = results.ResultsByTarget[target].Items;
-
-                            foreach (var item in taskItems) {
-                                whitelist.Add(ProjectCollection.Unescape(item.ItemSpec));
-                            }
-                        }
-                    }
-                }
-            }
-
-            return whitelist;
         }
     }
 

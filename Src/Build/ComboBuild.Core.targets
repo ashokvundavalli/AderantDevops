@@ -14,6 +14,7 @@
     </DispatchToInnerBuildDependsOn>
   </PropertyGroup>
 
+
   <!--
   This project file exists to provide an appropriate seam for adding new properties to the group without having to
   modify the project generator itself.
@@ -22,13 +23,23 @@
 
     <PropertyGroup>
       <LogId>$([System.Guid]::NewGuid())</LogId>
+
+      <D1>$([MSBuild]::Divide($(BuildGroupId), $(TotalNumberOfBuildGroups)))</D1>
+      <D2>$([MSBuild]::Multiply($(D1), 100))</D2>
+      <D3>$([System.Math]::Round($(D2)))</D3>
+      <D4>$([MSBuild]::Subtract(100, $(D3)))</D4>
+
+      <PadLeft>$([System.String]::new(' ', $(D3)))</PadLeft>
+      <PadRight>$([System.String]::new(' ', $(D4)))</PadRight>
+      <HappyCat>😸</HappyCat>
+      <Icecream>🍦</Icecream>
     </PropertyGroup>
 
     <PrintBanner Text="Group $(BuildGroupId) / $(TotalNumberOfBuildGroups)" />
     <SetProgress
-      CurrentOperation="Building"
+      CurrentOperation="Building Group"
       Activity="$(LogId)"
-      StatusDescription="Group $(BuildGroupId) / $(TotalNumberOfBuildGroups)" />
+      StatusDescription="$(BuildGroupId) / $(TotalNumberOfBuildGroups) $(PadLeft) $(HappyCat) $(PadRight) $(Icecream)" />
 
     <ItemGroup>
       <_ProjectsInGroup Include="@(ProjectsInGroup)" Condition="'$(switch-skip-compile)' == 'true' And '%(ProjectsInGroup.IsProjectFile)' != 'true'" />
@@ -43,8 +54,15 @@
     <MSBuild Projects="@(_ProjectsInGroup)"
              StopOnFirstFailure="true"
              Targets="%(_ProjectsInGroup.Targets)"
+             UnloadProjectsOnCompletion="true"
              BuildInParallel="$(BuildInParallel)">
     </MSBuild>
+
+    <SetProgress
+      Condition="'$(BuildGroupId)' == '$(TotalNumberOfBuildGroups)'"
+      CurrentOperation="Building Group"
+      Activity="$(LogId)"
+      StatusDescription="$(BuildGroupId) / $(TotalNumberOfBuildGroups) $(PadLeft) $(HappyCat)" />
 
     <Message Text="##vso[task.logdetail id=$(LogId);progress=100;state=Completed;Result=Succeeded]Build group $(BuildGroupId) finished"
              Condition="'$(IsDesktopBuild)' != 'true'" />

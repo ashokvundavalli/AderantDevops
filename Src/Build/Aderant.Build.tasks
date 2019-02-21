@@ -68,7 +68,6 @@
     <UsingTask TaskName="Aderant.Build.Tasks.RecordProjectOutputs"                                AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.GetBuildOutputs"                                     AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.CopyFiles"                                           AssemblyFile="$(BuildAssembly)" />
-    <UsingTask TaskName="Aderant.Build.Tasks.CreateDependencyLinks"                               AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.GatherProjectsToBuild"                               AssemblyFile="$(BuildAssembly)" />
 
     <UsingTask TaskName="Aderant.Build.Tasks.ZipBuildScripts"                                     AssemblyFile="$(BuildAssembly)" />

@@ -142,7 +142,7 @@
 
   </Target>
 
-  <Target Name="CreatePlan">
+  <Target Name="CreatePlan" DependsOnTargets="GatherProjectsToBuild">
 
     <!--
     ==========================================================================================
@@ -289,6 +289,8 @@
     ==========================================================================================
   -->
   <Target Name="ExecutePlan">
+    <Message Text="##vso[build.addbuildtag]$(BUILD_SOURCEBRANCHNAME)" Condition="'$(BUILD_REASON)' != 'PullRequest'" />
+
     <PropertyGroup>
       <CommonBuildProperties>
         BuildInParallel=true;
@@ -426,20 +428,21 @@
 
     <PropertyGroup>
       <DeploymentCheck Condition="'$(DeploymentCheck)' == ''">$(LocalExpertBinariesDirectory)Test\DeploymentCheck\DeploymentCheck.exe</DeploymentCheck>
-      <ErrorMessage>Failed to validate role manifests; please refer to the RunDeploymentCheck section of the build log.</ErrorMessage>
+      <ErrorMessage>The product has failed validation against the role manifests. Refer to the RunDeploymentCheck section of the build log.</ErrorMessage>
     </PropertyGroup>
 
     <Exec Condition="Exists('$(DeploymentCheck)')"
       Command="&quot;$(DeploymentCheck)&quot; ValidateRoleManifests $(ExpertSourceDirectory)"
-      IgnoreExitCode="false" />
+      ConsoleToMSBuild="true"
+      IgnoreExitCode="false">
+      <Output TaskParameter="ConsoleOutput" ItemName="DeploymentCheckResult" />
+    </Exec>
 
     <OnError ExecuteTargets="PrintErrorMessage" />
-
   </Target>
 
-
   <Target Name="PrintErrorMessage">
-    <Message Text ="##vso[task.logissue type=error]$(ErrorMessage)" />
+    <Error Text="##vso[task.logissue type=error]$(ErrorMessage) $(DeploymentCheckResult)" />
   </Target>
 
 

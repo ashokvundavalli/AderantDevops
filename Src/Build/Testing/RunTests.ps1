@@ -21,10 +21,6 @@ param(
   [string[]]
   $ReferencePaths,
 
-  [Parameter(Mandatory=$false)]
-  [string[]]
-  $ReferencesToFind,
-
   [Parameter(Mandatory=$false, ValueFromRemainingArguments=$true)]
   [string[]]
   $TestAssemblies
@@ -73,6 +69,9 @@ function CreateRunSettingsXml() {
     $writer = New-Object System.Xml.XmlTextWriter($sw)
     $writer.Formatting = [System.Xml.Formatting]::Indented
     $settingsDocument.WriteContentTo($writer)
+
+    $writer.Dispose()
+    $sw.Dispose()
 
     return $sw.ToString()
 }
@@ -169,12 +168,6 @@ try {
     $runSettingsFile = [System.IO.Path]::GetTempFileName()
     Add-Content -LiteralPath $runSettingsFile -Value $xml -Encoding UTF8
     $startInfo.Arguments += " /Settings:$runSettingsFile"
-
-    Write-Information "Finding and deploying references"
-
-    if ($null -ne $Env:BUILD_NO_DEPLOY_REFERENCES) {
-        FindAndDeployReferences $TestAssemblies
-    }
 
     Write-Information "Starting runner: $($startInfo.FileName) $($startInfo.Arguments)"
 
