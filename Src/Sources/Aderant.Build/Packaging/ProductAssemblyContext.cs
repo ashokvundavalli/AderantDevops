@@ -59,9 +59,13 @@ namespace Aderant.Build.Packaging {
                     var parts = module.Target.Split(';');
 
                     foreach (var part in parts) {
-                        string path = part.Replace("$", rootDirectory);
+                        if (part.IndexOf("$", StringComparison.Ordinal) >= 0) {
+                            string path = part.Replace("$", rootDirectory);
 
-                        yield return Path.GetFullPath(path);
+                            yield return Path.GetFullPath(path);
+                        } else {
+                            yield return Path.GetFullPath(Path.Combine(ProductDirectory, part));
+                        }
                     }
                 }
                 yield break;
@@ -70,7 +74,7 @@ namespace Aderant.Build.Packaging {
             if (!string.IsNullOrEmpty(module.Target)) {
                 var parts = module.Target.Split(';');
                 foreach (var part in parts) {
-                    yield return Path.Combine(ProductDirectory, part);
+                    yield return Path.GetFullPath(Path.Combine(ProductDirectory, part));
 
                 }
                 yield break;
