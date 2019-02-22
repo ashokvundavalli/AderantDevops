@@ -172,7 +172,15 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
             }
 
-            return graph.GetDependencyOrder().Where(x => (x as ConfiguredProject)?.BuildReason != null).ToList();
+            return graph.GetDependencyOrder().Where(p => {
+                var project = p as ConfiguredProject;
+
+                if (project != null) {
+                    return project.BuildReason != null;
+                }
+
+                return true;
+            }).ToList();
         }
 
         private void LogProjectsExcluded(IReadOnlyList<IDependable> filteredProjects, ProjectDependencyGraph projectGraph) {
@@ -702,7 +710,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (changesToConsider == ChangesToConsider.None) {
                 filteredProjects = visualStudioProjects;
             } else {
-                filteredProjects = visualStudioProjects.Where(x => (x as ConfiguredProject)?.IsDirty != false).ToList();
+                filteredProjects = visualStudioProjects.Where(x => !(x is ConfiguredProject) || ((ConfiguredProject)x).IsDirty).ToList();
             }
 
             return filteredProjects;
