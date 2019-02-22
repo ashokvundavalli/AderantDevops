@@ -596,7 +596,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <param name="studioProjects"></param>
         /// <param name="visualStudioProjects">All the projects list.</param>
         /// <param name="orchestrationFiles">File metadata for the target files that will orchestrate the build</param>
-        /// <param name="switchesExcludeTestProjects"></param>
+        /// <param name="excludeTestProjects">Specifies if test projects be removed from the build tree.</param>
         /// <param name="changesToConsider">Build the current branch, the changed files since forking from master, or all?</param>
         /// <param name="dependencyProcessing">
         /// Build the directly affected downstream projects, or recursively search for all
@@ -666,8 +666,10 @@ namespace Aderant.Build.DependencyAnalyzer {
                         }
                     }
 
-                    if (configuredProject.IsDirty && configuredProject.BuildReason.Flags == BuildReasonTypes.CachedBuildNotFound) {
-                        return false;
+                    if (configuredProject.IsDirty) {
+                        if (configuredProject.BuildReason != null && configuredProject.BuildReason.Flags == BuildReasonTypes.CachedBuildNotFound) {
+                            return false;
+                        }
                     }
 
                     return configuredProject.IsDirty;

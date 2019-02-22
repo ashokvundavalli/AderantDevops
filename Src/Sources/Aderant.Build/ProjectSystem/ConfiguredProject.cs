@@ -276,7 +276,13 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         public override string Id {
-            get { return FullPath + ":" + GetAssemblyName(); }
+            get {
+                if (FullPath != null) {
+                    return FullPath + ":" + GetAssemblyName();
+                }
+
+                return GetAssemblyName();
+            }
         }
 
         /// <summary>

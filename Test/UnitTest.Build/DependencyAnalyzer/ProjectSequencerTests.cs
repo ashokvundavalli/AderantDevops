@@ -11,7 +11,6 @@ using Aderant.Build.Model;
 using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
-using Microsoft.TeamFoundation.Framework.Client.Catalog.Objects;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
@@ -85,6 +84,43 @@ namespace UnitTest.Build.DependencyAnalyzer {
             Assert.IsFalse(m3.IsDirty);
         }
 
+        [TestMethod]
+        public void When_a_downstream_project_is_affected_then_it_will_not_use_build_cache() {
+            var p1 = new TestConfiguredProject(null) {
+                outputAssembly = "UnitTest1",
+                IsDirty = false,
+                IncludeInBuild = true,
+                IsWebProject = false,
+                ProjectTypeGuids = new[] { WellKnownProjectTypeGuids.TestProject }
+            };
+
+            var p2 = new TestConfiguredProject(null) {
+                outputAssembly = "MyWebApp1",
+                IsDirty = true,
+                IncludeInBuild = true,
+                IsWebProject = true,
+                ProjectTypeGuids = new[] { WellKnownProjectTypeGuids.WorkflowFoundation },
+
+            };
+
+            p1.AddResolvedDependency(null, p2);
+
+            var ctx = new BuildOperationContext {
+                BuildRoot = "",
+                Switches = new BuildSwitches {
+                    Downstream = true
+                },
+                StateFiles = new List<BuildStateFile> { new BuildStateFile() }
+            };
+
+            var graph = new ProjectDependencyGraph(p1, p2);
+            var sequencer = new ProjectSequencer(NullLogger.Default, null);
+            sequencer.CreatePlan(ctx, new OrchestrationFiles(), graph, false);
+
+            Assert.IsNotNull(p2.DirectoryNode.RetrievePrebuilts);
+            Assert.IsFalse(p2.DirectoryNode.RetrievePrebuilts.Value);
+        }
+
 
         [TestMethod]
         public void When_a_test_project_is_dirty_any_related_web_projects_are_included_in_build() {
@@ -93,7 +129,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
                 IsDirty = true,
                 IncludeInBuild = true,
                 IsWebProject = false,
-                ProjectTypeGuids = new []{WellKnownProjectTypeGuids.TestProject}
+                ProjectTypeGuids = new[] { WellKnownProjectTypeGuids.TestProject }
             };
 
             var p2 = new TestConfiguredProject(null) {
@@ -109,7 +145,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
             var graph = new ProjectDependencyGraph(p1, p2);
             var ctx = new BuildOperationContext {
                 BuildRoot = "",
-                Switches = new BuildSwitches()
+                Switches = new BuildSwitches(),
             };
 
             var sequencer = new ProjectSequencer(NullLogger.Default, null);
