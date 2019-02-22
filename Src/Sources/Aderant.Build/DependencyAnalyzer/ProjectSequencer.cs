@@ -143,10 +143,10 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <summary>
         /// If a project has no dependencies within the tree (nothing points to it) then it can be excluded from the tree during
         /// dependency analysis if the up-to-date check does not believe the project to be stale.
-        ///
-        /// If the directory has been marked as out-of-date then we need to propagate that state to all child projects to bring them back into the tree.
+        /// If the directory has been marked as out-of-date then we need to propagate that state to all child projects to bring
+        /// them back into the tree.
         /// Here we check for this and add the projects back in if the directory which owns them is invalidated.
-        /// TODO: This should be handled as part of <see cref="GetProjectsBuildList"/>
+        /// TODO: This should be handled as part of <see cref="GetProjectsBuildList" />
         /// </summary>
         private IReadOnlyList<IDependable> SecondPassAnalysis(IReadOnlyList<IDependable> filteredProjects, ProjectDependencyGraph projectGraph) {
             var order = projectGraph.GetDependencyOrder().ToList();
@@ -386,8 +386,8 @@ namespace Aderant.Build.DependencyAnalyzer {
             var projects = graph.Projects;
 
             var items = projects.Where(
-                s => s.BuildReason != null
-                     && (s.BuildReason.Flags.HasFlag(BuildReasonTypes.DependencyChanged) || s.BuildReason.Flags.HasFlag(BuildReasonTypes.InputsChanged)));
+                project => project.BuildReason != null
+                           && (project.BuildReason.Flags.HasFlag(BuildReasonTypes.DependencyChanged) || project.BuildReason.Flags.HasFlag(BuildReasonTypes.InputsChanged)));
 
             foreach (var item in items) {
                 if (item.DirectoryNode != null) {
