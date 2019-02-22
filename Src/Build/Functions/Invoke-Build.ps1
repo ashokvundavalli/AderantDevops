@@ -592,7 +592,7 @@ function global:Invoke-Build2 {
 
     if ($Clean.IsPresent) {
         Write-Host "You have specified 'Clean'." -ForegroundColor Yellow
-        Write-Host "Clean should not be used as it prevents incremental builds which increases build times."
+        Write-Information "Clean should not avoided as it prevents incremental builds which increases build times. If you find yourself needing this often please speak to a build engineer."
 
         if (-not($PSCmdlet.ShouldContinue("Continue cleaning", ""))) {
             return
