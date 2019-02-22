@@ -279,6 +279,11 @@ namespace Aderant.Build.ProjectSystem {
             get { return FullPath + ":" + GetAssemblyName(); }
         }
 
+        /// <summary>
+        /// The immediate parent of this item.
+        /// </summary>
+        internal DirectoryNode DirectoryNode { get; set; }
+
         public string GetAssemblyName() {
             return OutputAssembly;
         }

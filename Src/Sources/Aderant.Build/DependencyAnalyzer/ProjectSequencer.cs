@@ -108,6 +108,8 @@ namespace Aderant.Build.DependencyAnalyzer {
                 context.GetChangeConsiderationMode(),
                 context.GetRelationshipProcessingMode());
 
+            FindAllChangedProjectsAndDisableBuildCache(projectGraph);
+
             if (filteredProjects.Count != projectsInDependencyOrder.Count) {
                 FixupGraphAfterCacheSubstitution(projectsInDependencyOrder, filteredProjects);
             }
@@ -287,6 +289,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 foreach (var project in projects.Where(p => p.IsUnderSolutionRoot(group.Key))) {
                     // The project depends on prolog file
                     project.AddResolvedDependency(null, startNode);
+                    project.DirectoryNode = startNode;
 
                     // The completion of the group depends all members of the group
                     endNode.AddResolvedDependency(null, project);
@@ -322,11 +325,19 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             graph.ComputeReverseReferencesMap();
-
-            AddTransitiveDependencies(graph, startNodes);
         }
 
-        private static void AddTransitiveDependencies(ProjectDependencyGraph graph, List<DirectoryNode> startNodes) {
+        private static void FindAllChangedProjectsAndDisableBuildCache(ProjectDependencyGraph graph) {
+            var projects = graph.Projects;
+
+            var items = projects.Where(s => s.BuildReason != null
+                                            && (s.BuildReason.Flags.HasFlag(BuildReasonTypes.DependencyChanged) || s.BuildReason.Flags.HasFlag(BuildReasonTypes.InputsChanged)));
+
+            foreach (var item in items) {
+                if (item.DirectoryNode != null) {
+                    item.DirectoryNode.RetrievePrebuilts = false;
+                }
+            }
         }
 
         /// <summary>
@@ -350,7 +361,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             List<DirectoryNode> startNodes = new List<DirectoryNode>();
             List<DirectoryNode> endNodes = new List<DirectoryNode>();
 
-            Dictionary<string, DependencyManifest> manifestMap = new Dictionary<string, DependencyManifest>();
+            Dictionary<string, DependencyManifest> manifestMap = new Dictionary<string, DependencyManifest>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var makeFile in list) {
                 if (!string.IsNullOrWhiteSpace(makeFile)) {

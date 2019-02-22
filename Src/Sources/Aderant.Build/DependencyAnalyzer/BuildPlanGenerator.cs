@@ -181,7 +181,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             PropertyList propertiesForProjectInstance = new PropertyList();
 
-            // there are two new ways to pass properties in item metadata, Properties and AdditionalProperties.
+            // There are two new ways to pass properties in item metadata, Properties and AdditionalProperties.
             // The difference can be confusing and very problematic if used incorrectly.
             // The difference is that if you specify properties using the Properties metadata then any properties defined using the Properties attribute
             // on the MSBuild Task will be ignored.
@@ -193,7 +193,6 @@ namespace Aderant.Build.DependencyAnalyzer {
                 if (!visualStudioProject.IncludeInBuild) {
                     return null;
                 }
-
 
                 propertiesForProjectInstance = AddSolutionConfigurationProperties(visualStudioProject, propertiesForProjectInstance);
                 propertiesForProjectInstance["Id"] = projectInstanceId.ToString("D");
@@ -266,6 +265,12 @@ namespace Aderant.Build.DependencyAnalyzer {
                     ["IsProjectFile"] = bool.FalseString,
                     ["ProjectInstanceId"] = projectInstanceId.ToString("D"),
                 };
+
+                if (node.RetrievePrebuilts != null) {
+                    if (!node.RetrievePrebuilts.Value) {
+                        properties["RetrievePrebuilts"] = bool.FalseString;
+                    }
+                }
 
                 // Perf optimization, we can disable T4 if we haven't seen any projects under this solution path
                 if (!observedProjects.Contains(solutionDirectoryPath)) {

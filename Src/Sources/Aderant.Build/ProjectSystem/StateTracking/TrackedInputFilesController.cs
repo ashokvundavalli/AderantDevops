@@ -41,16 +41,22 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             // depending on the transform expression, there might be no relation between the results of the transforms
 
             if (existingTrackedFiles != null && existingTrackedFiles.Any()) {
-                Dictionary<string, TrackedInputFile> table1 = CreateDictionaryFromTrackedInputFiles(trackedInputFiles);
-                Dictionary<string, TrackedInputFile> table2 = CreateDictionaryFromTrackedInputFiles(existingTrackedFiles);
+                Dictionary<string, TrackedInputFile> newTable = CreateDictionaryFromTrackedInputFiles(trackedInputFiles);
+                Dictionary<string, TrackedInputFile> oldTable = CreateDictionaryFromTrackedInputFiles(existingTrackedFiles);
 
                 List<string> commonKeys;
-                List<string> uniqueKeysInTable1;
-                List<string> uniqueKeysInTable2;
-                DiffHashtables(table1, table2, out commonKeys, out uniqueKeysInTable1, out uniqueKeysInTable2);
+                List<string> uniqueKeysInNewTable;
+                List<string> uniqueKeysInOldTable;
+                DiffHashtables(newTable, oldTable, out commonKeys, out uniqueKeysInNewTable, out uniqueKeysInOldTable);
 
-                if (uniqueKeysInTable1.Count > 0 || uniqueKeysInTable2.Count > 0) {
-                    logger.Info($"Correlated tracked files: UniqueKeysInTable1: {uniqueKeysInTable1.Count} | UniqueKeysInTable2:{uniqueKeysInTable2.Count}");
+                if (uniqueKeysInNewTable.Count > 0 || uniqueKeysInOldTable.Count > 0) {
+                    logger.Debug($"Correlated tracked files: UniqueKeysInTable1: {uniqueKeysInNewTable.Count} | UniqueKeysInTable2:{uniqueKeysInOldTable.Count}");
+
+                    foreach (var key in uniqueKeysInNewTable) {
+                        TrackedInputFile inputFile = newTable[key];
+                        logger.Info($"File is detected as modified or new: {inputFile.FileName}");
+                    }
+
                     return new InputFilesDependencyAnalysisResult(false, trackedInputFiles);
                 }
             }

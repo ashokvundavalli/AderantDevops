@@ -2,6 +2,10 @@
 
 namespace Aderant.Build.DependencyAnalyzer.Model {
 
+    /// <summary>
+    /// A directory within the build tree.
+    /// The build tree will execute a set of pre/post targets per directory which is represented by this device.
+    /// </summary>
     [DebuggerDisplay("DirectoryNode: {" + nameof(Id) + "}")]
     internal sealed class DirectoryNode : AbstractArtifact {
 
@@ -40,6 +44,8 @@ namespace Aderant.Build.DependencyAnalyzer.Model {
         /// Used to determine if a graph fix up is required.
         /// </summary>
         public bool IsBuildingAnyProjects { get; set; }
+
+        public bool? RetrievePrebuilts { get; set; }
 
         private static string CreateName(string name, bool isPostTargets) {
             if (isPostTargets) {

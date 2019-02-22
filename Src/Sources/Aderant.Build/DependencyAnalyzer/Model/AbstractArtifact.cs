@@ -5,7 +5,7 @@ using Aderant.Build.Model;
 using Aderant.Build.ProjectSystem.References;
 
 namespace Aderant.Build.DependencyAnalyzer.Model {
-    
+
     public abstract class AbstractArtifact : IArtifact {
         private List<IResolvedDependency> resolvedDependencies = new List<IResolvedDependency>();
         private List<IUnresolvedDependency> unresolvedDependencies = new List<IUnresolvedDependency>();
