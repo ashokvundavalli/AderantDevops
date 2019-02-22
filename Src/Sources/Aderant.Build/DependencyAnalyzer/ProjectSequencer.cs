@@ -110,8 +110,12 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             FindAllChangedProjectsAndDisableBuildCache(projectGraph);
 
+            filteredProjects = SecondPassAnalysis(filteredProjects, projectGraph);
+
+            LogProjectsExcluded(filteredProjects, projectGraph);
+
             if (filteredProjects.Count != projectsInDependencyOrder.Count) {
-                FixupGraphAfterCacheSubstitution(projectsInDependencyOrder, filteredProjects);
+                CacheSubstitutionFixup(projectsInDependencyOrder, filteredProjects);
             }
 
             var groups = projectGraph.GetBuildGroups(filteredProjects);
@@ -137,15 +141,65 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         /// <summary>
+        /// If a project has no dependencies within the tree (nothing points to it) then it can be excluded from the tree during
+        /// dependency analysis if the up-to-date check does not believe the project to be stale.
+        ///
+        /// If the directory has been marked as out-of-date then we need to propagate that state to all child projects to bring them back into the tree.
+        /// Here we check for this and add the projects back in if the directory which owns them is invalidated.
+        /// TODO: This should be handled as part of <see cref="GetProjectsBuildList"/>
+        /// </summary>
+        private IReadOnlyList<IDependable> SecondPassAnalysis(IReadOnlyList<IDependable> filteredProjects, ProjectDependencyGraph projectGraph) {
+            var order = projectGraph.GetDependencyOrder().ToList();
+
+            var projects = filteredProjects.ToList();
+
+            foreach (var project in projectGraph.Projects) {
+                if (!project.IncludeInBuild) {
+                    continue;
+                }
+
+                if (project.DirectoryNode.RetrievePrebuilts != null && project.DirectoryNode.RetrievePrebuilts.Value == false) {
+                    if (project.BuildReason == null) {
+                        project.SetReason(BuildReasonTypes.Forced);
+
+                        int index = order.IndexOf(project);
+                        if (index >= 0) {
+                            projects.Insert(index, project);
+                        }
+                    }
+                }
+            }
+
+            return projects;
+        }
+
+        private void LogProjectsExcluded(IReadOnlyList<IDependable> filteredProjects, ProjectDependencyGraph projectGraph) {
+            var projectsExcluded = projectGraph.Nodes.Except(filteredProjects);
+
+            StringBuilder sb = new StringBuilder();
+            sb.Append("The following projects are excluded from this build:");
+            sb.AppendLine();
+
+            foreach (var project in projectsExcluded) {
+                ConfiguredProject configuredProject = projectGraph.GetProject(project.Id);
+                if (configuredProject != null) {
+                    sb.AppendLine(" -> " + configuredProject.Id);
+                }
+            }
+
+            logger.Info(sb.ToString());
+        }
+
+        /// <summary>
         /// Fixes the dependency graph.
-        /// <see cref="DependencyGraph.GetBuildGroups"/> will incorrectly group the graph when nodes are removed due to cache
+        /// <see cref="DependencyGraph.GetBuildGroups" /> will incorrectly group the graph when nodes are removed due to cache
         /// substitution or if a project is flagged to not build because not all are provided to GetBuildGroups
-        /// (as they are not in the set returned by <see cref="GetProjectsBuildList"/>.
+        /// (as they are not in the set returned by <see cref="GetProjectsBuildList" />.
         /// To fix this we add a synthetic dependency to on all nodes not building to all projects but only if the node itself has
         /// no items being built. This will introduce cycles but it doesn't matter as we have already sorted the graph but we just
         /// need to fix the grouping.
         /// </summary>
-        private static void FixupGraphAfterCacheSubstitution(IReadOnlyList<IDependable> projectsInDependencyOrder, IReadOnlyList<IDependable> filteredProjects) {
+        private static void CacheSubstitutionFixup(IReadOnlyList<IDependable> projectsInDependencyOrder, IReadOnlyList<IDependable> filteredProjects) {
             foreach (var node in projectsInDependencyOrder.OfType<DirectoryNode>()) {
                 if (!node.IsPostTargets && !node.IsBuildingAnyProjects) {
                     for (var i = 0; i < filteredProjects.Count; i++) {
@@ -167,6 +221,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 if (fileSystem.FileExists(treeFile)) {
                     fileSystem.DeleteFile(treeFile);
                 }
+
                 fileSystem.WriteAllText(treeFile, treeText);
             }
         }
@@ -330,8 +385,9 @@ namespace Aderant.Build.DependencyAnalyzer {
         private static void FindAllChangedProjectsAndDisableBuildCache(ProjectDependencyGraph graph) {
             var projects = graph.Projects;
 
-            var items = projects.Where(s => s.BuildReason != null
-                                            && (s.BuildReason.Flags.HasFlag(BuildReasonTypes.DependencyChanged) || s.BuildReason.Flags.HasFlag(BuildReasonTypes.InputsChanged)));
+            var items = projects.Where(
+                s => s.BuildReason != null
+                     && (s.BuildReason.Flags.HasFlag(BuildReasonTypes.DependencyChanged) || s.BuildReason.Flags.HasFlag(BuildReasonTypes.InputsChanged)));
 
             foreach (var item in items) {
                 if (item.DirectoryNode != null) {
