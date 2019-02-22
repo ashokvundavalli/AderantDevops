@@ -16,7 +16,7 @@
     <GenerateSampleDeployScript>false</GenerateSampleDeployScript>
     <PublishParametersFile>false</PublishParametersFile>
     <PackageParametersFile>false</PackageParametersFile>
-    <DeployOnBuild Condition="'$(DeployOnBuild)' == ''">true</DeployOnBuild>
+    <DeployOnBuild>false</DeployOnBuild>
     <DefaultPackageOutputDir>$(BinModuleDirectory)</DefaultPackageOutputDir>
     <DesktopBuildPackageLocation>$(BinModuleDirectory)</DesktopBuildPackageLocation>
 
