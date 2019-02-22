@@ -149,9 +149,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// TODO: This should be handled as part of <see cref="GetProjectsBuildList" />
         /// </summary>
         private IReadOnlyList<IDependable> SecondPassAnalysis(IReadOnlyList<IDependable> filteredProjects, ProjectDependencyGraph projectGraph) {
-            var order = projectGraph.GetDependencyOrder().ToList();
-
-            var projects = filteredProjects.ToList();
+            var graph = new ProjectDependencyGraph();
 
             foreach (var project in projectGraph.Projects) {
                 if (!project.IncludeInBuild) {
@@ -161,16 +159,20 @@ namespace Aderant.Build.DependencyAnalyzer {
                 if (project.DirectoryNode.RetrievePrebuilts != null && project.DirectoryNode.RetrievePrebuilts.Value == false) {
                     if (project.BuildReason == null) {
                         project.SetReason(BuildReasonTypes.Forced);
-
-                        int index = order.IndexOf(project);
-                        if (index >= 0) {
-                            projects.Insert(index, project);
-                        }
+                        graph.Add(project);
                     }
                 }
             }
 
-            return projects;
+            foreach (var filteredProject in filteredProjects) {
+                if (filteredProject != null) {
+                    graph.Add(filteredProject as IArtifact);
+                } else {
+                    throw new InvalidOperationException("Instance is not IArtifact");
+                }
+            }
+
+            return graph.GetDependencyOrder().Where(x => (x as ConfiguredProject)?.BuildReason != null).ToList();
         }
 
         private void LogProjectsExcluded(IReadOnlyList<IDependable> filteredProjects, ProjectDependencyGraph projectGraph) {
