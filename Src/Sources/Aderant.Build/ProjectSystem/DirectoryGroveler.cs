@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.IO;
@@ -41,7 +40,7 @@ namespace Aderant.Build.ProjectSystem {
         public BuildTaskLogger Logger { get; set; }
 
         /// <summary>
-        /// Begins looking buildable items under the paths provided by <see cref="includePaths"/>
+        /// Begins looking buildable items under the paths provided by <see cref="includePaths" />
         /// </summary>
         public void Grovel(IReadOnlyList<string> includePaths, IReadOnlyList<string> excludePaths) {
             var filePathCollector = new List<string>();
@@ -61,7 +60,7 @@ namespace Aderant.Build.ProjectSystem {
 
                 if (string.Equals(fileName, WellKnownPaths.EntryPointFileName)) {
                     makeFiles.Add(path);
-                    directoriesInBuild.Add(Path.GetFullPath(Path.GetDirectoryName(path) + "\\..\\"));
+                    AddDirectoryInBuild(new[] { Path.GetFullPath(Path.GetDirectoryName(path) + "\\..\\") });
                     continue;
                 }
 
@@ -92,9 +91,10 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         /// <summary>
-        /// Expands the scope of the build tree by pulling in directories that are referenced by other sources of dependency information
+        /// Expands the scope of the build tree by pulling in directories that are referenced by other sources of dependency
+        /// information
         /// </summary>
-        public void ExpandBuildTree(IBuildTreeContributorService pipelineService, HashSet<string> inputDirectories) {
+        public void ExpandBuildTree(IBuildTreeContributorService pipelineService, IEnumerable<string> inputDirectories) {
             HashSet<string> contributorsAdded = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (string directory in inputDirectories) {
@@ -121,7 +121,7 @@ namespace Aderant.Build.ProjectSystem {
 
                             contributorsAdded.Add(contributorRoot);
 
-                            AddDirectoryInBuild(new [] {contributorRoot });
+                            AddDirectoryInBuild(new[] { contributorRoot });
                         }
                     }
                 }

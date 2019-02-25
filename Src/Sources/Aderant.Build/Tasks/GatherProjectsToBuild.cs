@@ -55,7 +55,7 @@ namespace Aderant.Build.Tasks {
                 Log.LogMessage("Build will not expand build tree.");
             }
 
-            groveler.AddDirectoryInBuild(inputDirectories);
+            groveler.AddDirectoryInBuild(inputDirectories.Except(new[] { Context.BuildRoot }));
 
             if (!Context.Switches.RestrictToProvidedPaths) {
                 groveler.ExpandBuildTree(PipelineService, inputDirectories);
