@@ -41,14 +41,14 @@ namespace Aderant.Build.ProjectSystem {
         public BuildTaskLogger Logger { get; set; }
 
         /// <summary>
-        /// Begins looking buildable items under the paths provided by <see cref="contextInclude"/>
+        /// Begins looking buildable items under the paths provided by <see cref="includePaths"/>
         /// </summary>
-        public void Grovel(IReadOnlyList<string> contextInclude, IReadOnlyList<string> excludePaths) {
+        public void Grovel(IReadOnlyList<string> includePaths, IReadOnlyList<string> excludePaths) {
             var filePathCollector = new List<string>();
 
             var seenDirectories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            foreach (var path in contextInclude) {
+            foreach (var path in includePaths) {
                 filePathCollector.AddRange(GrovelForFiles(path, excludePaths, seenDirectories));
             }
 
@@ -94,10 +94,10 @@ namespace Aderant.Build.ProjectSystem {
         /// <summary>
         /// Expands the scope of the build tree by pulling in directories that are referenced by other sources of dependency information
         /// </summary>
-        public void ExpandBuildTree(IBuildTreeContributorService pipelineService) {
+        public void ExpandBuildTree(IBuildTreeContributorService pipelineService, HashSet<string> inputDirectories) {
             HashSet<string> contributorsAdded = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            foreach (string directory in DirectoriesInBuild) {
+            foreach (string directory in inputDirectories) {
                 var file = Path.Combine(directory, "Build", DependencyManifest.DependencyManifestFileName);
 
                 if (physicalFileSystem.FileExists(file)) {
@@ -108,10 +108,11 @@ namespace Aderant.Build.ProjectSystem {
 
                         // Construct a path that represents a possible directory that also needs to be built.
                         // We will check if it actually exists, or is needed later in the processing
-                        string contributorRoot = Path.Combine(Directory.GetParent(directory.TrimTrailingSlashes()).FullName, moduleName, "Build");
+                        string contributorRoot = Path.Combine(Directory.GetParent(directory.TrimTrailingSlashes()).FullName, moduleName);
+                        var buildDirectory = Path.Combine(contributorRoot, "Build");
 
-                        if (!contributorsAdded.Contains(contributorRoot)) {
-                            string contributorMakeFile = Path.Combine(contributorRoot, WellKnownPaths.EntryPointFileName);
+                        if (!contributorsAdded.Contains(buildDirectory)) {
+                            string contributorMakeFile = Path.Combine(buildDirectory, WellKnownPaths.EntryPointFileName);
 
                             pipelineService.AddBuildDirectoryContributor(
                                 new BuildDirectoryContribution(contributorMakeFile) {
@@ -119,11 +120,23 @@ namespace Aderant.Build.ProjectSystem {
                                 });
 
                             contributorsAdded.Add(contributorRoot);
+
+                            AddDirectoryInBuild(new [] {contributorRoot });
                         }
                     }
                 }
             }
         }
-    }
 
+        /// <summary>
+        /// Adds a directory to the build tree.
+        /// </summary>
+        public void AddDirectoryInBuild(IEnumerable<string> inputDirectories) {
+            foreach (string inputDirectory in inputDirectories) {
+                if (inputDirectory != null) {
+                    directoriesInBuild.Add(PathUtility.TrimTrailingSlashes(inputDirectory));
+                }
+            }
+        }
+    }
 }

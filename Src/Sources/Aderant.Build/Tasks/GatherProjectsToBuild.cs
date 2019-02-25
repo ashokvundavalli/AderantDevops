@@ -55,11 +55,13 @@ namespace Aderant.Build.Tasks {
                 Log.LogMessage("Build will not expand build tree.");
             }
 
-            groveler.Grovel(inputDirectories.ToArray(), ExcludedPaths);
+            groveler.AddDirectoryInBuild(inputDirectories);
 
             if (!Context.Switches.RestrictToProvidedPaths) {
-                groveler.ExpandBuildTree(PipelineService);
+                groveler.ExpandBuildTree(PipelineService, inputDirectories);
             }
+
+            groveler.Grovel(DirectoriesInBuild, ExcludedPaths);
 
             return !Log.HasLoggedErrors;
         }
