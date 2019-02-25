@@ -3,19 +3,51 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using Aderant.Build.PipelineService;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Tasks;
 using Microsoft.Build.Utilities;
 
-namespace Aderant.Build.Tasks {
-
-    public sealed class PowerShellScript : Task, ICancelableTask {
+namespace Aderant.Build.Tasks.PowerShell {
+    public class PowerShellScript : Task, ICancelableTask {
         private CancellationTokenSource cts;
+        private string scriptBlock;
 
-        [Required]
-        public string ScriptBlock { get; private set; }
+        public string ScriptBlock {
+            get {
+                if (scriptBlock == null) {
+                    if (ScriptResource == null) {
+                        ErrorUtilities.VerifyThrowArgument(ScriptResource != null, $"Neither {nameof(ScriptBlock)} or {nameof(ScriptResource)} is specified", null);
+                    }
+                    ScriptBlock = LoadResource(ScriptResource);
+                }
+                return scriptBlock;
+            }
+            set { scriptBlock = value; }
+        }
+
+        private string LoadResource(string scriptResource) {
+            var asm = Assembly.GetExecutingAssembly();
+            string[] names = asm.GetManifestResourceNames();
+
+            foreach (string name in names) {
+                var resourceName = typeof(PowerShellScript).Namespace + ".Resources." + scriptResource + ".ps1";
+
+                if (string.Equals(name, resourceName)) {
+                    using (Stream manifestResourceStream = asm.GetManifestResourceStream(resourceName)) {
+                        using (var reader = new StreamReader(manifestResourceStream)) {
+                            return reader.ReadToEnd();
+                        }
+                    }
+                }
+            }
+
+            throw new ArgumentException("There is no resource: " + scriptResource);
+        }
+
+        public string ScriptResource { get; set; }
 
         public string ProgressPreference { get; set; }
 
@@ -77,7 +109,9 @@ namespace Aderant.Build.Tasks {
             }
 
             using (var proxy = GetProxy()) {
-                proxy.SetStatus("Failed", OnErrorReason);
+                if (proxy != null) {
+                    proxy.SetStatus("Failed", OnErrorReason);
+                }
             }
         }
 
@@ -97,11 +131,13 @@ namespace Aderant.Build.Tasks {
             try {
                 var scripts = new List<string>();
 
-                string combine = Path.Combine(directoryName, "Build.psm1");
-                if (File.Exists(combine)) {
-                    scripts.Add(
-                        $"Import-Module \"{directoryName}\\Build.psm1\""
-                    );
+                if (directoryName != null) {
+                    string combine = Path.Combine(directoryName, "Build.psm1");
+                    if (File.Exists(combine)) {
+                        scripts.Add(
+                            $"Import-Module \"{directoryName}\\Build.psm1\""
+                        );
+                    }
                 }
 
                 scripts.Add(ScriptBlock);
@@ -139,7 +175,7 @@ namespace Aderant.Build.Tasks {
             pipelineExecutor.Info += (sender, message) => { log.LogMessage(message.ToString()); };
         }
 
-        private IBuildPipelineService GetProxy() {
+        internal virtual IBuildPipelineService GetProxy() {
             return BuildPipelineServiceClient.GetCurrentProxy();
         }
     }

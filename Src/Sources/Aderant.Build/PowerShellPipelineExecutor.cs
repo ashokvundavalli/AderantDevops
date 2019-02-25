@@ -5,6 +5,7 @@ using System.Management.Automation;
 using System.Management.Automation.Runspaces;
 using System.Threading;
 using Aderant.Build.Tasks;
+using Aderant.Build.Tasks.PowerShell;
 
 namespace Aderant.Build {
     internal class PowerShellPipelineExecutor {
@@ -80,6 +81,9 @@ namespace Aderant.Build {
                             var result = pipeline.Invoke();
                         } finally {
                             HadErrors = pipeline.HadErrors;
+
+                            pipeline.Output.DataReady -= HandleDataReady;
+                            pipeline.Error.DataReady -= HandleErrorReady;
                         }
                     }
                 } catch (ParseException ex) {

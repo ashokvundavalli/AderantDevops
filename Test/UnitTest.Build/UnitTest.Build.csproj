@@ -136,6 +136,7 @@
     </Compile>
     <Compile Include="ServerImage\DependencyGenerationTests.cs" />
     <Compile Include="Tasks\CopyFilesTests.cs" />
+    <Compile Include="Tasks\PowerShellScript\PowerShellScriptTests.cs" />
     <Compile Include="Tasks\ZipBuildScriptsTests.cs" />
     <Compile Include="Utilities\MemoizerTests.cs" />
     <Compile Include="DependencyAnalyzer\ProjectSequencerTests.cs" />

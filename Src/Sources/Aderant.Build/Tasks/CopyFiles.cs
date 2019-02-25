@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks.Dataflow;
+using Aderant.Build.Logging;
 using Aderant.Build.Packaging;
 using Microsoft.Build.Evaluation;
 using Microsoft.Build.Framework;
@@ -16,12 +17,11 @@ namespace Aderant.Build.Tasks {
     public class CopyFiles : Task {
         private IFileSystem fileSystem;
 
-        public CopyFiles()
-            : this(new PhysicalFileSystem()) {
+        public CopyFiles() : this(null) {
         }
 
         internal CopyFiles(IFileSystem fileSystem) {
-            this.fileSystem = fileSystem;
+            this.fileSystem = fileSystem ?? new PhysicalFileSystem(null, new BuildTaskLogger(Log));
         }
 
         [Required]

@@ -121,6 +121,7 @@
     <Compile Include="BuildDirectoryContribution.cs" />
     <Compile Include="IO\JunctionNativeMethods.cs" />
     <Compile Include="IO\Traverse.cs" />
+    <EmbeddedResource Include="Tasks\PowerShell\Resources\SetBuildTags.ps1" />
     <Compile Include="Utilities\TopologicalSort.cs" />
     <Compile Include="DependencyResolver\Models\PaketDependenciesStructure.cs" />
     <Compile Include="Packaging\FileRestore.cs" />
@@ -215,7 +216,7 @@
     <Compile Include="Tasks\ArtifactHandling\GetArtifactPaths.cs" />
     <Compile Include="PowerShellPipelineExecutor.cs" />
     <Compile Include="Tasks\GetBuildOutputs.cs" />
-    <Compile Include="Tasks\PowerShellScript.cs" />
+    <Compile Include="Tasks\PowerShell\PowerShellScript.cs" />
     <Compile Include="Tasks\InspectItemGroup.cs" />
     <Compile Include="Tasks\ArtifactHandling\CollectArtifactsForPublishing.cs" />
     <Compile Include="Packaging\PathSpec.cs" />
@@ -454,6 +455,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\Scripts\" />
+    <Folder Include="Tasks\PowerShell.Resources\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

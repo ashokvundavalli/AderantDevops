@@ -289,7 +289,9 @@
     ==========================================================================================
   -->
   <Target Name="ExecutePlan">
-    <Message Text="##vso[build.addbuildtag]$(BUILD_SOURCEBRANCHNAME)" Condition="'$(BUILD_REASON)' != 'PullRequest'" />
+    <PowerShellScript Condition="'$(BUILD_REASON)' != 'PullRequest'"
+                      LogScript="false"
+                      ScriptResource="SetBuildTags" />
 
     <PropertyGroup>
       <CommonBuildProperties>
