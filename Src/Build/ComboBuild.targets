@@ -241,13 +241,13 @@
 
     <Delete Files="$(SharedDependencyDirectory)paket.dependencies;$(SharedDependencyDirectory)paket.lock" />
 
-    <!--<GetDependencies
+    <GetDependencies
       ProductManifest="$(ProductManifestPath)"
       ModulesRootPath="$(SolutionRoot)"
       DependenciesDirectory="$(SharedDependencyDirectory)"
       DropPath="$(XamlBuildDropLocation)"
       ModulesInBuild="@(DirectoriesInBuild)"
-      EnabledResolvers="@(EnabledResolvers)" />-->
+      EnabledResolvers="@(EnabledResolvers)" />
 
     <MakeSymlink
       Link="%(DirectoriesInBuild.FullPath)\Dependencies"
