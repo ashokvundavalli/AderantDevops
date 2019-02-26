@@ -33,8 +33,7 @@ namespace Aderant.Build.Tasks {
             get { return groveler.ProjectFiles.ToArray(); }
         }
 
-        public override bool ExecuteTask() {
-            System.Diagnostics.Debugger.Launch();
+        public override bool ExecuteTask() {            
             if (Context.Exclude != null) {
                 ExcludedPaths = Context.Exclude.Union(ExcludedPaths ?? Enumerable.Empty<string>(), StringComparer.OrdinalIgnoreCase)
                     .Except(Context.Include, StringComparer.OrdinalIgnoreCase)
