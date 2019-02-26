@@ -33,7 +33,7 @@ namespace Aderant.Build.Tasks {
             get { return groveler.ProjectFiles.ToArray(); }
         }
 
-        public override bool ExecuteTask() {
+        public override bool ExecuteTask() {            
             if (Context.Exclude != null) {
                 ExcludedPaths = Context.Exclude.Union(ExcludedPaths ?? Enumerable.Empty<string>(), StringComparer.OrdinalIgnoreCase)
                     .Except(Context.Include, StringComparer.OrdinalIgnoreCase)
@@ -55,7 +55,7 @@ namespace Aderant.Build.Tasks {
                 Log.LogMessage("Build will not expand build tree.");
             }
 
-            groveler.AddDirectoryInBuild(inputDirectories.Except(new[] { Context.BuildRoot }));
+            groveler.AddDirectoryInBuild(inputDirectories);
 
             if (!Context.Switches.RestrictToProvidedPaths) {
                 groveler.ExpandBuildTree(PipelineService, inputDirectories);
