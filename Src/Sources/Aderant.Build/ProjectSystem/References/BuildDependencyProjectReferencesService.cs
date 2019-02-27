@@ -73,7 +73,7 @@ namespace Aderant.Build.ProjectSystem.References {
 
         private void LogMangled(IUnresolvedBuildDependencyProjectReference unresolved, ConfiguredProject resolvedReference) {
             if (!projectReferenceGuidsInError.Contains(unresolved.ProjectGuid)) {
-                logger.Warning($"The ProjectReference GUID {unresolved.ProjectGuid} in {this.ConfiguredProject.FullPath} for {unresolved.ProjectPath} does not match the target project of {resolvedReference.ProjectGuid}. Update the Project element to use the correct GUID to prevent the build from selecting the wrong project.");
+                logger.Error($"The ProjectReference GUID {unresolved.ProjectGuid} in {this.ConfiguredProject.FullPath} for {unresolved.ProjectPath} does not match the target project of {resolvedReference.ProjectGuid}. Update the Project element to use the correct GUID to prevent the build from selecting the wrong project.");
                 projectReferenceGuidsInError.Add(unresolved.ProjectGuid);
             }
         }
