@@ -273,7 +273,7 @@ doc.Save(File);
   ==========================================================================================
   -->
   <Target Name="BuildNumberOverrideTarget"
-          DependsOnTargets="SetBuildNumbers" AfterTargets="PrepareBuildEnvironment">
+          DependsOnTargets="SetBuildNumbers" AfterTargets="PrepareBuildEnvironment" Condition="'$(IsCustomBuild)' != 'true'">
 
     <!--<PropertyGroup>
       -->
