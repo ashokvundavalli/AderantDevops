@@ -38,7 +38,7 @@ namespace Aderant.Build.Analyzer.Rules.CodeQuality {
 
         internal override string Title => "Math Rounding Error";
 
-        internal override string MessageFormat => "Use 'Aderant.Framework.Extensions.MathRounding.RoundCurrencyAmount' instead of 'Math.Round' or 'Decimal.Round'";
+        internal override string MessageFormat => "Use 'Aderant.Framework.Extensions.MathRounding.RoundCurrencyAmount' instead of 'Math.Round' or 'Decimal.Round' for currency rounding, and use 'Aderant.Time.Extensions.TimeIncrementRounding' for time rounding.";
 
         internal override string Description => "The default rounding method for .NET is ToEven but SQL uses AwayFromZero, so we should keep it consistent within Expert and make sure that instead of calling Math.Round or Decimal.Round, call Aderant.Framework.Extensions.MathRounding.RoundCurrencyAmount instead to avoid discrepancies between classic/SQL vs .net code. User Story ID: 208165";
 
@@ -62,7 +62,8 @@ namespace Aderant.Build.Analyzer.Rules.CodeQuality {
             if (exp == null ||
                 IsAnalysisSuppressed(node, ValidSuppressionMessages) ||
                 !"System.Math.Round".EndsWith(exp.GetText().ToString(), StringComparison.Ordinal) &&
-                !"System.Decimal.Round".EndsWith(exp.GetText().ToString(), StringComparison.Ordinal)) {
+                !"System.Decimal.Round".EndsWith(exp.GetText().ToString(), StringComparison.Ordinal) &&
+                !"decimal.Round".EndsWith(exp.GetText().ToString(), StringComparison.Ordinal)) {
 
                 return;
             }

@@ -35,6 +35,25 @@ namespace Test {
         }
 
         [TestMethod]
+        public void MathRoundRule_InvalidDecimalRoundSingleNodeExpression() {
+            const string code = @"
+using System;
+
+namespace Test {
+    public class TestClass {
+        private void Method() {
+            var x = decimal.Round(1.09);
+        }
+    }
+}
+";
+            VerifyCSharpDiagnostic(
+                code,
+                GetDiagnostic(7, 21));
+
+        }
+
+        [TestMethod]
         public void MathRoundRule_InvalidMathRoundTwoNodesExpression() {
             const string code = @"
 using System;
