@@ -431,7 +431,7 @@
   <Target Name="RunDeploymentCheck" Condition="'$(IsDesktopBuild)' != 'true'">
 
     <PropertyGroup>
-      <DeploymentCheck Condition="'$(DeploymentCheck)' == ''">$(LocalExpertBinariesDirectory)Test\DeploymentCheck\DeploymentCheck.exe</DeploymentCheck>
+      <DeploymentCheck Condition="'$(DeploymentCheck)' == ''">$(ExpertSourceDirectory)Test\DeploymentCheck\DeploymentCheck.exe</DeploymentCheck>
       <ErrorMessage>The product has failed validation against the role manifests. Refer to the RunDeploymentCheck section of the build log.</ErrorMessage>
     </PropertyGroup>
 
