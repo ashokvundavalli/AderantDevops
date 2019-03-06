@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
          ToolsVersion="14.0"
          DefaultTargets="BuildAndPackage"
@@ -223,6 +223,33 @@
   </Target>
 
 
+  <UsingTask TaskName="FilterBuildDirectories" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+  <!-- This task is used to remove the root build directory in the event that it contains other modules.
+    This ensures that symlinks will not be created in an invalid location. -->
+
+    <ParameterGroup>
+      <RootDirectory ParameterType="System.String" Required="True" Output="False" />
+      <Directories ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="True" Output="False" />
+      <FilteredDirectories ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="True" />
+    </ParameterGroup>
+
+    <Task>
+      <Reference Include="System.Core" />
+      <Using Namespace="System.Linq" />
+      <Code Type="Fragment" Language="cs">
+        <![CDATA[
+            if (Directories.GroupBy(x => x.ItemSpec.StartsWith(RootDirectory, StringComparison.OrdinalIgnoreCase)).Count() > 1) {
+                FilteredDirectories = Directories.Where(x => !x.ItemSpec.Equals(RootDirectory.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase)).ToArray();
+            } else {
+                FilteredDirectories = Directories;
+            }
+          ]]>
+      </Code>
+    </Task>
+
+  </UsingTask>
+
+
   <Target Name="GetAllDependencies"
           Condition="'$(UseSharedDependencyDirectory)' == 'true' And '$(NoDependencyFetch)' != 'true'">
     <!--
@@ -241,27 +268,32 @@
 
     <Delete Files="$(SharedDependencyDirectory)paket.dependencies;$(SharedDependencyDirectory)paket.lock" />
 
+    <FilterBuildDirectories Condition="'@(DirectoriesInBuild->Count())' &gt; '1'"
+      RootDirectory="$(SolutionRoot)"
+      Directories="@(DirectoriesInBuild)">
+      <Output TaskParameter="FilteredDirectories" ItemName="FilteredDirectories" />
+    </FilterBuildDirectories>
+
+    <MakeDir Condition="!Exists('$(SharedDependencyDirectory)packages)')"
+      Directories="$(SharedDependencyDirectory)packages" />
+
     <GetDependencies
       ProductManifest="$(ProductManifestPath)"
       ModulesRootPath="$(SolutionRoot)"
       DependenciesDirectory="$(SharedDependencyDirectory)"
       DropPath="$(XamlBuildDropLocation)"
-      ModulesInBuild="@(DirectoriesInBuild)"
+      ModulesInBuild="@(FilteredDirectories)"
       EnabledResolvers="@(EnabledResolvers)" />
 
     <MakeSymlink
-      Link="%(DirectoriesInBuild.FullPath)\Dependencies"
+      Link="%(FilteredDirectories.FullPath)\Dependencies"
       Target="$(SharedDependencyDirectory)"
       Type="D">
         <Output TaskParameter="Link" ItemName="CreatedLinks" />
       </MakeSymlink>
 
-    <MakeDir Condition="!Exists('$(SharedDependencyDirectory)packages)')"
-      Directories="$(SharedDependencyDirectory)packages" />
-
     <MakeSymlink
-      Condition="!Exists('%(DirectoriesInBuild.FullPath)\packages')"
-      Link="%(DirectoriesInBuild.FullPath)\packages"
+      Link="%(FilteredDirectories.FullPath)\packages"
       Target="$(SharedDependencyDirectory)packages"
       FailIfLinkIsDirectoryWithContent="true"
       Type="D">
