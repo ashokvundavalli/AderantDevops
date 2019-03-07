@@ -1,8 +1,8 @@
 ﻿Set-StrictMode -Version 'Latest'
 
 function Initialize-BuildAssembly {
-	. "$PSScriptRoot\..\..\Build\Functions\Initialize-Assembly.ps1"
-	UpdateOrBuildAssembly -BuildScriptsDirectory "$PSScriptRoot\..\..\Build" $true
+    . "$PSScriptRoot\..\..\Build\Functions\Initialize-Assembly.ps1"
+        UpdateOrBuildAssembly -BuildScriptsDirectory "$PSScriptRoot\..\..\Build" $true
 }
 
 # Need to load Aderant.Build.dll first as it defines types used in later scripts
@@ -37,6 +37,7 @@ Initialize-Module
 [string]$global:BuildScriptsDirectory = $global:ShellContext.BuildScriptsDirectory
 [string]$global:PackageScriptsDirectory = ""
 [string]$global:ProductManifestPath = ""
+[string]$global:InstallPath = ""
 [PSModuleInfo]$currentModuleFeature = $null
 [string[]]$global:LastBuildBuiltModules = @()
 [string[]]$global:LastBuildRemainingModules = @()
@@ -239,6 +240,71 @@ function Set-ScriptPaths {
         Write-Debug -Message "PackageScriptsDirectory: $($ShellContext.PackageScriptsDirectory)"
         $ShellContext.ProductManifestPath = Join-Path -Path $ShellContext.PackageScriptsDirectory -ChildPath "\ExpertManifest.xml"
         Write-Debug -Message "ProductManifestPath: $($ShellContext.ProductManifestPath)"
+    }
+}
+
+<#
+Find the Install Location of programs
+#>
+
+function Find-InstallLocation ($programName) {
+    $registryItem = Get-ChildItem HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall | Get-ItemProperty | ?{ $_.PSObject.Properties.Name -match 'DisplayName' -and -not [string]::IsNullOrEmpty($_.DisplayName) -and $_.DisplayName -like $programName }
+
+    if($registryItem){
+        return $registryItem.InstallLocation
+    } else {
+        return $null;
+    }
+}
+
+<#
+Set Expert specific variables
+#>
+
+function Set-ExpertVariables {
+    $global:InstallPath = Find-InstallLocation -programName 'Expert Deployment Manager' 
+
+    if($global:InstallPath){
+        $ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentEngine -Value { Join-Path -Path $global:InstallPath -ChildPath 'DeploymentEngine.exe' }
+        $ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentManager -Value { Join-Path -Path $global:InstallPath -ChildPath 'DeploymentManager.exe' } 
+    } else {
+        $pathToDeploymentEngine = 'C:\AderantExpert\Install\DeploymentEngine.exe'
+        $pathToDeploymentManager = 'C:\AderantExpert\Install\DeploymentManager.exe'
+
+        $ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentEngine -Value { $pathToDeploymentEngine }
+        $ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentManager -Value { $pathToDeploymentManager }
+
+        if (-not (Test-Path $ShellContext.DeploymentManager)) {
+            Write-Warning "Please ensure that the DeploymentManager.exe is located at: $($pathToDeploymentManager)"
+        }
+    }
+}
+
+<#
+.Synopsis 
+    Displays the Build version url located in the binaries directory of the current branch.
+.Description
+    WARNING: If you have done a Get-Product since your last deployment, then it will show the version number of the Get-Product rather than what is deployed.
+.PARAMETER copyToClipboard
+    If specified the Build version will be copied to the clipboard.
+#>
+function Get-ProductBuild([switch]$copyToClipboard) {
+
+    $buildVersionFile = Get-ChildItem -Path $ShellContext.BranchBinariesDirectory -Filter Expert_Build_*.url
+    
+    if ($buildVersionFile) {
+    
+        $buildVersionFilePath = Join-Path -Path $ShellContext.BranchBinariesDirectory -ChildPath $buildVersionFile
+        Invoke-Item $buildVersionFilePath
+        Write-Host "Current Build information is visible at: $($buildVersionFilePath)" 
+
+        if ($copyToClipboard) {
+            Add-Type -AssemblyName "System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
+            [System.Windows.Forms.Clipboard]::SetText($buildVersionFile)
+        }
+
+    } else {
+        Write-Error "No url containing build information is present in: $($ShellContext.BranchBinariesDirectory) "
     }
 }
 
@@ -687,6 +753,7 @@ function Set-Environment {
 
         Set-ScriptPaths
         Set-ExpertSourcePath
+        Set-ExpertVariables
         Initialise-BuildLibraries
         Set-VisualStudioVersion
 
@@ -1221,7 +1288,6 @@ $functionsToExport = @(
     [PSCustomObject]@{ function = 'Get-ProductBuild'; alias = 'gpb'; },
     [PSCustomObject]@{ function = 'Git-Merge'; alias = $null; },
     [PSCustomObject]@{ function = 'Help'; alias = $null; },
-    [PSCustomObject]@{ function = 'Install-DeploymentManager'; alias = $null; },
     [PSCustomObject]@{ function = 'Install-LatestSoftwareFactory'; alias = 'usf'; },
     [PSCustomObject]@{ function = 'Install-LatestVisualStudioExtension'; alias = $null; },
     [PSCustomObject]@{ function = 'Move-Shelveset'; alias = $null; },
@@ -1235,7 +1301,6 @@ $functionsToExport = @(
     [PSCustomObject]@{ function = 'Start-DeploymentManager'; alias = 'dm'; },
     [PSCustomObject]@{ function = 'SwitchBranchTo'; alias = 'Switch-Branch'; },
     [PSCustomObject]@{ function = 'Prepare-Database'; alias = 'dbprep'; },
-    [PSCustomObject]@{ function = 'Uninstall-DeploymentManager'; alias = $null; },
     [PSCustomObject]@{ function = 'Update-Database'; alias = 'upd'; },
     [PSCustomObject]@{ function = 'Scorch'; alias = $null; },
     [PSCustomObject]@{ function = 'Clean'; alias = $null; },
@@ -1266,7 +1331,6 @@ Export-ModuleMember -variable BranchBinariesDirectory
 Export-ModuleMember -variable BranchName
 Export-ModuleMember -variable BranchModulesDirectory
 Export-ModuleMember -variable ProductManifestPath
-
 Export-ModuleMember -Function Get-DependenciesFrom
 Export-ModuleMember -Function Reset-DeveloperShell
 

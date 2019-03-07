@@ -1,44 +1,24 @@
 <#
 .Synopsis
-    Starts DeploymentManager for your current branch
+    Starts DeploymentManager
 .Description
-    DeploymentManager
+    Starts DeploymentManager.exe
 #>
-function Start-DeploymentManager {
-    $shell = ".\DeploymentManager.exe $fullManifest"
-    switch ($global:BranchExpertVersion) {
-        "8" {
-            #8.0 case where ExperSource and Deployment folders exist in binaries folder, and DeploymentManager is renamed to Setup.exe.
-            $shell = ".\Setup.exe $fullManifest"
-            pushd $global:BranchBinariesDirectory
-            Write "8.x Starting Deployment Manager (Setup.exe) in Binaries folder..."
-        }
-        "802" {
-            #8.0.2 case where ExperSource folder exists in binaries folder, and DeploymentManager is renamed to Setup.exe.
-            $shell = ".\Setup.exe $fullManifest"
-            pushd $global:BranchBinariesDirectory
-            Write "8.0.2 Starting Deployment Manager (Setup.exe) in Binaries folder..."
-        }
-        "8.1.0" {
-            if (Test-Path $ShellContext.DeploymentManager) {
-                $shell = $ShellContext.DeploymentManager                
-            } else {
-                $shell = $null
-                InstallDeployment                                
-            }
-        }
-        default {
-
-        }
+function global:Start-DeploymentManager {
+    if (Test-Path $ShellContext.DeploymentManager) {
+        Write-Host "Starting Deployment Manager..."
+        $shell = $ShellContext.DeploymentManager                
+    } else {
+        $shell = $null
+        Write-Warning "Please ensure that the DeploymentManager.exe is located at: $($ShellContext.DeploymentManager)"
     }
 
     if ($shell) {
         Invoke-Expression $shell
     }
-    popd
 }
 
-Export-ModuleMember Start-DeploymentManager
+Export-ModuleMember -Function 'Start-DeploymentManager'
 
 <#
 .Synopsis
@@ -73,11 +53,12 @@ function Start-DeploymentEngine {
 
     process {
         if (-not (Test-Path $ShellContext.DeploymentEngine)) {
-            Install-DeploymentManager
+            Write-Error "Couldn't locate the DeploymentEngine.exe, please place it at $($ShellContext.DeploymentEngine)"   
         }
 
-        $environmentXml = [System.IO.Path]::Combine($global:BranchBinariesDirectory, "environment.xml")
-        
+        $environmentXml = [System.IO.Path]::Combine($ShellContext.BranchBinariesDirectory, "environment.xml")
+        $pathToDeploymentEngineScript = Join-Path -Path $ShellContext.BranchBinariesDirectory -ChildPath "AutomatedDeployment\DeploymentEngine.ps1"
+
         if ([string]::IsNullOrWhiteSpace($serverName)) {
             $serverName = Get-DatabaseServer
         }
@@ -88,25 +69,25 @@ function Start-DeploymentEngine {
 
         switch ($true) {
             ($skipPackageImports.IsPresent -and $skipHelpDeployment.IsPresent) {
-                powershell.exe -NoProfile -NonInteractive -File "$global:BranchBinariesDirectory\AutomatedDeployment\DeploymentEngine.ps1" -command $command -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $ShellContext.DeploymentEngine -skipPackageImports -skipHelpDeployment
+                . $pathToDeploymentEngineScript -command $command -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $ShellContext.DeploymentEngine -skipPackageImports -skipHelpDeployment
                 break
             }
             $skipPackageImports.IsPresent {
-                powershell.exe -NoProfile -NonInteractive -File "$global:BranchBinariesDirectory\AutomatedDeployment\DeploymentEngine.ps1" -command $command -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $ShellContext.DeploymentEngine -skipPackageImports
+                . $pathToDeploymentEngineScript -command $command -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $ShellContext.DeploymentEngine -skipPackageImports
                 break
             }
             $skipHelpDeployment.IsPresent {
-                powershell.exe -NoProfile -NonInteractive -File "$global:BranchBinariesDirectory\AutomatedDeployment\DeploymentEngine.ps1" -command $command -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $ShellContext.DeploymentEngine -skipHelpDeployment
+                . $pathToDeploymentEngineScript -command $command -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $ShellContext.DeploymentEngine -skipHelpDeployment
                 break
             }
             default {
-                powershell.exe -NoProfile -NonInteractive -File "$global:BranchBinariesDirectory\AutomatedDeployment\DeploymentEngine.ps1" -command $command -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $ShellContext.DeploymentEngine
+                . $pathToDeploymentEngineScript -command $command -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $ShellContext.DeploymentEngine
                 break
             }
         }
 
         if (($command -eq "Deploy" -or $command -eq "Remove") -and $LASTEXITCODE -eq 0) {
-            powershell.exe -NoProfile -NonInteractive -File "$global:BranchBinariesDirectory\AutomatedDeployment\DeploymentEngine.ps1" -command "ExportEnvironmentManifest"  -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $ShellContext.DeploymentEngine
+            . $pathToDeploymentEngineScript -command "ExportEnvironmentManifest"  -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $ShellContext.DeploymentEngine
         }
     }
 }
@@ -122,11 +103,12 @@ Export-ModuleMember Start-DeploymentEngine
     Install-DeploymentManager
         Installs Deployment Manager from the current branch binaries directory.
 #>
-function Install-DeploymentManager {
-    & "$global:BranchBinariesDirectory\AutomatedDeployment\InstallDeploymentManager.ps1" -deploymentManagerMsiDirectory $global:BranchBinariesDirectory
+function global:Install-DeploymentManager {
+    $pathToInstallScript = Join-Path -Path $ShellContext.BranchBinariesDirectory -ChildPath "\AutomatedDeployment\InstallDeploymentManager.ps1"
+    & $pathToInstallScript -deploymentManagerMsiDirectory $ShellContext.BranchBinariesDirectory
 }
 
-Export-ModuleMember Install-DeploymentManager
+Export-ModuleMember -Function 'Install-DeploymentManager'
 
 <#
 .Synopsis
@@ -137,11 +119,12 @@ Export-ModuleMember Install-DeploymentManager
     Uninstall-DeploymentManager
         Uninstalls Deployment Manager using the .msi in the current branch binaries directory.
 #>
-function Uninstall-DeploymentManager {
-    & "$global:BranchBinariesDirectory\AutomatedDeployment\UninstallDeploymentManager.ps1" -deploymentManagerMsiDirectory $global:BranchBinariesDirectory
+function global:Uninstall-DeploymentManager {
+    $pathToUninstallScript = Join-Path -Path $ShellContext.BranchBinariesDirectory -ChildPath "\AutomatedDeployment\UninstallDeploymentManager.ps1"
+    & $pathToUninstallScript -deploymentManagerMsiDirectory $ShellContext.BranchBinariesDirectory
 }
 
-Export-ModuleMember Uninstall-DeploymentManager
+Export-ModuleMember -Function 'Uninstall-DeploymentManager'
 
 <#
 .Synopsis
@@ -150,7 +133,7 @@ Export-ModuleMember Uninstall-DeploymentManager
     Uses Get-EnvironmentFromXml to return the Database Server\Instance for the current local deployment.
 #>
 function Get-DatabaseServer() {
-    if (-Not (Test-Path ([System.IO.Path]::Combine($global:BranchBinariesDirectory, "environment.xml")))) {
+    if (-Not (Test-Path ([System.IO.Path]::Combine($ShellContext.BranchBinariesDirectory, "environment.xml")))) {
         $databaseServer = $env:COMPUTERNAME    
         Write-Host "Server instance set to: $databaseServer"
         return $databaseServer
@@ -186,7 +169,8 @@ Export-ModuleMember -Function Get-DatabaseServer
     Uses Get-EnvironmentFromXml to return the the database name for the current local deployment.
 #>
 function Get-Database() {
-    if (-Not (Test-Path ([System.IO.Path]::Combine($global:BranchBinariesDirectory, "environment.xml")))) {
+    Write-Host "Searching for environment.xml in BranchBinariesDirectory: $($ShellContext.BranchBinariesDirectory)" 
+    if (-Not (Test-Path ([System.IO.Path]::Combine($ShellContext.BranchBinariesDirectory, "environment.xml")))) {
         $database = Read-Host -Prompt "No environment.xml found. Please specify a database name"
         return $database
     } else {
