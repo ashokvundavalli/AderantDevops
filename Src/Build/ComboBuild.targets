@@ -115,12 +115,10 @@
 
       <ExcludePaths Include="Tests.UIAutomation\" />
 
-      <!--Need to teach the system that this provides the t4 engine-->
-
       <ExcludePaths Include="TempTransform\" />
       <ExcludePaths Include="Tests.Load\" />
       <ExcludePaths Include="Tests.Query\" />
-      <!--bm -Include C:\tfs\ExpertSuite\Dev\vnext\Modules\ -Exclude Web.Workflow,Build.T4Task,Libraries.SoftwareFactory,Applications.Rates,Tests.Query -RemainingArgs /p:UseSharedDependencyDirectory=true-->
+
       <ExcludePaths Include="MomentumFileOpening\" />
       <ExcludePaths Include="Performance.ExpertSuite\" />
       <ExcludePaths Include="Tests.Customization\" />
@@ -223,33 +221,6 @@
   </Target>
 
 
-  <UsingTask TaskName="FilterBuildDirectories" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
-  <!-- This task is used to remove the root build directory in the event that it contains other modules.
-    This ensures that symlinks will not be created in an invalid location. -->
-
-    <ParameterGroup>
-      <RootDirectory ParameterType="System.String" Required="True" Output="False" />
-      <Directories ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="True" Output="False" />
-      <FilteredDirectories ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="True" />
-    </ParameterGroup>
-
-    <Task>
-      <Reference Include="System.Core" />
-      <Using Namespace="System.Linq" />
-      <Code Type="Fragment" Language="cs">
-        <![CDATA[
-            if (Directories.GroupBy(x => x.ItemSpec.StartsWith(RootDirectory, StringComparison.OrdinalIgnoreCase)).Count() > 1) {
-                FilteredDirectories = Directories.Where(x => !x.ItemSpec.Equals(RootDirectory.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase)).ToArray();
-            } else {
-                FilteredDirectories = Directories;
-            }
-          ]]>
-      </Code>
-    </Task>
-
-  </UsingTask>
-
-
   <Target Name="GetAllDependencies"
           Condition="'$(UseSharedDependencyDirectory)' == 'true' And '$(NoDependencyFetch)' != 'true'">
     <!--
@@ -263,18 +234,14 @@
     -->
     <Message Text="Getting dependencies for build." />
 
-    <MakeDir Condition="!Exists('$(SharedDependencyDirectory))')"
+    <MakeDir
+      Condition="!Exists('$(SharedDependencyDirectory))')"
       Directories="$(SharedDependencyDirectory)" />
 
     <Delete Files="$(SharedDependencyDirectory)paket.dependencies;$(SharedDependencyDirectory)paket.lock" />
 
-    <FilterBuildDirectories Condition="'@(DirectoriesInBuild->Count())' &gt; '1'"
-      RootDirectory="$(SolutionRoot)"
-      Directories="@(DirectoriesInBuild)">
-      <Output TaskParameter="FilteredDirectories" ItemName="FilteredDirectories" />
-    </FilterBuildDirectories>
-
-    <MakeDir Condition="!Exists('$(SharedDependencyDirectory)packages)')"
+    <MakeDir
+      Condition="!Exists('$(SharedDependencyDirectory)packages)')"
       Directories="$(SharedDependencyDirectory)packages" />
 
     <GetDependencies
@@ -282,18 +249,24 @@
       ModulesRootPath="$(SolutionRoot)"
       DependenciesDirectory="$(SharedDependencyDirectory)"
       DropPath="$(XamlBuildDropLocation)"
-      ModulesInBuild="@(FilteredDirectories)"
+      ModulesInBuild="@(DirectoriesInBuild)"
       EnabledResolvers="@(EnabledResolvers)" />
 
+    <PropertyGroup>
+      <SolutionRootNoSlash>$(SolutionRoot.TrimEnd('\'))</SolutionRootNoSlash>
+    </PropertyGroup>
+
     <MakeSymlink
-      Link="%(FilteredDirectories.FullPath)\Dependencies"
+      Condition="'%(DirectoriesInBuild.FullPath)' != '$(SolutionRootNoSlash)'"
+      Link="%(DirectoriesInBuild.FullPath)\Dependencies"
       Target="$(SharedDependencyDirectory)"
       Type="D">
         <Output TaskParameter="Link" ItemName="CreatedLinks" />
-      </MakeSymlink>
+    </MakeSymlink>
 
     <MakeSymlink
-      Link="%(FilteredDirectories.FullPath)\packages"
+      Condition="'%(DirectoriesInBuild.FullPath)' != '$(SolutionRootNoSlash)'"
+      Link="%(DirectoriesInBuild.FullPath)\packages"
       Target="$(SharedDependencyDirectory)packages"
       FailIfLinkIsDirectoryWithContent="true"
       Type="D">
