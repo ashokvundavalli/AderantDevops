@@ -169,7 +169,8 @@
     <!-- Content -->
     <ItemGroup>
       <_FilesForSharedProject Include="$(ScriptsDirectory)Content\$(GlobExpression)*"
-                              Exclude="$(ScriptsDirectory)Content\**\ThirdParty.*\**">
+                              Exclude="$(ScriptsDirectory)Content\**\ThirdParty.*\**;
+                                       $(ScriptsDirectory)Content\**\favicon.ico">
         <Link>Content\</Link>
         <Type>Content</Type>
       </_FilesForSharedProject>
