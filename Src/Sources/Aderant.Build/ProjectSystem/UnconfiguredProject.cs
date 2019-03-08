@@ -114,7 +114,9 @@ namespace Aderant.Build.ProjectSystem {
             // PERF: We don't care about any imports, just the base project data
             var imports = element.Imports.ToList();
             foreach (var import in imports) {
-                element.RemoveChild(import);
+                if (import.Project.IndexOf("Microsoft", StringComparison.OrdinalIgnoreCase) >= 0) {
+                    element.RemoveChild(import);
+                }
             }
         }
 
