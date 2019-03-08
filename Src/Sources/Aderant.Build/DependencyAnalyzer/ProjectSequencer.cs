@@ -101,11 +101,6 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
             }
 
-            var environmentVariable = Environment.GetEnvironmentVariable("BUILD_REQUESTEDFOR");
-            if (string.Equals("Michael Baker", environmentVariable)) {
-                System.Diagnostics.Debugger.Launch();
-            }
-
             // According to options, find out which projects are selected to build.
             var filteredProjects = GetProjectsBuildList(
                 projectGraph,
