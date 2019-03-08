@@ -15,7 +15,15 @@ namespace Aderant.Build.Tasks {
 
         [Output]
         public string[] DirectoriesInBuild {
-            get { return groveler.DirectoriesInBuild.ToArray(); }
+            get {
+                var paths = groveler.DirectoriesInBuild.ToArray();
+
+                foreach (string path in paths) {
+                    ErrorUtilities.VerifyThrowArgument(!path.EndsWith(PathUtility.DirectorySeparator), "The path {0} must not end with a directory separator.", path);
+                }
+
+                return paths;
+            }
         }
 
         [Output]
@@ -33,7 +41,7 @@ namespace Aderant.Build.Tasks {
             get { return groveler.ProjectFiles.ToArray(); }
         }
 
-        public override bool ExecuteTask() {            
+        public override bool ExecuteTask() {
             if (Context.Exclude != null) {
                 ExcludedPaths = Context.Exclude.Union(ExcludedPaths ?? Enumerable.Empty<string>(), StringComparer.OrdinalIgnoreCase)
                     .Except(Context.Include, StringComparer.OrdinalIgnoreCase)

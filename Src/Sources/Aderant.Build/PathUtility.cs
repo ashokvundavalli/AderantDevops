@@ -188,5 +188,10 @@ namespace Aderant.Build {
 
             return false;
         }
+
+        /// <summary>
+        /// Used to separate directory levels in a path string
+        /// </summary>
+        public static string DirectorySeparator { get; private set; } = Path.DirectorySeparatorChar.ToString();
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -23,6 +24,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         private readonly IFileSystem fileSystem;
         private readonly ILogger logger;
         private bool isDesktopBuild;
+        private BuildCachePackageChecker packageChecker;
         private List<BucketId> missingIds;
         private List<BuildStateFile> stateFiles;
         private TrackedInputFilesController trackedInputFilesCheck;
@@ -172,15 +174,16 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
             }
 
-            return graph.GetDependencyOrder().Where(p => {
-                var project = p as ConfiguredProject;
+            return graph.GetDependencyOrder().Where(
+                p => {
+                    var project = p as ConfiguredProject;
 
-                if (project != null) {
-                    return project.BuildReason != null;
-                }
+                    if (project != null) {
+                        return project.BuildReason != null;
+                    }
 
-                return true;
-            }).ToList();
+                    return true;
+                }).ToList();
         }
 
         private void LogProjectsExcluded(IReadOnlyList<IDependable> filteredProjects, ProjectDependencyGraph projectGraph) {
@@ -190,7 +193,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             sb.Append("The following projects are excluded from this build:");
             sb.AppendLine();
 
-            foreach (var project in projectsExcluded) {
+            foreach (var project in projectsExcluded.OrderBy(p => p.Id, StringComparer.OrdinalIgnoreCase)) {
                 ConfiguredProject configuredProject = projectGraph.GetProject(project.Id);
                 if (configuredProject != null) {
                     sb.AppendLine(" -> " + configuredProject.Id);
@@ -543,7 +546,11 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             // See if we can skip this project because we can re-use the previous outputs
             if (stateFile != null) {
-                string projectFullPath = project.FullPath;
+                if (this.packageChecker == null) {
+                    this.packageChecker = new BuildCachePackageChecker(logger);
+                }
+
+                packageChecker.Artifacts = null;
 
                 bool artifactsExist = false;
 
@@ -556,12 +563,20 @@ namespace Aderant.Build.DependencyAnalyzer {
                     }
                 }
 
-                if (artifactsExist && stateFile.Outputs != null) {
-                    foreach (var projectInTree in stateFile.Outputs) {
-                        // The selected build cache contained this project, next check the inputs/outputs
-                        if (projectFullPath.IndexOf(projectInTree.Key, StringComparison.OrdinalIgnoreCase) >= 0) {
+                string projectFullPath = project.FullPath;
 
-                            bool artifactContainsProject = DoesArtifactContainProjectItem(project, artifacts);
+                if (artifactsExist && stateFile.Outputs != null) {
+                    packageChecker.Artifacts = artifacts;
+
+                    foreach (var projectInTree in stateFile.Outputs) {
+                        // Combine the original directory and the relative path to the project. This is done to get a unique path segment.
+                        // This avoids false selection of projects where "A\B.proj" may exist across two directories.
+                        string projectPath = Path.Combine(projectInTree.Value.Directory, projectInTree.Key);
+
+                        if (projectFullPath.IndexOf(projectPath, StringComparison.OrdinalIgnoreCase) >= 0) {
+                            // The selected build cache contained this project, next check the inputs/outputs
+
+                            bool artifactContainsProject = packageChecker.DoesArtifactContainProjectItem(project);
                             if (artifactContainsProject) {
                                 return;
                             }
@@ -576,6 +591,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 MarkDirty(project, BuildReasonTypes.ProjectOutputNotFound, dirtyProjects);
                 return;
+
             }
 
             MarkDirty(project, BuildReasonTypes.CachedBuildNotFound, dirtyProjects);
@@ -604,40 +620,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             return trackedInputs[solutionRoot];
         }
 
-        private bool DoesArtifactContainProjectItem(ConfiguredProject project, ICollection<ArtifactManifest> artifacts) {
-            // Packaged files such as workflows and web projects produce both an assembly an a package
-            // We want to interrogate the package for the packaged content if we have one of those projects
-            var outputFile = project.GetOutputAssemblyWithExtension();
-            if (project.IsZipPackaged) {
-                outputFile = Path.ChangeExtension(outputFile, ".zip");
-            }
-
-            List<ArtifactManifest> checkedArtifacts = null;
-
-            foreach (ArtifactManifest artifactManifest in artifacts) {
-                foreach (ArtifactItem file in artifactManifest.Files) {
-                    if (string.Equals(file.File, outputFile, StringComparison.OrdinalIgnoreCase)) {
-                        return true;
-                    }
-                }
-
-                if (checkedArtifacts == null) {
-                    checkedArtifacts = new List<ArtifactManifest>();
-                }
-
-                checkedArtifacts.Add(artifactManifest);
-            }
-
-            if (checkedArtifacts != null && checkedArtifacts.Count > 0) {
-                logger.Info($"Looked for {outputFile} but it was not found in packages:");
-
-                foreach (var checkedArtifact in checkedArtifacts) {
-                    logger.Info(string.Format("    {0} (package id: {1})", checkedArtifact.Id.PadRight(80), checkedArtifact.InstanceId));
-                }
-            }
-
-            return false;
-        }
 
         private BuildStateFile SelectStateFile(string stateFileKey) {
             foreach (var file in stateFiles) {
@@ -853,7 +835,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 topLevelNode.Children = group.Select(
                     s =>
                         new TreePrinter.Node {
-                            Name = s.Id,
+                            Name = s.Id.Split(':').Last(),
                             Children = DescribeChanges(s, showPath)
                         }).ToList();
                 i++;

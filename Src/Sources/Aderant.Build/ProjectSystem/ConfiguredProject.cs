@@ -35,7 +35,7 @@ namespace Aderant.Build.ProjectSystem {
             });
 
 
-        private static Memoizer<ConfiguredProject, string> outputPathMemoizer = new Memoizer<ConfiguredProject, string>(configuredProject => configuredProject.project.Value.GetPropertyValue("OutputType"));
+        private static Memoizer<ConfiguredProject, string> outputTypeMemoizer = new Memoizer<ConfiguredProject, string>(configuredProject => configuredProject.project.Value.GetPropertyValue("OutputType"));
 
         private static Memoizer<ConfiguredProject, string> outputAssemblyMemoizer = new Memoizer<ConfiguredProject, string>(configuredProject => configuredProject.project.Value.GetPropertyValue("AssemblyName"));
 
@@ -68,6 +68,7 @@ namespace Aderant.Build.ProjectSystem {
 
         private List<string> dirtyFiles;
 
+        private Memoizer<ConfiguredProject, string> outputType;
         private Memoizer<ConfiguredProject, IReadOnlyList<Guid>> extractTypeGuids;
         private string fileName;
         private Memoizer<ConfiguredProject, bool> isWebProject;
@@ -126,7 +127,7 @@ namespace Aderant.Build.ProjectSystem {
 
         public virtual string OutputAssembly {
             get {
-                if (outputPathMemoizer != null) {
+                if (outputAssemblyMemoizer != null) {
                     return outputAssemblyMemoizer.Evaluate(this);
                 }
 
@@ -136,12 +137,13 @@ namespace Aderant.Build.ProjectSystem {
 
         public virtual string OutputType {
             get {
-                if (outputPathMemoizer != null) {
-                    return outputPathMemoizer.Evaluate(this);
+                if (outputType != null) {
+                    return outputType.Evaluate(this);
                 }
 
                 return null;
             }
+            set { outputType = new Memoizer<ConfiguredProject, string>(cfg => value); }
         }
 
         public virtual IReadOnlyList<Guid> ProjectTypeGuids {
@@ -300,6 +302,7 @@ namespace Aderant.Build.ProjectSystem {
             if (projectElement != null) {
                 project = InitializeProject(projectElement);
 
+                outputType = outputTypeMemoizer;
                 extractTypeGuids = extractTypeGuidsMemoizer;
                 isWebProject = isWebProjectMemoizer;
                 projectGuid = projectGuidMemoizer;

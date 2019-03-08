@@ -19,7 +19,9 @@ namespace UnitTest.Build.ProjectSystem {
                     var element = ProjectRootElement.Create();
                     ProjectPropertyGroupElement propertyGroup = element.AddPropertyGroup();
                     propertyGroup.AddProperty("ProjectTypeGuids", "{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}");
-                    return element;
+                    propertyGroup.AddProperty("OutputType", "WinExe");
+                    propertyGroup.AddProperty("AssemblyName", "Blah");
+                return element;
                 }), "");
 
             var cfg2 = new ConfiguredProject(tree.Object);
@@ -29,6 +31,9 @@ namespace UnitTest.Build.ProjectSystem {
                 propertyGroup.AddProperty("ProjectTypeGuids", "{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}");
                 return element;
             }), "");
+
+            Assert.AreEqual("WinExe", cfg1.OutputType);
+            Assert.AreEqual("Blah", cfg1.OutputAssembly);
 
             Assert.AreEqual(2, cfg1.ProjectTypeGuids.Count);
             Assert.AreEqual(1, cfg2.ProjectTypeGuids.Count);

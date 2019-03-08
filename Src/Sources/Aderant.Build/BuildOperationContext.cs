@@ -404,6 +404,9 @@ namespace Aderant.Build {
         [DataMember]
         public string Origin { get; set; }
 
+        /// <summary>
+        /// The name of the directory within the source tree.
+        /// </summary>
         public string Directory {
             get { return directory; }
             set {
