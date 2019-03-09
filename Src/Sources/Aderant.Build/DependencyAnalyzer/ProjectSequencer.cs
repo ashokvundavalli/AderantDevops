@@ -663,16 +663,22 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             var projects = visualStudioProjects.OfType<ConfiguredProject>().ToList();
 
+            bool alwaysBuildWebProjects = true;
+
             if (orchestrationFiles != null) {
                 if (orchestrationFiles.ExtensibilityImposition != null) {
                     ApplyExtensibilityImposition(orchestrationFiles.ExtensibilityImposition, projects);
+
+                    alwaysBuildWebProjects = orchestrationFiles.ExtensibilityImposition.AlwaysBuildWebProjects;
                 }
             }
 
             // Get all the dirty projects due to user's modification.
             var dirtyProjects = visualStudioProjects.Where(p => IncludeProject(isDesktopBuild, excludeTestProjects, p)).Select(x => x.Id).ToList();
 
-            MarkWebProjectsDirty(studioProjects);
+            if (alwaysBuildWebProjects) {
+                MarkWebProjectsDirty(studioProjects);
+            }
 
             HashSet<string> h = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             h.UnionWith(dirtyProjects);

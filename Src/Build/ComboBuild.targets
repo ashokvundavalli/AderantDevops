@@ -64,6 +64,10 @@
   <Import Project="Aderant.Build.ServerImage.targets" />
   <!--<Import Project="Aderant.Build.IntegrationTesting.targets" />-->
 
+  <PropertyGroup>
+    <AlwaysBuildWebProjects Condition="'$(AlwaysBuildWebProjects)' == ''">true</AlwaysBuildWebProjects>
+  </PropertyGroup>
+
   <Import Project="$(ParametersFile)" Condition="Exists($(ParametersFile))" />
 
   <PropertyGroup>
@@ -167,6 +171,7 @@
       ExtensibilityFiles="@(ExtensibilityFiles)"
       MakeFiles="@(DirectoryMakeFiles)"
       ProjectFiles="@(ProjectFiles)"
+      AlwaysBuildWebProjects="$(AlwaysBuildWebProjects)"
       GroupExecutionFile="$(MSBuildThisFileDirectory)ComboBuild.Core.targets"
       BeforeProjectFile="$(MSBuildThisFileDirectory)ComboBuild.Pre.targets"
       AfterProjectFile="$(MSBuildThisFileDirectory)ComboBuild.Post.targets"

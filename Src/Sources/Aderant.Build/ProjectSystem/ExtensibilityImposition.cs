@@ -15,5 +15,7 @@ namespace Aderant.Build.ProjectSystem {
         public IReadOnlyCollection<string> AlwaysBuildProjects { get; }
 
         public Dictionary<string, string> AliasMap { get; set; }
+
+        public bool AlwaysBuildWebProjects { get; set; }
     }
 }

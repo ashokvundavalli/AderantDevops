@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml;
@@ -63,6 +62,7 @@ namespace Aderant.Build.Tasks {
         /// </summary>
         public string[] ExtensibilityFiles { get; set; }
 
+        public bool AlwaysBuildWebProjects { get; set; }
 
         [Output]
         public string[] DirectoriesInBuild { get; set; }
@@ -89,6 +89,7 @@ namespace Aderant.Build.Tasks {
 
             ExtensibilityController controller = new ExtensibilityController();
             var extensibilityImposition = controller.GetExtensibilityImposition(ExtensibilityFiles);
+            extensibilityImposition.AlwaysBuildWebProjects = AlwaysBuildWebProjects;
 
             var projectTree = ProjectTree.CreateDefaultImplementation(new BuildTaskLogger(Log));
 
