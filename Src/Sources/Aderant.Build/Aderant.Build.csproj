@@ -53,10 +53,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\packages\Microsoft.TeamFoundationServer.Client\lib\net45\Microsoft.TeamFoundation.SourceControl.WebApi.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.TeamFoundation.VersionControl.Common.Integration, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\CommonExtensions\Microsoft\TeamFoundation\Team Explorer\Microsoft.TeamFoundation.VersionControl.Common.Integration.dll</HintPath>
-    </Reference>
     <Reference Include="paket">
       <HintPath>..\..\Build\paket.exe</HintPath>
       <Private>True</Private>
@@ -115,6 +111,7 @@
     <Compile Include="Commands\GetBuildStateMetadataCommand.cs" />
     <Compile Include="DependencyAnalyzer\ProjectDependencyGraph.cs" />
     <Compile Include="DependencyAnalyzer\ProjectSequencer.cs" />
+    <Compile Include="DependencyResolver\DependencyException.cs" />
     <Compile Include="ProjectSystem\StateTracking\BuildCachePackageChecker.cs" />
     <Compile Include="DependencyAnalyzer\TextTemplates\Location.cs" />
     <Compile Include="DependencyAnalyzer\TextTemplates\ParserException.cs" />
