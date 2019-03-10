@@ -221,14 +221,16 @@
     </ItemGroup>
 
     <PropertyGroup>
-      <!-- Create the assembly search paths property. This defines where\how references are resolved -->
-      <!--This path order places our search paths first-->
+      <!-- Create the assembly search paths property. This defines where\how references are resolved.
+           This path order places our search paths first.
+           ReferencePath may not have been set when AssemblySearchPaths was defined. So we set it in the candidate list again just in case. -->
       <AssemblySearchPaths>
         $(AlternativeOutputDirectory);
         $(AlternativeOutputDirectory)StoredProcedures;
         $(RootFolder)\Dependencies\;
         @(AssemblySearchDirectories);
         $(AssemblySearchPaths);
+        $(ReferencePath);
       </AssemblySearchPaths>
     </PropertyGroup>
 
