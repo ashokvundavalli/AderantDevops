@@ -114,7 +114,7 @@ namespace Aderant.Build.ProjectSystem {
             DirectoryGroveler groveler;
             using (PerformanceTimer.Start((duration) => logger.Info("Directory scanning completed in: " + duration))) {
                 groveler = new DirectoryGroveler(Services.FileSystem);
-                groveler.Grovel(directories.ToList(), excludeFilterPatterns.ToList());
+                groveler.Grovel(directories.ToList(), excludeFilterPatterns?.ToList());
             }
 
             projectCollection = new ProjectCollection {
