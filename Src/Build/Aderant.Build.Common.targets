@@ -26,6 +26,7 @@
     <BuildToolsDirectory Condition="'$(BuildToolsDirectory)' != '' and !HasTrailingSlash('$(BuildToolsDirectory)')">$(BuildToolsDirectory)\</BuildToolsDirectory>
 
     <BuildAssembly Condition="'$(BuildAssembly)' == ''">$(BuildToolsDirectory)Aderant.Build.dll</BuildAssembly>
+    <BuildAssembly>$([MSBuild]::Unescape($(BuildAssembly)))</BuildAssembly>
 
     <PrepareBuildEnvironmentTargetImported>true</PrepareBuildEnvironmentTargetImported>
     <AderantCommonTargetsImported>true</AderantCommonTargetsImported>
