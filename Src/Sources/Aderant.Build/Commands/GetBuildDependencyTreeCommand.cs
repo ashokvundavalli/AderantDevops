@@ -39,6 +39,12 @@ namespace Aderant.Build.Commands {
             var collector = new BuildDependenciesCollector();
             collector.ProjectConfiguration = ConfigurationToBuild.Default;
 
+            if (collector.ExtensibilityImposition == null) {
+                collector.ExtensibilityImposition = new ExtensibilityImposition(null);
+            }
+
+            collector.ExtensibilityImposition.RequireSynchronizedOutputPathsByConfiguration = true;
+
             projectTree.LoadProjects(
                 resolvedPaths,
                 new[] { @"\__" },

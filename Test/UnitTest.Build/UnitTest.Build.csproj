@@ -127,6 +127,7 @@
     <Compile Include="ProjectSystem\DirectoryGrovelerTests.cs" />
     <Compile Include="FileSystemTests.cs" />
     <Compile Include="BuildPipelineServiceImplTests.cs" />
+    <Compile Include="ProjectSystem\ProjectBuildConfigurationTests.cs" />
     <Compile Include="ProjectSystem\StateTracking\BuildCachePackageCheckerTests.cs" />
     <Compile Include="ProjectSystem\TextTemplateReferencesServicesTests.cs" />
     <Compile Include="StateTracking\TrackedInputFilesControllerTests.cs" />

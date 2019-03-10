@@ -17,5 +17,7 @@ namespace Aderant.Build.ProjectSystem {
         public Dictionary<string, string> AliasMap { get; set; }
 
         public bool AlwaysBuildWebProjects { get; set; }
+
+        public bool RequireSynchronizedOutputPathsByConfiguration { get; set; }
     }
 }

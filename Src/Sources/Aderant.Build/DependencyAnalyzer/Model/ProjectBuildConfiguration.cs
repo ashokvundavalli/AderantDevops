@@ -5,16 +5,23 @@
     /// </summary>
     internal class ProjectBuildConfiguration {
 
-        public static ProjectBuildConfiguration DebugOnAnyCpu = new ProjectBuildConfiguration("Debug", "AnyCPU");
+        public static ProjectBuildConfiguration DebugOnAnyCpu { get; } = new ProjectBuildConfiguration("Debug", "AnyCPU");
 
-        public static ProjectBuildConfiguration ReleaseOnAnyCpu = new ProjectBuildConfiguration("Release", "AnyCPU");
+        public static ProjectBuildConfiguration ReleaseOnAnyCpu { get; } = new ProjectBuildConfiguration("Release", "AnyCPU");
 
         public ProjectBuildConfiguration(string configurationName, string platformName) {
             ConfigurationName = configurationName;
             PlatformName = platformName;
         }
 
+        /// <summary>
+        /// The configuration - "Debug", "Release", "Strawberry" etc
+        /// </summary>
         public string ConfigurationName { get; }
+
+        /// <summary>
+        /// The platform the configuration is targeting - x86, AnyCPU etc
+        /// </summary>
         public string PlatformName { get; }
 
         public static ProjectBuildConfiguration GetConfiguration(string configurationName, string platformName) {
@@ -31,6 +38,10 @@
             }
 
             return null;
+        }
+
+        public override string ToString() {
+            return ConfigurationName + "|" + PlatformName;
         }
     }
 }

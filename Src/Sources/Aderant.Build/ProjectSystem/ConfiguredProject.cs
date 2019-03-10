@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.Model;
+using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem.References;
 using Aderant.Build.Utilities;
 using Aderant.Build.VersionControl.Model;
@@ -66,12 +67,17 @@ namespace Aderant.Build.ProjectSystem {
             { "SolutionDir", "" }
         };
 
-        private List<string> dirtyFiles;
+        static List<string> conditions = new List<string> {
+            "$(Configuration)|$(Platform)==" + ProjectBuildConfiguration.ReleaseOnAnyCpu.ToString(),
+            "$(Configuration)|$(Platform)==" + ProjectBuildConfiguration.DebugOnAnyCpu.ToString()
+        };
 
-        private Memoizer<ConfiguredProject, string> outputType;
+        private List<string> dirtyFiles;
         private Memoizer<ConfiguredProject, IReadOnlyList<Guid>> extractTypeGuids;
         private string fileName;
         private Memoizer<ConfiguredProject, bool> isWebProject;
+
+        private Memoizer<ConfiguredProject, string> outputType;
 
         private Lazy<Project> project;
         private Memoizer<ConfiguredProject, Guid> projectGuid;
@@ -273,6 +279,13 @@ namespace Aderant.Build.ProjectSystem {
         /// </summary>
         internal ProjectCollection ProjectCollection { get; set; }
 
+        /// <summary>
+        /// The immediate parent of this item.
+        /// </summary>
+        internal DirectoryNode DirectoryNode { get; set; }
+
+        public bool RequireSynchronizedOutputPathsByConfiguration { get; set; }
+
         public virtual Guid ProjectGuid {
             get { return projectGuid.Evaluate(this); }
         }
@@ -286,11 +299,6 @@ namespace Aderant.Build.ProjectSystem {
                 return GetAssemblyName();
             }
         }
-
-        /// <summary>
-        /// The immediate parent of this item.
-        /// </summary>
-        internal DirectoryNode DirectoryNode { get; set; }
 
         public string GetAssemblyName() {
             return OutputAssembly;
@@ -352,6 +360,8 @@ namespace Aderant.Build.ProjectSystem {
 
                 if (IncludeInBuild) {
                     SetOutputPath();
+
+                    Validate(BuildConfiguration.ConfigurationName, BuildConfiguration.PlatformName);
                 }
             } else {
                 IProjectTreeInternal treeInternal = Tree as IProjectTreeInternal;
@@ -569,6 +579,44 @@ namespace Aderant.Build.ProjectSystem {
 
         public bool IsUnderSolutionRoot(string path) {
             return string.Equals(SolutionRoot, path, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public void Validate(string configuration, string platform) {
+            if (RequireSynchronizedOutputPathsByConfiguration) {
+                if (project != null) {
+                    var projectValue = project.Value;
+
+                    List<ProjectPropertyGroupElement> groups = new List<ProjectPropertyGroupElement>();
+
+                    if (platform == ProjectBuildConfiguration.ReleaseOnAnyCpu.PlatformName) {
+                        if (string.Equals(configuration, "Debug", StringComparison.OrdinalIgnoreCase) || string.Equals(configuration, "Release", StringComparison.OrdinalIgnoreCase)) {
+
+                            foreach (ProjectPropertyGroupElement group in projectValue.Xml.PropertyGroups) {
+                                if (group.Condition != null) {
+                                    string condition = group.Condition.Replace(" ", "").Replace("'", "");
+
+                                    foreach (var expression in conditions) {
+                                        if (condition.IndexOf(expression, StringComparison.OrdinalIgnoreCase) >= 0) {
+                                            groups.Add(group);
+                                        }
+                                    }
+                                }
+                            }
+
+                            var select = groups.SelectMany(s => s.Properties.Where(p => string.Equals(p.Name, "OutputPath", StringComparison.OrdinalIgnoreCase)));
+
+                            var groupBy = select.GroupBy(g => g.Value.TrimTrailingSlashes(), StringComparer.OrdinalIgnoreCase)
+                                .Where(g => g.Count() > 1)
+                                .Select(y => y.Key)
+                                .ToList();
+
+                            if (groupBy.Count == 0) {
+                                throw new BuildPlatformException($"The project {FullPath} defines two different output paths for the platform {platform}.");
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 

@@ -153,6 +153,13 @@ namespace Aderant.Build.ProjectSystem {
                         try {
                             if (!unconfiguredProject.IsTemplateProject()) {
                                 ConfiguredProject project = unconfiguredProject.LoadConfiguredProject(this);
+
+                                if (collector.ExtensibilityImposition != null) {
+                                    if (collector.ExtensibilityImposition != null) {
+                                        project.RequireSynchronizedOutputPathsByConfiguration = collector.ExtensibilityImposition.RequireSynchronizedOutputPathsByConfiguration;
+                                    }
+                                }
+
                                 project.AssignProjectConfiguration(collector.ProjectConfiguration);
                             } else {
                                 if (logger != null) {
