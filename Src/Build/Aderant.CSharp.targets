@@ -169,7 +169,7 @@
     </StringCache>
 
     <ItemGroup Condition="'$(_PackageDirectoriesHasValue)' != 'true'">
-      <_AllFiles Include="$(RootFolder)\packages\**\lib\*.dll"/>
+      <_AllFiles Include="$(RootFolder)\packages\**\lib\**\*.dll"/>
       <_PackageDirectories Include="@(_AllFiles->'%(RootDir)%(Directory)'->Distinct())"/>
     </ItemGroup>
 
