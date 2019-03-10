@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Aderant.Build.Packaging;
-using Microsoft.Build.Evaluation;
-using Microsoft.Build.Execution;
 using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks.ArtifactHandling {
@@ -61,72 +58,6 @@ namespace Aderant.Build.Tasks.ArtifactHandling {
             ArtifactRestoreSkipped = service.ArtifactRestoreSkipped;
 
             return !Log.HasLoggedErrors;
-        }
-    }
-
-    internal class MSBuildEngine {
-        private static MSBuildEngine instance;
-        private BuildManager manager;
-        private ProjectCollection projectCollection;
-
-        public static MSBuildEngine DefaultEngine {
-            get {
-                if (instance == null) {
-                    instance = new MSBuildEngine();
-                }
-
-                return instance;
-            }
-        }
-
-        public BuildResult BuildProjectFile(string fullPath, string target, out bool targetExists, IDictionary<string, string> globalProperties = null) {
-            if (manager == null) {
-                manager = new BuildManager();
-            }
-
-            if (projectCollection == null) {
-                projectCollection = new ProjectCollection();
-                projectCollection.IsBuildEnabled = true;
-            }
-
-            if (globalProperties != null) {
-                foreach (var prop in globalProperties) {
-                    projectCollection.SetGlobalProperty(prop.Key, prop.Value);
-                }
-            }
-
-            Project project = LoadProject(fullPath, projectCollection);
-            ProjectInstance projectInstance = project.CreateProjectInstance();
-
-            if (projectInstance.Targets.ContainsKey(target)) {
-                var result = manager.Build(
-                    new BuildParameters(projectCollection) { EnableNodeReuse = false, },
-                    new BuildRequestData(
-                        projectInstance,
-                        new[] { target },
-                        null,
-                        BuildRequestDataFlags.ProvideProjectStateAfterBuild));
-
-                if (globalProperties != null) {
-                    foreach (var prop in globalProperties) {
-                        projectCollection.RemoveGlobalProperty(prop.Key);
-                    }
-                }
-
-                if (result.OverallResult == BuildResultCode.Failure) {
-                    throw new Exception("Failed to evaluate: " + target, result.Exception);
-                }
-
-                targetExists = true;
-                return result;
-            }
-
-            targetExists = false;
-            return null;
-        }
-
-        protected virtual Project LoadProject(string directoryPropertiesFile, ProjectCollection collection) {
-            return collection.LoadProject(directoryPropertiesFile);
         }
     }
 }
