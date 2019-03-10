@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem;
+using Aderant.Build.VersionControl.Model;
 using Microsoft.Build.Construction;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
@@ -131,6 +133,27 @@ namespace UnitTest.Build.ProjectSystem {
                 "");
 
             project1.Validate("Debug", "AnyCPU");
+        }
+
+        [TestMethod]
+        public void Patch_content_can_contain_xaml_items() {
+            var tree = new Mock<IProjectTree>();
+
+            var project = new ConfiguredProject(tree.Object);
+            project.RequireSynchronizedOutputPathsByConfiguration = true;
+
+            project.Initialize(
+                new Lazy<ProjectRootElement>(
+                    () => {
+                        var element = ProjectRootElement.Create();
+                        element.AddItem("Page", "MyPage.xaml");
+                        return element;
+                    }),
+                "");
+
+            project.CalculateDirtyStateFromChanges(new List<ISourceChange> { new SourceChange("", "MyPage.xaml", FileStatus.Modified) });
+
+            Assert.IsTrue(project.IsDirty);
         }
     }
 }

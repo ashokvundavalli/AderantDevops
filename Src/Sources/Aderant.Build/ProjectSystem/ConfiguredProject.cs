@@ -503,6 +503,7 @@ namespace Aderant.Build.ProjectSystem {
             items.AddRange(project.Value.GetItems("Content"));
             items.AddRange(project.Value.GetItems("None"));
             items.AddRange(project.Value.GetItems("XamlAppdef"));
+            items.AddRange(project.Value.GetItems("Page"));
 
             int abort = -1;
 
