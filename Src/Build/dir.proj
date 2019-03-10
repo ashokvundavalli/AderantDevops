@@ -11,6 +11,14 @@
     <RunTSLint Condition="'$(RunTSLint)' == ''">false</RunTSLint>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <ReferencePropertiesFile>ReferencePaths.props</ReferencePropertiesFile>
+    <ReferencePathsDirectory>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', $(ReferencePropertiesFile)))</ReferencePathsDirectory>
+    <ReferencePropertiesFileFullPath>$(ReferencePathsDirectory)\$(ReferencePropertiesFile)</ReferencePropertiesFileFullPath>
+  </PropertyGroup>
+
+  <Import Project="$(ReferencePropertiesFileFullPath)" Condition="Exists($(ReferencePropertiesFileFullPath))" />
+
   <ItemGroup>
     <Analyzer Include="$(PackagesDirectory)Aderant.Build.Analyzer\analyzers\dotnet\cs\*.dll" />
   </ItemGroup>
