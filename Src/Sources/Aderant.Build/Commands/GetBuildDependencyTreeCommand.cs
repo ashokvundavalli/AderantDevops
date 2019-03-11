@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
 using System.Threading;
@@ -16,7 +17,10 @@ namespace Aderant.Build.Commands {
         public string[] Directories { get; set; }
 
         [Parameter(Mandatory = false, Position = 1, HelpMessage = "Specifies if the full project path should be printed.")]
-        public bool ShowPath { get; set; }
+        public SwitchParameter ShowPath { get; set; }
+
+        [Parameter(Mandatory = false, Position = 2, HelpMessage = "Specifies if the build tree should be written to file.")]
+        public SwitchParameter WriteFile { get; set; }
 
         protected override void ProcessRecord() {
             base.ProcessRecord();
@@ -61,9 +65,14 @@ namespace Aderant.Build.Commands {
 
             var groups = projectDependencyGraph.GetBuildGroups(projectDependencyGraph.GetDependencyOrder());
 
-            string treeText = ProjectSequencer.PrintBuildTree(groups, ShowPath);
+            string treeText = ProjectSequencer.PrintBuildTree(groups, ShowPath.IsPresent);
 
             Host.UI.Write(treeText);
+
+            if (WriteFile.IsPresent) {
+                ProjectSequencer.WriteBuildTree(new PhysicalFileSystem(), SessionState.Path.CurrentFileSystemLocation.Path, treeText);
+                Host.UI.Write($@"{Environment.NewLine}Wrote build tree to: '{SessionState.Path.CurrentFileSystemLocation.Path}\BuildTree.txt'.");
+            }
         }
 
         protected override void StopProcessing() {

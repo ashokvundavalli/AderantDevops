@@ -126,7 +126,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (logger != null) {
                 logger.Info(treeText);
 
-                WriteBuildTree(fileSystem, context, treeText);
+                WriteBuildTree(fileSystem, context.BuildRoot, treeText);
             }
 
             if (isDesktopBuild) {
@@ -227,8 +227,8 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        internal static void WriteBuildTree(IFileSystem fileSystem, BuildOperationContext context, string treeText) {
-            string treeFile = Path.Combine(context.BuildRoot, "BuildTree.txt");
+        internal static void WriteBuildTree(IFileSystem fileSystem, string destination, string treeText) {
+            string treeFile = Path.Combine(destination, "BuildTree.txt");
 
             if (fileSystem != null) {
                 if (fileSystem.FileExists(treeFile)) {

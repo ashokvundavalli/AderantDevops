@@ -278,7 +278,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
                 BuildRoot = TestContext.DeploymentDirectory
             };
 
-            ProjectSequencer.WriteBuildTree(fileSystem, context, Resources.BuildTree);
+            ProjectSequencer.WriteBuildTree(fileSystem, context.BuildRoot, Resources.BuildTree);
 
             string output = Path.Combine(TestContext.DeploymentDirectory, "BuildTree.txt");
 
