@@ -21,7 +21,7 @@
 
   <!-- Reapply the reference additional path hints. Because this file might be imported after Microsoft.CSharp.targets we always need to update this property
   to ensure VS takes on the new reference paths -->
-  <PropertyGroup Condition="'$(AssemblySearchPaths)' != ''">
+  <PropertyGroup Condition="'$(AssemblySearchPaths)' != '' And '$(BuildingInsideVisualStudio)' == 'true'">
     <AssemblySearchPaths>$(AssemblySearchPaths);$(ReferencePath)</AssemblySearchPaths>
   </PropertyGroup>
 
