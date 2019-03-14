@@ -12,7 +12,7 @@ using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
-    public sealed class ThirdPartyPackager : Task {
+    public sealed class ThirdPartyPackager : Microsoft.Build.Utilities.Task {
         private IFileSystem2 fileSystem;
         private BuildTaskLogger logger;
 
@@ -79,7 +79,7 @@ namespace Aderant.Build.Tasks {
                 using (PackageManager packageManager = new PackageManager(fileSystem, logger)) {
                     var requirement = DependencyRequirement.Create(
                         packageName,
-                        Constants.MainDependencyGroup,
+                        BuildConstants.MainDependencyGroup,
                         new VersionRequirement {
                             ConstraintExpression = ">= 0.0.0 ci"
                         });
