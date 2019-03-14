@@ -38,9 +38,9 @@ namespace Aderant.Build.Analyzer.Rules.CodeQuality {
 
         internal override string Title => "Math Rounding Error";
 
-        internal override string MessageFormat => "Illegal usage of 'Math.Round'.";
+        internal override string MessageFormat => "Use 'Aderant.Framework.Extensions.MathRounding.RoundCurrencyAmount' instead of 'Math.Round' or 'Decimal.Round' for currency rounding, and use 'Aderant.Time.Extensions.TimeIncrementRounding' for time rounding.";
 
-        internal override string Description => "The default rounding method for .NET is ToEven but SQL uses AwayFromZero, so we should keep it consistent within Expert and make sure every time the Math.Round is called, a MidpointRounding Enum is specified, otherwise there will be discrepancies between classic/SQL vs .net code. User Story ID: 208165";
+        internal override string Description => "The default rounding method for .NET is ToEven but SQL uses AwayFromZero, so we should keep it consistent within Expert and make sure that instead of calling Math.Round or Decimal.Round, call Aderant.Framework.Extensions.MathRounding.RoundCurrencyAmount instead to avoid discrepancies between classic/SQL vs .net code. User Story ID: 208165";
 
         #endregion Properties
 
@@ -61,27 +61,14 @@ namespace Aderant.Build.Analyzer.Rules.CodeQuality {
 
             if (exp == null ||
                 IsAnalysisSuppressed(node, ValidSuppressionMessages) ||
-                IsArgumentListValid(node) ||
-                !"System.Math.Round".EndsWith(exp.GetText().ToString(), StringComparison.Ordinal)) {
+                !"System.Math.Round".EndsWith(exp.GetText().ToString(), StringComparison.Ordinal) &&
+                !"System.Decimal.Round".EndsWith(exp.GetText().ToString(), StringComparison.Ordinal) &&
+                !"decimal.Round".EndsWith(exp.GetText().ToString(), StringComparison.Ordinal)) {
 
                 return;
             }
 
             ReportDiagnostic(context, Descriptor, node.GetLocation(), node);
-        }
-
-        private bool IsArgumentListValid(InvocationExpressionSyntax node) {
-
-            var childNodes = node.ArgumentList.ChildNodes().ToList();
-
-            // MidpointRounding argument is always expected, throw error if the number of child nodes is less than 2,
-            // or if the last argument isn't a MidpointRounding enum value.
-
-            if (childNodes.Count() < 2) {
-                return false;
-            }
-
-            return string.Equals("MidpointRounding", childNodes.LastOrDefault()?.GetFirstToken().Text, StringComparison.Ordinal);
         }
 
         #endregion

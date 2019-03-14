@@ -16,7 +16,7 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests.CodeQuality {
         #region Tests
 
         [TestMethod]
-        public void MathRoundRule_InvalidSingleNodeExpression() {
+        public void MathRoundRule_InvalidMathRoundSingleNodeExpression() {
             const string code = @"
 using System;
 
@@ -35,8 +35,26 @@ namespace Test {
         }
 
         [TestMethod]
-        public void MathRoundRule_InvalidTwoNodesExpression()
-        {
+        public void MathRoundRule_InvalidDecimalRoundSingleNodeExpression() {
+            const string code = @"
+using System;
+
+namespace Test {
+    public class TestClass {
+        private void Method() {
+            var x = decimal.Round(1.09);
+        }
+    }
+}
+";
+            VerifyCSharpDiagnostic(
+                code,
+                GetDiagnostic(7, 21));
+
+        }
+
+        [TestMethod]
+        public void MathRoundRule_InvalidMathRoundTwoNodesExpression() {
             const string code = @"
 using System;
 
@@ -54,27 +72,9 @@ namespace Test {
 
         }
 
-        [TestMethod]
-        public void MathRoundRule_ValidTwoNodesExpression() {
-            const string code = @"
-using System;
-
-namespace Test {
-    public class TestClass {
-        private void Method() {
-            var x = Math.Round(1.09, MidpointRounding.AwayFromZero);
-        }
-    }
-}
-";
-            VerifyCSharpDiagnostic(
-                code);
-
-        }
 
         [TestMethod]
-        public void MathRoundRule_ValidThreeNodesExpression()
-        {
+        public void MathRoundRule_InvalidMathRoundThreeNodesExpression() {
             const string code = @"
 using System;
 
@@ -87,27 +87,44 @@ namespace Test {
 }
 ";
             VerifyCSharpDiagnostic(
-                code);
+                code,
+                GetDiagnostic(7, 23));
 
         }
 
         [TestMethod]
-        public void MathRoundRule_ValidThreeNodesExpression_WithSystemPrefix()
-        {
+        public void MathRoundRule_InvalidDecimalRoundExpression() {
             const string code = @"
 using System;
 
 namespace Test {
     public class TestClass {
         private void Method() {
-            int min = (int)System.Math.Round(((100 - 20) / 60), MidpointRounding.AwayFromZero);
+            int min = Decimal.Round(((100 - 20) / 60), MidpointRounding.AwayFromZero);
+        }
+    }
+}
+";
+            VerifyCSharpDiagnostic(
+                code,
+                GetDiagnostic(7, 23));
+        }
+
+        [TestMethod]
+        public void MathRoundRule_ValidExpression() {
+            const string code = @"
+using System;
+using Aderant.Framework.Extensions;
+namespace Test {
+    public class TestClass {
+        private void Method() {
+            int min = MathRounding.RoundCurrencyAmount(((100 - 20) / 60), 2);
         }
     }
 }
 ";
             VerifyCSharpDiagnostic(
                 code);
-
         }
 
         #endregion Tests

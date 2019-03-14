@@ -38,7 +38,7 @@ $machineWideDirectories = @(
 )
 
 $whoAmI = $env:USERNAME
-$serviceAccounts = @("$env:USERNAME", "service.tfsbuild.ap", "tfsbuildservice$")
+$serviceAccounts = @("$env:USERNAME", "service.tfsbuild.ap", "tfsbuildservice$", "ExpertService$")
 
 foreach ($dir in $directoriesToRemove) {
     $removeTarget = $dir
@@ -58,7 +58,7 @@ foreach ($dir in $directoriesToRemove) {
 # Should a human run this script, don't nuke their environment
 if (-not [System.Environment]::UserInteractive) {
     if ($null -eq $env:AgentPool -or $env:AgentPool -eq 'Default') {
-        $machineWideDirectories += (Get-PSDrive -PSProvider FileSystem | Select-Object -Property { [System.IO.Path]::Combine($_.Root, "ExpertShare") }) 
+        $machineWideDirectories += (Get-PSDrive -PSProvider FileSystem | Select-Object -Property { [System.IO.Path]::Combine($_.Root, "ExpertShare") })
     }
 
     # Yay for checked in PostBuild events :)
