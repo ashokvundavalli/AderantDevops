@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -24,8 +23,8 @@ namespace Aderant.Build.DependencyAnalyzer {
         private readonly IFileSystem fileSystem;
         private readonly ILogger logger;
         private bool isDesktopBuild;
-        private BuildCachePackageChecker packageChecker;
         private List<BucketId> missingIds;
+        private BuildCachePackageChecker packageChecker;
         private List<BuildStateFile> stateFiles;
         private TrackedInputFilesController trackedInputFilesCheck;
         private Dictionary<string, InputFilesDependencyAnalysisResult> trackedInputs = new Dictionary<string, InputFilesDependencyAnalysisResult>(StringComparer.OrdinalIgnoreCase);
@@ -73,33 +72,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             var projectsInDependencyOrder = projectGraph.GetDependencyOrder();
 
             List<string> directoriesInBuild = new List<string>();
-
-            foreach (IDependable dependable in projectsInDependencyOrder) {
-                ConfiguredProject configuredProject = dependable as ConfiguredProject;
-
-                if (configuredProject != null) {
-                    if (isBuildCacheEnabled == false) {
-                        // No cache so mark everything as changed
-                        configuredProject.IsDirty = true;
-                        configuredProject.SetReason(BuildReasonTypes.Forced | BuildReasonTypes.CachedBuildNotFound);
-                    }
-
-                    if (!directoriesInBuild.Contains(configuredProject.SolutionRoot)) {
-                        directoriesInBuild.Add(configuredProject.SolutionRoot);
-                    }
-
-                    if (PipelineService != null) {
-                        PipelineService.TrackProject(
-                            new OnDiskProjectInfo {
-                                ProjectGuid = configuredProject.ProjectGuid,
-                                SolutionRoot = configuredProject.SolutionRoot,
-                                FullPath = configuredProject.FullPath,
-                                OutputPath = configuredProject.OutputPath,
-                                IsWebProject = configuredProject.IsWebProject,
-                            });
-                    }
-                }
-            }
+            TrackProjects(projectsInDependencyOrder, isBuildCacheEnabled, directoriesInBuild);
 
             // According to options, find out which projects are selected to build.
             var filteredProjects = GetProjectsBuildList(
@@ -142,6 +115,35 @@ namespace Aderant.Build.DependencyAnalyzer {
             };
         }
 
+        private void TrackProjects(IReadOnlyList<IDependable> projectsInDependencyOrder, bool isBuildCacheEnabled, List<string> directoriesInBuild) {
+            foreach (IDependable dependable in projectsInDependencyOrder) {
+                ConfiguredProject configuredProject = dependable as ConfiguredProject;
+
+                if (configuredProject != null) {
+                    if (isBuildCacheEnabled == false) {
+                        // No cache so mark everything as changed
+                        configuredProject.IsDirty = true;
+                        configuredProject.SetReason(BuildReasonTypes.Forced | BuildReasonTypes.CachedBuildNotFound);
+                    }
+
+                    if (!directoriesInBuild.Contains(configuredProject.SolutionRoot)) {
+                        directoriesInBuild.Add(configuredProject.SolutionRoot);
+                    }
+
+                    if (PipelineService != null) {
+                        PipelineService.TrackProject(
+                            new OnDiskProjectInfo {
+                                ProjectGuid = configuredProject.ProjectGuid,
+                                SolutionRoot = configuredProject.SolutionRoot,
+                                FullPath = configuredProject.FullPath,
+                                OutputPath = configuredProject.OutputPath,
+                                IsWebProject = configuredProject.IsWebProject,
+                            });
+                    }
+                }
+            }
+        }
+
         /// <summary>
         /// If a project has no dependencies within the tree (nothing points to it) then it can be excluded from the tree during
         /// dependency analysis if the up-to-date check does not believe the project to be stale.
@@ -150,7 +152,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// Here we check for this and add the projects back in if the directory which owns them is invalidated.
         /// TODO: This should be handled as part of <see cref="GetProjectsBuildList" />
         /// </summary>
-        private IReadOnlyList<IDependable> SecondPassAnalysis(IReadOnlyList<IDependable> filteredProjects, ProjectDependencyGraph projectGraph) {
+        internal IReadOnlyList<IDependable> SecondPassAnalysis(IReadOnlyList<IDependable> filteredProjects, ProjectDependencyGraph projectGraph) {
             var graph = new ProjectDependencyGraph();
 
             foreach (var project in projectGraph.Projects) {
@@ -164,6 +166,8 @@ namespace Aderant.Build.DependencyAnalyzer {
                         graph.Add(project);
                     }
                 }
+
+                AddDependencyOnCacheDownload(projectGraph, project);
             }
 
             foreach (var filteredProject in filteredProjects) {
@@ -184,6 +188,28 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                     return true;
                 }).ToList();
+        }
+
+        private static void AddDependencyOnCacheDownload(ProjectDependencyGraph projectGraph, ConfiguredProject project) {
+            if (project.BuildReason != null /* Project is selected to build */) {
+                IReadOnlyCollection<IDependable> dependencies = project.GetDependencies();
+                foreach (IDependable dependency in dependencies) {
+                    var dependentProject = projectGraph.GetNodeById<ConfiguredProject>(dependency.Id);
+
+                    if (dependentProject != null) {
+                        var directoryNode = dependentProject.DirectoryNode;
+
+                        if (directoryNode != project.DirectoryNode) {
+                            // Dependent project is not building - it must be coming from the cache.
+                            // Therefore we need to simulate "TreatAsDependency" and take a concrete
+                            // dependency on the cache download step
+                            if (dependentProject.BuildReason == null) {
+                                project.AddResolvedDependency(null, directoryNode);
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         private void LogProjectsExcluded(IReadOnlyList<IDependable> filteredProjects, ProjectDependencyGraph projectGraph) {
