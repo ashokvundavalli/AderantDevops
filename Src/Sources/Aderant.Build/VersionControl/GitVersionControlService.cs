@@ -166,6 +166,7 @@ namespace Aderant.Build.VersionControl {
             "releases/*",
 
             // Allow teams to have all of their work in a common branch and builds to pull cached builds
+            "features/*",
             "feature/*",
 
             "master"
