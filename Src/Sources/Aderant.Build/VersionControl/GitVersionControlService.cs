@@ -160,9 +160,14 @@ namespace Aderant.Build.VersionControl {
         }
 
         private static string[] globs = new[] {
+            // Common release vehicle naming
             "update/*",
             "patch/*",
             "releases/*",
+
+            // Allow teams to have all of their work in a common branch and builds to pull cached builds
+            "feature/*",
+
             "master"
         };
 
