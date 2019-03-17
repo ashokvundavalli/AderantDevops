@@ -285,5 +285,47 @@ namespace UnitTest.Build.DependencyAnalyzer {
             Assert.IsTrue(fileSystem.FileExists(output));
             Assert.AreEqual(Resources.BuildTree, fileSystem.ReadAllText(output));
         }
+
+        [TestMethod]
+        public void When_a_project_depends_on_a_project_coming_from_cache_it_implicitly_depends_on_the_directory() {
+            var tree = new Mock<IProjectTree>();
+
+            var d1 = new DirectoryNode("Dir1", @"C:\Dir1", false);
+            var p1 = new TestConfiguredProject(tree.Object) {
+                outputAssembly = "P1",
+                IsDirty = false,
+                IsWebProject = false,
+                IncludeInBuild = true, SolutionFile = d1.Directory + "\\Solution.sln"
+            };
+
+            var d2 = new DirectoryNode("Dir2", @"C:\Dir2", false);
+            var p2 = new TestConfiguredProject(tree.Object) {
+                outputAssembly = "P2",
+                IsDirty = true,
+                IsWebProject = false,
+                IncludeInBuild = true,
+                SolutionFile = d2.Directory + "\\Solution.sln"
+            };
+            p2.SetReason(BuildReasonTypes.DependencyChanged);
+            p2.AddResolvedDependency(null, p1);
+
+            var graph = new ProjectDependencyGraph(d1, p1, d2, p2);
+
+            var ctx = new BuildOperationContext {
+                BuildRoot = "",
+                Switches = new BuildSwitches {
+                    Downstream = true
+                },
+                StateFiles = new List<BuildStateFile> { new BuildStateFile() }
+            };
+
+            var sequencer = new ProjectSequencer(NullLogger.Default, null);
+            sequencer.CreatePlan(ctx, new OrchestrationFiles(), graph, false);
+
+            string[] items = p2.GetDependencies().Select(s => s.Id).ToArray();
+            Assert.AreEqual(3, items.Length);
+            CollectionAssert.Contains(items, "Dir1.Pre");
+            CollectionAssert.Contains(items, "Dir2.Pre");
+        }
     }
 }
