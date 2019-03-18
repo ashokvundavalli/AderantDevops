@@ -71,7 +71,23 @@ namespace Aderant.Build.Tasks {
 
             groveler.Grovel(DirectoriesInBuild, ExcludedPaths);
 
+            ValidatePaths();
+
             return !Log.HasLoggedErrors;
+        }
+
+        private void ValidatePaths() {
+            List<string> missingDirectories = new List<string>();
+
+            foreach (string directory in DirectoriesInBuild) {
+                if (!Directory.Exists(directory)) {
+                    missingDirectories.Add(directory);
+                }
+            }
+
+            if (missingDirectories.Any()) {
+                Log.LogError($"Build {(missingDirectories.Count == 1 ? "directory does not have a physical path" : "directories do not have physical paths")}:\n{string.Join("\n", missingDirectories)}");
+            }
         }
 
         private List<string> GetDirectoriesWithNoCachedBuild(string buildRoot, HashSet<string> contextInclude) {
