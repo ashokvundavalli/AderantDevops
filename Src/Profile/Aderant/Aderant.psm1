@@ -184,11 +184,12 @@ function Set-BranchPaths {
     #initialise from default setting
     Write-Debug "Setting information for branch from your defaults"
     $global:BranchLocalDirectory = (GetDefaultValue "DevBranchFolder").ToLower()
+    $global:BranchBinariesDirectory = Join-Path -Path $global:BranchLocalDirectory -ChildPath "\Binaries"
     $ShellContext.BranchLocalDirectory = $global:BranchLocalDirectory
     $ShellContext.BranchName = ResolveBranchName $global:BranchLocalDirectory
     $ShellContext.BranchServerDirectory = (GetDefaultValue "DropRootUNCPath").ToLower()
     $ShellContext.BranchModulesDirectory = Join-Path -Path $global:BranchLocalDirectory -ChildPath "\Modules"
-    $ShellContext.BranchBinariesDirectory = Join-Path -Path $global:BranchLocalDirectory -ChildPath "\Binaries"
+    $ShellContext.BranchBinariesDirectory = $global:BranchBinariesDirectory
 
     if (-not (Test-Path $global:BranchLocalDirectory)) {
         Write-Host ""
