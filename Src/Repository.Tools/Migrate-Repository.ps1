@@ -62,7 +62,7 @@ git remote add $module $sourceRepository
 git fetch $module
 git merge $module/$sourceTempBranch --allow-unrelated-histories
 git remote remove $module
-git push -u
+git push --set-upstream origin "relocate/$sourceBranch/$module"
 
 if ($createPullRequest.IsPresent) {
     [string]$targetModule = [System.IO.Path]::GetFileName($targetRepository)
