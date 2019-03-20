@@ -15,6 +15,8 @@
     The branch to retrieve build artifacts from.
 .Parameter pullRequestId
     The pull request id to retrieve build artifacts from.
+.Parameter buildNumber
+    The build id to retrieve build artifacts from.
 .Parameter components
     The list of components to retrieve from the drop location. Defaults to 'Product'.
 #>
@@ -23,7 +25,8 @@ param(
     [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$binariesDirectory,
     [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$dropRoot,
     [Parameter(Mandatory=$false, ParameterSetName = "Branch")][ValidateNotNullOrEmpty()][string]$branch,
-    [Parameter(Mandatory=$false, ParameterSetName = "PullRequest")][Alias("pull")][int]$pullRequestId,
+    [Parameter(Mandatory=$false, ParameterSetName = "PullRequest")][Alias("pull")][ValidateNotNullOrEmpty()][int]$pullRequestId,
+    [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][int]$buildNumber,
     [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][ValidateSet("Product", "Test")][string[]]$components
 )
 
@@ -217,6 +220,24 @@ begin {
             return $totalTime
         }
     }
+
+    function Create-BuildLink {
+        <#
+        .Synopsis
+            Create a link to build in the binaries directory
+        #>
+        param (
+            [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$binariesDirectory,
+            [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][int]$buildNumber
+        )
+
+        if ([System.Environment]::UserInteractive) {
+            [System.MarshalByRefObject]$shell = New-Object -ComObject 'WScript.Shell'
+            [System.MarshalByRefObject]$shortcut = $Shell.CreateShortcut((Join-Path -Path $binariesDirectory -ChildPath "Expert_Build_$buildNumber.url"))
+            $shortcut.TargetPath = "http://tfs:8080/tfs/ADERANT/ExpertSuite/_build/index?buildId=$buildNumber&_a=summary"
+            $shortcut.Save()
+        }
+    }
 }
 
 process {
@@ -231,8 +252,11 @@ process {
                 exit 1
             }
 
-            [int[]]$buildNumbers = Get-ChildItem -Path $branchDropRoot -Directory | Select-Object -ExpandProperty Name | Where-Object { $_ -match "^[\d\.]+$" }
-            [int]$buildNumber = $buildNumbers | Sort-Object -Descending | Select-Object -First 1
+            if (!$buildNumber) {
+                # Get the most recent build number if build number has not been specified by the user
+                [int[]]$buildNumbers = Get-ChildItem -Path $branchDropRoot -Directory | Select-Object -ExpandProperty Name | Where-Object { $_ -match "^[\d\.]+$" }
+                $buildNumber = $buildNumbers | Sort-Object -Descending | Select-Object -First 1
+            }
 
             if (-not $PSCmdlet.ShouldProcess('Build number')) {
                 Write-Host "Build number: $buildNumber"
@@ -246,13 +270,7 @@ process {
 
             $totalTime = Copy-Binaries -dropRoot $build -binariesDirectory $binariesDirectory -components $components -clearBinariesDirectory
 
-            # Create a link to build in the binaries directory.
-            if ([System.Environment]::UserInteractive) {
-                [System.MarshalByRefObject]$shell = New-Object -ComObject 'WScript.Shell'
-                [System.MarshalByRefObject]$shortcut = $Shell.CreateShortcut((Join-Path -Path $binariesDirectory -ChildPath "Expert_Build_$buildNUmber.url"))
-                $shortcut.TargetPath = "http://tfs:8080/tfs/ADERANT/ExpertSuite/_build/index?buildId=$buildNUmber&_a=summary"
-                $shortcut.Save()
-            }
+            Create-BuildLink -binariesDirectory $binariesDirectory -buildNumber $buildNumber
         }
         'PullRequest' {
             [string]$pullRequestDropRoot = Join-Path -Path $dropRoot -ChildPath "pulls\$pullRequestId"

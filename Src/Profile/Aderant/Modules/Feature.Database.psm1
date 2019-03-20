@@ -171,7 +171,7 @@ function global:Backup-ExpertDatabase {
             return
         }
 
-        [string]$assembly = Join-Path -Path $ShellContext.BranchBinariesDirectory -ChildPath "Test\UIAutomation\API.Database.dll"
+        [string]$assembly = Join-Path -Path $ShellContext.BranchBinariesDirectory -ChildPath "AutomatedDeployment\API.Database.dll"
 
         if (-not (Test-Path $assembly)) {
             Write-Error "Unable to locate API.Database assembly at: $($assembly)"
