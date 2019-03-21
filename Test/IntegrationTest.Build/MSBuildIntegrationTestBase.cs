@@ -10,12 +10,18 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build {
     [TestClass]
-    [DeploymentItem("IntegrationTest.targets")]
-    [DeploymentItem("TestDeployment\\")]
-    [DeploymentItem("Tasks\\", "Tasks\\")]
-    [DeploymentItem("EndToEnd\\", "EndToEnd\\")]
-    [DeploymentItem("Packaging\\", "Packaging\\")]
+    [DeploymentItem(TargetsFile)]
+    [DeploymentItem(TestDeployment)]
+    [DeploymentItem(Tasks, Tasks)]
+    [DeploymentItem(EndToEnd, EndToEnd)]
+    [DeploymentItem(Packaging, Packaging)]
     public abstract class MSBuildIntegrationTestBase {
+
+        private const string TargetsFile = "IntegrationTest.targets";
+        private const string Tasks = "Tasks\\";
+        private const string EndToEnd = "EndToEnd\\";
+        private const string Packaging = "Packaging\\";
+        private const string TestDeployment = "TestDeployment\\";
 
         public TestContext TestContext { get; set; }
 
@@ -34,6 +40,12 @@ namespace IntegrationTest.Build {
             if (properties == null) {
                 properties = new Dictionary<string, string>();
             }
+
+            Assert.IsTrue(File.Exists(Path.Combine(TestContext.DeploymentDirectory, TargetsFile)));
+            Assert.IsTrue(Directory.Exists(Path.Combine(TestContext.DeploymentDirectory, nameof(Tasks))));
+            Assert.IsTrue(Directory.Exists(Path.Combine(TestContext.DeploymentDirectory, nameof(EndToEnd))));
+            Assert.IsTrue(Directory.Exists(Path.Combine(TestContext.DeploymentDirectory, nameof(Packaging))));
+            Assert.IsTrue(Directory.Exists(Path.Combine(TestContext.DeploymentDirectory, nameof(TestDeployment))));
 
             Dictionary<string, string> globalProperties = new Dictionary<string, string>(properties) {
                 { "BuildToolsDirectory", TestContext.DeploymentDirectory },

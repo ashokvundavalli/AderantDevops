@@ -2,9 +2,9 @@
 
   <Import Project="Aderant.Build.Common.targets" />
 
-  <Import Project="$([MSBuild]::Unescape('$(MSBuildThisFileDirectory)Tasks\**\test.targets'))" />
-  <Import Project="$(MSBuildThisFileDirectory)Packaging\**\test.targets" />
-  <Import Project="$(MSBuildThisFileDirectory)EndToEnd\test.targets" />
+  <Import Project="Tasks\**\test.targets" />
+  <Import Project="Packaging\**\test.targets" />
+  <Import Project="EndToEnd\test.targets" />
 
   <ItemGroup>
     <Files Include="*.dll;" />
