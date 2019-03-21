@@ -3,8 +3,8 @@
   <Import Project="Aderant.Build.Common.targets" />
 
   <Import Project="EndToEnd\test.targets" />
-  <Import Project="Tasks\**\*" />
-  <Import Project="Packaging\**\*" />
+  <Import Project="Tasks\**\*.targets" />
+  <Import Project="Packaging\**\*.targets" />
 
   <ItemGroup>
     <Files Include="*.dll;" />
