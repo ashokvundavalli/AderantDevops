@@ -10,8 +10,10 @@
 .PARAMETER createBackup
     Switch to create a backup of the Binaries folder (named BinariesBackup in the same folder) after successfully retrieving the product.
     This is intended to be used by developers who call Copy-BinariesFromCurrentModules (cb) or Copy-BinToEnvironment and want to have a backup with the original files from the Get-Product call.
-.PARAMETER pullRquestId
+.PARAMETER pullRequestId
     Mixes the output of a pull request build into the product
+.PARAMETER buildNumber
+    Mixes the output of build into the product using buildNumber
 .EXAMPLE
     Get-Product -createBackup
 #>
@@ -19,11 +21,12 @@ function Get-Product {
     [CmdletBinding(DefaultParameterSetName="master")]
     param (
         [Parameter(Mandatory=$false, ParameterSetName = "Branch", Position = 0)][ValidateNotNullOrEmpty()][string]$branch,
-        [Parameter(Mandatory=$false, ParameterSetName = "PullRequest")][Alias("pr")][int]$pullRequestId,
+        [Parameter(Mandatory=$false, ParameterSetName = "PullRequest")][Alias("pr")][ValidateNotNullOrEmpty()][int]$pullRequestId,
+        [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][int]$buildNumber,
         [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$binariesDirectory,
         [string[]]$components = @('Product'),
         [switch]$createBackup,
-        [switch]$buildNumber
+        [switch]$buildNumberCheck
     )
 
     [string]$getProduct = Join-Path -Path $ShellContext.PackageScriptsDirectory -ChildPath 'Get-Product.ps1'
@@ -33,19 +36,20 @@ function Get-Product {
         $binariesDirectory = $ShellContext.BranchBinariesDirectory
     }
 
+    if ([string]::IsNullOrWhiteSpace($branch)) {
+        $branch = $PSCmdlet.ParameterSetName
+    }
+
     switch ($PSCmdlet.ParameterSetName) {
-        'Branch' {
-            & $getProduct -binariesDirectory $binariesDirectory -dropRoot $dropRoot -branch $branch -components $components -WhatIf:$($buildNumber.IsPresent)
-        }
         'PullRequest' {
-            & $getProduct -binariesDirectory $binariesDirectory -dropRoot $dropRoot -pullRequestId $pullRequestId -components $components -WhatIf:$($buildNumber.IsPresent)
+            & $getProduct -binariesDirectory $binariesDirectory -dropRoot $dropRoot -pullRequestId $pullRequestId -components $components -WhatIf:$($buildNumberCheck.IsPresent)
         }
-        'master' {
-            & $getProduct -binariesDirectory $binariesDirectory -dropRoot $dropRoot -branch 'master' -components $components -WhatIf:$($buildNumber.IsPresent)
+        default {
+            & $getProduct -binariesDirectory $binariesDirectory -dropRoot $dropRoot -branch $branch -buildNumber $buildNumber -components $components -WhatIf:$($buildNumberCheck.IsPresent)
         }
     }
 
-    if (-not $buildNumber.IsPresent -and $createBackup.IsPresent) {
+    if (-not $buildNumberCheck.IsPresent -and $createBackup.IsPresent) {
         Write-Host "Creating backup of Binaries folder."
         $backupPath = $ShellContext.BranchLocalDirectory + "\BinariesBackup"
         if (-not (Test-Path $backupPath)) {
@@ -134,30 +138,27 @@ function Get-ProductNoDebugFiles {
 
 <#
 .Synopsis 
-    Displays the BuildAll version in the binaries directory of the current branch.
+    Displays the Build version url located in the binaries directory of the current branch.
 .Description
-    WARNING: If you have done a Get-Product or Get-ProductZip since your last deployment, then it will show the version number of the Get-ProductZip rather than what is deployed.
+    WARNING: If you have done a Get-Product since your last deployment, then it will show the version number of the Get-Product rather than what is deployed.
 .PARAMETER copyToClipboard
-    If specified the BuildAll version will be copied to the clipboard.
+    If specified the Build version will be copied to the clipboard.
 #>
 function Get-ProductBuild([switch]$copyToClipboard) {
-    [string]$versionFilePath = "$($ShellContext.BranchBinariesDirectory)\BuildAllZipVersion.txt"
-    if ([System.IO.File]::Exists($versionFilePath)) {
-        if ((Get-Content -Path $versionFilePath) -match "[^\\]*[\w.]BuildAll_[\w.]*[^\\]") {
-            Write-Host "Current BuildAll version in $ShellContext.BranchName` branch:`r`n"
+    $buildVersionFile = Get-ChildItem -Path $ShellContext.BranchBinariesDirectory -Filter Expert_Build_*.url
+    
+    if ($buildVersionFile) {
+    
+        $buildVersionFilePath = Join-Path -Path $ShellContext.BranchBinariesDirectory -ChildPath $buildVersionFile
+        Invoke-Item $buildVersionFilePath
+        Write-Host "Current Build information is visible at: $($buildVersionFilePath)" 
 
-            if ($copyToClipboard) {
-                Add-Type -AssemblyName "System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
-                [System.Windows.Forms.Clipboard]::SetText($Matches[0])
-            }
-
-            return $Matches[0]
-        } else {
-            Write-Error "Content of BuildAllZipVersion.txt is questionable."
+        if ($copyToClipboard) {
+            Add-Type -AssemblyName "System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
+            [System.Windows.Forms.Clipboard]::SetText($buildVersionFile)
         }
-    } else {
-        Write-Error "No BuildAllZipVersion.txt present in: $($ShellContext.BranchBinariesDirectory)."
-    }
 
-    return $null
+    } else {
+        Write-Error "No url containing build information is present in: $($ShellContext.BranchBinariesDirectory) "
+    }
 }

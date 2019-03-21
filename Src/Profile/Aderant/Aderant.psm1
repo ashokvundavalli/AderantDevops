@@ -167,6 +167,7 @@ function IsMainBanch([string]$name) {
 }
 
 function ResolveBranchName([string]$branchPath) {
+    $name = ""
     if (IsMainBanch $branchPath) {
         $name = "MAIN"
     } elseif (IsDevBanch $branchPath) {
@@ -184,11 +185,12 @@ function Set-BranchPaths {
     #initialise from default setting
     Write-Debug "Setting information for branch from your defaults"
     $global:BranchLocalDirectory = (GetDefaultValue "DevBranchFolder").ToLower()
+    $global:BranchBinariesDirectory = Join-Path -Path $global:BranchLocalDirectory -ChildPath "\Binaries"
     $ShellContext.BranchLocalDirectory = $global:BranchLocalDirectory
     $ShellContext.BranchName = ResolveBranchName $global:BranchLocalDirectory
     $ShellContext.BranchServerDirectory = (GetDefaultValue "DropRootUNCPath").ToLower()
     $ShellContext.BranchModulesDirectory = Join-Path -Path $global:BranchLocalDirectory -ChildPath "\Modules"
-    $ShellContext.BranchBinariesDirectory = Join-Path -Path $global:BranchLocalDirectory -ChildPath "\Binaries"
+    $ShellContext.BranchBinariesDirectory = $global:BranchBinariesDirectory
 
     if (-not (Test-Path $global:BranchLocalDirectory)) {
         Write-Host ""
@@ -277,34 +279,6 @@ function Set-ExpertVariables {
         if (-not (Test-Path $ShellContext.DeploymentManager)) {
             Write-Warning "Please ensure that the DeploymentManager.exe is located at: $($pathToDeploymentManager)"
         }
-    }
-}
-
-<#
-.Synopsis 
-    Displays the Build version url located in the binaries directory of the current branch.
-.Description
-    WARNING: If you have done a Get-Product since your last deployment, then it will show the version number of the Get-Product rather than what is deployed.
-.PARAMETER copyToClipboard
-    If specified the Build version will be copied to the clipboard.
-#>
-function Get-ProductBuild([switch]$copyToClipboard) {
-
-    $buildVersionFile = Get-ChildItem -Path $ShellContext.BranchBinariesDirectory -Filter Expert_Build_*.url
-    
-    if ($buildVersionFile) {
-    
-        $buildVersionFilePath = Join-Path -Path $ShellContext.BranchBinariesDirectory -ChildPath $buildVersionFile
-        Invoke-Item $buildVersionFilePath
-        Write-Host "Current Build information is visible at: $($buildVersionFilePath)" 
-
-        if ($copyToClipboard) {
-            Add-Type -AssemblyName "System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
-            [System.Windows.Forms.Clipboard]::SetText($buildVersionFile)
-        }
-
-    } else {
-        Write-Error "No url containing build information is present in: $($ShellContext.BranchBinariesDirectory) "
     }
 }
 
@@ -563,25 +537,10 @@ function Get-CurrentModule {
 function OutputEnvironmentDetails {
     Write-Host ""
     Write-Host "-----------------------------"
-    Write-Host "Local Branch Information"
+    Write-Host "Local Information"
     Write-Host "-----------------------------"
-    Write-Host "Name :" $ShellContext.BranchName
     Write-Host "Path :" $global:BranchLocalDirectory
-    Write-Host ""
     Write-Host "-----------------------------"
-    Write-Host "Server Branch Information"
-    Write-Host "-----------------------------"
-    Write-Host "Path :" $ShellContext.BranchServerDirectory
-
-    if ($ShellContext.CurrentModuleName -and $ShellContext.CurrentModulePath) {
-        Write-Host ""
-        Write-Host "-----------------------------"
-        Write-Host "Current Module Information"
-        Write-Host "-----------------------------"
-        Write-Host "Name :" $ShellContext.CurrentModuleName
-        Write-Host "Path :" $ShellContext.CurrentModulePath
-        Write-Host ""
-    }
 }
 
 <#
@@ -1278,7 +1237,6 @@ $functionsToExport = @(
     [PSCustomObject]@{ function = 'Get-DependenciesForCurrentModule'; alias = 'gd'; },
     [PSCustomObject]@{ function = 'Get-DependenciesFrom'; alias = 'gdf'; },
     [PSCustomObject]@{ function = 'Get-EnvironmentFromXml'; alias = $null; },
-    [PSCustomObject]@{ function = 'Get-ExpertBuildAllVersion'; alias = $null; };
     [PSCustomObject]@{ function = 'Get-ExpertModulesInChangeset'; alias = $null; },
     [PSCustomObject]@{ function = 'Get-Database'; alias = $null; },
     [PSCustomObject]@{ function = 'Get-DatabaseServer'; alias = $null; },

@@ -21,9 +21,13 @@ function Clear-ExpertCache {
     )
 
     [string]$cache = "Aderant"
-    [string]$localAppData
-    [string]$roamingAppData
-    
+    [string]$localAppData = ""
+    [string]$roamingAppData = ""
+
+    Write-Warning '***'
+    Write-Warning 'If the product has caching issues, please raise a bug in TFS'
+    Write-Warning '***'
+
     if (-not [string]::IsNullOrWhiteSpace($environmentName)) {
         $cache = [string]::Concat($cache, "\$environmentName")
     }
