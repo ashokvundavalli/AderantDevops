@@ -21,7 +21,7 @@ namespace IntegrationTest.Build {
 
         public InternalBuildLogger Logger { get; set; }
 
-        public LoggerVerbosity LoggerVerbosity { get; set; } = LoggerVerbosity.Diagnostic;
+        public LoggerVerbosity LoggerVerbosity { get; set; } = LoggerVerbosity.Detailed;
 
         public bool DetailedSummary { get; set; } = true;
 
