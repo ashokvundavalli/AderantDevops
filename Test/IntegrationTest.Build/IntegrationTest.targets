@@ -2,7 +2,7 @@
 
   <Import Project="Aderant.Build.Common.targets" />
 
-  <Import Project="$(MSBuildThisFileDirectory)Tasks\**\test.targets" />
+  <Import Project="$([MSBuild]::Escape('$(MSBuildThisFileDirectory)Tasks\**\test.targets'))" />
   <Import Project="$(MSBuildThisFileDirectory)Packaging\**\test.targets" />
   <Import Project="$(MSBuildThisFileDirectory)EndToEnd\test.targets" />
 
