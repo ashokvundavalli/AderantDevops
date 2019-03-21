@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Xml;
 using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.VersionControl.Model;
@@ -133,6 +135,25 @@ namespace UnitTest.Build.ProjectSystem {
                 "");
 
             project1.Validate("Debug", "AnyCPU");
+        }
+
+        [TestMethod]
+        public void Windows_installer_project_properties() {
+            var tree = new Mock<IProjectTree>();
+
+            var project1 = new ConfiguredProject(tree.Object);
+
+            project1.Initialize(
+                new Lazy<ProjectRootElement>(
+                    () => {
+                        var reader = XmlReader.Create(new StringReader(ProjectSystemResources.MyWindowsInstallerApp));
+                        var element = ProjectRootElement.Create(reader);
+                        return element;
+                    }),
+                "");
+
+            Assert.AreEqual("Package", project1.OutputType);
+            Assert.AreEqual("ExpertAssistantPerUser.msi", project1.GetOutputAssemblyWithExtension());
         }
 
         [TestMethod]

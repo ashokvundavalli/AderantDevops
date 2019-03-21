@@ -38,7 +38,17 @@ namespace Aderant.Build.ProjectSystem {
 
         private static Memoizer<ConfiguredProject, string> outputTypeMemoizer = new Memoizer<ConfiguredProject, string>(configuredProject => configuredProject.project.Value.GetPropertyValue("OutputType"));
 
-        private static Memoizer<ConfiguredProject, string> outputAssemblyMemoizer = new Memoizer<ConfiguredProject, string>(configuredProject => configuredProject.project.Value.GetPropertyValue("AssemblyName"));
+        private static Memoizer<ConfiguredProject, string> outputAssemblyMemoizer = new Memoizer<ConfiguredProject, string>(
+            configuredProject => {
+                var value = configuredProject.project.Value.GetPropertyValue("AssemblyName");
+
+                if (string.IsNullOrWhiteSpace(value)) {
+                    // Windows Installer project
+                    return configuredProject.project.Value.GetPropertyValue("OutputName");
+                }
+
+                return value;
+            });
 
         private static Memoizer<ConfiguredProject, IReadOnlyList<Guid>> extractTypeGuidsMemoizer = new Memoizer<ConfiguredProject, IReadOnlyList<Guid>>(
             args => {
@@ -569,6 +579,10 @@ namespace Aderant.Build.ProjectSystem {
 
             if (string.Equals(OutputType, "exe", StringComparison.OrdinalIgnoreCase)) {
                 return OutputAssembly + ".exe";
+            }
+
+            if (string.Equals(OutputType, "package", StringComparison.OrdinalIgnoreCase)) {
+                return OutputAssembly + ".msi";
             }
 
             throw new NotSupportedException("Unable to determine output extension from type:" + OutputType);
