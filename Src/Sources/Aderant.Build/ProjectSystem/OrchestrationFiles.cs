@@ -11,9 +11,10 @@ namespace Aderant.Build.ProjectSystem {
         /// Gets or sets the project file to execute targets before exiting a directory
         /// </summary>
         public string AfterProjectFile { get; set; }
+
         public string GroupExecutionFile { get; set; }
+
         public string BuildPlan { get; set; }
-        public string CommonProjectFile { get; set; }
 
         /// <summary>
         /// Gets or sets the extensibility demands such as things we should always build

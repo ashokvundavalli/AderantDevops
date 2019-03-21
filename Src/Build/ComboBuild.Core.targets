@@ -108,6 +108,7 @@
 
         CustomAfterMicrosoftCSharpTargets=$(CustomAfterMicrosoftCSharpTargets);
         CustomAfterMicrosoftCommonTargets=$(CustomAfterMicrosoftCommonTargets);
+        CustomAfterWixTargets=$(CustomAfterWixTargets);
 
         AlternativeOutputDirectory=$(SharedDependencyDirectory);
         ArtifactStagingDirectory=$(ArtifactStagingDirectory);

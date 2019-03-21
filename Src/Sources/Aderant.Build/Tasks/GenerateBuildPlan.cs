@@ -97,7 +97,6 @@ namespace Aderant.Build.Tasks {
                 BeforeProjectFile = BeforeProjectFile,
                 AfterProjectFile = AfterProjectFile,
                 GroupExecutionFile = GroupExecutionFile,
-                CommonProjectFile = CommonProjectFile,
                 ExtensibilityImposition = extensibilityImposition,
                 MakeFiles = MakeFiles,
                 BuildPlan = BuildPlan,

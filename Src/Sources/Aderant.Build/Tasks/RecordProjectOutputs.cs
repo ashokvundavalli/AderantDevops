@@ -10,7 +10,6 @@ namespace Aderant.Build.Tasks {
     /// </summary>
     public class RecordProjectOutputs : BuildOperationContextTask {
 
-
         [Required]
         public string ProjectFile { get; set; }
 
