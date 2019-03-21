@@ -49,35 +49,45 @@ namespace IntegrationTest.Build {
                 collection.RegisterLogger(Logger = logger);
 
                 using (var manager = new BuildManager()) {
-                    var result = manager.Build(
-                        new BuildParameters(collection) {
-                            Loggers = collection.Loggers,
-                            DetailedSummary = DetailedSummary,
-                            EnableNodeReuse = false,
-                        },
-                        new BuildRequestData(
-                            Path.Combine(TestContext.DeploymentDirectory, "IntegrationTest.targets"),
-                            globalProperties,
-                            null,
-                            new[] { targetName },
-                            null));
+                    try {
+                        var result = manager.Build(
+                            new BuildParameters(collection) {
+                                Loggers = collection.Loggers,
+                                DetailedSummary = DetailedSummary,
+                                EnableNodeReuse = false,
+                            },
+                            new BuildRequestData(
+                                Path.Combine(TestContext.DeploymentDirectory, "IntegrationTest.targets"),
+                                globalProperties,
+                                null,
+                                new[] { targetName },
+                                null));
 
-                    if (result.OverallResult == BuildResultCode.Failure) {
-                        LogFile = @"C:\temp\" + TestContext.TestName + ".log";
-                        WriteLogFile(LogFile, logger.LogLines);
-                    }
-
-                    Result = result;
-
-                    if (BuildMustSucceed) {
-                        if (BuildResultCode.Failure == result.OverallResult && Environment.UserInteractive) {
-                            Process.Start("notepad++", LogFile);
+                        if (result.OverallResult == BuildResultCode.Failure) {
+                            LogFile = @"C:\temp\" + TestContext.TestName + ".log";
+                            WriteLogFile(LogFile, logger.LogLines);
                         }
 
-                        Assert.AreNotEqual(BuildResultCode.Failure, result.OverallResult);
-                    }
+                        Result = result;
 
-                    LogLines = logger.LogLines;
+                        if (BuildMustSucceed) {
+                            if (BuildResultCode.Failure == result.OverallResult && Environment.UserInteractive) {
+                                Process.Start("notepad++", LogFile);
+                            }
+
+                            Assert.AreNotEqual(BuildResultCode.Failure, result.OverallResult);
+                        }
+
+                        LogLines = logger.LogLines;
+                    } catch (System.ArgumentException) {
+                        string[] files = Directory.GetFiles(TestContext.DeploymentDirectory);
+
+                        TestContext.WriteLine("DeploymentDirectory content:");
+                        foreach (string file in files) {
+                            TestContext.WriteLine(file);
+                        }
+                        throw;
+                    }
                 }
             }
         }
