@@ -21,17 +21,11 @@ namespace IntegrationTest.Build {
 
         public InternalBuildLogger Logger { get; set; }
 
-        public LoggerVerbosity LoggerVerbosity { get; set; } = LoggerVerbosity.Detailed;
+        public LoggerVerbosity LoggerVerbosity { get; set; } = LoggerVerbosity.Diagnostic;
 
         public bool DetailedSummary { get; set; } = true;
 
         public List<string> LogLines { get; set; }
-
-        public string LogFile { get; set; }
-
-        public BuildResult Result { get; set; }
-
-        public bool BuildMustSucceed { get; set; } = true;
 
         /// <summary>
         /// Runs a target in your targets
@@ -42,7 +36,6 @@ namespace IntegrationTest.Build {
             }
 
             Dictionary<string, string> globalProperties = new Dictionary<string, string>(properties) {
-                //  { "NoMSBuildCommunityTasks", "true" },
                 { "BuildToolsDirectory", TestContext.DeploymentDirectory },
                 { "TestContextDeploymentDirectory", Path.Combine(TestContext.DeploymentDirectory) }
             };
@@ -55,7 +48,6 @@ namespace IntegrationTest.Build {
                 collection.RegisterLogger(Logger = logger);
 
                 using (var manager = new BuildManager()) {
-
                     var result = manager.Build(
                         new BuildParameters(collection) {
                             Loggers = collection.Loggers,
@@ -81,21 +73,19 @@ namespace IntegrationTest.Build {
                             Process.Start("notepad++", LogFile);
                         }
 
-                        string[] files = Directory.GetFiles(TestContext.DeploymentDirectory);
-
-                        TestContext.WriteLine(nameof(TestContext.DeploymentDirectory) + " content:");
-                        foreach (string file in files) {
-                            TestContext.WriteLine(file);
-                        }
-
                         Assert.AreNotEqual(BuildResultCode.Failure, result.OverallResult);
                     }
 
                     LogLines = logger.LogLines;
-
                 }
             }
         }
+
+        public string LogFile { get; set; }
+
+        public BuildResult Result { get; set; }
+
+        public bool BuildMustSucceed { get; set; } = true;
 
         protected void WriteLogFile(string path, List<string> logFile) {
             using (FileStream file = new FileStream(path, FileMode.Create)) {
@@ -104,7 +94,6 @@ namespace IntegrationTest.Build {
                 foreach (var text in logFile) {
                     writer.Write(text);
                 }
-
                 file.Flush(true);
             }
         }
