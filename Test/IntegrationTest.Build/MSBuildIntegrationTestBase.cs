@@ -84,7 +84,9 @@ namespace IntegrationTest.Build {
 
                         TestContext.WriteLine("DeploymentDirectory content:");
                         foreach (string file in files) {
+
                             TestContext.WriteLine(file);
+                            Console.WriteLine(file);
                         }
                         throw;
                     }
