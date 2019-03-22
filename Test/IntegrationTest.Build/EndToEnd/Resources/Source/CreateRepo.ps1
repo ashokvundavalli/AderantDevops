@@ -5,7 +5,9 @@ if ($null -eq $DeploymentItemsDirectory) {
 
 Set-Location $DeploymentItemsDirectory
 
-Write-Information $DeploymentItemsDirectory
+Write-Information "PSScriptRoot: $PSScriptRoot"
+Write-Information "DeploymentItemsDirectory: $DeploymentItemsDirectory"
+Write-Information ("Current Directory: " + ([System.Environment]::CurrentDirectory))
 
 & git init
 

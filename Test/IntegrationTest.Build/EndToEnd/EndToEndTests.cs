@@ -151,7 +151,6 @@ namespace IntegrationTest.Build.EndToEnd {
             executor.Warning += warning;
             executor.Debug += debug;
 
-
             executor.RunScript(
                 new[] {
                     command
