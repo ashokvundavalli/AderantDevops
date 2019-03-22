@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
 using System.Management.Automation;
 using System.Text;
@@ -107,6 +106,10 @@ namespace IntegrationTest.Build.EndToEnd {
         private void RunCommand(string command) {
             using (var ps = PowerShell.Create()) {
 
+                if (TestContext != null) {
+                    TestContext.WriteLine("Current PS execution directory: " + DeploymentItemsDirectory);
+                }
+
                 StringBuilder sb = new StringBuilder();
                 sb.AppendLine("Set-InformationPreference = 'Continue'");
                 sb.AppendLine($"cd {DeploymentItemsDirectory.Quote()}");
@@ -116,11 +119,12 @@ namespace IntegrationTest.Build.EndToEnd {
 
                 var results = ps.Invoke();
 
-                foreach (var item in results) {
-                    TestContext.WriteLine(item.ToString());
+                if (TestContext != null) {
+                    foreach (var item in results) {
+                        TestContext.WriteLine(item.ToString());
+                    }
                 }
             }
         }
     }
-
 }
