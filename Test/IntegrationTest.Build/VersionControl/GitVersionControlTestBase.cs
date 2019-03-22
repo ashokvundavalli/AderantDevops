@@ -1,6 +1,7 @@
 ﻿using System.IO;
-using System.Management.Automation;
+using System.Text;
 using Aderant.Build;
+using IntegrationTest.Build.EndToEnd;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build.VersionControl {
@@ -39,15 +40,10 @@ namespace IntegrationTest.Build.VersionControl {
         }
 
         protected static void RunPowerShell(TestContext context, string script) {
-            using (var ps = PowerShell.Create()) {
-                ps.AddScript($"cd {context.Properties["Repository"].ToString().Quote()}");
-                ps.AddScript(script);
-                var results = ps.Invoke();
-
-                foreach (var psObject in results) {
-                    context.WriteLine(psObject.ToString());
-                }
-            }
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine($"cd {context.Properties["Repository"].ToString().Quote()}");
+            sb.AppendLine(script);
+            PowerShellHelper.RunCommand(sb.ToString(), context, null);
         }
     }
 }

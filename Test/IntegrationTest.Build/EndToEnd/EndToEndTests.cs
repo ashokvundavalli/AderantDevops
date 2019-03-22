@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
@@ -95,66 +96,66 @@ namespace IntegrationTest.Build.EndToEnd {
         }
 
         private void CleanWorkingDirectory() {
-            RunCommand("& git clean -fdx");
+            PowerShellHelper.RunCommand("& git clean -fdx", TestContext, DeploymentItemsDirectory);
         }
 
         private void CommitChanges() {
-            RunCommand("& git add .");
-            RunCommand("& git commit -m \"Add\"");
+            PowerShellHelper.RunCommand("& git add .", TestContext, DeploymentItemsDirectory);
+            PowerShellHelper.RunCommand("& git commit -m \"Add\"", TestContext, DeploymentItemsDirectory);
         }
 
         private void AddFilesToNewGitRepository() {
-            RunCommand(Resources.CreateRepo);
+            PowerShellHelper.RunCommand(Resources.CreateRepo, TestContext, DeploymentItemsDirectory);
         }
+    }
 
-        private void RunCommand(string command) {
+    internal class PowerShellHelper {
+
+        public static void RunCommand(string command, TestContext context, string deploymentItemsDirectory = null) {
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("$InformationPreference = 'Continue'");
             sb.AppendLine("$ErrorActionPreference = 'Stop'");
-            sb.AppendLine("$DeploymentItemsDirectory = " + DeploymentItemsDirectory.Quote());
-            sb.AppendLine($"Set-Location {DeploymentItemsDirectory.Quote()}");
+
+            if (deploymentItemsDirectory != null) {
+                sb.AppendLine("$DeploymentItemsDirectory = " + deploymentItemsDirectory.Quote());
+                sb.AppendLine($"Set-Location {deploymentItemsDirectory.Quote()}");
+            }
+
             sb.AppendLine(command);
 
             var executor = new PowerShellPipelineExecutor();
 
-            executor.DataReady += OnExecutorOnDataReady;
-            executor.Debug += OnExecutorOnDebug;
-            executor.Info += OnExecutorOnInfo;
-            executor.Verbose += OnExecutorOnVerbose;
-            executor.ErrorReady += OnExecutorOnErrorReady;
+            EventHandler<ICollection<PSObject>> dataReady = (sender, objects) => {
+                foreach (var psObject in objects) {
+                    context.WriteLine(psObject.ToString());
+                }
+            };
+            EventHandler<ICollection<object>> errorReady = (sender, objects) => { context.WriteLine(objects.ToString()); };
+            EventHandler<InformationRecord> info = (sender, objects) => { context.WriteLine(objects.ToString()); };
+            EventHandler<VerboseRecord> verbose = (sender, objects) => { context.WriteLine(objects.ToString()); };
+            EventHandler<WarningRecord> warning = (sender, objects) => { context.WriteLine(objects.ToString()); };
+            EventHandler<DebugRecord> debug = (sender, objects) => { context.WriteLine(objects.ToString()); };
+
+            executor.DataReady += dataReady;
+            executor.ErrorReady += errorReady;
+            executor.Info += info;
+            executor.Verbose += verbose;
+            executor.Warning += warning;
+            executor.Debug += debug;
 
             executor.RunScript(
                 new[] {
-                    sb.ToString()
+                    command
                 },
                 null,
                 CancellationToken.None);
 
-            executor.DataReady -= OnExecutorOnDataReady;
-            executor.Debug -= OnExecutorOnDebug;
-            executor.Info -= OnExecutorOnInfo;
-            executor.Verbose -= OnExecutorOnVerbose;
-            executor.ErrorReady -= OnExecutorOnErrorReady;
-        }
-
-        private void OnExecutorOnDebug(object sender, DebugRecord objects) {
-            TestContext.WriteLine(objects.ToString());
-        }
-
-        private void OnExecutorOnErrorReady(object sender, ICollection<object> objects) {
-            TestContext.WriteLine(objects.ToString());
-        }
-
-        private void OnExecutorOnVerbose(object sender, VerboseRecord objects) {
-            TestContext.WriteLine(objects.ToString());
-        }
-
-        private void OnExecutorOnInfo(object sender, InformationRecord objects) {
-            TestContext.WriteLine(objects.ToString());
-        }
-
-        private void OnExecutorOnDataReady(object sender, ICollection<PSObject> objects) {
-            TestContext.WriteLine(string.Join(";", objects.Select(s => s.ToString())));
+            executor.DataReady -= dataReady;
+            executor.ErrorReady -= errorReady;
+            executor.Info -= info;
+            executor.Verbose -= verbose;
+            executor.Warning -= warning;
+            executor.Debug -= debug;
         }
     }
 }
