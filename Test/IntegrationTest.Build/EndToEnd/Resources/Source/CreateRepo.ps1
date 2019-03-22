@@ -1,4 +1,9 @@
-cd $DeploymentItemsDirectory
+Set-StrictMode -Version 'Latest'
+if ($null -eq $DeploymentItemsDirectory) {
+    throw '$DeploymentItemsDirectory not defined'
+}
+
+Set-Location $DeploymentItemsDirectory
 
 & git init
 

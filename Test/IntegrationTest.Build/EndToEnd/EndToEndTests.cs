@@ -113,18 +113,26 @@ namespace IntegrationTest.Build.EndToEnd {
                 StringBuilder sb = new StringBuilder();
                 sb.AppendLine("Set-InformationPreference = 'Continue'");
                 sb.AppendLine("$DeploymentItemsDirectory = " + DeploymentItemsDirectory.Quote());
-                sb.AppendLine($"cd {DeploymentItemsDirectory.Quote()}");
+                sb.AppendLine($"Set-Location {DeploymentItemsDirectory.Quote()}");
                 sb.AppendLine(command);
 
-                ps.AddScript(sb.ToString());
+                var scriptBlock = sb.ToString();
+
+                if (TestContext != null) {
+                    TestContext.WriteLine("Script: " + scriptBlock);
+                }
+
+                ps.AddScript(scriptBlock);
 
                 var results = ps.Invoke();
 
                 if (TestContext != null) {
                     foreach (var item in results) {
                         TestContext.WriteLine(item.ToString());
+
                     }
                 }
+
             }
         }
     }

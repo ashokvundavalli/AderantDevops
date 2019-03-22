@@ -61,7 +61,12 @@ namespace IntegrationTest.Build.EndToEnd {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to cd $PSScriptRoot
+        ///   Looks up a localized string similar to Set-StrictMode -Version &apos;Latest&apos;
+        ///if ($null -eq $DeploymentItemsDirectory) {
+        ///    throw &apos;$DeploymentItemsDirectory not defined&apos;
+        ///}
+        ///
+        ///Set-Location $DeploymentItemsDirectory
         ///
         ///&amp; git init
         ///
