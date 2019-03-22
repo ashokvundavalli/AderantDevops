@@ -17,11 +17,11 @@ namespace IntegrationTest.Build {
     [DeploymentItem(Packaging, Packaging)]
     public abstract class MSBuildIntegrationTestBase {
 
-        private const string TargetsFile = "IntegrationTest.targets";
-        private const string Tasks = "Tasks\\";
-        private const string EndToEnd = "EndToEnd\\";
-        private const string Packaging = "Packaging\\";
-        private const string TestDeployment = "TestDeployment\\";
+        public const string TargetsFile = "IntegrationTest.targets";
+        public const string Tasks = "Tasks\\";
+        public const string EndToEnd = "EndToEnd\\";
+        public const string Packaging = "Packaging\\";
+        public const string TestDeployment = "TestDeployment\\";
 
         public TestContext TestContext { get; set; }
 

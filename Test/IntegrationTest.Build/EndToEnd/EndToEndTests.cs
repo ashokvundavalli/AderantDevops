@@ -11,7 +11,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace IntegrationTest.Build.EndToEnd {
 
     [TestClass]
-    [DeploymentItem("EndToEnd\\Resources", "Resources")]
+    [DeploymentItem("EndToEnd\\Resources\\", "Resources\\")]
     public class EndToEndTests : MSBuildIntegrationTestBase {
 
         public string DeploymentItemsDirectory {
@@ -20,6 +20,8 @@ namespace IntegrationTest.Build.EndToEnd {
 
         [TestInitialize]
         public void TestInit() {
+            Assert.IsTrue(Directory.Exists(DeploymentItemsDirectory));
+
             AddFilesToNewGitRepository();
         }
 
