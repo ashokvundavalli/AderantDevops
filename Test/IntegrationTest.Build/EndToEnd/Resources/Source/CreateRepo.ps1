@@ -7,11 +7,10 @@ Write-Information "PSScriptRoot: $PSScriptRoot"
 Write-Information "DeploymentItemsDirectory: $DeploymentItemsDirectory"
 Write-Information ("Current Directory: " + ([System.Environment]::CurrentDirectory))
 
-if (-not (Test-Path $DeploymentItemsDirectory)) {
+if (-not ([System.IO.Directory]::Exists($DeploymentItemsDirectory))) {
     Write-Error "Directory $DeploymentItemsDirectory does not exist"
     return
 }
-
 
 Set-Location $DeploymentItemsDirectory
 
