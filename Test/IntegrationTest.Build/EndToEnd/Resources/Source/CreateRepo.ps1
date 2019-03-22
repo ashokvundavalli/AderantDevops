@@ -3,8 +3,6 @@ if ($null -eq $DeploymentItemsDirectory) {
     throw '$DeploymentItemsDirectory not defined'
 }
 
-Set-Location $DeploymentItemsDirectory
-
 Write-Information "PSScriptRoot: $PSScriptRoot"
 Write-Information "DeploymentItemsDirectory: $DeploymentItemsDirectory"
 Write-Information ("Current Directory: " + ([System.Environment]::CurrentDirectory))
@@ -13,6 +11,12 @@ if (-not (Test-Path $DeploymentItemsDirectory)) {
     Write-Error "Directory $DeploymentItemsDirectory does not exist"
     return
 }
+
+
+Set-Location $DeploymentItemsDirectory
+
+Write-Information ("Current location" + (Get-Location))
+Write-Information ("Current files" + (Get-ChildItem -LiteralPath $DeploymentItemsDirectory))
 
 & git init
 
