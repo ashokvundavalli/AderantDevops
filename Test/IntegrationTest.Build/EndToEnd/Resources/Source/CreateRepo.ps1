@@ -1,4 +1,6 @@
-cd $PSScriptRoot
+Write-Inforamtion "Script home: " $PSScriptRoot
+
+Set-Location $PSScriptRoot
 
 & git init
 

@@ -1,6 +1,8 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using System.Management.Automation;
+using System.Text;
 using Aderant.Build;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -104,8 +106,14 @@ namespace IntegrationTest.Build.EndToEnd {
 
         private void RunCommand(string command) {
             using (var ps = PowerShell.Create()) {
-                ps.AddScript($"cd {DeploymentItemsDirectory.Quote()}");
-                ps.AddScript(command);
+
+                StringBuilder sb = new StringBuilder();
+                sb.AppendLine("Set-InformationPreference = 'Continue'");
+                sb.AppendLine($"cd {DeploymentItemsDirectory.Quote()}");
+                sb.AppendLine(command);
+
+                ps.AddScript(sb.ToString());
+
                 var results = ps.Invoke();
 
                 foreach (var item in results) {
