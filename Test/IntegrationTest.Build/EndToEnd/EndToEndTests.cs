@@ -116,8 +116,10 @@ namespace IntegrationTest.Build.EndToEnd {
             sb.AppendLine("$InformationPreference = 'Continue'");
             sb.AppendLine("$ErrorActionPreference = 'Stop'");
 
+            Dictionary<string, object> variables = null;
             if (deploymentItemsDirectory != null) {
-                sb.AppendLine("$DeploymentItemsDirectory = " + deploymentItemsDirectory.Quote());
+                variables = new Dictionary<string, object>();
+                variables.Add("DeploymentItemsDirectory", deploymentItemsDirectory);
                 sb.AppendLine($"Set-Location {deploymentItemsDirectory.Quote()}");
             }
             sb.AppendLine("Write-Information $PSScriptRoot");
@@ -143,11 +145,12 @@ namespace IntegrationTest.Build.EndToEnd {
             executor.Warning += warning;
             executor.Debug += debug;
 
+
             executor.RunScript(
                 new[] {
                     command
                 },
-                null,
+                variables,
                 CancellationToken.None);
 
             executor.DataReady -= dataReady;
