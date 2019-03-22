@@ -1,7 +1,3 @@
-Write-Inforamtion "Script home: " $PSScriptRoot
-
-Set-Location $PSScriptRoot
-
 & git init
 
 Add-Content -Path ".gitignore" -value @"
