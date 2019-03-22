@@ -1,7 +1,9 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Management.Automation;
 using System.Text;
+using System.Threading;
 using Aderant.Build;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -104,32 +106,53 @@ namespace IntegrationTest.Build.EndToEnd {
         }
 
         private void RunCommand(string command) {
-            using (var ps = PowerShell.Create()) {
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("$InformationPreference = 'Continue'");
+            sb.AppendLine("$ErrorActionPreference = 'Stop'");
+            sb.AppendLine("$DeploymentItemsDirectory = " + DeploymentItemsDirectory.Quote());
+            sb.AppendLine($"Set-Location {DeploymentItemsDirectory.Quote()}");
+            sb.AppendLine(command);
 
-                if (TestContext != null) {
-                    TestContext.WriteLine("Current PS execution directory: " + DeploymentItemsDirectory);
-                }
+            var executor = new PowerShellPipelineExecutor();
 
-                StringBuilder sb = new StringBuilder();
-                sb.AppendLine("Set-InformationPreference = 'Continue'");
-                sb.AppendLine("$DeploymentItemsDirectory = " + DeploymentItemsDirectory.Quote());
-                sb.AppendLine($"Set-Location {DeploymentItemsDirectory.Quote()}");
-                sb.AppendLine(command);
+            executor.DataReady += OnExecutorOnDataReady;
+            executor.Debug += OnExecutorOnDebug;
+            executor.Info += OnExecutorOnInfo;
+            executor.Verbose += OnExecutorOnVerbose;
+            executor.ErrorReady += OnExecutorOnErrorReady;
 
-                var scriptBlock = sb.ToString();
+            executor.RunScript(
+                new[] {
+                    sb.ToString()
+                },
+                null,
+                CancellationToken.None);
 
-                ps.AddScript(scriptBlock);
+            executor.DataReady -= OnExecutorOnDataReady;
+            executor.Debug -= OnExecutorOnDebug;
+            executor.Info -= OnExecutorOnInfo;
+            executor.Verbose -= OnExecutorOnVerbose;
+            executor.ErrorReady -= OnExecutorOnErrorReady;
+        }
 
-                var results = ps.Invoke();
+        private void OnExecutorOnDebug(object sender, DebugRecord objects) {
+            TestContext.WriteLine(objects.ToString());
+        }
 
-                if (TestContext != null) {
-                    foreach (var item in results) {
-                        TestContext.WriteLine(item.ToString());
+        private void OnExecutorOnErrorReady(object sender, ICollection<object> objects) {
+            TestContext.WriteLine(objects.ToString());
+        }
 
-                    }
-                }
+        private void OnExecutorOnVerbose(object sender, VerboseRecord objects) {
+            TestContext.WriteLine(objects.ToString());
+        }
 
-            }
+        private void OnExecutorOnInfo(object sender, InformationRecord objects) {
+            TestContext.WriteLine(objects.ToString());
+        }
+
+        private void OnExecutorOnDataReady(object sender, ICollection<PSObject> objects) {
+            TestContext.WriteLine(string.Join(";", objects.Select(s => s.ToString())));
         }
     }
 }
