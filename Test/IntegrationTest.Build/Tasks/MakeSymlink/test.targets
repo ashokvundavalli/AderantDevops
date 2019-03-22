@@ -3,11 +3,17 @@
 
   <Target Name="MakeSymlink">
 
+    <PropertyGroup>
+      <Link>$(MSBuildThisFileDirectory)\Foo</Link>
+    </PropertyGroup>
+
     <MakeSymlink
-      Link="$(MSBuildThisFileDirectory)\Foo"
+      Link="$(Link)"
       Target="$(MSBuildThisFileDirectory)"
       CreateLinkParent="true"
       Type="J" />
+
+    <RemoveDir Directories="$(Link)" />
 
   </Target>
 
