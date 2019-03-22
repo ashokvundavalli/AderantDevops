@@ -67,6 +67,7 @@ namespace IntegrationTest.Build.EndToEnd {
                     { "RunTests", bool.FalseString },
                     { "NoDependencyFetch", bool.TrueString},
                     { "AllowNullScmBranch", bool.TrueString},
+                    { "GenerateFactory", bool.FalseString},
                     { WellKnownProperties.ContextEndpoint, endpoint },
                 };
 
@@ -102,6 +103,7 @@ namespace IntegrationTest.Build.EndToEnd {
 
             ctx.BuildMetadata = new BuildMetadata { BuildSourcesDirectory = deploymentItemsDirectory };
 
+            ctx.BuildRoot = testContext.DeploymentDirectory;
             ctx.SourceTreeMetadata = GetSourceTreeMetadata();
             ctx.BuildScriptsDirectory = props["BuildScriptsDirectory"];
             ctx.BuildSystemDirectory = Path.Combine(testContext.DeploymentDirectory, @"..\..\");
