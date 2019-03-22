@@ -1,26 +1,26 @@
 ﻿Set-StrictMode -Version "Latest"
 [int]$i = 1
 
-& git init
-Add-Content -Path "master.txt" -Value  "Some text"
-& git add "master.txt"
-& git commit -m "$($i++;$i) Added master.txt"
+& git -C $DeploymentItemsDirectory init
+Add-Content -LiteralPath "$DeploymentItemsDirectory\master.txt" -Value  "Some text"
+& git -C $DeploymentItemsDirectory add "master.txt"
+& git -C $DeploymentItemsDirectory commit -m "$($i++;$i) Added master.txt"
 
-Add-Content -Path "master.txt" -Value  "Some more"
-& git add "master.txt"
-& git commit -m "$($i++;$i) Modified master.txt"
+Add-Content -LiteralPath "$DeploymentItemsDirectory\master.txt" -Value  "Some more"
+& git -C $DeploymentItemsDirectory add "master.txt"
+& git -C $DeploymentItemsDirectory commit -m "$($i++;$i) Modified master.txt"
 
-Add-Content -Path "master.txt" -Value  "Some more!"
-& git add "master.txt"
-& git commit -m "$($i++;$i) Modified master.txt"
+Add-Content -Path "$DeploymentItemsDirectory\master.txt" -Value  "Some more!"
+& git -C $DeploymentItemsDirectory add "master.txt"
+& git -C $DeploymentItemsDirectory commit -m "$($i++;$i) Modified master.txt"
 
 # Create saturn branch
-& git checkout -b "saturn"
-Add-Content -Path "saturn.txt" -Value  "Some text"
-& git add "saturn.txt"
-& git commit -m "$($i++;$i) Added saturn.txt"
+& git -C $DeploymentItemsDirectory checkout -b "saturn"
+Add-Content -LiteralPath "$DeploymentItemsDirectory\saturn.txt" -Value  "Some text"
+& git -C $DeploymentItemsDirectory add "saturn.txt"
+& git -C $DeploymentItemsDirectory commit -m "$($i++;$i) Added saturn.txt"
 
-& git checkout -b "saturn"
-Add-Content -Path "saturn.txt" -Value  "Some more text"
-& git add "saturn.txt"
-& git commit -m "$($i++;$i) Modified saturn.txt"
+& git -C $DeploymentItemsDirectory checkout -b "saturn"
+Add-Content -LiteralPath "$DeploymentItemsDirectory\saturn.txt" -Value  "Some more text"
+& git -C $DeploymentItemsDirectory add "saturn.txt"
+& git -C $DeploymentItemsDirectory commit -m "$($i++;$i) Modified saturn.txt"

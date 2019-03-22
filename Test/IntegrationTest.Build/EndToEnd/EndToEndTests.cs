@@ -127,7 +127,7 @@ namespace IntegrationTest.Build.EndToEnd {
 
             var executor = new PowerShellPipelineExecutor();
 
-            bool errors = false;
+         
 
             EventHandler<ICollection<PSObject>> dataReady = (sender, objects) => {
                 foreach (var psObject in objects) {
@@ -139,8 +139,6 @@ namespace IntegrationTest.Build.EndToEnd {
                 foreach (var psObject in objects) {
                     context.WriteLine(psObject.ToString());
                 }
-
-                errors = true;
             };
 
             EventHandler<InformationRecord> info = (sender, objects) => { context.WriteLine(objects.ToString()); };
@@ -168,10 +166,6 @@ namespace IntegrationTest.Build.EndToEnd {
             executor.Verbose -= verbose;
             executor.Warning -= warning;
             executor.Debug -= debug;
-
-            if (errors) {
-                Assert.Fail("During script execution an error occurred. Test failed.");
-            }
         }
     }
 }

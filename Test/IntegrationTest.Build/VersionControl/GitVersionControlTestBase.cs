@@ -1,6 +1,5 @@
-﻿using System.IO;
-using System.Text;
-using Aderant.Build;
+﻿using System;
+using System.IO;
 using IntegrationTest.Build.EndToEnd;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -34,17 +33,13 @@ namespace IntegrationTest.Build.VersionControl {
         }
 
         private static string TestDirectory(TestContext context, bool shareRepositoryBetweenTests) {
-            var testDirectory = Path.Combine(context.DeploymentDirectory, shareRepositoryBetweenTests ? string.Empty : context.TestName);
+            var testDirectory = Path.Combine(context.DeploymentDirectory, shareRepositoryBetweenTests ? "0C68A615-E3A7-47E7-8BEF-AB858B28CD92" : context.TestName);
             context.Properties["Repository"] = testDirectory;
             return testDirectory;
         }
 
         protected static void RunPowerShell(TestContext context, string script) {
-            StringBuilder sb = new StringBuilder();
-            sb.AppendLine($"Set-Location {context.Properties["Repository"].ToString().Quote()}");
-            sb.AppendLine("Write-Information $PSScriptRoot");
-            sb.AppendLine(script);
-            PowerShellHelper.RunCommand(sb.ToString(), context, null);
+            PowerShellHelper.RunCommand(script, context, context.Properties["Repository"].ToString());
         }
     }
 }
