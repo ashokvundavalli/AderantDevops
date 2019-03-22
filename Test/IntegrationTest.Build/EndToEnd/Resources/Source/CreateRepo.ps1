@@ -12,20 +12,14 @@ if (-not ([System.IO.Directory]::Exists($DeploymentItemsDirectory))) {
     #return
 }
 
-Set-Location $DeploymentItemsDirectory
-Push-Location $DeploymentItemsDirectory
+& git -C $DeploymentItemsDirectory init
 
-Write-Information ("Current location: " + (Get-Location))
-Write-Information ("Current files: " + (Get-ChildItem -LiteralPath $DeploymentItemsDirectory))
-
-& git init
-
-Add-Content -Path ".gitignore" -value @"
+Add-Content -LiteralPath "$DeploymentItemsDirectory\.gitignore" -value @"
 [Bb]in/
 [Oo]bj/
 "@
 
-& git add .
-& git add ModuleA/Build/TFSBuild.rsp -f
-& git add ModuleB/Build/TFSBuild.rsp -f
-& git commit -m "Added all files"
+& git -C $DeploymentItemsDirectory add .
+& git -C $DeploymentItemsDirectory add ModuleA/Build/TFSBuild.rsp -f
+& git -C $DeploymentItemsDirectory add ModuleB/Build/TFSBuild.rsp -f
+& git -C $DeploymentItemsDirectory commit -m "Added all files"
