@@ -9,6 +9,11 @@ Write-Information "PSScriptRoot: $PSScriptRoot"
 Write-Information "DeploymentItemsDirectory: $DeploymentItemsDirectory"
 Write-Information ("Current Directory: " + ([System.Environment]::CurrentDirectory))
 
+if (-not (Test-Path $DeploymentItemsDirectory)) {
+    Write-Error "Directory $DeploymentItemsDirectory does not exist"
+    return
+}
+
 & git init
 
 Add-Content -Path ".gitignore" -value @"
