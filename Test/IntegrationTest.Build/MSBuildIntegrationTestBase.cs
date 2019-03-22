@@ -45,7 +45,6 @@ namespace IntegrationTest.Build {
             Assert.IsTrue(Directory.Exists(Path.Combine(TestContext.DeploymentDirectory, nameof(Tasks))));
             Assert.IsTrue(Directory.Exists(Path.Combine(TestContext.DeploymentDirectory, nameof(EndToEnd))));
             Assert.IsTrue(Directory.Exists(Path.Combine(TestContext.DeploymentDirectory, nameof(Packaging))));
-            Assert.IsTrue(Directory.Exists(Path.Combine(TestContext.DeploymentDirectory, nameof(TestDeployment))));
 
             Dictionary<string, string> globalProperties = new Dictionary<string, string>(properties) {
                 { "BuildToolsDirectory", TestContext.DeploymentDirectory },

@@ -5,6 +5,8 @@ if ($null -eq $DeploymentItemsDirectory) {
 
 Set-Location $DeploymentItemsDirectory
 
+Write-Information $DeploymentItemsDirectory
+
 & git init
 
 Add-Content -Path ".gitignore" -value @"

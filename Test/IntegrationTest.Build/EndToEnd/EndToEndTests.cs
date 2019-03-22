@@ -122,6 +122,7 @@ namespace IntegrationTest.Build.EndToEnd {
                 variables.Add("DeploymentItemsDirectory", deploymentItemsDirectory);
                 sb.AppendLine($"Set-Location {deploymentItemsDirectory.Quote()}");
             }
+
             sb.AppendLine("Write-Information $PSScriptRoot");
             sb.AppendLine(command);
 
@@ -132,7 +133,12 @@ namespace IntegrationTest.Build.EndToEnd {
                     context.WriteLine(psObject.ToString());
                 }
             };
-            EventHandler<ICollection<object>> errorReady = (sender, objects) => { context.WriteLine(objects.ToString()); };
+            EventHandler<ICollection<object>> errorReady = (sender, objects) => {
+                foreach (var psObject in objects) {
+                    context.WriteLine(psObject.ToString());
+                }
+            };
+
             EventHandler<InformationRecord> info = (sender, objects) => { context.WriteLine(objects.ToString()); };
             EventHandler<VerboseRecord> verbose = (sender, objects) => { context.WriteLine(objects.ToString()); };
             EventHandler<WarningRecord> warning = (sender, objects) => { context.WriteLine(objects.ToString()); };
