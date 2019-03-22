@@ -118,10 +118,6 @@ namespace IntegrationTest.Build.EndToEnd {
 
                 var scriptBlock = sb.ToString();
 
-                if (TestContext != null) {
-                    TestContext.WriteLine("Script: " + scriptBlock);
-                }
-
                 ps.AddScript(scriptBlock);
 
                 var results = ps.Invoke();
