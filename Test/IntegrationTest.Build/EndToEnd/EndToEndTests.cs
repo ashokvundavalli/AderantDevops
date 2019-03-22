@@ -21,7 +21,6 @@ namespace IntegrationTest.Build.EndToEnd {
 
         [TestInitialize]
         public void TestInit() {
-            Environment.CurrentDirectory = DeploymentItemsDirectory;
             AddFilesToNewGitRepository();
             Assert.IsTrue(Directory.Exists(DeploymentItemsDirectory));
         }
