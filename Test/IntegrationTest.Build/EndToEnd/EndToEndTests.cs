@@ -21,15 +21,14 @@ namespace IntegrationTest.Build.EndToEnd {
 
         [TestInitialize]
         public void TestInit() {
+            Environment.CurrentDirectory = DeploymentItemsDirectory;
+            AddFilesToNewGitRepository();
             Assert.IsTrue(Directory.Exists(DeploymentItemsDirectory));
-
         }
 
         [TestMethod]
         [Description("The basic scenario. No changes - the build should reuse existing artifacts")]
         public void Build_tree_reuse_scenario() {
-            AddFilesToNewGitRepository();
-
             using (var buildService = new TestBuildServiceHost(TestContext, DeploymentItemsDirectory)) {
                 // Simulate first build
                 RunTarget("EndToEnd", buildService.Properties);

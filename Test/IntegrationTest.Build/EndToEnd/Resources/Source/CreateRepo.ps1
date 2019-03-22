@@ -14,8 +14,8 @@ if (-not ([System.IO.Directory]::Exists($DeploymentItemsDirectory))) {
 
 Set-Location $DeploymentItemsDirectory
 
-Write-Information ("Current location" + (Get-Location))
-Write-Information ("Current files" + (Get-ChildItem -LiteralPath $DeploymentItemsDirectory))
+Write-Information ("Current location: " + (Get-Location))
+Write-Information ("Current files: " + (Get-ChildItem -LiteralPath $DeploymentItemsDirectory))
 
 & git init
 
