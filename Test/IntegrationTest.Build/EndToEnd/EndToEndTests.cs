@@ -112,6 +112,7 @@ namespace IntegrationTest.Build.EndToEnd {
 
                 StringBuilder sb = new StringBuilder();
                 sb.AppendLine("Set-InformationPreference = 'Continue'");
+                sb.AppendLine("$DeploymentItemsDirectory = " + DeploymentItemsDirectory.Quote());
                 sb.AppendLine($"cd {DeploymentItemsDirectory.Quote()}");
                 sb.AppendLine(command);
 

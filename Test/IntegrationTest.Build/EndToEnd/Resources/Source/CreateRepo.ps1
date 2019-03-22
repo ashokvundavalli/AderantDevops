@@ -1,3 +1,5 @@
+cd $DeploymentItemsDirectory
+
 & git init
 
 Add-Content -Path ".gitignore" -value @"
