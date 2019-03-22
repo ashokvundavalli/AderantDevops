@@ -41,7 +41,8 @@ namespace IntegrationTest.Build.VersionControl {
 
         protected static void RunPowerShell(TestContext context, string script) {
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine($"cd {context.Properties["Repository"].ToString().Quote()}");
+            sb.AppendLine($"Set-Location {context.Properties["Repository"].ToString().Quote()}");
+            sb.AppendLine("Write-Information $PSScriptRoot");
             sb.AppendLine(script);
             PowerShellHelper.RunCommand(sb.ToString(), context, null);
         }

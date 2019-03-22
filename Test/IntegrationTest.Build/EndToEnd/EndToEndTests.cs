@@ -120,7 +120,7 @@ namespace IntegrationTest.Build.EndToEnd {
                 sb.AppendLine("$DeploymentItemsDirectory = " + deploymentItemsDirectory.Quote());
                 sb.AppendLine($"Set-Location {deploymentItemsDirectory.Quote()}");
             }
-
+            sb.AppendLine("Write-Information $PSScriptRoot");
             sb.AppendLine(command);
 
             var executor = new PowerShellPipelineExecutor();
