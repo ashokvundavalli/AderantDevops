@@ -62,23 +62,21 @@ namespace IntegrationTest.Build.EndToEnd {
         
         /// <summary>
         ///   Looks up a localized string similar to Set-StrictMode -Version &apos;Latest&apos;
-        ///if ($null -eq $DeploymentItemsDirectory) {
-        ///    throw &apos;$DeploymentItemsDirectory not defined&apos;
-        ///}
         ///
-        ///Set-Location $DeploymentItemsDirectory
+        ///&amp; git init .
         ///
-        ///&amp; git init
+        ///[string]$cwd = Get-Location
+        ///$file = [Management.Automation.WildcardPattern]::Unescape($cwd + &apos;\.gitignore&apos;)
         ///
-        ///Add-Content -Path &quot;.gitignore&quot; -value @&quot;
+        ///Add-Content -LiteralPath $file -Value @&apos;
         ///[Bb]in/
         ///[Oo]bj/
-        ///&quot;@
+        ///&apos;@ -Force
         ///
         ///&amp; git add .
         ///&amp; git add ModuleA/Build/TFSBuild.rsp -f
         ///&amp; git add ModuleB/Build/TFSBuild.rsp -f
-        ///&amp; git commit -m &quot;Added all files&quot;
+        ///&amp; git commit -m &apos;Added all files&apos;
         ///.
         /// </summary>
         internal static string CreateRepo {

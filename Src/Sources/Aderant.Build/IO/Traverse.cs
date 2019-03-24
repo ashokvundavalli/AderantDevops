@@ -1,11 +1,14 @@
 ﻿using System.Collections.Generic;
+using Aderant.Build.Logging;
 
 namespace Aderant.Build.IO {
     internal class DirectoryScanner {
+        private readonly ILogger logger;
         private readonly IFileSystem physicalFileSystem;
 
-        public DirectoryScanner(IFileSystem physicalFileSystem) {
+        public DirectoryScanner(IFileSystem physicalFileSystem, ILogger logger) {
             this.physicalFileSystem = physicalFileSystem;
+            this.logger = logger;
         }
 
         public IReadOnlyList<string> ExcludeFilterPatterns { get; set; }
@@ -34,6 +37,10 @@ namespace Aderant.Build.IO {
                     continue;
                 }
 
+                if (logger != null) {
+                    logger.Debug("Traversing directory: " + directory);
+                }
+
                 var skip = PathUtility.IsPathExcludedByFilters(directory, ExcludeFilterPatterns);
 
                 if (!skip) {
@@ -45,8 +52,13 @@ namespace Aderant.Build.IO {
                         PreviouslySeenDirectories.Add(directory);
                     }
 
+                    if (logger != null) {
+                        logger.Debug("Skipped file: " + directory);
+                    }
+
                     continue;
                 }
+
 
                 foreach (var extension in extensions) {
                     var filesFromDirectory = physicalFileSystem.GetFiles(directory, extension, false);

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace Aderant.Build {
     public static class FileSystemExtensions {
@@ -46,6 +47,11 @@ namespace Aderant.Build {
                     return BitConverter.ToString(computedHash).Replace("-", string.Empty); // Yay allocations
                 }
             }
+        }
+
+        internal static Stream ToStream(this string contents) {
+            byte[] byteArray = Encoding.UTF8.GetBytes(contents);
+            return new MemoryStream(byteArray);
         }
     }
 }

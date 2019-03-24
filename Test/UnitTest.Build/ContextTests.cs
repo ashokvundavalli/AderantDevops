@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using Aderant.Build;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -17,6 +16,15 @@ namespace UnitTest.Build {
             ctx.Switches = switches;
 
             Assert.AreEqual(true, ctx.Switches.Downstream);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException))]
+        public void Root_cannot_be_unsed() {
+            var ctx = new BuildOperationContext();
+
+            ctx.BuildRoot = "abc";
+            ctx.BuildRoot = null;
         }
     }
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Aderant.Build.Logging;
@@ -56,7 +57,7 @@ namespace Aderant.Build.Tasks {
             groveler = new DirectoryGroveler(new PhysicalFileSystem());
             groveler.Logger = new BuildTaskLogger(Log);
 
-            HashSet<string> inputDirectories = new HashSet<string>(Context.Include, StringComparer.OrdinalIgnoreCase);
+            HashSet<string> inputDirectories = new HashSet<string>(Context.Include ?? new[] { Context.BuildRoot }, StringComparer.OrdinalIgnoreCase);
             if (!Context.Switches.RestrictToProvidedPaths) {
                 GetDirectoriesWithNoCachedBuild(Context.BuildRoot, inputDirectories).ForEach(s => inputDirectories.Add(s));
             } else {

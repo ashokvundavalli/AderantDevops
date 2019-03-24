@@ -2,7 +2,7 @@
          ToolsVersion="14.0">
 
     <Target Name="EndToEnd">
-      <MSBuild Projects="$(TestContextDeploymentDirectory)\ComboBuild.targets"
+      <MSBuild Projects="ComboBuild.targets"
                Targets="BuildAndPackage" />
     </Target>
 

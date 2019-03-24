@@ -133,7 +133,7 @@
     </ItemGroup>
 
     <MakeSymlink
-      Condition="!Exists('%(Link.FullPath)')"
+      Condition="!Exists('%(Link.FullPath)') And Exists('%(Link.LinkTarget)')"
       Link="%(Link.FullPath)"
       Target="%(Link.LinkTarget)"
       Type="D" />

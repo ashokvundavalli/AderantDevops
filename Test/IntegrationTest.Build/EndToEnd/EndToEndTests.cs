@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
-using System.Management.Automation;
-using System.Text;
-using System.Threading;
-using Aderant.Build;
 using Aderant.Build.ProjectSystem.StateTracking;
+using IntegrationTest.Build.Helpers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build.EndToEnd {
@@ -16,13 +11,15 @@ namespace IntegrationTest.Build.EndToEnd {
     public class EndToEndTests : MSBuildIntegrationTestBase {
 
         public string DeploymentItemsDirectory {
-            get { return Path.Combine(TestContext.DeploymentDirectory, "Resources", "Source"); }
+            // Square brackets bring gMSA parity to the desktop builds
+            // PowerShell has many quirks with square brackets in paths so lets cause more issues locally to
+            // avoid difficult to troubleshoot path issues.
+            get { return Path.Combine(TestContext.DeploymentDirectory, "Resources", "[0]", "Source"); }
         }
 
         [TestInitialize]
         public void TestInit() {
             AddFilesToNewGitRepository();
-            Assert.IsTrue(Directory.Exists(DeploymentItemsDirectory));
         }
 
         [TestMethod]
@@ -34,6 +31,7 @@ namespace IntegrationTest.Build.EndToEnd {
 
                 var context = buildService.GetContext();
 
+                Assert.IsNotNull(context.BuildRoot);
                 Assert.AreEqual(2, context.WrittenStateFiles.Count);
                 Assert.IsTrue(context.WrittenStateFiles.All(File.Exists));
             }
@@ -105,67 +103,6 @@ namespace IntegrationTest.Build.EndToEnd {
 
         private void AddFilesToNewGitRepository() {
             PowerShellHelper.RunCommand(Resources.CreateRepo, TestContext, DeploymentItemsDirectory);
-        }
-    }
-
-    internal class PowerShellHelper {
-
-        public static void RunCommand(string command, TestContext context, string deploymentItemsDirectory = null) {
-            StringBuilder sb = new StringBuilder();
-            sb.AppendLine("$InformationPreference = 'Continue'");
-            sb.AppendLine("$ErrorActionPreference = 'Stop'");
-
-            Dictionary<string, object> variables = null;
-            if (deploymentItemsDirectory != null) {
-                variables = new Dictionary<string, object>();
-                variables.Add("DeploymentItemsDirectory", deploymentItemsDirectory);
-                sb.AppendLine($"Set-Location {deploymentItemsDirectory.Quote()}");
-            }
-
-            sb.AppendLine("Write-Information $PSScriptRoot");
-            sb.AppendLine(command);
-
-            var executor = new PowerShellPipelineExecutor();
-
-         
-
-            EventHandler<ICollection<PSObject>> dataReady = (sender, objects) => {
-                foreach (var psObject in objects) {
-                    context.WriteLine(psObject.ToString());
-                }
-            };
-
-            EventHandler<ICollection<object>> errorReady = (sender, objects) => {
-                foreach (var psObject in objects) {
-                    context.WriteLine(psObject.ToString());
-                }
-            };
-
-            EventHandler<InformationRecord> info = (sender, objects) => { context.WriteLine(objects.ToString()); };
-            EventHandler<VerboseRecord> verbose = (sender, objects) => { context.WriteLine(objects.ToString()); };
-            EventHandler<WarningRecord> warning = (sender, objects) => { context.WriteLine(objects.ToString()); };
-            EventHandler<DebugRecord> debug = (sender, objects) => { context.WriteLine(objects.ToString()); };
-
-            executor.DataReady += dataReady;
-            executor.ErrorReady += errorReady;
-            executor.Info += info;
-            executor.Verbose += verbose;
-            executor.Warning += warning;
-            executor.Debug += debug;
-
-            executor.RunScript(
-                new[] {
-                    command
-                },
-                variables,
-                CancellationToken.None);
-
-            executor.DataReady -= dataReady;
-            executor.ErrorReady -= errorReady;
-            executor.Info -= info;
-            executor.Verbose -= verbose;
-            executor.Warning -= warning;
-            executor.Debug -= debug;
         }
     }
 }

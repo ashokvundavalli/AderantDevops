@@ -1,5 +1,7 @@
-﻿using Aderant.Build.VersionControl;
-using Aderant.Build.VersionControl.Model;
+﻿using System;
+using System.IO;
+using Aderant.Build.VersionControl;
+using IntegrationTest.Build.Helpers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build.VersionControl {
@@ -9,9 +11,19 @@ namespace IntegrationTest.Build.VersionControl {
 
         public override TestContext TestContext { get; set; }
 
-        [ClassInitialize]
-        public static void ClassInitialize(TestContext context) {
-            Initialize(context, Resources.CreateRepo, true);
+        [TestInitialize]
+        public void TestInitialize() {
+            PowerShellHelper.AssertCurrentDirectory();
+
+            if (RepositoryPath == null) {
+                // Square brackets bring gMSA parity to the desktop builds
+                // PowerShell has many quirks with square brackets in paths so lets cause more issues locally to
+                // avoid difficult to troubleshoot path issues.
+                var path = Path.Combine(TestContext.DeploymentDirectory, "[" + DateTime.UtcNow.ToFileTimeUtc() + "]");
+                RepositoryPath = RunPowerShellInDirectory(TestContext, Resources.CreateRepo, path);
+            }
+
+            Assert.IsNotNull(RepositoryPath);
         }
 
         [TestMethod]

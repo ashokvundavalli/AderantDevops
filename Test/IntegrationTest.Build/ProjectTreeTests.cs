@@ -142,7 +142,7 @@ namespace IntegrationTest.Build {
         }
 
         private static void AssertSequence(IEnumerable<IDependable> sequence, params string[] solutions) {
-            AssertSequence(sequence.Select(s => s.Id).ToArray(), solutions);
+            AssertSequence(sequence.Select(s => s.Id.Split(':').Last()).ToArray(), solutions);
         }
 
         private static void AssertSequence(string[] sequence, params IEnumerable<string>[] solutions) {

@@ -61,6 +61,9 @@ namespace Aderant.Build {
         [DataMember]
         private ICollection<string> writtenStateFiles;
 
+        [DataMember]
+        private string buildRoot;
+
         public BuildOperationContext() {
             Environment = "";
             PipelineName = "";
@@ -93,8 +96,16 @@ namespace Aderant.Build {
         [DataMember]
         public string[] Exclude { get; set; }
 
-        [DataMember]
-        public string BuildRoot { get; set; }
+        public string BuildRoot {
+            get { return buildRoot; }
+            set {
+                if (!string.IsNullOrEmpty(buildRoot)) {
+                    ErrorUtilities.VerifyThrowArgument(!string.IsNullOrEmpty(value), "BuildRoot cannot be unset", null);
+                }
+
+                buildRoot = value;
+            }
+        }
 
         [DataMember]
         public string LogFile { get; set; }

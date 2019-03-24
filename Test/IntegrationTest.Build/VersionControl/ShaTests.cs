@@ -8,15 +8,12 @@ namespace IntegrationTest.Build.VersionControl {
 
         public override TestContext TestContext { get; set; }
 
-        [TestInitialize]
-        public void ClassInitialize() {
-            Initialize(TestContext, Resources.CommitGraphWalking, false);
-        }
-
         [TestMethod]
         public void Tree_sha_is_stable() {
+            var repositoryPath = RunPowerShellInIsolatedDirectory(TestContext, Resources.CommitGraphWalking);
+
             var vc = new GitVersionControlService();
-            var result = vc.GetMetadata(RepositoryPath, "", "");
+            var result = vc.GetMetadata(repositoryPath, "", "");
 
             Assert.IsNotNull(result);
             Assert.AreEqual("refs/heads/master", result.CommonAncestor);
@@ -28,32 +25,46 @@ namespace IntegrationTest.Build.VersionControl {
         [TestMethod]
         public void Per_directory_bucket_sha_is_stable() {
             var createScript = @"
-New-Item -ItemType Directory ""Dir1""
-Add-Content -Path ""Dir1\dir1.txt"" -Value  ""123""
 
-New-Item -ItemType Directory ""Dir2""
-Add-Content -Path ""Dir2\dir2.txt"" -Value  ""456""
+[string]$cwd = (Get-Location)
+
+New-Item -ItemType Directory -Path ($cwd + '\Dir1')
+$dir1 = [Management.Automation.WildcardPattern]::Unescape($cwd + '.\Dir1\dir1.txt')
+Add-Content -LiteralPath $dir1 -Value '123' -Force
+
+New-Item -ItemType Directory -Path ($cwd + '\Dir2')
+$dir2 = [Management.Automation.WildcardPattern]::Unescape($cwd + '.\Dir2\dir2.txt')
+Add-Content -LiteralPath $dir2 -Value '456' -Force
+
+& git init .
 & git add .
-& git commit -m ""Add folders""";
+& git commit -m 'Add folders'
+";
 
-            RunPowerShell(TestContext, createScript);
+            var repositoryPath = RunPowerShellInIsolatedDirectory(TestContext, createScript);
 
             var vc = new GitVersionControlService();
-            var result = vc.GetMetadata(RepositoryPath, "", "");
+            var result = vc.GetMetadata(repositoryPath, "", "");
 
             Assert.AreEqual("12ea309af9a27ee662c636f4b82246f8619b3bee", result.GetBucket("Dir1").Id);
             Assert.AreEqual("53d9f188d4c8cb79c6b98bc56e5c629def625ca1", result.GetBucket("Dir2").Id);
 
             var updateScript = @"
-Add-Content -Path ""Dir2\dir2.txt"" -Value  ""456123""
+[string]$cwd = (Get-Location)
+
+$dir2 = [Management.Automation.WildcardPattern]::Unescape($cwd + '.\Dir2\dir2.txt')
+
+Add-Content -LiteralPath $dir2 -Value '456123'
 & git add .
-& git commit -m ""Add folders""";
+& git commit -m 'Change content'";
 
-            RunPowerShell(TestContext, updateScript);
+            RunPowerShellInDirectory(TestContext, updateScript, repositoryPath);
 
-            result = vc.GetMetadata(RepositoryPath, "", "");
+            result = vc.GetMetadata(repositoryPath, "", "");
             Assert.AreEqual("12ea309af9a27ee662c636f4b82246f8619b3bee", result.GetBucket("Dir1").Id);
             Assert.AreEqual("ccf18c9c16647bcc54c09191ac44e566a4a760d8", result.GetBucket("Dir2").Id);
         }
+
+
     }
 }

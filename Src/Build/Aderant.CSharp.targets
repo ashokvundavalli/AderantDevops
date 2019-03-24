@@ -5,18 +5,6 @@
 
   <Import Project="Aderant.Build.Common.targets" Condition="'$(PrepareBuildEnvironmentTargetImported)' == ''" />
 
-  <UsingTask TaskName="Aderant.Build.Tasks.UpdateSplashScreenImage"
-             AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
-             Condition="'$(IsCustomBuild)' != 'true'" />
-
-  <UsingTask TaskName="Aderant.Build.Tasks.ProjectConformityCheck"
-             AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
-             Condition="'$(IsCustomBuild)' != 'true'" />
-
-  <UsingTask TaskName="Aderant.Build.Tasks.OrmMappingValidator"
-             AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
-             Condition="'$(IsCustomBuild)' != 'true'" />
-
   <PropertyGroup>
     <WebContentProject Condition="'$(WebContentProject)' == ''">$(BuildScriptsDirectory)Aderant.wpp.Content.proj</WebContentProject>
 
@@ -26,6 +14,10 @@
     <SignApplications Condition="'$(SignApplications)' == '' And Exists('$(MSBuildThisFileDirectory)\Aderant.CodeSigning.targets')">true</SignApplications>
 
     <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+
+    <!--No doc file, then suppress the no documentation warning-->
+    <NoWarn Condition="'$(DocumentationFile)' == ''">$(NoWarn);1591;1570;1572;1573;1574</NoWarn>
+    <WarningsNotAsErrors Condition="'$(DocumentationFile)' == ''">$(WarningsNotAsErrors);1591;1570;1572;1573;1574</WarningsNotAsErrors>
   </PropertyGroup>
 
   <Import Project="Aderant.CodeSigning.targets" Condition="'$(SignApplications)' == 'true'" />
@@ -273,11 +265,11 @@
 
 
   <Target Name="FailOnAmbiguousAssemblyResolve" AfterTargets="ResolveAssemblyReferences">
-      <ItemGroup>
-        <DataServiceRedirect Include="@(SuggestedBindingRedirects)" Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(SuggestedBindingRedirects.Identity)', '(Microsoft[.]Data)'))" />
-      </ItemGroup>
+    <ItemGroup>
+      <DataServiceRedirect Include="@(SuggestedBindingRedirects)" Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(SuggestedBindingRedirects.Identity)', '(Microsoft[.]Data)'))" />
+    </ItemGroup>
 
-      <Warning Text="The compiler could not resolve a concrete reference to @(DataServiceRedirect) and so selected a version arbitrarily. This will probably result in runtime problems. Please fix any references to Microsoft.Data.* assemblies to ensure the version you want to use is selected by the compiler." Condition="'@(DataServiceRedirect)' != ''" />
+    <Warning Text="The compiler could not resolve a concrete reference to @(DataServiceRedirect) and so selected a version arbitrarily. This will probably result in runtime problems. Please fix any references to Microsoft.Data.* assemblies to ensure the version you want to use is selected by the compiler." Condition="'@(DataServiceRedirect)' != ''" />
   </Target>
 
 

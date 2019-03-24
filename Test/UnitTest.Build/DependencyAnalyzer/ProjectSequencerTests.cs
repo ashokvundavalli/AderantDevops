@@ -110,6 +110,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
                 Switches = new BuildSwitches {
                     Downstream = true
                 },
+                BuildMetadata = new BuildMetadata(),
                 StateFiles = new List<BuildStateFile> { new BuildStateFile() }
             };
 
@@ -146,6 +147,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
             var ctx = new BuildOperationContext {
                 BuildRoot = "",
                 Switches = new BuildSwitches(),
+                BuildMetadata = new BuildMetadata()
             };
 
             var sequencer = new ProjectSequencer(NullLogger.Default, null);
@@ -244,7 +246,11 @@ namespace UnitTest.Build.DependencyAnalyzer {
 
         [TestMethod]
         public void AddedByDependencyAnalysis_is_true_when_user_selects_that_directory_to_build() {
-            var sequencer = new ProjectSequencer(new NullLogger(), new Mock<IFileSystem>().Object);
+            var fs = new Mock<IFileSystem>();
+            fs.Setup(s => s.FileExists(It.IsAny<string>())).Returns(true).Verifiable();
+            fs.Setup(s => s.OpenFile("Temp\\Foo\\Build\\DependencyManifest.xml")).Returns("<root />".ToStream());
+
+            var sequencer = new ProjectSequencer(new NullLogger(), fs.Object);
 
             var ps = new Mock<IBuildPipelineService>();
             // Simulate the "Bar" directory being added by expanding the build tree via
@@ -316,6 +322,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
                 Switches = new BuildSwitches {
                     Downstream = true
                 },
+                BuildMetadata = new BuildMetadata(),
                 StateFiles = new List<BuildStateFile> { new BuildStateFile() }
             };
 

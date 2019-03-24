@@ -515,7 +515,7 @@ namespace Aderant.Build.Packaging {
             return false;
         }
 
-        internal static string[] OrderBuildsByBuildNumber(string[] entries) {
+        internal string[] OrderBuildsByBuildNumber(string[] entries) {
             var numbers = new List<KeyValuePair<int, string>>(entries.Length);
 
             foreach (var entry in entries) {
@@ -523,7 +523,7 @@ namespace Aderant.Build.Packaging {
 
                 int version;
                 if (Int32.TryParse(directoryName, NumberStyles.Any, CultureInfo.InvariantCulture, out version)) {
-                    if (version > 0) {
+                    if (version > 0 || AllowZeroBuildId) {
                         numbers.Add(new KeyValuePair<int, string>(version, entry));
                     }
                 }
@@ -531,6 +531,12 @@ namespace Aderant.Build.Packaging {
 
             return numbers.OrderByDescending(d => d.Key).Select(s => s.Value).ToArray();
         }
+
+        /// <summary>
+        /// Allows the service to process builds with an Id of 0.
+        /// Useful for testing as tests do not generate a build id.
+        /// </summary>
+        internal bool AllowZeroBuildId { get; set; }
 
         public void RegisterHandler(IArtifactHandler handler) {
             this.handlers.Add(handler);

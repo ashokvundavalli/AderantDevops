@@ -1,26 +1,30 @@
-﻿Set-StrictMode -Version "Latest"
+﻿Set-StrictMode -Version 'Latest'
 [int]$i = 1
 
-& git -C $DeploymentItemsDirectory init
-Add-Content -LiteralPath "$DeploymentItemsDirectory\master.txt" -Value  "Some text"
-& git -C $DeploymentItemsDirectory add "master.txt"
-& git -C $DeploymentItemsDirectory commit -m "$($i++;$i) Added master.txt"
+[string]$cwd = Get-Location
+$master = [Management.Automation.WildcardPattern]::Unescape($cwd + '.\master.txt')
+$saturn = [Management.Automation.WildcardPattern]::Unescape($cwd + '.\saturn.txt')
 
-Add-Content -LiteralPath "$DeploymentItemsDirectory\master.txt" -Value  "Some more"
-& git -C $DeploymentItemsDirectory add "master.txt"
-& git -C $DeploymentItemsDirectory commit -m "$($i++;$i) Modified master.txt"
+& git init
+Add-Content -LiteralPath $master -Value 'Some text' -Force
+& git add 'master.txt'
+& git commit -m "$($i++;$i) Added master.txt"
 
-Add-Content -Path "$DeploymentItemsDirectory\master.txt" -Value  "Some more!"
-& git -C $DeploymentItemsDirectory add "master.txt"
-& git -C $DeploymentItemsDirectory commit -m "$($i++;$i) Modified master.txt"
+Add-Content -LiteralPath $master -Value 'Some more'
+& git add 'master.txt'
+& git commit -m "$($i++;$i) Modified master.txt"
+
+Add-Content -LiteralPath $master -Value 'Some more!'
+& git add 'master.txt'
+& git commit -m "$($i++;$i) Modified master.txt"
 
 # Create saturn branch
-& git -C $DeploymentItemsDirectory checkout -b "saturn"
-Add-Content -LiteralPath "$DeploymentItemsDirectory\saturn.txt" -Value  "Some text"
-& git -C $DeploymentItemsDirectory add "saturn.txt"
-& git -C $DeploymentItemsDirectory commit -m "$($i++;$i) Added saturn.txt"
+& git checkout -b 'saturn' -q
+Add-Content -LiteralPath $saturn -Value 'Some text'
+& git add 'saturn.txt'
+& git commit -m "$($i++;$i) Added saturn.txt"
 
-& git -C $DeploymentItemsDirectory checkout -b "saturn"
-Add-Content -LiteralPath "$DeploymentItemsDirectory\saturn.txt" -Value  "Some more text"
-& git -C $DeploymentItemsDirectory add "saturn.txt"
-& git -C $DeploymentItemsDirectory commit -m "$($i++;$i) Modified saturn.txt"
+& git checkout 'saturn' -q
+Add-Content -LiteralPath $saturn -Value 'Some more text'
+& git add 'saturn.txt'
+& git commit -m "$($i++;$i) Modified saturn.txt"

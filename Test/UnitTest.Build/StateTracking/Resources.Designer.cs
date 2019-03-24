@@ -64,12 +64,13 @@ namespace UnitTest.Build.StateTracking {
         ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
         ///&lt;Project ToolsVersion=&quot;14.0&quot; xmlns=&quot;http://schemas.microsoft.com/developer/msbuild/2003&quot;&gt;
         ///
-        ///    &lt;Target Name=&quot;GenerateTrackedInputFiles&quot; Returns=&quot;@(TrackedInputFiles)&quot;&gt;
+        ///  &lt;Target Name=&quot;GenerateTrackedInputFiles&quot; Outputs=&quot;@(TrackedInputFiles)&quot;&gt;
         ///
-        ///      &lt;ItemGroup&gt;
-        ///         &lt;TrackedInputFiles Include=&quot;$(MSBuildThisFileFullPath)&quot; /&gt;
-        ///         &lt;TrackedInputFiles Include=&quot;$(MSBuildThisFileFullPath)&quot; /&gt;
-        ///      &lt;/ItemGroup&gt;
+        ///    &lt;ItemGroup&gt;
+        ///      &lt;TrackedInputFiles Include=&quot;C:\Temp\go.build&quot; /&gt;
+        ///      &lt;TrackedInputFiles Include=&quot;$(MSBuildThisFileFullPath)&quot; /&gt;
+        ///      &lt;TrackedInputFiles Include=&quot;A&quot; /&gt;
+        ///    &lt;/ItemGroup&gt;
         ///
         ///    &lt;/Target&gt;
         ///

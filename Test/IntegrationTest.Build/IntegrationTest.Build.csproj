@@ -115,6 +115,7 @@
     </Content>
     <Compile Include="AssemblyInitializer.cs" />
     <Compile Include="EndToEnd\EndToEndTests.cs" />
+    <Compile Include="Helpers\PowerShellHelper.cs" />
     <Compile Include="EndToEnd\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -130,6 +131,7 @@
     <Compile Include="Tasks\MakeSymlink\MakeSymlinkTests.cs" />
     <Compile Include="Tasks\RetrieveArtifacts\RetrieveArtifactsTests.cs" />
     <Compile Include="Tasks\GenerateArchivesTest.cs" />
+    <Compile Include="VersionControl\GitVersionControlTestBase.cs" />
     <Compile Include="VersionControl\GitVersionControlTests.cs" />
     <Compile Include="ConfiguredProjectTests\ConfiguredProjectTests.cs" />
     <Compile Include="ConfiguredProjectTests\Resources.Designer.cs">
@@ -137,7 +139,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="VersionControl\GitVersionControlTestBase.cs" />
     <Compile Include="VersionControl\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -160,9 +161,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Tasks\CheckForDoubleWrites\test.targets">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="EndToEnd\Resources\Source\ModuleA\dir.props">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Tasks\MakeSymlink\test.targets">

@@ -22,7 +22,7 @@ namespace Aderant.Build {
         }
 
         /// <summary>
-        /// Blows up if the reference if the condition is false.
+        /// Blows up if the condition is false.
         /// </summary>
         internal static void VerifyThrowArgument(bool condition, string errorMessageTemplate, object arg0) {
             VerifyThrowArgument(condition, null, errorMessageTemplate, arg0);

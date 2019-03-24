@@ -46,9 +46,8 @@ namespace IntegrationTest.Build {
             Assert.IsTrue(Directory.Exists(Path.Combine(TestContext.DeploymentDirectory, nameof(EndToEnd))));
             Assert.IsTrue(Directory.Exists(Path.Combine(TestContext.DeploymentDirectory, nameof(Packaging))));
 
-            Dictionary<string, string> globalProperties = new Dictionary<string, string>(properties) {
+            Dictionary<string, string> globalProperties = new Dictionary<string, string>(properties, StringComparer.OrdinalIgnoreCase) {
                 { "BuildToolsDirectory", TestContext.DeploymentDirectory },
-                { "TestContextDeploymentDirectory", Path.Combine(TestContext.DeploymentDirectory) }
             };
 
             using (ProjectCollection collection = new ProjectCollection(globalProperties)) {
@@ -111,7 +110,7 @@ namespace IntegrationTest.Build {
 
         public class InternalBuildLogger : ConsoleLogger {
 
-            private char[] newLine = Environment.NewLine.ToCharArray();
+            private static readonly char[] newLine = Environment.NewLine.ToCharArray();
 
             public InternalBuildLogger(TestContext context, LoggerVerbosity verbosity)
                 : base(verbosity) {

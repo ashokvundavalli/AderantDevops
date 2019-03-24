@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using Aderant.Build.DependencyAnalyzer;
@@ -9,30 +8,20 @@ using Aderant.Build.Providers;
 
 namespace Aderant.Build.DependencyResolver {
     internal class ResolverRequest {
-        internal List<DependencyState<IDependencyRequirement>> dependencies = new List<DependencyState<IDependencyRequirement>>();
-        private readonly ILogger logger;
-        private List<ModuleState<ExpertModule>> modules = new List<ModuleState<ExpertModule>>();
+        internal List<DependencyState<IDependencyRequirement>> Dependencies = new List<DependencyState<IDependencyRequirement>>();
+        private readonly List<ModuleState<ExpertModule>> modules = new List<ModuleState<ExpertModule>>();
         private string dependenciesDirectory;
-        private IFileSystem2 physicalFileSystem;
         private bool requiresThirdPartyReplication;
 
-        public ILogger Logger {
-            get { return logger; }
-        }
+        public ILogger Logger { get; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ResolverRequest"/> class.
         /// </summary>
         /// <param name="logger">The logger.</param>
-        /// <param name="modulesRootPath"></param>
         /// <param name="modules">The modules.</param>
-        public ResolverRequest(ILogger logger, string modulesRootPath, params ExpertModule[] modules)
-            : this(logger, new PhysicalFileSystem(modulesRootPath), modules) {
-        }
-
-        internal ResolverRequest(ILogger logger, IFileSystem2 physicalFileSystem, params ExpertModule[] modules) {
-            this.logger = logger;
-            this.physicalFileSystem = physicalFileSystem;
+        public ResolverRequest(ILogger logger, params ExpertModule[] modules) {
+            this.Logger = logger;
 
             if (modules != null) {
                 var sortedModules = new SortedSet<ExpertModule>(modules);
@@ -152,13 +141,13 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         internal DependencyState<IDependencyRequirement> GetOrAdd(IDependencyRequirement requirement) {
-            DependencyState<IDependencyRequirement> dependency = dependencies.FirstOrDefault(s => requirement.Equals(s.Item));
+            DependencyState<IDependencyRequirement> dependency = Dependencies.FirstOrDefault(s => requirement.Equals(s.Item));
 
             if (dependency == null) {
                 dependency = new DependencyState<IDependencyRequirement>();
                 dependency.Item = requirement;
 
-                dependencies.Add(dependency);
+                Dependencies.Add(dependency);
             }
             return dependency;
         }
@@ -167,14 +156,14 @@ namespace Aderant.Build.DependencyResolver {
         /// Gets the resolved requirements.
         /// </summary>
         public virtual IEnumerable<IDependencyRequirement> GetResolvedRequirements() {
-            return dependencies.Where(s => s.State == DependencyState.Resolved).Select(s => s.Item);
+            return Dependencies.Where(s => s.State == DependencyState.Resolved).Select(s => s.Item);
         }
 
         /// <summary>
         /// Gets the resolved or unresolved requirements.
         /// </summary>
         public virtual IEnumerable<IDependencyRequirement> GetRequirementsByType(DependencyState type) {
-            return dependencies.Where(s => s.State == type).Select(s => s.Item);
+            return Dependencies.Where(s => s.State == type).Select(s => s.Item);
         }
 
         public void AssociateRequirements(ExpertModule module, IEnumerable<IDependencyRequirement> requirements) {

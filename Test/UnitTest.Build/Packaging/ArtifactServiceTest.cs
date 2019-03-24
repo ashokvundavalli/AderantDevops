@@ -178,5 +178,16 @@ namespace UnitTest.Build.Packaging {
             Assert.IsTrue(linkCommands.AssociationCommands.Contains(@"##vso[artifact.associate artifactname=TheProduct;type=FilePath;]\\foo\bar\refs\heads\master\0", StringComparer.OrdinalIgnoreCase));
             Assert.IsTrue(linkCommands.AssociationCommands.Contains(@"##vso[artifact.associate artifactname=SomeOtherArtifact;type=FilePath;]\\baz\cache", StringComparer.OrdinalIgnoreCase));
         }
+
+        [TestMethod]
+        public void ZeroId_is_allowed_for_tests() {
+            var mock = new Mock<IBuildPipelineService>();
+            var artifactService = new ArtifactService(mock.Object, new Mock<IFileSystem>().Object, NullLogger.Default);
+            artifactService.AllowZeroBuildId = true;
+
+            var result = artifactService.OrderBuildsByBuildNumber(new[] { "0", "5", "8" });
+
+            CollectionAssert.AreEquivalent(new[] { "8", "5", "0" }, result);
+        }
     }
 }

@@ -61,25 +61,22 @@ namespace IntegrationTest.Build.VersionControl {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Set-StrictMode -Version &quot;Latest&quot;
+        ///   Looks up a localized string similar to Set-StrictMode -Version &apos;Latest&apos;
         ///[int]$i = 1
         ///
+        ///$master = ([Management.Automation.WildcardPattern]::Unescape(&apos;.\master.txt&apos;))
+        ///$saturn = ([Management.Automation.WildcardPattern]::Unescape(&apos;.\saturn.txt&apos;))
+        ///
         ///&amp; git init
-        ///Add-Content -Path &quot;master.txt&quot; -Value  &quot;Some text&quot;
-        ///&amp; git add &quot;master.txt&quot;
+        ///Add-Content -LiteralPath $master -Value &apos;Some text&apos; -Force
+        ///&amp; git add &apos;master.txt&apos;
         ///&amp; git commit -m &quot;$($i++;$i) Added master.txt&quot;
         ///
-        ///Add-Content -Path &quot;master.txt&quot; -Value  &quot;Some more&quot;
-        ///&amp; git add &quot;master.txt&quot;
+        ///Add-Content -LiteralPath $master -Value &apos;Some more&apos;
+        ///&amp; git add &apos;master.txt&apos;
         ///&amp; git commit -m &quot;$($i++;$i) Modified master.txt&quot;
         ///
-        ///Add-Content -Path &quot;master.txt&quot; -Value  &quot;Some more!&quot;
-        ///&amp; git add &quot;master.txt&quot;
-        ///&amp; git commit -m &quot;$($i++;$i) Modified master.txt&quot;
-        ///
-        ///# Create saturn branch
-        ///&amp; git checkout -b &quot;saturn&quot;
-        ///Add-Content -Path [rest of string was truncated]&quot;;.
+        ///Add-Content -LiteralPath $mas [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string CommitGraphWalking {
             get {
@@ -88,19 +85,24 @@ namespace IntegrationTest.Build.VersionControl {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to &amp; git init
-        ///Add-Content -Path &quot;master.txt&quot; -Value  &quot;Some text&quot;
-        ///&amp; git add &quot;master.txt&quot;
-        ///&amp; git commit -m &quot;Added master.txt&quot;
+        ///   Looks up a localized string similar to Set-StrictMode -Version &apos;Latest&apos;
+        ///
+        ///$master = ([Management.Automation.WildcardPattern]::Unescape(&apos;.\master.txt&apos;))
+        ///$saturn = ([Management.Automation.WildcardPattern]::Unescape(&apos;.\saturn.txt&apos;))
+        ///
+        ///&amp; git init .
+        ///Add-Content -LiteralPath $master -Value &apos;Some text&apos; -Force
+        ///
+        ///&amp; git add &apos;master.txt&apos;
+        ///&amp; git commit -m &apos;Added master.txt&apos;
         ///
         ///# Create saturn branch
-        ///&amp; git checkout -b &quot;saturn&quot;
-        ///Add-Content -Path &quot;saturn.txt&quot; -Value  &quot;Some text&quot;
-        ///&amp; git add &quot;saturn.txt&quot;
-        ///&amp; git commit -m &quot;Added saturn.txt&quot;
+        ///&amp; git checkout -b &apos;saturn&apos; -q
+        ///Add-Content -LiteralPath $saturn -Value &apos;Some text&apos; -Force
+        ///&amp; git add &apos;saturn.txt&apos;
+        ///&amp; git commit -m &apos;Added saturn.txt&apos;
         ///
-        ///Add-Content -Path &quot;saturn.txt&quot; -Value &quot;Some text more text&quot;
-        ///Add-Content -Path &quot;master.txt&quot; -Value &quot;Some text more text&quot;.
+        ///# [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string CreateRepo {
             get {

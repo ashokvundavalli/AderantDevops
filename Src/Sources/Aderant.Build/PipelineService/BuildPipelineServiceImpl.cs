@@ -39,6 +39,11 @@ namespace Aderant.Build.PipelineService {
         internal ProjectTreeOutputSnapshot Outputs { get; } = new ProjectTreeOutputSnapshot();
 
         public void Publish(BuildOperationContext context) {
+            if (string.IsNullOrEmpty(context.BuildRoot)) {
+                if (ctx != null && !string.IsNullOrEmpty(ctx.BuildRoot)) {
+                    context.BuildRoot = ctx.BuildRoot;
+                }
+            }
             ctx = context;
         }
 

@@ -18,10 +18,6 @@ namespace Aderant.Build.Tasks {
 
         protected BuildOperationContext Context {
             get {
-                if (InternalContext != null) {
-                    return InternalContext;
-                }
-
                 return context ?? (context = ObtainContext());
             }
         }
@@ -29,8 +25,6 @@ namespace Aderant.Build.Tasks {
         protected ILogger Logger {
             get { return logger ?? (logger = new BuildTaskLogger(Log)); }
         }
-
-        internal static BuildOperationContext InternalContext { get; set; }
 
         internal IBuildPipelineService PipelineService {
             get { return Service ?? (Service = BuildPipelineServiceClient.GetProxy(ContextEndpoint ?? BuildPipelineServiceHost.PipeId)); }

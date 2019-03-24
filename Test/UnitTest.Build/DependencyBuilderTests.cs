@@ -3,32 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer;
-using Aderant.Build.Providers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTest.Build {
     [TestClass]
     public class DependencyBuilderTests {
-        private const string BranchPath = @"c:\tfs\ExpertSuite\Dev\Framework";
-
-        #region Test Context
-
-        private TestContext testContextInstance;
-
-        /// <summary>
-        ///Gets or sets the test context which provides
-        ///information about and functionality for the current test run.
-        ///</summary>
-        public TestContext TestContext {
-            get { return testContextInstance; }
-            set { testContextInstance = value; }
-        }
-
-        #endregion
+        public TestContext TestContext { get; set; }
 
         [TestMethod]
         public void GetModulesReturnsDistinctModules() {
-            DependencyBuilder builder = new DependencyBuilder(BranchPath);
+            var provider = new FakeProvider();
+            DependencyBuilder builder = new DependencyBuilder(provider);
             IEnumerable<ExpertModule> modules = builder.GetAllModules();
             Assert.IsNotNull(modules);
             Assert.AreNotEqual(0, modules.Count());
@@ -39,7 +24,8 @@ namespace UnitTest.Build {
         [TestMethod]
         [Ignore]
         public void GetModuleDependenciesReturnsCorrectDependencies() {
-            DependencyBuilder builder = new DependencyBuilder(BranchPath);
+            var provider = new FakeProvider();
+            DependencyBuilder builder = new DependencyBuilder(provider);
             IEnumerable<ModuleDependency> modulesDependencies = builder.GetModuleDependencies();
             Assert.IsNotNull(modulesDependencies);
             Assert.AreNotEqual(0, modulesDependencies.Count());
@@ -52,7 +38,8 @@ namespace UnitTest.Build {
 
         [TestMethod]
         public void BuildMGraphDocumentReturnsCorrectDocument() {
-            DependencyBuilder builder = new DependencyBuilder(BranchPath);
+            var provider = new FakeProvider();
+            DependencyBuilder builder = new DependencyBuilder(provider);
             XDocument doc = builder.BuildMGraphDocument();
             Assert.IsNotNull(doc);
             TestContext.WriteLine(doc.ToString(SaveOptions.None));
@@ -61,7 +48,8 @@ namespace UnitTest.Build {
         [TestMethod]
         [Ignore]
         public void BuildDGMLDocumentReturnsCorrectDocument() {
-            DependencyBuilder builder = new DependencyBuilder(BranchPath);
+            var provider = new FakeProvider();
+            DependencyBuilder builder = new DependencyBuilder(provider);
             XDocument doc = builder.BuildDgmlDocument(true, false);
             Assert.IsNotNull(doc);
             TestContext.WriteLine(doc.ToString(SaveOptions.None));
@@ -70,7 +58,8 @@ namespace UnitTest.Build {
         [TestMethod]
         [Ignore]
         public void BuildDependencyTree() {
-            DependencyBuilder builder = new DependencyBuilder(BranchPath);
+            var provider = new FakeProvider();
+            DependencyBuilder builder = new DependencyBuilder(provider);
             IEnumerable<Aderant.Build.Build> tree = builder.GetTree(false);
 
 
@@ -103,6 +92,7 @@ namespace UnitTest.Build {
         }
 
         [TestMethod]
+        [Ignore]
         public void When_Bottom_Of_Stack_Is_Equivalent_Can_Be_Built_In_Parallel() {
             var provider = new ParallelFakeProvider();
 
@@ -112,7 +102,7 @@ namespace UnitTest.Build {
             Assert.AreEqual(3, builds.Count);
             CollectionAssert.AllItemsAreUnique(builds);
 
-            Aderant.Build.Build build = builds.Last();
+            var build = builds.Last();
             Assert.AreEqual(2, build.Modules.Count());
             Assert.AreEqual("C", build.Modules.First().Name);
             Assert.AreEqual("D", build.Modules.Last().Name);

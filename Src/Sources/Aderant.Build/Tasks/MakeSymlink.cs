@@ -31,10 +31,6 @@ namespace Aderant.Build.Tasks {
         public bool FailIfLinkIsDirectoryWithContent { get; set; }
 
         public override bool Execute() {
-            if (!ValidateIsAdmin()) {
-                return !Log.HasLoggedErrors;
-            }
-
             NativeMethods.SymbolicLink link = NativeMethods.SymbolicLink.SYMBOLIC_LINK_FLAG_DIRECTORY;
 
             bool useJunction = false;
@@ -52,6 +48,10 @@ namespace Aderant.Build.Tasks {
                         break;
                     }
                 }
+            }
+
+            if (!useJunction && !ValidateIsAdmin()) {
+                return !Log.HasLoggedErrors;
             }
 
             try {

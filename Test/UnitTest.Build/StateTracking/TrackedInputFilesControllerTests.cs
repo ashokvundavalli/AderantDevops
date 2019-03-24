@@ -1,9 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Xml;
+using Aderant.Build;
+using Aderant.Build.Logging;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Microsoft.Build.Evaluation;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
+using UnitTest.Build.Helpers;
 
 namespace UnitTest.Build.StateTracking {
 
@@ -14,11 +18,16 @@ namespace UnitTest.Build.StateTracking {
 
         [TestMethod]
         public void Target_returns_file_list() {
-            var controller = new TestTrackedInputFilesController();
-            controller.ProjectReader = XmlReader.Create(new StringReader(Resources.ExampleTrackedInputFiles));
+            Mock<IFileSystem> mock = new Mock<IFileSystem>();
+            mock.Setup(s => s.FileExists(It.IsAny<string>())).Returns(true);
+            mock.Setup(s => s.OpenFile(It.IsAny<string>())).Returns("".ToStream);
+
+            var controller = new TestTrackedInputFilesController(mock.Object, new TextContextLogger(TestContext)) {
+                ProjectReader = XmlReader.Create(new StringReader(Resources.ExampleTrackedInputFiles))
+            };
 
             IReadOnlyCollection<TrackedInputFile> trackedInputFiles;
-            trackedInputFiles = controller.GetFilesToTrack(TestContext.DeploymentDirectory + @"\dummy.txt", TestContext.DeploymentDirectory);
+            trackedInputFiles = controller.GetFilesToTrack(Path.Combine(TestContext.DeploymentDirectory + "\\dummy.txt"), TestContext.DeploymentDirectory);
 
             Assert.IsNotNull(trackedInputFiles);
             Assert.AreNotEqual(0, trackedInputFiles.Count);
@@ -76,6 +85,8 @@ namespace UnitTest.Build.StateTracking {
     }
 
     internal class TestTrackedInputFilesController : TrackedInputFilesController {
+        public TestTrackedInputFilesController(IFileSystem fileSystem, ILogger logger) : base(fileSystem, logger) {
+        }
 
         public XmlReader ProjectReader { get; set; }
 

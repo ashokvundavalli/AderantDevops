@@ -52,12 +52,13 @@ namespace IntegrationTest.Build.EndToEnd {
         private void Initialize() {
             if (properties == null) {
                 endpoint = Path.GetRandomFileName();
+                testContext.WriteLine("Creating test host: " + endpoint);
 
-                properties = new Dictionary<string, string> {
+                properties = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
                     { "BuildScriptsDirectory", testContext.DeploymentDirectory + "\\" },
                     { "CompileBuildSystem", bool.FalseString },
                     { "ProductManifestPath", Path.Combine(deploymentItemsDirectory, "ExpertManifest.xml") },
-                    { "SolutionRoot", Path.Combine(deploymentItemsDirectory) },
+                    { "SolutionRoot", deploymentItemsDirectory },
                     { "ArtifactStagingDirectory", $@"{Path.Combine(testContext.DeploymentDirectory, Path.GetRandomFileName())}\" },
                     { "PackageArtifacts", bool.TrueString },
                     { "XamlBuildDropLocation", "A" },
@@ -68,6 +69,7 @@ namespace IntegrationTest.Build.EndToEnd {
                     { "NoDependencyFetch", bool.TrueString},
                     { "AllowNullScmBranch", bool.TrueString},
                     { "GenerateFactory", bool.FalseString},
+                    { "ExcludeArtifactStagingDirectory", bool.FalseString},
                     { WellKnownProperties.ContextEndpoint, endpoint },
                 };
 
@@ -89,6 +91,7 @@ namespace IntegrationTest.Build.EndToEnd {
             }
 
             service = new BuildPipelineServiceHost();
+            service.SetServiceAddressEnvironmentVariable = false;
             service.StartService(endpoint);
         }
 
@@ -98,15 +101,16 @@ namespace IntegrationTest.Build.EndToEnd {
 
         private BuildOperationContext CreateContext(Dictionary<string, string> props) {
             var ctx = new BuildOperationContext();
+            ctx.BuildRoot = props["SolutionRoot"];
+            ctx.BuildScriptsDirectory = props["BuildScriptsDirectory"];
+            ctx.BuildSystemDirectory = Path.Combine(testContext.DeploymentDirectory, @"..\..\");
+
             ctx.DropLocationInfo.PrimaryDropLocation = Path.Combine(testContext.DeploymentDirectory, testContext.TestName, "_drop");
             ctx.DropLocationInfo.BuildCacheLocation = Path.Combine(testContext.DeploymentDirectory, testContext.TestName, "_cache");
 
             ctx.BuildMetadata = new BuildMetadata { BuildSourcesDirectory = deploymentItemsDirectory };
 
-            ctx.BuildRoot = testContext.DeploymentDirectory;
             ctx.SourceTreeMetadata = GetSourceTreeMetadata();
-            ctx.BuildScriptsDirectory = props["BuildScriptsDirectory"];
-            ctx.BuildSystemDirectory = Path.Combine(testContext.DeploymentDirectory, @"..\..\");
 
             return ctx;
         }
@@ -117,7 +121,10 @@ namespace IntegrationTest.Build.EndToEnd {
             context = CreateContext(properties);
             context.BuildMetadata.BuildId += 1;
 
-            var buildStateMetadata = new ArtifactService(NullLogger.Default)
+            var artifactService = new ArtifactService(NullLogger.Default);
+            artifactService.AllowZeroBuildId = true;
+
+            var buildStateMetadata = artifactService
                 .GetBuildStateMetadata(
                     context.SourceTreeMetadata.GetBuckets().Select(s => s.Id).ToArray(),
                     context.DropLocationInfo.BuildCacheLocation);

@@ -20,7 +20,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>..\..\Bin\Test\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -135,6 +135,7 @@
     </Compile>
     <Compile Include="ProjectSystem\StateTracking\BuildCachePackageCheckerTests.cs" />
     <Compile Include="ProjectSystem\TextTemplateReferencesServicesTests.cs" />
+    <Compile Include="Helpers\TextContextLogger.cs" />
     <Compile Include="StateTracking\TrackedInputFilesControllerTests.cs" />
     <Compile Include="StateTracking\Resources.Designer.cs">
       <AutoGen>True</AutoGen>

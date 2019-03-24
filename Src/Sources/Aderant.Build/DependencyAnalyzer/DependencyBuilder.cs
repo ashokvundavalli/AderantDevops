@@ -380,7 +380,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// </summary>
         /// <param name="restrictToModulesInBranch">if set to <c>true</c> restricts the analysis to modules in the current branch.</param>
         /// <returns></returns>
-        /// <exception cref="CircularDependencyException">Whe a a circular dependency between following modules is detected</exception>
+        /// <exception cref="CircularDependencyException">When a circular dependency between following modules is detected</exception>
         public IEnumerable<Build> GetTree(bool restrictToModulesInBranch) {
             return null;
         }

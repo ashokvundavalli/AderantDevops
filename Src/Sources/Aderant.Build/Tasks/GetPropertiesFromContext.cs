@@ -41,6 +41,10 @@ namespace Aderant.Build.Tasks {
                 context.ArtifactStagingDirectory = ArtifactStagingDirectory;
             }
 
+            if (context.BuildRoot != null) {
+                Log.LogMessage(MessageImportance.Low, "Build root: " + context.BuildRoot);
+            }
+
             PipelineService.Publish(context);
 
             return !Log.HasLoggedErrors;

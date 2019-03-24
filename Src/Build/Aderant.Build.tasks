@@ -74,4 +74,13 @@
 
     <!-- Debugging task -->
     <UsingTask TaskName="Aderant.Build.Tasks.InspectItemGroup"                                    AssemblyFile="$(BuildAssembly)" />
+
+    <UsingTask TaskName="Aderant.Build.Tasks.UpdateSplashScreenImage"                             AssemblyName="$(BuildAssembly)"
+               Condition="'$(IsCustomBuild)' != 'true'" />
+
+    <UsingTask TaskName="Aderant.Build.Tasks.ProjectConformityCheck"                              AssemblyFile="$(BuildAssembly)"
+               Condition="'$(IsCustomBuild)' != 'true'" />
+
+    <UsingTask TaskName="Aderant.Build.Tasks.OrmMappingValidator"                                 AssemblyFile="$(BuildAssembly)"
+               Condition="'$(IsCustomBuild)' != 'true'" />
 </Project>

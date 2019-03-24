@@ -1,13 +1,17 @@
-﻿& git  -C $DeploymentItemsDirectory init
-Add-Content -LiteralPath "$DeploymentItemsDirectory\master.txt" -Value  "Some text"
-& git -C $DeploymentItemsDirectory add "master.txt"
-& git -C $DeploymentItemsDirectory commit -m "Added master.txt"
+﻿Set-StrictMode -Version 'Latest'
+
+[string]$cwd = Get-Location
+$master = ([Management.Automation.WildcardPattern]::Unescape($cwd + '.\master.txt'))
+$saturn = ([Management.Automation.WildcardPattern]::Unescape($cwd + '.\saturn.txt'))
+
+& git init .
+Add-Content -LiteralPath $master -Value 'Some text' -Force
+
+& git add 'master.txt'
+& git commit -m 'Added master.txt'
 
 # Create saturn branch
-& git -C $DeploymentItemsDirectory checkout -b "saturn"
-Add-Content -LiteralPath "$DeploymentItemsDirectory\saturn.txt" -Value  "Some text"
-& git -C $DeploymentItemsDirectory add "saturn.txt"
-& git -C $DeploymentItemsDirectory commit -m "Added saturn.txt"
-
-Add-Content -LiteralPath "$DeploymentItemsDirectory\saturn.txt" -Value "Some text more text"
-Add-Content -LiteralPath "$DeploymentItemsDirectory\master.txt" -Value "Some text more text"
+& git checkout -b 'saturn' -q
+Add-Content -LiteralPath $saturn -Value 'Some text' -Force
+& git add 'saturn.txt'
+& git commit -m 'Added saturn.txt'

@@ -48,6 +48,8 @@ namespace Aderant.Build.PipelineService {
 
         public Uri ServerUri { get; set; }
 
+        public bool SetServiceAddressEnvironmentVariable { get; set; } = true;
+
         public void Dispose() {
             StopListener();
 
@@ -58,6 +60,7 @@ namespace Aderant.Build.PipelineService {
             } finally {
                 host = null;
                 dataService = null;
+
                 Environment.SetEnvironmentVariable(WellKnownProperties.ContextEndpoint, null, EnvironmentVariableTarget.Process);
             }
         }
@@ -79,15 +82,20 @@ namespace Aderant.Build.PipelineService {
                 PipeId = pipeId;
                 ServerUri = address;
 
-                // Always set this as we might be invoked from an external application (like PowerShell) several times and so
-                // need to update the value
-                Environment.SetEnvironmentVariable(WellKnownProperties.ContextEndpoint, pipeId, EnvironmentVariableTarget.Process);
+                if (SetServiceAddressEnvironmentVariable) {
+                    // Always set this as we might be invoked from an external application (like PowerShell) several times and so
+                    // need to update the value
+                    Environment.SetEnvironmentVariable(WellKnownProperties.ContextEndpoint, pipeId, EnvironmentVariableTarget.Process);
+                }
             }
         }
 
         public void StopListener() {
             if (host != null && host.State == CommunicationState.Opened) {
-                host.Close();
+                try {
+                    host.Close();
+                } catch (TimeoutException) {
+                }
             }
         }
 

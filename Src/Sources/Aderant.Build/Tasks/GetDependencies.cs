@@ -59,7 +59,7 @@ namespace Aderant.Build.Tasks {
 
             var logger = new BuildTaskLogger(this);
 
-            ResolverRequest request = new ResolverRequest(logger, ModulesRootPath);
+            ResolverRequest request = new ResolverRequest(logger);
 
             if (ProductManifest != null) {
                 ProductManifest = Path.GetFullPath(ProductManifest);

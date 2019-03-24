@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using IntegrationTest.Build.EndToEnd;
+﻿using IntegrationTest.Build.Helpers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build.VersionControl {
@@ -8,38 +6,17 @@ namespace IntegrationTest.Build.VersionControl {
     [DeploymentItem(@"TestDeployment\x86\", "x86")]
     [DeploymentItem(@"TestDeployment\x64\", "x64")]
     public abstract class GitVersionControlTestBase {
-        private static bool shareRepositoryBetweenTests;
 
         public virtual TestContext TestContext { get; set; }
 
-        public string RepositoryPath {
-            get {
-                if (TestContext.Properties.Contains("Repository")) {
-                    return TestContext.Properties["Repository"].ToString();
-                }
+        public string RepositoryPath { get; set; }
 
-                return TestDirectory(TestContext, shareRepositoryBetweenTests);
-            }
+        protected static string RunPowerShellInIsolatedDirectory(TestContext context, string script) {
+            return PowerShellHelper.RunCommand(script, context, null);
         }
 
-        protected static void Initialize(TestContext context, string resources, bool shareRepositoryBetweenTests) {
-            GitVersionControlTestBase.shareRepositoryBetweenTests = shareRepositoryBetweenTests;
-
-            var testDirectory = TestDirectory(context, shareRepositoryBetweenTests);
-
-            Directory.CreateDirectory(testDirectory);
-
-            RunPowerShell(context, resources);
-        }
-
-        private static string TestDirectory(TestContext context, bool shareRepositoryBetweenTests) {
-            var testDirectory = Path.Combine(context.DeploymentDirectory, shareRepositoryBetweenTests ? "0C68A615-E3A7-47E7-8BEF-AB858B28CD92" : context.TestName);
-            context.Properties["Repository"] = testDirectory;
-            return testDirectory;
-        }
-
-        protected static void RunPowerShell(TestContext context, string script) {
-            PowerShellHelper.RunCommand(script, context, context.Properties["Repository"].ToString());
+        protected static string RunPowerShellInDirectory(TestContext testContext, string script, string repositoryPath) {
+            return PowerShellHelper.RunCommand(script, testContext, repositoryPath);
         }
     }
 }

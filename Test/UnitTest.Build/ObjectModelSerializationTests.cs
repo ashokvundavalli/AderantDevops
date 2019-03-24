@@ -50,11 +50,13 @@ namespace UnitTest.Build {
             var metadata = new BuildOperationContext();
             metadata.WrittenStateFiles = new List<string> { "1" };
             metadata.IsDesktopBuild = false;
+            metadata.BuildRoot = "abc";
 
             var instance = RoundTrip(metadata);
 
             Assert.IsNotNull(instance);
             Assert.AreEqual(1, instance.WrittenStateFiles.Count);
+            Assert.AreEqual("abc", instance.BuildRoot);
             Assert.IsFalse(instance.IsDesktopBuild);
         }
 

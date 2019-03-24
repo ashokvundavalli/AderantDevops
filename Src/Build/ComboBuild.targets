@@ -5,9 +5,14 @@
          InitialTargets="SetPropertiesFromContext;"
          TreatAsLocalProperty="SolutionRoot;BuildFlavor">
 
+  <PropertyGroup>
+    <UseCIProperties>true</UseCIProperties>
+    <UseCIProperties Condition="'$(BUILD_REPOSITORY_NAME)' != 'Build.Infrastructure'" />
+  </PropertyGroup>
+
   <!-- Server build property setup -->
-  <PropertyGroup Condition="'$(BUILD_BUILDURI)' != ''">
-    <SolutionRoot Condition="'$(BUILD_SOURCESDIRECTORY)' != ''">$(BUILD_SOURCESDIRECTORY)</SolutionRoot>
+  <PropertyGroup Condition="'$(BUILD_BUILDURI)' != '' And '$(UseCIProperties)' == 'true'">
+    <SolutionRoot Condition="'$(SolutionRoot)' == '' And '$(BUILD_SOURCESDIRECTORY)' != ''">$(BUILD_SOURCESDIRECTORY)</SolutionRoot>
   </PropertyGroup>
 
   <!-- Desktop build property setup -->
@@ -100,35 +105,50 @@
   <Target Name="CleanStagingDirectory" DependsOnTargets="RemoveLockedFilesFromLastBuild">
     <RemoveDir Condition="'$(IsDesktopBuild)' == 'false'"
                Directories="$(ArtifactStagingDirectory)" />
-    <MakeDir Condition="'$(IsDesktopBuild)' == 'false'"
-             Directories="$(UpdateStagingDirectory)" />
+
+    <MakeDir Condition="!Exists('$(SharedDependencyDirectory))')"
+             Directories="$(SharedDependencyDirectory)" />
+
+    <MakeDir Directories="$(UpdateStagingDirectory)" />
   </Target>
 
 
   <Target Name="GatherProjectsToBuild">
     <Message Text="IsDesktopBuild: $(IsDesktopBuild)" />
 
+    <PropertyGroup>
+      <_CurrentUserName>$([System.Environment]::UserName)</_CurrentUserName>
+      <!-- Are we a gMSA account? -->
+      <_UserNameEndsWithDollar>$(_CurrentUserName.EndsWith('$'))</_UserNameEndsWithDollar>
+    </PropertyGroup>
+
+    <Message Text="UserName:$(_CurrentUserName). gMSA:$(_UserNameEndsWithDollar)" />
+
     <ItemGroup>
       <ExcludePaths Include=".git" />
-      <ExcludePaths Include="$" />
+      <ExcludePaths Include=".vs" />
       <ExcludePaths Include="\_" />
-      <ExcludePaths Include="$(ArtifactStagingDirectory)" />
       <ExcludePaths Include="TempTemplateTransform\" />
       <ExcludePaths Include="Applications.MatterCenterIntegration\" />
       <ExcludePaths Include="Applications.DocuDraftAddIn\" />
-
       <ExcludePaths Include="Tests.UIAutomation\" />
-
       <ExcludePaths Include="TempTransform\" />
       <ExcludePaths Include="Tests.Load\" />
       <ExcludePaths Include="Tests.Query\" />
-
       <ExcludePaths Include="MomentumFileOpening\" />
       <ExcludePaths Include="Performance.ExpertSuite\" />
       <ExcludePaths Include="Tests.Customization\" />
       <ExcludePaths Include="Aderant.ExpertIntegration.iManage\" />
       <!-- Has stuff we can't build - missing third party libs-->
       <ExcludePaths Include="Workflow.Integration.Samples\" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(ExcludeArtifactStagingDirectory)' != 'false'">
+      <ExcludePaths Include="$(ArtifactStagingDirectory)" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(_UserNameEndsWithDollar)' == 'false'">
+      <ExcludePaths Include="$" />
     </ItemGroup>
 
     <GatherProjectsToBuild
@@ -144,8 +164,8 @@
 
   </Target>
 
-  <Target Name="CreatePlan" DependsOnTargets="GatherProjectsToBuild">
 
+  <Target Name="CreatePlan" DependsOnTargets="GatherProjectsToBuild">
     <!--
     ==========================================================================================
         Build Configurations
@@ -237,10 +257,6 @@
       we always end up fetching more than is needed which is sub optimal.
     -->
     <Message Text="Getting dependencies for build." />
-
-    <MakeDir
-      Condition="!Exists('$(SharedDependencyDirectory))')"
-      Directories="$(SharedDependencyDirectory)" />
 
     <Delete Files="$(SharedDependencyDirectory)paket.dependencies;$(SharedDependencyDirectory)paket.lock" />
 
