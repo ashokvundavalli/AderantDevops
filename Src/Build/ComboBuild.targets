@@ -6,8 +6,8 @@
          TreatAsLocalProperty="SolutionRoot;BuildFlavor">
 
   <PropertyGroup>
-    <UseCIProperties>true</UseCIProperties>
-    <UseCIProperties Condition="'$(BUILD_REPOSITORY_NAME)' != 'Build.Infrastructure'" />
+    <UseCIProperties Condition="'$(BUILD_REPOSITORY_NAME)' != 'Build.Infrastructure'">true</UseCIProperties>
+    <UseCIProperties Condition="'$(UseCIProperties)' == ''">false</UseCIProperties>
   </PropertyGroup>
 
   <!-- Server build property setup -->
