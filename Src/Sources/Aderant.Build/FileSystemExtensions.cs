@@ -49,6 +49,9 @@ namespace Aderant.Build {
             }
         }
 
+        /// <summary>
+        /// Convenient method for creating a stream for unit testing.
+        /// </summary>
         internal static Stream ToStream(this string contents) {
             byte[] byteArray = Encoding.UTF8.GetBytes(contents);
             return new MemoryStream(byteArray);
