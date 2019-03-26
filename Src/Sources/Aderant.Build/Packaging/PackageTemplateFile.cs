@@ -30,7 +30,7 @@ namespace Aderant.Build.Packaging {
         }
 
         public void AddDependency(Domain.PackageName item) {
-            var packageName = item.Item1;
+            var packageName = item.Name;
 
             var excludedDependencies = parser["excludeddependencies"];
             if (excludedDependencies != null) {
@@ -61,7 +61,7 @@ namespace Aderant.Build.Packaging {
             }
 
             // LOCKEDVERSION is a magic Paket token which is replaced with the resolved package version from the lock file
-            string entry = string.Format(CultureInfo.InvariantCulture, "{0} {1} LOCKEDVERSION", item.Item1, @operator);
+            string entry = string.Format(CultureInfo.InvariantCulture, "{0} {1} LOCKEDVERSION", item.Name, @operator);
 
             if (packageNameIndexes.Any()) {
                 list.Insert(packageNameIndexes.First(), entry);
@@ -96,7 +96,7 @@ namespace Aderant.Build.Packaging {
         }
 
         private static int FindEntryIndex(Domain.PackageName item, List<string> list) {
-            return list.FindIndex(element => element.IndexOf(item.Item1, StringComparison.OrdinalIgnoreCase) >= 0);
+            return list.FindIndex(element => element.IndexOf(item.Name, StringComparison.OrdinalIgnoreCase) >= 0);
         }
 
         public void Save(Stream stream) {
@@ -109,7 +109,7 @@ namespace Aderant.Build.Packaging {
                 using (var writer = new SectionWriter(streamWriter)) {
                     writer.Write(sections);
 
-                    // Truncate the remainder of the file... 
+                    // Truncate the remainder of the file...
                     writer.Flush();
                     stream.SetLength(stream.Position);
                 }

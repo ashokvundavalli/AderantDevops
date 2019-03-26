@@ -61,6 +61,7 @@
     <PackageProduct Condition="'$(CopyToDropEnabled)' == 'true'">true</PackageProduct>
 
     <ParametersFile>$(SolutionRoot)Build\Parameters.props</ParametersFile>
+    <BranchConfigFile>$(SolutionRoot)Build\BranchConfig.xml</BranchConfigFile>
   </PropertyGroup>
 
   <Import Project="Aderant.Build.Common.targets" />
@@ -264,8 +265,13 @@
       Condition="!Exists('$(SharedDependencyDirectory)packages)')"
       Directories="$(SharedDependencyDirectory)packages" />
 
+    <PropertyGroup>
+      <BranchConfigurationXml Condition="Exists($(BranchConfigFile))">$([System.IO.File]::ReadAllText($(BranchConfigFile)))</BranchConfigurationXml>
+    </PropertyGroup>
+
     <GetDependencies
       ProductManifest="$(ProductManifestPath)"
+      ConfigurationXml="$(BranchConfigurationXml)"
       ModulesRootPath="$(SolutionRoot)"
       DependenciesDirectory="$(SharedDependencyDirectory)"
       DropPath="$(XamlBuildDropLocation)"

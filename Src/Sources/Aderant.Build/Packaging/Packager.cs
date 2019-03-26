@@ -46,7 +46,7 @@ namespace Aderant.Build.Packaging {
             foreach (var file in GetTemplateFiles()) {
                 var dependenciesFile = DependenciesFile.ReadFromFile(spec.DependenciesFile);
 
-                var lockFile = LockFile.LoadFrom(dependenciesFile.FindLockfile().FullName);
+                var lockFile = LockFile.LoadFrom(dependenciesFile.FindLockFile().FullName);
 
                 var mainGroup = lockFile.GetGroupedResolution().Where(g => string.Equals(g.Key.Item1, Domain.GroupName(Constants.MainDependencyGroup)));
                 var dependencyMap = mainGroup.ToDictionary(d => d.Key.Item2, d => d.Value.Version);
@@ -73,7 +73,8 @@ namespace Aderant.Build.Packaging {
                         symbols: false,
                         includeReferencedProjects: true,
                         projectUrl: FSharpOption<string>.None,
-                        pinProjectReferences: true);
+                        pinProjectReferences: true,
+                        interprojectReferencesConstraint:FSharpOption<InterprojectReferencesConstraint.InterprojectReferencesConstraint>.None);
 
                     packedTemplates++;
                 } catch (Exception ex) {
@@ -122,7 +123,7 @@ namespace Aderant.Build.Packaging {
                 if (file.StartsWith(".git")) {
                     continue;
                 }
-                // Ignore files under the Build Infrastructure working directory, as it mat contain test resources 
+                // Ignore files under the Build Infrastructure working directory, as it mat contain test resources
                 // which would erroneously be picked up
                 if (file.IndexOf(BuildInfrastructureWorkingDirectory, StringComparison.OrdinalIgnoreCase) >= 0) {
                     continue;

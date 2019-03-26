@@ -382,6 +382,8 @@ namespace Aderant.Build.ProjectSystem {
             foreach (string projectFile in analysisContextProjectFiles) {
                 LoadAndParseProjectFile(projectFile);
             }
+
+            UnconfiguredProject.ClearCaches();
         }
 
         private void EnsureUnconfiguredProjects() {

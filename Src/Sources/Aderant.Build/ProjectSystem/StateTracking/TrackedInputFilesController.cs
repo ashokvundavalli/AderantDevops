@@ -118,6 +118,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         internal IReadOnlyCollection<TrackedInputFile> GetFilesToTrack(string directoryPropertiesFile, string directory) {
             var globalProps = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { { "SolutionRoot", directory } };
             using (var collection = new ProjectCollection(globalProps)) {
+                collection.RegisterLogger(new LoggerAdapter(logger));
                 collection.IsBuildEnabled = true;
 
                 Project project = LoadProject(directoryPropertiesFile, collection);
@@ -170,6 +171,27 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
         protected virtual Project LoadProject(string directoryPropertiesFile, ProjectCollection collection) {
             return collection.LoadProject(directoryPropertiesFile);
+        }
+
+        internal class LoggerAdapter : Microsoft.Build.Framework.ILogger {
+            private readonly ILogger logger;
+
+            public LoggerAdapter(ILogger logger) {
+                this.logger = logger;
+
+            }
+
+            public void Initialize(IEventSource eventSource) {
+                eventSource.MessageRaised += (sender, args) => { this.logger.Info(args.Message); };
+                eventSource.ErrorRaised += (sender, args) => { this.logger.Error(args.Message); };
+                eventSource.WarningRaised += (sender, args) => { this.logger.Warning(args.Message); };
+            }
+
+            public void Shutdown() {
+            }
+
+            public LoggerVerbosity Verbosity { get; set; }
+            public string Parameters { get; set; }
         }
     }
 

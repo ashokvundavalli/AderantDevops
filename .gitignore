@@ -263,3 +263,5 @@ ModelManifest.xml
 /.vscode
 /CommonBuild
 /Test/Test.Build/DependencyAnalysis/Resources/Source/ModuleB/Flob/TextTemplate1.cs
+/Src/Build/paket.exe
+/.paket

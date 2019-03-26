@@ -8,11 +8,11 @@ using Aderant.Build.Providers;
 
 namespace Aderant.Build.DependencyResolver {
     internal class ResolverRequest {
-        internal List<DependencyState<IDependencyRequirement>> Dependencies = new List<DependencyState<IDependencyRequirement>>();
+        internal List<DependencyState<IDependencyRequirement>> dependencies = new List<DependencyState<IDependencyRequirement>>();
         private readonly List<ModuleState<ExpertModule>> modules = new List<ModuleState<ExpertModule>>();
         private string dependenciesDirectory;
         private bool requiresThirdPartyReplication;
-
+        private Dictionary<string, HashSet<string>> restrictions = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
         public ILogger Logger { get; }
 
         /// <summary>
@@ -47,16 +47,6 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         /// <summary>
-        /// Gets or sets the type of the request.
-        /// </summary>
-        /// <remarks>
-        /// We have XAML continuous integration builds, XAML build all, teambuild desktop build, desktop build VNext, server build VNext.
-        /// All of these use different root path flavors, some with the module name, some without. We need a hint from the build system to figure what the root path means to us
-        /// so we know how to probe for files
-        /// </remarks>
-        public string DirectoryContext { get; set; }
-
-        /// <summary>
         /// Gets or sets a value indicating whether to blat everything and force a clean refresh of every package.
         /// </summary>
         /// <value>
@@ -77,6 +67,8 @@ namespace Aderant.Build.DependencyResolver {
         /// Modules can tell the build system to not replicate packages to the dependencies folder via DependencyReplication=false in the DependencyManifest.xml
         /// </summary>
         public bool ReplicationExplicitlyDisabled { get; set; }
+
+        public bool ValidatePackageConstraints { get; set; }
 
         /// <summary>
         /// Sets the dependencies directory to place dependencies into.
@@ -141,13 +133,13 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         internal DependencyState<IDependencyRequirement> GetOrAdd(IDependencyRequirement requirement) {
-            DependencyState<IDependencyRequirement> dependency = Dependencies.FirstOrDefault(s => requirement.Equals(s.Item));
+            DependencyState<IDependencyRequirement> dependency = dependencies.FirstOrDefault(s => requirement.Equals(s.Item));
 
             if (dependency == null) {
                 dependency = new DependencyState<IDependencyRequirement>();
                 dependency.Item = requirement;
 
-                Dependencies.Add(dependency);
+                dependencies.Add(dependency);
             }
             return dependency;
         }
@@ -156,14 +148,14 @@ namespace Aderant.Build.DependencyResolver {
         /// Gets the resolved requirements.
         /// </summary>
         public virtual IEnumerable<IDependencyRequirement> GetResolvedRequirements() {
-            return Dependencies.Where(s => s.State == DependencyState.Resolved).Select(s => s.Item);
+            return dependencies.Where(s => s.State == DependencyState.Resolved).Select(s => s.Item);
         }
 
         /// <summary>
         /// Gets the resolved or unresolved requirements.
         /// </summary>
         public virtual IEnumerable<IDependencyRequirement> GetRequirementsByType(DependencyState type) {
-            return Dependencies.Where(s => s.State == type).Select(s => s.Item);
+            return dependencies.Where(s => s.State == type).Select(s => s.Item);
         }
 
         public void AssociateRequirements(ExpertModule module, IEnumerable<IDependencyRequirement> requirements) {
@@ -196,6 +188,22 @@ namespace Aderant.Build.DependencyResolver {
             }
 
             return dependenciesRequiredForBuild;
+        }
+
+           /// <summary>
+        /// Captures any .NET framework restrictions and the group they are associated with.
+        /// </summary>
+        public void AddFrameworkRestriction(string group, string frameworkVersion) {
+            HashSet<string> set;
+            if (!restrictions.TryGetValue(group, out set)) {
+                restrictions.Add(group, set = new HashSet<string>(StringComparer.OrdinalIgnoreCase));
+            }
+
+            set.Add(frameworkVersion);
+        }
+
+        public Dictionary<string, IReadOnlyCollection<string>> GetFrameworkRestrictions() {
+            return restrictions.ToDictionary(s => s.Key, s => (IReadOnlyCollection<string>)s.Value.ToList());
         }
 
         public IEnumerable<ExpertModule> GetModulesInBuild() {

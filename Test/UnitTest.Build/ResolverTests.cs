@@ -17,7 +17,7 @@ namespace UnitTest.Build {
             var resolverImpl = Moq.Mock.Of<IDependencyResolver>();
 
             Mock.Get(resolverImpl).Setup(s => s.Resolve(
-                It.IsAny<ResolverRequest>(),
+                It.IsAny<ResolverRequest>(), 
                 It.Is<IEnumerable<IDependencyRequirement>>(r => Validate2(r)),
                 It.IsAny<CancellationToken>())).Verifiable();
 

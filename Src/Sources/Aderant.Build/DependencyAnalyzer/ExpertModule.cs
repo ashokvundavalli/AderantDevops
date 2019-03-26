@@ -16,6 +16,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         private string name;
         private IList<XAttribute> customAttributes;
         private ModuleType? type;
+        private bool? replicateToDependencies = null;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ExpertModule"/> class.
@@ -190,7 +191,18 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <summary>
         /// Gets or sets a value indicating whether to replicate this instance to the dependencies folder (otherwise it just stays in package)
         /// </summary>
-        public bool ReplicateToDependencies { get; set; } = true;
+        public bool ReplicateToDependencies {
+            get {
+                return replicateToDependencies.GetValueOrDefault(true);
+            }
+            set {
+                replicateToDependencies = value;
+            }
+        }
+
+        public bool HasReplicateToDependenciesValue {
+            get { return replicateToDependencies != null; }
+        }
 
         internal VersionRequirement VersionRequirement {
             get {

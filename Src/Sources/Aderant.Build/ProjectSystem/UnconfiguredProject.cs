@@ -1,17 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Xml;
 using Aderant.Build.Utilities;
+using Microsoft.Build.BuildEngine;
 using Microsoft.Build.Construction;
 using Microsoft.Build.Evaluation;
 
 namespace Aderant.Build.ProjectSystem {
     [Export(typeof(UnconfiguredProject))]
     internal class UnconfiguredProject {
+        private static XmlNameTable nameTable = new XmlNameTableThreadSafe();
 
         private static readonly Memoizer<UnconfiguredProject, Guid> projectGuidMemoizer = new Memoizer<UnconfiguredProject, Guid>(
             project => {
@@ -58,11 +59,23 @@ namespace Aderant.Build.ProjectSystem {
             FullPath = projectLocation;
 
             // CreateReader from XDocument doesn't work with ProjectRootElement.Create so use the old XmlDocument API
-            XmlReaderSettings xmlReaderSettings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Ignore };
-            var projectDocument = new XmlDocument();
+            XmlReaderSettings xmlReaderSettings = new XmlReaderSettings {
+                DtdProcessing = DtdProcessing.Ignore,
+                NameTable = nameTable
+            };
 
-            using (XmlReader xmlReader = XmlReader.Create(reader, xmlReaderSettings)) {
-                projectDocument.Load(xmlReader);
+            var projectDocument = new XmlDocument(nameTable);
+
+            try {
+                using (XmlReader xmlReader = XmlReader.Create(reader, xmlReaderSettings)) {
+                    projectDocument.Load(xmlReader);
+                }
+            } catch (Exception ex) {
+                if (!string.IsNullOrEmpty(projectLocation)) {
+                    throw new InvalidProjectFileException(projectLocation, 0, 0, 0, 0, ex.Message, null, null, null);
+                }
+
+                throw;
             }
 
             projectElement = new Lazy<ProjectRootElement>(
@@ -142,6 +155,38 @@ namespace Aderant.Build.ProjectSystem {
 
             configuredProject.Initialize(projectElement, FullPath);
             return configuredProject;
+        }
+
+        public static void ClearCaches() {
+            nameTable = new XmlNameTableThreadSafe();
+        }
+    }
+
+    internal class XmlNameTableThreadSafe : NameTable {
+        private object locker = new object();
+
+        public override string Add(string key) {
+            lock (locker) {
+                return base.Add(key);
+            }
+        }
+
+        public override string Add(char[] key, int start, int len) {
+            lock (locker) {
+                return base.Add(key, start, len);
+            }
+        }
+
+        public override string Get(string value) {
+            lock (locker) {
+                return base.Get(value);
+            }
+        }
+
+        public override string Get(char[] key, int start, int len) {
+            lock (locker) {
+                return base.Get(key, start, len);
+            }
         }
     }
 }

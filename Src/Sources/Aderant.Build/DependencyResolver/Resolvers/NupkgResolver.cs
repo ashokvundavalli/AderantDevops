@@ -2,15 +2,29 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
 using Aderant.Build.Providers;
-using Paket;
 
 namespace Aderant.Build.DependencyResolver.Resolvers {
     internal class NupkgResolver : IDependencyResolver {
+
         private ILogger logger;
+
+        static NupkgResolver() {
+            // Paket used to support being loaded as byte array but current versions have a hard dependency on Assembly.Location which is
+            // null when dynamically loaded from a byte array.
+            var data = AppDomain.CurrentDomain.GetData("BuildScriptsDirectory") as string;
+            if (!string.IsNullOrEmpty(data)) {
+                Assembly.LoadFrom(Path.Combine(data, "paket.exe"));
+            }
+        }
+
+        public NupkgResolver() {
+        }
+
         public IModuleProvider ModuleFactory { get; set; }
 
         public IEnumerable<IDependencyRequirement> GetDependencyRequirements(ResolverRequest resolverRequest, ExpertModule module) {
@@ -20,14 +34,37 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
             string moduleDirectory = resolverRequest.GetModuleDirectory(module);
 
             if (!string.IsNullOrEmpty(moduleDirectory)) {
-                using (var pm = new PaketPackageManager(moduleDirectory, new PhysicalFileSystem(), logger)) {
-                    var groupList = pm.FindGroups();
+                using (var manager = new PaketPackageManager(moduleDirectory, new PhysicalFileSystem(), logger)) {
+                    var groupList = manager.FindGroups();
 
                     foreach (string groupName in groupList) {
-                        var requirements = pm.GetDependencies(groupName);
-                        foreach (var item in requirements) {
+                        var dependencyGroup = manager.GetDependencies(groupName);
+
+                        if (dependencyGroup.FrameworkRestrictions != null) {
+                            foreach (string restriction in dependencyGroup.FrameworkRestrictions) {
+                                resolverRequest.AddFrameworkRestriction(groupName, restriction);
+                            }
+                        }
+
+                        foreach (var item in dependencyGroup.Requirements) {
                             var requirement = DependencyRequirement.Create(item.Key, groupName, item.Value);
-                            requirement.ReplicateToDependencies = true;
+
+                            var requirementWithGroupSupport = requirement as IDependencyGroup;
+                            if (requirementWithGroupSupport != null) {
+                                requirementWithGroupSupport.DependencyGroup = dependencyGroup;
+                            }
+
+                            bool replicationEnabled = true;
+                            if (ReplicationExplicitlyDisabled.HasValue) {
+                                if (ReplicationExplicitlyDisabled.Value == true) {
+                                    replicationEnabled = false;
+                                }
+                            }
+
+                            if (replicationEnabled) {
+                                SetReplicationFlag(resolverRequest, requirement);
+                            }
+
                             yield return requirement;
                         }
                     }
@@ -47,6 +84,26 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
                 SingleModuleRestore(resolverRequest, requirements, cancellationToken);
             } else {
                 ServerBuildRestore(resolverRequest, requirements, cancellationToken);
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether replication explicitly disabled.
+        /// Modules can tell the build system to not replicate packages to the dependencies folder via DependencyReplication=false
+        /// in the DependencyManifest.xml
+        /// </summary>
+        public bool? ReplicationExplicitlyDisabled { get; set; }
+
+        private static void SetReplicationFlag(ResolverRequest resolverRequest, IDependencyRequirement requirement) {
+            if (resolverRequest.ModuleFactory != null) {
+                var expertModule = resolverRequest.ModuleFactory.GetModule(requirement.Name);
+                if (expertModule != null) {
+                    if (expertModule.HasReplicateToDependenciesValue) {
+                        requirement.ReplicateToDependencies = expertModule.ReplicateToDependencies;
+                    } else {
+                        requirement.ReplicateToDependencies = true;
+                    }
+                }
             }
         }
 
@@ -70,7 +127,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
 
         private void PackageRestore(ResolverRequest resolverRequest, string directory, IFileSystem2 fileSystem, IEnumerable<IDependencyRequirement> requirements, CancellationToken cancellationToken) {
             using (var manager = new PaketPackageManager(directory, fileSystem, logger)) {
-                manager.Add(requirements);
+                manager.Add(requirements, resolverRequest);
 
                 if (resolverRequest.Update) {
                     manager.Update(resolverRequest.Force);
@@ -99,8 +156,9 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
             }
         }
 
-        private void ReplicateToDependenciesDirectory(ResolverRequest resolverRequest, string directory, IFileSystem2 fileSystem, IDependencyRequirement requirement) {
 
+        // TODO: Remove this - now obsolete in 81+
+        private void ReplicateToDependenciesDirectory(ResolverRequest resolverRequest, string directory, IFileSystem2 fileSystem, IDependencyRequirement requirement) {
             // For a build all we place the packages folder under dependencies
             // For a single module, it goes next to the dependencies folder
             if (requirement.Group == "Development") {
@@ -139,14 +197,11 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
         }
 
         private static string GeneratePathToPackage(string directory, IDependencyRequirement requirement) {
-            var path = string.Equals(requirement.Group, Aderant.Build.Constants.MainDependencyGroup, StringComparison.OrdinalIgnoreCase) ? "" : requirement.Group;
+            var path = string.Equals(requirement.Group, Constants.MainDependencyGroup, StringComparison.OrdinalIgnoreCase) ? "" : requirement.Group;
             return Path.Combine(directory, "packages", path, requirement.Name);
         }
 
-        /// <summary>
-        /// Gets or sets a value indicating whether replication explicitly disabled.
-        /// Modules can tell the build system to not replicate packages to the dependencies folder via DependencyReplication=false in the DependencyManifest.xml
-        /// </summary>
-        public bool? ReplicationExplicitlyDisabled { get; set; }
+        public static void Initialize() {
+        }
     }
 }

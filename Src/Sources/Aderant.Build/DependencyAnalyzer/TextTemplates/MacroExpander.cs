@@ -10,10 +10,6 @@ namespace Aderant.Build.DependencyAnalyzer.TextTemplates {
                 { "$(ProjectDir)", m => m.ProjectDir },
             };
 
-        public static ICollection<string> Macros {
-            get { return macros.Keys; }
-        }
-
         public string ProjectDir { get; set; }
 
         public string Expand(string source) {

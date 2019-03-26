@@ -117,9 +117,6 @@ process {
 
     if (Test-ReparsePoint $moduleDependenciesDirectory) {
         [System.IO.Directory]::Delete($moduleDependenciesDirectory)
-
-        # To see a files hardlinks
-        #fsutil.exe hardlink list ...
     }
 
     if ($global:BranchModulesDirectory) {
@@ -127,5 +124,5 @@ process {
         Remove-Item -Path $global:BranchModulesDirectory\paket.lock -Force -ErrorAction SilentlyContinue
     }
 
-    Get-ExpertDependenciesForModule -ModuleName $moduleName -ModulesRootPath $modulesRootPath -DependenciesDirectory $moduleDependenciesDirectory -DropPath $dropPath -BuildScriptsDirectory $buildScriptsDirectory -Update:$update -ShowOutdated:$showOutdated -Force:$force -ProductManifestPath $global:ProductManifestPath
+    Get-ExpertDependenciesForModule -ModuleName $moduleName -ModulesRootPath $modulesRootPath -DependenciesDirectory $moduleDependenciesDirectory -DropPath $dropPath -Update:$update -ShowOutdated:$showOutdated -Force:$force -ProductManifestPath $global:ProductManifestPath
 }

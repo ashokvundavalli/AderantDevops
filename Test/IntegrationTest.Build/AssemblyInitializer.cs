@@ -15,9 +15,6 @@ namespace IntegrationTest.Build {
         public static void AssemblyInitialize(TestContext context) {
             Environment.CurrentDirectory = context.DeploymentDirectory;
 
-            Assert.IsTrue(Directory.Exists(context.DeploymentDirectory + "\\x86"));
-            Assert.IsTrue(Directory.Exists(context.DeploymentDirectory + "\\x64"));
-
             GlobalSettings.NativeLibraryPath = context.DeploymentDirectory;
 
             PowerShellHelper.RunCommand("& git config --global core.autocrlf false", context, null);

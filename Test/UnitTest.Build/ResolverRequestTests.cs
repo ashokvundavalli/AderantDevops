@@ -57,9 +57,9 @@ namespace UnitTest.Build {
         public void ResolverRequest_NoExistingDependency() {
             IDependencyRequirement requirement = DependencyRequirement.Create("a", Constants.MainDependencyGroup);
             var resolverRequest = new ResolverRequest(NullLogger.Default);
-            Assert.AreEqual(0, resolverRequest.Dependencies.Count);
+            Assert.AreEqual(0, resolverRequest.dependencies.Count);
             var result = resolverRequest.GetOrAdd(requirement);
-            Assert.AreEqual(1, resolverRequest.Dependencies.Count);
+            Assert.AreEqual(1, resolverRequest.dependencies.Count);
             Assert.IsNotNull(result);
         }
 
@@ -67,11 +67,11 @@ namespace UnitTest.Build {
         public void ResolverRequest_ExistingDependency() {
             IDependencyRequirement requirement = DependencyRequirement.Create("a", Constants.MainDependencyGroup);
             var resolverRequest = new ResolverRequest(NullLogger.Default);
-            Assert.AreEqual(0, resolverRequest.Dependencies.Count);
+            Assert.AreEqual(0, resolverRequest.dependencies.Count);
 
             for (int i = 0; i < 2; i++) {
                 var result = resolverRequest.GetOrAdd(requirement);
-                Assert.AreEqual(1, resolverRequest.Dependencies.Count);
+                Assert.AreEqual(1, resolverRequest.dependencies.Count);
                 Assert.IsNotNull(result);
             }
         }
@@ -84,11 +84,11 @@ namespace UnitTest.Build {
             };
 
             var resolverRequest = new ResolverRequest(NullLogger.Default);
-            Assert.AreEqual(0, resolverRequest.Dependencies.Count);
+            Assert.AreEqual(0, resolverRequest.dependencies.Count);
 
             for (int i = 0; i < requirements.GetLength(0); i++) {
                 var result = resolverRequest.GetOrAdd(requirements[i]);
-                Assert.AreEqual(i + 1, resolverRequest.Dependencies.Count);
+                Assert.AreEqual(i + 1, resolverRequest.dependencies.Count);
                 Assert.IsNotNull(result);
             }
         }
@@ -101,7 +101,7 @@ namespace UnitTest.Build {
             };
 
             var resolverRequest = new ResolverRequest(NullLogger.Default);
-            Assert.AreEqual(0, resolverRequest.Dependencies.Count);
+            Assert.AreEqual(0, resolverRequest.dependencies.Count);
 
             var result1 = resolverRequest.GetOrAdd(requirements[0]);
             var result2 = resolverRequest.GetOrAdd(requirements[1]);

@@ -29,16 +29,11 @@ namespace Aderant.Build.DependencyResolver {
         /// <param name="resolverRequest">The resolver request.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         public void ResolveDependencies(ResolverRequest resolverRequest, CancellationToken cancellationToken = default(CancellationToken)) {
-            resolverRequest.Modules.ToList().ForEach(s => logger.Info($"Resolving dependencies for {s.Name}"));
-
             List<IDependencyRequirement> requirements = new List<IDependencyRequirement>();
 
             GatherRequirements(resolverRequest, requirements);
 
             AddAlwaysRequired(resolverRequest, requirements);
-
-            //TODO: Restore this behaviour
-            //RemoveRequirementsBeingBuilt(resolverRequest, requirements);
 
             List<IDependencyRequirement> distinctRequirements = requirements.Distinct().ToList();
 

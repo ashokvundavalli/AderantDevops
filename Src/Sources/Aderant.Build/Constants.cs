@@ -1,5 +1,11 @@
-﻿namespace Aderant.Build {
+﻿using Aderant.Build.DependencyResolver.Resolvers;
+
+namespace Aderant.Build {
     public static class Constants {
+        static Constants() {
+            NupkgResolver.Initialize();
+        }
+
         /// <summary>
         /// The build infrastructure directory
         /// </summary>
@@ -21,8 +27,13 @@
         public static string NugetServerClearCacheUrl = PackageServerUrl + "/ClearCache()";
 
         public static string DefaultNuGetServer = "https://www.nuget.org/api/v2";
+        private static string mainDependencyGroup;
 
-        internal static string MainDependencyGroup = Paket.Constants.MainDependencyGroup.ToString();
+        internal static string MainDependencyGroup {
+            get {
+                return mainDependencyGroup ?? (mainDependencyGroup = Paket.Constants.MainDependencyGroup.ToString());
+            }
+        }
     }
 
     public static class WellKnownPaths {

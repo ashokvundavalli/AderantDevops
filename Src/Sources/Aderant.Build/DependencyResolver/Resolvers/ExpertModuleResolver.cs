@@ -9,7 +9,7 @@ using Aderant.Build.Providers;
 
 namespace Aderant.Build.DependencyResolver.Resolvers {
     public class ExpertModuleResolver : IDependencyResolver {
-      
+
         private readonly IFileSystem2 fileSystem;
         private List<DependencySource> sources = new List<DependencySource>();
 

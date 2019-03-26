@@ -138,7 +138,7 @@ function global:UpdateOrBuildAssembly {
 
                 Write-Host "`r`nBuild.Infrastructure branch [" -NoNewline
 
-                if ($branch -eq "master") {
+                if ($branch -eq "master" -or $branch -eq "187604-Sequencer") {
                     Write-Host $branch -ForegroundColor Green -NoNewline
                     Write-Host "]`r`n"
                     & git -C $PSScriptRoot pull --ff-only
@@ -155,12 +155,15 @@ function global:UpdateOrBuildAssembly {
 
         $assemblyPathRoot = [System.IO.Path]::Combine("$BuildScriptsDirectory\..\Build.Tools")
 
+        # Download the paket dependency tool
+        & "$BuildScriptsDirectory\paket.bootstrapper.exe" "5.198.0"
+
         BuildProjects $BuildScriptsDirectory $true
 
         LoadAssembly $BuildScriptsDirectory "$assemblyPathRoot\Aderant.Build.dll" $true
-        LoadAssembly $BuildScriptsDirectory "$assemblyPathRoot\paket.exe" $false
         LoadAssembly $BuildScriptsDirectory "$assemblyPathRoot\protobuf-net.dll" $false
-
         LoadLibGit2Sharp "$BuildScriptsDirectory\..\Build.Tools"
+
+        [System.AppDomain]::CurrentDomain.SetData("BuildScriptsDirectory", $BuildScriptsDirectory)
     }
 }

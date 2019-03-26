@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 using Microsoft.FSharp.Collections;
 using Microsoft.FSharp.Core;
 using Paket;
@@ -22,7 +21,7 @@ namespace Aderant.Build.DependencyResolver {
                     myMutex.WaitOne();
 
                     foreach (var group in groups) {
-                        dependencies.Restore(force, new FSharpOption<string>(group), FSharpList<string>.Empty, false, false);
+                        dependencies.Restore(force, new FSharpOption<string>(group), FSharpList<string>.Empty, false, false, false, FSharpOption<string>.None);
                     }
                 } finally {
                     myMutex.ReleaseMutex();

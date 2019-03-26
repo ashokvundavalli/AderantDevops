@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Aderant.Build.DependencyResolver;
@@ -7,9 +9,10 @@ using Aderant.Build.Packaging;
 using Aderant.Build.Packaging.NuGet;
 using Aderant.Build.Versioning;
 using Microsoft.Build.Framework;
+using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
-    public sealed class ThirdPartyPackager : Microsoft.Build.Utilities.Task {
+    public sealed class ThirdPartyPackager : Task {
         private IFileSystem2 fileSystem;
         private BuildTaskLogger logger;
 
@@ -30,8 +33,8 @@ namespace Aderant.Build.Tasks {
                 return !Log.HasLoggedErrors;
             }
 
-            // Ignore wired folder names like $tf, .git, etc. which has caused problems.
-            var packageName = Path.GetFileName(Folder)??"";
+            // Ignore folder names like $tf, .git, etc. which cause problems.
+            var packageName = Path.GetFileName(Folder) ?? "";
             if (packageName.StartsWith("$") || packageName.StartsWith(".")) {
                 Log.LogMessage($"Ignoring strange folder name {packageName}.");
                 return !Log.HasLoggedErrors;
@@ -41,9 +44,15 @@ namespace Aderant.Build.Tasks {
 
             if (!IsModified(Folder)) {
                 Log.LogMessage("No changes where detected for {0}. It will be excluded from packaging.", Folder);
+
+                IEnumerable<string> files = fileSystem.GetFiles(Folder, "*.nuspec", true);
+                foreach (var file in files) {
+                    logger.Info("Removing file " + file);
+                    fileSystem.DeleteFile(file);
+                }
                 return !Log.HasLoggedErrors;
             }
-            
+
             Version version = GetVersion();
 
             UpdateSpecification(version);
@@ -68,16 +77,28 @@ namespace Aderant.Build.Tasks {
             // Download the existing package
             try {
                 using (PaketPackageManager packageManager = new PaketPackageManager(Folder, fileSystem, logger)) {
-                    packageManager.Add(new[] { DependencyRequirement.Create(packageName, Constants.MainDependencyGroup) });
-                    packageManager.Restore();
+                    var requirement = DependencyRequirement.Create(
+                        packageName,
+                        Constants.MainDependencyGroup,
+                        new VersionRequirement {
+                            ConstraintExpression = ">= 0.0.0 ci"
+                        });
+
+
+                    packageManager.Add(new[] { requirement });
+                    packageManager.Update(true);
+                    packageManager.Restore(true);
                 }
             } catch (Exception ex) {
-                if (ex.Message.Contains("Could not find versions for package")) {
+                if (ex.Message.Contains("Could not find versions for package") || ex.Message.StartsWith("Unable to retrieve package versions")) {
                     logger.Warning("Package {0} doesn't exist. Assuming it is a new package.", packageName);
 
                     return false;
+                } else {
+                    logger.Error(ex.Message);
                 }
             }
+
             return true;
         }
 
@@ -89,7 +110,6 @@ namespace Aderant.Build.Tasks {
             } else {
                 Log.LogMessage("Located specification file: {0}", specificationFilePath);
             }
-            
 
             string specificationText = ReadSpecFile(fileSystem, specificationFilePath);
 
@@ -126,13 +146,15 @@ namespace Aderant.Build.Tasks {
             // Guard for TFS which uses read-only files
             fileSystem.MakeFileWritable(specFilePath);
 
-            fileSystem.AddFile(specFilePath, stream => {
-                using (stream) {
-                    using (var writer = new StreamWriter(stream)) {
-                        writer.Write(text);
+            fileSystem.AddFile(
+                specFilePath,
+                stream => {
+                    using (stream) {
+                        using (var writer = new StreamWriter(stream)) {
+                            writer.Write(text);
+                        }
                     }
-                }
-            });
+                });
         }
 
         private static string ReadSpecFile(IFileSystem2 fileSystem, string specFile) {
@@ -146,13 +168,15 @@ namespace Aderant.Build.Tasks {
 
             string specFile = Path.Combine(Folder, Path.GetFileName(Folder) + ".nuspec");
 
-            fs.AddFile(specFile, stream => {
-                using (stream) {
-                    using (StreamWriter writer = new StreamWriter(stream)) {
-                        writer.Write(Resources.TemplateNuspec);
+            fs.AddFile(
+                specFile,
+                stream => {
+                    using (stream) {
+                        using (StreamWriter writer = new StreamWriter(stream)) {
+                            writer.Write(Resources.TemplateNuspec);
+                        }
                     }
-                }
-            });
+                });
 
             return specFile;
         }

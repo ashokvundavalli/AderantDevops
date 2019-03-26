@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using System.IO;
 using System.Threading;
+using System.Xml.Linq;
+using Aderant.Build.Commands;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyResolver;
-using Aderant.Build.DependencyResolver.Resolvers;
 using Aderant.Build.Logging;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
@@ -13,7 +11,7 @@ using Microsoft.Build.Utilities;
 namespace Aderant.Build.Tasks {
     public class GetDependencies : Task, ICancelableTask {
         private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-        private HashSet<string> enabledResolvers;
+
 
         public string ModulesRootPath { get; set; }
 
@@ -43,15 +41,27 @@ namespace Aderant.Build.Tasks {
         /// </value>
         public ITaskItem[] ModulesInBuild { get; set; }
 
-        /// <summary>
-        /// Gets or sets the type of the build. For example Build All, Continuous Integration or other.
-        /// </summary>
-        /// <value>The type of the build.</value>
-        public string BuildType { get; set; }
+        public string ConfigurationXml { get; set; }
 
         public string[] EnabledResolvers {
-            get { return enabledResolvers.ToArray(); }
-            set { this.enabledResolvers = new HashSet<string>(value, StringComparer.OrdinalIgnoreCase); }
+            get {
+                return new string[0];
+            }
+            set {
+                if (string.IsNullOrEmpty(ConfigurationXml)) {
+                    if (value != null && value.Length > 0) {
+                        var resolvers = new XElement("DependencyResolvers");
+                        foreach (string name in value) {
+                            resolvers.Add(new XElement(name));
+                        }
+
+                        var doc = new XDocument();
+                        doc.Add(new XElement("BranchConfig", resolvers));
+
+                        ConfigurationXml = doc.ToString();
+                    }
+                }
+            }
         }
 
         public override bool Execute() {
@@ -59,44 +69,33 @@ namespace Aderant.Build.Tasks {
 
             var logger = new BuildTaskLogger(this);
 
-            ResolverRequest request = new ResolverRequest(logger);
-
+            ExpertManifest productManifest = null;
             if (ProductManifest != null) {
                 ProductManifest = Path.GetFullPath(ProductManifest);
-                ExpertManifest productManifest = ExpertManifest.Load(ProductManifest);
+                productManifest = ExpertManifest.Load(ProductManifest);
                 productManifest.ModulesDirectory = ModulesRootPath;
-                request.ModuleFactory = productManifest;
             }
 
             LogParameters();
 
-            request.SetDependenciesDirectory(DependenciesDirectory);
-            request.DirectoryContext = BuildType;
+            var workflow = new ResolverWorkflow(logger);
+            workflow.ConfigurationXml = ConfigurationXml;
+            workflow.ModulesRootPath = ModulesRootPath;
+            workflow.DropPath = DropPath;
+            workflow.DependenciesDirectory = DependenciesDirectory;
+            workflow.Request.ModuleFactory = productManifest;
 
             if (!string.IsNullOrEmpty(ModuleName)) {
-                request.AddModule(ModuleName);
+                workflow.Request.AddModule(ModuleName);
             }
 
             if (ModulesInBuild != null) {
                 foreach (ITaskItem module in ModulesInBuild) {
-                    request.AddModule(module.ItemSpec);
+                    workflow.Request.AddModule(module.ItemSpec);
                 }
             }
 
-            ExpertModuleResolver moduleResolver = new ExpertModuleResolver(new PhysicalFileSystem(ModulesRootPath));
-            moduleResolver.AddDependencySource(DropPath, ExpertModuleResolver.DropLocation);
-
-            List<IDependencyResolver> resolvers = new List<IDependencyResolver>();
-            if (IncludeResolver(nameof(ExpertModuleResolver))) {
-                resolvers.Add(moduleResolver);
-            }
-
-            if (IncludeResolver(nameof(NupkgResolver))) {
-                resolvers.Add(new NupkgResolver());
-            }
-
-            Resolver resolver = new Resolver(logger, resolvers.ToArray());
-            resolver.ResolveDependencies(request, cancellationTokenSource.Token);
+            workflow.Run(cancellationTokenSource.Token);
 
             return !Log.HasLoggedErrors;
         }
@@ -111,18 +110,6 @@ namespace Aderant.Build.Tasks {
             }
         }
 
-        private bool IncludeResolver(string name) {
-            if (enabledResolvers == null) {
-                return true;
-            }
-
-            var includeResolver = enabledResolvers != null && enabledResolvers.Contains(name);
-            if (!includeResolver) {
-                Log.LogMessage($"Resolver '{name}' is not enabled.");
-            }
-
-            return includeResolver;
-        }
 
         private void LogParameters() {
             Log.LogMessage(MessageImportance.Normal, "ModulesRootPath: " + ModulesRootPath, null);

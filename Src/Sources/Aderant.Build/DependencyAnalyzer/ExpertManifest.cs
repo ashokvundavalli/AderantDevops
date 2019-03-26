@@ -31,7 +31,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 var dependencies = dependenciesFile.GetDependenciesInGroup(Domain.GroupName(Constants.MainDependencyGroup));
 
                 return wrappedManifest.ReferencedModules.Union(
-                    dependencies.Select(s => s.Key.Item1).Select(
+                    dependencies.Select(s => s.Key.Name).Select(
                         s => new ExpertModule(s) {
                             GetAction = GetAction.NuGet,
                         })).ToList();
