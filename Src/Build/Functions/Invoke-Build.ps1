@@ -465,9 +465,15 @@ function global:Invoke-Build2 {
         [switch]$Branch,
 
         [Parameter()]
+        <#
+        Builds all projects and immediate dependencies of those projects. (an immediate dependency has a distance of 1).
+        #>
         [switch]$Downstream,
 
         [Parameter()]
+        <#
+        Builds all projects and dependencies of dependencies (children of children). This is a the full transitive closure.
+        #>
         [switch]$Transitive,
 
         [Parameter()]
@@ -481,7 +487,7 @@ function global:Invoke-Build2 {
         [switch]$Release,
 
         <#
-        Resumes the build from the last failure point.
+        Resumes the build from the last failure point. This switch cannot be combined with other arguments.
         #>
         [Parameter()]
         [switch]$Resume,
@@ -526,7 +532,8 @@ function global:Invoke-Build2 {
         [string[]]$Include = $null,
 
         <#
-        Excludes solutions and projects found under these paths into the build tree. Supports wildcards and relative paths.
+        Excludes solutions and projects found under these paths from the build tree. Supports wildcards and relative paths.
+        Directories and files that are excluded will not participate in build, packaging, or test targets.
         #>
         [Parameter()]
         [string[]]$Exclude = $null,
