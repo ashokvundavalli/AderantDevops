@@ -125,8 +125,8 @@
     <Message Text="UserName:$(_CurrentUserName). gMSA:$(_UserNameEndsWithDollar)" />
 
     <ItemGroup>
-      <ExcludePaths Include=".git" />
-      <ExcludePaths Include=".vs" />
+      <ExcludePaths Include="\.git" />
+      <ExcludePaths Include="\.vs" />
       <ExcludePaths Include="\_" />
       <ExcludePaths Include="TempTemplateTransform\" />
       <ExcludePaths Include="Applications.MatterCenterIntegration\" />
