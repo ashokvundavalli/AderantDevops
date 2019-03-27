@@ -102,9 +102,14 @@ namespace Aderant.Build.Packaging {
                 string localProjectFile = Path.Combine(solutionRoot, projectFile);
                 string directoryOfProject = Path.GetDirectoryName(localProjectFile);
 
-                string originalOutputPath;
                 string outputPath = project.Value.OutputPath.NormalizeTrailingSlashes();
-                originalOutputPath = outputPath;
+
+                if (Path.IsPathRooted(outputPath)) {
+                    logger.Warning($"Skipped restoring artifacts for project: '{project.Key}' as output path: '{outputPath}' is rooted.");
+                    continue;
+                }
+
+                string originalOutputPath = outputPath;
 
                 bool isTestProject = project.Value.IsTestProject;
                 ISet<string> targetDirectories = CreateDestinationDirectoryList(directoryOfProject, originalOutputPath, isTestProject);

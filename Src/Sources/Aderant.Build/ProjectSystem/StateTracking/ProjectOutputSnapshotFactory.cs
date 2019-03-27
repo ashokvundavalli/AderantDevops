@@ -25,7 +25,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
         /// <summary>
         /// The output path of the project.
-        /// Expected to ne project file relative.
+        /// Expected to be project file relative.
         /// </summary>
         public string OutputPath { get; set; }
 
@@ -52,6 +52,8 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         public ProjectOutputSnapshot BuildSnapshot(Guid projectGuid) {
             string projectFile = ProjectFile;
 
+            string projectFileFullPath = ProjectFile;
+
             if (SourcesDirectory != null && projectFile.StartsWith(SourcesDirectory, StringComparison.OrdinalIgnoreCase)) {
                 projectFile = projectFile.Substring(SourcesDirectory.Length)
                     .TrimStart(Path.DirectorySeparatorChar)
@@ -60,12 +62,18 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
             bool isTestProject = IsTestProject();
 
+            string relativeOutputPath = PathUtility.MakeRelative(Path.GetDirectoryName(projectFileFullPath), OutputPath);
+
+            if (Path.IsPathRooted(relativeOutputPath)) {
+                System.Diagnostics.Debugger.Launch();
+                throw new InvalidOperationException($"Project: '{projectFile}' has rooted output path: '{OutputPath}'.");
+            }
 
             var snapshot = new ProjectOutputSnapshot {
                 ProjectFile = projectFile,
                 ProjectGuid = projectGuid,
                 FilesWritten = RemoveIntermediateObjects(CleanFileWrites(FileWrites), IntermediateDirectories),
-                OutputPath = OutputPath,
+                OutputPath = relativeOutputPath,
                 Origin = "ThisBuild",
                 Directory = GetDirectory(SourcesDirectory),
                 IsTestProject = isTestProject,
@@ -77,6 +85,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         private string[] CleanFileWrites(IReadOnlyList<string> fileWrites) {
             if (fileWrites != null) {
                 string[] cleanedFileWrites = new string[fileWrites.Count];
+                string projectFileDirectoryName = Path.GetDirectoryName(ProjectFile);
 
                 for (var i = 0; i < fileWrites.Count; i++) {
                     string fileWrite = fileWrites[i];
@@ -85,7 +94,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
                     // Turns "C:\\B\\516\\2\\s\\Foo\\Bin\\Module\\Notification.zip" into a relative path
                     if (Path.IsPathRooted(cleanFileWrite)) {
-                        cleanFileWrite = PathUtility.MakeRelative(Path.GetDirectoryName(ProjectFile), cleanFileWrite);
+                        cleanFileWrite = PathUtility.MakeRelative(projectFileDirectoryName, cleanFileWrite);
                     }
 
                     cleanedFileWrites[i] = cleanFileWrite;

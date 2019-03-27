@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using Aderant.Build;
 using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
@@ -18,6 +20,7 @@ namespace UnitTest.Build.ProjectSystem {
 
             snapshotBuilder.SourcesDirectory = @"C:\a\b\c";
             snapshotBuilder.ProjectFile = @"C:\a\b\c\d\foo.csproj";
+            snapshotBuilder.OutputPath = @"C:\a\b\c\bin\module\";
 
             var outputFilesSnapshot = snapshotBuilder.BuildSnapshot(Guid.NewGuid());
 
@@ -25,6 +28,19 @@ namespace UnitTest.Build.ProjectSystem {
 
             Assert.AreEqual(1, service.Outputs.Keys.Count);
             Assert.IsTrue(service.Outputs.ContainsKey(@"d\foo.csproj"));
+        }
+
+        [TestMethod]
+        public void Project_output_path_is_relative() {
+            ProjectOutputSnapshotBuilder snapshotBuilder = new ProjectOutputSnapshotBuilder {
+                SourcesDirectory = @"C:\a\b\c",
+                ProjectFile = @"C:\a\b\c\d\foo.csproj",
+                OutputPath = @"C:\a\b\c\bin\module\"
+            };
+
+            ProjectOutputSnapshot outputFilesSnapshot = snapshotBuilder.BuildSnapshot(Guid.NewGuid());
+
+            Assert.IsFalse(Path.IsPathRooted(outputFilesSnapshot.OutputPath));
         }
 
         [TestMethod]

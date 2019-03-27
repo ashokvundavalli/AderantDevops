@@ -585,7 +585,7 @@ namespace Aderant.Build.ProjectSystem {
                 return OutputAssembly + ".msi";
             }
 
-            throw new NotSupportedException("Unable to determine output extension from type:" + OutputType);
+            throw new NotSupportedException($"Unable to determine output extension from type: '{OutputType}' for project: '{FullPath}'.");
         }
 
         public IReadOnlyCollection<IResolvedDependency> GetTextTemplateDependencies() {
