@@ -132,7 +132,7 @@ namespace Aderant.Build.Tasks {
             var specificationElement = new XElement("specification");
             foreach (var file in files) {
                 var directoryName = Path.GetDirectoryName(file).Split(Path.DirectorySeparatorChar).Last();
-                if (directoryName == "Packages" && !file.Contains("BinFiles")) {
+                if (directoryName == "packages" && !file.Contains("BinFiles")) {
                     specificationElement.Add(new XElement("package", new XElement("name", file)));
                 } else {
                     var fileElement = new XElement("file", new XElement("name", file));
