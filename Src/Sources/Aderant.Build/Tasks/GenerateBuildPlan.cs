@@ -118,6 +118,8 @@ namespace Aderant.Build.Tasks {
 
             ImpactedTestAssemblies = projectTree.LoadedConfiguredProjects.Where(proj => proj.AreTestsImpacted).Select(proj => proj.GetOutputAssemblyWithExtension()).ToArray();
 
+            PipelineService.RecordImpactedProjects(projectTree.LoadedConfiguredProjects.Where(proj => proj.IsDirty || proj.DirtyFiles != null && proj.DirtyFiles.Any()).Select(proj => Path.GetDirectoryName(proj.FullPath)));
+
             PipelineService.Publish(context);
         }
 

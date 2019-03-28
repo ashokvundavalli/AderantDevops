@@ -241,6 +241,11 @@ foreach(var replacement in replacements){
       WorkingDirectory="$(TempSolutionDirectory)"
       ParallelCompression="false" />
 
+    <CopyCustomSolution
+        CustomProjects="@(CustomProjectDirectories)"
+        StagingPackageDrop="$(UpdateStagingDirectory)\BinFiles"
+        CustomSolutionZipPath="%(ZipFile.FullPath)" />
+
     <RemoveDir
       Directories="$(TempSolutionDirectory)"/>
 
@@ -275,7 +280,8 @@ foreach(var replacement in replacements){
         SkipPackageValidation="$(SkipPackageValidation)"
         BuildFrom="$(SolutionDirectoryPath)"
         SeedPackageSrc="$(SolutionDirectoryPath)Src\SeedPackages"
-        SeedPackageDrop="$(SolutionDirectoryPath)Bin\Module\Packages" />
+        SeedPackageDrop="$(SolutionDirectoryPath)Bin\Module\Packages"
+        StagingPackageDrop="$(UpdateStagingDirectory)\BinFiles"/>
 
     <SeedPackagePacking
         SkipPackageValidation="$(SkipPackageValidation)"

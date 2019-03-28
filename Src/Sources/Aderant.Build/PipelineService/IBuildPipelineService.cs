@@ -25,11 +25,17 @@ namespace Aderant.Build.PipelineService {
         [OperationContract]
         void RecordProjectOutputs(ProjectOutputSnapshot snapshot);
 
+        [OperationContract]
+        void RecordImpactedProjects(IEnumerable<string> impactedProjects);
+
         /// <summary>
         /// Returns the outputs for a specific container.
         /// </summary>
         [OperationContract]
         IEnumerable<ProjectOutputSnapshot> GetProjectOutputs(string container);
+
+        [OperationContract]
+        IEnumerable<string> GetImpactedProjects();
 
         /// <summary>
         /// Returns the outputs for all projects seen by the build.

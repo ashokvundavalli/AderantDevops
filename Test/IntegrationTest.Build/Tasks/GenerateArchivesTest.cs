@@ -1,10 +1,14 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using Aderant.Build;
 using Aderant.Build.Packaging;
+using Aderant.Build.PipelineService;
 using Aderant.Build.Tasks;
+using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -126,5 +130,75 @@ namespace IntegrationTest.Build.Tasks {
 
             return stopwatch.ElapsedMilliseconds;
         }
+
+        [TestMethod]
+        public void GenerateUpdateZip() {
+            string outputFile = Path.Combine(TestContext.DeploymentDirectory, "update.zip");
+            destinationFiles.Add(outputFile);
+
+            GenerateArchives task = new GenerateArchives {
+                DirectoriesToArchive = new ITaskItem[] { new TaskItem(sourceFiles) },
+                OutputArchives = new ITaskItem[] { new TaskItem(outputFile) },
+                CompressionLevel = "Fastest",
+                BuildEngine = new MockBuildEngine(),
+                CreateManifest = true
+            };
+
+            var context = new BuildOperationContext { BuildMetadata = new BuildMetadata { ScmBranch = "branch/Test" } };
+
+            using (var host = new BuildPipelineServiceHost()) {
+                host.StartService(DateTime.Now.Ticks.ToString());
+                BuildPipelineServiceClient.GetCurrentProxy().Publish(context);
+
+                task.Execute();
+            }
+
+            string manifestPath = Path.Combine(sourceFiles, "Manifest.xml");
+
+            Assert.IsTrue(File.Exists(manifestPath));
+            Assert.IsTrue(File.Exists(outputFile));
+        }
+    }
+    
+    public class MockBuildEngine : IBuildEngine {
+
+        public List<BuildErrorEventArgs> LogErrorEvents = new List<BuildErrorEventArgs>();
+
+        public List<BuildMessageEventArgs> LogMessageEvents = new List<BuildMessageEventArgs>();
+
+        public List<CustomBuildEventArgs> LogCustomEvents = new List<CustomBuildEventArgs>();
+
+        public List<BuildWarningEventArgs> LogWarningEvents = new List<BuildWarningEventArgs>();
+
+        public bool BuildProjectFile(
+            string projectFileName, string[] targetNames,
+            System.Collections.IDictionary globalProperties,
+            System.Collections.IDictionary targetOutputs) {
+            return true;
+        }
+
+        public int ColumnNumberOfTaskNode => 0;
+
+        public bool ContinueOnError => true;
+
+        public int LineNumberOfTaskNode => 0;
+
+        public void LogCustomEvent(CustomBuildEventArgs e) {
+            LogCustomEvents.Add(e);
+        }
+
+        public void LogErrorEvent(BuildErrorEventArgs e) {
+            LogErrorEvents.Add(e);
+        }
+
+        public void LogMessageEvent(BuildMessageEventArgs e) {
+            LogMessageEvents.Add(e);
+        }
+
+        public void LogWarningEvent(BuildWarningEventArgs e) {
+            LogWarningEvents.Add(e);
+        }
+
+        public string ProjectFileOfTaskNode => "fake ProjectFileOfTaskNode";
     }
 }

@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using Microsoft.Build.Framework;
 using System.IO;
 using System.IO.Compression;
 using System.Web;
 using System.Xml.Linq;
 using System.Collections.Generic;
-using System.Net;
 using System.Text.RegularExpressions;
-using System.Xml.XPath;
 using Aderant.Build.SeedPackageValidation;
 
 namespace Aderant.Build.Tasks {
@@ -42,7 +39,7 @@ namespace Aderant.Build.Tasks {
     ///             SeedPackageDrop = "$(SolutionDirectoryPath)Bin\Packages" />
     ///     ]]>
     /// </summary>
-    public class SeedPackagePacking : Microsoft.Build.Utilities.Task {
+    public class SeedPackagePacking : BuildOperationContextTask {
         private Dictionary<string, XDocument> documentCache = new Dictionary<string, XDocument>();
         private List<Error> errors = new List<Error>();
 
@@ -67,7 +64,9 @@ namespace Aderant.Build.Tasks {
 
         public bool CheckForComponentInPackage { get; set; } = true;
 
-        public override bool Execute() {
+        public string StagingPackageDrop { get; set; }
+
+        public override bool ExecuteTask() {
             if (!Directory.Exists(SeedPackageSrc)) {
                 Log.LogMessage("No seed package found. Exiting.");
                 return true;
@@ -95,8 +94,6 @@ namespace Aderant.Build.Tasks {
                 return false;
             }
         }
-
-        
 
         private List<string> CoreValidate() {
             var fileNames = GetFilesInDirectory(SeedPackageSrc).ToList();
@@ -163,7 +160,7 @@ namespace Aderant.Build.Tasks {
                     var packageSrcDir = Path.Combine(SeedPackageSrc, packageName); // "...\Src\SeedPackages\AccountsPayable"
                     var destination = Path.Combine(SeedPackageDrop, packageName + ".zip"); // "...\Bin\Module\Packages\AccountsPayable.zip"
 
-                    Log.LogMessage($@"Zipping seed package definitions from {packageSrcDir} to {destination}");
+                    Log.LogMessage($"Zipping seed package definitions from {packageSrcDir} to {destination}");
                     try {
                         if (File.Exists(destination)) {
                             var fi = new FileInfo(destination);
@@ -174,12 +171,40 @@ namespace Aderant.Build.Tasks {
                             Directory.CreateDirectory(SeedPackageDrop);
                         }
                         ZipFile.CreateFromDirectory(packageSrcDir, destination);
+                        if (SeedContentHasChanges()) {                            
+                            var stagingFileName = Path.Combine(StagingPackageDrop, "Packages", packageName + ".zip");
+                            var updatePackagesFile = stagingFileName.Replace("BinFiles\\", "");
+
+                            var updatePackagesFolder = Path.GetDirectoryName(updatePackagesFile);
+                            if (!Directory.Exists(updatePackagesFolder)) {
+                                Directory.CreateDirectory(updatePackagesFolder);
+                            }
+
+                            var binFilesPackagesFolder = Path.GetDirectoryName(stagingFileName);
+                            if (!Directory.Exists(binFilesPackagesFolder)) {
+                                Directory.CreateDirectory(binFilesPackagesFolder);
+                            }
+
+                            Log.LogMessage($"Seed package content changes detected, copying {packageName}.zip to {stagingFileName}");
+                            File.Copy(destination, stagingFileName);
+                            File.Copy(destination, updatePackagesFile);
+                        }
                         Log.LogMessage($"{dirs.Length} seed package(s) produced.");
                     } catch (Exception ex) {
                         throw new Exception($"Error zipping the seed package(s): {ex.Message}. Source directory: {packageSrcDir}. Destination: {destination}");
                     }
                 }
             }
+        }
+
+        private bool SeedContentHasChanges() {
+            var context = PipelineService.GetContext();
+            var changes = context.SourceTreeMetadata?.Changes.ToList();
+            if (context.BuildMetadata.IsPullRequest && changes != null && changes.Any(c => c.Path.IndexOf("SeedPackage", StringComparison.OrdinalIgnoreCase) > 0)) {
+                return true;
+            }
+
+            return false;
         }
 
         // Package validations

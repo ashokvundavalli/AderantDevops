@@ -80,6 +80,7 @@
     <BuildAndPackageDependsOn>
       PrepareBuildEnvironment;
       CleanStagingDirectory;
+      MakeStagingDirectory;
       GetTfvc;
       GatherProjectsToBuild;
       GetAllDependencies;
@@ -88,6 +89,7 @@
       RunTests;
       WriteStateFiles;
       PackageProduct;
+      ProduceUpdatePackage;
       CreateServerImage;
       <!--RunIntegrationTests;-->
       CopyToDrop;
@@ -113,6 +115,10 @@
     <MakeDir Directories="$(UpdateStagingDirectory)" />
   </Target>
 
+  <Target Name="MakeStagingDirectory">
+    <MakeDir Condition="!Exists('$(UpdateStagingDirectory)')"
+      Directories="$(UpdateStagingDirectory)" />
+  </Target>
 
   <Target Name="GatherProjectsToBuild">
     <Message Text="IsDesktopBuild: $(IsDesktopBuild)" />
@@ -530,10 +536,13 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
       <UpdateArchiveFile>$(UpdateStagingDirectory)Update.zip</UpdateArchiveFile>
     </PropertyGroup>
 
+    <Delete Files="$(UpdateArchiveFile)" />
+
     <GenerateArchives
       DirectoriesToArchive="$(UpdateStagingDirectory)"
       OutputArchives="$(UpdateArchiveFile)"
-      CompressionLevel="$(CompressionLevel)">
+      CompressionLevel="$(CompressionLevel)"
+      CreateManifest="true">
       <Output TaskParameter="ArchivedFiles" ItemName="ArtifactArchives" />
     </GenerateArchives>
 

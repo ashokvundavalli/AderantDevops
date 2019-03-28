@@ -412,7 +412,7 @@
     <MSBuild Condition="'$(IncludeOutputInUpdatePackage)' == 'true'"
              Projects="$(MSBuildProjectFullPath)"
              Targets="CopyFilesToOutputDirectory"
-             Properties="OutDir=$(UpdateStagingDirectory);
+             Properties="OutDir=$(UpdateStagingDirectory)\BinFiles;
                          CreateHardLinksForCopyAdditionalFilesIfPossible=true;
                          CopyOutputSymbolsToOutputDirectory=false;
                          _DocumentationFileProduced=false" />

@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Aderant.Build.Packaging;
 using Aderant.Build.Utilities;
 using Microsoft.Build.Framework;
@@ -11,7 +12,7 @@ using Microsoft.Build.Utilities;
 using Task = Microsoft.Build.Utilities.Task;
 
 namespace Aderant.Build.Tasks {
-    public sealed class GenerateArchives : Task {
+    public sealed class GenerateArchives : BuildOperationContextTask {
 
         private CompressionLevel compressionLevel;
 
@@ -27,12 +28,14 @@ namespace Aderant.Build.Tasks {
             set { compressionLevel = (CompressionLevel)Enum.Parse(typeof(CompressionLevel), value); }
         }
 
+        public bool CreateManifest { get; set; }
+
         [Output]
         public ITaskItem[] ArchivedFiles { get; private set; }
 
         public string[] ExcludeFilter { get; set; }
 
-        public override bool Execute() {
+        public override bool ExecuteTask() {
             if (DirectoriesToArchive == null || OutputArchives.Length == 0) {
                 Log.LogError("Value {0} cannot be null or empty.", nameof(DirectoriesToArchive));
                 return !Log.HasLoggedErrors;
@@ -58,6 +61,9 @@ namespace Aderant.Build.Tasks {
                 }
 
                 try {
+                    if (CreateManifest) {
+                        GenerateManifest(directoriesToArchive.First().Location);
+                    }                    
                     ProcessDirectories(directoriesToArchive, compressionLevel);
                 } catch (AggregateException exception) {
                     Log.LogError(exception.Flatten().ToString());
@@ -118,6 +124,45 @@ namespace Aderant.Build.Tasks {
 
                     File.Move(temp, directory.Destination);
                 });
+        }
+
+        internal void GenerateManifest(string folder) {
+            var files = Directory.GetFiles(folder, "*", SearchOption.AllDirectories);
+
+            var specificationElement = new XElement("specification");
+            foreach (var file in files) {
+                var directoryName = Path.GetDirectoryName(file).Split(Path.DirectorySeparatorChar).Last();
+                if (directoryName == "Packages" && !file.Contains("BinFiles")) {
+                    specificationElement.Add(new XElement("package", new XElement("name", file)));
+                } else {
+                    var fileElement = new XElement("file", new XElement("name", file));
+                    
+                    if (directoryName != "BinFiles") {
+                        fileElement.Add(new XElement("relativePath", directoryName));
+                    }
+                    specificationElement.Add(fileElement);
+                }
+            }
+
+            var updateName = PipelineService.GetContext().BuildMetadata.ScmBranch;
+            updateName = Path.GetFileName(updateName);
+
+            XElement manifest = new XElement("Package", new XAttribute("Version", "ManifestV5"),
+                new XElement("id", Guid.NewGuid()),
+                new XElement("name", updateName),
+                new XElement("description", $"Update package for branch {updateName}"),
+                new XElement("instructions", "If you have customizations, please ensure they are reapplied after importing this Update."),
+                new XElement("version", "1.8.0"),
+                new XElement("createDate", DateTime.Now.ToUniversalTime()),
+                new XElement("isPatch", true),
+                new XElement("owner",
+                    new XElement("id", "00000000-0000-0000-0000-00000000000a"),
+                    new XElement("name", "Aderant")
+                    ),
+                specificationElement
+            );
+
+            manifest.Save(Path.Combine(folder, "Manifest.xml"));
         }
     }
 }

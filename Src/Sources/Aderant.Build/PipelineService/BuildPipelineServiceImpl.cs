@@ -36,6 +36,8 @@ namespace Aderant.Build.PipelineService {
             this.consoleAdapter = consoleAdapter;
         }
 
+        private List<string> ImpactedProjets = new List<string>();
+
         internal ProjectTreeOutputSnapshot Outputs { get; } = new ProjectTreeOutputSnapshot();
 
         public void Publish(BuildOperationContext context) {
@@ -55,12 +57,20 @@ namespace Aderant.Build.PipelineService {
             Outputs[snapshot.ProjectFile] = snapshot;
         }
 
+        public void RecordImpactedProjects(IEnumerable<string> impactedProjects) {
+            ImpactedProjets = impactedProjects.ToList();
+        }
+
         public IEnumerable<ProjectOutputSnapshot> GetProjectOutputs(string container) {
             return Outputs.GetProjectsForTag(container);
         }
 
         public IEnumerable<ProjectOutputSnapshot> GetProjectSnapshots() {
             return Outputs.Values;
+        }
+
+        public IEnumerable<string> GetImpactedProjects() {
+            return ImpactedProjets;
         }
 
         public void RecordArtifacts(string container, IEnumerable<ArtifactManifest> manifests) {
