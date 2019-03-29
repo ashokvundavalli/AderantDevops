@@ -155,6 +155,7 @@ namespace Aderant.Build.Tasks {
             if (dirs.Length == 0) {
                 Log.LogMessage($"No seed package found. Exiting.");
             } else {
+                System.Diagnostics.Debugger.Launch();
                 foreach (var dir in dirs) {
                     var packageName = dir.Name; // "AccountsPayable"
                     var packageSrcDir = Path.Combine(SeedPackageSrc, packageName); // "...\Src\SeedPackages\AccountsPayable"
@@ -171,7 +172,7 @@ namespace Aderant.Build.Tasks {
                             Directory.CreateDirectory(SeedPackageDrop);
                         }
                         ZipFile.CreateFromDirectory(packageSrcDir, destination);
-                        if (SeedContentHasChanges()) {                            
+                        if (SeedContentHasChanges() && !String.IsNullOrEmpty(StagingPackageDrop)) {                            
                             var stagingFileName = Path.Combine(StagingPackageDrop, "Packages", packageName + ".zip");
                             var updatePackagesFile = stagingFileName.Replace("BinFiles\\", "");
 
