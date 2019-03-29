@@ -155,7 +155,6 @@ namespace Aderant.Build.Tasks {
             if (dirs.Length == 0) {
                 Log.LogMessage($"No seed package found. Exiting.");
             } else {
-                System.Diagnostics.Debugger.Launch();
                 foreach (var dir in dirs) {
                     var packageName = dir.Name; // "AccountsPayable"
                     var packageSrcDir = Path.Combine(SeedPackageSrc, packageName); // "...\Src\SeedPackages\AccountsPayable"
