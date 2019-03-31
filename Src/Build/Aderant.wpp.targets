@@ -140,10 +140,15 @@
       <Output TaskParameter="InPath" ItemName="FilesFoundInPath" />
     </FindUnderPath>
 
+    <ItemGroup>
+      <!--Keep JS files as these are usually generated -->
+      <_Filtered Include="@(FilesFoundInPath)" Condition="'%(Extension)' != '.js'" />
+    </ItemGroup>
+
     <Message Text="Excluding test files from web package $(MSBuildProjectDirectory) -> @(FilesFoundInPath)" />
 
     <ItemGroup>
-      <FilesForPackagingFromProject Remove="@(FilesFoundInPath)" />
+      <FilesForPackagingFromProject Remove="@(_Filtered)" />
     </ItemGroup>
 
   </Target>
