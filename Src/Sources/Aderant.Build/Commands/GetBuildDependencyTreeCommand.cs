@@ -47,7 +47,7 @@ namespace Aderant.Build.Commands {
                 collector.ExtensibilityImposition = new ExtensibilityImposition(null);
             }
 
-            collector.ExtensibilityImposition.RequireSynchronizedOutputPathsByConfiguration = true;
+            collector.ExtensibilityImposition.RequireSynchronizedOutputPaths = true;
 
             projectTree.LoadProjects(
                 resolvedPaths,

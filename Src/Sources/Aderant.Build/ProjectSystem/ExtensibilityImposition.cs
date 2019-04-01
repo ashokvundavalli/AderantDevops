@@ -18,6 +18,9 @@ namespace Aderant.Build.ProjectSystem {
 
         public bool AlwaysBuildWebProjects { get; set; }
 
-        public bool RequireSynchronizedOutputPathsByConfiguration { get; set; }
+        /// <summary>
+        /// Requires that for a given platform that all configurations within that platform have the same output path pattern.
+        /// </summary>
+        public bool RequireSynchronizedOutputPaths { get; set; }
     }
 }

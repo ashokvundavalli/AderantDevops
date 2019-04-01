@@ -295,7 +295,10 @@ namespace Aderant.Build.ProjectSystem {
         /// </summary>
         internal DirectoryNode DirectoryNode { get; set; }
 
-        public bool RequireSynchronizedOutputPathsByConfiguration { get; set; }
+        /// <summary>
+        /// Requires that for a given platform that all configurations within that platform have the same output path pattern.
+        /// </summary>
+        public bool RequireSynchronizedOutputPaths { get; set; }
 
         public virtual Guid ProjectGuid {
             get { return projectGuid.Evaluate(this); }
@@ -598,36 +601,43 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         public void Validate(string configuration, string platform) {
-            if (RequireSynchronizedOutputPathsByConfiguration) {
-                if (project != null) {
-                    var projectValue = project.Value;
+            if (RequireSynchronizedOutputPaths) {
+                ValidateProperty(configuration, platform, "OutputPath");
+                ValidateProperty(configuration, platform, "PlatformTarget");
+            }
+        }
 
-                    List<ProjectPropertyGroupElement> groups = new List<ProjectPropertyGroupElement>();
+        private void ValidateProperty(string configuration, string platform, string property) {
+            if (project != null) {
+                var projectValue = project.Value;
 
-                    if (platform == ProjectBuildConfiguration.ReleaseOnAnyCpu.PlatformName) {
-                        if (string.Equals(configuration, "Debug", StringComparison.OrdinalIgnoreCase) || string.Equals(configuration, "Release", StringComparison.OrdinalIgnoreCase)) {
+                List<ProjectPropertyGroupElement> groups = new List<ProjectPropertyGroupElement>();
 
-                            foreach (ProjectPropertyGroupElement group in projectValue.Xml.PropertyGroups) {
-                                if (group.Condition != null) {
-                                    string condition = group.Condition.Replace(" ", "").Replace("'", "");
+                if (platform == ProjectBuildConfiguration.ReleaseOnAnyCpu.PlatformName) {
+                    if (string.Equals(configuration, "Debug", StringComparison.OrdinalIgnoreCase) || string.Equals(configuration, "Release", StringComparison.OrdinalIgnoreCase)) {
 
-                                    foreach (var expression in conditions) {
-                                        if (condition.IndexOf(expression, StringComparison.OrdinalIgnoreCase) >= 0) {
-                                            groups.Add(group);
-                                        }
+                        foreach (ProjectPropertyGroupElement group in projectValue.Xml.PropertyGroups) {
+                            if (group.Condition != null) {
+                                string condition = group.Condition.Replace(" ", "").Replace("'", "");
+
+                                foreach (var expression in conditions) {
+                                    if (condition.IndexOf(expression, StringComparison.OrdinalIgnoreCase) >= 0) {
+                                        groups.Add(group);
                                     }
                                 }
                             }
+                        }
 
-                            var select = groups.SelectMany(s => s.Properties.Where(p => string.Equals(p.Name, "OutputPath", StringComparison.OrdinalIgnoreCase)));
+                        var values = groups.SelectMany(s => s.Properties.Where(p => string.Equals(p.Name, property, StringComparison.OrdinalIgnoreCase)));
 
-                            var groupBy = select.GroupBy(g => g.Value.TrimTrailingSlashes(), StringComparer.OrdinalIgnoreCase)
+                        if (values.Any()) {
+                            var result = values.GroupBy(g => g.Value.TrimTrailingSlashes(), StringComparer.OrdinalIgnoreCase)
                                 .Where(g => g.Count() > 1)
                                 .Select(y => y.Key)
                                 .ToList();
 
-                            if (groupBy.Count == 0) {
-                                throw new BuildPlatformException($"The project {FullPath} defines two different output paths for the platform {platform}.");
+                            if (result.Count == 0) {
+                                throw new BuildPlatformException($"The project {FullPath} defines conflicting values for {property} for the platform {platform}. Value(s):{string.Join(";", values.Select(s => s.Value + " " + s.Location.LocationString))}");
                             }
                         }
                     }

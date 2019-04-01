@@ -156,7 +156,7 @@ namespace Aderant.Build.ProjectSystem {
 
                                 if (collector.ExtensibilityImposition != null) {
                                     if (collector.ExtensibilityImposition != null) {
-                                        project.RequireSynchronizedOutputPathsByConfiguration = collector.ExtensibilityImposition.RequireSynchronizedOutputPathsByConfiguration;
+                                        project.RequireSynchronizedOutputPaths = collector.ExtensibilityImposition.RequireSynchronizedOutputPaths;
                                     }
                                 }
 

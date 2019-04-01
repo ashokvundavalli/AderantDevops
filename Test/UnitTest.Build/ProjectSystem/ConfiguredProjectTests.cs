@@ -60,7 +60,7 @@ namespace UnitTest.Build.ProjectSystem {
             var tree = new Mock<IProjectTree>();
 
             var project1 = new ConfiguredProject(tree.Object);
-            project1.RequireSynchronizedOutputPathsByConfiguration = true;
+            project1.RequireSynchronizedOutputPaths = true;
 
             project1.Initialize(
                 new Lazy<ProjectRootElement>(
@@ -90,7 +90,7 @@ namespace UnitTest.Build.ProjectSystem {
             var tree = new Mock<IProjectTree>();
 
             var project1 = new ConfiguredProject(tree.Object);
-            project1.RequireSynchronizedOutputPathsByConfiguration = true;
+            project1.RequireSynchronizedOutputPaths = true;
 
             project1.Initialize(
                 new Lazy<ProjectRootElement>(
@@ -116,7 +116,7 @@ namespace UnitTest.Build.ProjectSystem {
             var tree = new Mock<IProjectTree>();
 
             var project1 = new ConfiguredProject(tree.Object);
-            project1.RequireSynchronizedOutputPathsByConfiguration = true;
+            project1.RequireSynchronizedOutputPaths = true;
 
             project1.Initialize(
                 new Lazy<ProjectRootElement>(
@@ -130,6 +130,64 @@ namespace UnitTest.Build.ProjectSystem {
                         propertyGroup2.Condition = " '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ";
                         propertyGroup2.AddProperty("OutputPath", @"\..\Bin\Module\\\");
 
+                        return element;
+                    }),
+                "");
+
+            project1.Validate("Debug", "AnyCPU");
+        }
+
+        [TestMethod]
+        public void When_single_path_defined_then_no_error() {
+            var tree = new Mock<IProjectTree>();
+
+            var project1 = new ConfiguredProject(tree.Object);
+            project1.RequireSynchronizedOutputPaths = true;
+
+            project1.Initialize(
+                new Lazy<ProjectRootElement>(
+                    () => {
+                        var reader = XmlReader.Create(new StringReader(ProjectSystemResources.Project_with_single_output_path));
+                        var element = ProjectRootElement.Create(reader);
+                        return element;
+                    }),
+                "");
+
+            project1.Validate("Debug", "AnyCPU");
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(BuildPlatformException))]
+        public void Platform_target_validation() {
+            var tree = new Mock<IProjectTree>();
+
+            var project1 = new ConfiguredProject(tree.Object);
+            project1.RequireSynchronizedOutputPaths = true;
+
+            project1.Initialize(
+                new Lazy<ProjectRootElement>(
+                    () => {
+                        var reader = XmlReader.Create(new StringReader(ProjectSystemResources.Conflicting_platformtarget));
+                        var element = ProjectRootElement.Create(reader);
+                        return element;
+                    }),
+                "");
+
+            project1.Validate("Debug", "AnyCPU");
+        }
+
+        [TestMethod]
+        public void Platform_target_validation_can_be_disabled() {
+            var tree = new Mock<IProjectTree>();
+
+            var project1 = new ConfiguredProject(tree.Object);
+            project1.RequireSynchronizedOutputPaths = false;
+
+            project1.Initialize(
+                new Lazy<ProjectRootElement>(
+                    () => {
+                        var reader = XmlReader.Create(new StringReader(ProjectSystemResources.Conflicting_platformtarget));
+                        var element = ProjectRootElement.Create(reader);
                         return element;
                     }),
                 "");
@@ -161,7 +219,7 @@ namespace UnitTest.Build.ProjectSystem {
             var tree = new Mock<IProjectTree>();
 
             var project = new ConfiguredProject(tree.Object);
-            project.RequireSynchronizedOutputPathsByConfiguration = true;
+            project.RequireSynchronizedOutputPaths = true;
 
             project.Initialize(
                 new Lazy<ProjectRootElement>(

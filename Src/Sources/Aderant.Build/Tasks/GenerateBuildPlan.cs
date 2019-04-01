@@ -64,6 +64,11 @@ namespace Aderant.Build.Tasks {
 
         public bool AlwaysBuildWebProjects { get; set; }
 
+        /// <summary>
+        /// Requires that for a given platform that all configurations within that platform have the same output path pattern.
+        /// </summary>
+        public bool RequireSynchronizedOutputPaths { get; set; }
+
         [Output]
         public string[] DirectoriesInBuild { get; set; }
 
@@ -90,6 +95,7 @@ namespace Aderant.Build.Tasks {
             ExtensibilityController controller = new ExtensibilityController();
             var extensibilityImposition = controller.GetExtensibilityImposition(ExtensibilityFiles);
             extensibilityImposition.AlwaysBuildWebProjects = AlwaysBuildWebProjects;
+            extensibilityImposition.RequireSynchronizedOutputPaths = RequireSynchronizedOutputPaths;
 
             var projectTree = ProjectTree.CreateDefaultImplementation(new BuildTaskLogger(Log));
 

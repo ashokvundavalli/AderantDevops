@@ -72,6 +72,7 @@
 
   <PropertyGroup>
     <AlwaysBuildWebProjects Condition="'$(AlwaysBuildWebProjects)' == ''">true</AlwaysBuildWebProjects>
+    <RequireSynchronizedOutputPaths Condition="'$(RequireSynchronizedOutputPaths)' == ''">false</RequireSynchronizedOutputPaths>
   </PropertyGroup>
 
   <Import Project="$(ParametersFile)" Condition="Exists($(ParametersFile))" />
@@ -199,6 +200,7 @@
       MakeFiles="@(DirectoryMakeFiles)"
       ProjectFiles="@(ProjectFiles)"
       AlwaysBuildWebProjects="$(AlwaysBuildWebProjects)"
+      RequireSynchronizedOutputPaths="$(RequireSynchronizedOutputPaths)"
       GroupExecutionFile="$(MSBuildThisFileDirectory)ComboBuild.Core.targets"
       BeforeProjectFile="$(MSBuildThisFileDirectory)ComboBuild.Pre.targets"
       AfterProjectFile="$(MSBuildThisFileDirectory)ComboBuild.Post.targets"

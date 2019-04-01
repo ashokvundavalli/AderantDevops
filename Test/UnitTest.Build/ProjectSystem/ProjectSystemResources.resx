@@ -118,7 +118,13 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="Conflicting_platformtarget" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>resources\conflicting_platformtarget.csproj;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
   <data name="MyWindowsInstallerApp" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>resources\mywindowsinstallerapp.wixproj;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="Project_with_single_output_path" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>resources\project_with_single_output_path.csproj;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
 </root>
