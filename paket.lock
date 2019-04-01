@@ -1,95 +1,95 @@
 REFERENCES: STRICT
-FRAMEWORK: NET46, NET45
+RESTRICTION: || (== net45) (== net46)
 NUGET
   remote: https://www.nuget.org/api/v2
-    Castle.Core (4.3.1) - framework: net45, net46
-    Microsoft.AspNet.WebApi.Client (5.2.7) - framework: net45, net46
-      Newtonsoft.Json (>= 6.0.4) - framework: net45, net46
-    Microsoft.AspNet.WebApi.Core (5.2.7) - framework: net45, net46
-      Microsoft.AspNet.WebApi.Client (>= 5.2.7) - framework: net45, net46
-    Microsoft.AspNet.WebApi.WebHost (5.2.7) - framework: net45, net46
-      Microsoft.AspNet.WebApi.Core (>= 5.2.7 < 5.3) - framework: net45, net46
-    Microsoft.AspNet.WebHooks.Common (1.2.1) - framework: net45, net46
-      Microsoft.AspNet.WebApi.Core (>= 5.2.2) - framework: net45, net46
-    Microsoft.AspNet.WebHooks.Receivers (1.2.1) - framework: net45, net46
-      Microsoft.AspNet.WebApi.Core (>= 5.2.2) - framework: net45, net46
-      Microsoft.AspNet.WebHooks.Common (>= 1.2.1) - framework: net45, net46
-    Microsoft.AspNet.WebHooks.Receivers.Generic (1.2.1) - framework: net45, net46
-      Microsoft.AspNet.WebApi.Core (>= 5.2.2) - framework: net45, net46
-      Microsoft.AspNet.WebHooks.Common (>= 1.2.1) - framework: net45, net46
-      Microsoft.AspNet.WebHooks.Receivers (>= 1.2.1) - framework: net45, net46
-    Microsoft.AspNet.WebHooks.Receivers.VSTS (1.2.1) - framework: net45, net46
-      Microsoft.AspNet.WebApi.Core (>= 5.2.2) - framework: net45, net46
-      Microsoft.AspNet.WebHooks.Common (>= 1.2.1) - framework: net45, net46
-      Microsoft.AspNet.WebHooks.Receivers (>= 1.2.1) - framework: net45, net46
-    Microsoft.Azure.ConfigurationManager (4.0) - framework: net45, net46
-      Newtonsoft.Json (>= 9.0.1) - framework: net46
-    Microsoft.Azure.KeyVault.Core (3.0.1) - framework: net45, net46
-    Microsoft.Azure.Services.AppAuthentication (1.0.3) - framework: net45, net46
-      Microsoft.IdentityModel.Clients.ActiveDirectory (>= 3.14.2) - framework: net46
-    Microsoft.Bcl (1.1.10) - framework: net45, net46
-      Microsoft.Bcl.Build (>= 1.0.14) - framework: net45, net46
-    Microsoft.Bcl.Build (1.0.21) - import_targets: false, framework: net45, net46
-    Microsoft.IdentityModel.Clients.ActiveDirectory (4.5) - framework: net45, net46
-    Microsoft.IdentityModel.JsonWebTokens (5.3) - framework: net45
-      Microsoft.IdentityModel.Tokens (>= 5.3) - framework: net45
-      Newtonsoft.Json (>= 10.0.1) - framework: net45
-    Microsoft.IdentityModel.Logging (5.3) - framework: net45, net46
-    Microsoft.IdentityModel.Tokens (5.3) - framework: net45, net46
-      Microsoft.IdentityModel.Logging (>= 5.3) - framework: net45
-      Newtonsoft.Json (>= 10.0.1) - framework: net45
-    Microsoft.Net.Http (2.2.22) - framework: net45, net46
-      Microsoft.Bcl (>= 1.1.9) - framework: net45, net46
-      Microsoft.Bcl.Build (>= 1.0.14) - framework: net45, net46
-    Microsoft.TeamFoundation.DistributedTask.Common.Contracts (15.131.1) - framework: net45, net46
-      Microsoft.VisualStudio.Services.Client (15.131.1) - framework: net45, net46
-    Microsoft.TeamFoundationServer.Client (15.131.1) - framework: net45, net46
-      Microsoft.AspNet.WebApi.Client (>= 5.2.3) - framework: net45, net46
-      Microsoft.TeamFoundation.DistributedTask.Common.Contracts (15.131.1) - framework: net45, net46
-      Microsoft.VisualStudio.Services.Client (15.131.1) - framework: net45, net46
-      Newtonsoft.Json (>= 9.0.1) - framework: net45, net46
-    Microsoft.TeamFoundationServer.ExtendedClient (15.131.1) - framework: net45, net46
-      Microsoft.AspNet.WebApi.Client (>= 5.2.3) - framework: net45, net46
-      Microsoft.AspNet.WebApi.Core (>= 5.2.3) - framework: net45, net46
-      Microsoft.IdentityModel.Clients.ActiveDirectory (>= 3.17.2) - framework: net45, net46
-      Microsoft.TeamFoundationServer.Client (15.131.1) - framework: net45, net46
-      Microsoft.VisualStudio.Services.Client (15.131.1) - framework: net45, net46
-      Microsoft.VisualStudio.Services.InteractiveClient (15.131.1) - framework: net45, net46
-      Newtonsoft.Json (>= 9.0.1) - framework: net45, net46
-      System.IdentityModel.Tokens.Jwt (>= 5.1.5) - framework: net45, net46
-    Microsoft.VisualStudio.Services.Client (15.131.1) - framework: net45, net46
-      Microsoft.AspNet.WebApi.Client (>= 5.2.3) - framework: net45, net46
-      Newtonsoft.Json (>= 9.0.1) - framework: net45, net46
-    Microsoft.VisualStudio.Services.InteractiveClient (15.131.1) - framework: net45, net46
-      Microsoft.IdentityModel.Clients.ActiveDirectory (>= 3.17.2) - framework: net45, net46
-      Microsoft.IdentityModel.Logging (>= 1.1.5) - framework: net45, net46
-      Microsoft.IdentityModel.Tokens (>= 5.1.5) - framework: net45, net46
-      Microsoft.VisualStudio.Services.Client (15.131.1) - framework: net45, net46
-      Newtonsoft.Json (>= 9.0.1) - framework: net45, net46
-      System.IdentityModel.Tokens.Jwt (>= 5.1.5) - framework: net45, net46
-      WindowsAzure.ServiceBus (>= 3.3.2) - framework: net45, net46
-    Microsoft.WindowsAPICodePack-Core (1.1.0.2) - framework: net45, net46
-    Microsoft.WindowsAPICodePack-Shell (1.1) - framework: net45, net46
-      Microsoft.WindowsAPICodePack-Core (>= 1.1) - framework: net45, net46
-    Moq (4.10) - framework: net45, net46
-      Castle.Core (>= 4.3.1) - framework: net45, net46
-      System.Threading.Tasks.Extensions (>= 4.3) - framework: net45, net46
-      System.ValueTuple (>= 4.4) - framework: net45, net46
-    Newtonsoft.Json (10.0.3) - framework: net45, net46
-    System.IdentityModel.Tokens.Jwt (5.3) - framework: net45, net46
-      Microsoft.IdentityModel.JsonWebTokens (>= 5.3) - framework: net45
-      Microsoft.IdentityModel.Tokens (>= 5.3) - framework: net45
-      Newtonsoft.Json (>= 10.0.1) - framework: net45
-    System.Threading.Tasks.Extensions (4.3) - framework: net45, net46
-    System.ValueTuple (4.4) - framework: net45, net46
-    WindowsAPICodePack-Core (1.1.2) - framework: net45, net46
-    WindowsAzure.ServiceBus (5.1) - framework: net45, net46
-      Microsoft.Azure.Services.AppAuthentication (>= 1.0.3) - framework: net45, net46
-      Microsoft.IdentityModel.Clients.ActiveDirectory (>= 3.19.8) - framework: net45, net46
-      System.IdentityModel.Tokens.Jwt (>= 4.0.4.403061554) - framework: net45, net46
-    WindowsAzure.Storage (9.3.3) - framework: net45, net46
-      Microsoft.Azure.KeyVault.Core (>= 1.0) - framework: net45, net46
-      Newtonsoft.Json (>= 10.0.2) - framework: net45, net46
+    Castle.Core (4.3.1)
+    Microsoft.AspNet.WebApi.Client (5.2.7)
+      Newtonsoft.Json (>= 6.0.4)
+    Microsoft.AspNet.WebApi.Core (5.2.7)
+      Microsoft.AspNet.WebApi.Client (>= 5.2.7)
+    Microsoft.AspNet.WebApi.WebHost (5.2.7)
+      Microsoft.AspNet.WebApi.Core (>= 5.2.7 < 5.3)
+    Microsoft.AspNet.WebHooks.Common (1.2.1)
+      Microsoft.AspNet.WebApi.Core (>= 5.2.2)
+    Microsoft.AspNet.WebHooks.Receivers (1.2.1)
+      Microsoft.AspNet.WebApi.Core (>= 5.2.2)
+      Microsoft.AspNet.WebHooks.Common (>= 1.2.1)
+    Microsoft.AspNet.WebHooks.Receivers.Generic (1.2.1)
+      Microsoft.AspNet.WebApi.Core (>= 5.2.2)
+      Microsoft.AspNet.WebHooks.Common (>= 1.2.1)
+      Microsoft.AspNet.WebHooks.Receivers (>= 1.2.1)
+    Microsoft.AspNet.WebHooks.Receivers.VSTS (1.2.1)
+      Microsoft.AspNet.WebApi.Core (>= 5.2.2)
+      Microsoft.AspNet.WebHooks.Common (>= 1.2.1)
+      Microsoft.AspNet.WebHooks.Receivers (>= 1.2.1)
+    Microsoft.Azure.ConfigurationManager (4.0)
+      Newtonsoft.Json (>= 9.0.1) - restriction: == net46
+    Microsoft.Azure.KeyVault.Core (3.0.1)
+    Microsoft.Azure.Services.AppAuthentication (1.0.3)
+      Microsoft.IdentityModel.Clients.ActiveDirectory (>= 3.14.2) - restriction: == net46
+    Microsoft.Bcl (1.1.10)
+      Microsoft.Bcl.Build (>= 1.0.14)
+    Microsoft.Bcl.Build (1.0.21) - import_targets: false
+    Microsoft.IdentityModel.Clients.ActiveDirectory (4.5)
+    Microsoft.IdentityModel.JsonWebTokens (5.3) - restriction: == net45
+      Microsoft.IdentityModel.Tokens (>= 5.3) - restriction: == net45
+      Newtonsoft.Json (>= 10.0.1) - restriction: == net45
+    Microsoft.IdentityModel.Logging (5.3)
+    Microsoft.IdentityModel.Tokens (5.3)
+      Microsoft.IdentityModel.Logging (>= 5.3) - restriction: == net45
+      Newtonsoft.Json (>= 10.0.1) - restriction: == net45
+    Microsoft.Net.Http (2.2.22)
+      Microsoft.Bcl (>= 1.1.9)
+      Microsoft.Bcl.Build (>= 1.0.14)
+    Microsoft.TeamFoundation.DistributedTask.Common.Contracts (15.131.1)
+      Microsoft.VisualStudio.Services.Client (15.131.1)
+    Microsoft.TeamFoundationServer.Client (15.131.1)
+      Microsoft.AspNet.WebApi.Client (>= 5.2.3)
+      Microsoft.TeamFoundation.DistributedTask.Common.Contracts (15.131.1)
+      Microsoft.VisualStudio.Services.Client (15.131.1)
+      Newtonsoft.Json (>= 9.0.1)
+    Microsoft.TeamFoundationServer.ExtendedClient (15.131.1)
+      Microsoft.AspNet.WebApi.Client (>= 5.2.3)
+      Microsoft.AspNet.WebApi.Core (>= 5.2.3)
+      Microsoft.IdentityModel.Clients.ActiveDirectory (>= 3.17.2)
+      Microsoft.TeamFoundationServer.Client (15.131.1)
+      Microsoft.VisualStudio.Services.Client (15.131.1)
+      Microsoft.VisualStudio.Services.InteractiveClient (15.131.1)
+      Newtonsoft.Json (>= 9.0.1)
+      System.IdentityModel.Tokens.Jwt (>= 5.1.5)
+    Microsoft.VisualStudio.Services.Client (15.131.1)
+      Microsoft.AspNet.WebApi.Client (>= 5.2.3)
+      Newtonsoft.Json (>= 9.0.1)
+    Microsoft.VisualStudio.Services.InteractiveClient (15.131.1)
+      Microsoft.IdentityModel.Clients.ActiveDirectory (>= 3.17.2)
+      Microsoft.IdentityModel.Logging (>= 1.1.5)
+      Microsoft.IdentityModel.Tokens (>= 5.1.5)
+      Microsoft.VisualStudio.Services.Client (15.131.1)
+      Newtonsoft.Json (>= 9.0.1)
+      System.IdentityModel.Tokens.Jwt (>= 5.1.5)
+      WindowsAzure.ServiceBus (>= 3.3.2)
+    Microsoft.WindowsAPICodePack-Core (1.1.0.2)
+    Microsoft.WindowsAPICodePack-Shell (1.1)
+      Microsoft.WindowsAPICodePack-Core (>= 1.1)
+    Moq (4.10)
+      Castle.Core (>= 4.3.1)
+      System.Threading.Tasks.Extensions (>= 4.3)
+      System.ValueTuple (>= 4.4)
+    Newtonsoft.Json (10.0.3)
+    System.IdentityModel.Tokens.Jwt (5.3)
+      Microsoft.IdentityModel.JsonWebTokens (>= 5.3) - restriction: == net45
+      Microsoft.IdentityModel.Tokens (>= 5.3) - restriction: == net45
+      Newtonsoft.Json (>= 10.0.1) - restriction: == net45
+    System.Threading.Tasks.Extensions (4.3)
+    System.ValueTuple (4.4)
+    WindowsAPICodePack-Core (1.1.2)
+    WindowsAzure.ServiceBus (5.1)
+      Microsoft.Azure.Services.AppAuthentication (>= 1.0.3)
+      Microsoft.IdentityModel.Clients.ActiveDirectory (>= 3.19.8)
+      System.IdentityModel.Tokens.Jwt (>= 4.0.4.403061554)
+    WindowsAzure.Storage (9.3.3)
+      Microsoft.Azure.KeyVault.Core (>= 1.0)
+      Newtonsoft.Json (>= 10.0.2)
 
 GROUP Analyzer
 NUGET
@@ -111,3 +111,12 @@ NUGET
     System.Collections.Immutable (1.1.36)
     System.Reflection.Metadata (1.0.21)
       System.Collections.Immutable (>= 1.1.36)
+
+GROUP DevTools
+REFERENCES: STRICT
+RESTRICTION: == net461
+NUGET
+  remote: https://www.nuget.org/api/v2
+    LibGit2Sharp (0.26)
+      LibGit2Sharp.NativeBinaries (2.0.267)
+    LibGit2Sharp.NativeBinaries (2.0.267)

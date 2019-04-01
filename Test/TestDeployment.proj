@@ -2,27 +2,32 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
 
   <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+  </PropertyGroup>
+
+  <PropertyGroup>
     <IncludePattern>
       <!--
         As we want just the folder name in our item group link, we add a wild card to the end of the folders so we can use RecursiveDir to get the folder name
         If we don't do this RecursiveDir would return foo\bar\ rather than just bar\
       -->
-      $(MSBuildProjectDirectory)\..\..\Src\Build.Tools\lib\win32\**\*;
+      $(MSBuildProjectDirectory)\..\..\Src\Build.Tools\**\lib\**\*;
       $(MSBuildProjectDirectory)\..\..\Src\Build.Tools\7z.exe;
       $(MSBuildProjectDirectory)\..\..\Src\Build.Tools\7z.dll;
       $(MSBuildProjectDirectory)\..\..\Src\Build\**\*;
     </IncludePattern>
-    <ExcludePattern></ExcludePattern>
+    <ExcludePattern>
+      **\obj\**\*;
+      **\LessCompiler\**
+    </ExcludePattern>
   </PropertyGroup>
 
-
   <ItemGroup>
-      <Content Include="$(IncludePattern)" Exclude="$(ExcludePattern)">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-          <Link>TestDeployment\%(RecursiveDir)%(Filename)%(Extension)</Link>
-          <Visible>true</Visible>
-      </Content>
+    <Content Include="$(IncludePattern)" Exclude="$(ExcludePattern)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>TestDeployment\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <Visible>true</Visible>
+    </Content>
   </ItemGroup>
 
 </Project>
-

@@ -12,6 +12,19 @@ namespace Aderant.Build.VersionControl {
     [PartCreationPolicy(CreationPolicy.NonShared)]
     internal class GitVersionControlService : IVersionControlService {
 
+        private static string[] globs = new[] {
+            // Common release vehicle naming
+            "update/*",
+            "patch/*",
+            "releases/*",
+
+            // Allow teams to have all of their work in a common branch and builds to pull cached builds
+            "features/*",
+            "feature/*",
+
+            "master"
+        };
+
         public GitVersionControlService() {
         }
 
@@ -126,7 +139,9 @@ namespace Aderant.Build.VersionControl {
         private Commit FindMostLikelyReusableBucket(Repository repository, Commit currentTree, out string commonBranch, CancellationToken cancellationToken) {
             var refs = GetRefsToSearchForCommit(repository);
 
-            Commit commit = currentTree.Parents.FirstOrDefault();
+            // Which is the "first" and which is the "second" parent of a merge?
+            // If you're on branch some-branch and say git merge some-other-branch, then the first parent is the latest commit on some-branch and the second is the latest commit on some-other-branch.
+            Commit commit = currentTree.Parents.LastOrDefault();
             Commit[] interestingCommit = { null };
 
             int i = 0;
@@ -139,16 +154,18 @@ namespace Aderant.Build.VersionControl {
                 interestingCommit[0] = commit;
 
                 // Get the reachable branches to this commit.
-                var reachableFrom = repository.Refs.ReachableFrom(refs, interestingCommit).FirstOrDefault();
+                var reachables = repository.Refs.ReachableFrom(refs, interestingCommit);
 
-                if (reachableFrom != null) {
+                var firstReachable = reachables.FirstOrDefault();
+
+                if (firstReachable != null) {
                     // If found, we can return from this point.
-                    commonBranch = reachableFrom.CanonicalName;
+                    commonBranch = firstReachable.CanonicalName;
                     return commit;
                 }
 
                 // Else, go to its parent.
-                commit = commit.Parents.FirstOrDefault();
+                commit = commit.Parents.LastOrDefault();
 
                 if (i > 128) {
                     break;
@@ -159,45 +176,23 @@ namespace Aderant.Build.VersionControl {
             return null;
         }
 
-        private static string[] globs = new[] {
-            // Common release vehicle naming
-            "update/*",
-            "patch/*",
-            "releases/*",
-
-            // Allow teams to have all of their work in a common branch and builds to pull cached builds
-            "features/*",
-            "feature/*",
-
-            "master"
-        };
-
         private static List<Reference> GetRefsToSearchForCommit(Repository repository) {
-            bool isHeadDetached = repository.Info.IsHeadDetached;
-
             var patterns = new List<string>();
+
+            patterns.AddRange(globs);
 
             if (repository.Head.TrackedBranch != null) {
                 string name = repository.Head.TrackedBranch.UpstreamBranchCanonicalName;
                 patterns.Add(name);
             }
 
-            patterns.AddRange(globs);
-
             List<Reference> refs = new List<Reference>();
             foreach (var pattern in patterns) {
-                // For non-pull request CI builds the branch is checked out at a particular commit
-                // and we need to include /remotes/origin/ in the ref spec (I don't know why)
-                string finalGlob = pattern;
+                var glob = "refs/remotes/origin/" + pattern;
+                refs.AddRange(repository.Refs.FromGlob(glob));
 
-                if (isHeadDetached) {
-                    finalGlob = "refs/remotes/origin/" + pattern;
-                } else {
-                    if (!pattern.StartsWith("refs/")) {
-                        finalGlob = "refs/heads/" + pattern;
-                    }
-                }
-                refs.AddRange(repository.Refs.FromGlob(finalGlob));
+                var alternativeGlob = "refs/heads/" + pattern;
+                refs.AddRange(repository.Refs.FromGlob(alternativeGlob));
             }
 
             return refs.Distinct().ToList();

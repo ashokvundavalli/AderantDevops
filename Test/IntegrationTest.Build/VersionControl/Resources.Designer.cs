@@ -64,8 +64,10 @@ namespace IntegrationTest.Build.VersionControl {
         ///   Looks up a localized string similar to Set-StrictMode -Version &apos;Latest&apos;
         ///[int]$i = 1
         ///
-        ///$master = ([Management.Automation.WildcardPattern]::Unescape(&apos;.\master.txt&apos;))
-        ///$saturn = ([Management.Automation.WildcardPattern]::Unescape(&apos;.\saturn.txt&apos;))
+        ///# PowerShell has many quirks with square brackets in paths
+        ///[string]$cwd = Get-Location
+        ///$master = [Management.Automation.WildcardPattern]::Unescape($cwd + &apos;.\master.txt&apos;)
+        ///$saturn = [Management.Automation.WildcardPattern]::Unescape($cwd + &apos;.\saturn.txt&apos;)
         ///
         ///&amp; git init
         ///Add-Content -LiteralPath $master -Value &apos;Some text&apos; -Force
@@ -73,10 +75,7 @@ namespace IntegrationTest.Build.VersionControl {
         ///&amp; git commit -m &quot;$($i++;$i) Added master.txt&quot;
         ///
         ///Add-Content -LiteralPath $master -Value &apos;Some more&apos;
-        ///&amp; git add &apos;master.txt&apos;
-        ///&amp; git commit -m &quot;$($i++;$i) Modified master.txt&quot;
-        ///
-        ///Add-Content -LiteralPath $mas [rest of string was truncated]&quot;;.
+        ///&amp; git  [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string CommitGraphWalking {
             get {
@@ -87,8 +86,10 @@ namespace IntegrationTest.Build.VersionControl {
         /// <summary>
         ///   Looks up a localized string similar to Set-StrictMode -Version &apos;Latest&apos;
         ///
-        ///$master = ([Management.Automation.WildcardPattern]::Unescape(&apos;.\master.txt&apos;))
-        ///$saturn = ([Management.Automation.WildcardPattern]::Unescape(&apos;.\saturn.txt&apos;))
+        ///# PowerShell has many quirks with square brackets in paths
+        ///[string]$cwd = Get-Location
+        ///$master = ([Management.Automation.WildcardPattern]::Unescape($cwd + &apos;.\master.txt&apos;))
+        ///$saturn = ([Management.Automation.WildcardPattern]::Unescape($cwd + &apos;.\saturn.txt&apos;))
         ///
         ///&amp; git init .
         ///Add-Content -LiteralPath $master -Value &apos;Some text&apos; -Force
@@ -98,15 +99,36 @@ namespace IntegrationTest.Build.VersionControl {
         ///
         ///# Create saturn branch
         ///&amp; git checkout -b &apos;saturn&apos; -q
-        ///Add-Content -LiteralPath $saturn -Value &apos;Some text&apos; -Force
-        ///&amp; git add &apos;saturn.txt&apos;
-        ///&amp; git commit -m &apos;Added saturn.txt&apos;
-        ///
-        ///# [rest of string was truncated]&quot;;.
+        ///Add-Content -Literal [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string CreateRepo {
             get {
                 return ResourceManager.GetString("CreateRepo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Set-StrictMode -Version &apos;Latest&apos;
+        ///
+        ///# PowerShell has many quirks with square brackets in paths
+        ///[string]$cwd = Get-Location
+        ///$branch1 = ([Management.Automation.WildcardPattern]::Unescape($cwd + &apos;.\branch1.txt&apos;))
+        ///$branch2 = ([Management.Automation.WildcardPattern]::Unescape($cwd + &apos;.\branch2.txt&apos;))
+        ///
+        ///&amp; git init .
+        ///Add-Content -LiteralPath $branch1 -Value &apos;foo&apos; -Force
+        ///
+        ///&amp; git add .
+        ///&amp; git commit -m &apos;foo&apos;
+        ///
+        ///&amp; git checkout -b &apos;branch1&apos; -q
+        ///Add-Content -LiteralPath $branch2 -Value &apos;bar&apos; -Force
+        ///&amp; git add .
+        /// [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string Merge {
+            get {
+                return ResourceManager.GetString("Merge", resourceCulture);
             }
         }
     }

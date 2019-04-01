@@ -92,14 +92,44 @@ function LoadAssembly($buildScriptsDirectory, [string]$assemblyPath, [bool]$load
     }
 }
 
+function RunActionExclusive([scriptblock]$action, [string]$mutexName) {
+    $runTool = $true
+
+    if ($Host.Runspace.ApartmentState -eq [Threading.ApartmentState]::STA) {
+        $mutexName = $mutexName.Replace("\", "|")
+        $mutex = [System.Threading.Mutex]::new($false, "Local\$mutexName")
+        $runTool = $mutex.WaitOne(0)
+
+        # Prevent GC
+        $MyInvocation.MyCommand.Module.PrivateData[$mutexName] = $mutex
+    }
+
+    if ($runTool) {
+        Write-Debug "Running action in exlcusive lock:"
+        Write-Debug $action.Ast
+        $action.Invoke()
+    }
+}
+
 function UpdateSubmodules([string]$head) {
-    #TODO speed this up
-    Set-StrictMode -Version 'Latest'
-    & git -C $PSScriptRoot submodule update --init --recursive
+     $action = {
+        & git -C $PSScriptRoot submodule update --init --recursive
+    }
+    RunActionExclusive $action ("git_submodule_update_$PSScriptRoot")
 }
 
 function LoadLibGit2Sharp([string]$buildToolsDirectory) {
     [void][System.Reflection.Assembly]::LoadFrom("$buildToolsDirectory\LibGit2Sharp.dll")
+}
+
+function DownloadPaket([string]$buildScriptDirectory) {
+    $action = {
+        # Download the paket dependency tool
+        Start-Process -FilePath  "$buildScriptDirectory\paket.bootstrapper.exe" -ArgumentList  "5.198.0" -NoNewWindow -PassThru -Wait
+        Start-Process -FilePath  "$buildScriptDirectory\paket.exe" -ArgumentList @("restore", "--group", "DevTools") -NoNewWindow -PassThru -Wait -WorkingDirectory ("$BuildScriptsDirectory\..\.\..")
+    }
+
+    RunActionExclusive $action ("458c7732-8934-42e8-8e93-afcc8632c632" + $buildScriptDirectory)
 }
 
 function global:UpdateOrBuildAssembly {
@@ -155,8 +185,7 @@ function global:UpdateOrBuildAssembly {
 
         $assemblyPathRoot = [System.IO.Path]::Combine("$BuildScriptsDirectory\..\Build.Tools")
 
-        # Download the paket dependency tool
-        & "$BuildScriptsDirectory\paket.bootstrapper.exe" "5.198.0"
+        DownloadPaket $BuildScriptsDirectory
 
         BuildProjects $BuildScriptsDirectory $true
 

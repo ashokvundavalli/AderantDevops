@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!--The supplied props file that comes with the package assumes you are using dotnet cli so the props file does not have the MSBuild
+  namespace declared so full .NET build engines freak out. Once again, we must roll our own solutions by implementing the bare minimum deployment steps-->
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <LibGit2SharpNativeBinaries>(MSBuildThisFileDirectory)\..\..\..\..\packages\devtools\LibGit2Sharp.NativeBinaries\</LibGit2SharpNativeBinaries>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ContentWithTargetPath Condition="Exists('$(LibGit2SharpNativeBinaries)runtimes\win-x64\native\git2-572e4d8.dll')" Include="$(LibGit2SharpNativeBinaries)runtimes\win-x64\native\git2-572e4d8.dll">
+      <TargetPath>lib\win32\x64\git2-572e4d8.dll</TargetPath>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </ContentWithTargetPath>
+    <ContentWithTargetPath Condition="Exists('$(LibGit2SharpNativeBinaries)runtimes\win-x86\native\git2-572e4d8.dll')" Include="$(LibGit2SharpNativeBinaries)runtimes\win-x86\native\git2-572e4d8.dll">
+      <TargetPath>lib\win32\x86\git2-572e4d8.dll</TargetPath>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </ContentWithTargetPath>
+    <ContentWithTargetPath Include="$(LibGit2SharpNativeBinaries)libgit2\LibGit2Sharp.dll.config">
+      <TargetPath>LibGit2Sharp.dll.config</TargetPath>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </ContentWithTargetPath>
+  </ItemGroup>
+</Project>

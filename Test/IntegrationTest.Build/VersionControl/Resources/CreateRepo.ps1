@@ -1,5 +1,6 @@
 ﻿Set-StrictMode -Version 'Latest'
 
+# PowerShell has many quirks with square brackets in paths
 [string]$cwd = Get-Location
 $master = ([Management.Automation.WildcardPattern]::Unescape($cwd + '.\master.txt'))
 $saturn = ([Management.Automation.WildcardPattern]::Unescape($cwd + '.\saturn.txt'))
