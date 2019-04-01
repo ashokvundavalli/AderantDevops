@@ -40,14 +40,15 @@ namespace Aderant.Build.ProjectSystem {
 
         private static Memoizer<ConfiguredProject, string> outputAssemblyMemoizer = new Memoizer<ConfiguredProject, string>(
             configuredProject => {
-                var value = configuredProject.project.Value.GetPropertyValue("AssemblyName");
+                var projectProperty = configuredProject.project.Value.GetProperty("AssemblyName");
 
-                if (string.IsNullOrWhiteSpace(value)) {
-                    // Windows Installer project
+                if (projectProperty == null || projectProperty.IsImported) {
+                    // Windows Installer projects define a default AssemblyName in an import, we ignore it and go straight for the
+                    // output name instead
                     return configuredProject.project.Value.GetPropertyValue("OutputName");
                 }
 
-                return value;
+                return projectProperty.EvaluatedValue;
             });
 
         private static Memoizer<ConfiguredProject, IReadOnlyList<Guid>> extractTypeGuidsMemoizer = new Memoizer<ConfiguredProject, IReadOnlyList<Guid>>(
