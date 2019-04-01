@@ -95,13 +95,15 @@ function LoadAssembly($buildScriptsDirectory, [string]$assemblyPath, [bool]$load
 function RunActionExclusive([scriptblock]$action, [string]$mutexName) {
     $runTool = $true
 
-    if ($Host.Runspace.ApartmentState -eq [Threading.ApartmentState]::STA) {
-        $mutexName = $mutexName.Replace("\", "|")
-        $mutex = [System.Threading.Mutex]::new($false, "Local\$mutexName")
-        $runTool = $mutex.WaitOne(0)
+    if ($null -ne $MyInvocation.MyCommand.Module) {
+        if ($Host.Runspace.ApartmentState -eq [Threading.ApartmentState]::STA) {
+            $mutexName = $mutexName.Replace("\", "|")
+            $mutex = [System.Threading.Mutex]::new($false, "Local\$mutexName")
+            $runTool = $mutex.WaitOne(0)
 
-        # Prevent GC
-        $MyInvocation.MyCommand.Module.PrivateData[$mutexName] = $mutex
+            # Prevent GC
+            $MyInvocation.MyCommand.Module.PrivateData[$mutexName] = $mutex
+        }
     }
 
     if ($runTool) {
