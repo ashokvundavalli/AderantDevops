@@ -2,6 +2,7 @@
 using Aderant.Build.Packaging;
 using Aderant.Build.Packaging.Handlers;
 using Microsoft.Build.Framework;
+using Microsoft.Build.Tasks;
 
 namespace Aderant.Build.Tasks.ArtifactHandling {
     public sealed class CreateArtifacts : BuildOperationContextTask {
