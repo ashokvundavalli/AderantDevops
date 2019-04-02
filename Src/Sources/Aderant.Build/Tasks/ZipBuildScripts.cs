@@ -8,6 +8,9 @@ using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
     public class ZipBuildScripts : Task {
+        static ZipBuildScripts() {
+            DotNetQuriks.ZipFileUseForwardSlash();
+        }
 
         [Required]
         public string TargetDirectory { get; set; }
@@ -52,7 +55,7 @@ namespace Aderant.Build.Tasks {
                             Log.LogError("Aderant.Build.dll was not found at {0}", BuildAssemblyLocation);
                             return false;
                         }
-                        
+
                         ZipFile.CreateFromDirectory(buildFolder, scriptZipPath);
                         Directory.Delete(buildFolder, true);
                     }

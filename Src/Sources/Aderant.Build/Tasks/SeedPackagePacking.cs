@@ -33,13 +33,17 @@ namespace Aderant.Build.Tasks {
     ///         <UsingTask TaskName="SeedPackagePacking"
     ///             AssemblyFile="$(BuildAssembly)"
     ///             Condition="'$(IsCustomBuild)' != 'true'" />
-    ///         <SeedPackagePacking 
+    ///         <SeedPackagePacking
     ///             BuildFrom="$(SolutionDirectoryPath)"
     ///             SeedPackageSrc = "$(SolutionDirectoryPath)Src\SeedPackages"
     ///             SeedPackageDrop = "$(SolutionDirectoryPath)Bin\Packages" />
     ///     ]]>
     /// </summary>
     public class SeedPackagePacking : BuildOperationContextTask {
+        static SeedPackagePacking() {
+            DotNetQuriks.ZipFileUseForwardSlash();
+        }
+
         private Dictionary<string, XDocument> documentCache = new Dictionary<string, XDocument>();
         private List<Error> errors = new List<Error>();
 
@@ -97,7 +101,7 @@ namespace Aderant.Build.Tasks {
 
         private List<string> CoreValidate() {
             var fileNames = GetFilesInDirectory(SeedPackageSrc).ToList();
-            
+
             Validate(fileNames);
 
             if (errors.Any()) {
@@ -171,7 +175,7 @@ namespace Aderant.Build.Tasks {
                             Directory.CreateDirectory(SeedPackageDrop);
                         }
                         ZipFile.CreateFromDirectory(packageSrcDir, destination);
-                        if (SeedContentHasChanges() && !String.IsNullOrEmpty(StagingPackageDrop)) {                            
+                        if (SeedContentHasChanges() && !String.IsNullOrEmpty(StagingPackageDrop)) {
                             var stagingFileName = Path.Combine(StagingPackageDrop, "Packages", packageName + ".zip");
                             var updatePackagesFile = stagingFileName.Replace("BinFiles\\", "");
 
@@ -234,11 +238,11 @@ namespace Aderant.Build.Tasks {
                     Log.LogError($"File {fileName} is not a valid XML document.");
                 }
             }
-            
+
             return document;
         }
 
-    
+
 
         public void CheckForUnusedPackagesOrEntries() {
             var whiteList = "SampleWorkflows";
@@ -353,7 +357,7 @@ namespace Aderant.Build.Tasks {
                         seedDocument = XDocument.Load(seed, LoadOptions.SetLineInfo | LoadOptions.SetBaseUri);
                     }
                     var seedName = seed.Split(new[] { "SeedPackages\\", "TestPackages\\" }, StringSplitOptions.None).ElementAtOrDefault(1);
-                    
+
                     if (seedName == null) {
                         continue;
                     }
@@ -496,4 +500,9 @@ namespace Aderant.Build.Tasks {
         }
     }
 
+    internal class DotNetQuriks {
+        public static void ZipFileUseForwardSlash() {
+            AppContext.SetSwitch("Switch.System.IO.Compression.ZipFile.UseBackslash", false);
+        }
+    }
 }

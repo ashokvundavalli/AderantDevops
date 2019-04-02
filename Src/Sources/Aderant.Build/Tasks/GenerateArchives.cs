@@ -9,10 +9,12 @@ using Aderant.Build.Packaging;
 using Aderant.Build.Utilities;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
-using Task = Microsoft.Build.Utilities.Task;
 
 namespace Aderant.Build.Tasks {
     public sealed class GenerateArchives : BuildOperationContextTask {
+        static GenerateArchives() {
+            DotNetQuriks.ZipFileUseForwardSlash();
+        }
 
         private CompressionLevel compressionLevel;
 
@@ -63,7 +65,7 @@ namespace Aderant.Build.Tasks {
                 try {
                     if (CreateManifest) {
                         GenerateManifest(directoriesToArchive.First().Location);
-                    }                    
+                    }
                     ProcessDirectories(directoriesToArchive, compressionLevel);
                 } catch (AggregateException exception) {
                     Log.LogError(exception.Flatten().ToString());
@@ -136,7 +138,7 @@ namespace Aderant.Build.Tasks {
                     specificationElement.Add(new XElement("package", new XElement("name", file)));
                 } else {
                     var fileElement = new XElement("file", new XElement("name", file));
-                    
+
                     if (directoryName != "BinFiles") {
                         fileElement.Add(new XElement("relativePath", directoryName));
                     }
