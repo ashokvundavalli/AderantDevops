@@ -514,9 +514,20 @@ function SetRepository([string]$path) {
     $ShellContext.IsGitRepository = $true
 
     [string]$currentModuleBuildDirectory = "$path\Build"
-
+	
     if (Test-Path $currentModuleBuildDirectory) {
-        [string]$featureModule = Get-ChildItem -Path $currentModuleBuildDirectory -Recurse | Where-Object { $_.extension -eq ".psm1" -and $_.Name -match "Feature.*" } | Select-Object -First 1 | Select-Object -ExpandProperty FullName
+        $items = Get-ChildItem -Path $currentModuleBuildDirectory -Filter 'Feature*.psm1'
+		
+		[string]$featureModule = $null
+				
+		foreach ($item in $items) {
+			if (Test-ReparsePoint $item) {
+				continue
+			}
+			
+			$featureModule = $item			
+		}
+
         if ($featureModule) {
             ImportFeatureModule $featureModule
         }

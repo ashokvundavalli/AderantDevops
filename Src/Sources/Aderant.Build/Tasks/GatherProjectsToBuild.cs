@@ -43,7 +43,7 @@ namespace Aderant.Build.Tasks {
         }
 
         public override bool ExecuteTask() {
-            if (Context.Exclude != null) {
+            if (Context.Exclude.Count() > 0) {
                 ExcludedPaths = Context.Exclude.Union(ExcludedPaths ?? Enumerable.Empty<string>(), StringComparer.OrdinalIgnoreCase)
                     .Except(Context.Include, StringComparer.OrdinalIgnoreCase)
                     .ToArray();
@@ -57,7 +57,7 @@ namespace Aderant.Build.Tasks {
             groveler = new DirectoryGroveler(new PhysicalFileSystem());
             groveler.Logger = new BuildTaskLogger(Log);
 
-            HashSet<string> inputDirectories = new HashSet<string>(Context.Include ?? new[] { Context.BuildRoot }, StringComparer.OrdinalIgnoreCase);
+            HashSet<string> inputDirectories = new HashSet<string>(Context.Include, StringComparer.OrdinalIgnoreCase);
             if (!Context.Switches.RestrictToProvidedPaths) {
                 GetDirectoriesWithNoCachedBuild(Context.BuildRoot, inputDirectories).ForEach(s => inputDirectories.Add(s));
             } else {
