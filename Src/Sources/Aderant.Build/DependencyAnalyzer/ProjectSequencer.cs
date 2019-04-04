@@ -162,7 +162,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 if (project.DirectoryNode.RetrievePrebuilts != null && project.DirectoryNode.RetrievePrebuilts.Value == false) {
                     if (project.BuildReason == null) {
-                        project.SetReason(BuildReasonTypes.Forced);
+                        project.SetReason(BuildReasonTypes.Forced, "SecondPassAnalysis");
                         graph.Add(project);
                     }
                 }
@@ -339,7 +339,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                         ConfiguredProject project = graph.GetProject(id);
                         if (project != null) {
                             if (project.IsWebProject && !project.IsDirty) {
-                                MarkDirty(project, BuildReasonTypes.Forced, "");
+                                MarkDirty(project, BuildReasonTypes.Forced, "MarkWebProjectsDirty");
                             }
                         }
                     }
