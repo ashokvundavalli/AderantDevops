@@ -84,33 +84,17 @@ namespace Aderant.Build {
             }
         }
 
-        [DataMember]
-        private string[] include;
         /// <summary>
         /// Includes solutions and projects found under these paths into the build tree.
-        /// </summary>        
-        public string[] Include {
-            get {
-                return include ?? new string[] { BuildRoot };
-            }
-            set {
-                this.include = value;
-            }
-        }
-
+        /// </summary>
         [DataMember]
-        private string[] exclude;
+        public string[] Include { get; set; }
+
         /// <summary>
         /// Excludes solutions and projects found under these paths from build tree.
         /// </summary>
-        public string[] Exclude {
-            get {
-                return exclude ?? new string[] { };
-            }
-            set {
-                this.exclude = value;
-            }
-        }
+        [DataMember]
+        public string[] Exclude { get; set; }
 
         public string BuildRoot {
             get { return buildRoot; }

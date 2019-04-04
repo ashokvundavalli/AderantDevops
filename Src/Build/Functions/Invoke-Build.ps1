@@ -1,6 +1,5 @@
 ﻿$InformationPreference = 'Continue'
 $titleEventSource = "ProgressChanged"
-$environmentConfigured = $false
 
 [string]$indent1 = "  "
 [string]$indent2 = "        "
@@ -313,39 +312,31 @@ function GetBuildStateMetadata($context) {
 }
 
 function PrepareEnvironment {
-	if ($script:environmentConfigured) {
-		return
-	}
+    # Setup environment for JavaScript tests
+    $lockDownPath = "HKCU:\SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_LOCALMACHINE_LOCKDOWN"
+    if (-not ( Test-Path $lockDownPath)) {
+        New-Item -Path "$lockDownPath" -Type Directory -Force | Out-Null
+    }
 
-	try {
-		# Setup environment for JavaScript tests
-		$lockDownPath = "HKCU:\SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_LOCALMACHINE_LOCKDOWN"
-		if (-not ( Test-Path $lockDownPath)) {
-			New-Item -Path "$lockDownPath" -Type Directory -Force | Out-Null
-		}
+    Set-ItemProperty -Path $lockDownPath -Name "iexplore.exe" -Type "DWORD" -Value 0 | Out-Null
 
-		Set-ItemProperty -Path $lockDownPath -Name "iexplore.exe" -Type "DWORD" -Value 0 | Out-Null
+    if ((Test-Path "$lockDownPath\Settings") -eq 0) {
+        New-Item -Path "$lockDownPath\Settings" -Type Directory -Force | Out-Null
+    }
+    Set-ItemProperty -Path "$lockDownPath\Settings" -Name "LOCALMACHINE_CD_UNLOCK" -Value 0 -Force | Out-Null
 
-		if ((Test-Path "$lockDownPath\Settings") -eq 0) {
-			New-Item -Path "$lockDownPath\Settings" -Type Directory -Force | Out-Null
-		}
-		Set-ItemProperty -Path "$lockDownPath\Settings" -Name "LOCALMACHINE_CD_UNLOCK" -Value 0 -Force | Out-Null
+    # To avoid runtime problems by binding to interesting assemblies, we delete this so MSBuild will always try to bind to our version of WCF and not one found on the computer somewhere
+    $wcfPath32 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319\AssemblyFoldersEx\WCF Data Services Standalone Assemblies"
+    $wcfPath64 = "HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319\AssemblyFoldersEx\WCF Data Services Standalone Assemblies"
+    if (Test-Path $wcfPath32) {
+        Remove-Item -Path $wcfPath32 -Recurse
+    }
 
-		# To avoid runtime problems by binding to interesting assemblies, we delete this so MSBuild will always try to bind to our version of WCF and not one found on the computer somewhere
-		$wcfPath32 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319\AssemblyFoldersEx\WCF Data Services Standalone Assemblies"
-		$wcfPath64 = "HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319\AssemblyFoldersEx\WCF Data Services Standalone Assemblies"
-		if (Test-Path $wcfPath32) {
-			Remove-Item -Path $wcfPath32 -Recurse
-		}
+    if (Test-Path $wcfPath64) {
+        Remove-Item -Path $wcfPath64 -Recurse
+    }
 
-		if (Test-Path $wcfPath64) {
-			Remove-Item -Path $wcfPath64 -Recurse
-		}
-
-		Optimize-BuildEnvironment
-	} finally {
-		$script:environmentConfigured = $true
-	}
+    Optimize-BuildEnvironment
 }
 
 # Expand input paths into array. Try to resolve the path to full.
