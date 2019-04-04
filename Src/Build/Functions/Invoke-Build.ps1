@@ -267,20 +267,18 @@ function GetSourceTreeMetadata($context, $repositoryPath) {
         Write-Information "$indent1 CommonAncestor: $($context.SourceTreeMetadata.CommonAncestor)"
     }
 
-    if ($context.IsDesktopBuild) {
-        if ($null -ne $context.SourceTreeMetadata.Changes -and $context.SourceTreeMetadata.Changes.Count -gt 0) {
-            Write-Information "$indent1 Changes..."
-            $i = 0
-            foreach ($change in $context.SourceTreeMetadata.Changes) {
-                $i++
-                if ($change.Status -ne "Untracked") {
-                    Write-Information "$indent2 $($change.Path):$($change.Status)"
-                }
+    if ($null -ne $context.SourceTreeMetadata.Changes -and $context.SourceTreeMetadata.Changes.Count -gt 0) {
+        Write-Information "$indent1 Changes..."
+        $i = 0
+        foreach ($change in $context.SourceTreeMetadata.Changes) {
+            $i++
+            if ($change.Status -ne "Untracked") {
+                Write-Information "$indent2 $($change.Path):$($change.Status)"
+            }
 
-                if ($i -gt 100) {
-                    Write-Information "$indent2 ..."
-                    break
-                }
+            if ($i -gt 100) {
+                Write-Information "$indent2 ..."
+                break
             }
         }
     }
