@@ -365,7 +365,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             foreach (var group in grouping) {
                 List<ConfiguredProject> dirtyProjects = group.Where(g => g.IsDirty).ToList();
 
-                string dirtyProjectsLogLine = string.Join(", ", dirtyProjects.Select(s => s.Id));
+                var dirtyProjectsLogLine = dirtyProjects.Select(s => s.Id);
 
                 string solutionDirectoryName = PathUtility.GetFileName(group.Key ?? "");
 
@@ -554,7 +554,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// If the outputs look sane and safe then the project is removed from the build tree and the cached outputs are
         /// substituted in.
         /// </summary>
-        internal void ApplyStateFile(BuildStateFile stateFile, string stateFileKey, string dirtyProjects, ConfiguredProject project, ref bool hasLoggedUpToDate) {
+        internal void ApplyStateFile(BuildStateFile stateFile, string stateFileKey, IEnumerable<string> dirtyProjects, ConfiguredProject project, ref bool hasLoggedUpToDate) {
             string solutionRoot = project.SolutionRoot;
             InputFilesDependencyAnalysisResult result = BeginTrackingInputFiles(stateFile, solutionRoot);
 
@@ -662,6 +662,16 @@ namespace Aderant.Build.DependencyAnalyzer {
             project.IsDirty = true;
             project.IncludeInBuild = true;
             project.SetReason(reasonTypes, reasonDescription);
+        }
+
+        private static void MarkDirty(ConfiguredProject project, BuildReasonTypes reasonTypes, IEnumerable<string> changedProjects) {
+            MarkDirty(project, reasonTypes, (string)null);
+
+            if (changedProjects != null) {
+                if (project.BuildReason.ChangedDependentProjects == null || project.BuildReason.ChangedDependentProjects.Count == 0) {
+                    project.BuildReason.ChangedDependentProjects = changedProjects.ToArray();
+                }
+            }
         }
 
         /// <summary>

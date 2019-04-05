@@ -208,7 +208,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
 
             var sequencer = new ProjectSequencer(NullLogger.Default, null);
             bool hasLoggedUpToDate = false;
-            sequencer.ApplyStateFile(file, "", "", p1, ref hasLoggedUpToDate);
+            sequencer.ApplyStateFile(file, "", null, p1, ref hasLoggedUpToDate);
 
             Assert.AreEqual(p1.BuildReason.Flags, BuildReasonTypes.ProjectOutputNotFound);
             Assert.IsTrue(p1.IsDirty);
