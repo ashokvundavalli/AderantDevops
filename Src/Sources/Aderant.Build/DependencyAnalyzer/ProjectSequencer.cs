@@ -793,7 +793,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     }
 
                     if (configuredProject.BuildReason != null) {
-                        children.Add(new TreePrinter.Node { Name = "Flags: " + configuredProject.BuildReason.Flags });
+                        children.Add(new TreePrinter.Node { Name = string.Format("Flags: {0}. Reason: {1}", configuredProject.BuildReason.Flags, configuredProject.BuildReason.Description ?? string.Empty) });
 
                         if (configuredProject.BuildReason.ChangedDependentProjects != null)
                             children.Add(
