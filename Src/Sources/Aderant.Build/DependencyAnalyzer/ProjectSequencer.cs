@@ -85,7 +85,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             FindAllChangedProjectsAndDisableBuildCache(projectGraph);
 
-            //filteredProjects = SecondPassAnalysis(filteredProjects, projectGraph);
+            filteredProjects = SecondPassAnalysis(filteredProjects, projectGraph);
 
             LogProjectsExcluded(filteredProjects, projectGraph);
 
@@ -161,6 +161,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
 
                 if (project.DirectoryNode.RetrievePrebuilts != null && project.DirectoryNode.RetrievePrebuilts.Value == false) {
+                    logger.Info($"{project.DirectoryNode.DirectoryName} retrieve prebuilts: {project.DirectoryNode.RetrievePrebuilts.Value}");
                     if (project.BuildReason == null) {
                         project.SetReason(BuildReasonTypes.Forced, "SecondPassAnalysis");
                         graph.Add(project);
@@ -803,7 +804,13 @@ namespace Aderant.Build.DependencyAnalyzer {
                     }
 
                     if (configuredProject.BuildReason != null) {
-                        children.Add(new TreePrinter.Node { Name = string.Format("Flags: {0}. Reason: {1}", configuredProject.BuildReason.Flags, configuredProject.BuildReason.Description ?? string.Empty) });
+
+                        string reason = string.Empty;
+                        if (string.IsNullOrEmpty(configuredProject.BuildReason.Description)) {
+                            reason = "Reason: " + configuredProject.BuildReason.Description;
+                        }
+
+                        children.Add(new TreePrinter.Node { Name = string.Format("Flags: {0}. {1}", configuredProject.BuildReason.Flags, reason) });
 
                         if (configuredProject.BuildReason.ChangedDependentProjects != null)
                             children.Add(

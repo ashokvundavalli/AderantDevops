@@ -90,6 +90,10 @@
       <PrepareBuildEnvironmentProperties>ResolveAssemblyReferencesSilent=true;DoNotCopyLocalIfInGac=true</PrepareBuildEnvironmentProperties>
     </PropertyGroup>
 
+    <PropertyGroup Condition="'$(BUILD_BUILDID)' != ''">
+      <PrepareBuildEnvironmentProperties>$(PrepareBuildEnvironmentProperties);Configuration=Release</PrepareBuildEnvironmentProperties>
+    </PropertyGroup>
+
     <MSBuild
       Projects="@(Projects)"
       BuildInParallel="true"
