@@ -806,7 +806,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     if (configuredProject.BuildReason != null) {
 
                         string reason = string.Empty;
-                        if (string.IsNullOrEmpty(configuredProject.BuildReason.Description)) {
+                        if (!string.IsNullOrWhiteSpace(configuredProject.BuildReason.Description)) {
                             reason = "Reason: " + configuredProject.BuildReason.Description;
                         }
 
