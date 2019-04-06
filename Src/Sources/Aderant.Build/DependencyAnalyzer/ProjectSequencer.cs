@@ -85,7 +85,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             FindAllChangedProjectsAndDisableBuildCache(projectGraph);
 
-            filteredProjects = SecondPassAnalysis(filteredProjects, projectGraph);
+            //filteredProjects = SecondPassAnalysis(filteredProjects, projectGraph);
 
             LogProjectsExcluded(filteredProjects, projectGraph);
 
