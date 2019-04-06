@@ -93,6 +93,8 @@ namespace Aderant.Build.DependencyAnalyzer {
                 CacheSubstitutionFixup(projectsInDependencyOrder, filteredProjects);
             }
 
+            LogPrebuiltStatus(filteredProjects);
+
             var groups = projectGraph.GetBuildGroups(filteredProjects);
 
             string treeText = PrintBuildTree(groups, true);
@@ -113,6 +115,12 @@ namespace Aderant.Build.DependencyAnalyzer {
             return new BuildPlan(project) {
                 DirectoriesInBuild = directoriesInBuild,
             };
+        }
+
+        private void LogPrebuiltStatus(IReadOnlyList<IDependable> filteredProjects) {
+            foreach (var project in filteredProjects.OfType<DirectoryNode>().Distinct()) {
+                logger.Info($"{project.DirectoryName} retrieve prebuilts: {(project.RetrievePrebuilts.HasValue ? project.RetrievePrebuilts.Value.ToString() : "?")}");
+            }
         }
 
         private void TrackProjects(IReadOnlyList<IDependable> projectsInDependencyOrder, bool isBuildCacheEnabled, List<string> directoriesInBuild) {
@@ -161,7 +169,6 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
 
                 if (project.DirectoryNode.RetrievePrebuilts != null && project.DirectoryNode.RetrievePrebuilts.Value == false) {
-                    logger.Info($"{project.DirectoryNode.DirectoryName} retrieve prebuilts: {project.DirectoryNode.RetrievePrebuilts.Value}");
                     if (project.BuildReason == null) {
                         project.SetReason(BuildReasonTypes.Forced, "SecondPassAnalysis");
                         graph.Add(project);
