@@ -7,10 +7,12 @@
   -->
 
   <!--Default implementation-->
-  <Target Name="GetStagingDirectoryWhitelist" Returns="@(StagingDirectoryWhitelist)">
+  <Target Name="GetStagingDirectoryWhitelist" Returns="@(StagingDirectoryWhitelist)">    
     <ItemGroup>
       <StagingDirectoryWhitelist Include="UnitTest.Framework.Helpers.dll" />
     </ItemGroup>
+    
+    <Message Text="Default @(StagingDirectoryWhitelist)" />
   </Target>
 
   <Import Project="$(ExtensibilityFile)" Condition="'$(ExtensibilityFile)' != ''" />

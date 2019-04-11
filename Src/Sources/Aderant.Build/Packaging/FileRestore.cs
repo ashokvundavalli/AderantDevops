@@ -188,13 +188,22 @@ namespace Aderant.Build.Packaging {
                         WildcardPattern pattern = WildcardPattern.Get(item, WildcardOptions.IgnoreCase);
 
                         if (pattern.IsMatch(filePath)) {
-                            logger.Debug("File '{0}' was included because of: {1}", filePath, pattern);
-                            targetDirectories.Add(CommonDependencyDirectory);
+                            IncludeFile(filePath, targetDirectories, pattern.ToString());
                             break;
                         }
                     }
+
+                    if (string.Equals(item, filePath, StringComparison.OrdinalIgnoreCase)) {
+                        IncludeFile(filePath, targetDirectories, item);
+                        break;
+                    }
                 }
             }
+        }
+
+        private void IncludeFile(string filePath, ISet<string> targetDirectories, string pattern) {
+            logger.Debug("File '{0}' was included because of: {1}", filePath, pattern);
+            targetDirectories.Add(CommonDependencyDirectory);
         }
 
         private HashSet<string> CreateDestinationDirectoryList(string directoryOfProject, string outputPath, bool isTestProject) {
