@@ -9,7 +9,7 @@ if (-not (Test-Path $pathToGit)) {
     throw "Git.exe not found at $pathToGit"
 }
 
-$hosts = @("tfs", "tfs.ap.aderant.com")
+$hosts = @("tfs", "tfs.ap.aderant.com", "tfs.aderant.com")
 
 foreach ($entry in $hosts) { # Host is a reserved readonly PowerShell variable and so cannot be assigned to
     & $pathToGit config --global credential.$entry.interactive never
