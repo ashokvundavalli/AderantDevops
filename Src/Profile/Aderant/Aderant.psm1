@@ -178,29 +178,45 @@ function ResolveBranchName([string]$branchPath) {
     return $name
 }
 
+function Set-LocalDirectory {
+    $global:BranchLocalDirectory = (GetDefaultValue "DevBranchFolder").ToLower()
+
+    if (-not (Test-Path $global:BranchLocalDirectory)) {
+        Write-Host ""
+        Write-Host "*********************************************************************************************************************************"
+        Write-Warning "The directory does not exist. Call Set-ExpertBranchInfo for initial setup of local directory and branch info"
+        Write-Host "*********************************************************************************************************************************"
+        Write-Host ""
+
+        throw "Please setup environment"
+    }
+}
+
+function Set-BinariesDirectory {
+    $environmentXml = [System.IO.Path]::Combine($global:BranchLocalDirectory, "environment.xml")
+
+    if (-not (Test-Path $environmentXml)) {
+        $global:BranchBinariesDirectory = Join-Path -Path $global:BranchLocalDirectory -ChildPath "\Binaries"
+    } else {
+        # If the environment xml exists in the DevBranchFolder, set it as the BranchBinariesDirectory
+        $global:BranchBinariesDirectory = $global:BranchLocalDirectory
+    }
+
+    $ShellContext.BranchBinariesDirectory = $global:BranchBinariesDirectory
+}
+
 <#
 Branch information
 #>
 function Set-BranchPaths {
     #initialise from default setting
     Write-Debug "Setting information for branch from your defaults"
-    $global:BranchLocalDirectory = (GetDefaultValue "DevBranchFolder").ToLower()
-    $global:BranchBinariesDirectory = Join-Path -Path $global:BranchLocalDirectory -ChildPath "\Binaries"
+    Set-LocalDirectory
+    Set-BinariesDirectory
     $ShellContext.BranchLocalDirectory = $global:BranchLocalDirectory
     $ShellContext.BranchName = ResolveBranchName $global:BranchLocalDirectory
     $ShellContext.BranchServerDirectory = (GetDefaultValue "DropRootUNCPath").ToLower()
     $ShellContext.BranchModulesDirectory = Join-Path -Path $global:BranchLocalDirectory -ChildPath "\Modules"
-    $ShellContext.BranchBinariesDirectory = $global:BranchBinariesDirectory
-
-    if (-not (Test-Path $global:BranchLocalDirectory)) {
-        Write-Host ""
-        Write-Host "*********************************************************************************************************************************"
-        Write-Warning "The branch directory does not exist. Call Set-ExpertBranchInfo for initial setup of local directory and branch info"
-        Write-Host "*********************************************************************************************************************************"
-        Write-Host ""
-
-        throw "Please setup environment"
-    }
 }
 
 <#
