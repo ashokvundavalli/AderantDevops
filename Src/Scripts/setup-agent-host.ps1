@@ -3,7 +3,7 @@ param(
     [Parameter(Mandatory=$false)][int]$agentsToProvision = 0,
     [bool]$removeAllAgents = $true,
     [Parameter(Mandatory=$false)][string]$agentArchive,
-    [Parameter(Mandatory=$false)][string]$tfsHost = "http://tfs:8080/tfs",
+    [Parameter(Mandatory=$false)][string]$tfsHost = "https://tfs.aderant.com/tfs",
     [Parameter(Mandatory=$false)][string]$agentPool,
     # The scratch drive for the agent, this is where the intermediate objects will be placed
     [Parameter(Mandatory=$false)]$workDirectory
