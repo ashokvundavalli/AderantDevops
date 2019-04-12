@@ -449,7 +449,7 @@ namespace Willys.LsaSecurity
 
     Invoke-Command -Session $session -ScriptBlock {
         Remove-Item "$scriptsDirectory\Build.Infrastructure" -Force -Recurse -ErrorAction SilentlyContinue
-        & git clone "http://tfs.ap.aderant.com:8080/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure" "$scriptsDirectory\Build.Infrastructure" -q
+        & git clone "https://tfs.aderant.com:8080/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure" "$scriptsDirectory\Build.Infrastructure" -q
     } -ArgumentList $scriptsDirectory, $credentials
 
     if ($restart.IsPresent) {
