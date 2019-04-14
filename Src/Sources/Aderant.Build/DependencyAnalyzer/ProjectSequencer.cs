@@ -119,7 +119,9 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         private void LogPrebuiltStatus(IReadOnlyList<IDependable> filteredProjects) {
             foreach (var project in filteredProjects.OfType<DirectoryNode>().Distinct()) {
-                logger.Info($"{project.DirectoryName} retrieve prebuilts: {(project.RetrievePrebuilts.HasValue ? project.RetrievePrebuilts.Value.ToString() : "?")}");
+                if (!project.IsPostTargets) {
+                    logger.Info($"{project.DirectoryName} retrieve prebuilts: {(project.RetrievePrebuilts.HasValue ? project.RetrievePrebuilts.Value.ToString() : "?")}");
+                }
             }
         }
 
