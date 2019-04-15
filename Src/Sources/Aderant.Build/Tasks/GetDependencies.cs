@@ -65,9 +65,15 @@ namespace Aderant.Build.Tasks {
         }
 
         public override bool Execute() {
-            ModulesRootPath = Path.GetFullPath(ModulesRootPath);
+            BuildTaskLogger logger = new BuildTaskLogger(this);            
 
-            var logger = new BuildTaskLogger(this);
+            ExecuteInternal(logger);
+
+            return !Log.HasLoggedErrors;
+        }
+
+        public void ExecuteInternal(Logging.ILogger logger) {
+            ModulesRootPath = Path.GetFullPath(ModulesRootPath);
 
             ExpertManifest productManifest = null;
             if (ProductManifest != null) {
@@ -76,7 +82,7 @@ namespace Aderant.Build.Tasks {
                 productManifest.ModulesDirectory = ModulesRootPath;
             }
 
-            LogParameters();
+            LogParameters(logger);
 
             var workflow = new ResolverWorkflow(logger);
             workflow.ConfigurationXml = ConfigurationXml;
@@ -96,8 +102,6 @@ namespace Aderant.Build.Tasks {
             }
 
             workflow.Run(cancellationTokenSource.Token);
-
-            return !Log.HasLoggedErrors;
         }
 
         /// <summary>
@@ -111,10 +115,10 @@ namespace Aderant.Build.Tasks {
         }
 
 
-        private void LogParameters() {
-            Log.LogMessage(MessageImportance.Normal, "ModulesRootPath: " + ModulesRootPath, null);
-            Log.LogMessage(MessageImportance.Normal, "DropPath: " + DropPath, null);
-            Log.LogMessage(MessageImportance.Normal, "ProductManifest: " + ProductManifest, null);
+        private void LogParameters(Logging.ILogger logger) {
+            logger.Info($"ModulesRootPath: {ModulesRootPath}");
+            logger.Info($"DropPath: {DropPath}");
+            logger.Info($"ProductManifest: {ProductManifest}");
         }
     }
 }

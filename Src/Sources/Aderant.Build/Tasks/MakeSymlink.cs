@@ -5,9 +5,11 @@ using System.Runtime.InteropServices;
 using System.Security.Principal;
 using Aderant.Build.IO;
 using Microsoft.Build.Framework;
+using Microsoft.Build.Utilities;
+using Aderant.Build.Logging;
 
 namespace Aderant.Build.Tasks {
-    public class MakeSymlink : Microsoft.Build.Utilities.Task {
+    public class MakeSymlink : Task {
 
         [Required]
         [Output]
@@ -31,6 +33,17 @@ namespace Aderant.Build.Tasks {
         public bool FailIfLinkIsDirectoryWithContent { get; set; }
 
         public override bool Execute() {
+            if (!ValidateIsAdmin()) {
+                return !Log.HasLoggedErrors;
+            }
+
+            var logger = new BuildTaskLogger(this);
+
+            ExecuteInternal(logger);
+
+            return !Log.HasLoggedErrors;        }
+
+        public void ExecuteInternal(Logging.ILogger logger) {
             NativeMethods.SymbolicLink link = NativeMethods.SymbolicLink.SYMBOLIC_LINK_FLAG_DIRECTORY;
 
             bool useJunction = false;
@@ -44,14 +57,14 @@ namespace Aderant.Build.Tasks {
                         link = NativeMethods.SymbolicLink.SYMBOLIC_LINK_FLAG_DIRECTORY;
                         break;
                     case 'j': {
-                        useJunction = true;
-                        break;
-                    }
+                            useJunction = true;
+                            break;
+                        }
                 }
             }
 
             if (!useJunction && !ValidateIsAdmin()) {
-                return !Log.HasLoggedErrors;
+                return;
             }
 
             try {
@@ -65,42 +78,38 @@ namespace Aderant.Build.Tasks {
                 DirectoryInfo info = new DirectoryInfo(Link);
                 if (FailIfLinkIsDirectoryWithContent && info.Exists && !info.Attributes.HasFlag(FileAttributes.ReparsePoint)) {
                     if (info.GetFileSystemInfos("*", SearchOption.TopDirectoryOnly).Any()) {
-                        Log.LogError($"Error: Unable to create symbolic link. The link '{Link}' exists and is not a reparse point. Is this folder committed in error?");
-                        return false;
+                        logger.Error($"Error: Unable to create symbolic link. The link '{Link}' exists and is not a reparse point. Is this folder committed in error?");
+                        return;
                     }
                 }
 
                 if (info.Exists) {
-                    Log.LogMessage("Deleting directory: " + info.FullName);
+                    logger.Info("Deleting directory: " + info.FullName);
                     info.Delete(true);
                 }
 
                 if (CreateLinkParent && (useJunction || link == NativeMethods.SymbolicLink.SYMBOLIC_LINK_FLAG_DIRECTORY)) {
                     var parentDirectory = info.Parent;
                     if (parentDirectory != null && !parentDirectory.Exists) {
-                        Log.LogMessage(MessageImportance.Low, "Creating directory: " + parentDirectory.FullName);
+                        logger.Info("Creating directory: " + parentDirectory.FullName);
                         parentDirectory.Create();
                     }
                 }
 
                 if (useJunction) {
-                    Log.LogMessage("Creating junction {0} <=====> {1}", Link, Target);
+                    logger.Info("Creating junction {0} <=====> {1}", Link, Target);
                     JunctionNativeMethods.CreateJunction(Target, Link, false);
                 } else {
-                    Log.LogMessage("Creating symlink {0} <=====> {1}", Link, Target);
+                    logger.Info("Creating symlink {0} <=====> {1}", Link, Target);
                     if (!NativeMethods.CreateSymbolicLink(Link, Target, (uint)link)) {
-                        Log.LogError($"Error: Unable to create symbolic link '{Link}'. (Error Code: {Marshal.GetLastWin32Error()})");
+                        logger.Error($"Error: Unable to create symbolic link '{Link}'. (Error Code: {Marshal.GetLastWin32Error()})");
                     }
                 }
             } catch (Exception ex) {
-                Log.LogErrorFromException(ex);
-                return false;
+                logger.LogErrorFromException(ex, true, true);
+                return;
             }
-
-            return !Log.HasLoggedErrors;
         }
-
-
 
         private bool ValidateIsAdmin() {
             using (WindowsIdentity identity = WindowsIdentity.GetCurrent()) {

@@ -32,17 +32,127 @@ Export-ModuleMember Start-BuildForCurrentModule
 
 <#
 .Synopsis
-    Retrieves the dependencies required to build the current module
+    Jump up the file tree from the current location until the root of a git repository (contains a .git directory) is found.
+.Outputs
+    The path of the .git directory
 #>
-function Get-DependenciesForCurrentModule([switch]$noUpdate, [switch]$showOutdated, [switch]$force) {
-    if ([string]::IsNullOrEmpty($ShellContext.CurrentModulePath)) {
-        Write-Warning "The current module is not set so the binaries will not be copied"
-    } else {
-        try {
-            pushd $ShellContext.BuildScriptsDirectory
-            & .\LoadDependencies.ps1 -modulesRootPath $ShellContext.CurrentModulePath -dropPath $ShellContext.BranchServerDirectory -update:(-not $noUpdate) -showOutdated:$showOutdated -force:$force
-        } finally {
-            popd
+function Get-GitDirectory($searchDirectory) {
+    # Canonicalize our starting location
+    [string]$searchDirectory = [System.IO.Path]::GetFullPath($searchDirectory)
+
+    do {
+        # Construct the path that we will use to test against
+        [string]$possibleFileDirectory = [System.IO.Path]::Combine($searchDirectory, '.git')
+
+        # If we successfully locate the file in the directory that we're
+        # looking in, simply return that location. Otherwise we'll
+        # keep moving up the tree.
+        if ([System.IO.Directory]::Exists($possibleFileDirectory)) {
+            # We've found the file, return the directory we found it in
+            return $searchDirectory
+        } else {
+            # GetDirectoryName will return null when we reach the root
+            # terminating our search
+            $searchDirectory = [System.IO.Path]::GetDirectoryName($searchDirectory)
+        }
+    } while ($null -ne $searchDirectory)
+
+    # When we didn't find the location, then return an empty string
+    return [string]::Empty
+}
+
+<#
+.Synopsis
+    Retrieves the dependencies required to build the current module
+    If run at the root will crawl all modules and get dependencies for everything
+
+#>
+function Get-DependenciesForCurrentModule {
+    [CmdletBinding()]
+    param(
+        [switch]$noUpdate,
+        [switch]$showOutdated,
+        [switch]$force
+    )
+
+    begin {
+        Set-StrictMode -Version 'Latest'
+        $ErrorActionPreference = 'Stop'
+
+        [string]$currentPath = (Get-Location).Path
+    }
+
+    process {
+        if (-Not ([string]::IsNullOrEmpty($ShellContext.CurrentModulePath)) -And [System.IO.File]::Exists([System.IO.Path]::Combine($ShellContext.CurrentModulePath, 'Build\TFSBuild.proj'))) {
+            try {
+                Push-Location -Path $ShellContext.BuildScriptsDirectory
+                & '.\LoadDependencies.ps1' -modulesRootPath $ShellContext.CurrentModulePath -dropPath $ShellContext.BranchServerDirectory -update:$(-not $noUpdate.IsPresent) -showOutdated:$($showOutdated.IsPresent) -force:$($force.IsPresent)
+            } finally {
+                Pop-Location
+            }
+        } else {
+			[string]$root = Get-GitDirectory -searchDirectory $currentPath
+
+			if ([string]::IsNullOrWhiteSpace($root)) {
+			    Write-Error "Unable to locate .git directory based on path: '$($currentPath)'."
+			    return
+			}
+
+            [string]$productManifest = Join-Path -Path $root -ChildPath 'Build\ExpertManifest.xml'
+
+            if (-not (Test-Path $productManifest)) {
+                Write-Error "Unable to locate ExpertManifest.xml at: '$productManifest'."
+                return
+            }
+
+            [string]$branchConfigPath = Join-Path -Path $root -ChildPath 'Build\BranchConfig.xml'
+
+            [string]$branchConfig = ""
+            if (Test-Path $branchConfigPath) {
+                $branchConfig = Get-Content $branchConfigPath                
+            } else {
+                Write-Warning "Unable to locate BranchConfig.xml at: '$branchConfigPath'"
+            }
+
+            [string[]]$modulesInBuild = (Get-ChildItem -Path $root -Filter 'paket.dependencies' -File -Recurse -Depth 1).DirectoryName
+
+            if ($null -eq $modulesInBuild -or $modulesInBuild.Count -eq 0) {
+                Write-Error "Unable to locate any paket.dependencies files in any modules in root: '$root'."
+                return
+            }
+			
+            [Microsoft.Build.Framework.ITaskItem[]]$modulesInBuildTasks = $modulesInBuild | ForEach-Object { [Microsoft.Build.Utilities.TaskItem]::new($_) }
+
+            [Aderant.Build.Tasks.GetDependencies]$getDependencies = [Aderant.Build.Tasks.GetDependencies]::new()
+
+            [Aderant.Build.Logging.PowerShellLogger]$logger = [Aderant.Build.Logging.PowerShellLogger]::new((Get-Host))
+            
+            $getDependencies.ProductManifest = $productManifest
+            $getDependencies.ConfigurationXml = $branchConfig
+            $getDependencies.ModulesRootPath = $root
+            $getDependencies.DropPath = $ShellContext.BranchServerDirectory
+            $getDependencies.DependenciesDirectory = [System.IO.Path]::Combine($root, '_as\out')
+            $getDependencies.ModulesInBuild = $modulesInBuildTasks
+            $getDependencies.EnabledResolvers = @('NupkgResolver')
+
+            $getDependencies.ExecuteInternal($logger)
+
+            [Aderant.Build.Tasks.MakeSymlink]$makeSymlink = [Aderant.Build.Tasks.MakeSymlink]::new()
+            $makeSymlink.Type = 'D'            
+
+            $makeSymlink.Target = "$root\_as\out\packages"
+            $makeSymlink.FailIfLinkIsDirectoryWithContent = $true
+            $modulesInBuild | ForEach-Object {
+                $makeSymlink.Link = "$_\packages"
+                $makeSymlink.ExecuteInternal($logger)
+            }
+
+            $makeSymlink.Target = "$root\_as\out"
+            $makeSymlink.FailIfLinkIsDirectoryWithContent = $false
+            $modulesInBuild | ForEach-Object {
+                $makeSymlink.Link = "$_\Dependencies"
+                $makeSymlink.ExecuteInternal($logger)
+            }
         }
     }
 }
