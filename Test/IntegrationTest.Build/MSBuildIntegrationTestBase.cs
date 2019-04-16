@@ -72,7 +72,7 @@ namespace IntegrationTest.Build {
                             null));
 
                     if (result.OverallResult == BuildResultCode.Failure) {
-                        LogFile = @"C:\temp\" + TestContext.TestName + ".log";
+                        LogFile = Path.Combine(TestContext.DeploymentDirectory, $"{TestContext.TestName}.log");
                         WriteLogFile(LogFile, logger.LogLines);
                     }
 
