@@ -103,7 +103,12 @@ foreach ($tableEntity in $builds) {
         $result = $queryCache[$buildUrl]
         $seenBefore = $true
     } else {
-        $result = Invoke-RestMethod -Method Get -Uri $buildUrl -UseDefaultCredentials
+        try {
+            $result = Invoke-RestMethod -Method Get -Uri $buildUrl -UseDefaultCredentials
+        } catch {
+            Write-Warning -Message $_
+            continue
+        }
         $queryCache.Add($buildUrl, $result)
     }
 
