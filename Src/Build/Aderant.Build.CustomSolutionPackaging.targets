@@ -143,7 +143,9 @@ foreach(var replacement in replacements){
                %(CustomProjectDirectories.FullPath)\BuildTemp\**\*;
                %(CustomProjectDirectories.FullPath)\**\obj\**;
                %(CustomProjectDirectories.FullPath)\**\_Resharper*\**;
-               %(CustomProjectDirectories.FullPath)\**\*.g*.cs;
+               %(CustomProjectDirectories.FullPath)\**\*.g.cs;
+               %(CustomProjectDirectories.FullPath)\**\*.gen.cs;
+               %(CustomProjectDirectories.FullPath)\**\*.generated.cs;
                %(CustomProjectDirectories.FullPath)\**\*.pfx;
                %(CustomProjectDirectories.FullPath)\**\*.vssscc;
                %(CustomProjectDirectories.FullPath)\**\*.vspscc;
@@ -331,7 +333,9 @@ foreach(var replacement in replacements){
                              %(_AllWorkflowDirectoriesWithMetadata.FullPath)\BuildTemp\**\*;
                              %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\obj\**;
                              %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\_Resharper*\**;
-                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\*.g*.cs;
+                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\*.g.cs;
+                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\*.gen.cs;
+                             %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\*.generated.cs;
                              %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\*.pfx;
                              %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\*.vssscc;
                              %(_AllWorkflowDirectoriesWithMetadata.FullPath)\**\*.vspscc;
