@@ -532,20 +532,11 @@ function SetRepository([string]$path) {
     [string]$currentModuleBuildDirectory = "$path\Build"
 	
     if (Test-Path $currentModuleBuildDirectory) {
-        $items = Get-ChildItem -Path $currentModuleBuildDirectory -Filter 'Feature*.psm1'
-		
-		[string]$featureModule = $null
-				
-		foreach ($item in $items) {
-			if (Test-ReparsePoint $item) {
-				continue
-			}
-			
-			$featureModule = $item
-		}
+        # We only allow 1 feature*.psm1 file in the \build folder.
+        $featureModule = Get-ChildItem -Path $currentModuleBuildDirectory -File -Filter 'Feature*.psm1' | Select-object -First 1
 
-        if ($featureModule) {
-            ImportFeatureModule $featureModule
+        if($featureModule -and $featureModule.FullName) {
+            ImportFeatureModule $featureModule.FullName
         }
     }
 }
