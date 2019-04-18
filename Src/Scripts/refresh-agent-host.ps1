@@ -13,6 +13,7 @@ Push-Location $PSScriptRoot
 & git pull
 
 . $PSScriptRoot\configure-disk-device-parameters.ps1
+. $PSScriptRoot\optimize-drives.ps1
 . $PSScriptRoot\Disable-InternetExplorerESC.ps1
 
 Pop-Location
