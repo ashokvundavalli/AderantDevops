@@ -22,5 +22,7 @@ namespace Aderant.Build.ProjectSystem {
         /// Requires that for a given platform that all configurations within that platform have the same output path pattern.
         /// </summary>
         public bool RequireSynchronizedOutputPaths { get; set; }
+
+        public bool CreateHardLinksForCopyLocal { get; set; }
     }
 }

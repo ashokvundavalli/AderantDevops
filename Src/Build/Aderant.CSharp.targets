@@ -310,8 +310,8 @@
 
 
   <Target Name="BeforeCopyFilesMarkedCopyLocal" BeforeTargets="_CopyFilesMarkedCopyLocal">
-    <PropertyGroup Condition="'$(IsDesktopBuild)' == 'false'">
-      <CreateHardLinksForCopyLocalIfPossible>true</CreateHardLinksForCopyLocalIfPossible>
+    <PropertyGroup Condition="'$(IsDesktopBuild)' == 'false' And '$(CreateHardLinksForCopyLocal)' != ''">
+      <CreateHardLinksForCopyLocalIfPossible>$(CreateHardLinksForCopyLocal)</CreateHardLinksForCopyLocalIfPossible>
     </PropertyGroup>
   </Target>
 

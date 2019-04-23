@@ -73,6 +73,7 @@
   <PropertyGroup>
     <AlwaysBuildWebProjects Condition="'$(AlwaysBuildWebProjects)' == ''">true</AlwaysBuildWebProjects>
     <RequireSynchronizedOutputPaths Condition="'$(RequireSynchronizedOutputPaths)' == ''">false</RequireSynchronizedOutputPaths>
+    <CreateHardLinksForCopyLocal Condition="'$(CreateHardLinksForCopyLocal)' == ''">false</CreateHardLinksForCopyLocal>
   </PropertyGroup>
 
   <Import Project="$(ParametersFile)" Condition="Exists($(ParametersFile))" />
@@ -201,6 +202,7 @@
       ProjectFiles="@(ProjectFiles)"
       AlwaysBuildWebProjects="$(AlwaysBuildWebProjects)"
       RequireSynchronizedOutputPaths="$(RequireSynchronizedOutputPaths)"
+      CreateHardLinksForCopyLocal="$(CreateHardLinksForCopyLocal)"
       GroupExecutionFile="$(MSBuildThisFileDirectory)ComboBuild.Core.targets"
       BeforeProjectFile="$(MSBuildThisFileDirectory)ComboBuild.Pre.targets"
       AfterProjectFile="$(MSBuildThisFileDirectory)ComboBuild.Post.targets"

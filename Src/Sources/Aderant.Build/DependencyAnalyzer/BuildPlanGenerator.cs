@@ -71,6 +71,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     CreateItemGroupMembers(
                         orchestrationFiles.BeforeProjectFile,
                         orchestrationFiles.AfterProjectFile,
+                        orchestrationFiles.ExtensibilityImposition,
                         projectGroup,
                         buildGroupCount));
 
@@ -136,12 +137,12 @@ namespace Aderant.Build.DependencyAnalyzer {
             return "ProjectsToBuild" + buildGroupCount;
         }
 
-        private IEnumerable<ItemGroupItem> CreateItemGroupMembers(string beforeProjectFile, string afterProjectFile, IReadOnlyList<IDependable> projectGroup, int buildGroup) {
+        private IEnumerable<ItemGroupItem> CreateItemGroupMembers(string beforeProjectFile, string afterProjectFile, ExtensibilityImposition imposition, IReadOnlyList<IDependable> projectGroup, int buildGroup) {
             return projectGroup.Select(
                 studioProject => {
                     SetUseCommonOutputDirectory(projectGroup.OfType<ConfiguredProject>());
 
-                    var item = GenerateItem(beforeProjectFile, afterProjectFile, buildGroup, studioProject);
+                    var item = GenerateItem(beforeProjectFile, afterProjectFile, buildGroup, studioProject, imposition);
 
                     if (item != null) {
                         item.Condition = $"('$(ResumeGroupId)' == '') Or ('{buildGroup}' >= '$(ResumeGroupId)')";
@@ -176,7 +177,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        private ItemGroupItem GenerateItem(string beforeProjectFile, string afterProjectFile, int buildGroup, IDependable studioProject) {
+        private ItemGroupItem GenerateItem(string beforeProjectFile, string afterProjectFile, int buildGroup, IDependable studioProject, ExtensibilityImposition imposition) {
             Guid projectInstanceId = Guid.NewGuid();
 
             PropertyList propertiesForProjectInstance = new PropertyList();
@@ -193,101 +194,113 @@ namespace Aderant.Build.DependencyAnalyzer {
                 if (!visualStudioProject.IncludeInBuild) {
                     return null;
                 }
-
-                propertiesForProjectInstance = AddSolutionConfigurationProperties(visualStudioProject, propertiesForProjectInstance);
-                propertiesForProjectInstance["Id"] = projectInstanceId.ToString("D");
-
-                if (solutionPropertyLists.ContainsKey(propertiesForProjectInstance["SolutionRoot"])) {
-                    foreach (KeyValuePair<string, string> keyValuePair in solutionPropertyLists[propertiesForProjectInstance["SolutionRoot"]]) {
-                        if (!propertiesForProjectInstance.ContainsKey(keyValuePair.Key)) {
-                            propertiesForProjectInstance.Add(keyValuePair.Key, keyValuePair.Value);
-                        }
-                    }
-                }
-
-                ItemGroupItem project = new ItemGroupItem(visualStudioProject.FullPath) {
-                    ["Id"] = projectInstanceId.ToString("D"),
-                    [BuildGroupId] = buildGroup.ToString(CultureInfo.InvariantCulture),
-                    ["IsWebProject"] = visualStudioProject.IsWebProject.ToString(),
-                    // Indicates this file is not part of the build system
-                    ["IsProjectFile"] = bool.TrueString,
-                };
-
-                if (visualStudioProject.BuildConfiguration != null) {
-                    project["Configuration"] = visualStudioProject.BuildConfiguration.ConfigurationName;
-                    project["Platform"] = visualStudioProject.BuildConfiguration.PlatformName;
-                    project["AdditionalProperties"] = $"Configuration={visualStudioProject.BuildConfiguration.ConfigurationName}; Platform={visualStudioProject.BuildConfiguration.PlatformName}";
-                }
-
-                if (visualStudioProject.BuildReason != null && visualStudioProject.BuildReason.Flags.HasFlag(BuildReasonTypes.AlwaysBuild)) {
-                    project["Targets"] = "Rebuild";
-                }
-
-                AddProjectOutputToUpdatePackage(propertiesForProjectInstance, visualStudioProject);
-
-                TrackProjectItems(project, visualStudioProject);
-
-                if (project["IsWebProject"] == bool.TrueString) {
-                    if (!propertiesForProjectInstance.ContainsKey("WebPublishPipelineCustomizeTargetFile")) {
-                        propertiesForProjectInstance.Add("WebPublishPipelineCustomizeTargetFile", "$(BuildScriptsDirectory)Aderant.wpp.targets");
-                    }
-                }
-
-                OnItemGroupItemMaterialized(new ItemGroupItemMaterializedEventArgs(project, propertiesForProjectInstance));
-
-                project[PropertiesKey] = propertiesForProjectInstance.ToString();
-
+                var project = SetConfiguredProjectProperties(buildGroup, propertiesForProjectInstance, visualStudioProject, imposition, projectInstanceId);
                 return project;
             }
 
             DirectoryNode node = studioProject as DirectoryNode;
             if (node != null) {
-                string solutionDirectoryPath = node.Directory;
-
-                PropertyList properties;
-                if (solutionPropertyLists.ContainsKey(solutionDirectoryPath)) {
-                    properties = solutionPropertyLists[solutionDirectoryPath];
-                } else {
-                    properties = AddBuildProperties(propertiesForProjectInstance, fileSystem, solutionDirectoryPath);
-                    solutionPropertyLists.Add(solutionDirectoryPath, properties);
-                }
-
-                if (!properties.ContainsKey("SolutionRoot")) {
-                    properties.Add("SolutionRoot", solutionDirectoryPath);
-                }
-
-                ItemGroupItem item = new ItemGroupItem(node.IsPostTargets ? afterProjectFile : beforeProjectFile) {
-                    [BuildGroupId] = buildGroup.ToString(CultureInfo.InvariantCulture),
-
-                    // Indicates this file is part of the build system itself
-                    ["IsPostTargets"] = node.IsPostTargets ? bool.TrueString : bool.FalseString,
-                    ["IsPreTargets"] = !node.IsPostTargets ? bool.TrueString : bool.FalseString,
-                    ["IsProjectFile"] = bool.FalseString,
-                    ["ProjectInstanceId"] = projectInstanceId.ToString("D"),
-                };
-
-                if (node.RetrievePrebuilts != null) {
-                    if (!node.RetrievePrebuilts.Value) {
-                        properties["RetrievePrebuilts"] = bool.FalseString;
-                    }
-                }
-
-                // Perf optimization, we can disable T4 if we haven't seen any projects under this solution path
-                if (!observedProjects.Contains(solutionDirectoryPath)) {
-                    properties["T4TransformEnabled"] = bool.FalseString;
-                }
-
-                properties["ProjectInstanceId"] = projectInstanceId.ToString("D");
-                properties["RunUserTargets"] = node.AddedByDependencyAnalysis ? bool.FalseString : bool.TrueString;
-
-                OnItemGroupItemMaterialized(new ItemGroupItemMaterializedEventArgs(item, properties));
-
-                item[PropertiesKey] = properties.ToString();
-
+                var item = SetDirectoryProperties(buildGroup, propertiesForProjectInstance, node, beforeProjectFile, afterProjectFile, projectInstanceId);
                 return item;
             }
 
             return null;
+        }
+
+        private ItemGroupItem SetConfiguredProjectProperties(int buildGroup, PropertyList propertiesForProjectInstance, ConfiguredProject visualStudioProject, ExtensibilityImposition imposition, Guid projectInstanceId) {
+            propertiesForProjectInstance = AddSolutionConfigurationProperties(visualStudioProject, propertiesForProjectInstance);
+            propertiesForProjectInstance["Id"] = projectInstanceId.ToString("D");
+
+            if (solutionPropertyLists.ContainsKey(propertiesForProjectInstance["SolutionRoot"])) {
+                foreach (KeyValuePair<string, string> keyValuePair in solutionPropertyLists[propertiesForProjectInstance["SolutionRoot"]]) {
+                    if (!propertiesForProjectInstance.ContainsKey(keyValuePair.Key)) {
+                        propertiesForProjectInstance.Add(keyValuePair.Key, keyValuePair.Value);
+                    }
+                }
+            }
+
+            ItemGroupItem project = new ItemGroupItem(visualStudioProject.FullPath) {
+                ["Id"] = projectInstanceId.ToString("D"),
+                [BuildGroupId] = buildGroup.ToString(CultureInfo.InvariantCulture),
+                ["IsWebProject"] = visualStudioProject.IsWebProject.ToString(),
+                // Indicates this file is not part of the build system
+                ["IsProjectFile"] = bool.TrueString,
+            };
+
+            if (imposition.CreateHardLinksForCopyLocal) {
+                project["CreateHardLinksForCopyLocal"] = bool.TrueString;
+            }
+
+            if (visualStudioProject.BuildConfiguration != null) {
+                project["Configuration"] = visualStudioProject.BuildConfiguration.ConfigurationName;
+                project["Platform"] = visualStudioProject.BuildConfiguration.PlatformName;
+                project["AdditionalProperties"] = $"Configuration={visualStudioProject.BuildConfiguration.ConfigurationName}; Platform={visualStudioProject.BuildConfiguration.PlatformName}";
+            }
+
+            if (visualStudioProject.BuildReason != null && visualStudioProject.BuildReason.Flags.HasFlag(BuildReasonTypes.AlwaysBuild)) {
+                project["Targets"] = "Rebuild";
+            }
+
+            AddProjectOutputToUpdatePackage(propertiesForProjectInstance, visualStudioProject);
+
+            TrackProjectItems(project, visualStudioProject);
+
+            if (project["IsWebProject"] == bool.TrueString) {
+                if (!propertiesForProjectInstance.ContainsKey("WebPublishPipelineCustomizeTargetFile")) {
+                    propertiesForProjectInstance.Add("WebPublishPipelineCustomizeTargetFile", "$(BuildScriptsDirectory)Aderant.wpp.targets");
+                }
+            }
+
+            OnItemGroupItemMaterialized(new ItemGroupItemMaterializedEventArgs(project, propertiesForProjectInstance));
+
+            project[PropertiesKey] = propertiesForProjectInstance.ToString();
+            return project;
+        }
+
+        private ItemGroupItem SetDirectoryProperties(int buildGroup, PropertyList propertiesForProjectInstance, DirectoryNode node, string beforeProjectFile, string afterProjectFile, Guid projectInstanceId) {
+
+            string solutionDirectoryPath = node.Directory;
+
+            PropertyList properties;
+            if (solutionPropertyLists.ContainsKey(solutionDirectoryPath)) {
+                properties = solutionPropertyLists[solutionDirectoryPath];
+            } else {
+                properties = AddBuildProperties(propertiesForProjectInstance, fileSystem, solutionDirectoryPath);
+                solutionPropertyLists.Add(solutionDirectoryPath, properties);
+            }
+
+            if (!properties.ContainsKey("SolutionRoot")) {
+                properties.Add("SolutionRoot", solutionDirectoryPath);
+            }
+
+            ItemGroupItem item = new ItemGroupItem(node.IsPostTargets ? afterProjectFile : beforeProjectFile) {
+                [BuildGroupId] = buildGroup.ToString(CultureInfo.InvariantCulture),
+
+                // Indicates this file is part of the build system itself
+                ["IsPostTargets"] = node.IsPostTargets ? bool.TrueString : bool.FalseString,
+                ["IsPreTargets"] = !node.IsPostTargets ? bool.TrueString : bool.FalseString,
+                ["IsProjectFile"] = bool.FalseString,
+                ["ProjectInstanceId"] = projectInstanceId.ToString("D"),
+            };
+
+            if (node.RetrievePrebuilts != null) {
+                if (!node.RetrievePrebuilts.Value) {
+                    properties["RetrievePrebuilts"] = bool.FalseString;
+                }
+            }
+
+            // Perf optimization, we can disable T4 if we haven't seen any projects under this solution path
+            if (!observedProjects.Contains(solutionDirectoryPath)) {
+                properties["T4TransformEnabled"] = bool.FalseString;
+            }
+
+            properties["ProjectInstanceId"] = projectInstanceId.ToString("D");
+            properties["RunUserTargets"] = node.AddedByDependencyAnalysis ? bool.FalseString : bool.TrueString;
+
+            OnItemGroupItemMaterialized(new ItemGroupItemMaterializedEventArgs(item, properties));
+
+            item[PropertiesKey] = properties.ToString();
+            return item;
         }
 
         private static void AddProjectOutputToUpdatePackage(PropertyList propertyList, ConfiguredProject visualStudioProject) {

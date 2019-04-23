@@ -69,6 +69,11 @@ namespace Aderant.Build.Tasks {
         /// </summary>
         public bool RequireSynchronizedOutputPaths { get; set; }
 
+        /// <summary>
+        /// Pass through property that eventually sets CreateHardLinksForCopyLocalIfPossible from the built-in targets.
+        /// </summary>
+        public bool CreateHardLinksForCopyLocal { get; set; }
+
         [Output]
         public string[] DirectoriesInBuild { get; set; }
 
@@ -96,6 +101,7 @@ namespace Aderant.Build.Tasks {
             var extensibilityImposition = controller.GetExtensibilityImposition(ExtensibilityFiles);
             extensibilityImposition.AlwaysBuildWebProjects = AlwaysBuildWebProjects;
             extensibilityImposition.RequireSynchronizedOutputPaths = RequireSynchronizedOutputPaths;
+            extensibilityImposition.CreateHardLinksForCopyLocal = CreateHardLinksForCopyLocal;
 
             var projectTree = ProjectTree.CreateDefaultImplementation(new BuildTaskLogger(Log));
 
