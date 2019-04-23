@@ -487,7 +487,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                             var contribution = contributions.FirstOrDefault(s => string.Equals(s.File, makeFile, StringComparison.OrdinalIgnoreCase));
                             if (contribution != null) {
 
-                                // Ensure the user did not explicitly as this directory to be built
+                                // Ensure the user did not explicitly ask this directory to be built
                                 if (!makeFiles.Contains(contribution.File)) {
                                     startNode.AddedByDependencyAnalysis = true;
                                     endNode.AddedByDependencyAnalysis = true;
@@ -617,7 +617,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                                 return;
                             }
 
-                            MarkDirty(project, BuildReasonTypes.OutputNotFoundInCachedBuild, dirtyProjects);
+                            MarkDirty(project, BuildReasonTypes.OutputNotFoundInCachedBuild, (string)null);
                             return;
                         }
                     }
@@ -625,12 +625,12 @@ namespace Aderant.Build.DependencyAnalyzer {
                     logger.Info($"No artifacts exist for '{stateFileKey}' or there are no project outputs.");
                 }
 
-                MarkDirty(project, BuildReasonTypes.ProjectOutputNotFound, dirtyProjects);
+                MarkDirty(project, BuildReasonTypes.ProjectOutputNotFound, (string)null);
                 return;
 
             }
 
-            MarkDirty(project, BuildReasonTypes.CachedBuildNotFound, dirtyProjects);
+            MarkDirty(project, BuildReasonTypes.CachedBuildNotFound, (string)null);
         }
 
         private InputFilesDependencyAnalysisResult BeginTrackingInputFiles(BuildStateFile stateFile, string solutionRoot) {
@@ -753,26 +753,26 @@ namespace Aderant.Build.DependencyAnalyzer {
         private static bool IncludeProject(bool desktopBuild, bool excludeTestProjects, IDependable x) {
             var configuredProject = x as ConfiguredProject;
 
-            if (desktopBuild) {
-                if (configuredProject != null) {
-                    if (!configuredProject.IncludeInBuild) {
+            if (configuredProject != null) {
+                if (!configuredProject.IncludeInBuild) {
+                    return false;
+                }
+
+                if (excludeTestProjects) {
+                    // Web projects are also test projects so don't be too aggressive here.
+                    if (configuredProject.IsTestProject && !configuredProject.IsWebProject) {
                         return false;
                     }
+                }
 
-                    if (excludeTestProjects) {
-                        // Web projects are also test projects so don't be too aggressive here.
-                        if (configuredProject.IsTestProject && !configuredProject.IsWebProject) {
-                            return false;
-                        }
+                if (configuredProject.DirtyFiles != null && configuredProject.DirtyFiles.Count > 0) {
+                    return true;
+                }
+
+                if (configuredProject.IsDirty) {
+                    if (configuredProject.BuildReason != null && configuredProject.BuildReason.Flags == BuildReasonTypes.CachedBuildNotFound) {
+                        return false;
                     }
-
-                    if (configuredProject.IsDirty) {
-                        if (configuredProject.BuildReason != null && configuredProject.BuildReason.Flags == BuildReasonTypes.CachedBuildNotFound) {
-                            return false;
-                        }
-                    }
-
-                    return configuredProject.IsDirty;
                 }
             }
 
@@ -877,7 +877,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             while (newCount != 0) {
                 p = MarkDirty(allProjects, projectsToFind).ToList();
                 newCount = p.Count;
-                var newSearchList = new HashSet<string>();
+                var newSearchList = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 newSearchList.UnionWith(p.Select(x => x.Id));
                 projectsToFind = newSearchList;
             }

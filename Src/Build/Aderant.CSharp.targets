@@ -191,6 +191,28 @@
     </PropertyGroup>
   </Target>
 
+
+  <PropertyGroup>
+    <!--PERF: Avoid looking for winmd files.
+          Put the most likely extensions first for reference resolution speed.
+      -->
+    <AllowedReferenceAssemblyFileExtensions>
+      .dll;
+      .exe
+    </AllowedReferenceAssemblyFileExtensions>
+
+
+    <!--
+        These are the extensions that reference resolution will consider when looking for files related
+        to resolved references. Here we ignore pdb and xml for test projets to avoid pulling in that baggage.
+        A dummy name is provided to fool the ResolveAssemblyReference task.
+      -->
+    <AllowedReferenceRelatedFileExtensions Condition=" $(ProjectTypeGuids.Contains('3AC096D0-A1C2-E12C-1390-A8335801FDAB')) == 'true' ">
+      _
+    </AllowedReferenceRelatedFileExtensions>
+  </PropertyGroup>
+
+
   <Target Name="SetAssemblySearchPaths" BeforeTargets="GetReferenceAssemblyPaths;BeforeResolveReferences" DependsOnTargets="AssignPropertiesForCustomSearchPaths;CollectNugetPackagePaths">
 
     <!--
@@ -226,13 +248,6 @@
       </AssemblySearchPaths>
     </PropertyGroup>
 
-    <PropertyGroup>
-      <!--PERF: Avoid looking for winmd files. -->
-      <AllowedReferenceAssemblyFileExtensions>
-        .dll;
-        .exe
-      </AllowedReferenceAssemblyFileExtensions>
-    </PropertyGroup>
 
     <!--Adding additional dependencies searching locations. -->
     <PropertyGroup>
@@ -294,6 +309,13 @@
   </Target>
 
 
+  <Target Name="BeforeCopyFilesMarkedCopyLocal" BeforeTargets="_CopyFilesMarkedCopyLocal">
+    <PropertyGroup Condition="'$(IsDesktopBuild)' == 'false'">
+      <CreateHardLinksForCopyLocalIfPossible>true</CreateHardLinksForCopyLocalIfPossible>
+    </PropertyGroup>
+  </Target>
+
+
   <!-- Disable copy local for all projects which build to Bin\Module excluding Office integration projects (addins).
        VSTO projects run a target called VisualStudioForApplicationsBuild which executes FindRibbons. The FindRibbons task is stupid and has no
        mechanism for supply a dependency directory - it depends on the dependencies of your project being available by virtue of copy local -->
@@ -313,7 +335,8 @@
       <UseCommonOutputDirectory Condition="'$(DisableCopyLocal)' == 'true'">true</UseCommonOutputDirectory>
     </PropertyGroup>
 
-    <Message Text="Copy local disabled: $(DisableCopyLocal)" />
+    <Message Text="Copy local disabled: $(DisableCopyLocal)" Importance="Low" />
+
 
     <ItemGroup>
       <ReferenceNew Include="@(Reference)" Condition="'$(DisableCopyLocal)' == 'true'">
