@@ -227,7 +227,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 ["IsProjectFile"] = bool.TrueString,
             };
 
-            if (imposition.CreateHardLinksForCopyLocal) {
+            if (imposition != null && imposition.CreateHardLinksForCopyLocal) {
                 project["CreateHardLinksForCopyLocal"] = bool.TrueString;
             }
 
