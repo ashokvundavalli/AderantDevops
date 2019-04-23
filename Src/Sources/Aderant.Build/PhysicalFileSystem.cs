@@ -72,17 +72,7 @@ namespace Aderant.Build {
         }
 
         public virtual void DeleteFile(string path) {
-            if (!FileExists(path)) {
-                return;
-            }
-
-            try {
-                MakeFileWritable(path);
-                path = GetFullPath(path);
-                File.Delete(path);
-            } catch (FileNotFoundException) {
-
-            }
+            DeleteFile(path, false);
         }
 
         public virtual void DeleteDirectory(string path, bool recursive) {
@@ -447,6 +437,10 @@ namespace Aderant.Build {
         }
 
         private void TryCopyViaLink(string fileLocation, string fileDestination, CreateSymlinkLink createLink) {
+            // This can be subject to race conditions - if we are invoked by multiple projects
+            // e.g as part of the CopyLocal process then another project may have already created the destination.
+            // Unfortunately we cannot get hold of the full copy local closure so we need to use careful error
+            // handling instead.
             string[] links = NativeMethods.GetFileSiblingHardLinks(fileLocation);
 
             if (links != null && links.Length > 1) {
@@ -460,10 +454,32 @@ namespace Aderant.Build {
 
             // CreateHardLink and CreateSymbolicLink cannot overwrite an existing file or link
             // so we need to delete the existing entry before we create the hard or symbolic link.
-            DeleteFile(fileDestination);
+            DeleteFile(fileDestination, true);
 
-            if (!createLink(fileDestination, fileLocation, (uint)NativeMethods.SymbolicLink.SYMBOLIC_LINK_FLAG_FILE)) {
-                throw new InvalidOperationException($"Failed to create link {fileDestination} ==> {fileLocation}");
+            // Check again if the file exists, it does we must be racing with another thread.
+            var exists = FileExists(fileDestination);
+
+            if (!exists) {
+                if (!createLink(fileDestination, fileLocation, (uint)NativeMethods.SymbolicLink.SYMBOLIC_LINK_FLAG_FILE)) {
+                    throw new InvalidOperationException($"Failed to create link {fileDestination} ==> {fileLocation}");
+                }
+            }
+        }
+
+        private void DeleteFile(string path, bool skipChecks) {
+            if (FileExists(path)) {
+                return;
+            }
+
+            try {
+                if (!skipChecks) {
+                    MakeFileWritable(path);
+                }
+
+                path = GetFullPath(path);
+                File.Delete(path);
+            } catch (FileNotFoundException) {
+
             }
         }
 

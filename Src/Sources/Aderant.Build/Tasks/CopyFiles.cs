@@ -38,6 +38,31 @@ namespace Aderant.Build.Tasks {
 
         public bool UseHardlinks { get; set; }
 
+        public bool UseHardlinksIfPossible {
+            get { return UseHardlinks; }
+            set { UseHardlinks = value; }
+        }
+
+        /// <summary>
+        /// Provides API compatibly with Copy task
+        /// </summary>
+        public bool SkipUnchangedFiles { get; set; }
+
+        /// <summary>
+        /// Provides API compatibly with Copy task
+        /// </summary>
+        public bool OverwriteReadOnlyFiles { get; set; }
+
+        /// <summary>
+        /// Provides API compatibly with Copy task
+        /// </summary>
+        public int Retries { get; set; }
+
+        /// <summary>
+        /// Provides API compatibly with Copy task
+        /// </summary>
+        public int RetryDelayMilliseconds { get; set; }
+
         public override bool Execute() {
             if (SourceFiles == null || SourceFiles.Length == 0) {
                 DestinationFiles = new ITaskItem[0];
@@ -61,7 +86,7 @@ namespace Aderant.Build.Tasks {
 
                     var add = seenDestinations.Add(destinationFile.ItemSpec);
                     if (add) {
-                        var copyItem = new PathSpec(sourceFile.ItemSpec, destinationFile.ItemSpec);
+                        var copyItem = new PathSpec(sourceFile.ItemSpec, destinationFile.GetMetadata("FullPath"));
                         copySpecs.Add(copyItem);
                     } else {
                         Log.LogWarning("The file {0} -> {1} was ignored as it would result in a double write.", sourceFile.ItemSpec, destinationFile.ItemSpec);

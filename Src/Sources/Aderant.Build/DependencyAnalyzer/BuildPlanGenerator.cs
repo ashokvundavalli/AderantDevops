@@ -228,7 +228,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             };
 
             if (imposition != null && imposition.CreateHardLinksForCopyLocal) {
-                project["CreateHardLinksForCopyLocal"] = bool.TrueString;
+                propertiesForProjectInstance["CreateHardLinksForCopyLocal"] = bool.TrueString;
             }
 
             if (visualStudioProject.BuildConfiguration != null) {
