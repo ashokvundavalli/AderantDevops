@@ -309,13 +309,6 @@
   </Target>
 
 
-  <Target Name="BeforeCopyFilesMarkedCopyLocal" BeforeTargets="_CopyFilesMarkedCopyLocal">
-    <PropertyGroup Condition="'$(IsDesktopBuild)' == 'false' And '$(CreateHardLinksForCopyLocal)' != ''">
-      <CreateHardLinksForCopyLocalIfPossible>$(CreateHardLinksForCopyLocal)</CreateHardLinksForCopyLocalIfPossible>
-    </PropertyGroup>
-  </Target>
-
-
   <!-- Disable copy local for all projects which build to Bin\Module excluding Office integration projects (addins).
        VSTO projects run a target called VisualStudioForApplicationsBuild which executes FindRibbons. The FindRibbons task is stupid and has no
        mechanism for supply a dependency directory - it depends on the dependencies of your project being available by virtue of copy local -->
@@ -473,41 +466,10 @@
   </Target>
 
 
-  <!--
-  ============================================================
-                                      _CopyFilesMarkedCopyLocal
+  <PropertyGroup Condition="'$(IsDesktopBuild)' == 'false' And '$(CreateHardLinksForCopyLocal)' != ''">
+    <CreateHardLinksForCopyLocalIfPossible>$(CreateHardLinksForCopyLocal)</CreateHardLinksForCopyLocalIfPossible>
+  </PropertyGroup>
 
-  Copy references that are marked as "CopyLocal" and their dependencies, including .pdbs, .xmls and satellites.
-
-  This overrides the built in target.
-  ============================================================
-  -->
-  <Target
-      Name="_CopyFilesMarkedCopyLocal"
-      Condition="'@(ReferenceCopyLocalPaths)' != ''"
-        >
-
-    <PropertyGroup>
-      <!-- By default we're not using Hard Links to copy to the output directory, and never when building in VS -->
-      <CreateHardLinksForCopyLocalIfPossible Condition="'$(BuildingInsideVisualStudio)' == 'true' or '$(CreateHardLinksForCopyLocalIfPossible)' == ''">false</CreateHardLinksForCopyLocalIfPossible>
-    </PropertyGroup>
-
-    <CopyFiles
-        SourceFiles="@(ReferenceCopyLocalPaths)"
-        DestinationFiles="@(ReferenceCopyLocalPaths->'$(OutDir)%(DestinationSubDirectory)%(Filename)%(Extension)')"
-        SkipUnchangedFiles="$(SkipCopyUnchangedFiles)"
-        OverwriteReadOnlyFiles="$(OverwriteReadOnlyFiles)"
-        Retries="$(CopyRetryCount)"
-        RetryDelayMilliseconds="$(CopyRetryDelayMilliseconds)"
-        UseHardlinksIfPossible="$(CreateHardLinksForCopyLocalIfPossible)"
-        Condition="'$(UseCommonOutputDirectory)' != 'true'"
-            >
-
-      <Output TaskParameter="DestinationFiles" ItemName="FileWritesShareable"/>
-
-    </CopyFiles>
-
-  </Target>
-
+  <Import Project="Aderant.CSharp.overrides.targets" Condition="'$(CreateHardLinksForCopyLocalIfPossible)' == 'true'" />
 
 </Project>
