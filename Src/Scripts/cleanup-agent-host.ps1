@@ -68,7 +68,9 @@ function RemoveFolder([string]$removeTarget) {
     if (Test-Path $removeTarget) {
         Write-Information "Deleting files under $removeTarget"
 
-        Remove-Item $removeTarget -Verbose -Force -Recurse -ErrorAction SilentlyContinue
+        Push-Location $removeTarget
+        Remove-Item * -Verbose -Force -Recurse -ErrorAction SilentlyContinue
+        Pop-Location
     } else {
         Write-Information "Not deleting $removeTarget"
     }
