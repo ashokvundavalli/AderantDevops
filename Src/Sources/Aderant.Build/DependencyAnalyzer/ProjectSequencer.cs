@@ -720,7 +720,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             // Get all the dirty projects due to user's modification.
-            var dirtyProjects = visualStudioProjects.Where(p => IncludeProject(isDesktopBuild, excludeTestProjects, p)).Select(x => x.Id).ToList();
+            var dirtyProjects = visualStudioProjects.Where(p => IncludeProject(excludeTestProjects, p)).Select(x => x.Id).ToList();         
 
             if (alwaysBuildWebProjects) {
                 MarkWebProjectsDirty(studioProjects);
@@ -750,7 +750,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             return filteredProjects;
         }
 
-        private static bool IncludeProject(bool desktopBuild, bool excludeTestProjects, IDependable x) {
+        private static bool IncludeProject(bool excludeTestProjects, IDependable x) {
             var configuredProject = x as ConfiguredProject;
 
             if (configuredProject != null) {
@@ -769,10 +769,8 @@ namespace Aderant.Build.DependencyAnalyzer {
                     return true;
                 }
 
-                if (configuredProject.IsDirty) {
-                    if (configuredProject.BuildReason != null && configuredProject.BuildReason.Flags == BuildReasonTypes.CachedBuildNotFound) {
-                        return false;
-                    }
+                if (configuredProject.BuildReason != null && configuredProject.BuildReason.Flags == BuildReasonTypes.CachedBuildNotFound) {
+                    return true;
                 }
             }
 
