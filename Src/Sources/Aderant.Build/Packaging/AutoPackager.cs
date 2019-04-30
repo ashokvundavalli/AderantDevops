@@ -30,6 +30,10 @@ namespace Aderant.Build.Packaging {
                     logger.Warning($"! Project {project.ProjectFile} output path ends with two path separators: '{projectOutputPath}'. Normalize this path.");
                 }
 
+                if (project.FilesWritten == null) {
+                    continue;
+                }
+
                 foreach (var file in project.FilesWritten) {
                     string outputRelativePath = null;
 

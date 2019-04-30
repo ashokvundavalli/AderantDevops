@@ -26,6 +26,7 @@
       PostBuild;
       RunBuildExtensions;
       SignInstallers;
+      CopyRelatedFiles;
       PackageArtifactsCore;
     </EndToEndDependsOn>
 
@@ -79,9 +80,14 @@
       </_PackageArtifact>
     </ItemGroup>
   </Target>
+  
+  <Target Name="CopyRelatedFiles">
+    <CopyRelatedFiles
+      SourceLocation ="$(BinModuleDirectory)"
+      Destination="$(UpdateStagingDirectory)BinFiles" />
+  </Target>
 
-
-  <Target Name="PackageArtifactsCore" DependsOnTargets="$(PackageArtifactsDependsOn)">
+    <Target Name="PackageArtifactsCore" DependsOnTargets="$(PackageArtifactsDependsOn)">
 
     <CreateArtifacts
       ContextEndpoint="$(ContextEndpoint)"

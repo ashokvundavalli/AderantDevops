@@ -117,6 +117,7 @@
     <Compile Include="DependencyAnalyzer\ProjectSequencer.cs" />
     <Compile Include="DependencyResolver\DependenciesFileWriter.cs" />
     <Compile Include="DependencyResolver\DependencyException.cs" />
+    <Compile Include="ProjectSystem\RelatedFilesManifest.cs" />
     <Compile Include="ProjectSystem\StateTracking\BuildCachePackageChecker.cs" />
     <Compile Include="DependencyAnalyzer\TextTemplates\Location.cs" />
     <Compile Include="DependencyAnalyzer\TextTemplates\ParserException.cs" />
@@ -126,6 +127,7 @@
     <Compile Include="IO\Traverse.cs" />
     <EmbeddedResource Include="Tasks\PowerShell\Resources\SetBuildTags.ps1" />
     <Compile Include="Tasks\CopyCustomSolution.cs" />
+    <Compile Include="Tasks\CopyRelatedFiles.cs" />
     <Compile Include="Utilities\TopologicalSort.cs" />
     <Compile Include="Packaging\FileRestore.cs" />
     <Compile Include="ProjectSystem\StateTracking\TrackedInputFile.cs" />

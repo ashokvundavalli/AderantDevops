@@ -6,6 +6,18 @@
   <!--Runs after MSI materialization -->
   <Target Name="AfterCompileAndLink" AfterTargets="CompileAndLink">
 
+    <Copy
+      SourceFiles="@(IntermediateAssembly->'$(OutputPath)%(Filename)%(Extension)')"
+      Condition="Exists('@(IntermediateAssembly->'$(OutputPath)%(Filename)%(Extension)')')"
+      DestinationFolder="$(UpdateStagingDirectory)\BinFiles\"
+      UseHardlinksIfPossible="true"
+      OverwriteReadOnlyFiles="$(OverwriteReadOnlyFiles)"
+      Retries="$(CopyRetryCount)"
+      RetryDelayMilliseconds="$(CopyRetryDelayMilliseconds)"
+      ContinueOnError="true">
+      <Output TaskParameter="DestinationFiles" ItemName="FileWrites"/>
+    </Copy>
+
     <RecordProjectOutputs
         ContextEndpoint="$(ContextEndpoint)"
         SolutionRoot="$(SolutionRoot)"

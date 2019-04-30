@@ -36,7 +36,8 @@ namespace Aderant.Build.PipelineService {
             this.consoleAdapter = consoleAdapter;
         }
 
-        private List<string> ImpactedProjets = new List<string>();
+        private List<string> ImpactedProjects = new List<string>();
+        private Dictionary<string, List<string>> RelatedFiles = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
 
         internal ProjectTreeOutputSnapshot Outputs { get; } = new ProjectTreeOutputSnapshot();
 
@@ -58,11 +59,29 @@ namespace Aderant.Build.PipelineService {
         }
 
         public void RecordImpactedProjects(IEnumerable<string> impactedProjects) {
-            ImpactedProjets = impactedProjects.ToList();
+            ImpactedProjects = impactedProjects.ToList();
+        }
+
+        public void RecordRelatedFiles(Dictionary<string, List<string>> relatedFiles) {            
+            if (RelatedFiles == null) {
+                RelatedFiles = relatedFiles;
+            } else {
+                foreach (var relatedFile in relatedFiles.Keys) {
+                    if (RelatedFiles.ContainsKey(relatedFile)) {
+                        RelatedFiles[relatedFile] = RelatedFiles[relatedFile].Union(relatedFiles[relatedFile]).ToList();
+                    } else {
+                        RelatedFiles.Add(relatedFile, relatedFiles[relatedFile]);
+                    }                    
+                }
+            }
         }
 
         public IEnumerable<ProjectOutputSnapshot> GetProjectOutputs(string container) {
             return Outputs.GetProjectsForTag(container);
+        }
+
+        public Dictionary<string, List<string>> GetRelatedFiles() {
+            return RelatedFiles;
         }
 
         public IEnumerable<ProjectOutputSnapshot> GetProjectSnapshots() {
@@ -70,7 +89,7 @@ namespace Aderant.Build.PipelineService {
         }
 
         public IEnumerable<string> GetImpactedProjects() {
-            return ImpactedProjets;
+            return ImpactedProjects;
         }
 
         public void RecordArtifacts(string container, IEnumerable<ArtifactManifest> manifests) {

@@ -16,11 +16,9 @@ namespace UnitTest.Build.ProjectSystem {
         public void Project_key_is_source_relative_path() {
             var service = new BuildPipelineServiceImpl();
 
-            ProjectOutputSnapshotBuilder snapshotBuilder = new ProjectOutputSnapshotBuilder();
+            ProjectOutputSnapshotBuilder snapshotBuilder = new ProjectOutputSnapshotBuilder(@"C:\a\b\c", @"C:\a\b\c\d\foo.csproj",
+                null, @"C:\a\b\c\bin\module\", null, null, null, null);
 
-            snapshotBuilder.SourcesDirectory = @"C:\a\b\c";
-            snapshotBuilder.ProjectFile = @"C:\a\b\c\d\foo.csproj";
-            snapshotBuilder.OutputPath = @"C:\a\b\c\bin\module\";
 
             var outputFilesSnapshot = snapshotBuilder.BuildSnapshot(Guid.NewGuid());
 
@@ -32,11 +30,8 @@ namespace UnitTest.Build.ProjectSystem {
 
         [TestMethod]
         public void Project_output_path_is_relative() {
-            ProjectOutputSnapshotBuilder snapshotBuilder = new ProjectOutputSnapshotBuilder {
-                SourcesDirectory = @"C:\a\b\c",
-                ProjectFile = @"C:\a\b\c\d\foo.csproj",
-                OutputPath = @"C:\a\b\c\bin\module\"
-            };
+            ProjectOutputSnapshotBuilder snapshotBuilder = new ProjectOutputSnapshotBuilder(@"C:\a\b\c", @"C:\a\b\c\d\foo.csproj",
+                null, @"C:\a\b\c\bin\module\", null, null, null, null);
 
             ProjectOutputSnapshot outputFilesSnapshot = snapshotBuilder.BuildSnapshot(Guid.NewGuid());
 
@@ -45,9 +40,8 @@ namespace UnitTest.Build.ProjectSystem {
 
         [TestMethod]
         public void TestProjectType_sets_IsTestProject() {
-            ProjectOutputSnapshotBuilder snapshotBuilder = new ProjectOutputSnapshotBuilder();
-            snapshotBuilder.ProjectFile = "foo.csproj";
-            snapshotBuilder.TestProjectType = "UnitTest";
+            ProjectOutputSnapshotBuilder snapshotBuilder = new ProjectOutputSnapshotBuilder(null, "foo.csproj", null,
+                null, null, null, "UnitTest", null);
 
             var snapshot = snapshotBuilder.BuildSnapshot(Guid.NewGuid());
             Assert.IsTrue(snapshot.IsTestProject);
@@ -55,9 +49,8 @@ namespace UnitTest.Build.ProjectSystem {
 
         [TestMethod]
         public void ProjectTypeGuids_sets_IsTestProject() {
-            ProjectOutputSnapshotBuilder snapshotBuilder = new ProjectOutputSnapshotBuilder();
-            snapshotBuilder.ProjectFile = "foo.csproj";
-            snapshotBuilder.ProjectTypeGuids = new[] { WellKnownProjectTypeGuids.TestProject.ToString() };
+            ProjectOutputSnapshotBuilder snapshotBuilder = new ProjectOutputSnapshotBuilder(null, "foo.csproj", null, null,
+                null, new[] { WellKnownProjectTypeGuids.TestProject.ToString() }, null, null);
 
             var snapshot = snapshotBuilder.BuildSnapshot(Guid.NewGuid());
             Assert.IsTrue(snapshot.IsTestProject);

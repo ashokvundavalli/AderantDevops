@@ -115,6 +115,18 @@
     <Content Include="Packaging\Web\Web.Site1\Scripts\Web.Site2\other.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Resources\BinFiles\Aderant.Query.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\BinFiles\Aderant.Query.Resources.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\BinFiles\Customization\NestedFolder\TestFile.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\BinFiles\ExpertQuery.SqlViews.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Tasks\ReadAssemblyInfo\Resources\AssemblyInfo.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -136,6 +148,7 @@
     <Compile Include="Tasks\MakeSymlink\MakeSymlinkTests.cs" />
     <Compile Include="Tasks\RetrieveArtifacts\RetrieveArtifactsTests.cs" />
     <Compile Include="Tasks\GenerateArchivesTest.cs" />
+    <Compile Include="Tasks\CopyRelatedFilesTests.cs" />
     <Compile Include="VersionControl\GitVersionControlTestBase.cs" />
     <Compile Include="VersionControl\GitVersionControlTests.cs" />
     <Compile Include="ConfiguredProjectTests\ConfiguredProjectTests.cs" />
@@ -182,19 +195,12 @@
     <Content Include="Packaging\Web\Web.Site1\Views\_Layout.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Resources\BinFiles\Customization\Services.Query.Custom.zip">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <None Include="VersionControl\Resources\CommitGraphWalking.ps1" />
     <Compile Include="VersionControl\ShaTests.cs" />
     <Compile Include="WarningRatchetTests.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\Src\Sources\Aderant.Build.Tasks\Aderant.Build.Tasks.csproj">
-      <Project>{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}</Project>
-      <Name>Aderant.Build.Tasks</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Src\Sources\Aderant.Build\Aderant.Build.csproj">
-      <Project>{66E50D39-8E73-4D16-944B-43F18C308FE0}</Project>
-      <Name>Aderant.Build</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -247,7 +253,16 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Packaging\Web\Web.Site1\Views\Shared\" />
-    <Folder Include="Resources\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Src\Sources\Aderant.Build.Tasks\Aderant.Build.Tasks.csproj">
+      <Project>{256cb4bf-2ad9-497f-9174-9c4fdd9f6ce3}</Project>
+      <Name>Aderant.Build.Tasks</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Src\Sources\Aderant.Build\Aderant.Build.csproj">
+      <Project>{66e50d39-8e73-4d16-944b-43f18c308fe0}</Project>
+      <Name>Aderant.Build</Name>
+    </ProjectReference>
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

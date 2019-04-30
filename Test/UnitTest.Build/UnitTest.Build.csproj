@@ -121,6 +121,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="DependencyResolver\ResolverWorkflowTests.cs" />
+    <Compile Include="PipelineService\BuildPipelineServiceTests.cs" />
     <Compile Include="Tasks\GetDependenciesTaskTests.cs" />
     <Compile Include="DirectoryMetadataServiceTests.cs" />
     <Compile Include="Packaging\FileRestoreTests.cs" />

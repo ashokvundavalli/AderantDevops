@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
+using System.Xml.Linq;
 using Aderant.Build;
 using Aderant.Build.Packaging;
 using Aderant.Build.PipelineService;
@@ -148,7 +150,7 @@ namespace IntegrationTest.Build.Tasks {
 
             using (var host = new BuildPipelineServiceHost()) {
                 host.StartService(DateTime.Now.Ticks.ToString());
-                BuildPipelineServiceClient.GetCurrentProxy().Publish(context);
+                BuildPipelineServiceClient.GetProxy(BuildPipelineServiceHost.PipeId).Publish(context);
 
                 task.Execute();
             }
@@ -157,6 +159,24 @@ namespace IntegrationTest.Build.Tasks {
 
             Assert.IsTrue(File.Exists(manifestPath));
             Assert.IsTrue(File.Exists(outputFile));
+        }
+
+        [TestMethod]
+        [DeploymentItem(@"Resources", "Resources")]
+        public void GenerateManifestHandlesRelativePaths() {
+            var directory = Path.Combine(TestContext.DeploymentDirectory, "Resources");
+            var task = new GenerateArchives();
+
+            var context = new BuildOperationContext { BuildMetadata = new BuildMetadata { ScmBranch = "branch/Test" } };
+            using (var host = new BuildPipelineServiceHost()) {
+                host.StartService(DateTime.Now.Ticks.ToString());
+                BuildPipelineServiceClient.GetProxy(BuildPipelineServiceHost.PipeId).Publish(context);
+
+                task.GenerateManifest(directory);
+            }
+
+            var manifest = XDocument.Load(Path.Combine(directory, "Manifest.xml"));
+            Assert.IsTrue(manifest.Descendants().Any(d => d.Name == "relativePath" && d.Value == "\\Customization\\NestedFolder"));
         }
     }
     

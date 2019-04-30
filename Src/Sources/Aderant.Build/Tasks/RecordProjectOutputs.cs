@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Linq;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Microsoft.Build.Framework;
 
@@ -34,16 +36,8 @@ namespace Aderant.Build.Tasks {
         public string[] References { get; set; }
 
         public override bool ExecuteTask() {
-            var builder = new ProjectOutputSnapshotBuilder {
-                SourcesDirectory = SolutionRoot,
-                ProjectFile = ProjectFile,
-                FileWrites = FileWrites,
-                OutputPath = OutputPath.ItemSpec,
-                IntermediateDirectories = IntermediateDirectories,
-                ProjectTypeGuids = ProjectTypeGuids,
-                TestProjectType = TestProjectType,
-                References = References,
-            };
+            var builder = new ProjectOutputSnapshotBuilder(SolutionRoot, ProjectFile, FileWrites, OutputPath.ItemSpec, IntermediateDirectories, ProjectTypeGuids,
+                TestProjectType, References);
 
             var snapshot = builder.BuildSnapshot(Guid.Parse(ProjectGuid));
 

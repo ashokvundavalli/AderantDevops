@@ -6,7 +6,10 @@ using System.Threading.Tasks;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
 using Aderant.Build.Model;
+using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem;
+using Aderant.Build.Tasks;
+using IntegrationTest.Build.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build {

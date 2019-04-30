@@ -140,7 +140,10 @@ namespace Aderant.Build.Tasks {
                     var fileElement = new XElement("file", new XElement("name", file));
 
                     if (directoryName != "BinFiles") {
-                        fileElement.Add(new XElement("relativePath", directoryName));
+                        var relativePath = file.Replace(Path.Combine(folder, "BinFiles"), "", StringComparison.OrdinalIgnoreCase);
+                        var relativeFolder = relativePath.Replace(Path.GetFileName(file), "", StringComparison.OrdinalIgnoreCase);
+                        relativeFolder = relativeFolder.TrimTrailingSlashes();
+                        fileElement.Add(new XElement("relativePath", relativeFolder));
                     }
                     specificationElement.Add(fileElement);
                 }
@@ -149,7 +152,7 @@ namespace Aderant.Build.Tasks {
             var updateName = PipelineService.GetContext().BuildMetadata.ScmBranch;
             updateName = Path.GetFileName(updateName);
 
-            XElement manifest = new XElement("Package", new XAttribute("Version", "ManifestV5"),
+            XElement manifest = new XElement("package", new XAttribute("Version", "ManifestV5"),
                 new XElement("id", Guid.NewGuid()),
                 new XElement("name", updateName),
                 new XElement("description", $"Update package for branch {updateName}"),
