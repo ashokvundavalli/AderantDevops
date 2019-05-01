@@ -292,7 +292,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             // Perf optimization, we can disable T4 if we haven't seen any projects under this solution path
-			// Don't do this on desktop to simplify things for developers
+            // Don't do this on desktop to simplify things for developers
             if (!isDesktopBuild && !observedProjects.Contains(solutionDirectoryPath)) {
                 properties["T4TransformEnabled"] = bool.FalseString;
             }
