@@ -305,11 +305,13 @@
     <!--Exclude any .less files beginning with an '_' from being compiled as a convention, also exclude all less files from the obj directories -->
     <LessFiles Include="$(MSBuildProjectDirectory)\Content\*.less"
                Exclude="$(MSBuildProjectDirectory)\Content\_*.less" />
+
+    <LessInputs Include="$(MSBuildProjectDirectory)\Content\*.less" />
   </ItemGroup>
 
 
   <Target Name="CompileLess"
-          Inputs="@(LessFiles)"
+          Inputs="@(LessInputs)"
           Outputs="@(LessFiles->'%(RelativeDir)%(Filename).css')"
           AfterTargets="CopyLinkedContentFiles"
           Condition="'$(EnableLESSCompile)' == 'True'">
