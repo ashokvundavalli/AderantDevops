@@ -91,7 +91,7 @@
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(BUILD_BUILDID)' != ''">
-      <PrepareBuildEnvironmentProperties>$(PrepareBuildEnvironmentProperties);Configuration=Release</PrepareBuildEnvironmentProperties>
+      <PrepareBuildEnvironmentProperties>$(PrepareBuildEnvironmentProperties);Configuration=Debug</PrepareBuildEnvironmentProperties>
     </PropertyGroup>
 
     <MSBuild
