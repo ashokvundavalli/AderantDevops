@@ -440,7 +440,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             foreach (var item in items) {
                 if (item.DirectoryNode != null) {
-                    if (string.Equals(Environment.GetEnvironmentVariable("SYSTEM_PULLREQUEST_PULLREQUESTID"), "24840")) {
+                    if (string.Equals(Environment.GetEnvironmentVariable("SYSTEM_PULLREQUEST_PULLREQUESTID"), "24946")) {
                         System.Diagnostics.Debugger.Launch();
                     }
                     item.DirectoryNode.RetrievePrebuilts = false;
@@ -723,7 +723,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             // Get all the dirty projects due to user's modification.
-            var dirtyProjects = buildableProjects.Where(p => IncludeProject(excludeTestProjects, p)).Select(x => x.Id).ToList();         
+            var dirtyProjects = buildableProjects.Where(p => IncludeProject(excludeTestProjects, p)).Select(x => x.Id).ToList();
 
             if (alwaysBuildWebProjects) {
                 MarkWebProjectsDirty(studioProjects);
