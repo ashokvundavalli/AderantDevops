@@ -18,7 +18,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         private static readonly char[] newLineArray = Environment.NewLine.ToCharArray();
         private readonly IFileSystem fileSystem;
         private readonly HashSet<string> observedProjects = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        private bool isDesktopBuild;
 
         private readonly Dictionary<string, PropertyList> solutionPropertyLists = new Dictionary<string, PropertyList>(StringComparer.OrdinalIgnoreCase);
         private string[] commandLineArgs;
@@ -27,12 +26,14 @@ namespace Aderant.Build.DependencyAnalyzer {
             this.fileSystem = fileSystem;
         }
 
-        public string MetaprojectXml { get; set; }
+        private bool IsDesktopBuild { get; set; }
+
+		public string MetaprojectXml { get; set; }
 
         public event EventHandler<ItemGroupItemMaterializedEventArgs> ItemGroupItemMaterialized;
 
         public Project GenerateProject(IReadOnlyList<IReadOnlyList<IDependable>> projectGroups, OrchestrationFiles orchestrationFiles, bool desktopBuild, string buildFrom = null) {
-	        this.isDesktopBuild = desktopBuild;
+	        IsDesktopBuild = desktopBuild;
 	        CaptureCommandLine();
 
             Project project = new Project();
@@ -293,7 +294,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             // Perf optimization, we can disable T4 if we haven't seen any projects under this solution path
             // Don't do this on desktop to simplify things for developers
-            if (!isDesktopBuild && !observedProjects.Contains(solutionDirectoryPath)) {
+            if (!IsDesktopBuild && !observedProjects.Contains(solutionDirectoryPath)) {
                 properties["T4TransformEnabled"] = bool.FalseString;
             }
 
