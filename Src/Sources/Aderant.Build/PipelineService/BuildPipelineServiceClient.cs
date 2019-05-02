@@ -58,12 +58,20 @@ namespace Aderant.Build.PipelineService {
             InvokeServiceAction(() => InnerProxy.ChannelContract.RecordImpactedProjects(impactedProjects));
         }
 
+        public void RecordRelatedFiles(Dictionary<string, List<string>> relatedFiles) {
+            InvokeServiceAction(() => InnerProxy.ChannelContract.RecordRelatedFiles(relatedFiles));
+        }
+
         public IEnumerable<ProjectOutputSnapshot> GetProjectOutputs(string container) {
             return InvokeServiceAction(() => InnerProxy.ChannelContract.GetProjectOutputs(container));
         }
 
         public IEnumerable<string> GetImpactedProjects() {
             return InvokeServiceAction(() => InnerProxy.ChannelContract.GetImpactedProjects());
+        }
+
+        public Dictionary<string, List<string>> GetRelatedFiles() {
+            return InvokeServiceAction(() => InnerProxy.ChannelContract.GetRelatedFiles());
         }
 
         public IEnumerable<ProjectOutputSnapshot> GetProjectSnapshots() {

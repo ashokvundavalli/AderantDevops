@@ -29,7 +29,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
                 }
             };
 
-            Project generateProject = project.GenerateProject(items, new OrchestrationFiles { BeforeProjectFile = "A", AfterProjectFile = "B" });
+            Project generateProject = project.GenerateProject(items, new OrchestrationFiles { BeforeProjectFile = "A", AfterProjectFile = "B" }, false);
 
             var targets = generateProject.Elements.OfType<Target>().ToList();
             Assert.AreEqual("RunProjectsToBuild1", targets[0].Name);
@@ -73,7 +73,8 @@ namespace UnitTest.Build.DependencyAnalyzer {
                 {
                     BeforeProjectFile = "A",
                     AfterProjectFile = "B"
-                });
+                },
+                false);
 
             generateProject.CreateXml();
         }
@@ -145,7 +146,8 @@ namespace UnitTest.Build.DependencyAnalyzer {
                 new OrchestrationFiles {
                     BeforeProjectFile = "A",
                     AfterProjectFile = "B"
-                });
+                },
+                false);
 
             generateProject.CreateXml();
 

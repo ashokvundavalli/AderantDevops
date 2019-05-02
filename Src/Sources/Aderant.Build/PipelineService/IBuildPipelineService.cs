@@ -29,6 +29,12 @@ namespace Aderant.Build.PipelineService {
         void RecordImpactedProjects(IEnumerable<string> impactedProjects);
 
         /// <summary>
+        /// Records the list of related files for the file given as the key. Will merge dictionaries together to keep a concise list.
+        /// </summary>
+        [OperationContract]
+        void RecordRelatedFiles(Dictionary<string, List<string>> relatedFiles);
+
+        /// <summary>
         /// Returns the outputs for a specific container.
         /// </summary>
         [OperationContract]
@@ -36,6 +42,9 @@ namespace Aderant.Build.PipelineService {
 
         [OperationContract]
         IEnumerable<string> GetImpactedProjects();
+
+        [OperationContract]
+        Dictionary<string, List<string>> GetRelatedFiles();
 
         /// <summary>
         /// Returns the outputs for all projects seen by the build.

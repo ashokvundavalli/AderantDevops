@@ -49,6 +49,25 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         /// </summary>
         public string[] References { get; set; }
 
+        public ProjectOutputSnapshotBuilder(string sourcesDirectory, string projectFile, string[] fileWrites, string outputPath, string[] intermediateDirectories, IEnumerable<string> projectTypeGuids, string testProjectType, string[] references) {
+            SourcesDirectory = sourcesDirectory;
+            ProjectFile = projectFile;
+            FileWrites = fileWrites;
+            OutputPath = outputPath;
+            IntermediateDirectories = intermediateDirectories;
+            ProjectTypeGuids = projectTypeGuids?.ToList();
+            TestProjectType = testProjectType;
+            References = references;
+
+            if (ProjectFile.EndsWith(".wixproj", StringComparison.OrdinalIgnoreCase)) {
+                var outputName = Path.GetFileNameWithoutExtension(ProjectFile);
+                var wixOutputPath = Path.Combine(OutputPath, outputName + ".wixlib");
+                var list = FileWrites.ToList();
+                list.Add(wixOutputPath);
+                FileWrites = list.ToArray();
+            }
+        }
+
         public ProjectOutputSnapshot BuildSnapshot(Guid projectGuid) {
             string projectFile = ProjectFile;
 
@@ -65,7 +84,6 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             string relativeOutputPath = PathUtility.MakeRelative(Path.GetDirectoryName(projectFileFullPath), OutputPath);
 
             if (Path.IsPathRooted(relativeOutputPath)) {
-                System.Diagnostics.Debugger.Launch();
                 throw new InvalidOperationException($"Project: '{projectFile}' has rooted output path: '{OutputPath}'.");
             }
 
@@ -175,16 +193,8 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
             ErrorUtilities.IsNotNull(sourcesDirectory, nameof(sourcesDirectory));
 
-            var tracker = new ProjectOutputSnapshotBuilder {
-                SourcesDirectory = sourcesDirectory,
-                ProjectFile = projectFile,
-                FileWrites = projectOutputs,
-                OutputPath = outputPath,
-                IntermediateDirectories = intermediateDirectories,
-                ProjectTypeGuids = projectTypeGuids,
-                TestProjectType = testProjectType,
-                References = references,
-            };
+            var tracker = new ProjectOutputSnapshotBuilder(sourcesDirectory, projectFile, projectOutputs, outputPath, intermediateDirectories,
+                projectTypeGuids, testProjectType, references);
 
             return tracker.BuildSnapshot(projectGuid);
         }

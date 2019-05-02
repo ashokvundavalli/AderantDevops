@@ -110,7 +110,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             var planGenerator = new BuildPlanGenerator(fileSystem);
             planGenerator.MetaprojectXml = MetaprojectXml;
-            var project = planGenerator.GenerateProject(groups, files, null);
+            var project = planGenerator.GenerateProject(groups, files, isDesktopBuild, null);
 
             return new BuildPlan(project) {
                 DirectoriesInBuild = directoriesInBuild,
@@ -691,7 +691,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// According to options, find out which projects are selected to build.
         /// </summary>
         /// <param name="studioProjects"></param>
-        /// <param name="visualStudioProjects">All the projects list.</param>
+        /// <param name="buildableProjects">All the projects list.</param>
         /// <param name="orchestrationFiles">File metadata for the target files that will orchestrate the build</param>
         /// <param name="excludeTestProjects">Specifies if test projects be removed from the build tree.</param>
         /// <param name="changesToConsider">Build the current branch, the changed files since forking from master, or all?</param>
@@ -701,7 +701,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// </param>
         internal IReadOnlyList<IDependable> GetProjectsBuildList(
             ProjectDependencyGraph studioProjects,
-            IReadOnlyList<IDependable> visualStudioProjects,
+            IReadOnlyList<IDependable> buildableProjects,
             OrchestrationFiles orchestrationFiles,
             bool excludeTestProjects,
             ChangesToConsider changesToConsider,
@@ -710,7 +710,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             logger.Info("ChangesToConsider:" + changesToConsider);
             logger.Info("DependencyRelationshipProcessing:" + dependencyProcessing);
 
-            var projects = visualStudioProjects.OfType<ConfiguredProject>().ToList();
+            var projects = buildableProjects.OfType<ConfiguredProject>().ToList();
 
             bool alwaysBuildWebProjects = true;
 
@@ -723,7 +723,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             // Get all the dirty projects due to user's modification.
-            var dirtyProjects = visualStudioProjects.Where(p => IncludeProject(isDesktopBuild, excludeTestProjects, p)).Select(x => x.Id).ToList();
+            var dirtyProjects = buildableProjects.Where(p => IncludeProject(excludeTestProjects, p)).Select(x => x.Id).ToList();         
 
             if (alwaysBuildWebProjects) {
                 MarkWebProjectsDirty(studioProjects);
@@ -735,25 +735,25 @@ namespace Aderant.Build.DependencyAnalyzer {
             // According to DownStream option, either mark the directly affected or all the recursively affected downstream projects as dirty.
             switch (dependencyProcessing) {
                 case DependencyRelationshipProcessing.Direct:
-                    MarkDirty(visualStudioProjects, h);
+                    MarkDirty(buildableProjects, h);
                     break;
                 case DependencyRelationshipProcessing.Transitive:
-                    MarkDirtyAll(visualStudioProjects, h);
+                    MarkDirtyAll(buildableProjects, h);
                     break;
             }
 
             // Get all projects that are either visualStudio projects and dirty, or not visualStudio projects. Or say, skipped the unchanged csproj projects.
             IReadOnlyList<IDependable> filteredProjects;
             if (changesToConsider == ChangesToConsider.None) {
-                filteredProjects = visualStudioProjects;
+                filteredProjects = buildableProjects;
             } else {
-                filteredProjects = visualStudioProjects.Where(x => !(x is ConfiguredProject) || ((ConfiguredProject)x).IsDirty).ToList();
+                filteredProjects = buildableProjects.Where(x => !(x is ConfiguredProject) || ((ConfiguredProject)x).IsDirty).ToList();
             }
 
             return filteredProjects;
         }
 
-        private static bool IncludeProject(bool desktopBuild, bool excludeTestProjects, IDependable x) {
+        private static bool IncludeProject(bool excludeTestProjects, IDependable x) {
             var configuredProject = x as ConfiguredProject;
 
             if (configuredProject != null) {
@@ -772,10 +772,8 @@ namespace Aderant.Build.DependencyAnalyzer {
                     return true;
                 }
 
-                if (configuredProject.IsDirty) {
-                    if (configuredProject.BuildReason != null && configuredProject.BuildReason.Flags == BuildReasonTypes.CachedBuildNotFound) {
-                        return false;
-                    }
+                if (configuredProject.BuildReason != null && configuredProject.BuildReason.Flags == BuildReasonTypes.CachedBuildNotFound) {
+                    return true;
                 }
             }
 

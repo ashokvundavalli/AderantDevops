@@ -19,6 +19,7 @@ using Aderant.Build.Utilities;
 using Aderant.Build.VersionControl.Model;
 using Microsoft.Build.Construction;
 using Microsoft.Build.Evaluation;
+using Newtonsoft.Json;
 
 namespace Aderant.Build.ProjectSystem {
 
@@ -207,12 +208,19 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         public DependencyGraph CreateBuildDependencyGraph(BuildDependenciesCollector collector) {
+            return CreateBuildDependencyGraph(collector, null);
+        }
+
+        public DependencyGraph CreateBuildDependencyGraph(BuildDependenciesCollector collector, IBuildPipelineService pipelineService) {
             List<ISourceChange> changes = null;
             if (collector.SourceChanges != null) {
                 changes = collector.SourceChanges.ToList();
             }
 
             foreach (var project in LoadedConfiguredProjects) {
+                if (pipelineService != null) {
+                    FindRelatedFiles(project.FullPath, pipelineService);                    
+                }
 
                 try {
                     project.AnalyzeBuildDependencies(collector);
@@ -228,6 +236,17 @@ namespace Aderant.Build.ProjectSystem {
 
             var graph = CreateBuildDependencyGraphInternal();
             return new DependencyGraph(graph);
+        }
+
+        internal void FindRelatedFiles(string projectPath, IBuildPipelineService pipelineService) {
+            var projectDir = Path.GetDirectoryName(projectPath);
+
+            var manifests = Directory.GetFiles(projectDir, "*RelatedFiles.json", SearchOption.AllDirectories);
+            foreach (var manifest in manifests) {
+                var text = Services.FileSystem.ReadAllText(manifest);
+                var relatedFiles = JsonConvert.DeserializeObject<RelatedFilesManifest>(text).RelatedFiles;
+                pipelineService.RecordRelatedFiles(relatedFiles);
+            }                    
         }
 
         public async Task<BuildPlan> ComputeBuildPlan(BuildOperationContext context, AnalysisContext analysisContext, IBuildPipelineService pipelineService, OrchestrationFiles jobFiles) {
@@ -246,7 +265,7 @@ namespace Aderant.Build.ProjectSystem {
                 }
             }
 
-            DependencyGraph graph = CreateBuildDependencyGraph(collector);
+            DependencyGraph graph = CreateBuildDependencyGraph(collector, pipelineService);
 
             using (var exportLifetimeContext = SequencerFactory.CreateExport()) {
                 var sequencer = exportLifetimeContext.Value;
