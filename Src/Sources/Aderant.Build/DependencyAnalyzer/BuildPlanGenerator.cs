@@ -28,7 +28,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         private bool IsDesktopBuild { get; set; }
 
-		public string MetaprojectXml { get; set; }
+        public string MetaprojectXml { get; set; }
 
         public event EventHandler<ItemGroupItemMaterializedEventArgs> ItemGroupItemMaterialized;
 
