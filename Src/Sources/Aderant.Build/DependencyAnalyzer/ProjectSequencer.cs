@@ -440,9 +440,9 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             foreach (var item in items) {
                 if (item.DirectoryNode != null) {
-                    if (string.Equals(Environment.GetEnvironmentVariable("BUILD_SOURCEBRANCHNAME"), "208124_DisbursmentMergeNotRunningSaveRulesWhenMultipleDisbsCreated")) {
-                        System.Diagnostics.Debugger.Launch();
-                    }
+                    //if (string.Equals(Environment.GetEnvironmentVariable("BUILD_SOURCEBRANCHNAME"), "208124_DisbursmentMergeNotRunningSaveRulesWhenMultipleDisbsCreated")) {
+                    //    System.Diagnostics.Debugger.Launch();
+                    //}
                     item.DirectoryNode.RetrievePrebuilts = false;
                 }
             }
