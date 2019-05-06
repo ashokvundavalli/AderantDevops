@@ -142,7 +142,7 @@ namespace Aderant.Build.Tasks {
                     if (directoryName != "BinFiles") {
                         var relativePath = file.Replace(Path.Combine(folder, "BinFiles"), "", StringComparison.OrdinalIgnoreCase);
                         var relativeFolder = relativePath.Replace(Path.GetFileName(file), "", StringComparison.OrdinalIgnoreCase);
-                        relativeFolder = relativeFolder.TrimTrailingSlashes();
+                        relativeFolder = PathUtility.TrimLeadingSlashes(relativeFolder.TrimTrailingSlashes());
                         fileElement.Add(new XElement("relativePath", relativeFolder));
                     }
                     specificationElement.Add(fileElement);
