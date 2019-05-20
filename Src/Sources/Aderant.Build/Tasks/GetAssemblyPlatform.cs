@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -86,32 +85,41 @@ namespace Aderant.Build.Tasks {
 
             Dictionary<ITaskItem, string> analyzedAssemblies = new Dictionary<ITaskItem, string>();
 
-            // TODO: No longer needed
-            IEnumerable<ITaskItem> filteredAssemblies = Assemblies.Where(item => !item.GetMetadata("FullPath").Contains("SharedBin"));
-
-            Queue<ITaskItem> scanQueue = new Queue<ITaskItem>(filteredAssemblies);
+            Queue<ITaskItem> scanQueue = new Queue<ITaskItem>(Assemblies);
 
             List<ITaskItem> failedItems = new List<ITaskItem>();
 
             while (scanQueue.Count > 0) {
-                var item = scanQueue.Dequeue();
+                ITaskItem item = scanQueue.Dequeue();
 
                 string fullPath = item.GetMetadata("FullPath");
 
                 if (PathUtility.HasExtension(item.ItemSpec, allowedAssemblyExtensions) && File.Exists(item.ItemSpec)) {
                     string hash;
                     using (var cryptoProvider = new SHA1CryptoServiceProvider()) {
-                        using (var stream = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 1024 * 1024)) {
+                        using (FileStream stream = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 1048576)) {
                             hash = BitConverter.ToString(cryptoProvider.ComputeHash(stream));
                         }
                     }
 
                     if (ShouldAnalyze(analyzedAssemblies, hash, item)) {
                         try {
+                            bool checkCiStatus = fullPath.IndexOf("IntegrationTest", StringComparison.OrdinalIgnoreCase) != -1;
+
                             ProcessorArchitecture[] referenceArchitectures;
                             ImageFileMachine imageFileMachine;
+                            bool ciEnabled;
+                            string ciCategory;
                             Exception exception;
-                            PortableExecutableKinds peKind = inspector.Inspect(item.ItemSpec, out referenceArchitectures, out imageFileMachine, out exception);
+                            PortableExecutableKinds peKind = inspector.Inspect(item.ItemSpec, checkCiStatus, out referenceArchitectures, out imageFileMachine, out ciEnabled, out ciCategory, out exception);
+
+                            if (checkCiStatus) {
+                                item.SetMetadata("CIEnabled", ciEnabled.ToString());
+
+                                if (!string.IsNullOrWhiteSpace(ciCategory)) {
+                                    item.SetMetadata("CICategory", ciCategory);
+                                }
+                            }
 
                             if ((peKind & PortableExecutableKinds.Required32Bit) != 0) {
                                 item.SetMetadata("Platform", "x86");
@@ -155,6 +163,9 @@ namespace Aderant.Build.Tasks {
                             }
                         }
                     }
+                } else {
+                    failedItems.Add(item);
+                    assemblies.Remove(item);
                 }
             }
 
@@ -176,6 +187,12 @@ namespace Aderant.Build.Tasks {
                 },
                 RegisteredTaskObjectLifetime.Build,
                 false);
+
+            if (failedItems.Count > 0) {
+                foreach (ITaskItem item in failedItems) {
+                    Log.LogWarning($"Unable to identify assembly platform for assembly: '{item.GetMetadata("FullPath")}'.");
+                }
+            }
 
             return !Log.HasLoggedErrors;
         }
@@ -247,13 +264,15 @@ namespace Aderant.Build.Tasks {
         public TaskLoggingHelper Logger { get; set; }
 
         /// <param name="assembly"></param>
+        /// <param name="checkCiStatus"></param>
         /// <param name="referenceArchitectures">
         /// The architectures this assembly has references to Islamic, Romanesque, Bauhaus
         /// etc.
         /// </param>
         /// <param name="imageFileMachine"></param>
+        /// <param name="ciEnabled"></param>
         /// <param name="exception"></param>
-        public PortableExecutableKinds Inspect(string assembly, out ProcessorArchitecture[] referenceArchitectures, out ImageFileMachine imageFileMachine, out Exception exception) {
+        public PortableExecutableKinds Inspect(string assembly, bool checkCiStatus, out ProcessorArchitecture[] referenceArchitectures, out ImageFileMachine imageFileMachine, out bool ciEnabled, out string ciCategory, out Exception exception) {
             referenceArchitectures = null;
             exception = null;
 
@@ -279,6 +298,15 @@ namespace Aderant.Build.Tasks {
             PortableExecutableKinds peKind;
             asm.ManifestModule.GetPEKind(out peKind, out imageFileMachine);
 
+            if (checkCiStatus) {
+                Tuple <bool, string> ciProperties = DetermineCiStatus(asm.CustomAttributes.ToArray());
+                ciEnabled = ciProperties.Item1;
+                ciCategory = ciProperties.Item2;
+            } else {
+                ciEnabled = false;
+                ciCategory = null;
+            }
+
             try {
                 var references = asm.GetReferencedAssemblies();
 
@@ -290,6 +318,34 @@ namespace Aderant.Build.Tasks {
             }
 
             return peKind;
+        }
+
+        internal static Tuple<bool, string> DetermineCiStatus(CustomAttributeData[] customAttributeData) {
+            bool ciEnabled = false;
+            string ciCategory = null;
+
+            foreach (CustomAttributeData attributeData in customAttributeData) {
+                if (attributeData.AttributeType.Name.Equals("AssemblyMetadataAttribute")) {
+                    if (!ciEnabled) {
+                        if (attributeData.ConstructorArguments[0].Value.ToString().Equals("CIEnabled", StringComparison.OrdinalIgnoreCase)) {
+                            ciEnabled = attributeData.ConstructorArguments[1].Value.ToString().Equals("true", StringComparison.OrdinalIgnoreCase);
+                            continue;
+                        }
+                    }
+
+                    if (ciCategory == null) {
+                        if (attributeData.ConstructorArguments[0].Value.ToString().Equals("ciCategory", StringComparison.OrdinalIgnoreCase)) {
+                            ciCategory = attributeData.ConstructorArguments[1].Value.ToString();
+                        }
+                    }
+
+                    if (ciEnabled && ciCategory != null) {
+                        break;
+                    }
+                }
+            }
+
+            return new Tuple<bool, string>(ciEnabled, ciCategory);
         }
 
         private ProcessorArchitecture[] GetReferenceArchitectures(AssemblyName[] references) {

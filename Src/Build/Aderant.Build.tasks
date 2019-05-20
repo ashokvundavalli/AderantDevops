@@ -74,6 +74,9 @@
 
     <UsingTask TaskName="Aderant.Build.Tasks.ZipBuildScripts"                                     AssemblyFile="$(BuildAssembly)" />
 
+    <!-- For integration testing -->
+    <UsingTask TaskName="Aderant.Build.Tasks.RoleManifestPackageIdentifier"                       AssemblyFile="$(BuildAssembly)" />
+
     <!-- Debugging task -->
     <UsingTask TaskName="Aderant.Build.Tasks.InspectItemGroup"                                    AssemblyFile="$(BuildAssembly)" />
 

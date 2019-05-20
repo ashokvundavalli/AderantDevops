@@ -128,6 +128,7 @@
     <EmbeddedResource Include="Tasks\PowerShell\Resources\SetBuildTags.ps1" />
     <Compile Include="Tasks\CopyCustomSolution.cs" />
     <Compile Include="Tasks\CopyRelatedFiles.cs" />
+    <Compile Include="Tasks\RoleManifestPackageIdentifier.cs" />
     <Compile Include="Utilities\TopologicalSort.cs" />
     <Compile Include="Packaging\FileRestore.cs" />
     <Compile Include="ProjectSystem\StateTracking\TrackedInputFile.cs" />

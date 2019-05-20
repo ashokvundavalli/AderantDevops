@@ -38,6 +38,8 @@
 
     <!-- Location to drop artifacts (packaged outputputs) -->
     <ArtifactStagingDirectory Condition="'$(ArtifactStagingDirectory)' == ''">$(SolutionRoot)_as\</ArtifactStagingDirectory>
+    <LocalExpertBinariesDirectory>$(ArtifactStagingDirectory)product\</LocalExpertBinariesDirectory>
+    <ExpertSourceDirectory>$(LocalExpertBinariesDirectory)ExpertSource\</ExpertSourceDirectory>
 
     <!-- Location to drop outputs to share within the build -->
     <UseSharedDependencyDirectory Condition="'$(UseSharedDependencyDirectory)' == ''">true</UseSharedDependencyDirectory>
@@ -68,7 +70,7 @@
   <Import Project="Aderant.CodeSigning.targets" />
   <Import Project="Aderant.Build.Testing.targets" />
   <Import Project="Aderant.Build.ServerImage.targets" />
-  <!--<Import Project="Aderant.Build.IntegrationTesting.targets" />-->
+  <Import Project="Aderant.Build.IntegrationTesting.targets" />
 
   <PropertyGroup>
     <AlwaysBuildWebProjects Condition="'$(AlwaysBuildWebProjects)' == ''">true</AlwaysBuildWebProjects>
@@ -88,15 +90,37 @@
       GetAllDependencies;
       CreatePlan;
       ExecutePlan;
-      RunTests;
+      MSBuildRunTests;
       WriteStateFiles;
       PackageProduct;
       ProduceUpdatePackage;
       CreateServerImage;
-      <!--RunIntegrationTests;-->
+      MSBuildRunIntegrationTests;
       CopyToDrop;
     </BuildAndPackageDependsOn>
   </PropertyGroup>
+
+
+  <Target Name="MSBuildRunTests" DependsOnTargets="CreatePlan" Condition="'$(RunTests)' != 'false'">
+
+    <PropertyGroup>
+      <ImpactedTestAssemblies>@(ImpactedTestAssemblies)</ImpactedTestAssemblies>
+    </PropertyGroup>
+
+    <MSBuild Projects="$(MSBuildProjectFile)" Targets="RunTests" Properties="TestPattern=UnitTest;ImpactedTestAssemblies=$(ImpactedTestAssemblies);" />
+
+  </Target>
+
+
+  <Target Name="MSBuildRunIntegrationTests" DependsOnTargets="CreatePlan">
+
+    <PropertyGroup>
+      <ImpactedTestAssemblies>@(ImpactedTestAssemblies)</ImpactedTestAssemblies>
+    </PropertyGroup>
+
+    <MSBuild Projects="$(MSBuildProjectFile)" Targets="RunIntegrationTests" Properties="TestPattern=IntegrationTest;ImpactedTestAssemblies=$(ImpactedTestAssemblies);ExpertSourceDirectory=$(ExpertSourceDirectory)" />
+
+  </Target>
 
 
   <Target Name="RemoveLockedFilesFromLastBuild">
@@ -367,8 +391,6 @@
 
   <Target Name="GetFilesForPackage">
     <PropertyGroup>
-      <LocalExpertBinariesDirectory>$(ArtifactStagingDirectory)product\</LocalExpertBinariesDirectory>
-      <ExpertSourceDirectory>$(LocalExpertBinariesDirectory)ExpertSource\</ExpertSourceDirectory>
       <ProductArchiveFileName Condition="'$(ProductArchiveFileName)' == ''">Binaries.zip</ProductArchiveFileName>
       <ProductArchiveFile>$(ArtifactStagingDirectory)package\$(ProductArchiveFileName)</ProductArchiveFile>
     </PropertyGroup>

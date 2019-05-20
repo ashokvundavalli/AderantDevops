@@ -132,7 +132,11 @@ begin {
             Clear-Environment -binariesDirectory $binariesDirectory
         }
 
-        [double]$totalTime = 0
+            if (-not (Test-Path -Path $binariesDirectory)) {
+                New-Item -Path $binariesDirectory -ItemType 'Directory' -Force | Out-Null
+            }
+
+            [double]$totalTime = 0
 
         foreach ($component in $components) {
             [string]$componentPath = Join-Path -Path $dropRoot -ChildPath $component

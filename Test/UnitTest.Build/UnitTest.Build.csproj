@@ -147,6 +147,8 @@
     <Compile Include="ServerImage\DependencyGenerationTests.cs" />
     <Compile Include="Tasks\CopyFilesTests.cs" />
     <Compile Include="Tasks\PowerShellScript\PowerShellScriptTests.cs" />
+    <Compile Include="Tasks\RoleManifestPackageIdentifierTests.cs" />
+    <Compile Include="Tasks\GetAssemblyPlatformTests.cs" />
     <Compile Include="Tasks\ZipBuildScriptsTests.cs" />
     <Compile Include="FilterDirectoryTests.cs" />
     <Compile Include="Utilities\MemoizerTests.cs" />
@@ -265,6 +267,12 @@
     <Content Include="Resources\DifferentOutputPathsProject.csproj" />
     <Content Include="Resources\MatchingOutputPathsProject.csproj" />
     <Content Include="Resources\ReplaceReferencesProject.csproj" />
+    <None Include="Tasks\Roles\configuration.role.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Tasks\Roles\security.role.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Content Include="Tasks\UpdateSplashScreenImage\Expert_2014_style.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -336,6 +344,7 @@
       <Name>Aderant.Build</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="..\TestDeployment.proj" />
 </Project>

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0"
-  TreatAsLocalProperty="ImageWorkingDirectory">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
 <!-- External variables: ArtifactStagingDirectory, BuildToolsDirectory, ExpertSourceDirectory, SolutionRoot -->
 
   <PropertyGroup>
@@ -10,11 +9,12 @@
     </CreateServerImageDependsOn>
 
     <ImageWorkingDirectory>$(ArtifactStagingDirectory)ServerImage\</ImageWorkingDirectory>
+    <ImageToolingDirectory>$(ImageWorkingDirectory)packages\Aderant.Deployment.Internal\lib\</ImageToolingDirectory>
+    <DeploymentEngine>$(ImageWorkingDirectory)packages\Aderant.Deployment.Internal\lib\DeploymentEngine.exe</DeploymentEngine>
     <ServerImageDependencies>$(SolutionRoot)Build\ServerImage.dependencies</ServerImageDependencies>
 
     <_CreateServerImage Condition="'$(_CreateServerImage)' == ''">$([System.Environment]::GetEnvironmentVariable('CreateServerImage'))</_CreateServerImage>
-    <_CreateServerImage Condition="'$(_CreateServerImage)' == ''">$(CreateServerImage)</_CreateServerImage>
-    <_CreateServerImage Condition="'$(_CreateServerImage)' == ''">false</_CreateServerImage>
+    <_CreateServerImage Condition="'$(_CreateServerImage)' == ''">$([MSBuild]::ValueOrDefault('$(CreateServerImage)', 'false'))</_CreateServerImage>
   </PropertyGroup>
 
 
@@ -42,7 +42,6 @@
   <Target Name="CreateServerImage" Condition="Exists('$(ServerImageDependencies)') And '$(_CreateServerImage)' == 'true'" DependsOnTargets="CreateServerImageCore;$(CreateServerImageDependsOn)">
 
     <PropertyGroup>
-      <DeploymentEngine>$(ImageWorkingDirectory)packages\Aderant.Deployment.Internal\lib\DeploymentEngine.exe</DeploymentEngine>
       <_SkipHelp Condition="'$(SkipHelp)' != 'false'">/skh</_SkipHelp>
     </PropertyGroup>
 

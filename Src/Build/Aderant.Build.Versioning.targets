@@ -37,6 +37,8 @@
       <!-- Slurp in the paket.lock data as well -->
       <_PaketLockFile>$([System.IO.Path]::Combine($(SolutionDirectoryPath), 'paket.lock'))</_PaketLockFile>
       <_PaketLockText Condition="Exists($(_PaketLockFile))">$([System.IO.File]::ReadAllText($(_PaketLockFile)))</_PaketLockText>
+
+      <CIEnabled Condition="'$(IsIntegrationTest)' == 'true' And '$(CIEnabled)' == ''">false</CIEnabled>
     </PropertyGroup>
 
     <GitVersion
@@ -81,6 +83,27 @@
         <_Parameter1>Build.Flavor</_Parameter1>
         <_Parameter2>$(BuildFlavor)</_Parameter2>
       </_AssemblyAttributes>
+
+      <_AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(IsIntegrationTest)' == 'true'">
+        <_Parameter1>CIEnabled</_Parameter1>
+        <_Parameter2>$(CIEnabled)</_Parameter2>
+      </_AssemblyAttributes>
+
+      <_AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(IsIntegrationTest)' == 'true' And '$(CICategory)' != ''">
+        <_Parameter1>CICategory</_Parameter1>
+        <_Parameter2>$(CICategory)</_Parameter2>
+      </_AssemblyAttributes>
+    </ItemGroup>
+
+    <RoleManifestPackageIdentifier Condition="'$(IsIntegrationTest)' == 'true'"
+      ManifestSearchDirectories="@(ManifestSearchDirectories)"
+      DependentRoles="@(DependentRoles)"
+      PackageBlacklist="@(PackageBlacklist)" >
+      <Output TaskParameter="DependentPackages" ItemName="DependentPackages" />
+    </RoleManifestPackageIdentifier>
+
+    <ItemGroup>
+      <_AssemblyAttributes Condition="'$(IsIntegrationTest)' == 'true'" Include="@(DependentPackages)" />
     </ItemGroup>
 
   </Target>

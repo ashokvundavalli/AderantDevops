@@ -1,0 +1,63 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<role id="security"
+      name="Security Service"
+      requiresInstanceFile="true"
+      supportsScaleOut="true"
+      mandatory ="true">
+  <files>
+    <!-- Network Share Files -->
+    <!-- Security is dependent upon Configuration and Identity, therefore we do not need to copy common files-->
+    <file filename="security.role.xml" deploymentLocation="NetworkShare" />
+    <file filename="SecurityManager.exe" deploymentLocation="NetworkShare" />
+    <file filename="SecurityManager.exe.config"  deploymentLocation="NetworkShare" />
+    <file filename="Aderant.Framework.Security.dll" deploymentLocation="NetworkShare" />
+    <file filename="Aderant.Framework.Security.Presentation.dll" deploymentLocation="NetworkShare" />
+    <file filename="Aderant.Security.dll" deploymentLocation="NetworkShare" />
+    <file filename="Aderant.Security.Service.dll" deploymentLocation="NetworkShare" />
+    <file filename="Aderant.BusinessEntity.Model.dll" deploymentLocation="NetworkShare" />
+    <file filename="Aderant.BusinessEntity.Library.dll" deploymentLocation="NetworkShare" />
+    <file filename="Aderant.Employee.Model.dll" deploymentLocation="NetworkShare" />
+    <file filename="Aderant.Employee.Library.dll" deploymentLocation="NetworkShare" />
+
+    <file filename="Aderant.Security.dll" deploymentLocation="Local" targetRelativePath="SharedBin" />
+    <file filename="Aderant.Security.Service.dll" deploymentLocation="Local" targetRelativePath="SharedBin" />
+    <file filename="Aderant.Framework.Security.Presentation.dll" deploymentLocation="Local" targetRelativePath="SharedBin" />
+
+    <file filename="Aderant.Security.dll" deploymentLocation="Local" targetRelativePath="Services\FrameworkServices\Security\bin" />
+    <file filename="Aderant.Security.Service.dll" deploymentLocation="Local" targetRelativePath="Services\FrameworkServices\Security\bin" />
+    <file filename="Aderant.Framework.dll" deploymentLocation="Local" targetRelativePath="Services\FrameworkServices\Security\bin" />
+    <file filename="Aderant.Framework.Communication.Client.dll" deploymentLocation="Local" targetRelativePath="Services\FrameworkServices\Security\bin" />
+    <file filename="Aderant.Framework.Communication.Server.dll" deploymentLocation="Local" targetRelativePath="Services\FrameworkServices\Security\bin" />
+    <file filename="Aderant.Framework.ServiceLibrary.dll" deploymentLocation="Local" targetRelativePath="Services\FrameworkServices\Security\bin" />
+    <file filename="Aderant.Framework.Persistence.dll" deploymentLocation="Local" targetRelativePath="Services\FrameworkServices\Security\bin" />
+    <file filename="Aderant.Framework.Presentation.dll" deploymentLocation="Local" targetRelativePath="Services\FrameworkServices\Security\bin" />
+    <file filename="Aderant.Framework.Security.dll" deploymentLocation="Local" targetRelativePath="Services\FrameworkServices\Security\bin" />
+    <file filename="Aderant.Framework.Configuration.Service.dll" deploymentLocation="Local" targetRelativePath="Services\FrameworkServices\Security\bin" />
+
+  </files>
+  <dependencies>
+    <dependency type="Configuration" />
+  </dependencies>
+  <iisServiceHost>
+    <applicationPools>
+      <applicationPool name="ExpertFramework_{{Name}}"
+                       netVersion="V4.0" />
+    </applicationPools>
+    <services>
+      <service
+        name="Security"
+        proxyInterface="Aderant.Security.Service.ISecurityService"
+        proxyContract="Aderant.Security.Service.ISecurityContractAsync"
+        applicationPool="ExpertFramework_{{Name}}"
+        serviceType="FrameworkServices"
+        serviceExtension="svc"
+        supportedProtocols="http,net.pipe"
+        allowAnonymousAuthentication="true"
+        allowWindowsAuthentication="true"
+        serviceAssembly="Aderant.Security.Service" />
+    </services>
+  </iisServiceHost>
+  <packages>
+    <package relativePath="Packages" filename="security.zip" />
+  </packages>
+</role>

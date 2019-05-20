@@ -21,6 +21,10 @@ param(
   [string[]]
   $ReferencePaths,
 
+  [Parameter(Mandatory=$false)]
+  [Hashtable]
+  $AdditionalEnvironmentVariables,
+
   [Parameter(Mandatory=$false, ValueFromRemainingArguments=$true)]
   [string[]]
   $TestAssemblies
@@ -156,6 +160,12 @@ $startInfo.Arguments = "$ToolArgs $TestAssemblies"
 $startInfo.WorkingDirectory = $WorkingDirectory
 $startInfo.Environment["EXPERT_MODULE_DIRECTORY"] = $SolutionRoot
 $startInfo.Environment["BUILD_SOLUTION_ROOT"] = $SolutionRoot
+
+if ($null -ne $AdditionalEnvironmentVariables -and $AdditionalEnvironmentVariables.Count -gt 0) {
+    foreach ($variable in $AdditionalEnvironmentVariables.GetEnumerator()) {
+        $startInfo.Environment[$variable.Key] = $variable.Value
+    }
+}
 
 $global:LASTEXITCODE = 0
 $runSettingsFile = ""
