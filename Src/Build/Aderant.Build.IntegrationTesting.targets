@@ -17,7 +17,7 @@
     <DeployCIEnvironment>
       GetServerImageDependencies;
       ProvisionExpertDatabase;
-      UpdateServerImage;
+      <!-- UpdateServerImage; -->
       ExecuteQueryViewsScript;
       LightUpServerImage;
     </DeployCIEnvironment>
