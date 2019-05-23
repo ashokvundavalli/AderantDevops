@@ -29,8 +29,10 @@
     <OriginBranch Condition="'$(OriginBranch)' == ''">master</OriginBranch>
     <OriginTFVCBranch Condition="'$(OriginTFVCBranch)' == ''">dev\vnext</OriginTFVCBranch>
     
-    <DeployEnvironment Condition="'$(DeployEnvironment)' == ''">false</DeployEnvironment>
-    <DeployEnvironment Condition="'$(IsDesktopBuild)' != 'true' And '$(_RunIntegrationTests)' == 'true'">true</DeployEnvironment>
+    <_DeployEnvironment Condition="'$(_DeployEnvironment)' == ''">$([System.Environment]::GetEnvironmentVariable('DeployEnvironment'))</_DeployEnvironment>
+    <_DeployEnvironment Condition="'$(_DeployEnvironment)' == ''">$(DeployEnvironment)</_DeployEnvironment>
+    <_DeployEnvironment Condition="'$(_DeployEnvironment)' == '' And '$(IsDesktopBuild)' != 'true' And '$(_RunIntegrationTests)' == 'true'">true</_DeployEnvironment>
+    <_DeployEnvironment Condition="'$(_DeployEnvironment)' == ''">false</_DeployEnvironment>
   </PropertyGroup>
 
 
@@ -81,7 +83,7 @@
 
 
   <Target Name="GetServerImage"
-    Condition="'$(DeployEnvironment)' == 'true'">
+    Condition="'$(_DeployEnvironment)' == 'true'">
 
     <Message Text="Acquiring Expert server image." />
 
@@ -117,19 +119,19 @@
 
 
   <Target Name="ProvisionExpertDatabase"
-    Condition="'$(DeployEnvironment)' == 'true'">
+    Condition="'$(_DeployEnvironment)' == 'true'">
 
     <Message Text="Provisioning Expert database: $(DatabaseName)" />
 
     <Exec ContinueOnError="false"
       IgnoreExitCode="false"
-      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\ProvisionDatabase.ps1&apos; -serverInstance &apos;LocalHost&apos; -databaseName &apos;$(DatabaseName)&apos; -backupPath &apos;$(ImageWorkingDirectory)\Expert.bak&apos; -assembly &apos;$(ImageWorkingDirectory)\API.Database.dll&apos; }&quot;" />
+      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\ProvisionDatabase.ps1&apos; -serverInstance &apos;LocalHost&apos; -DatabaseName &apos;$(DatabaseName)&apos; -backupPath &apos;$(ImageWorkingDirectory)\Expert.bak&apos; -assembly &apos;$(ImageWorkingDirectory)\API.Database.dll&apos; }&quot;" />
 
   </Target>
 
 
   <Target Name="UpdateServerImage"
-    Condition="'$(DeployEnvironment)' == 'true'">
+    Condition="'$(_DeployEnvironment)' == 'true'">
 
     <Message Text="Updating Expert server image: $(ExpertEnvironmentName)." />
 
@@ -150,13 +152,13 @@
 
 
   <Target Name="ExecuteQueryViewsScript"
-    Condition="'$(DeployEnvironment)' == 'true'">
+    Condition="'$(_DeployEnvironment)' == 'true'">
 
     <Message Text="Executing QueryViews Script: ExpertQuery.SqlViews.sql" />
 
     <Exec ContinueOnError="false"
       IgnoreExitCode="false"
-      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\ExecuteSQLFile.ps1&apos; -serverInstance &apos;LocalHost&apos; -databaseName &apos;$(DatabaseName)&apos; -sqlFilePath &apos;$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\ExpertQuery.SqlViews.sql&apos; -assembly &apos;$(ImageWorkingDirectory)\API.Database.dll&apos; }&quot;" />
+      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\ExecuteSQLFile.ps1&apos; -serverInstance &apos;LocalHost&apos; -DatabaseName &apos;$(DatabaseName)&apos; -sqlFilePath &apos;$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\ExpertQuery.SqlViews.sql&apos; -assembly &apos;$(ImageWorkingDirectory)\API.Database.dll&apos; }&quot;" />
 
     <OnError ExecuteTargets="LightsOff" />
 
@@ -164,7 +166,7 @@
 
 
   <Target Name="LightUpServerImage"
-    Condition="'$(DeployEnvironment)' == 'true'">
+    Condition="'$(_DeployEnvironment)' == 'true'">
 
     <Message Text="Lighting up Expert server image: Expert_$(ExpertEnvironmentName)." />
 
@@ -179,7 +181,7 @@
 
 
   <Target Name="PackageImport"
-    Condition="'$(DeployEnvironment)' == 'true' And '$(ImportPackages)' == 'true'">
+    Condition="'$(_DeployEnvironment)' == 'true' And '$(ImportPackages)' == 'true'">
 
     <PropertyGroup>
       <FactoryBin>$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\SharedBin\Factory.bin</FactoryBin>
@@ -214,7 +216,8 @@
     <OnError ExecuteTargets="LightsOff" />
 
   </Target>
-  
+
+
   <Target Name="GrovelForTestAssemblies" Returns="@(IntegrationTestAssemblies)">
     <ItemGroup>
       <IntegrationTestAssemblies Include="$(BinTestDirectory)*IntegrationTest*.dll" />
@@ -223,6 +226,39 @@
   
   <Target Name="RunIntegrationTestsCore" BeforeTargets="RunIntegrationTests">  
   </Target>
+
+
+  <UsingTask TaskName="ParseRunSettings" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <RunSettingsFile ParameterType="System.String" Required="true" />
+      <RunSettingsDatabase ParameterType="System.String" Output="true" />
+    </ParameterGroup>
+
+    <Task>
+      <Reference Include="System" />
+      <Reference Include="System.Core" />
+      <Reference Include="System.Xml" />
+      <Reference Include="System.Xml.Linq" />
+      <Using Namespace="System.Linq" />
+      <Using Namespace="System.Xml.Linq" />
+      <Code Type="Fragment" Language="cs">
+        <![CDATA[
+            XElement xml = XElement.Load(RunSettingsFile);
+
+            XElement testRunParameters = xml.Element("TestRunParameters");
+
+            if (testRunParameters != null) {
+                XAttribute element = testRunParameters.Elements("Parameter").Where(x => x.Attributes().Any(y => y.Value.Equals("Database", StringComparison.OrdinalIgnoreCase))).Attributes("value").FirstOrDefault();
+
+                if (element != null) {
+                    RunSettingsDatabase = element.Value;
+                }
+            }
+          ]]>
+      </Code>
+    </Task>
+  </UsingTask>
+
 
   <Target Name="RunIntegrationTests"
     DependsOnTargets="RunIntegrationTestsCore;$(RunIntegrationTestsDependsOn)"
@@ -239,7 +275,9 @@
       <PlatformSwitch Condition="'$(Use32BitTestRunner)' != 'true'">/Platform:x64</PlatformSwitch>
       <TestAdapterSwitch Condition="'$(PSTests)' == 'true'">/TestAdapterPath:"$(BuildScriptsDirectory)..\Build.Tools"</TestAdapterSwitch>
       <ResultsFileSwitch Condition="'$(ResultsFileSwitch)' == ''">/Logger:trx</ResultsFileSwitch>
-      <TestCaseFilter>/TestCaseFilter:&quot;TestCategory!=Reporting$(CustomTestFilters)&quot;</TestCaseFilter>     
+      <TestCaseFilter>/TestCaseFilter:&quot;TestCategory!=Reporting$(CustomTestFilters)&quot;</TestCaseFilter>
+      <RunSettingsFile Condition="'$(IsDesktopBuild)' != 'true' And '$(CustomRunSettings)' != ''">$(BinTestDirectory)$(CustomRunSettings)</RunSettingsFile>
+      <RunSettingsSwitch Condition="Exists('$(RunSettingsFile)')">/Settings:$(RunSettingsFile)</RunSettingsSwitch>
     </PropertyGroup>
 
     <Message Condition="'$(Use32BitTestRunner)' == 'true'" Text="Must run tests in 32-bit mode as at least one build output assembly has a platform of x86." />
@@ -253,11 +291,21 @@
 
     <ItemGroup>
       <EnvironmentVariables Include='SET "EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory)"' />
-      <EnvironmentVariables Condition="'$(DeployEnvironment)' == 'true'" Include='SET "EXPERT_ENVIRONMENT_URL=$(ExpertEnvironmentUrl)"' />
+      <EnvironmentVariables Condition="'$(_DeployEnvironment)' == 'true'" Include='SET "EXPERT_ENVIRONMENT_URL=$(ExpertEnvironmentUrl)"' />
     </ItemGroup>
 
     <PropertyGroup>
       <EnvironmentVariables>@(EnvironmentVariables->' %(Identity) ', '&amp;')</EnvironmentVariables>
+    </PropertyGroup>
+
+    <ParseRunSettings Condition="Exists('$(RunSettingsFile)')"
+      RunSettingsFile="$(RunSettingsFile)">
+      <Output TaskParameter="RunSettingsDatabase" PropertyName="RunSettingsDatabase" />
+    </ParseRunSettings>
+
+    <PropertyGroup>
+      <!-- If the runsettings file specifies a database name, override the existing DatabaseName. -->
+      <DatabaseName Condition="'$(RunSettingsDatabase)' != ''">$(RunSettingsDatabase)</DatabaseName>
     </PropertyGroup>
 
     <Exec Condition="'$(IntegrationTestAssemblies)' != ''"
@@ -265,7 +313,7 @@
       IgnoreExitCode="false"
       WorkingDirectory="$(VsTestWorkingDirectory)"
       Timeout="$(TestTimeoutMilliseconds)"
-      Command='$(EnvironmentVariables) &amp; "$(PathToTestTool)" $(IntegrationTestAssemblies) $(TestCaseFilter) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch)' />   
+      Command='$(EnvironmentVariables) &amp; "$(PathToTestTool)" $(IntegrationTestAssemblies) $(TestCaseFilter) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) $(RunSettingsSwitch)' />
 
     <PropertyGroup>
       <TestOutcome>Succeeded</TestOutcome>
@@ -275,6 +323,7 @@
 
   </Target>
 
+
  <PropertyGroup>
     <!-- Allows environment variables to override RSP parameters -->
     <_RunAutomationTests Condition="'$(_RunAutomationTests)' == ''">$([System.Environment]::GetEnvironmentVariable('RunAutomationTests'))</_RunAutomationTests>
@@ -282,8 +331,9 @@
     <_RunAutomationTests Condition="'$(_RunAutomationTests)' == ''">false</_RunAutomationTests>
   </PropertyGroup>
 
+
   <Target Name="RunAutomationTests"
-    Condition="('$(IsDesktopBuild)' != 'true' And '$(_RunAutomationTests)' == 'true' And '$(DeployEnvironment)' == 'true' And '$(IsCustomBuild)' != 'true') Or ('$(IsDesktopBuild)' == 'true' And '$(RunDesktopAutomationTests)' == 'true')"
+    Condition="('$(IsDesktopBuild)' != 'true' And '$(_RunAutomationTests)' == 'true' And '$(_DeployEnvironment)' == 'true' And '$(IsCustomBuild)' != 'true') Or ('$(IsDesktopBuild)' == 'true' And '$(RunDesktopAutomationTests)' == 'true')"
     DependsOnTargets="$(RunTestsDependsOn);$(RunIntegrationTestsDependsOn);RunIntegrationTests">
     <ItemGroup>
       <PrepCategories Include="$(CustomAutomationTestFilters)" />
@@ -339,7 +389,15 @@
  
 
   <Target Name="LightsOff"
-    Condition="'$(DeployEnvironment)' == 'true' And '$(_RunIntegrationTests)' == 'true' And '$(RunTest)' != 'false' And '$(IsCustomBuild)' != 'true'">
+    Condition="'$(_RunIntegrationTests)' == 'true' And '$(RunTest)' != 'false' And '$(IsCustomBuild)' != 'true'">
+
+    <CallTarget Targets="RemoveServerImage" Condition="'$(_DeployEnvironment)' == 'true'" />
+    <CallTarget Targets="DropDatabase" Condition="'$(_DeployEnvironment)' == 'true' Or '$(RunSettingsDatabase)' != ''" />
+
+  </Target>
+
+
+  <Target Name="RemoveServerImage" Condition="'$(_DeployEnvironment)' == 'true'">
 
     <ItemGroup>
       <BackupPackageFiles Include="$(SolutionDirectoryPath)BackupPackages\**"></BackupPackageFiles>
@@ -353,15 +411,23 @@
 
     <Exec ContinueOnError="true"
       IgnoreExitCode="false"
-      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\DeploymentEngine.exe&apos; TeardownServerImage /name:$(ExpertEnvironmentName) }&quot;" />
+      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; &apos;$(ImageWorkingDirectory)\DeploymentEngine.exe&apos; TeardownServerImage /name:$(ExpertEnvironmentName)&quot;" />
+
+  </Target>
+
+
+  <Target Name="DropDatabase">
+
+  <PropertyGroup>
+    <ServerInstance Condition="'$(ServerInstance)' == ''">localhost</ServerInstance>
+  </PropertyGroup>
 
     <Message Text="Dropping Expert database: $(DatabaseName)." />
 
     <Exec ContinueOnError="true"
       IgnoreExitCode="false"
-      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\DropDatabase.ps1&apos; -serverInstance &apos;LocalHost&apos; -databaseName &apos;$(DatabaseName)&apos; -assembly &apos;$(ImageWorkingDirectory)\API.Database.dll&apos; }&quot;" />
+      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; &apos;$(ImageWorkingDirectory)\DropDatabase.ps1&apos; -serverInstance &apos;$(ServerInstance)&apos; -DatabaseName &apos;$(DatabaseName)&apos; -assembly &apos;$(ImageWorkingDirectory)\API.Database.dll&apos;&quot;" />
 
   </Target>
-
 
 </Project>
