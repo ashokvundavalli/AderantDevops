@@ -63,21 +63,19 @@
 
     <ParametersFile>$(SolutionRoot)Build\Parameters.props</ParametersFile>
     <BranchConfigFile>$(SolutionRoot)Build\BranchConfig.xml</BranchConfigFile>
-  </PropertyGroup>
 
-  <Import Project="Aderant.Build.Common.targets" />
-  <Import Project="Aderant.CodeSigning.targets" />
-  <Import Project="Aderant.Build.Testing.targets" />
-  <Import Project="Aderant.Build.ServerImage.targets" />
-  <Import Project="Aderant.Build.IntegrationTesting.targets" />
-
-  <PropertyGroup>
     <AlwaysBuildWebProjects Condition="'$(AlwaysBuildWebProjects)' == ''">true</AlwaysBuildWebProjects>
     <RequireSynchronizedOutputPaths Condition="'$(RequireSynchronizedOutputPaths)' == ''">false</RequireSynchronizedOutputPaths>
     <CreateHardLinksForCopyLocal Condition="'$(CreateHardLinksForCopyLocal)' == ''">false</CreateHardLinksForCopyLocal>
   </PropertyGroup>
 
   <Import Project="$(ParametersFile)" Condition="Exists($(ParametersFile))" />
+
+  <Import Project="Aderant.Build.Common.targets" />
+  <Import Project="Aderant.CodeSigning.targets" />
+  <Import Project="Aderant.Build.Testing.targets" />
+  <Import Project="Aderant.Build.ServerImage.targets" />
+  <Import Project="Aderant.Build.IntegrationTesting.targets" />
 
   <PropertyGroup>
     <BuildAndPackageDependsOn>
