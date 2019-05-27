@@ -28,7 +28,6 @@
 
     <!--Test configuration-->
     <RunTests Condition="'$(RunTests)' == ''">$([MSBuild]::ValueOrDefault('$(RunTests)', 'true'))</RunTests>
-    <RunIntegrationTests Condition="'$(RunIntegrationTests)' == ''">$([MSBuild]::ValueOrDefault('$(RunIntegrationTests)', 'false'))</RunIntegrationTests>
 
     <EnableTFVCGet Condition="'$(EnableTFVCGet)' == ''">false</EnableTFVCGet>
 
