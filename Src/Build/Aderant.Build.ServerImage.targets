@@ -13,6 +13,7 @@
     <DeploymentEngine>$(ImageWorkingDirectory)packages\Aderant.Deployment.Internal\lib\DeploymentEngine.exe</DeploymentEngine>
     <ServerImageDependencies>$(SolutionRoot)Build\ServerImage.dependencies</ServerImageDependencies>
 
+    <_CreateServerImage Condition="'$(IsDesktopBuild)' == 'true'">false</_CreateServerImage>
     <_CreateServerImage Condition="'$(_CreateServerImage)' == ''">$([System.Environment]::GetEnvironmentVariable('CreateServerImage'))</_CreateServerImage>
     <_CreateServerImage Condition="'$(_CreateServerImage)' == ''">$([MSBuild]::ValueOrDefault('$(CreateServerImage)', 'false'))</_CreateServerImage>
   </PropertyGroup>
