@@ -2,7 +2,7 @@
 
 function Initialize-BuildAssembly {
     . "$PSScriptRoot\..\..\Build\Functions\Initialize-Assembly.ps1"
-        UpdateOrBuildAssembly -BuildScriptsDirectory "$PSScriptRoot\..\..\Build" $true
+    UpdateOrBuildAssembly -BuildScriptsDirectory "$PSScriptRoot\..\..\Build" $true
 }
 
 # Need to load Aderant.Build.dll first as it defines types used in later scripts
@@ -18,9 +18,7 @@ $global:ShellContext = $null
 
 function Initialize-Module {
     . $PSScriptRoot\ShellContext.ps1
-    $global:ShellContext = [ShellContext]::new()
-
-    UpdateOrBuildAssembly -BuildScriptsDirectory $ShellContext.BuildScriptsDirectory $false
+    $global:ShellContext = [ShellContext]::new()    
 
     $MyInvocation.MyCommand.Module.PrivateData.ShellContext = $global:ShellContext
 }

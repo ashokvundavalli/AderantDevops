@@ -301,16 +301,12 @@ param(
 #=================================================================================================
 task EndToEnd {
     # End of all tasks. Print out current build flavor: Debug or Release.
-    # Write-Host "Finished build in $global:buildFlavor. Use the -debug or -release to switch." -foregroundcolor Green
-
-    #TODO: Move to preparebuildenv
-    # Get submodules
-    & git submodule update --init --recursive
+    # Write-Host "Finished build in $global:buildFlavor. Use the -debug or -release to switch." -foregroundcolor Green    
 
     # Import extensibility functions
     Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath 'Functions') -Filter '*.ps1' | ForEach-Object { . $_.FullName }
 
-    UpdateOrBuildAssembly $PSScriptRoot $false
+    UpdateOrBuildAssembly $PSScriptRoot $true
 
     Invoke-Build2 -ModulePath $Env:BUILD_SOURCESDIRECTORY
 }

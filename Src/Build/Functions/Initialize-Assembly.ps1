@@ -109,15 +109,27 @@ function RunActionExclusive([scriptblock]$action, [string]$mutexName) {
     if ($runTool) {
         Write-Debug "Running action in exlcusive lock:"
         Write-Debug $action.Ast
+        
         $action.Invoke()
     }
+    return $runTool
 }
 
-function UpdateSubmodules([string]$head) {
+function RefreshSources([bool]$pull, [string]$head) {
      $action = {
+        if ($pull) {
+            & git -C $PSScriptRoot pull --ff-only
+        }
         & git -C $PSScriptRoot submodule update --init --recursive
     }
-    RunActionExclusive $action ("git_submodule_update_$PSScriptRoot")
+
+    $lockName = "$head" + "_build_update_lock"
+    
+    $updated = RunActionExclusive $action $lockName
+
+    if (-not $updated) {
+        Write-Warning "Update skipped as another PowerShell instance is running"
+    }
 }
 
 function LoadLibGit2Sharp([string]$buildToolsDirectory) {
@@ -142,7 +154,11 @@ function global:UpdateOrBuildAssembly {
 
         [Parameter(Mandatory=$true)]
         [bool]
-        $Update
+        $Update,
+
+        [Parameter(Mandatory=$false)]
+        [bool]
+        $IsServerBuild
     )
 
     begin {
@@ -163,25 +179,29 @@ function global:UpdateOrBuildAssembly {
         }
 
         if ($Update) {
-            if ($Host.Name.Contains("ISE")) {
+            if (-not $Host.Name.Contains("ISE")) {
                 # ISE logs stderror as fatal. Git logs stuff to stderror and thus if any git output occurs the import will fail inside the ISE
 
                 [string]$branch = & git -C $PSScriptRoot rev-parse --abbrev-ref HEAD
 
                 Write-Host "`r`nBuild.Infrastructure branch [" -NoNewline
 
+                $pull = $false
+
                 if ($branch -eq "master" -or $branch -eq "187604-Sequencer") {
                     Write-Host $branch -ForegroundColor Green -NoNewline
                     Write-Host "]`r`n"
-                    & git -C $PSScriptRoot pull --ff-only
+                    $pull = $true
                 } else {
                     Write-Host $branch -ForegroundColor Yellow -NoNewline
                     Write-Host "]`r`n"
+                }                
+
+                if ($IsServerBuild) {
+                    $pull = $false
                 }
-
-                [string]$head = & git -C $PSScriptRoot rev-parse HEAD
-
-                UpdateSubmodules $head
+                
+                RefreshSources $pull $branch
             }
         }
 
