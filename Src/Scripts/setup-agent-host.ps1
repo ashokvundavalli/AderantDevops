@@ -90,8 +90,8 @@ process {
 
             foreach ($directory in $directories) {
                 cmd /c "$($directory.FullName)\config.cmd remove --auth Integrated"
-
-                Remove-Item -Path $directory.FullName -Force -Recurse -Verbose -ErrorAction SilentlyContinue
+                                
+                [System.IO.Directory]::Delete($directory.FullName, $true)
             }
         }
 
