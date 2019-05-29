@@ -21,7 +21,7 @@ namespace UnitTest.Build.Tasks.PowerShellScript {
         public void ScriptResource_sets_script_block() {
             var script = new TestPowerShellScript();
             script.BuildEngine = new Mock<IBuildEngine>().As<IBuildEngine3>().As<IBuildEngine4>().Object;
-            script.ScriptResource = "SetBuildTags";
+            script.ScriptFromResource = "SetBuildTags";
 
             script.Execute();
 

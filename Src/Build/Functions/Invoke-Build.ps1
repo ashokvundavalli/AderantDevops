@@ -175,7 +175,6 @@ function CreateToolArgumentString($context, $remainingArgs) {
             $set.Add("/p:IsDesktopBuild=true")
         } else {
             $set.Add("/p:IsDesktopBuild=false")
-            $set.Add("/clp:PerformanceSummary")
         }
 
         if ($MinimalConsoleLogging.IsPresent) {
@@ -302,8 +301,9 @@ function GetBuildStateMetadata($context) {
     [string[]]$ids = @()
     if ($stm.BucketIds.Count -gt 0) {
         $ids = $stm.BucketIds | Select-Object -ExpandProperty Id
+        $tags = $stm.BucketIds | Select-Object -ExpandProperty Tag
     }
-    $buildState = Get-BuildStateMetadata -BucketIds $ids -DropLocation $context.DropLocationInfo.BuildCacheLocation
+    $buildState = Get-BuildStateMetadata -BucketIds $ids -Tags $tags -DropLocation $context.DropLocationInfo.BuildCacheLocation
 
     $context.BuildStateMetadata = $buildState
 
@@ -312,40 +312,44 @@ function GetBuildStateMetadata($context) {
     }
 }
 
-function PrepareEnvironment {
-	if ($environmentConfigured) {
-		return
-	}
+function PrepareEnvironment($BuildScriptsDirectory, $isBuildAgent) {
+  if ($environmentConfigured) {
+    return
+  }
 
-	try {
-		# Setup environment for JavaScript tests
-		$lockDownPath = "HKCU:\SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_LOCALMACHINE_LOCKDOWN"
-		if (-not ( Test-Path $lockDownPath)) {
-			New-Item -Path "$lockDownPath" -Type Directory -Force | Out-Null
-		}
+  if ($isBuildAgent) {
+    . "$BuildScriptsDirectory\vsvars.ps1"
+  }
 
-		Set-ItemProperty -Path $lockDownPath -Name "iexplore.exe" -Type "DWORD" -Value 0 | Out-Null
+  try {
+    # Setup environment for JavaScript tests
+    $lockDownPath = "HKCU:\SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_LOCALMACHINE_LOCKDOWN"
+    if (-not ( Test-Path $lockDownPath)) {
+      New-Item -Path "$lockDownPath" -Type Directory -Force | Out-Null
+    }
 
-		if ((Test-Path "$lockDownPath\Settings") -eq 0) {
-			New-Item -Path "$lockDownPath\Settings" -Type Directory -Force | Out-Null
-		}
-		Set-ItemProperty -Path "$lockDownPath\Settings" -Name "LOCALMACHINE_CD_UNLOCK" -Value 0 -Force | Out-Null
+    Set-ItemProperty -Path $lockDownPath -Name "iexplore.exe" -Type "DWORD" -Value 0 | Out-Null
 
-		# To avoid runtime problems by binding to interesting assemblies, we delete this so MSBuild will always try to bind to our version of WCF and not one found on the computer somewhere
-		$wcfPath32 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319\AssemblyFoldersEx\WCF Data Services Standalone Assemblies"
-		$wcfPath64 = "HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319\AssemblyFoldersEx\WCF Data Services Standalone Assemblies"
-		if (Test-Path $wcfPath32) {
-			Remove-Item -Path $wcfPath32 -Recurse
-		}
+    if ((Test-Path "$lockDownPath\Settings") -eq 0) {
+      New-Item -Path "$lockDownPath\Settings" -Type Directory -Force | Out-Null
+    }
+    Set-ItemProperty -Path "$lockDownPath\Settings" -Name "LOCALMACHINE_CD_UNLOCK" -Value 0 -Force | Out-Null
 
-		if (Test-Path $wcfPath64) {
-			Remove-Item -Path $wcfPath64 -Recurse
-		}
+    # To avoid runtime problems by binding to interesting assemblies, we delete this so MSBuild will always try to bind to our version of WCF and not one found on the computer somewhere
+    $wcfPath32 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319\AssemblyFoldersEx\WCF Data Services Standalone Assemblies"
+    $wcfPath64 = "HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319\AssemblyFoldersEx\WCF Data Services Standalone Assemblies"
+    if (Test-Path $wcfPath32) {
+      Remove-Item -Path $wcfPath32 -Recurse
+    }
 
-		Optimize-BuildEnvironment
-	} finally {
-		$environmentConfigured = $true
-	}
+    if (Test-Path $wcfPath64) {
+      Remove-Item -Path $wcfPath64 -Recurse
+    }
+
+    Optimize-BuildEnvironment
+  } finally {
+    $environmentConfigured = $true
+  }
 }
 
 # Expand input paths into array. Try to resolve the path to full.
@@ -643,7 +647,7 @@ function global:Invoke-Build2 {
         GetBuildStateMetadata $context
     }
 
-    PrepareEnvironment
+    PrepareEnvironment $context.BuildScriptsDirectory $context.BuildMetadata.BuildId -gt 0
 
     $context.StartedAt = [DateTime]::UtcNow
     $context.LogFile = "$root\build.log"
@@ -668,11 +672,13 @@ function global:Invoke-Build2 {
             $Target = "CreatePlan"
         }
 
-        Run-MSBuild "$($context.BuildScriptsDirectory)ComboBuild.targets" "/target:$($Target) /fl /flp:logfile=$($context.LogFile);Encoding=UTF-8 /p:ContextEndpoint=$contextEndpoint $args"
+        $global:LASTEXITCODE = 0
+
+        Run-MSBuild "$($context.BuildScriptsDirectory)ComboBuild.targets" "/target:$($Target) /p:ContextEndpoint=$contextEndpoint /p:SKIP_BUILD_SYSTEM_COMPILE=true $args" -logFileName $context.LogFile
 
         $succeeded = $true
 
-        if ($LASTEXITCODE -eq 0 -and $displayCodeCoverage.IsPresent) {
+        if ($global:LASTEXITCODE -eq 0 -and $displayCodeCoverage.IsPresent) {
             [string]$codeCoverageReport = Join-Path -Path $repositoryPath -ChildPath "Bin\Test\CodeCoverage\dotCoverReport.html"
 
             if (Test-Path ($codeCoverageReport)) {
@@ -689,10 +695,6 @@ function global:Invoke-Build2 {
         Get-EventSubscriber -SourceIdentifier $titleEventSource | Unregister-Event
 
         $host.UI.RawUI.ForegroundColor = $currentColor
-
-        if (-not $context.IsDesktopBuild) {
-            Write-Host "##vso[task.uploadfile]$($context.LogFile)"
-        }
 
         $context = $contextService.CurrentContext
         $reason = $context.BuildStatusReason

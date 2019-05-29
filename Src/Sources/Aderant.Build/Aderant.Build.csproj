@@ -39,14 +39,9 @@
     <Prefer32Bit>false</Prefer32Bit>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
-  <PropertyGroup>
-    <PathToMSBuild Condition="'$(PathToMSBuild)' == ''">$(MSBuildToolsPath)</PathToMSBuild>
-    <PathToMSBuild Condition="'$(PathToMSBuild)' == ''">C:\Program Files (x86)\MSBuild\14.0\Bin</PathToMSBuild>
-  </PropertyGroup>
-  <Import Project="..\References.v$(MSBuildToolsVersion).props" />
+  <Import Project="..\References.props" />
   <ItemGroup>
-    <Reference Include="LibGit2Sharp, Version=0.23.0.0, Culture=neutral, PublicKeyToken=7cbde695407f0333, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="LibGit2Sharp, Version=0.26.0.0, Culture=neutral, PublicKeyToken=7cbde695407f0333, processorArchitecture=MSIL">
       <HintPath>..\..\..\packages\devtools\LibGit2Sharp\lib\net46\LibGit2Sharp.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
@@ -128,7 +123,9 @@
     <EmbeddedResource Include="Tasks\PowerShell\Resources\SetBuildTags.ps1" />
     <Compile Include="Tasks\CopyCustomSolution.cs" />
     <Compile Include="Tasks\CopyRelatedFiles.cs" />
+    <Compile Include="Utilities\InspectionDomainInitializer.cs" />
     <Compile Include="Tasks\RoleManifestPackageIdentifier.cs" />
+    <Compile Include="Utilities\LoadContextAssemblyResolver.cs" />
     <Compile Include="Utilities\TopologicalSort.cs" />
     <Compile Include="Packaging\FileRestore.cs" />
     <Compile Include="ProjectSystem\StateTracking\TrackedInputFile.cs" />
@@ -250,7 +247,6 @@
     <Compile Include="Services\IContextualServiceProvider.cs" />
     <Compile Include="Services\CompositionProperties.cs" />
     <Compile Include="Constants.cs" />
-    <Compile Include="BuildDetailPublisher.cs" />
     <Compile Include="BuildInfrastructureHelper.cs" />
     <Compile Include="BuildSummary.cs" />
     <Compile Include="BuildMetadata.cs" />
@@ -305,7 +301,7 @@
     <Compile Include="SeedPackageValidation\FirmRuleVersionError.cs" />
     <Compile Include="Tasks\ReadAssemblyInfo.cs" />
     <Compile Include="Tasks\GitVersion.cs" />
-    <Compile Include="Tasks\Hash.cs" />
+    <Compile Include="Tasks\HashItems.cs" />
     <Compile Include="SeedPackageValidation\SmartFormDeltaError.cs" />
     <Compile Include="SeedPackageValidation\SmartFormModelError.cs" />
     <Compile Include="Tasks\SmartReference.cs" />
@@ -324,8 +320,6 @@
     <Compile Include="DependencyAnalyzer\IGlobalAttributesProvider.cs" />
     <Compile Include="DependencyResolver\PaketPackageManager.cs" />
     <Compile Include="DependencyResolver\DependencySource.cs" />
-    <Compile Include="ExpertBuildConfiguration.cs" />
-    <Compile Include="ExpertBuildDetail.cs" />
     <Compile Include="IFileSystem2.cs" />
     <Compile Include="Logging\NullLogger.cs" />
     <Compile Include="AssemblyVersionInspector.cs" />
@@ -350,7 +344,6 @@
     <Compile Include="Tasks\CompileLess.cs" />
     <Compile Include="Tasks\SeedPackagePacking.cs" />
     <Compile Include="Tasks\OrmMappingValidator.cs" />
-    <Compile Include="Tasks\ProjectConformityCheck.cs" />
     <Compile Include="Tasks\ProjectConformityController.cs" />
     <Compile Include="Tasks\Legacy\PushPaketTemplatesTask.cs" />
     <Compile Include="Packaging\NuGet\StringNuspecValue.cs" />
@@ -367,20 +360,12 @@
     <Compile Include="Versioning\IVersionAnalyzer`.cs" />
     <Compile Include="Versioning\JavaScriptAnalyzer.cs" />
     <Compile Include="Versioning\SemanticVersion.cs" />
-    <Compile Include="Providers\ITeamFoundationWorkspace.cs" />
-    <Compile Include="ServiceLocator.cs" />
-    <Compile Include="Tasks\AddBuildProjectNode.cs" />
     <Compile Include="Tasks\CheckCertificate.cs" />
-    <Compile Include="Tasks\Legacy\FinalizeBuild.cs" />
-    <Compile Include="IBuildProcessTemplate.cs" />
     <Compile Include="WellKnownProperties.cs" />
     <Compile Include="XElementExtensions.cs" />
     <Compile Include="Logging\BuildTaskLogger.cs" />
-    <Compile Include="Tasks\PublishBuild.cs" />
     <Compile Include="DependencyResolver\DependencyResolvedEventArgs.cs" />
     <Compile Include="DependencyAnalyzer\ExpertModuleMapper.cs" />
-    <Compile Include="DependencyAnalyzer\SourceControlModuleInspector.cs" />
-    <Compile Include="Providers\TeamFoundationWorkspace.cs" />
     <Compile Include="DependencyAnalyzer\WebModule.cs" />
     <Compile Include="FileSystem.cs" />
     <Compile Include="DependencyAnalyzer\ExpertManifest.cs" />
@@ -388,7 +373,6 @@
     <Compile Include="DuplicateModuleInManifestException.cs" />
     <Compile Include="DependencyAnalyzer\ThirdPartyModule.cs" />
     <Compile Include="Commands\Legacy\CopyBinToEnvironment.cs" />
-    <Compile Include="Process\DefinitionParametersConfigurator.cs" />
     <Compile Include="Commands\Legacy\GetExpertBranches.cs" />
     <Compile Include="Commands\Legacy\GetDependencies.cs" />
     <Compile Include="Commands\GetDependencyGraph.cs" />
@@ -397,7 +381,6 @@
     <Compile Include="Commands\Legacy\GetDownstreamExpertModules.cs" />
     <Compile Include="Commands\Legacy\GetExpertModule.cs" />
     <Compile Include="Commands\Legacy\GetExpertModules.cs" />
-    <Compile Include="Commands\Legacy\NewExpertBuildDefinition.cs" />
     <Compile Include="Commands\Legacy\SortModulesByBuildOrder.cs" />
     <Compile Include="DependencyAnalyzer\CircularDependencyException.cs" />
     <Compile Include="DependencyAnalyzer\DependencyBuilder.cs" />
@@ -420,7 +403,6 @@
     <Compile Include="MSBuild\Target.cs" />
     <Compile Include="Providers\IModuleProvider.cs" />
     <Compile Include="Providers\PathProvider.cs" />
-    <Compile Include="Providers\ModuleWorkspace.cs" />
     <Compile Include="SplashScreenText.cs" />
     <Compile Include="Tasks\BuildConfigurationCheck.cs" />
     <Compile Include="Tasks\GetCopyLocalItemsToRemove.cs" />
@@ -437,7 +419,6 @@
     <Compile Include="Commands\Legacy\WebPackageExtract.cs" />
     <Compile Include="DependencyResolver\VersionRequirement.cs" />
     <Compile Include="VisualStudioEnvironmentContext.cs" />
-    <Compile Include="UpgradeTemplateBuildProcess.cs" />
     <Compile Include="Legacy\WebArchiveFileSystem.cs" />
   </ItemGroup>
   <ItemGroup>

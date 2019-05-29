@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27703.2000
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28803.352
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{31A06791-2770-4455-94CF-489136D6405A}"
 EndProject
@@ -108,6 +108,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrxerConsole", "Src\Sources
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IntegrationTest.Analyzer", "Test\IntegrationTest.Analyzer\IntegrationTest.Analyzer.csproj", "{EE7FA89A-D218-4383-93C7-92225B017E10}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.Build.TeamFoundation", "src\Sources\Aderant.Build.TeamFoundation\Aderant.Build.TeamFoundation.csproj", "{BD56B34B-DB85-4154-A560-0BC1FE6386DA}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Src\ContentProject\BuildSrc.projitems*{fdd10972-7785-4bf7-9381-225d2d35c098}*SharedItemsImports = 13
@@ -185,6 +187,10 @@ Global
 		{EE7FA89A-D218-4383-93C7-92225B017E10}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EE7FA89A-D218-4383-93C7-92225B017E10}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EE7FA89A-D218-4383-93C7-92225B017E10}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BD56B34B-DB85-4154-A560-0BC1FE6386DA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BD56B34B-DB85-4154-A560-0BC1FE6386DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BD56B34B-DB85-4154-A560-0BC1FE6386DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BD56B34B-DB85-4154-A560-0BC1FE6386DA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

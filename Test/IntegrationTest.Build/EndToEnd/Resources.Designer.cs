@@ -19,7 +19,7 @@ namespace IntegrationTest.Build.EndToEnd {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -66,18 +66,17 @@ namespace IntegrationTest.Build.EndToEnd {
         ///&amp; git init .
         ///
         ///[string]$cwd = Get-Location
-        ///$file = [Management.Automation.WildcardPattern]::Unescape($cwd + &apos;\.gitignore&apos;)
+        ///$file = $cwd + &apos;\.gitignore&apos;
         ///
-        ///Add-Content -LiteralPath $file -Value @&apos;
+        ///[System.IO.File]::WriteAllLines($file, @&apos;
         ///[Bb]in/
         ///[Oo]bj/
-        ///&apos;@ -Force
+        ///&apos;@)
         ///
-        ///&amp; git add .
-        ///&amp; git add ModuleA/Build/TFSBuild.rsp -f
-        ///&amp; git add ModuleB/Build/TFSBuild.rsp -f
-        ///&amp; git commit -m &apos;Added all files&apos;
-        ///.
+        ///&amp; git add &apos;-A&apos; &apos;-f&apos;
+        ///&amp; git add &apos;ModuleA\Build\TFSBuild.rsp&apos; &apos;-f&apos;
+        ///&amp; git add &apos;ModuleB\Build\TFSBuild.rsp&apos; &apos;-f&apos;
+        ///&amp; git commit -m &apos;Added all files&apos;.
         /// </summary>
         internal static string CreateRepo {
             get {

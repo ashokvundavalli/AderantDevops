@@ -1,4 +1,166 @@
-﻿
+﻿if (-not $ShellContext.IsTfvcModuleEnabled) {
+    return
+}
+
+# Called from SwitchBranchTo
+function Set-ChangedBranchPaths([string]$name) {
+    #initialise from default setting
+    Write-Host "Change branch to $name"
+
+    # container as in dev or release
+    $newBranchContainer = ""
+    $previousBranchContainer = ""
+
+    # name of branch or MAIN
+    $newBranchName = ""
+    $previousBranchName = ""
+
+    #was the pervious branch MAIN?
+    [bool]$changeToContainerFromMAIN = $false
+
+    # get the new and previous name a container parts
+    if ((IsDevBanch $ShellContext.BranchName) -or (IsReleaseBanch $ShellContext.BranchName)) {
+        $previousBranchContainer = $ShellContext.BranchName.Substring(0, $ShellContext.BranchName.LastIndexOf("\"))
+        $previousBranchName = $ShellContext.BranchName.Substring($ShellContext.BranchName.LastIndexOf("\") + 1)
+    } elseif ((IsMainBanch $ShellContext.BranchName)) {
+        $previousBranchName = "MAIN"
+        $changeToContainerFromMAIN = $true
+    }
+
+    if ((IsDevBanch $name) -or (IsReleaseBanch $name)) {
+        $newBranchContainer = $name.Substring(0, $name.LastIndexOf("\"))
+        $newBranchName = $name.Substring($name.LastIndexOf("\") + 1)
+    } elseif ((IsMainBanch $name)) {
+        $newBranchName = "MAIN"
+        $newBranchContainer = "\"
+    }
+
+    $success = $false
+    if ($changeToContainerFromMAIN) {
+        $success = Switch-BranchFromMAINToContainer $newBranchContainer $newBranchName $previousBranchName
+    } else {
+        $success = Switch-BranchFromContainer $newBranchContainer $previousBranchContainer $newBranchName $previousBranchName
+    }
+
+    if ($success -eq $false) {
+        Write-Host -ForegroundColor Yellow "'$name' branch was not found on this machine."
+        return $false
+    }
+
+    #Set common paths
+    $ShellContext.BranchModulesDirectory = (Join-Path -Path $global:BranchLocalDirectory -ChildPath "Modules")
+
+    $ShellContext.BranchBinariesDirectory = (Join-Path -Path $global:BranchLocalDirectory -ChildPath "Binaries")
+    if ((Test-Path $ShellContext.BranchBinariesDirectory) -eq $false) {
+        New-Item -Path $ShellContext.BranchBinariesDirectory -ItemType Directory
+    }
+
+    return $true
+}
+
+<#
+ we need to cater for the fact MAIN is the only branch and not a container like dev or release
+#>
+function Switch-BranchFromMAINToContainer($newBranchContainer, $newBranchName, $previousBranchName) {
+    #change name and then container and remove extra backslash's
+    $globalBranchName = ($ShellContext.BranchName -replace $previousBranchName, $newBranchName)
+    $globalBranchName = $newBranchContainer + "\" + $globalBranchName
+
+    if ($globalBranchName -eq "\") {
+        return $false
+    }
+
+    # The strip logic assumes the last slash is the container separator, if the local dir ends with a slash it will break that assumption
+    $global:BranchLocalDirectory = $global:BranchLocalDirectory.TrimEnd([System.IO.Path]::DirectorySeparatorChar)
+
+    #strip MAIN then add container and name
+    $globalBranchLocalDirectory = $global:BranchLocalDirectory.Substring(0, $global:BranchLocalDirectory.LastIndexOf("\") + 1)
+    $globalBranchLocalDirectory = (Join-Path -Path $globalBranchLocalDirectory -ChildPath( Join-Path -Path $newBranchContainer -ChildPath $newBranchName))
+
+    if ((Test-Path $globalBranchLocalDirectory) -eq $false) {
+        return $false
+    }
+
+    $ShellContext.BranchName = $globalBranchName
+    $global:BranchLocalDirectory = $globalBranchLocalDirectory
+
+    #strip MAIN then add container and name
+    $ShellContext.BranchServerDirectory = $ShellContext.BranchServerDirectory.Substring(0, $ShellContext.BranchServerDirectory.LastIndexOf("\") + 1)
+    $ShellContext.BranchServerDirectory = (Join-Path -Path $ShellContext.BranchServerDirectory -ChildPath( Join-Path -Path $newBranchContainer -ChildPath $newBranchName))
+
+    $ShellContext.BranchServerDirectory = [System.IO.Path]::GetFullPath($ShellContext.BranchServerDirectory)
+
+    return $true
+}
+
+<#
+ we dont have to do anything special if we change from a container to other branch type
+#>
+function Switch-BranchFromContainer($newBranchContainer, $previousBranchContainer, $newBranchName, $previousBranchName) {
+    #change name and then container and remove extra backslash's
+    $branchName = $ShellContext.BranchName.Replace($previousBranchName, $newBranchName)
+    $branchName = $ShellContext.BranchName.Replace($previousBranchContainer, $newBranchContainer)
+    if (IsMainBanch $branchName) {
+        $branchName = [System.Text.RegularExpressions.Regex]::Replace($branchName, "[^1-9a-zA-Z_\+]", "");
+    }
+
+    if ($branchName -eq "\") {
+        return $false
+    }
+
+    $branchLocalDirectory = $global:BranchLocalDirectory.Substring(0, $global:BranchLocalDirectory.LastIndexOf($previousBranchContainer));
+    $branchLocalDirectory = (Join-Path -Path $branchLocalDirectory -ChildPath( Join-Path -Path $newBranchContainer -ChildPath $newBranchName))
+
+    if ((Test-Path $branchLocalDirectory) -eq $false -or $branchLocalDirectory.EndsWith("ExpertSuite")) {
+        return $false
+    }
+
+    $ShellContext.BranchName = $branchName
+    $global:BranchLocalDirectory = $branchLocalDirectory
+
+    $ShellContext.BranchServerDirectory = $ShellContext.BranchServerDirectory.Substring(0, $ShellContext.BranchServerDirectory.LastIndexOf($previousBranchContainer));
+    $ShellContext.BranchServerDirectory = (Resolve-Path -Path ($ShellContext.BranchServerDirectory + $newBranchContainer + "\" + $newBranchName)).ProviderPath
+    $ShellContext.BranchServerDirectory = [System.IO.Path]::GetFullPath($ShellContext.BranchServerDirectory)
+
+    return $true
+}
+
+<#
+ Re-set the local working branch
+ e.g. Dev\Product or MAIN
+#>
+function SwitchBranchTo {
+    param(
+        [Parameter(Mandatory=$true)][string]$newBranch,
+        [switch]$setAsDefault
+    )
+
+    begin {
+        if ($ShellContext.BranchName -Contains $newBranch) {
+            Write-Host "The magic unicorn has refused your request." -ForegroundColor Yellow
+            return
+        }
+
+        $success = Set-ChangedBranchPaths $newBranch
+
+        if ($success -eq $false) {
+            return
+        }
+
+        Set-Environment
+
+        Set-CurrentModule $ShellContext.CurrentModuleName
+
+        Set-Location -Path $global:BranchLocalDirectory
+
+        if ($setAsDefault.IsPresent) {
+            SetDefaultValue dropRootUNCPath $ShellContext.BranchServerDirectory
+            SetDefaultValue devBranchFolder $global:BranchLocalDirectory
+        }
+    }
+}
+
+
 function PromptUserToShelveBranch($branchName, $tfsPath, $shelvesetName){
 
     $message = "What do you want to do?";
@@ -402,8 +564,192 @@ function global:Merge-Branch([string] $sourceBranch, [string] $targetBranch, [sw
     Write-Host "Merge Completed!!!"
 }
 
+<#
+.Synopsis
+    Builds the current module on server.
+.Description
+    Builds the current module on server.
+.Example
+     bm -getDependencies -clean ; Build-ExpertModulesOnServer -downstream
+    If a local build succeeded, a server build will then be kicked off for current module.
+#>
+function Build-ExpertModulesOnServer([string[]] $workflowModuleNames, [switch] $downstream = $false) {
+    $moduleBeforeBuild = $null;
+    $currentWorkingDirectory = Get-Location;
+
+    if (!$workflowModuleNames) {
+        if (($ShellContext.CurrentModulePath) -and (Test-Path $ShellContext.CurrentModulePath)) {
+            $moduleBeforeBuild = (New-Object System.IO.DirectoryInfo $ShellContext.CurrentModulePath | foreach {$_.Name});
+            $workflowModuleNames = @($moduleBeforeBuild);
+        }
+    }
+
+    if (-not ($workflowModuleNames)) {
+        write "No modules specified.";
+        return;
+    }
+
+    [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$workflowModuleNames = $global:Workspace.GetModules($workflowModuleNames)
+
+    if ((Test-Path $ShellContext.BranchLocalDirectory) -ne $true) {
+        write "Branch Root path does not exist: '$ShellContext.BranchLocalDirectory'"
+    }
+
+    [Aderant.Build.DependencyAnalyzer.ExpertModule[]] $modules = Sort-ExpertModulesByBuildOrder -BranchPath $ShellContext.BranchModulesDirectory -Modules $workflowModuleNames -ProductManifestPath $ShellContext.ProductManifestPath
+
+    if (!$modules -or (($modules.Length -ne $workflowModuleNames.Length) -and $workflowModuleNames.Length -gt 0)) {
+        Write-Warning "After sorting builds by order the following modules were excluded.";
+        Write-Warning "These modules probably have no dependency manifest or do not exist in the Expert Manifest"
+
+        (Compare-Object -ReferenceObject $workflowModuleNames -DifferenceObject $modules -Property Name -PassThru) | Select-Object -Property Name
+
+        $message = "Do you want to continue anyway?";
+        $yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes"
+        $no = New-Object System.Management.Automation.Host.ChoiceDescription "&No"
+
+        $options = [System.Management.Automation.Host.ChoiceDescription[]]($yes, $no)
+        $result = $host.UI.PromptForChoice($null, $message, $options, 0)
+
+        if ($result -ne 0) {
+            write "Module(s) not found."
+            return
+        }
+    }
+
+    if ($downstream -eq $true) {
+        write ""
+        write "Retrieving downstream modules"
+
+        [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$modules = $global:Workspace.DependencyAnalyzer.GetDownstreamModules($modules)
+
+        $modules = Sort-ExpertModulesByBuildOrder -BranchPath $ShellContext.BranchModulesDirectory -Modules $modules -ProductManifestPath $ShellContext.ProductManifestPath
+        $modules = $modules | Where { $_.ModuleType -ne [Aderant.Build.DependencyAnalyzer.ModuleType]::Test }
+        write "Done."
+    }
+
+    $modules = $modules | Where {$exclude -notcontains $_}
+
+    write ""
+    write "********** Build Overview *************"
+    $count = 0
+    $weHaveSkipped = $false
+    foreach ($module in $modules) {
+        $count++;
+        write "$count. $module";
+    }
+    write "";
+    write "";
+    write "Press Ctrl+C now to abort.";
+    Start-Sleep -m 2000;
+
+    foreach ($module in $modules) {
+        $sourcePath = $BranchName.replace('\', '.') + "." + $module;
+
+        Write-Warning "Build(s) started attempting on server for $module, if you do not wish to watch this build log you can now press 'CTRL+C' to exit.";
+        Write-Warning "Exiting will not cancel your current build on server. But it will cancel the subsequent builds if you have multiple modules specified, i.e. -downstream build.";
+        Write-Warning "...";
+        Write-Warning "You can use 'popd' to get back to your previous directory.";
+        Write-Warning "You can use 'New-ExpertBuildDefinition' to create a new build definition for current module if non-exist."
+
+        Invoke-Expression "tfsbuild start http://tfs:8080/tfs ExpertSuite $sourcePath";
+    }
+    if ($moduleBeforeBuild) {
+        cm $moduleBeforeBuild;
+    }
+    pushd $currentWorkingDirectory;
+}
+
+Export-ModuleMember Build-ExpertModulesOnServer
+
+function IsDevBanch([string]$name) {
+    return $name.LastIndexOf("dev", [System.StringComparison]::OrdinalIgnoreCase) -gt $name.LastIndexOf("releases", [System.StringComparison]::OrdinalIgnoreCase) -and $name.LastIndexOf("dev", [System.StringComparison]::OrdinalIgnoreCase) -gt $name.LastIndexOf("main", [System.StringComparison]::OrdinalIgnoreCase)
+}
+
+function IsReleaseBanch([string]$name) {
+    return $name.LastIndexOf("releases", [System.StringComparison]::OrdinalIgnoreCase) -gt $name.LastIndexOf("dev", [System.StringComparison]::OrdinalIgnoreCase) -and $name.LastIndexOf("releases", [System.StringComparison]::OrdinalIgnoreCase) -gt $name.LastIndexOf("main", [System.StringComparison]::OrdinalIgnoreCase)
+}
+
+function IsMainBanch([string]$name) {
+    return $name.LastIndexOf("main", [System.StringComparison]::OrdinalIgnoreCase) -gt $name.LastIndexOf("dev", [System.StringComparison]::OrdinalIgnoreCase) -and $name.LastIndexOf("main", [System.StringComparison]::OrdinalIgnoreCase) -gt $name.LastIndexOf("releases", [System.StringComparison]::OrdinalIgnoreCase)
+}
+
+function ResolveBranchName([string]$branchPath) {
+    $name = ""
+    if (IsMainBanch $branchPath) {
+        $name = "MAIN"
+    } elseif (IsDevBanch $branchPath) {
+        $name = $branchPath.Substring($branchPath.LastIndexOf("dev\", [System.StringComparison]::OrdinalIgnoreCase))
+    } elseif (IsReleaseBanch $branchPath) {
+        $name = $branchPath.Substring($branchPath.LastIndexOf("releases\", [System.StringComparison]::OrdinalIgnoreCase))
+    }
+    return $name
+}
+
+<#
+.Synopsis
+    Sets the default branch information.
+.Description
+    Sets the default branch information. This was formerly held in the defaults.xml file. After initially setting this information
+    you should use the Switch-Branch command with the -SetAsDefault parameter to update it.
+.PARAMETER devBranchFolder
+    The full path to the development branch
+.PARAMETER dropUncPath
+    The full unc path to the network drop folder for the branch
+.EXAMPLE
+        Set-ExpertBranchInfo -devBranchFolder c:\ExpertSuite\Dev\Msg2 -dropUncPath C:\expertsuite\Dev\Msg2
+     Will set the default branch information to the Dev\Msg2 branch
+
+#>
+function Set-ExpertBranchInfo([string] $devBranchFolder, [string] $dropUncPath) {
+    if ((Test-Path $devBranchFolder) -ne $true) {
+        Write-Error "The path $devBranchFolder does not exist"
+    }
+
+    if ((Test-Path $dropUncPath) -ne $true) {
+        Write-Error "The path $dropUncPath does not exist"
+    }
+
+    SetDefaultValue DevBranchFolder $devBranchFolder
+    SetDefaultValue DropRootUNCPath $dropUncPath
+    Set-Environment
+    Write-Host ""
+    Write-Host "The environment has been configured"
+    Write-Host "You should not have to run this command again on this machine"
+    Write-Host "In future when changing branches you should use the Switch-Branch command with the -SetAsDefault parameter to make it permanent."
+}
+
+function Set-LocalDirectory {
+    $global:BranchLocalDirectory = (GetDefaultValue "DevBranchFolder").ToLower()
+
+    if (-not (Test-Path $global:BranchLocalDirectory)) {
+        Write-Host ""
+        Write-Host "*********************************************************************************************************************************"
+        Write-Warning "The directory does not exist. Call Set-ExpertBranchInfo for initial setup of local directory and branch info"
+        Write-Host "*********************************************************************************************************************************"
+        Write-Host ""
+
+        throw "Please setup environment"
+    }
+}
+
 Set-Alias merge Merge-Branch -Scope Global
 Set-Alias bmerge Merge-Baseless -Scope Global
 Export-ModuleMember -function Merge-Branch -alias merge
 Export-ModuleMember -function Merge-Baseless -alias bmerge
 Export-ModuleMember -function Move-Shelveset
+
+#These commands are in AderantTfs.psm1
+Add-BranchExpansionParameter -CommandName "Merge-Branch" -ParameterName "sourceBranch"
+Add-BranchExpansionParameter -CommandName "Merge-Branch" -ParameterName "targetBranch"
+Add-BranchExpansionParameter -CommandName "Merge-Baseless" -ParameterName "sourceBranch"
+Add-BranchExpansionParameter -CommandName "Merge-Baseless" -ParameterName "targetBranch"
+
+# Add branch auto completion scenarios
+Add-BranchExpansionParameter -CommandName "SwitchBranchTo" -ParameterName "newBranch" -IsDefault
+Add-BranchExpansionParameter -CommandName "Branch-Module" -ParameterName "sourceBranch"
+Add-BranchExpansionParameter -CommandName "Branch-Module" -ParameterName "targetBranch"
+
+Add-BranchExpansionParameter –CommandName "New-ExpertManifestForBranch" –ParameterName "SourceBranch" -IsDefault
+Add-BranchExpansionParameter –CommandName "New-ExpertManifestForBranch" –ParameterName "TargetBranch"
+Add-BranchExpansionParameter -CommandName "Move-Shelveset" -ParameterName "TargetBranch"
+Add-BranchExpansionParameter -CommandName "Move-Shelveset" -ParameterName "SourceBranch"

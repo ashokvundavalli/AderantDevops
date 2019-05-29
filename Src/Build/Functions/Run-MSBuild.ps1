@@ -111,7 +111,7 @@ function Exec-CommandCore([string]$command, [string]$commandArgs, [switch]$useCo
     }
 
     while (-not $process.WaitForExit(100)) {
-      if ($parentProcess) {       
+      if ($parentProcess) {
         AttachDebuger $parentProcess $process.Id
         $parentProcess = $null
       }
@@ -119,7 +119,7 @@ function Exec-CommandCore([string]$command, [string]$commandArgs, [switch]$useCo
     }
 
     $finished = $true
-    if ($process.ExitCode -ne 0) {        
+    if ($process.ExitCode -ne 0) {
         throw "Command failed to execute successfully: $command $commandArgs"
     }
   }
@@ -135,51 +135,51 @@ function Exec-CommandCore([string]$command, [string]$commandArgs, [switch]$useCo
 
 function AttachDebuger([System.Diagnostics.Process]$parentProcess, [int]$id) {
     Write-Output "Attaching debugger"
-    Add-Type -ReferencedAssemblies "Microsoft.CSharp" -TypeDefinition $Source -Language CSharp 
+    Add-Type -ReferencedAssemblies "Microsoft.CSharp" -TypeDefinition $Source -Language CSharp
 
     $dte = $null
     if ($parentProcess) {
         $dte = [_.DteHelper]::GetDte($parentProcess)
     } else {
-        $dte = [_.DteHelper]::GetDteInstances() | Sort-Object -Property Version -Descending | Select-Object -First 1    
-    }    
+        $dte = [_.DteHelper]::GetDteInstances() | Sort-Object -Property Version -Descending | Select-Object -First 1
+    }
 
     ($dte.Debugger.LocalProcesses | Where-Object ProcessId -match $id).Attach()
 }
 
-# Lets the process re-use the current console. 
+# Lets the process re-use the current console.
 # This means items like colored output will function correctly.
 function Exec-Console([string]$command, [string]$commandArgs, [HashTable]$variables, [System.Diagnostics.Process]$parentProcess) {
     Set-StrictMode -Version 'Latest'
     Exec-CommandCore -command $command -commandArgs $commandArgs -useConsole:$true -variables:$variables -parentProcess:$parentProcess
 }
 
-function Run-MSBuild([string]$projectFilePath, [string]$buildArgs = "", [string]$logFileName = "", [switch]$parallel = $true, [switch]$summary = $true) {
+function Run-MSBuild([string]$projectFilePath, [string]$buildArgs = "", [string]$logFileName = "") {
     Set-StrictMode -Version 'Latest'
 
     $type = [Type]::GetType("System.Management.Automation.PsUtils, System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35")
-    $method = $type.GetMethod("GetParentProcess", [System.Reflection.BindingFlags]::NonPublic -bor [System.Reflection.BindingFlags]::Static) 
+    $method = $type.GetMethod("GetParentProcess", [System.Reflection.BindingFlags]::NonPublic -bor [System.Reflection.BindingFlags]::Static)
     $process = $method.Invoke($null, ([System.Diagnostics.Process]::GetCurrentProcess()))
 
     $debugMode = $false
     if ($process.ProcessName -eq "devenv") {
-        Write-Output "PowerShell was started from Visual Studio assuming you wish to debug"
+        Write-Information "PowerShell was started from Visual Studio ... assuming you wish to debug"
         $debugMode = $true
     } else {
         $process = $null
     }
-     
-    #     As part of our builds, quite a few projects copy files to the binaries directory or other locations.  
+
+    #     As part of our builds, quite a few projects copy files to the binaries directory or other locations.
     #     These can be anything from image files to test scripts.  To have our builds complete more quickly, we use the multi-process option (/maxcpucount) of msbuild to build projects in parallel.
-    #     This all sounds normal, so what's the problem?  In a large team, people will sometimes inadvertently add statements to different project files that copy files to the same destination.  
-    #     When those project files have no references to each other, directly or indirectly, msbuild may build them in parallel.  
-    #     If it does happen to run those projects in parallel on different nodes and the copies happen at the same time, the build breaks because one copy succeeds and one fails.  
+    #     This all sounds normal, so what's the problem?  In a large team, people will sometimes inadvertently add statements to different project files that copy files to the same destination.
+    #     When those project files have no references to each other, directly or indirectly, msbuild may build them in parallel.
+    #     If it does happen to run those projects in parallel on different nodes and the copies happen at the same time, the build breaks because one copy succeeds and one fails.
     #     Since the timing is not going to be the same on every build, the result is random build breaks. Build breaks suck. They drain the productivity of the team and are frustrating.
-    #     
-    #     There also appears to be a race condition inside MS Build that we come across from time to time where the same destination path is used in more than one copy.
-    #     
+    #
+    #     There also appears to be a race condition inside MSBuild that we come across from time to time where the same destination path is used in more than one copy.
+    #
     #     Consider this log snippet
-    #     
+    #
     #  441>_CopyFilesMarkedCopyLocal:
     #        Copying file from "e:\B\90\7659\src\Libraries.Entities.Bill\packages\ThirdParty.NHibernate\lib\NHibernate.xml" to "..\..\Bin\Test\NHibernate.xml".
     #      _CopyOutOfDateSourceItemsToOutputDirectory:
@@ -196,21 +196,46 @@ function Run-MSBuild([string]$projectFilePath, [string]$buildArgs = "", [string]
     #        Copying file from "obj\Release\UnitTest.Bill.Library.pdb" to "..\..\Bin\Test\UnitTest.Bill.Library.pdb".
     #  440>C:\Program Files (x86)\MSBuild\14.0\bin\Microsoft.Common.CurrentVersion.targets(4106,5): error MSB3021: Unable to copy file "e:\B\90\7659\src\Libraries.Entities.Bill\Src\Aderant.Bill.Library\Installation\CmsDbScripts\BillModel_InquiryMatterArAging.sql" to "..\..\Bin\Test\Installation\CmsDbScripts\BillModel_InquiryMatterArAging.sql". Access to the path '..\..\Bin\Test\Installation\CmsDbScripts\BillModel_InquiryMatterArAging.sql' is denied. [e:\B\90\7659\src\Libraries.Entities.Bill\Test\IntegrationTest.Bill.Library\IntegrationTest.Bill.Library.csproj]
     #        Copying file from "e:\B\90\7659\src\Libraries.Entities.Bill\Src\Aderant.Bill.Library\Installation\CmsDbScripts\BillModel_InquiryMatterWipAging.sql" to "..\..\Bin\Test\Installation\CmsDbScripts\BillModel_InquiryMatterWipAging.sql".
-    #        
-    #     There are two nodes running, 440 and 441. 
+    #
+    #     There are two nodes running, 440 and 441.
     #     For some reason both 441 and 440 schedule the copy of BillModel_InquiryMatterWipAging.sql to the output even though a node should only work on a single target at a time
-    #     and thus a single node should be processing the source items of a project at any given time.      
+    #     and thus a single node should be processing the source items of a project at any given time.
 
     $environmentBlock = @{"MSBUILDALWAYSRETRY" = "1"}
-        
+
     if ([System.Diagnostics.Debugger]::IsAttached -or $debugMode) {
         $buildArgs = $buildArgs -ireplace "\/m:([^\s]+)","" #replace /m:<n> arg. This makes debugging easier as only 1 process is spawned
-        $buildArgs = "$buildArgs /p:WaitForDebugger=true"        
-    } 
+        $buildArgs = "$buildArgs /p:WaitForDebugger=true"
+    }
 
-    Exec-Console "C:\Program Files (x86)\MSBuild\14.0\Bin\MSBuild.exe" "$projectFilePath $buildArgs" $environmentBlock $process
+    $path = Resolve-MSBuild "*" "x86"
 
-    if ($process) {
-        $process.Dispose()
+    $tool = "$path\MSBuild.exe"
+
+    if ($logFileName) {
+        $supportsBinaryLogger = ((Get-Item $tool).VersionInfo.FileMajorPart -gt 14)
+
+        if (-not $supportsBinaryLogger) {
+            $buildArgs += " /fl /flp:logfile=$logFileName;Encoding=UTF-8"
+        } else {
+            $logFileName = [System.IO.Path]::ChangeExtension($logFileName, ".binlog")
+            $buildArgs += " /bl:$logFileName"
+
+            if (-not [System.Environment]::UserInteractive) {
+                $buildArgs += " /clp:verbosity=minimal"
+            }
+        }
+    }
+
+    try {
+        Exec-Console $tool "$projectFilePath $buildArgs" $environmentBlock $process
+    } finally {
+        if (Test-Path $logFileName) {
+            Write-Host "##vso[task.uploadfile]$logFileName"
+        }
+
+        if ($process) {
+            $process.Dispose()
+        }
     }
 }

@@ -5,12 +5,15 @@ using System.Linq;
 using System.Reflection;
 
 namespace Aderant.Build.Utilities {
+
     internal class RoslynLocator {
         private readonly string pathToBuildTools;
 
         private static readonly List<string> acceptedCodeAnalysisCSharpVersions = new List<string> {
-            "1.3.1.0",
-            "1.2.0.0",
+            "3.0.0.0",  // VS 2019
+            "2.10.0.0", // VS 2017
+            "1.3.1.0",  // VS 2015
+            "1.2.0.0",  // VS 2015
             "1.0.0.0"
         };
 
@@ -21,13 +24,21 @@ namespace Aderant.Build.Utilities {
         private Assembly Resolve(object sender, ResolveEventArgs args) {
             var name = args.Name.Split(',')[0];
 
-            if (name == "Microsoft.CodeAnalysis.CSharp") {
-                string file = Path.Combine(pathToBuildTools, name + ".dll");
-                if (File.Exists(file)) {
-                    AssemblyName assemblyName = AssemblyName.GetAssemblyName(file);
+            var paths = new [] {
+                "",
+                "Roslyn"
+            };
 
-                    if (acceptedCodeAnalysisCSharpVersions.Contains(assemblyName.Version.ToString())) {
-                        return Assembly.LoadFrom(file);
+            if (name == "Microsoft.CodeAnalysis.CSharp") {
+                foreach (var path in paths) {
+                    string file = Path.Combine(pathToBuildTools, path, name + ".dll");
+
+                    if (File.Exists(file)) {
+                        AssemblyName assemblyName = AssemblyName.GetAssemblyName(file);
+
+                        if (acceptedCodeAnalysisCSharpVersions.Contains(assemblyName.Version.ToString())) {
+                            return Assembly.LoadFrom(file);
+                        }
                     }
                 }
             }

@@ -41,7 +41,8 @@ namespace Aderant.Build.Tasks {
 
             ExecuteInternal(logger);
 
-            return !Log.HasLoggedErrors;        }
+            return !Log.HasLoggedErrors;
+        }
 
         public void ExecuteInternal(Logging.ILogger logger) {
             NativeMethods.SymbolicLink link = NativeMethods.SymbolicLink.SYMBOLIC_LINK_FLAG_DIRECTORY;

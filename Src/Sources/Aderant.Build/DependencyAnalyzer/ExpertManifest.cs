@@ -39,7 +39,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
     }
 
-    internal class ExpertManifest : IModuleProvider, IGlobalAttributesProvider {
+    public class ExpertManifest : IModuleProvider, IGlobalAttributesProvider {
         private readonly IFileSystem2 fileSystem;
         private readonly XDocument manifest;
 

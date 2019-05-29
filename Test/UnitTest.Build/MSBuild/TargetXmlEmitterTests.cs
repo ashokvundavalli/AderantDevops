@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using System.Xml.Linq;
+﻿using System.Xml.Linq;
 using Aderant.Build.MSBuild;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -10,6 +9,7 @@ namespace UnitTest.Build.MSBuild {
 
         [TestMethod]
         public void WritesTargetChildren() {
+            
             Target target = new Target("Foo");
             target.Add(new Message("Foo"));
 
@@ -18,7 +18,7 @@ namespace UnitTest.Build.MSBuild {
 
             XElement document = visitor.GetXml();
 
-            var expected = @"<Project ToolsVersion=""14.0"" DefaultTargets="""" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
+            var expected = $@"<Project ToolsVersion=""{visitor.ToolsVersion}"" DefaultTargets="""" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
   <!--Properties is a special element understood by the MS Build task and will associate the unique properties to each project-->
   <Target Name=""Foo"">
     <Message Text=""Foo"" />
@@ -40,7 +40,7 @@ namespace UnitTest.Build.MSBuild {
 
             XElement document = visitor.GetXml();
 
-            var expected = @"<Project ToolsVersion=""14.0"" DefaultTargets="""" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
+            var expected = $@"<Project ToolsVersion=""{visitor.ToolsVersion}"" DefaultTargets="""" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
   <!--Properties is a special element understood by the MS Build task and will associate the unique properties to each project-->
   <Target Name=""Foo"" />
   <Target Name=""Bar"" DependsOnTargets=""Foo"" />

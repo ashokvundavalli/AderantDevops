@@ -51,6 +51,8 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             this.observedProjects.UnionWith(projectGroups.SelectMany(s => s).OfType<ConfiguredProject>().Select(s => s.SolutionRoot));
 
+            var buildPlanId = Guid.NewGuid().ToString("D");
+
             for (int i = 0; i < projectGroups.Count; i++) {
                 buildGroupCount++;
 
@@ -102,8 +104,15 @@ namespace Aderant.Build.DependencyAnalyzer {
                             { "BuildPlanFile", "$(MSBuildThisFileFullPath)" },
                             { $"{BuildGroupId}", $"{buildGroupCount}" },
                             { "TotalNumberOfBuildGroups", "$(TotalNumberOfBuildGroups)" },
+
+                            // Should we use all CPUs?
                             { "BuildInParallel", "$(BuildInParallel)" },
+
+                            // The VS project reference graph, needed for RAR compatibility
                             { "CurrentSolutionConfigurationContents", "$(CurrentSolutionConfigurationContents)" },
+
+                            // A unique id for this plan, could be used to create directories just for this build instance
+                            { "BuildPlanId", buildPlanId },
                         }.ToString()
                     });
 

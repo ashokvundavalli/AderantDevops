@@ -13,6 +13,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace IntegrationTest.Build.EndToEnd {
     internal class TestBuildServiceHost : IDisposable {
         private readonly string deploymentItemsDirectory;
+        private readonly bool disableInProcNode;
         private readonly TestContext testContext;
 
         private BuildOperationContext context;
@@ -22,7 +23,8 @@ namespace IntegrationTest.Build.EndToEnd {
         private BuildPipelineServiceClient client;
         private BuildPipelineServiceHost service;
 
-        public TestBuildServiceHost(TestContext testContext, string deploymentItemsDirectory) {
+        public TestBuildServiceHost(bool disableInProcNode, TestContext testContext, string deploymentItemsDirectory) {
+            this.disableInProcNode = disableInProcNode;
             this.testContext = testContext;
             this.deploymentItemsDirectory = deploymentItemsDirectory;
         }
@@ -91,7 +93,7 @@ namespace IntegrationTest.Build.EndToEnd {
             }
 
             service = new BuildPipelineServiceHost();
-            service.SetServiceAddressEnvironmentVariable = false;
+            service.SetServiceAddressEnvironmentVariable = disableInProcNode;
             service.StartService(endpoint);
         }
 
@@ -127,6 +129,7 @@ namespace IntegrationTest.Build.EndToEnd {
             var buildStateMetadata = artifactService
                 .GetBuildStateMetadata(
                     context.SourceTreeMetadata.GetBuckets().Select(s => s.Id).ToArray(),
+                    null,
                     context.DropLocationInfo.BuildCacheLocation);
 
             Assert.AreNotEqual(0, buildStateMetadata.BuildStateFiles.Count);

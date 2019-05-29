@@ -10,7 +10,7 @@ namespace Aderant.Build.Tasks {
     /// Currently uses SHA1. Not intended as a cryptographic security measure, only uniqueness between build executions.
     /// </remarks>
     /// </summary>
-    public class Hash : Task {
+    public class HashItems : Task {
         private const string ItemSeparatorCharacter = "\u2028";
 
         /// <summary>

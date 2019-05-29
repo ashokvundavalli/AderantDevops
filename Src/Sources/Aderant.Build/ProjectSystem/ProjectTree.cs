@@ -113,7 +113,7 @@ namespace Aderant.Build.ProjectSystem {
             logger.Info("Raw scanning paths: " + string.Join(",", directories));
 
             DirectoryGroveler groveler;
-            using (PerformanceTimer.Start((duration) => logger.Info("Directory scanning completed in: " + duration))) {
+            using (PerformanceTimer.Start((duration) => logger.Info("Directory scanning completed in: " + duration.ToString()))) {
                 groveler = new DirectoryGroveler(Services.FileSystem);
                 groveler.Grovel(directories.ToList(), excludeFilterPatterns?.ToList());
             }
@@ -147,7 +147,7 @@ namespace Aderant.Build.ProjectSystem {
             if (LoadedUnconfiguredProjects != null) {
                 ErrorUtilities.IsNotNull(collector.ProjectConfiguration, nameof(collector.ProjectConfiguration));
 
-                using (PerformanceTimer.Start(ms => logger?.Info("Loading projects completed in: " + ms))) {
+                using (PerformanceTimer.Start(ms => logger?.Info("Loading projects completed in: " + ms.ToString()))) {
                     foreach (var unconfiguredProject in LoadedUnconfiguredProjects) {
                         cancellationToken.ThrowIfCancellationRequested();
 
@@ -180,7 +180,7 @@ namespace Aderant.Build.ProjectSystem {
                 }
             }
 
-            using (PerformanceTimer.Start(ms => logger.Info("Build tree dependencies collected in: " + ms))) {
+            using (PerformanceTimer.Start(ms => logger.Info("Build tree dependencies collected in: " + ms.ToString()))) {
                 foreach (var project in LoadedConfiguredProjects) {
                     try {
                         GenerateCurrentSolutionConfigurationXml(collector.ProjectConfiguration);
@@ -219,7 +219,7 @@ namespace Aderant.Build.ProjectSystem {
 
             foreach (var project in LoadedConfiguredProjects) {
                 if (pipelineService != null) {
-                    FindRelatedFiles(project.FullPath, pipelineService);                    
+                    FindRelatedFiles(project.FullPath, pipelineService);
                 }
 
                 try {
@@ -246,7 +246,7 @@ namespace Aderant.Build.ProjectSystem {
                 var text = Services.FileSystem.ReadAllText(manifest);
                 var relatedFiles = JsonConvert.DeserializeObject<RelatedFilesManifest>(text).RelatedFiles;
                 pipelineService.RecordRelatedFiles(relatedFiles);
-            }                    
+            }
         }
 
         public async Task<BuildPlan> ComputeBuildPlan(BuildOperationContext context, AnalysisContext analysisContext, IBuildPipelineService pipelineService, OrchestrationFiles jobFiles) {
@@ -471,6 +471,7 @@ namespace Aderant.Build.ProjectSystem {
                         unconfiguredProject = exportLifetimeContext.Value;
 
                         unconfiguredProject.ProjectCollection = projectCollection;
+                        unconfiguredProject.AllowConformityModification = true;
                         unconfiguredProject.Initialize(reader, file);
 
                         loadedUnconfiguredProjects.Add(unconfiguredProject);

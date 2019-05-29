@@ -420,9 +420,30 @@ namespace Aderant.Build.Packaging {
         public bool ArtifactRestoreSkipped { get; set; }
 
         public BuildStateMetadata GetBuildStateMetadata(string[] bucketIds, string dropLocation, CancellationToken token = default(CancellationToken)) {
+            return GetBuildStateMetadata(bucketIds, null, dropLocation, token);
+        }
+
+        public BuildStateMetadata GetBuildStateMetadata(string[] bucketIds, string[] tags, string dropLocation, CancellationToken token = default(CancellationToken)) {
+            //System.Diagnostics.Debugger.Launch();
+            if (bucketIds != null && tags != null && bucketIds.Length > 0 && tags.Length != 0) {
+                if (bucketIds.Length != tags.Length) {
+                    // The two vectors must have the same length
+                    throw new InvalidOperationException(string.Format("{2} refers to {0} item(s), and {3} refers to {1} item(s). They must have the same number of items.",
+                        bucketIds.Length,
+                        bucketIds.Length,
+                        "DestinationFiles",
+                        "SourceFiles"));
+                }
+            }
+
+            //var s = bucketIds.ToList();
+            //    s.RemoveAt(Array.IndexOf(tags, "Customization"));
+            //    s.RemoveAt(Array.IndexOf(tags, "Billing"));
+            //bucketIds = s.ToArray();
+
             logger.Info($"Querying prebuilt artifacts from: {dropLocation}");
 
-            using (PerformanceTimer.Start(duration => logger.Info($"{nameof(GetBuildStateMetadata)} completed in: {duration} ms"))) {
+            using (PerformanceTimer.Start(duration => logger.Info($"{nameof(GetBuildStateMetadata)} completed in: {duration.ToString()} ms"))) {
 
                 var metadata = new BuildStateMetadata();
                 var files = new List<BuildStateFile>();

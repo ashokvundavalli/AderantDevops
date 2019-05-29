@@ -1,17 +1,26 @@
-﻿Set-StrictMode -Version 'Latest'
-
-function Initialize-BuildAssembly {
-    . "$PSScriptRoot\..\..\Build\Functions\Initialize-Assembly.ps1"
-    UpdateOrBuildAssembly -BuildScriptsDirectory "$PSScriptRoot\..\..\Build" $true
-}
+﻿Set-StrictMode -Version Latest
 
 # Need to load Aderant.Build.dll first as it defines types used in later scripts
-Initialize-BuildAssembly
+. "$PSScriptRoot\..\..\Build\Functions\Initialize-BuildEnvironment.ps1"
 
 # Import extensibility functions
-Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath "..\..\Build\Functions") -Filter "*.ps1" | Where-Object {$_.Extension -eq ".ps1" } | ForEach-Object { . $_.FullName; Write-Debug "Imported build function $($_.Name)" }
-Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath "Functions") -Filter "*.ps1" | ForEach-Object { . $_.FullName;Write-Debug "Imported profile function $($_.Name)" }
-Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath "Modules") -Filter "*.psm1" | ForEach-Object { Import-Module $_.FullName -DisableNameChecking;Write-Debug "Imported profile module $($_.Name)" }
+$imports = @(
+    (Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath "..\..\Build\Functions") -Filter "*.ps1"),
+    (Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath "Functions") -Filter "*.ps1"),
+    (Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath "Modules") -Filter "*.psm1")
+)
+
+foreach ($directory in $imports) {
+    foreach ($file in $directory) {
+        if ($file.Extension -eq ".ps1") {
+            . $file.FullName
+        }
+
+        if ($file.Extension -eq ".psm1") {
+            Import-Module $file.FullName -DisableNameChecking
+        }
+    }
+}
 Update-FormatData -PrependPath (Join-Path -Path $PSScriptRoot -ChildPath '..\..\Build\Functions\Formats\SourceTreeMetadata.format.ps1xml')
 
 $global:ShellContext = $null
@@ -19,7 +28,6 @@ $global:ShellContext = $null
 function Initialize-Module {
     . $PSScriptRoot\ShellContext.ps1
     $global:ShellContext = [ShellContext]::new()    
-
     $MyInvocation.MyCommand.Module.PrivateData.ShellContext = $global:ShellContext
 }
 
@@ -152,44 +160,6 @@ function global:GetDefaultValue {
     }
 }
 
-function IsDevBanch([string]$name) {
-    return $name.LastIndexOf("dev", [System.StringComparison]::OrdinalIgnoreCase) -gt $name.LastIndexOf("releases", [System.StringComparison]::OrdinalIgnoreCase) -and $name.LastIndexOf("dev", [System.StringComparison]::OrdinalIgnoreCase) -gt $name.LastIndexOf("main", [System.StringComparison]::OrdinalIgnoreCase)
-}
-
-function IsReleaseBanch([string]$name) {
-    return $name.LastIndexOf("releases", [System.StringComparison]::OrdinalIgnoreCase) -gt $name.LastIndexOf("dev", [System.StringComparison]::OrdinalIgnoreCase) -and $name.LastIndexOf("releases", [System.StringComparison]::OrdinalIgnoreCase) -gt $name.LastIndexOf("main", [System.StringComparison]::OrdinalIgnoreCase)
-}
-
-function IsMainBanch([string]$name) {
-    return $name.LastIndexOf("main", [System.StringComparison]::OrdinalIgnoreCase) -gt $name.LastIndexOf("dev", [System.StringComparison]::OrdinalIgnoreCase) -and $name.LastIndexOf("main", [System.StringComparison]::OrdinalIgnoreCase) -gt $name.LastIndexOf("releases", [System.StringComparison]::OrdinalIgnoreCase)
-}
-
-function ResolveBranchName([string]$branchPath) {
-    $name = ""
-    if (IsMainBanch $branchPath) {
-        $name = "MAIN"
-    } elseif (IsDevBanch $branchPath) {
-        $name = $branchPath.Substring($branchPath.LastIndexOf("dev\", [System.StringComparison]::OrdinalIgnoreCase))
-    } elseif (IsReleaseBanch $branchPath) {
-        $name = $branchPath.Substring($branchPath.LastIndexOf("releases\", [System.StringComparison]::OrdinalIgnoreCase))
-    }
-    return $name
-}
-
-function Set-LocalDirectory {
-    $global:BranchLocalDirectory = (GetDefaultValue "DevBranchFolder").ToLower()
-
-    if (-not (Test-Path $global:BranchLocalDirectory)) {
-        Write-Host ""
-        Write-Host "*********************************************************************************************************************************"
-        Write-Warning "The directory does not exist. Call Set-ExpertBranchInfo for initial setup of local directory and branch info"
-        Write-Host "*********************************************************************************************************************************"
-        Write-Host ""
-
-        throw "Please setup environment"
-    }
-}
-
 function Set-BinariesDirectory {
     $environmentXml = [System.IO.Path]::Combine($global:BranchLocalDirectory, "environment.xml")
 
@@ -207,8 +177,10 @@ function Set-BinariesDirectory {
 Branch information
 #>
 function Set-BranchPaths {
-    #initialise from default setting
     Write-Debug "Setting information for branch from your defaults"
+
+    Import-Module "$PSScriptRoot\AderantTfs.psm1" -Global
+
     Set-LocalDirectory
     Set-BinariesDirectory
     $ShellContext.BranchLocalDirectory = $global:BranchLocalDirectory
@@ -223,17 +195,19 @@ Pre-8.0 environments still use the old folder structure where everything was in 
 according to the setting in the ExpertManifest.xml file.
 #>
 function Set-ExpertSourcePath {
-    [xml]$manifest = Get-Content $ShellContext.ProductManifestPath
-    [string]$branchExpertVersion = $manifest.ProductManifest.ExpertVersion
+    if (Test-Path $ShellContext.ProductManifestPath) {
+        [xml]$manifest = Get-Content $ShellContext.ProductManifestPath
+        [string]$branchExpertVersion = $manifest.ProductManifest.ExpertVersion
 
-    if ($branchExpertVersion.StartsWith("8")) {
-        $global:BranchExpertSourceDirectory = Join-Path -Path $global:BranchLocalDirectory -ChildPath "\Binaries\ExpertSource"
+        if ($branchExpertVersion.StartsWith("8")) {
+            $global:BranchExpertSourceDirectory = Join-Path -Path $global:BranchLocalDirectory -ChildPath "\Binaries\ExpertSource"
 
-        if (-not (Test-Path -Path $global:BranchExpertSourceDirectory)) {
-            [System.IO.Directory]::CreateDirectory($global:BranchExpertSourceDirectory) | Out-Null
+            if (-not (Test-Path -Path $global:BranchExpertSourceDirectory)) {
+                [System.IO.Directory]::CreateDirectory($global:BranchExpertSourceDirectory) | Out-Null
+            }
+        } else {
+            $global:BranchExpertSourceDirectory = $ShellContext.BranchBinariesDirectory
         }
-    } else {
-        $global:BranchExpertSourceDirectory = $ShellContext.BranchBinariesDirectory
     }
 }
 
@@ -244,18 +218,12 @@ function Set-ScriptPaths {
         [string]$root = Resolve-Path "$PSScriptRoot\..\..\..\"
 
         $ShellContext.BuildScriptsDirectory = Join-Path -Path $root -ChildPath "Src\Build"
-        Write-Debug -Message "BuildScriptsDirectory: $($ShellContext.BuildScriptsDirectory)"
         $ShellContext.PackageScriptsDirectory = Join-Path -Path $root -ChildPath "Src\Package"
-        Write-Debug -Message "PackageScriptsDirectory: $($ShellContext.PackageScriptsDirectory)"
         $ShellContext.ProductManifestPath = Join-Path -Path $ShellContext.BranchModulesDirectory -ChildPath "ExpertManifest.xml"
-        Write-Debug -Message "ProductManifestPath: $($ShellContext.ProductManifestPath)"
     } else {
         $ShellContext.BuildScriptsDirectory = Join-Path -Path $ShellContext.BranchModulesDirectory -ChildPath "\Build.Infrastructure\Src\Build"
-        Write-Debug -Message "BuildScriptsDirectory: $($ShellContext.BuildScriptsDirectory)"
         $ShellContext.PackageScriptsDirectory = Join-Path -Path $ShellContext.BranchModulesDirectory -ChildPath "\Build.Infrastructure\Src\Package"
-        Write-Debug -Message "PackageScriptsDirectory: $($ShellContext.PackageScriptsDirectory)"
         $ShellContext.ProductManifestPath = Join-Path -Path $ShellContext.PackageScriptsDirectory -ChildPath "\ExpertManifest.xml"
-        Write-Debug -Message "ProductManifestPath: $($ShellContext.ProductManifestPath)"
     }
 }
 
@@ -278,11 +246,11 @@ Set Expert specific variables
 #>
 
 function Set-ExpertVariables {
-    $global:InstallPath = Find-InstallLocation -programName 'Expert Deployment Manager' 
+    $global:InstallPath = Find-InstallLocation -programName 'Expert Deployment Manager'
 
     if($global:InstallPath){
         $ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentEngine -Value { Join-Path -Path $global:InstallPath -ChildPath 'DeploymentEngine.exe' }
-        $ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentManager -Value { Join-Path -Path $global:InstallPath -ChildPath 'DeploymentManager.exe' } 
+        $ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentManager -Value { Join-Path -Path $global:InstallPath -ChildPath 'DeploymentManager.exe' }
     } else {
         $pathToDeploymentEngine = 'C:\AderantExpert\Install\DeploymentEngine.exe'
         $pathToDeploymentManager = 'C:\AderantExpert\Install\DeploymentManager.exe'
@@ -297,134 +265,13 @@ function Set-ExpertVariables {
 }
 
 <#
-    Initialise functions from Build-Libraries.ps1
+    Initialize functions from Build-Libraries.ps1
 #>
-function Initialise-BuildLibraries {
+function Initialize-BuildLibraries {
     . ($ShellContext.BuildScriptsDirectory + "\Build-Libraries.ps1")
 }
 
-# Called from SwitchBranchTo
-function Set-ChangedBranchPaths([string]$name) {
-    #initialise from default setting
-    Write-Host "Change branch to $name"
 
-    # container as in dev or release
-    $newBranchContainer = ""
-    $previousBranchContainer = ""
-
-    # name of branch or MAIN
-    $newBranchName = ""
-    $previousBranchName = ""
-
-    #was the pervious branch MAIN?
-    [bool]$changeToContainerFromMAIN = $false
-
-    # get the new and previous name a container parts
-    if ((IsDevBanch $ShellContext.BranchName) -or (IsReleaseBanch $ShellContext.BranchName)) {
-        $previousBranchContainer = $ShellContext.BranchName.Substring(0, $ShellContext.BranchName.LastIndexOf("\"))
-        $previousBranchName = $ShellContext.BranchName.Substring($ShellContext.BranchName.LastIndexOf("\") + 1)
-    } elseif ((IsMainBanch $ShellContext.BranchName)) {
-        $previousBranchName = "MAIN"
-        $changeToContainerFromMAIN = $true
-    }
-
-    if ((IsDevBanch $name) -or (IsReleaseBanch $name)) {
-        $newBranchContainer = $name.Substring(0, $name.LastIndexOf("\"))
-        $newBranchName = $name.Substring($name.LastIndexOf("\") + 1)
-    } elseif ((IsMainBanch $name)) {
-        $newBranchName = "MAIN"
-        $newBranchContainer = "\"
-    }
-
-    $success = $false
-    if ($changeToContainerFromMAIN) {
-        $success = Switch-BranchFromMAINToContainer $newBranchContainer $newBranchName $previousBranchName
-    } else {
-        $success = Switch-BranchFromContainer $newBranchContainer $previousBranchContainer $newBranchName $previousBranchName
-    }
-
-    if ($success -eq $false) {
-        Write-Host -ForegroundColor Yellow "'$name' branch was not found on this machine."
-        return $false
-    }
-
-    #Set common paths
-    $ShellContext.BranchModulesDirectory = (Join-Path -Path $global:BranchLocalDirectory -ChildPath "Modules")
-
-    $ShellContext.BranchBinariesDirectory = (Join-Path -Path $global:BranchLocalDirectory -ChildPath "Binaries")
-    if ((Test-Path $ShellContext.BranchBinariesDirectory) -eq $false) {
-        New-Item -Path $ShellContext.BranchBinariesDirectory -ItemType Directory
-    }
-
-    return $true
-}
-
-<#
- we need to cater for the fact MAIN is the only branch and not a container like dev or release
-#>
-function Switch-BranchFromMAINToContainer($newBranchContainer, $newBranchName, $previousBranchName) {
-    #change name and then container and remove extra backslash's
-    $globalBranchName = ($ShellContext.BranchName -replace $previousBranchName, $newBranchName)
-    $globalBranchName = $newBranchContainer + "\" + $globalBranchName
-
-    if ($globalBranchName -eq "\") {
-        return $false
-    }
-
-    # The strip logic assumes the last slash is the container separator, if the local dir ends with a slash it will break that assumption
-    $global:BranchLocalDirectory = $global:BranchLocalDirectory.TrimEnd([System.IO.Path]::DirectorySeparatorChar)
-
-    #strip MAIN then add container and name
-    $globalBranchLocalDirectory = $global:BranchLocalDirectory.Substring(0, $global:BranchLocalDirectory.LastIndexOf("\") + 1)
-    $globalBranchLocalDirectory = (Join-Path -Path $globalBranchLocalDirectory -ChildPath( Join-Path -Path $newBranchContainer -ChildPath $newBranchName))
-
-    if ((Test-Path $globalBranchLocalDirectory) -eq $false) {
-        return $false
-    }
-
-    $ShellContext.BranchName = $globalBranchName
-    $global:BranchLocalDirectory = $globalBranchLocalDirectory
-
-    #strip MAIN then add container and name
-    $ShellContext.BranchServerDirectory = $ShellContext.BranchServerDirectory.Substring(0, $ShellContext.BranchServerDirectory.LastIndexOf("\") + 1)
-    $ShellContext.BranchServerDirectory = (Join-Path -Path $ShellContext.BranchServerDirectory -ChildPath( Join-Path -Path $newBranchContainer -ChildPath $newBranchName))
-
-    $ShellContext.BranchServerDirectory = [System.IO.Path]::GetFullPath($ShellContext.BranchServerDirectory)
-
-    return $true
-}
-
-<#
- we dont have to do anything special if we change from a container to other branch type
-#>
-function Switch-BranchFromContainer($newBranchContainer, $previousBranchContainer, $newBranchName, $previousBranchName) {
-    #change name and then container and remove extra backslash's
-    $branchName = $ShellContext.BranchName.Replace($previousBranchName, $newBranchName)
-    $branchName = $ShellContext.BranchName.Replace($previousBranchContainer, $newBranchContainer)
-    if (IsMainBanch $branchName) {
-        $branchName = [System.Text.RegularExpressions.Regex]::Replace($branchName, "[^1-9a-zA-Z_\+]", "");
-    }
-
-    if ($branchName -eq "\") {
-        return $false
-    }
-
-    $branchLocalDirectory = $global:BranchLocalDirectory.Substring(0, $global:BranchLocalDirectory.LastIndexOf($previousBranchContainer));
-    $branchLocalDirectory = (Join-Path -Path $branchLocalDirectory -ChildPath( Join-Path -Path $newBranchContainer -ChildPath $newBranchName))
-
-    if ((Test-Path $branchLocalDirectory) -eq $false -or $branchLocalDirectory.EndsWith("ExpertSuite")) {
-        return $false
-    }
-
-    $ShellContext.BranchName = $branchName
-    $global:BranchLocalDirectory = $branchLocalDirectory
-
-    $ShellContext.BranchServerDirectory = $ShellContext.BranchServerDirectory.Substring(0, $ShellContext.BranchServerDirectory.LastIndexOf($previousBranchContainer));
-    $ShellContext.BranchServerDirectory = (Resolve-Path -Path ($ShellContext.BranchServerDirectory + $newBranchContainer + "\" + $newBranchName)).ProviderPath
-    $ShellContext.BranchServerDirectory = [System.IO.Path]::GetFullPath($ShellContext.BranchServerDirectory)
-
-    return $true
-}
 
 function Set-CurrentModule {
     param (
@@ -528,7 +375,7 @@ function SetRepository([string]$path) {
     $ShellContext.IsGitRepository = $true
 
     [string]$currentModuleBuildDirectory = "$path\Build"
-	
+
     if (Test-Path $currentModuleBuildDirectory) {
         # We only allow 1 feature*.psm1 file in the \build folder.
         $featureModule = Get-ChildItem -Path $currentModuleBuildDirectory -File -Filter 'Feature*.psm1' | Select-object -First 1
@@ -718,23 +565,26 @@ function Output-VSIXLog {
 #>
 function Set-Environment {
     param (
-        [switch]$initialize
+        [switch]$Initialize
     )
 
     process {
-        if ($initialize.IsPresent) {
-            Set-BranchPaths
+        if ($ShellContext.IsTfvcModuleEnabled) {
+            if ($Initialize.IsPresent) {
+                Set-BranchPaths
+            }
+
+            Set-ScriptPaths
+            Set-ExpertSourcePath
+            Set-ExpertVariables
         }
 
-        Set-ScriptPaths
-        Set-ExpertSourcePath
-        Set-ExpertVariables
-        Initialise-BuildLibraries
+        Initialize-BuildLibraries
         Set-VisualStudioVersion
 
         OutputEnvironmentDetails
 
-        if ($initialize.IsPresent) {
+        if ($Initialize.IsPresent) {
             # Setup PowerShell script unit test environment
             Install-Pester
         }
@@ -742,76 +592,23 @@ function Set-Environment {
 }
 
 function Set-VisualStudioVersion() {
-    $file = [System.IO.Path]::Combine($ShellContext.BuildScriptsDirectory, "vsvars.ps1")
-    . $file
-}
+    $job = Start-Job -Name "Set-VisualStudioVersion" -ScriptBlock {
+        Param($path)
+        $file = [System.IO.Path]::Combine($path, "vsvars.ps1")
+        . $file
+    } -ArgumentList $ShellContext.BuildScriptsDirectory
 
-<#
- Re-set the local working branch
- e.g. Dev\Product or MAIN
-#>
-function SwitchBranchTo {
-    param(
-        [Parameter(Mandatory=$true)][string]$newBranch,
-        [switch]$setAsDefault
-    )
+    $jobEvent = Register-ObjectEvent $job StateChanged -Action {
+        $jobEvent | Unregister-Event
 
-    begin {
-        if ($ShellContext.BranchName -Contains $newBranch) {
-            Write-Host "The magic unicorn has refused your request." -ForegroundColor Yellow
-            return
+        $data = Receive-Job $sender.Name
+
+        foreach ($item in $data.GetEnumerator()) {
+            Set-Item -Force -Path "ENV:\$($item.Key)" -Value $item.Value
         }
 
-        $success = Set-ChangedBranchPaths $newBranch
-
-        if ($success -eq $false) {
-            return
-        }
-
-        Set-Environment
-
-        Set-CurrentModule $ShellContext.CurrentModuleName
-
-        Set-Location -Path $global:BranchLocalDirectory
-
-        if ($setAsDefault.IsPresent) {
-            SetDefaultValue dropRootUNCPath $ShellContext.BranchServerDirectory
-            SetDefaultValue devBranchFolder $global:BranchLocalDirectory
-        }
+        $Host.UI.RawUI.WindowTitle = "Visual Studio environment ready"
     }
-}
-
-<#
-.Synopsis
-    Sets the default branch information.
-.Description
-    Sets the default branch information. This was formerly held in the defaults.xml file. After initially setting this information
-    you should use the Switch-Branch command with the -SetAsDefault parameter to update it.
-.PARAMETER devBranchFolder
-    The full path to the development branch
-.PARAMETER dropUncPath
-    The full unc path to the network drop folder for the branch
-.EXAMPLE
-        Set-ExpertBranchInfo -devBranchFolder c:\ExpertSuite\Dev\Msg2 -dropUncPath C:\expertsuite\Dev\Msg2
-     Will set the default branch information to the Dev\Msg2 branch
-
-#>
-function Set-ExpertBranchInfo([string] $devBranchFolder, [string] $dropUncPath) {
-    if ((Test-Path $devBranchFolder) -ne $true) {
-        Write-Error "The path $devBranchFolder does not exist"
-    }
-
-    if ((Test-Path $dropUncPath) -ne $true) {
-        Write-Error "The path $dropUncPath does not exist"
-    }
-
-    SetDefaultValue DevBranchFolder $devBranchFolder
-    SetDefaultValue DropRootUNCPath $dropUncPath
-    Set-Environment
-    Write-Host ""
-    Write-Host "The environment has been configured"
-    Write-Host "You should not have to run this command again on this machine"
-    Write-Host "In future when changing branches you should use the Switch-Branch command with the -SetAsDefault parameter to make it permanent."
 }
 
 # sets a value in the global defaults storage
@@ -822,7 +619,6 @@ function global:SetDefaultValue {
     )
 
     [Environment]::SetEnvironmentVariable("Expert$propertyName", $defaultValue, "User")
-
 }
 
 <#
@@ -847,8 +643,7 @@ function Open-ModuleSolution() {
         [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$ModuleName,
         [switch]$getDependencies,
         [switch]$getLatest,
-        [switch]$code,
-        [switch]$seventeen
+        [switch]$code
     )
 
     begin {
@@ -856,16 +651,6 @@ function Open-ModuleSolution() {
     }
 
     process {
-        if ($seventeen) {
-            [string]$vsSeventeenDirectory = "C:\Program Files (x86)\Microsoft Visual Studio\2017\*\Common7\IDE\devenv.exe"
-
-            if (Test-Path $vsSeventeenDirectory) {
-                $devenv = (Get-Item $vsSeventeenDirectory | select-object -First 1).FullName
-            } else {
-                Write-Host "VS 2017 could not be found ($vsSeventeenDirectory)"
-            }
-        }
-
         $prevModule = $null
 
         if (($getDependencies) -and -not [string]::IsNullOrEmpty($ModuleName)) {
@@ -941,7 +726,7 @@ function Open-ModuleSolution() {
 function TabExpansion([string] $line, [string] $lastword) {
     if (-not $lastword.Contains(";")) {
         $aliases = Get-Alias
-        $parser = New-Object Aderant.Build.AutoCompletionParser $line, $lastword, $aliases
+        $parser = [Aderant.Build.AutoCompletionParser]::new($line, $lastword, $aliases)
 
         # Evaluate Branches
         Try {
@@ -1034,22 +819,6 @@ function Add-BranchExpansionParameter([string]$CommandName, [string]$ParameterNa
     $objNewExpansion | Add-Member -type NoteProperty -name IsDefault -value $IsDefault
     $global:expertTabBranchExpansions += $objNewExpansion
 }
-
-# Add branch auto completion scenarios
-Add-BranchExpansionParameter -CommandName "SwitchBranchTo" -ParameterName "newBranch" -IsDefault
-Add-BranchExpansionParameter -CommandName "Branch-Module" -ParameterName "sourceBranch"
-Add-BranchExpansionParameter -CommandName "Branch-Module" -ParameterName "targetBranch"
-
-Add-BranchExpansionParameter –CommandName "New-ExpertManifestForBranch" –ParameterName "SourceBranch" -IsDefault
-Add-BranchExpansionParameter –CommandName "New-ExpertManifestForBranch" –ParameterName "TargetBranch"
-Add-BranchExpansionParameter -CommandName "Move-Shelveset" -ParameterName "TargetBranch"
-Add-BranchExpansionParameter -CommandName "Move-Shelveset" -ParameterName "SourceBranch"
-
-#These commands are in AderantTfs.psm1
-Add-BranchExpansionParameter -CommandName "Merge-Branch" -ParameterName "sourceBranch"
-Add-BranchExpansionParameter -CommandName "Merge-Branch" -ParameterName "targetBranch"
-Add-BranchExpansionParameter -CommandName "Merge-Baseless" -ParameterName "sourceBranch"
-Add-BranchExpansionParameter -CommandName "Merge-Baseless" -ParameterName "targetBranch"
 
 # Add module auto completion scenarios
 Add-ModuleExpansionParameter -CommandName "Set-CurrentModule" -ParameterName "name"
@@ -1315,17 +1084,12 @@ Export-ModuleMember -Function Reset-DeveloperShell
 #    Enable-ExpertPrompt
 #} "Enable-ExpertPrompt"
 
-#Measure-Command {
-#    Check-Vsix "NUnit3.TestAdapter" "0da0f6bd-9bb6-4ae3-87a8-537788622f2d" "NUnit.NUnit3TestAdapter"
-#} "NUnit3.TestAdapter install"
+#Check-Vsix "NUnit3.TestAdapter" "0da0f6bd-9bb6-4ae3-87a8-537788622f2d" "NUnit.NUnit3TestAdapter"
+#Check-Vsix "Aderant.DeveloperTools" "b36002e4-cf03-4ed9-9f5c-bf15991e15e4"
 
-#Measure-Command {
-#    Check-Vsix "Aderant.DeveloperTools" "b36002e4-cf03-4ed9-9f5c-bf15991e15e4"
-#} "Aderant.DeveloperTools install"
+#$ShellContext.LastVsixCheckCommit("", "LastVsixCheckCommit", $ShellContext.CurrentCommit) | Out-Null
 
-#$ShellContext.SetRegistryValue("", "LastVsixCheckCommit", $ShellContext.CurrentCommit) | Out-Null
-
-Set-Environment -initialize
+Set-Environment -Initialize
 
 Write-Host ""
 Write-Host "Type " -NoNewLine

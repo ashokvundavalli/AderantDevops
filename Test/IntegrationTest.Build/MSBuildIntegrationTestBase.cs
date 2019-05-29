@@ -6,6 +6,7 @@ using Microsoft.Build.Evaluation;
 using Microsoft.Build.Execution;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Logging;
+using Microsoft.Build.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build {
@@ -48,6 +49,7 @@ namespace IntegrationTest.Build {
 
             Dictionary<string, string> globalProperties = new Dictionary<string, string>(properties, StringComparer.OrdinalIgnoreCase) {
                 { "BuildToolsDirectory", TestContext.DeploymentDirectory },
+                { "NoMSBuildCommunityTasks", bool.TrueString }
             };
 
             using (ProjectCollection collection = new ProjectCollection(globalProperties)) {
@@ -63,6 +65,7 @@ namespace IntegrationTest.Build {
                             Loggers = collection.Loggers,
                             DetailedSummary = DetailedSummary,
                             EnableNodeReuse = false,
+                            DisableInProcNode = DisableInProcNode
                         },
                         new BuildRequestData(
                             Path.Combine(TestContext.DeploymentDirectory, "IntegrationTest.targets"),
@@ -88,6 +91,17 @@ namespace IntegrationTest.Build {
 
                     LogLines = logger.LogLines;
                 }
+            }
+        }
+
+        public bool DisableInProcNode {
+            get {
+                string version = ToolLocationHelper.CurrentToolsVersion;
+                if (version == "Current" || version == "15.0") {
+                    return true;
+                }
+
+                return false;
             }
         }
 

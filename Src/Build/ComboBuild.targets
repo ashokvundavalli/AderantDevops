@@ -158,6 +158,7 @@
       <ExcludePaths Include="\.git" />
       <ExcludePaths Include="\.vs" />
       <ExcludePaths Include="\_" />
+      <ExcludePaths Include="$([MSBuild]::Escape('*tmp.csproj'))" />
       <ExcludePaths Include="TempTemplateTransform\" />
       <ExcludePaths Include="Applications.MatterCenterIntegration\" />
       <ExcludePaths Include="Applications.DocuDraftAddIn\" />
@@ -355,9 +356,14 @@
   <Target Name="ExecutePlan">
     <PowerShellScript Condition="'$(BUILD_REASON)' != 'PullRequest'"
                       LogScript="false"
-                      ScriptResource="SetBuildTags" />
+                      ScriptFromResource="SetBuildTags" />
 
     <PropertyGroup>
+      <WixProperties Condition="'$(UseWixShim)' == 'true' And '$(WixTargetsPath)' != ''">
+          UseWixShim=$(UseWixShim);
+          WixTargetsPath=$(WixTargetsPath)
+      </WixProperties>
+
       <CommonBuildProperties>
         BuildInParallel=true;
         BuildNumber=$(BuildNumber);
@@ -372,6 +378,7 @@
         CustomAfterMicrosoftCSharpTargets=$(CustomAfterMicrosoftCSharpTargets);
         CustomAfterMicrosoftCommonTargets=$(CustomAfterMicrosoftCommonTargets);
         CompileBuildSystem=false;
+        $(WixProperties)
       </CommonBuildProperties>
     </PropertyGroup>
 
@@ -385,6 +392,22 @@
              BuildInParallel="$(BuildInParallel)" />
 
   </Target>
+
+
+
+  <PropertyGroup>
+    <PackageProductDependsOn>
+      GetFilesForPackage;
+      GetProduct;
+      AddCurrentBuildInfo;
+      GenerateFactory;
+      ArchiveArtifacts;
+      CleanBinariesBeforePackaging;
+      RunDeploymentCheck;
+    </PackageProductDependsOn>
+  </PropertyGroup>
+
+
 
   <Target Name="GetFilesForPackage">
     <PropertyGroup>
@@ -446,6 +469,21 @@
     <OnError ExecuteTargets="HandleGetProductError" />
   </Target>
 
+
+  <Target Name="AddCurrentBuildInfo">
+
+    <PowerShellScript
+      Condition="'$(BUILD_BUILDID)' != ''"
+      ScriptBlock='
+$buildNumber = $Env:BUILD_BUILDID
+$shell = New-Object -ComObject "WScript.Shell"
+$shortcut = $Shell.CreateShortcut((Join-Path -Path "$(LocalExpertBinariesDirectory)" -ChildPath "Expert_Build_$buildNumber.url"))
+$shortcut.TargetPath = "$Env:SYSTEM_TEAMFOUNDATIONSERVERURI/$Env:SYSTEM_TEAMPROJECT/_build/index?buildId=$buildNumber&amp;_a=summary"
+$shortcut.Save()' />
+
+  </Target>
+
+
   <Target Name="HandleGetProductError">
     <Message Text="LocalPackageFiles:" />
     <Message Text="%(LocalPackageFiles.FullPath)" />
@@ -505,22 +543,10 @@
     <OnError ExecuteTargets="PrintErrorMessage" />
   </Target>
 
+
   <Target Name="PrintErrorMessage">
     <Error Text="##vso[task.logissue type=error]$(ErrorMessage) $(DeploymentCheckResult)" />
   </Target>
-
-
-  <PropertyGroup>
-    <PackageProductDependsOn>
-      GetFilesForPackage;
-      GetProduct;
-      GenerateFactory;
-      ArchiveArtifacts;
-      CleanBinariesBeforePackaging;
-      RunDeploymentCheck;
-    </PackageProductDependsOn>
-  </PropertyGroup>
-
 
   <PropertyGroup>
     <CompressionLevel Condition="'$(CompressionLevel)' == ''">Fastest</CompressionLevel>

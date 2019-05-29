@@ -1,46 +1,84 @@
 <?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0"
+  InitialTargets="_ShowToolVersionInfo"
+  xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Choose>
+    <When Condition="'$(MSBuildToolsVersion)' &gt; 15.0">
+      <PropertyGroup>
+        <MSBuildTargetAssemblyVersion>15.1.0.0</MSBuildTargetAssemblyVersion>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(MSBuildToolsVersion)' == '15.0'">
+      <PropertyGroup>
+        <MSBuildTargetAssemblyVersion>15.1.0.0</MSBuildTargetAssemblyVersion>
+      </PropertyGroup>
+    </When>
+    <When Condition="$(MSBuildToolsVersion) &lt;= 14.0">
+      <PropertyGroup>
+        <MSBuildTargetAssemblyVersion>$(MSBuildAssemblyVersion).0.0</MSBuildTargetAssemblyVersion>
+      </PropertyGroup>
+    </When>
+  </Choose>
+
+  <Target Name="_ShowToolVersionInfo">
+    <!--<Warning
+      Text="MSBuildToolsVersion: $(MSBuildToolsVersion)
+    MSBuildAssemblyVersion: $(MSBuildAssemblyVersion)
+    MSBuildToolsPath: $(MSBuildToolsPath)
+    VisualStudioVersion: $(VisualStudioVersion)" />-->
+  </Target>
+
+  <PropertyGroup>
+    <!-- VS cannot handle newline characters in this string -->
+    <!-- <ReferencePath> -->
+    <!-- $(ReferencePath);C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin;C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\MSBuild\15.0\Bin;C:\Program Files (x86)\MSBuild\14.0\Bin; -->
+    <!-- </ReferencePath> -->
+  </PropertyGroup>
 
   <PropertyGroup>
     <TeamFoundationReferencePath>$(VS140COMNTOOLS)..\IDE\CommonExtensions\Microsoft\TeamFoundation\Team Explorer</TeamFoundationReferencePath>
   </PropertyGroup>
+
   <PropertyGroup>
     <IsTestProject>False</IsTestProject>
     <IsTestProject Condition="$(ProjectTypeGuids.Contains('{3AC096D0-A1C2-E12C-1390-A8335801FDAB}'))">True</IsTestProject>
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="Microsoft.Build, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+    <Reference
+      Include="Microsoft.Build, Version=$(MSBuildTargetAssemblyVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>True</SpecificVersion>
       <HintPath>$(MSBuildToolsPath)\Microsoft.Build.dll</HintPath>
-      <Private>False</Private>
+      <Private>$(IsTestProject)</Private>
     </Reference>
 
-    <Reference Include="Microsoft.Build.Framework, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+    <Reference
+      Include="Microsoft.Build.Framework, Version=$(MSBuildTargetAssemblyVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>True</SpecificVersion>
       <HintPath>$(MSBuildToolsPath)\Microsoft.Build.Framework.dll</HintPath>
-      <Private>False</Private>
+      <Private>$(IsTestProject)</Private>
     </Reference>
 
-    <Reference Include="Microsoft.Build.Engine, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+    <Reference
+      Include="Microsoft.Build.Engine, Version=$(MSBuildTargetAssemblyVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>True</SpecificVersion>
       <HintPath>$(MSBuildToolsPath)\Microsoft.Build.Engine.dll</HintPath>
-      <Private>False</Private>
+      <Private>$(IsTestProject)</Private>
     </Reference>
 
     <Reference
-      Include="Microsoft.Build.Tasks.Core, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      Include="Microsoft.Build.Tasks.Core, Version=$(MSBuildTargetAssemblyVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>True</SpecificVersion>
-      <HintPath>$(MSBuildToolsPath)\\Microsoft.Build.Tasks.Core.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll</HintPath>
+      <Private>$(IsTestProject)</Private>
     </Reference>
 
     <Reference
-      Include="Microsoft.Build.Utilities.Core, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      Include="Microsoft.Build.Utilities.Core, Version=$(MSBuildTargetAssemblyVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>True</SpecificVersion>
       <HintPath>$(MSBuildToolsPath)\Microsoft.Build.Utilities.Core.dll</HintPath>
-      <Private>False</Private>
+      <Private>$(IsTestProject)</Private>
     </Reference>
 
     <Reference
@@ -48,31 +86,31 @@
       <HintPath>$(TeamFoundationReferencePath)\Microsoft.TeamFoundation.Build.Client.dll</HintPath>
       <Private>$(IsTestProject)</Private>
     </Reference>
-    
+
     <Reference
       Include="Microsoft.TeamFoundation.Build.Common, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>$(TeamFoundationReferencePath)\Microsoft.TeamFoundation.Build.Common.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    
+
     <Reference
       Include="Microsoft.TeamFoundation.Build.Workflow, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <HintPath>$(TeamFoundationReferencePath)\Microsoft.TeamFoundation.Build.Workflow.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    
+
     <Reference
       Include="Microsoft.TeamFoundation.Client, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>$(TeamFoundationReferencePath)\Microsoft.TeamFoundation.Client.dll</HintPath>
       <Private>$(IsTestProject)</Private>
     </Reference>
-    
+
     <Reference
       Include="Microsoft.TeamFoundation.VersionControl.Client, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>$(TeamFoundationReferencePath)\Microsoft.TeamFoundation.VersionControl.Client.dll</HintPath>
       <Private>$(IsTestProject)</Private>
     </Reference>
-    
+
     <Reference
       Include="Microsoft.TeamFoundation.VersionControl.Common, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>$(TeamFoundationReferencePath)\Microsoft.TeamFoundation.VersionControl.Common.dll</HintPath>

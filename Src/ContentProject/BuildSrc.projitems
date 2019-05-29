@@ -10,6 +10,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <ExcludePattern>
+      **\obj\**
     </ExcludePattern>
   </PropertyGroup>
   <ItemGroup>

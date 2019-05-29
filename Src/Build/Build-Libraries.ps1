@@ -1,5 +1,4 @@
-﻿. "$PSScriptRoot\Functions\Initialize-Assembly.ps1"
-UpdateOrBuildAssembly $PSScriptRoot $false
+﻿. "$PSScriptRoot\Functions\Initialize-BuildEnvironment.ps1"
 
 <#
 .Synopsis
@@ -8,9 +7,6 @@ UpdateOrBuildAssembly $PSScriptRoot $false
 
 .Remarks
 #>
-
-    #TODO: Remove usages of this
-    $global:IsTeamBuild = $Env:TF_BUILD -ne $null
 
     ###
     # Loads the local dependency manifest
@@ -941,27 +937,6 @@ UpdateOrBuildAssembly $PSScriptRoot $false
         }
     }
 
-    Function script:FormatCopyMessage($pipeline) {
-        # Workaround for /NP not being compatible with /MT which fills up stdout with copy progress
-        if ($pipeline -eq $null) {
-            return
-        }
-
-        if ($pipeline.Contains("%")) {
-            return
-        }
-
-        if ([String]::IsNullOrEmpty($pipeline)) {
-            return
-        }
-
-        if ($IsTeamBuild) {
-            Write-Host $pipeline.TrimStart().PadLeft(10)
-        } else {
-            Write-Debug $pipeline.TrimStart().PadLeft(10)
-        }
-    }
-
     Function global:GetBranchNameFromDropPath([string]$dropPath) {
         $parts = $dropPath.TrimEnd('\').Split('\')
 
@@ -1216,7 +1191,7 @@ function LoadAgentSdk() {
     # PowerShell has it's own assembly resolver and assembly cache.
     # That cache is populated by binary modules so to ensure it doesn't interrer with us we need to load our types into this
     # app domain first, then load the assembly as a binary module
-	[void][System.Reflection.Assembly]::Load("Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed")
+    [void][System.Reflection.Assembly]::Load("Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed")
 
     $assembly = [System.Reflection.Assembly]::Load("Microsoft.TeamFoundation.DistributedTask.Task.LegacySDK, Version=16.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a")
 

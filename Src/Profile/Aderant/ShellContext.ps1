@@ -2,22 +2,65 @@
     Provides a context object that stores state for when the build tool chain is running interactively 
 #>
 class ShellContext {
+    hidden $autoProperties = @{
+        'Version' = 1.0
+        'IsTfvcModuleEnabled' = $false
+    }
+
+    hidden [string] $configFile = $null
+
     ShellContext() {
         $path = "HKCU:\Software\Aderant\PowerShell"
         if (-not (Test-Path $path)) {
             New-Item -Path $path -ErrorAction SilentlyContinue | Out-Null 
         }
-        $this.RegistryHome = $path 
+        $this.RegistryHome = $path       
 
-        # Create the path to the cache if it does not exist
-        New-Item -Path $this.CacheDirectory -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
+        $this.ProfileHome = [System.IO.Path]::Combine([Environment]::GetFolderPath([Environment+SpecialFolder]::LocalApplicationData), "Aderant", "ContinuousDelivery")
+
+        if (-not (Test-Path $this.ProfileHome)) {
+            New-Item -Type Directory -Path $this.ProfileHome -ErrorAction SilentlyContinue | Out-Null 
+        }
+
+        $this.configFile = [System.IO.Path]::Combine($this.ProfileHome, "config.json")        
+        $this.AddPublicMembers()
+
+        if (Test-Path $this.configFile) {
+            $data = Get-Content -Path $this.configFile | ConvertFrom-Json
+            $data.psobject.properties | Foreach { $this.autoProperties[$_.Name] = $_.Value }            
+        }
+    }
+
+    hidden AddPublicMembers() {
+        $Members = $this.autoProperties.Keys
+
+        foreach ($Member in $Members) {
+            $PublicPropertyName = $Member -replace '_', ''
+            # Define getter part
+            $Getter = 'return $this.autoProperties["{0}"]' -f $Member
+            $Getter = [ScriptBlock]::Create($Getter)
+
+            # Define setter part
+            $Setter = '
+$this.autoProperties["{0}"] = $args[0]
+$this.autoProperties | ConvertTo-Json | Out-File {1}
+' -f $Member, $this.configFile
+            $Setter = [ScriptBlock]::Create($Setter)
+
+            $AddMemberParams = @{
+                Name = $PublicPropertyName
+                MemberType = 'ScriptProperty'
+                Value = $Getter
+                SecondValue = $Setter
+            }
+            $this | Add-Member @AddMemberParams
+        }
     }
         
     [string] $BuildScriptsDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, "..\..\Build"))
     [string] $BuildToolsDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, "..\..\Build.Tools"))
-    [string] $PackagingTool = [System.IO.Path]::Combine($this.BuildScriptsDirectory, "paket.exe")
-    [string] $CacheDirectory = [System.IO.Path]::Combine([Environment]::GetFolderPath([Environment+SpecialFolder]::LocalApplicationData), "AderantPowerShell")
-    [string] $CurrentCommit
+    [string] $PackagingTool = [System.IO.Path]::Combine($this.BuildScriptsDirectory, "paket.exe")    
+    [string] $ProfileHome
     [string] $RegistryHome
 
     [string] $BranchRoot = ""
@@ -37,8 +80,8 @@ class ShellContext {
     [string] $CurrentModulePath = ""
     [string] $CurrentModuleBuildPath = ""
 
-    [bool] $IsGitRepository 
-    [bool] $PoshGitAvailable
+    [bool] $IsGitRepository = $false
+    [bool] $PoshGitAvailable = $false    
 
     [object] SetRegistryValue([string]$path, [string]$name, $value) {
         $fullPath = ($this.RegistryHome + "\" + $path).TrimEnd("\")

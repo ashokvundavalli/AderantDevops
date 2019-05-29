@@ -22,40 +22,6 @@
 
   <Import Project="Aderant.CodeSigning.targets" Condition="'$(SignApplications)' == 'true'" />
 
-  <UsingTask TaskName="GetProductName"
-             TaskFactory="CodeTaskFactory"
-             AssemblyFile="$(CodeTaskFactoryAssembly)">
-    <ParameterGroup>
-      <AssemblyInfo ParameterType="Microsoft.Build.Framework.ITaskItem" Required="true" />
-      <ProductName Output="true"/>
-    </ParameterGroup>
-    <Task>
-      <Reference Include="System.Core" />
-      <Using Namespace="System" />
-      <Using Namespace="System.IO" />
-      <Using Namespace="System.Text.RegularExpressions" />
-      <Using Namespace="Microsoft.Build.Framework" />
-      <Using Namespace="Microsoft.Build.Utilities" />
-      <Code Type="Fragment" Language="cs">
-        <![CDATA[
-            var fullPath = AssemblyInfo.GetMetadata("FullPath");
-            string text = System.IO.File.ReadAllText(fullPath);
-
-            var assemblyTitleExpression = new Regex(@"(AssemblyProduct|AssemblyTitle)\((.*?)\)");
-            GroupCollection match = assemblyTitleExpression.Match(text).Groups;
-            string value = match[match.Count - 1].Value;
-
-            if (!string.IsNullOrEmpty(value)) {
-                // Product names for the splash screen don't have Expert in the name, unless you want to run Expert ExpertTime :)
-                ProductName = value.Replace("\"", string.Empty);
-                return true;
-            }
-        ]]>
-      </Code>
-    </Task>
-  </UsingTask>
-
-
   <!--
     Updates the product splash screen without touching the original file
   -->
@@ -246,6 +212,14 @@
         $(AssemblySearchPaths);
         $(ReferencePath);
       </AssemblySearchPaths>
+
+      <AssemblySearchPaths Condition="'$(VS160COMNTOOLS)' != ''">
+        $(AssemblySearchPaths);$(VS160COMNTOOLS)..\..\MSBuild\Microsoft\VisualStudio\v16.0\TextTemplating
+      </AssemblySearchPaths>
+
+      <AssemblySearchPaths Condition="'$(VS150COMNTOOLS)' != ''">
+        $(AssemblySearchPaths);$(VS150COMNTOOLS)..\..\MSBuild\Microsoft\VisualStudio\v15.0\TextTemplating
+      </AssemblySearchPaths>
     </PropertyGroup>
 
 
@@ -279,15 +253,6 @@
   </Target>
 
 
-  <Target Name="FailOnAmbiguousAssemblyResolve" AfterTargets="ResolveAssemblyReferences">
-    <ItemGroup>
-      <DataServiceRedirect Include="@(SuggestedBindingRedirects)" Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(SuggestedBindingRedirects.Identity)', '(Microsoft[.]Data)'))" />
-    </ItemGroup>
-
-    <Warning Text="The compiler could not resolve a concrete reference to @(DataServiceRedirect) and so selected a version arbitrarily. This will probably result in runtime problems. Please fix any references to Microsoft.Data.* assemblies to ensure the version you want to use is selected by the compiler." Condition="'@(DataServiceRedirect)' != ''" />
-  </Target>
-
-
   <Target Name="CheckOrmMappingFile" BeforeTargets="CoreBuild"
           Condition="'$(IsCustomBuild)' != 'true' And '$(AssemblyName)' != 'Aderant.Framework.SoftwareFactory.Domain'">
 
@@ -298,14 +263,6 @@
       EmbeddedResource="@(EmbeddedResource)"
       ProjectTypeGuids="$(ProjectTypeGuids)" />
 
-  </Target>
-
-
-  <Target Name="ApplyCodeAnalzyer"
-          Condition="'$(IsCustomBuild)' != 'true'"
-          BeforeTargets="CoreCompile;ResolveAssemblyReferences">
-
-    <ProjectConformityCheck Project="$(MSBuildProjectFullPath)" IsDesktopBuild="$(IsDesktopBuild)" />
   </Target>
 
 
@@ -329,7 +286,6 @@
     </PropertyGroup>
 
     <Message Text="Copy local disabled: $(DisableCopyLocal)" Importance="Low" />
-
 
     <ItemGroup>
       <ReferenceNew Include="@(Reference)" Condition="'$(DisableCopyLocal)' == 'true'">

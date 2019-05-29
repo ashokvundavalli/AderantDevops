@@ -18,14 +18,11 @@ namespace UnitTest.Build {
         }
 
         [TestMethod]
+        [ExpectedException(typeof(Microsoft.PowerShell.Commands.WriteErrorException))]
         public void Fail_result_from_script() {
             var executor = new PowerShellPipelineExecutor();
 
             executor.RunScript(new[] { "Write-Error 'Oh no'" }, null);
-
-            var executorResult = executor.HadErrors;
-
-            Assert.IsTrue(executorResult);
         }
 
         [TestMethod]
@@ -67,6 +64,7 @@ Write-Debug 'Verbose'"
         }
 
         [TestMethod]
+        [ExpectedException(typeof(Microsoft.PowerShell.Commands.WriteErrorException))]
         public void Error_capture() {
             var executor = new PowerShellPipelineExecutor();
 
@@ -80,8 +78,6 @@ Write-Error 'Error'
 "
                 },
                 null);
-
-            Assert.IsNotNull(errors);
         }
     }
 }

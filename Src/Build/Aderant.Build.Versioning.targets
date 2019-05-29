@@ -122,9 +122,9 @@
       <GeneratedAssemblyInfoFile Condition="'$(GeneratedAssemblyInfoFile)' == ''">$(IntermediateOutputPath)AssemblyInfo.g.cs</GeneratedAssemblyInfoFile>
     </PropertyGroup>
 
-    <Hash ItemsToHash="@(_AssemblyAttributes->'%(Identity)%(_Parameter2)')">
+    <Aderant.Build.Tasks.HashItems ItemsToHash="@(_AssemblyAttributes->'%(Identity)%(_Parameter2)')">
       <Output TaskParameter="HashResult" PropertyName="__AssemblyAttributesHash" />
-    </Hash>
+    </Aderant.Build.Tasks.HashItems>
 
     <Aderant.Build.Tasks.WriteLinesToFile
       Lines="$(__AssemblyAttributesHash)"

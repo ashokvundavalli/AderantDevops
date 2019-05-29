@@ -12,8 +12,10 @@
       GetContextVariables;
       AssignProjectProperties
     </DispatchToInnerBuildDependsOn>
-  </PropertyGroup>
 
+    <TemporaryDirectoryKey>$(BuildPlanId)</TemporaryDirectoryKey>
+    <TemporaryDirectoryKey Condition="'$(TemporaryDirectoryKey)' == ''" >$([System.Guid]::NewGuid())</TemporaryDirectoryKey>
+  </PropertyGroup>
 
   <!--
   This project file exists to provide an appropriate seam for adding new properties to the group without having to
@@ -39,7 +41,7 @@
     <SetProgress
       CurrentOperation="Building Group"
       Activity="$(LogId)"
-      StatusDescription="$(BuildGroupId) / $(TotalNumberOfBuildGroups) $(PadLeft) $(HappyCat) $(PadRight) $(Icecream)" />
+      StatusDescription="$(BuildGroupId) / $(TotalNumberOfBuildGroups) [$(PadLeft) $(HappyCat) $(PadRight) $(Icecream)]" />
 
     <ItemGroup>
       <_ProjectsInGroup Include="@(ProjectsInGroup)" Condition="'$(switch-skip-compile)' == 'true' And '%(ProjectsInGroup.IsProjectFile)' != 'true'" />
@@ -114,7 +116,8 @@
         ArtifactStagingDirectory=$(ArtifactStagingDirectory);
         RunCodeAnalysisOnThisProject=false;
         _GitDir=$(_GitDir);
-        IsBuildCacheEnabled=$(IsBuildCacheEnabled)
+        IsBuildCacheEnabled=$(IsBuildCacheEnabled);
+        TemporaryDirectoryKey=$(TemporaryDirectoryKey)
       </PropertiesCommonToAllProjects>
     </PropertyGroup>
 
@@ -133,6 +136,13 @@
       <_SolutionRoot>@(_ProjectProperties->Metadata('SolutionRoot'))</_SolutionRoot>
     </PropertyGroup>
 
+    <PropertyGroup>
+      <WixProperties Condition="'$(UseWixShim)' == 'true'">
+        WixTargetsPath=$(WixTargetsPath);
+        WixCATargetsPath=$([System.IO.Path]::ChangeExtension($(WixTargetsPath), '.ca.targets'))
+      </WixProperties>
+    </PropertyGroup>
+
     <ItemGroup>
       <ProjectsInGroup>
         <Properties>
@@ -149,6 +159,14 @@
 
         <!-- If it's a build system project default to the EndToEnd target -->
         <Targets Condition="'%(IsProjectFile)' != 'true'">EndToEnd</Targets>
+      </ProjectsInGroup>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectsInGroup Condition="'%(IsProjectFile)' == 'true'">
+        <Properties>
+          %(Properties);$(WixProperties)
+        </Properties>
       </ProjectsInGroup>
     </ItemGroup>
 

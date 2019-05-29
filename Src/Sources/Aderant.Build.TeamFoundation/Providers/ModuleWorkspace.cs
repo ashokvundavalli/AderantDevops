@@ -11,12 +11,12 @@ using Microsoft.TeamFoundation.VersionControl.Client;
 
 namespace Aderant.Build.Providers {
     /// <summary>
-    /// Represents an ExpertSuite development environment. 
-    /// 
+    /// Represents an ExpertSuite development environment.
+    ///
     /// The ideal is to make this class the single entry point for all services required for working with Expert Suite.
     /// This class should manage the various manifest files and provide a set of dependency analysis services.
-    /// 
-    /// The class also talks to Team Foundation. 
+    ///
+    /// The class also talks to Team Foundation.
     /// </summary>
     [Export(typeof(IWorkspace))]
     [PartCreationPolicy(CreationPolicy.Shared)]
@@ -34,7 +34,7 @@ namespace Aderant.Build.Providers {
                 return tfsWorkspace;
             }
         }
-      
+
         [ContextualExport(typeof(VersionControlServer), ExportMode.Desktop)]
         public VersionControlServer VersionControlServer {
             get {
@@ -92,7 +92,7 @@ namespace Aderant.Build.Providers {
 
                 ExpertManifest manifest = ExpertManifest.Load(productManifestPath);
                 manifest.ModulesDirectory = modulesDirectory;
-                
+
                 dependencyAnalyzer = new DependencyBuilder(manifest);
             }).ContinueWith(delegate {
                 workspaceTask = null;

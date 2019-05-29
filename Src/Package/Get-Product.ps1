@@ -35,7 +35,7 @@ begin {
     $ErrorActionPreference = 'Stop'
     $InformationPreference = 'Continue'
 
-    Write-Host "Running '$($MyInvocation.MyCommand.Name.Replace(`".ps1`", `"`"))' with the following parameters:" -ForegroundColor Cyan
+    Write-Information "Running '$($MyInvocation.MyCommand.Name.Replace(`".ps1`", `"`"))' with the following parameters:"
 
     foreach ($parameter in $MyInvocation.MyCommand.Parameters) {
        Write-Information (Get-Variable -Name $Parameter.Values.Name -ErrorAction SilentlyContinue | Out-String)
@@ -54,6 +54,9 @@ begin {
 
         process {
             if (Test-Path $binariesDirectory) {
+                if (Test-Path ("$binariesDirectory\.git")) {
+                    throw 'Refusing a clean a source controlled directory'
+                }
                 Write-Information "Clearing directory: $($binariesDirectory)"
                 Remove-Item $binariesDirectory\* -Recurse -Force -Exclude $exclusions
             }
@@ -217,24 +220,6 @@ begin {
             return $totalTime
         }
     }
-
-    function Create-BuildLink {
-        <#
-        .Synopsis
-            Create a link to build in the binaries directory
-        #>
-        param (
-            [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$binariesDirectory,
-            [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][int]$buildNumber
-        )
-
-        if ([System.Environment]::UserInteractive) {
-            [System.MarshalByRefObject]$shell = New-Object -ComObject 'WScript.Shell'
-            [System.MarshalByRefObject]$shortcut = $Shell.CreateShortcut((Join-Path -Path $binariesDirectory -ChildPath "Expert_Build_$buildNumber.url"))
-            $shortcut.TargetPath = "http://tfs:8080/tfs/ADERANT/ExpertSuite/_build/index?buildId=$buildNumber&_a=summary"
-            $shortcut.Save()
-        }
-    }
 }
 
 process {
@@ -266,8 +251,6 @@ process {
             Write-Information "Selected build: $build"
 
             $totalTime = Copy-Binaries -dropRoot $build -binariesDirectory $binariesDirectory -components $components -clearBinariesDirectory
-
-            Create-BuildLink -binariesDirectory $binariesDirectory -buildNumber $buildNumber
         }
         'PullRequest' {
             [string]$pullRequestDropRoot = Join-Path -Path $dropRoot -ChildPath "pulls\$pullRequestId"

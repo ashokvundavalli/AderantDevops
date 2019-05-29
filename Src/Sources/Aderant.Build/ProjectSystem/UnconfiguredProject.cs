@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Xml;
+using Aderant.Build.Tasks;
 using Aderant.Build.Utilities;
 using Microsoft.Build.BuildEngine;
 using Microsoft.Build.Construction;
@@ -46,6 +48,7 @@ namespace Aderant.Build.ProjectSystem {
 
 
         public ProjectCollection ProjectCollection { get; set; }
+        public bool AllowConformityModification { get; set; }
 
         public bool IsTemplateProject() {
             if (isTemplateProject) {
@@ -103,7 +106,7 @@ namespace Aderant.Build.ProjectSystem {
                         element = ProjectRootElement.Create(xmlReader, projectCollection);
                     }
 
-                    RemoveImports(element);
+                    ProcessImports(projectLocation, element);
 
                     AssignPath(projectLocation, element);
 
@@ -123,13 +126,27 @@ namespace Aderant.Build.ProjectSystem {
             }
         }
 
-        private static void RemoveImports(ProjectRootElement element) {
+        private void ProcessImports(string projectLocation, ProjectRootElement element) {
             // PERF: We don't care about any imports, just the base project data
             var imports = element.Imports.ToList();
+
+            var importsToRemove = new List<ProjectImportElement>();
+
             foreach (var import in imports) {
                 if (import.Project.IndexOf("Microsoft", StringComparison.OrdinalIgnoreCase) >= 0) {
-                    element.RemoveChild(import);
+                    importsToRemove.Add(import);
                 }
+            }
+
+            if (AllowConformityModification) {
+                if (!string.IsNullOrEmpty(projectLocation)) {
+                    var controller = new ProjectConformityController();
+                    controller.AddDirProjectIfNecessary(element, projectLocation);
+                }
+            }
+
+            foreach (var import in importsToRemove) {
+                element.RemoveChild(import);
             }
         }
 

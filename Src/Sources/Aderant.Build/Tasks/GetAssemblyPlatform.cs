@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
+using Aderant.Build.Utilities;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 using ProcessorArchitecture = System.Reflection.ProcessorArchitecture;
@@ -24,10 +25,11 @@ namespace Aderant.Build.Tasks {
 
         private List<ITaskItem> assemblies;
 
-        private AppDomain inspectionDomain;
-
         private List<ITaskItem> assembliesTargetingX64 = new List<ITaskItem>();
         private List<ITaskItem> assembliesTargetingX86 = new List<ITaskItem>();
+
+        private AppDomain inspectionDomain;
+        private InspectionDomainInitializer init;
 
         /// <summary>
         /// Gets or sets the assemblies to analyze.
@@ -221,13 +223,23 @@ namespace Aderant.Build.Tasks {
             Assembly thisAssembly = typeof(GetAssemblyPlatform).Assembly;
 
             if (inspectionDomain != null) {
-                AppDomain.Unload(inspectionDomain);
+                System.Threading.Tasks.Task.Run(() => AppDomain.Unload(inspectionDomain));
                 inspectionDomain = null;
             }
 
             inspectionDomain = AppDomain.CreateDomain("Inspection Domain", null, Path.GetDirectoryName(thisAssembly.Location), null, false);
+
             var inspector = (AssemblyInspector)inspectionDomain.CreateInstanceAndUnwrap(thisAssembly.FullName, typeof(AssemblyInspector).FullName);
             inspector.AssemblyDependencies = AssemblyDependencies;
+
+            if (init != null) {
+                init.Dispose();
+            }
+
+            this.init = (InspectionDomainInitializer)inspectionDomain.CreateInstanceFromAndUnwrap(typeof(InspectionDomainInitializer).Assembly.Location, typeof(InspectionDomainInitializer).FullName);
+            init.LoadAssembly(Log.GetType().Assembly.Location);
+            init.LoadAssembly(BuildEngine.GetType().Assembly.Location);
+
             inspector.Logger = Log;
 
             return inspector;
@@ -250,10 +262,11 @@ namespace Aderant.Build.Tasks {
 
             return true;
         }
-    }
 
-    public class AssemblyPlatformData {
-        public ITaskItem[] Assemblies { get; set; }
+
+        public class AssemblyPlatformData {
+            public ITaskItem[] Assemblies { get; set; }
+        }
     }
 
     internal class AssemblyInspector : MarshalByRefObject {
@@ -261,7 +274,7 @@ namespace Aderant.Build.Tasks {
         private Dictionary<string, ProcessorArchitecture[]> seenAssemblies = new Dictionary<string, ProcessorArchitecture[]>(StringComparer.OrdinalIgnoreCase);
 
         public string[] AssemblyDependencies { get; set; }
-        public TaskLoggingHelper Logger { get; set; }
+        public object Logger { get; set; }
 
         /// <param name="assembly"></param>
         /// <param name="checkCiStatus"></param>
@@ -284,10 +297,9 @@ namespace Aderant.Build.Tasks {
                     if (!dictionary.ContainsKey(key)) {
                         dictionary.Add(key, dependency);
                     } else {
-                        if (Logger != null) {
-                            Logger.LogWarning("Already seen file: " + dependency);
-                        }
+                        this.LogWarning("Already seen file: " + dependency);
                     }
+
                 }
 
                 fileMap = dictionary;
@@ -348,6 +360,20 @@ namespace Aderant.Build.Tasks {
             return new Tuple<bool, string>(ciEnabled, ciCategory);
         }
 
+        private void LogWarning(string message) {
+            var logger = Logger as TaskLoggingHelper;
+            if (logger != null) {
+                logger.LogWarning(message);
+            }
+        }
+
+        private void Log(string message) {
+            var logger = Logger as TaskLoggingHelper;
+            if (logger != null) {
+                logger.LogMessage(MessageImportance.Low, message);
+            }
+        }
+
         private ProcessorArchitecture[] GetReferenceArchitectures(AssemblyName[] references) {
             List<ProcessorArchitecture> collector = new List<ProcessorArchitecture>();
 
@@ -364,7 +390,7 @@ namespace Aderant.Build.Tasks {
 
                     FindReference(reference, collector);
                 } catch (Exception ex) {
-                    Logger.LogMessage(MessageImportance.Low, "Exception while processing reference list. " + ex);
+                    Log("Exception while processing reference list. " + ex);
                 }
             }
 
@@ -411,23 +437,6 @@ namespace Aderant.Build.Tasks {
 
             architectures = null;
             return locationOnDisk != null;
-        }
-
-        private static bool ShouldDeployMissingReferences(Assembly asm) {
-            IList<CustomAttributeData> customAttributes = asm.GetCustomAttributesData();
-            foreach (var customAttribute in customAttributes) {
-                if (customAttribute.AttributeType == typeof(AssemblyMetadataAttribute)) {
-                    if ((string)customAttribute.ConstructorArguments[0].Value == "TestRun:DeployMissingReferences") {
-                        var deployMissingReferences = bool.Parse((string)customAttribute.ConstructorArguments[1].Value);
-
-                        if (deployMissingReferences) {
-                            return true;
-                        }
-                    }
-                }
-            }
-
-            return false;
         }
     }
 }

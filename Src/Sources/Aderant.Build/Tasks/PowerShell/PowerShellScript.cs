@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -12,20 +13,92 @@ using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks.PowerShell {
     public class PowerShellScript : Task, ICancelableTask {
-        private CancellationTokenSource cts;
-        private string scriptBlock;
+        private static ConcurrentDictionary<string, string[]> cache = new ConcurrentDictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
 
-        public string ScriptBlock {
-            get {
-                if (scriptBlock == null) {
-                    if (ScriptResource == null) {
-                        ErrorUtilities.VerifyThrowArgument(ScriptResource != null, $"Neither {nameof(ScriptBlock)} or {nameof(ScriptResource)} is specified", null);
-                    }
-                    ScriptBlock = LoadResource(ScriptResource);
-                }
-                return scriptBlock;
+        private CancellationTokenSource cts;
+
+        public bool UseResultCache { get; set; }
+
+        public string ScriptBlock { get; set; }
+
+        public string ScriptFromResource { get; set; }
+
+        public string ProgressPreference { get; set; }
+
+        public string OnErrorReason { get; set; }
+
+        public string[] TaskObjects { get; set; }
+
+        public bool LogScript { get; set; } = true;
+
+        [Output]
+        public string[] Result { get; set; }
+
+        public override bool Execute() {
+            Script script = null;
+
+            if (!string.IsNullOrEmpty(ScriptBlock)) {
+                script = new Script(ScriptBlock, ScriptBlock);
+            } if (!string.IsNullOrEmpty(ScriptFromResource)) {
+                script = new Script(LoadResource(ScriptFromResource), ScriptFromResource);
+
+                this.ScriptBlock = script.Value;
             }
-            set { scriptBlock = value; }
+
+            if (script == null || script.Value == null) {
+                ErrorUtilities.VerifyThrowArgument(ScriptFromResource != null, $"Neither {nameof(ScriptBlock)} or {nameof(ScriptFromResource)} is specified", null);
+            }
+
+            if (UseResultCache) {
+                string[] result;
+                if (cache.TryGetValue(script.CacheKey, out result)) {
+                    Result = result;
+                    return true;
+                }
+            }
+
+            try {
+                BuildEngine3.Yield();
+
+                string thisTaskExecutingDirectory = Path.GetDirectoryName(BuildEngine.ProjectFileOfTaskNode);
+
+                Dictionary<string, object> variables = new Dictionary<string, object>();
+                if (TaskObjects != null) {
+                    foreach (var key in TaskObjects) {
+                        object registeredTaskObject = BuildEngine4.GetRegisteredTaskObject(key, RegisteredTaskObjectLifetime.Build);
+
+                        if (registeredTaskObject != null) {
+                            Log.LogMessage(MessageImportance.Normal, "Extracted registered task object: " + key);
+                        }
+
+                        variables[key] = registeredTaskObject;
+                    }
+                }
+
+                if (LogScript) {
+                    Log.LogMessage(MessageImportance.Normal, "Executing script:\r\n{0}", script.Value);
+                }
+
+                try {
+                    if (RunScript(variables, script.Value, Log, thisTaskExecutingDirectory)) {
+                        FailTask(null, script.Value);
+                    }
+                } catch (Exception ex) {
+                    FailTask(ex, script.Value);
+                }
+
+                if (UseResultCache) {
+                    cache.TryAdd(script.CacheKey, Result);
+                }
+
+                return !Log.HasLoggedErrors;
+            } finally {
+                BuildEngine3.Reacquire();
+            }
+        }
+
+        public void Cancel() {
+            cts.Cancel();
         }
 
         private string LoadResource(string scriptResource) {
@@ -47,62 +120,8 @@ namespace Aderant.Build.Tasks.PowerShell {
             throw new ArgumentException("There is no resource: " + scriptResource);
         }
 
-        public string ScriptResource { get; set; }
-
-        public string ProgressPreference { get; set; }
-
-        public string OnErrorReason { get; set; }
-
-        public string[] TaskObjects { get; set; }
-
-        public bool LogScript { get; set; } = true;
-
-        [Output]
-        public string Result { get; set; }
-
-        public override bool Execute() {
-            try {
-                BuildEngine3.Yield();
-
-                string thisTaskExecutingDirectory = Path.GetDirectoryName(BuildEngine.ProjectFileOfTaskNode);
-
-                Dictionary<string, object> variables = new Dictionary<string, object>();
-                if (TaskObjects != null) {
-                    foreach (var key in TaskObjects) {
-                        object registeredTaskObject = BuildEngine4.GetRegisteredTaskObject(key, RegisteredTaskObjectLifetime.Build);
-
-                        if (registeredTaskObject != null) {
-                            Log.LogMessage(MessageImportance.Normal, "Extracted registered task object: " + key);
-                        }
-
-                        variables[key] = registeredTaskObject;
-                    }
-                }
-
-                if (LogScript) {
-                    Log.LogMessage(MessageImportance.Normal, "Executing script:\r\n{0}", ScriptBlock);
-                }
-
-                try {
-                    if (RunScript(variables, Log, thisTaskExecutingDirectory)) {
-                        FailTask(null);
-                    }
-                } catch (Exception ex) {
-                    FailTask(ex);
-                }
-
-                return !Log.HasLoggedErrors;
-            } finally {
-                BuildEngine3.Reacquire();
-            }
-        }
-
-        public void Cancel() {
-            cts.Cancel();
-        }
-
-        private void FailTask(Exception exception) {
-            Log.LogError("[Error] Execution of script: '{0}' failed.", ScriptBlock);
+        private void FailTask(Exception exception, string scriptValue) {
+            Log.LogError("[Error] Execution of script: '{0}' failed.", scriptValue);
 
             if (exception != null) {
                 Log.LogErrorFromException(exception);
@@ -115,8 +134,7 @@ namespace Aderant.Build.Tasks.PowerShell {
             }
         }
 
-        private bool RunScript(Dictionary<string, object> variables, TaskLoggingHelper name, string directoryName) {
-
+        private bool RunScript(Dictionary<string, object> variables, string scriptValue, TaskLoggingHelper name, string directoryName) {
             var processRunner = new ProcessRunner(new Exec { BuildEngine = this.BuildEngine });
             var pipelineExecutor = new PowerShellPipelineExecutor {
                 ProcessRunner = processRunner
@@ -130,7 +148,6 @@ namespace Aderant.Build.Tasks.PowerShell {
 
             try {
                 var scripts = new List<string>();
-
                 if (directoryName != null) {
                     string combine = Path.Combine(directoryName, "Build.psm1");
                     if (File.Exists(combine)) {
@@ -140,14 +157,16 @@ namespace Aderant.Build.Tasks.PowerShell {
                     }
                 }
 
-                scripts.Add(ScriptBlock);
+                scripts.Add(scriptValue);
 
                 pipelineExecutor.RunScript(
                     scripts,
                     variables,
                     cts.Token);
 
-                Result = pipelineExecutor.Result;
+                if (pipelineExecutor.Result != null) {
+                    Result = pipelineExecutor.Result.ToArray();
+                }
 
             } catch (OperationCanceledException) {
                 // Cancellation was requested
@@ -177,6 +196,17 @@ namespace Aderant.Build.Tasks.PowerShell {
 
         internal virtual IBuildPipelineService GetProxy() {
             return BuildPipelineServiceClient.GetCurrentProxy();
+        }
+
+        internal class Script {
+            public Script(string value, string cacheKey) {
+                Value = value;
+                CacheKey = cacheKey;
+            }
+
+            public string CacheKey;
+
+            public string Value;
         }
     }
 

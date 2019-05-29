@@ -2,6 +2,8 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
     <!-- NOTE: Using the fully qualified class name in a <UsingTask> tag is faster than using a partially qualified name. -->
+    <!-- Beware that if you name your task the same as one provided by the engine, the engine may bind to your task instead which can cause problems
+         if it task signature and behaviour does not meet the expectation of the calling target. -->
 
     <!-- Gets the platform of an assembly (e.g. x86, x64 or AnyCPU) -->
     <UsingTask TaskName="Aderant.Build.Tasks.GetAssemblyPlatform"                                 AssemblyFile="$(BuildAssembly)" />
@@ -47,7 +49,7 @@
     <UsingTask TaskName="Aderant.Build.Tasks.GetFileVersionInfo"                                  AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.CheckFreeSpace"                                      AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.GitVersion"                                          AssemblyFile="$(BuildAssembly)" />
-    <UsingTask TaskName="Aderant.Build.Tasks.Hash"                                                AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.HashItems"                                           AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.WriteLinesToFile"                                    AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.ReadAssemblyInfo"                                    AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.PrintBanner"                                         AssemblyFile="$(BuildAssembly)" />
@@ -83,9 +85,66 @@
     <UsingTask TaskName="Aderant.Build.Tasks.UpdateSplashScreenImage"                             AssemblyFile="$(BuildAssembly)"
                Condition="'$(IsCustomBuild)' != 'true'" />
 
-    <UsingTask TaskName="Aderant.Build.Tasks.ProjectConformityCheck"                              AssemblyFile="$(BuildAssembly)"
-               Condition="'$(IsCustomBuild)' != 'true'" />
-
     <UsingTask TaskName="Aderant.Build.Tasks.OrmMappingValidator"                                 AssemblyFile="$(BuildAssembly)"
                Condition="'$(IsCustomBuild)' != 'true'" />
+
+  <PropertyGroup>
+    <TargetTaskFactory Condition="'$(TargetTaskFactory)' == ''">RoslynCodeTaskFactory</TargetTaskFactory>
+    <TargetTaskFactory Condition="'$(IsVisualStudio2019OrHigher)' != 'true'">CodeTaskFactory</TargetTaskFactory>
+  </PropertyGroup>
+
+    <UsingTask
+      Condition="$(CodeTaskFactoryAssembly) != ''"
+      TaskName="LoadAssembly"
+      TaskFactory="$(TargetTaskFactory)"
+      AssemblyFile="$(CodeTaskFactoryAssembly)" >
+      <ParameterGroup>
+        <AssemblyFile ParameterType="System.String" Required="true"/>
+      </ParameterGroup>
+      <Task>
+        <Using Namespace="System"/>
+        <Using Namespace="System.IO"/>
+        <Code>
+          <![CDATA[
+  if (!string.IsNullOrEmpty(AssemblyFile) && File.Exists(AssemblyFile)) {
+      System.Reflection.Assembly.LoadFrom(AssemblyFile);
+  }
+]]>
+        </Code>
+      </Task>
+    </UsingTask>
+
+    <UsingTask TaskName="GetProductName"
+      TaskFactory="CodeTaskFactory"
+      AssemblyFile="$(CodeTaskFactoryAssembly)">
+      <ParameterGroup>
+        <AssemblyInfo ParameterType="Microsoft.Build.Framework.ITaskItem" Required="true" />
+        <ProductName Output="true"/>
+      </ParameterGroup>
+      <Task>
+        <Reference Include="System.Core" />
+        <Using Namespace="System" />
+        <Using Namespace="System.IO" />
+        <Using Namespace="System.Text.RegularExpressions" />
+        <Using Namespace="Microsoft.Build.Framework" />
+        <Using Namespace="Microsoft.Build.Utilities" />
+        <Code Type="Fragment" Language="cs">
+          <![CDATA[
+  var fullPath = AssemblyInfo.GetMetadata("FullPath");
+  string text = System.IO.File.ReadAllText(fullPath);
+
+  var assemblyTitleExpression = new Regex(@"(AssemblyProduct|AssemblyTitle)\((.*?)\)");
+  GroupCollection match = assemblyTitleExpression.Match(text).Groups;
+  string value = match[match.Count - 1].Value;
+
+  if (!string.IsNullOrEmpty(value)) {
+      // Product names for the splash screen don't have Expert in the name, unless you want to run Expert ExpertTime :)
+      ProductName = value.Replace("\"", string.Empty);
+      return true;
+  }
+        ]]>
+        </Code>
+      </Task>
+    </UsingTask>
+
 </Project>

@@ -10,7 +10,7 @@
       SourceFiles="@(IntermediateAssembly->'$(OutputPath)%(Filename)%(Extension)')"
       Condition="Exists('@(IntermediateAssembly->'$(OutputPath)%(Filename)%(Extension)')')"
       DestinationFolder="$(UpdateStagingDirectory)\BinFiles\"
-      UseHardlinksIfPossible="true"
+      UseHardlinksIfPossible="false"
       OverwriteReadOnlyFiles="$(OverwriteReadOnlyFiles)"
       Retries="$(CopyRetryCount)"
       RetryDelayMilliseconds="$(CopyRetryDelayMilliseconds)"

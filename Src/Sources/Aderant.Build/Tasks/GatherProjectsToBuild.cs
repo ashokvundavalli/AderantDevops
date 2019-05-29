@@ -43,7 +43,7 @@ namespace Aderant.Build.Tasks {
         }
 
         public override bool ExecuteTask() {
-            if (Context.Exclude.Count() > 0) {
+            if (Context.Exclude.Length > 0) {
                 ExcludedPaths = Context.Exclude.Union(ExcludedPaths ?? Enumerable.Empty<string>(), StringComparer.OrdinalIgnoreCase)
                     .Except(Context.Include, StringComparer.OrdinalIgnoreCase)
                     .ToArray();

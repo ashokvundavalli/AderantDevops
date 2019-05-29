@@ -1,10 +1,11 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
 using System.Threading;
-using Aderant.Build.Tasks;
 using Aderant.Build.Tasks.PowerShell;
 
 namespace Aderant.Build {
@@ -15,7 +16,7 @@ namespace Aderant.Build {
         /// <summary>
         /// The scalar script result.
         /// </summary>
-        public string Result { get; set; }
+        public List<string> Result { get; set; }
 
         public bool HadErrors { get; private set; }
         public ProcessRunner ProcessRunner { get; set; }
@@ -79,11 +80,36 @@ namespace Aderant.Build {
 
                         try {
                             var result = pipeline.Invoke();
+
+                            if (result != null && result.Count > 0) {
+                                Result = result.Select(s => s.ToString()).ToList();
+                            }
                         } finally {
                             HadErrors = pipeline.HadErrors;
 
                             pipeline.Output.DataReady -= HandleDataReady;
                             pipeline.Error.DataReady -= HandleErrorReady;
+
+                            if (HadErrors) {
+                                var errorArray = runspace.SessionStateProxy.GetVariable("Error") as ICollection;
+
+                                if (errorArray != null) {
+                                    foreach (var error in errorArray) {
+                                        // All of the errors should be ErrorRecords but on some installs we've seen this
+                                        // Unable to cast object of type 'System.Management.Automation.ParameterBindingException' to type 'System.Management.Automation.ErrorRecord'.
+                                        ErrorRecord record = error as ErrorRecord;
+
+                                        if (record != null && record.Exception != null) {
+                                            throw record.Exception;
+                                        }
+
+                                        var ex = error as Exception;
+                                        if (ex != null) {
+                                            throw ex;
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 } catch (ParseException ex) {
@@ -145,7 +171,11 @@ namespace Aderant.Build {
                             continue;
                         }
 
-                        Result = item.ToString();
+                        if (Result == null) {
+                            Result = new List<string>();
+                        }
+
+                        Result.Add(item.ToString());
 
                         if (DataReady != null) {
                             DataReady(this, new[] { item });

@@ -8,6 +8,7 @@ using System.Collections.Immutable;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Microsoft.CodeAnalysis.Host.Mef;
 
 namespace TestHelper {
     /// <summary>

@@ -11,7 +11,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>UnitTest.Build</RootNamespace>
     <AssemblyName>UnitTest.Build</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <TargetFrameworkProfile />
@@ -36,7 +36,7 @@
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
-  <Import Project="..\..\Src\Sources\References.v$(MSBuildToolsVersion).props" />
+  <Import Project="..\..\Src\Sources\References.props" />
   <ItemGroup>
     <Reference Include="Castle.Core">
       <HintPath>..\..\packages\Castle.Core\lib\net45\Castle.Core.dll</HintPath>
@@ -79,6 +79,10 @@
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Microsoft.PowerShell.Commands.Utility, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="System.Threading.Tasks.Extensions">
       <HintPath>..\..\packages\System.Threading.Tasks.Extensions\lib\portable-net45+win8+wp8+wpa81\System.Threading.Tasks.Extensions.dll</HintPath>
     </Reference>
@@ -109,7 +113,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BucketTests.cs" />
-    <Compile Include="BuildControllerTests.cs" />
+    <Compile Include="Legacy\BuildControllerTests.cs" />
     <Compile Include="BuildLogProcessorTests.cs" />
     <Compile Include="BuildMetadataTests.cs" />
     <Compile Include="BuildProjectCheckTests.cs" />
@@ -170,7 +174,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="DependencyResolver\DependencyManifestTests.cs" />
-    <Compile Include="ExpertBuildConfigurationTests.cs" />
+    <Compile Include="Legacy\ExpertBuildConfigurationTests.cs" />
     <Compile Include="ExpertManifestTests.cs" />
     <Compile Include="ModuleDependencyResolverTests.cs" />
     <Compile Include="IndendedFileParserTests.cs" />
@@ -338,6 +342,10 @@
     <ProjectReference Include="..\..\Src\Sources\Aderant.Build.Tasks\Aderant.Build.Tasks.csproj">
       <Project>{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}</Project>
       <Name>Aderant.Build.Tasks</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\Sources\Aderant.Build.TeamFoundation\Aderant.Build.TeamFoundation.csproj">
+      <Project>{bd56b34b-db85-4154-a560-0bc1fe6386da}</Project>
+      <Name>Aderant.Build.TeamFoundation</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\Src\Sources\Aderant.Build\Aderant.Build.csproj">
       <Project>{66E50D39-8E73-4D16-944B-43F18C308FE0}</Project>

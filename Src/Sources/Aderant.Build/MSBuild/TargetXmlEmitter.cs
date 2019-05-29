@@ -22,6 +22,13 @@ namespace Aderant.Build.MSBuild {
             document = CreateRoot(null);
         }
 
+        /// <summary>
+        /// Gets the tool version the emitter is using such as 14.0, 15.0, Current etc
+        /// </summary>
+        public string ToolsVersion {
+            get { return ToolLocationHelper.CurrentToolsVersion; }
+        }
+
         private XElement CreateRoot(Project project) {
             return new XElement(
                 Xmlns + "Project",

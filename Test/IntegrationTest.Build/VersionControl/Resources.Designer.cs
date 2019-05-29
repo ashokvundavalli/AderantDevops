@@ -19,7 +19,7 @@ namespace IntegrationTest.Build.VersionControl {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -113,6 +113,7 @@ namespace IntegrationTest.Build.VersionControl {
         ///# PowerShell has many quirks with square brackets in paths
         ///[string]$cwd = Get-Location
         ///$branch1 = ([Management.Automation.WildcardPattern]::Unescape($cwd + &apos;.\branch1.txt&apos;))
+        ///$branch1a = ([Management.Automation.WildcardPattern]::Unescape($cwd + &apos;.\branch1a.txt&apos;))
         ///$branch2 = ([Management.Automation.WildcardPattern]::Unescape($cwd + &apos;.\branch2.txt&apos;))
         ///
         ///&amp; git init .
@@ -121,10 +122,7 @@ namespace IntegrationTest.Build.VersionControl {
         ///&amp; git add .
         ///&amp; git commit -m &apos;foo&apos;
         ///
-        ///&amp; git checkout -b &apos;branch1&apos; -q
-        ///Add-Content -LiteralPath $branch2 -Value &apos;bar&apos; -Force
-        ///&amp; git add .
-        /// [rest of string was truncated]&quot;;.
+        ///&amp; git chec [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string Merge {
             get {

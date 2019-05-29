@@ -19,7 +19,7 @@ namespace UnitTest.Build.TextTemplateAnalysis {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -79,6 +79,15 @@ namespace UnitTest.Build.TextTemplateAnalysis {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to &lt;#@ DomainModelDsl processor=&quot;DomainModelDslDirectiveProcessor&quot; requires=&quot;fileName=&apos;..\..\..\Dependencies\Collections.dmdsl&apos;&quot; provides=&quot;DomainPart=RootDomainPart&quot; #&gt;.
+        /// </summary>
+        internal static string TextTemplateWithCustomProcessor {
+            get {
+                return ResourceManager.GetString("TextTemplateWithCustomProcessor", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to &lt;#@ template debug=&quot;false&quot; hostspecific=&quot;false&quot; language=&quot;C#&quot; #&gt;
         ///&lt;#@ assembly name=&quot;System.Core&quot; #&gt;
         ///&lt;#@ import namespace=&quot;System.Linq&quot; #&gt;
@@ -88,15 +97,6 @@ namespace UnitTest.Build.TextTemplateAnalysis {
         ///
         ///&lt;#@ include file=&quot;common.ttinclude&quot;#&gt;
         ///&lt;#@ include file=&quot;$(ProjectDir)\common1.ttinclude&quot;#&gt;.
-        /// </summary>
-        internal static string TextTemplateWithCustomProcessor {
-            get {
-                return ResourceManager.GetString("TextTemplateWithCustomProcessor", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to &lt;#@ DomainModelDsl processor=&quot;DomainModelDslDirectiveProcessor&quot; requires=&quot;fileName=&apos;..\..\..\Dependencies\Collections.dmdsl&apos;&quot; provides=&quot;DomainPart=RootDomainPart&quot; #&gt;.
         /// </summary>
         internal static string TextTemplateWithInclude {
             get {

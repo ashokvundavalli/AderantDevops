@@ -25,7 +25,7 @@ namespace IntegrationTest.Build.EndToEnd {
         [TestMethod]
         [Description("The basic scenario. No changes - the build should reuse existing artifacts")]
         public void Build_tree_reuse_scenario() {
-            using (var buildService = new TestBuildServiceHost(TestContext, DeploymentItemsDirectory)) {
+            using (var buildService = new TestBuildServiceHost(base.DisableInProcNode, TestContext, DeploymentItemsDirectory)) {
                 // Simulate first build
                 RunTarget("EndToEnd", buildService.Properties);
 
@@ -36,7 +36,7 @@ namespace IntegrationTest.Build.EndToEnd {
                 Assert.IsTrue(context.WrittenStateFiles.All(File.Exists));
             }
 
-            using (var buildService = new TestBuildServiceHost(TestContext, DeploymentItemsDirectory)) {
+            using (var buildService = new TestBuildServiceHost(base.DisableInProcNode, TestContext, DeploymentItemsDirectory)) {
                 buildService.PrepareForAnotherRun();
 
                 // Run second build
@@ -69,7 +69,7 @@ namespace IntegrationTest.Build.EndToEnd {
 
         [TestMethod]
         public void When_project_is_deleted_build_still_completes() {
-            using (var buildService = new TestBuildServiceHost(TestContext, DeploymentItemsDirectory)) {
+            using (var buildService = new TestBuildServiceHost(base.DisableInProcNode, TestContext, DeploymentItemsDirectory)) {
                 RunTarget("EndToEnd", buildService.Properties);
 
                 Directory.Delete(Path.Combine(DeploymentItemsDirectory, "ModuleB", "Flob"), true);
@@ -78,7 +78,7 @@ namespace IntegrationTest.Build.EndToEnd {
                 CommitChanges();
             }
 
-            using (var buildService = new TestBuildServiceHost(TestContext, DeploymentItemsDirectory)) {
+            using (var buildService = new TestBuildServiceHost(base.DisableInProcNode, TestContext, DeploymentItemsDirectory)) {
                 buildService.PrepareForAnotherRun();
                 CleanWorkingDirectory();
 

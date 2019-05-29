@@ -29,6 +29,8 @@
     <BuildAssembly Condition="'$(BuildAssembly)' == ''">$(BuildToolsDirectory)Aderant.Build.dll</BuildAssembly>
     <BuildAssembly>$([MSBuild]::Unescape($(BuildAssembly)))</BuildAssembly>
 
+    <IsVisualStudio2019OrHigher Condition="'$([Microsoft.Build.Utilities.ToolLocationHelper]::CurrentToolsVersion)' == 'Current'">true</IsVisualStudio2019OrHigher>
+
     <PrepareBuildEnvironmentTargetImported>true</PrepareBuildEnvironmentTargetImported>
     <AderantCommonTargetsImported>true</AderantCommonTargetsImported>
   </PropertyGroup>
@@ -40,12 +42,12 @@
     <VsCommonTools Condition="'$(VS120COMNTOOLS)' != ''">$(VS120COMNTOOLS)</VsCommonTools>
     <VsCommonTools Condition="'$(VS140COMNTOOLS)' != ''">$(VS140COMNTOOLS)</VsCommonTools>
 
-    <VS2017Enterprise>C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\Tools\</VS2017Enterprise>
-    <VsCommonTools Condition="Exists('$(VS2017Enterprise)')">$(VS2017Enterprise)</VsCommonTools>
+    <!-- Depends on VsVars being run! -->
+    <VsCommonTools Condition="'$(VS150COMNTOOLS)' != ''">$(VS150COMNTOOLS)</VsCommonTools>
+    <VsCommonTools Condition="'$(VS160COMNTOOLS)' != ''">$(VS160COMNTOOLS)</VsCommonTools>
 
     <CodeTaskFactoryAssembly Condition="'$(VisualStudioVersion)' == '12.0'">$(MSBuildToolsPath)\Microsoft.Build.Tasks.v$(MSBuildToolsVersion).dll</CodeTaskFactoryAssembly>
-    <CodeTaskFactoryAssembly Condition="'$(VisualStudioVersion)' == '14.0'">$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll</CodeTaskFactoryAssembly>
-    <CodeTaskFactoryAssembly Condition="'$(VisualStudioVersion)' == '15.0'">$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll</CodeTaskFactoryAssembly>
+    <CodeTaskFactoryAssembly Condition="'$(VisualStudioVersion)' &gt; 12.0">$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll</CodeTaskFactoryAssembly>
 
     <MSBuildCommunityTasksPath Condition="'$(MSBuildCommunityTasksPath)' == ''">$(MSBuildThisFileDirectory)\Tasks\MSBuild.Community.Tasks\</MSBuildCommunityTasksPath>
 
@@ -91,7 +93,7 @@
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(BUILD_BUILDID)' != ''">
-      <PrepareBuildEnvironmentProperties>$(PrepareBuildEnvironmentProperties);Configuration=Debug</PrepareBuildEnvironmentProperties>
+      <PrepareBuildEnvironmentProperties>$(PrepareBuildEnvironmentProperties);Configuration=Release</PrepareBuildEnvironmentProperties>
     </PropertyGroup>
 
     <MSBuild
@@ -104,6 +106,38 @@
       FreeSpace="10"
       Units="GB" />
   </Target>
+
+
+  <Target Name="EnsureWixToolsetInstalled" AfterTargets="PrepareBuildEnvironment">
+    <!-- With Build 15.0 MSBuildExtensionsPath32 now looks in the VS directory like this: Program Files (x86)\Microsoft Visual Studio\2017\Professional\MSBuild\
+         Lots of software does not place objects here - eg WiX.
+         Traditionally WiX has been a global install and so lives in the legacy MSBuildExtensionsPath32 location 'Program Files (x86)\MSBuild'
+         To prevent build breaks we detect if we can shim WixTargetsPath to use the global install for Build 15.0 if we cannot find a local install.
+    -->
+    <PropertyGroup>
+      <LocalWixInstallLocation Condition=" '$(WixTargetsPath)' == '' AND Exists('$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\wix.targets') ">true</LocalWixInstallLocation>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <GlobalWixInstallLocation Condition=" '$(WixTargetsPath)' == '' " Include="$(MSBuildProgramFiles32)\MSBuild\Microsoft\WiX\v3.x\wix.targets" />
+    </ItemGroup>
+
+    <PropertyGroup>
+      <UseWixShim Condition="'$(LocalWixInstallLocation)' != 'true' And @(GlobalWixInstallLocation->Count()) != 0">true</UseWixShim>
+      <WixTargetsPath Condition="'$(UseWixShim)' == 'true'">@(GlobalWixInstallLocation)</WixTargetsPath>
+      <ToDownload>To download the WiX Toolset, see http://wixtoolset.org/releases/</ToDownload>
+    </PropertyGroup>
+
+    <Error Condition="'$(LocalWixInstallLocation)' != 'true' And @(GlobalWixInstallLocation->Count()) == 0"
+           Text="The WiX Toolset v3.11 (or newer) build tools must be installed to build. $(ToDownload)" />
+
+    <Warning Condition="'$(UseWixShim)' == 'true'"
+             Text="!!! We had to shim the The WiX Toolset to use the global install as WiX was not found under $(MSBuildExtensionsPath32). Please install the WiX extension for Visual Studio to resolve this. $(ToDownload)" />
+
+    <MSBuild.Community.Tasks.Prompt
+      Condition=" '$(NoMSBuildCommunityTasks)' != 'true' And '$(IsDesktopBuild)' == 'true' And '$(UseWixShim)' == 'true' And '$(project-set)' != 'minimal'" />
+  </Target>
+
 
   <UsingTask
     TaskName="GetBranchRootFromServerPath"

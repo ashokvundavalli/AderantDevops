@@ -108,7 +108,11 @@ namespace Aderant.Build.Tasks {
             string pathToBuildTools = ToolLocationHelper.GetPathToBuildTools(ToolLocationHelper.CurrentToolsVersion);
             var locator = new RoslynLocator(pathToBuildTools);
 
-            parseTextMethod = locator.GetCodeAnalysisCSharpAssembly().GetType("Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree")
+            var assembly = locator.GetCodeAnalysisCSharpAssembly();
+
+            ErrorUtilities.IsNotNull(assembly, nameof(assembly));
+
+            parseTextMethod = assembly.GetType("Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree")
                 .GetMethods(BindingFlags.Public | BindingFlags.Static)
                 .FirstOrDefault(x => x.Name == "ParseText" && x.GetParameters()[0].ParameterType == typeof(string));
         }
