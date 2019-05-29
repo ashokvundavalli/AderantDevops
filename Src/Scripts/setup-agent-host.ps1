@@ -72,9 +72,9 @@ process {
         return ("$($env:COMPUTERNAME)_{0}_{1}" -f ($prefixes[$prefixesRnd], $suffixes[$suffixesRnd]))
     }
 
-    function DeleteRecursive(string $workingDirectory) {
+    function DeleteRecursive([string] $workingDirectory) {
         # Work around PowerShell bugs: https://github.com/powershell/powershell/issues/621
-        if (Test-Path $$workingDirectory) {
+        if (Test-Path $workingDirectory) {
             Get-ChildItem -LiteralPath $workingDirectory -Recurse -Attributes ReparsePoint | % { $_.Delete() }
             Remove-Item -Path $workingDirectory -Force -Recurse -Verbose -ErrorAction SilentlyContinue
         }
