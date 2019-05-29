@@ -86,6 +86,10 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             FindAllChangedProjectsAndDisableBuildCache(projectGraph);
 
+            if (string.Equals(System.Environment.GetEnvironmentVariable("SYSTEM_PULLREQUEST_PULLREQUESTID"), "25441")) {
+                System.Diagnostics.Debugger.Launch();
+            }
+
             filteredProjects = SecondPassAnalysis(filteredProjects, projectGraph);
 
             LogProjectsExcluded(filteredProjects, projectGraph);
@@ -419,7 +423,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                     if (!changedFilesOnly) {
                         if (considerStateFiles) {
-                            ApplyStateFile(stateFile, solutionDirectoryName, dirtyProjectsLogLine, project, ref hasLoggedUpToDate);
+                            ApplyStateFile(stateFile, solutionDirectoryName, project, ref hasLoggedUpToDate);
 
                             if (project.IsDirty) {
                                 startNode.IsBuildingAnyProjects = true;
@@ -568,7 +572,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// If the outputs look sane and safe then the project is removed from the build tree and the cached outputs are
         /// substituted in.
         /// </summary>
-        internal void ApplyStateFile(BuildStateFile stateFile, string stateFileKey, IEnumerable<string> dirtyProjects, ConfiguredProject project, ref bool hasLoggedUpToDate) {
+        internal void ApplyStateFile(BuildStateFile stateFile, string stateFileKey, ConfiguredProject project, ref bool hasLoggedUpToDate) {
             string solutionRoot = project.SolutionRoot;
             InputFilesDependencyAnalysisResult result = BeginTrackingInputFiles(stateFile, solutionRoot);
 
