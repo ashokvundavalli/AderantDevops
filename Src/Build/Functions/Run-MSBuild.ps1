@@ -220,10 +220,6 @@ function Run-MSBuild([string]$projectFilePath, [string]$buildArgs = "", [string]
         } else {
             $logFileName = [System.IO.Path]::ChangeExtension($logFileName, ".binlog")
             $buildArgs += " /bl:$logFileName"
-
-            #if (-not [System.Environment]::UserInteractive) {
-            #    $buildArgs += " /clp:verbosity=minimal"
-            #}
         }
     }
 

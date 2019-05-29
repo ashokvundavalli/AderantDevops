@@ -592,23 +592,23 @@ function Set-Environment {
 }
 
 function Set-VisualStudioVersion() {
-    $job = Start-Job -Name "Set-VisualStudioVersion" -ScriptBlock {
-        Param($path)
-        $file = [System.IO.Path]::Combine($path, "vsvars.ps1")
+    #$job = Start-Job -Name "Set-VisualStudioVersion" -ScriptBlock {
+    #    Param($path)
+        $file = [System.IO.Path]::Combine($ShellContext.BuildScriptsDirectory, "vsvars.ps1")
         . $file
-    } -ArgumentList $ShellContext.BuildScriptsDirectory
+    #} -ArgumentList $ShellContext.BuildScriptsDirectory
 
-    $jobEvent = Register-ObjectEvent $job StateChanged -Action {
-        $jobEvent | Unregister-Event
-
-        $data = Receive-Job $sender.Name
-
-        foreach ($item in $data.GetEnumerator()) {
-            Set-Item -Force -Path "ENV:\$($item.Key)" -Value $item.Value
-        }
-
-        $Host.UI.RawUI.WindowTitle = "Visual Studio environment ready"
-    }
+    #$jobEvent = Register-ObjectEvent $job StateChanged -Action {
+    #    $jobEvent | Unregister-Event
+    #
+    #    $data = Receive-Job $sender.Name
+    #
+    #    foreach ($item in $data.GetEnumerator()) {
+    #        Set-Item -Force -Path "ENV:\$($item.Key)" -Value $item.Value
+    #    }
+    #
+    #    $Host.UI.RawUI.WindowTitle = "Visual Studio environment ready"
+    #}
 }
 
 # sets a value in the global defaults storage

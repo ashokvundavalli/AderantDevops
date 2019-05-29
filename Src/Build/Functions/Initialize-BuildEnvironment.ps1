@@ -154,25 +154,14 @@ function RunActionExclusive([scriptblock]$action, [string]$mutexName) {
 }
 
 function RefreshSources([bool]$pull, [string]$head) {
-     $action = {
-        if ($pull) {
-            & git -C $PSScriptRoot pull --ff-only
-        }
-
-        Write-Information "Updating submodules..."
-        $job = Start-Job -Name "submodule update" -ScriptBlock {
-            Param($path)
-            & git -C $path submodule update --init --recursive            
-        } -ArgumentList $PSScriptRoot        
-
-        $jobEvent = Register-ObjectEvent $job StateChanged -Action {
-            $jobEvent | Unregister-Event
-
-            $data = Receive-Job $sender.Name
-
-            $Host.UI.RawUI.WindowTitle = "Submodule update complete"            
-        }
+    $action = {
+       if ($pull) {
+           & git -C $PSScriptRoot pull --ff-only
+       }      
     }
+
+    Write-Information "Updating submodules..."
+    & git -C $PSScriptRoot submodule update --init --recursive
 
     $lockName = "$head" + "_BUILD_UPDATE_LOCK"
     
