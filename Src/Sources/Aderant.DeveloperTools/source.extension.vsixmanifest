@@ -12,14 +12,12 @@
     <InstallationTarget Version="[14.0,16.0)" Id="Microsoft.VisualStudio.Community" />
   </Installation>
   <Dependencies>
-    <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.5,)" />
-    <Dependency Id="Microsoft.VisualStudio.MPF.12.0" DisplayName="Visual Studio MPF 12.0" d:Source="Installed" Version="[12.0]" />
   </Dependencies>
   <Assets>
     <Asset Type="Microsoft.VisualStudio.VsPackage" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%;PkgdefProjectOutputGroup|" />
     <Asset Type="Microsoft.VisualStudio.MefComponent" d:Source="Project" Path="|Aderant.DeveloperTools.XamlAdorner|" d:ProjectName="%CurrentProject%.XamlAdorner" />
   </Assets>
   <Prerequisites>
-    <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[15.8.27729.1,16.0)" DisplayName="Visual Studio core editor" />
+    <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[14.0,16.0)" DisplayName="Visual Studio core editor" />
   </Prerequisites>
 </PackageManifest>
