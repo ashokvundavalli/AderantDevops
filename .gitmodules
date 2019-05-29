@@ -1,12 +1,12 @@
 [submodule "Chutzpah"]
 	path = Src/Build.Tools/Chutzpah
-	url = http://tfs.ap.aderant.com:8080/tfs/ADERANT/ExpertSuite/_git/ThirdParty.Chutzpah
+	url = https://tfs.aderant.com/tfs/ADERANT/ExpertSuite/_git/ThirdParty.Chutzpah
 	branch = master
 [submodule "dotCover"]
 	path = Src/Build.Tools/dotCover
-	url = http://tfs.ap.aderant.com:8080/tfs/ADERANT/ExpertSuite/_git/ThirdParty.dotCover
+	url = https://tfs.aderant.com/tfs/ADERANT/ExpertSuite/_git/ThirdParty.dotCover
 	branch = master
 [submodule "GitLink"]
 	path = Src/Build.Tools/GitLink
-	url = http://tfs.ap.aderant.com:8080/tfs/ADERANT/ExpertSuite/_git/ThirdParty.GitLink
+	url = https://tfs.aderant.com/tfs/ADERANT/ExpertSuite/_git/ThirdParty.GitLink
 	branch = master
