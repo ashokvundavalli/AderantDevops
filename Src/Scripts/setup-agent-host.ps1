@@ -72,6 +72,14 @@ process {
         return ("$($env:COMPUTERNAME)_{0}_{1}" -f ($prefixes[$prefixesRnd], $suffixes[$suffixesRnd]))
     }
 
+    function DeleteRecursive(string $workingDirectory) {
+        # Work around PowerShell bugs: https://github.com/powershell/powershell/issues/621
+        if (Test-Path $$workingDirectory) {
+            Get-ChildItem -LiteralPath $workingDirectory -Recurse -Attributes ReparsePoint | % { $_.Delete() }
+            Remove-Item -Path $workingDirectory -Force -Recurse -Verbose -ErrorAction SilentlyContinue
+        }
+    }
+
     function RemoveAllAgents() {
         Write-Output "Removing existing build agents"
 
@@ -89,9 +97,8 @@ process {
             $directories = Get-ChildItem -LiteralPath $AgentRootDirectory
 
             foreach ($directory in $directories) {
-                cmd /c "$($directory.FullName)\config.cmd remove --auth Integrated"
-                                
-                [System.IO.Directory]::Delete($directory.FullName, $true)
+                cmd /c "$($directory.FullName)\config.cmd remove --auth Integrated"\                      
+                DeleteRecursive $directory.FullName                
             }
         }
 
@@ -104,11 +111,8 @@ process {
 
         # If the path doesn't exist Get-ChildItem will happily pick the working directory instead which could delete C:\Windows\ ...
         # https://github.com/PowerShell/PowerShell/issues/5699
-        if (Test-Path $workingDirectory) {
-            # Work around PowerShell bugs: https://github.com/powershell/powershell/issues/621
-            Get-ChildItem -LiteralPath $workingDirectory -Recurse -Attributes ReparsePoint | % { $_.Delete() }
-
-            Remove-Item -Path $workingDirectory -Force -Recurse -Verbose -ErrorAction SilentlyContinue
+        if (Test-Path $workingDirectory) {            
+            DeleteRecursive $workingDirectory
         }
 
         & $PSScriptRoot\iis-cleanup.ps1
