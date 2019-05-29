@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -440,6 +441,9 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             foreach (var item in items) {
                 if (item.DirectoryNode != null) {
+                    if (item.BuildReason.Flags.HasFlag(BuildReasonTypes.ProjectOutputNotFound)) {
+                        continue;
+                    }
                     item.DirectoryNode.RetrievePrebuilts = false;
                 }
             }
@@ -769,12 +773,16 @@ namespace Aderant.Build.DependencyAnalyzer {
                     return true;
                 }
 
-                if (configuredProject.BuildReason != null && configuredProject.BuildReason.Flags == BuildReasonTypes.CachedBuildNotFound) {
-                    return true;
-                }
             }
 
-            return configuredProject?.IsDirty == true;
+            if (configuredProject != null) {
+                var reason = configuredProject.BuildReason;
+
+                return configuredProject.IsDirty &&
+                        !reason.Flags.HasFlag(BuildReasonTypes.CachedBuildNotFound) && !reason.Flags.HasFlag(BuildReasonTypes.AlwaysBuild);
+            }
+
+            return false;
         }
 
         private void ApplyExtensibilityImposition(ExtensibilityImposition extensibilityImposition, List<ConfiguredProject> visualStudioProjects) {

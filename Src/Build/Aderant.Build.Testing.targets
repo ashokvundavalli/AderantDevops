@@ -161,7 +161,7 @@ $workingDirectory = "$(SolutionRoot)"
 $isDesktopBuild = $$(IsDesktopBuild)
 $referencePaths = $(AllDirectoriesWithDlls)
 $testFiles = $(AssembliesUnderTest)
-[Hashtable]$additionalEnvironmentVariables = @{
+$additionalEnvironmentVariables = @{
     "EXPERT_ENVIRONMENT_URL" = "$(ExpertEnvironmentUrl)";
     "EXPERT_SOURCE_DIRECTORY" = "$(ExpertSourceDirectory)";
 }
