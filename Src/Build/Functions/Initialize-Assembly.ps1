@@ -178,6 +178,9 @@ function global:UpdateOrBuildAssembly {
             exit 1
         }
 
+        # Redirect ERROR to OUTPUT
+        $env:GIT_REDIRECT_STDERR = '2>&1'
+
         if ($Update) {
             if (-not $Host.Name.Contains("ISE")) {
                 # ISE logs stderror as fatal. Git logs stuff to stderror and thus if any git output occurs the import will fail inside the ISE
