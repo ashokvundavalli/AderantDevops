@@ -446,7 +446,10 @@ function AssignSwitches() {
     }
 
     if ($PSCmdLet.MyInvocation.BoundParameters.ContainsKey("Verbose")) {
-        $context.BuildMetadata.DebugLoggingEnabled = $true
+        $value = $PSCmdLet.MyInvocation.BoundParameters["Verbose"]
+        if ($value) {
+            $context.BuildMetadata.DebugLoggingEnabled = $true
+        }
     }
 
     $context.Switches = $switches

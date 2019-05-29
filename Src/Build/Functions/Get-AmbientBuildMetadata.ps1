@@ -37,7 +37,9 @@ function Get-AmbientBuildMetadata {
             $buildInfo.ScmBranch = Get-EnvironmentVariable 'BUILD_SOURCEBRANCH'
             $buildInfo.BuildSourcesDirectory = Get-EnvironmentVariable 'BUILD_SOURCESDIRECTORY'
 
-            if (Get-EnvironmentVariable 'SYSTEM_DEBUG' -eq "true") { $buildInfo.DebugLoggingEnabled = $true }
+            if (Get-EnvironmentVariable 'SYSTEM_DEBUG' -eq "true") { 
+                $buildInfo.DebugLoggingEnabled = $true 
+            }
 
             if (Get-EnvironmentVariable 'BUILD_REASON' -eq "PullRequest") {
                 $buildInfo.SetPullRequestInfo(
