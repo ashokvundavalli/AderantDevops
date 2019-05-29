@@ -3,17 +3,16 @@
 
   <PropertyGroup>
     <RunTestsDependsOn>
-      CreatePlan;
       CollectTestAssemblies;
       SetupTestProperties;
       CollectAssemblyPlatforms;
-      RunTestAssemblies
+      RunTestAssemblies;
     </RunTestsDependsOn>
   </PropertyGroup>
 
 
   <Target Name="RunTests"
-          Condition="'$(RunTests)' != 'false'"
+          Condition="'$(RunTests)' != 'false' Or '$(_RunIntegrationTests)' != 'false'"
           DependsOnTargets="$(RunTestsDependsOn)">
 
   </Target>
@@ -31,7 +30,7 @@
   </Target>
 
 
-  <Target Name="SetupTestProperties">
+  <Target Name="SetupTestProperties" Outputs="$(TestPattern)">
     <!-- Collect all assemblies to use as test dependencies -->
     <ItemGroup>
       <AllStagedDlls Include="$(ArtifactStagingDirectory)**\*.dll"
@@ -40,7 +39,7 @@
     </ItemGroup>
 
     <PropertyGroup>
-      <UnitTestAssemblies>@(TestAssemblies->'"%(FullPath)"', ',')</UnitTestAssemblies>
+      <AssembliesUnderTest>@(TestAssemblies->'"%(FullPath)"', ',')</AssembliesUnderTest>
       <VsTestWorkingDirectory>$(SolutionRoot)</VsTestWorkingDirectory>
 
       <CodeCoverage Condition="'$(CodeCoverage)' == ''">false</CodeCoverage>
@@ -51,15 +50,20 @@
       <PathToTestTool>$([System.IO.Path]::GetFullPath('$(PathToTestTool)'))</PathToTestTool>
 
       <IsolationSwitch>/InIsolation</IsolationSwitch>
-      <RunUnitTestsInParallel>$([MSBuild]::ValueOrDefault('$(RunUnitTestsInParallel)', 'true'))</RunUnitTestsInParallel>
-      <ParallelSwitch Condition="'$(RunUnitTestsInParallel)' == 'true'">/Parallel</ParallelSwitch>
+      <RunTestsInParallel Condition="'$(TestPattern)' != '' And $(TestPattern.Equals('IntegrationTest', StringComparison.OrdinalIgnoreCase))">false</RunTestsInParallel>
+      <RunTestsInParallel>$([MSBuild]::ValueOrDefault('$(RunTestsInParallel)', 'true'))</RunTestsInParallel>
+      <ParallelSwitch Condition="'$(RunTestsInParallel)' == 'true'">/Parallel</ParallelSwitch>
 
       <TestAdapterSwitch Condition="'$(PSTests)' == 'true'">/TestAdapterPath:"$(BuildScriptsDirectory)..\Build.Tools"</TestAdapterSwitch>
       <ResultsFileSwitch Condition="'$(ResultsFileSwitch)' == ''">/Logger:trx</ResultsFileSwitch>
       <RunSettingsSwitch>/Settings:$(TestWorkingDirectory)default.runsettings</RunSettingsSwitch>
 
+      <TestPattern>$([MSBuild]::ValueOrDefault('$(TestPattern)', 'UnitTest'))</TestPattern>
+
       <AllDirectoriesWithDlls>@(AllDirectoriesWithDlls->'"%(FullPath)"', ',')</AllDirectoriesWithDlls>
     </PropertyGroup>
+
+    <Message Text="TestPattern: $(TestPattern)" />
   </Target>
 
 
@@ -76,14 +80,18 @@
     </ItemGroup>
 
     <ItemGroup>
-      <CandidateTestAssemblies Include="%(TestAssemblyDirectories.FullPath)**\*UnitTest*.dll"
-                               Exclude="%(TestAssemblyDirectories.FullPath)**\*Helpers*.dll;
-                                        %(TestAssemblyDirectories.FullPath)**\Microsoft.*;
-                                        %(TestAssemblyDirectories.FullPath)**\System.*;" />
+      <CandidateTestAssemblies Include="%(TestAssemblyDirectories.FullPath)\**\*$(TestPattern)*.dll"
+                               Exclude="%(TestAssemblyDirectories.FullPath)\**\*Helpers*.dll;
+                                        %(TestAssemblyDirectories.FullPath)\**\Microsoft.*;
+                                        %(TestAssemblyDirectories.FullPath)\**\System.*;" />
 
-      <AssemblyDependencies Include="%(TestAssemblyDirectories.FullPath)**\*.dll;
-                                     %(TestAssemblyDirectories.FullPath)**\*.exe"
+      <AssemblyDependencies Include="%(TestAssemblyDirectories.FullPath)\**\*.dll;
+                                     %(TestAssemblyDirectories.FullPath)\**\*.exe"
                             Exclude="@(CandidateTestAssemblies)" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ImpactedTestAssemblies Include="$(ImpactedTestAssemblies)"></ImpactedTestAssemblies>
     </ItemGroup>
 
     <FindInList
@@ -114,9 +122,14 @@
     <Message Text="Assembly: %(AssembliesWithTargetPlatform.FileName) -> Platform: %(AssembliesWithTargetPlatform.PEKind) (AnyCPU)" Condition="'@(AssembliesWithTargetPlatform)' != ''" />
     <Message Text="Assembly: %(AssembliesTargetingX64.FileName) -> Platform: %(AssembliesTargetingX64.PEKind) (x64)" Condition="'@(AssembliesTargetingX64)' != ''" />
     <Message Text="Assembly: %(AssembliesTargetingX86.FileName) -> Platform: %(AssembliesTargetingX86.PEKind) (x86)" Condition="'@(AssembliesTargetingX86)' != ''" />
+    <Message Condition="'@(AssembliesWithTargetPlatform)' != '' And $(TestPattern.Equals('IntegrationTest', StringComparison.OrdinalIgnoreCase))" Text="Assembly: %(AssembliesWithTargetPlatform.FileName) -> CIEnabled: %(AssembliesWithTargetPlatform.CIEnabled)" />
 
     <ItemGroup>
-      <_Assemblies Include="@(AssembliesWithTargetPlatform)">
+      <_Assemblies Condition="$(TestPattern.Equals('IntegrationTest', StringComparison.OrdinalIgnoreCase)) != 'true'" Include="@(AssembliesWithTargetPlatform)">
+        <SolutionRoot>$(SolutionRoot)</SolutionRoot>
+        <TestRunDirectory>$(TestRunDirectory)</TestRunDirectory>
+      </_Assemblies>
+      <_Assemblies Condition="'@(_Assemblies)' == '' And %(AssembliesWithTargetPlatform.CIEnabled) == 'true'" Include="@(AssembliesWithTargetPlatform)">
         <SolutionRoot>$(SolutionRoot)</SolutionRoot>
         <TestRunDirectory>$(TestRunDirectory)</TestRunDirectory>
       </_Assemblies>
@@ -129,27 +142,31 @@
 
     <PropertyGroup>
       <PlatformSwitch>/Platform:%(_Assemblies.Platform)</PlatformSwitch>
+      <TestCaseFilter Condition="'%(_Assemblies.CICategory)' != ''">/TestCaseFilter:`&quot;%(_Assemblies.CICategory)`&quot;</TestCaseFilter>
       <TestRunDirectory>%(_Assemblies.TestRunDirectory)</TestRunDirectory>
-      <UnitTestAssemblies>@(_Assemblies->'"%(FullPath)"', ',')</UnitTestAssemblies>
+      <AssembliesUnderTest>@(_Assemblies->'"%(FullPath)"', ',')</AssembliesUnderTest>
     </PropertyGroup>
-
 
     <!-- TaskObjectKey will be the task object from GetAssemblyPlatform -->
     <PowerShellScript
-      Condition="'$(UnitTestAssemblies)' != ''"
+      Condition="'$(AssembliesUnderTest)' != ''"
       ScriptBlock='
 $ErrorActionPreference = "Stop"
 $InformationPreference = "Continue"
 
 $testTool = "$(PathToTestTool)"
-$testToolArgs = "$(ResultsFileSwitch) $(PlatformSwitch) $(ParallelSwitch)"
+$testToolArgs = "$(ResultsFileSwitch) $(PlatformSwitch) $(TestCaseFilter) $(ParallelSwitch)"
 $testRunDirectory = "$(TestRunDirectory)"
 $workingDirectory = "$(SolutionRoot)"
 $isDesktopBuild = $$(IsDesktopBuild)
 $referencePaths = $(AllDirectoriesWithDlls)
-$testFiles = $(UnitTestAssemblies)
+$testFiles = $(AssembliesUnderTest)
+[Hashtable]$additionalEnvironmentVariables = @{
+    "EXPERT_ENVIRONMENT_URL" = "$(ExpertEnvironmentUrl)";
+    "EXPERT_SOURCE_DIRECTORY" = "$(ExpertSourceDirectory)";
+}
 
-. Testing\RunTests.ps1 -PathToTestTool $testTool -ToolArgs $testToolArgs -WorkingDirectory $workingDirectory -SolutionRoot $testRunDirectory -IsDesktopBuild:$isDesktopBuild -ReferencePaths $referencePaths -TestAssemblies $testFiles'
+. Testing\RunTests.ps1 -PathToTestTool $testTool -ToolArgs $testToolArgs -WorkingDirectory $workingDirectory -SolutionRoot $testRunDirectory -IsDesktopBuild:$isDesktopBuild -ReferencePaths $referencePaths -TestAssemblies $testFiles -AdditionalEnvironmentVariables $additionalEnvironmentVariables'
       OnErrorReason="Test failure"
       TaskObjects="$(AssemblyPlatformDataKey)" />
 

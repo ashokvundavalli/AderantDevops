@@ -33,11 +33,12 @@ param(
 begin {
     Set-StrictMode -Version 'Latest'
     $ErrorActionPreference = 'Stop'
+    $InformationPreference = 'Continue'
 
     Write-Host "Running '$($MyInvocation.MyCommand.Name.Replace(`".ps1`", `"`"))' with the following parameters:" -ForegroundColor Cyan
 
     foreach ($parameter in $MyInvocation.MyCommand.Parameters) {
-        Write-Host (Get-Variable -Name $Parameter.Values.Name -ErrorAction SilentlyContinue | Out-String)
+       Write-Information (Get-Variable -Name $Parameter.Values.Name -ErrorAction SilentlyContinue | Out-String)
     }
 
     function Clear-Environment {
@@ -53,7 +54,7 @@ begin {
 
         process {
             if (Test-Path $binariesDirectory) {
-                Write-Host "Clearing directory: $($binariesDirectory)"
+                Write-Information "Clearing directory: $($binariesDirectory)"
                 Remove-Item $binariesDirectory\* -Recurse -Force -Exclude $exclusions
             }
         }
@@ -70,7 +71,7 @@ begin {
         )
 
         begin {
-            Write-Host "Validating SHA1 file hashes for component: $component."
+            Write-Information "Validating SHA1 file hashes for component: $component."
             Write-Debug 'SHA1 file validation list:'
             Write-Debug ($filesToValidate.FullName | Format-List | Out-String)
             [bool]$errors = $false
@@ -91,7 +92,7 @@ begin {
                 [string]$actualSha1 = (Get-FileHash -Path $fileToValidate -Algorithm SHA1).Hash.ToUpper()
 
                 if (-not $expectedSha1 -eq $actualSha1) {
-                    Write-Error "Validation failed for file: '$fileToValidate'.`r`nExpected SHA1 hash: '$expectedSha1'`r`nActual SHA1 hash: '$actualSha1'" -ErrorAction Continue
+                    Write-Error "Integrity check failed for file: '$fileToValidate'.`r`nExpected SHA1 hash: '$expectedSha1'`r`nActual SHA1 hash: '$actualSha1'" -ErrorAction Continue
                     $errors = $true
                 } else {
                     Write-Debug "`r`nSHA1 validation for file: $fileToValidate with hash: '$actualSha1' succeeded."
@@ -110,6 +111,7 @@ begin {
             Acquires binaries from the specified drop location.
         #>
         [CmdletBinding()]
+        [OutputType([double])]
         param (
             [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$binariesDirectory,
             [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$dropRoot,
@@ -117,64 +119,59 @@ begin {
             [switch]$clearBinariesDirectory
         )
 
-        begin {
-            $components = $components | Sort-Object -Unique
+        New-Item -Path $binariesDirectory -ItemType 'Directory' -Force -ErrorAction 'SilentlyContinue' | Out-Null
+
+        $components = $components | Sort-Object -Unique
+
+        if (-not (Test-Path -Path $dropRoot)) {
+            Write-Error "Drop path: '$droproot' does not exist."
+            exit 1
         }
 
-        process {
-            if (-not (Test-Path -Path $dropRoot)) {
-                Write-Error "Drop path: '$droproot' does not exist."
-                exit 1
-            }
+        if ($clearBinariesDirectory.IsPresent) {
+            Clear-Environment -binariesDirectory $binariesDirectory
+        }
 
-            if ($clearBinariesDirectory.IsPresent) {
-                Clear-Environment -binariesDirectory $binariesDirectory
+            if (-not (Test-Path -Path $binariesDirectory)) {
+                New-Item -Path $binariesDirectory -ItemType 'Directory' -Force | Out-Null
             }
 
             [double]$totalTime = 0
 
-            foreach ($component in $components) {
-                [string]$componentPath = Join-Path -Path $dropRoot -ChildPath $component
+        foreach ($component in $components) {
+            [string]$componentPath = Join-Path -Path $dropRoot -ChildPath $component
 
-                if (-not (Test-Path $componentPath)) {
-                    Write-Error "Directory: '$componentPath' does not exist."
-                    exit 1
+            if (-not (Test-Path $componentPath)) {
+                Write-Error "Directory: '$componentPath' does not exist."
+                exit 1
+            }
+
+            Start-Process -FilePath "robocopy.exe" -ArgumentList @($componentPath, $binariesDirectory, "*.*", "/NJH", "/MT", "R:10", "/W:1") -Wait -NoNewWindow
+
+            [System.IO.FileInfo]$filesToValidate = Get-ChildItem -Path $binariesDirectory -File -Filter "*.sha1"
+
+            if (-not $null -eq $filesToValidate) {
+                $action = {
+                    Confirm-Files -filesToValidate $filesToValidate -component $component
                 }
 
-                [System.IO.FileInfo[]]$binaries = Get-ChildItem -Path $componentPath -File
-
-                Write-Host "`r`nCopying files:"
-                Write-Host ($binaries.FullName | Format-List | Out-String)
-                Write-Host 'To directory:'
-                Write-Host "$binariesDirectory`r`n"
-
-                [double]$executionTime = [System.Math]::Round((Measure-Command { ForEach-Object -InputObject $binaries { Copy-Item -Path $_.FullName -Destination $binariesDirectory } }).TotalSeconds, 2)
-                Write-Host "Acquired $component in: $executionTime seconds.`r`n" -ForegroundColor Cyan
+                $executionTime = [System.Math]::Round((Measure-Command $action).TotalSeconds, 2)
+                Write-Host "`r`nValidation for $component completed in: $executionTime seconds." -ForegroundColor Cyan
                 $totalTime = $totalTime + $executionTime
-
-                [System.IO.FileInfo]$filesToValidate = Get-ChildItem -Path $binariesDirectory -File -Filter "*.sha1"
-
-                if (-not $null -eq $filesToValidate) {
-                    $executionTime = [System.Math]::Round((Measure-Command { Confirm-Files -filesToValidate $filesToValidate -component $component }).TotalSeconds, 2)
-                    Write-Host "`r`nValidation for $component completed in: $executionTime seconds." -ForegroundColor Cyan
-                    $totalTime = $totalTime + $executionTime
-                }
             }
         }
 
-        end {
-            if ($null -ne $components -and $components.Length -gt 1) {
-                Write-Host "Total binary acquisition time: $totalTime seconds." -ForegroundColor Cyan
-            }
-
-            return $totalTime
+        if ($null -ne $components -and $components.Length -gt 1) {
+            Write-Host "Total binary acquisition time: $totalTime seconds." -ForegroundColor Cyan
         }
+
+        return $totalTime
     }
 
-    function Export-Archives {
+    function ExtractArchives {
         <#
         .Synopsis
-            Extracts all archives in the binaries directory.
+            Extracts all archives in the given directory.
         #>
         param (
             [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$binariesDirectory
@@ -186,7 +183,7 @@ begin {
             [double]$totalTime = 0
 
             if ($null -eq $archives -or $archives.Length -eq 0) {
-                Write-Host "No archives discovered at path: '$binariesDirectory'."
+               Write-Information "No archives discovered at path: '$binariesDirectory'."
                 return
             }
 
@@ -200,10 +197,10 @@ begin {
 
             Add-Type -AssemblyName 'System.IO.Compression.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'
 
-            Write-Host "`r`nExtracting archives:"
-            Write-Host ($archives.FullName | Format-List | Out-String)
-            Write-Host 'To directory:'
-            Write-Host "$binariesDirectory`r`n"
+            Write-Information "`r`nExtracting archives:"
+            Write-Information ($archives.FullName | Format-List | Out-String)
+            Write-Information 'To directory:'
+            Write-Information "$binariesDirectory`r`n"
 
             foreach ($archive in $archives) {
                 [double]$executionTime = [System.Math]::Round((Measure-Command { [System.IO.Compression.ZipFile]::ExtractToDirectory($archive.FullName, $binariesDirectory) }).TotalSeconds, 2)
@@ -259,14 +256,14 @@ process {
             }
 
             if (-not $PSCmdlet.ShouldProcess('Build number')) {
-                Write-Host "Build number: $buildNumber"
+               Write-Information "Build number: $buildNumber"
                 return $buildNumber
                 exit 0
             }
 
             [string]$build = Join-Path $branchDropRoot -ChildPath $buildNumber
 
-            Write-Host "Selected build: $build"
+            Write-Information "Selected build: $build"
 
             $totalTime = Copy-Binaries -dropRoot $build -binariesDirectory $binariesDirectory -components $components -clearBinariesDirectory
 
@@ -284,7 +281,7 @@ process {
         }
     }
 
-    $totalTime = $totalTime + (Export-Archives -binariesDirectory $binariesDirectory)
+    $totalTime = $totalTime + (ExtractArchives -binariesDirectory $binariesDirectory)
     Write-Host "`r`nProduct retrieved in $totalTime seconds.`r`n" -ForegroundColor Cyan
     exit 0
 }

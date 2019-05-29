@@ -4,6 +4,7 @@
   <PropertyGroup>
     <PackagesDirectory Condition="'$(PackagesDirectory)' == ''">$(MSBuildThisFileDirectory)packages\</PackagesDirectory>
     <ThisProject>$([System.IO.Path]::GetFileName($(MSBuildProjectFullPath)))</ThisProject>
+    <IsIntegrationTest>$(ThisProject.StartsWith('IntegrationTest.'))</IsIntegrationTest>
     <IsWeb>$(ThisProject.StartsWith('Web.'))</IsWeb>
     <IsMobile>$(ThisProject.StartsWith('Mobile.'))</IsMobile>
     <IsWebOrMobile>false</IsWebOrMobile>
@@ -16,6 +17,13 @@
     <ReferencePathsDirectory>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', $(ReferencePropertiesFile)))</ReferencePathsDirectory>
     <ReferencePropertiesFileFullPath>$(ReferencePathsDirectory)\$(ReferencePropertiesFile)</ReferencePropertiesFileFullPath>
   </PropertyGroup>
+  
+  <ItemGroup>
+    <ManifestSearchDirectories Include="$(MSBuildThisFileDirectory)Dependencies\" />
+    <ManifestSearchDirectories Include="$(MSBuildThisFileDirectory)..\Libraries.Roles\Src\Roles\" />
+  </ItemGroup>
+  
+  <Import Project="$(MSBuildThisFileDirectory)dir.props" Condition="Exists('$(MSBuildThisFileDirectory)dir.props')" />
 
   <Import Project="$(ReferencePropertiesFileFullPath)" Condition="Exists($(ReferencePropertiesFileFullPath))" />
 

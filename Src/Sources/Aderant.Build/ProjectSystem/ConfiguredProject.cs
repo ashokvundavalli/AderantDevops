@@ -194,7 +194,7 @@ namespace Aderant.Build.ProjectSystem {
                     }
                 }
 
-                if (OutputAssembly != null && OutputAssembly.Contains("UIAutomation")) {
+                if (OutputAssembly != null && OutputAssembly.IndexOf("UIAutomation", StringComparison.OrdinalIgnoreCase) != -1) {
                     return true;
                 }
 

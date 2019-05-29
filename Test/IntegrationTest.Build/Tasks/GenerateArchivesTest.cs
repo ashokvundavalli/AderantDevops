@@ -176,7 +176,7 @@ namespace IntegrationTest.Build.Tasks {
             }
 
             var manifest = XDocument.Load(Path.Combine(directory, "Manifest.xml"));
-            Assert.IsTrue(manifest.Descendants().Any(d => d.Name == "relativePath" && d.Value == "\\Customization\\NestedFolder"));
+            Assert.IsTrue(manifest.Descendants().Any(d => d.Name == "relativePath" && d.Value == "Customization\\NestedFolder"));            
         }
     }
     
