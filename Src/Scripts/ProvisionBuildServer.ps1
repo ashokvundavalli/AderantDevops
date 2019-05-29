@@ -266,12 +266,8 @@ namespace Willys.LsaSecurity
         
     }
 
-    $scriptsDirectory = (Invoke-Command -Session $session -ScriptBlock $setupScriptBlock -ArgumentList $credentials, $skipAgentDownload.IsPresent)
-       
-    Invoke-Command -Session $session -ScriptBlock {
-        Remove-Item "$scriptsDirectory\Build.Infrastructure" -Force -Recurse -ErrorAction SilentlyContinue
-        & git clone "https://tfs.aderant.com/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure" "$scriptsDirectory\Build.Infrastructure" -q
-    } -ArgumentList $scriptsDirectory, $credentials
+    $scriptsDirectory = (Invoke-Command -Session $session -ScriptBlock $setupScriptBlock -ArgumentList $credentials, $skipAgentDownload.IsPresent)     
+
     
     Invoke-Command -Session $session -ScriptBlock {
         param (
@@ -453,6 +449,13 @@ namespace Willys.LsaSecurity
         # Register the new scheduled task
         Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger –Principal $principal -Settings $STSettings -Force 
     } -ArgumentList $scriptsDirectory
+
+
+    Invoke-Command -Session $session -ScriptBlock {
+        Remove-Item "$scriptsDirectory\Build.Infrastructure" -Force -Recurse -ErrorAction SilentlyContinue
+        & git clone "https://tfs.aderant.com/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure" "$scriptsDirectory\Build.Infrastructure" -q
+    } -ArgumentList $scriptsDirectory, $credentials
+
 
     if ($restart.IsPresent) {
         Write-Host "Restarting build agent: $($server)"
