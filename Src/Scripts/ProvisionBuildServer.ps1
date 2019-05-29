@@ -7,7 +7,7 @@ param (
 )
 
 begin {
-    Set-StrictMode -Version Latest
+    Set-StrictMode -Version Latest    
 }
 
 process {
@@ -203,40 +203,39 @@ namespace Willys.LsaSecurity
 }
 '@
 
-
-
-
-    if (-not ($server.EndsWith(".ap.aderant.com", "CurrentCultureIgnoreCase"))) {
-        $server = "$server.$((gwmi WIN32_ComputerSystem).Domain)"
-    }
-
-    [PSCredential]$credentials = Get-Credential "ADERANT_AP\service.tfsbuild.ap"
-    $session = New-PSSession -ComputerName $server -Credential $credentials -Authentication Credssp -ErrorAction Stop
+    [PSCredential]$credentials = Get-Credential (Get-Credential)
+    $session = New-PSSession -ComputerName $server -Credential $credentials -ErrorAction Stop
 
     $setupScriptBlock = {
         param (
             [PSCredential]$credentials,
             [bool]$skipDownload
         )
+        
+        $InformationPreference = 'Continue'
+        
+        [string]$scriptsDirectory = "$env:SystemDrive\Scripts"
 
-        # Make me fast
-        $powerPlan = Get-WmiObject -Namespace root\cimv2\power -Class Win32_PowerPlan -Filter "ElementName = 'High Performance'"
-        $powerPlan.Activate()
+        try {
+          # Make me fast
+          $powerPlan = Get-WmiObject -Namespace root\cimv2\power -Class Win32_PowerPlan -Filter "ElementName = 'High Performance'"
+          $powerPlan.Activate()
+        } catch {
+          # Don't panic on Windows 10
+          Write-Warning $Error[0]
+        }
 
         # Make me admin
         Add-LocalGroupMember -Group Administrators -Member ADERANT_AP\tfsbuildservice$ -ErrorAction SilentlyContinue
         Add-LocalGroupMember -Group Administrators -Member $credentials.UserName -ErrorAction SilentlyContinue
-        Add-LocalGroupMember -Group docker-users -Member ADERANT_AP\tfsbuildservice$ -ErrorAction SilentlyContinue
-        Add-LocalGroupMember -Group docker-users -Member $credentials.UserName -ErrorAction SilentlyContinue
         Add-LocalGroupMember -Group Administrators -Member ADERANT_AP\SG_AP_Dev_Operations -ErrorAction SilentlyContinue
-
-        [string]$scriptsDirectory = "$env:SystemDrive\Scripts"
+        
+        Add-LocalGroupMember -Group docker-users -Member ADERANT_AP\tfsbuildservice$ -ErrorAction SilentlyContinue
+        Add-LocalGroupMember -Group docker-users -Member $credentials.UserName -ErrorAction SilentlyContinue        
 
         New-Item -Path $scriptsDirectory -ItemType Directory -ErrorAction SilentlyContinue
 
         Push-Location $scriptsDirectory
-
-        $credentials | Export-Clixml -Path "$scriptsDirectory\credentials.xml"
 
         if (-not $skipDownload) {
             Write-Host "Downloading build agent zip"
@@ -254,17 +253,25 @@ namespace Willys.LsaSecurity
 
         Import-Module ServerManager
 
-        if (-not (Get-WindowsFeature | Where-Object {$_.Name -eq "Hyper-V"}).InstallState -eq "Installed") {
-            Enable-WindowsOptionalFeature -Online -FeatureName:Microsoft-Hyper-V -All
+        try {
+           if (-not (Get-WindowsFeature | Where-Object {$_.Name -eq "Hyper-V"}).InstallState -eq "Installed") {
+              Enable-WindowsOptionalFeature -Online -FeatureName:Microsoft-Hyper-V -All
+            }
+        } catch {
+           Write-Warning $Error[0]
         }
 
         # Return the machine specific script home
         return $scriptsDirectory
+        
     }
 
-    [string]$scriptsDirectory = (Invoke-Command -Session $session -ScriptBlock $setupScriptBlock -ArgumentList $credentials, $skipAgentDownload.IsPresent)[1]
-    
-    
+    $scriptsDirectory = (Invoke-Command -Session $session -ScriptBlock $setupScriptBlock -ArgumentList $credentials, $skipAgentDownload.IsPresent)
+       
+    Invoke-Command -Session $session -ScriptBlock {
+        Remove-Item "$scriptsDirectory\Build.Infrastructure" -Force -Recurse -ErrorAction SilentlyContinue
+        & git clone "https://tfs.aderant.com/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure" "$scriptsDirectory\Build.Infrastructure" -q
+    } -ArgumentList $scriptsDirectory, $credentials
     
     Invoke-Command -Session $session -ScriptBlock {
         param (
@@ -309,7 +316,7 @@ namespace Willys.LsaSecurity
         $STSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -Compatibility Win8
 
         #Register the new scheduled task
-        Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger -User $credentials.UserName -Password $credentials.GetNetworkCredential().Password -Settings $STSettings -RunLevel Highest -Force
+        Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger -User $credentials.UserName -Password $credentials.GetNetworkCredential().Password -Settings $STSettings -RunLevel Highest -Force        
     } -ArgumentList $scriptsDirectory, $credentials, $agentPool
 
 
@@ -329,7 +336,7 @@ namespace Willys.LsaSecurity
         $STSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -Compatibility Win8
 
         #Register the new scheduled task
-        Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger -User $credentials.UserName -Password $credentials.GetNetworkCredential().Password -Settings $STSettings -RunLevel Highest -Force
+        Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger -User $credentials.UserName -Password $credentials.GetNetworkCredential().Password -Settings $STSettings -RunLevel Highest -Force        
     } -ArgumentList $scriptsDirectory, $credentials
 
 
@@ -446,11 +453,6 @@ namespace Willys.LsaSecurity
         # Register the new scheduled task
         Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger –Principal $principal -Settings $STSettings -Force 
     } -ArgumentList $scriptsDirectory
-
-    Invoke-Command -Session $session -ScriptBlock {
-        Remove-Item "$scriptsDirectory\Build.Infrastructure" -Force -Recurse -ErrorAction SilentlyContinue
-        & git clone "https://tfs.aderant.com:8080/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure" "$scriptsDirectory\Build.Infrastructure" -q
-    } -ArgumentList $scriptsDirectory, $credentials
 
     if ($restart.IsPresent) {
         Write-Host "Restarting build agent: $($server)"

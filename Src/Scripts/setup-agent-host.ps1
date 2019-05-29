@@ -46,7 +46,7 @@ process {
     if ([string]::IsNullOrWhiteSpace($agentArchive)) {
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
         $ProgressPreference = 'SilentlyContinue'
-        $agentArchive = "$env:SystemDrive\Scripts\vsts-agent.zip"
+        $agentArchive = "$env:SystemDrive\Scripts\vsts-agent.zip"        
         Invoke-WebRequest "https://vstsagentpackage.azureedge.net/agent/2.141.2/vsts-agent-win-x64-2.141.2.zip" -OutFile $agentArchive
     }
 
@@ -118,8 +118,12 @@ process {
     }
 
     function SetHighPower() {
-        $powerPlan = Get-WmiObject -Namespace root\cimv2\power -Class Win32_PowerPlan -Filter "ElementName = 'High Performance'"
-        $powerPlan.Activate()
+        try  {
+            $powerPlan = Get-WmiObject -Namespace root\cimv2\power -Class Win32_PowerPlan -Filter "ElementName = 'High Performance'"
+            $powerPlan.Activate()
+        } catch {
+            Write-Warning $Error[0]
+        }
     }
 
     function ConfigureGit() {
