@@ -2,12 +2,14 @@
 param (
     [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$server,
     [Parameter(Mandatory=$false)][string]$agentPool,
+    [Parameter(Mandatory=$false)][PSCredential]$credentials,
     [switch]$skipAgentDownload,
     [switch]$restart
 )
 
 begin {
-    Set-StrictMode -Version Latest    
+    Set-StrictMode -Version Latest
+    $InformationPreference = 'Continue'
 }
 
 process {
@@ -203,7 +205,10 @@ namespace Willys.LsaSecurity
 }
 '@
 
-    [PSCredential]$credentials = Get-Credential (Get-Credential)
+    if ($null -eq $credentials) {
+        $credentials = Get-Credential (Get-Credential)
+    }
+
     $session = New-PSSession -ComputerName $server -Credential $credentials -ErrorAction Stop
 
     $setupScriptBlock = {
@@ -211,80 +216,87 @@ namespace Willys.LsaSecurity
             [PSCredential]$credentials,
             [bool]$skipDownload
         )
-        
-        $InformationPreference = 'Continue'
-        
-        [string]$scriptsDirectory = "$env:SystemDrive\Scripts"
 
-        try {
-          # Make me fast
-          $powerPlan = Get-WmiObject -Namespace root\cimv2\power -Class Win32_PowerPlan -Filter "ElementName = 'High Performance'"
-          $powerPlan.Activate()
-        } catch {
-          # Don't panic on Windows 10
-          Write-Warning $Error[0]
+        begin {
+            Set-StrictMode -Version 'Latest'
+            $InformationPreference = 'Continue'
         }
 
-        # Make me admin
-        Add-LocalGroupMember -Group Administrators -Member ADERANT_AP\tfsbuildservice$ -ErrorAction SilentlyContinue
-        Add-LocalGroupMember -Group Administrators -Member $credentials.UserName -ErrorAction SilentlyContinue
-        Add-LocalGroupMember -Group Administrators -Member ADERANT_AP\SG_AP_Dev_Operations -ErrorAction SilentlyContinue
-        
-        Add-LocalGroupMember -Group docker-users -Member ADERANT_AP\tfsbuildservice$ -ErrorAction SilentlyContinue
-        Add-LocalGroupMember -Group docker-users -Member $credentials.UserName -ErrorAction SilentlyContinue        
-
-        New-Item -Path $scriptsDirectory -ItemType Directory -ErrorAction SilentlyContinue
-
-        Push-Location $scriptsDirectory
-
-        if (-not $skipDownload) {
-            Write-Host "Downloading build agent zip"
-            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-            $currentProgressPreference = $ProgressPreference
-            $ProgressPreference = "SilentlyContinue"
+        process {
+            [string]$scriptsDirectory = "$Env:SystemDrive\Scripts"
+            # Return the machine specific script home.
+            Write-Output -InputObject $scriptsDirectory
 
             try {
-                $agentArchive = "$env:SystemDrive\Scripts\vsts-agent.zip"        
-                Invoke-WebRequest "https://vstsagentpackage.azureedge.net/agent/2.141.2/vsts-agent-win-x64-2.141.2.zip" -OutFile $agentArchive -UseBasicParsing
-            } finally {
-                $ProgressPreference = $currentProgressPreference
+                # Make me fast
+                $powerPlan = Get-WmiObject -Namespace root\cimv2\power -Class Win32_PowerPlan -Filter "ElementName = 'High Performance'"
+                [void]$powerPlan.Activate()
+            } catch {
+                # Don't panic on Windows 10
+                Write-Warning $Error[0]
+            }
+
+            # Make me admin
+            Add-LocalGroupMember -Group Administrators -Member $credentials.UserName -ErrorAction SilentlyContinue
+            Add-LocalGroupMember -Group Administrators -Member ADERANT_NA\SG_GB_BuildServices -ErrorAction SilentlyContinue
+            Add-LocalGroupMember -Group Administrators -Member ADERANT_AP\SG_AP_Dev_Operations -ErrorAction SilentlyContinue
+
+            [Microsoft.PowerShell.Commands.LocalPrincipal]$dockerUsersGroup = Get-LocalGroup -Name 'docker-users' -ErrorAction 'SilentlyContinue'
+
+            if ($null -ne $dockerUsersGroup) {
+                Add-LocalGroupMember -Group docker-users -Member $credentials.UserName -ErrorAction SilentlyContinue
+                Add-LocalGroupMember -Group docker-users -Member ADERANT_NA\SG_GB_BuildServices -ErrorAction SilentlyContinue
+                Add-LocalGroupMember -Group docker-users -Member ADERANT_AP\SG_AP_Dev_Operations -ErrorAction SilentlyContinue
+            }
+
+            [void](New-Item -Path $scriptsDirectory -ItemType Directory -Force)
+
+            Push-Location -Path $scriptsDirectory
+
+            if (-not $skipDownload) {
+                Write-Information -MessageData 'Downloading build agent zip'
+                [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+                $currentProgressPreference = $ProgressPreference
+                $ProgressPreference = 'SilentlyContinue'
+
+                try {
+                    $agentArchive = "$env:SystemDrive\Scripts\vsts-agent.zip"
+                    Invoke-WebRequest "https://vstsagentpackage.azureedge.net/agent/2.141.2/vsts-agent-win-x64-2.141.2.zip" -OutFile $agentArchive -UseBasicParsing
+                } finally {
+                    $ProgressPreference = $currentProgressPreference
+                }
+            }
+
+            Import-Module ServerManager
+
+            try {
+                if (-not (Get-WindowsFeature | Where-Object {$_.Name -eq "Hyper-V"}).InstallState -eq "Installed") {
+                    Enable-WindowsOptionalFeature -Online -FeatureName:Microsoft-Hyper-V -All
+                }
+            } catch {
+                Write-Warning $Error[0]
             }
         }
-
-        Import-Module ServerManager
-
-        try {
-           if (-not (Get-WindowsFeature | Where-Object {$_.Name -eq "Hyper-V"}).InstallState -eq "Installed") {
-              Enable-WindowsOptionalFeature -Online -FeatureName:Microsoft-Hyper-V -All
-            }
-        } catch {
-           Write-Warning $Error[0]
-        }
-
-        # Return the machine specific script home
-        return $scriptsDirectory
-        
     }
 
-    $scriptsDirectory = (Invoke-Command -Session $session -ScriptBlock $setupScriptBlock -ArgumentList $credentials, $skipAgentDownload.IsPresent)     
+    [string]$scriptsDirectory = (Invoke-Command -Session $session -ScriptBlock $setupScriptBlock -ArgumentList $credentials, $skipAgentDownload.IsPresent)
 
-    
     Invoke-Command -Session $session -ScriptBlock {
         param (
               [string]$code
         )
-          
+
         Add-Type $code
         $m = [Willys.LsaSecurity.LsaWrapper]::new()
         $m.AddPrivileges("ADERANT_AP\tfsbuildservice$", "SeAssignPrimaryTokenPrivilege")
         $m.AddPrivileges("ADERANT_AP\tfsbuildservice$", "SeIncreaseQuotaPrivilege")
         $m.Dispose()
-                  
+
     } -ArgumentList $lsaCode
 
     Write-Host "Generating Scheduled Tasks"
 
-    <# 
+    <#
     ============================================================
     Setup Task
     ============================================================
@@ -303,20 +315,20 @@ namespace Willys.LsaSecurity
 
         $STTrigger = New-ScheduledTaskTrigger -AtStartup
         [string]$STName = "Setup Agent Host"
-        
+
         Unregister-ScheduledTask -TaskName $STName -Confirm:$false -ErrorAction SilentlyContinue
-        
+
         #Action to run as
         $STAction = New-ScheduledTaskAction -Execute "$Env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoLogo -Sta -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File $scriptsDirectory\Build.Infrastructure\Src\Scripts\setup-agent-host.ps1" -WorkingDirectory $scriptsDirectory
         #Configure when to stop the task and how long it can run for. In this example it does not stop on idle and uses the maximum possible duration by setting a timelimit of 0
         $STSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -Compatibility Win8
 
         #Register the new scheduled task
-        Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger -User $credentials.UserName -Password $credentials.GetNetworkCredential().Password -Settings $STSettings -RunLevel Highest -Force        
+        Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger -User $credentials.UserName -Password $credentials.GetNetworkCredential().Password -Settings $STSettings -RunLevel Highest -Force
     } -ArgumentList $scriptsDirectory, $credentials, $agentPool
 
 
-    <# 
+    <#
     ============================================================
     Clean up agent Task
     ============================================================
@@ -324,19 +336,19 @@ namespace Willys.LsaSecurity
     Invoke-Command -Session $session -ScriptBlock {
         $STTrigger = New-ScheduledTaskTrigger -AtStartup
         [string]$STName = "Cleanup Agent Host"
-        
+
         Unregister-ScheduledTask -TaskName $STName -Confirm:$false -ErrorAction SilentlyContinue
-        
+
         #Action to run as
-        $STAction = New-ScheduledTaskAction -Execute "$Env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoLogo -Sta -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File $scriptsDirectory\Build.Infrastructure\Src\Scripts\cleanup-agent-host.ps1" -WorkingDirectory $scriptsDirectory        
+        $STAction = New-ScheduledTaskAction -Execute "$Env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoLogo -Sta -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File $scriptsDirectory\Build.Infrastructure\Src\Scripts\cleanup-agent-host.ps1" -WorkingDirectory $scriptsDirectory
         $STSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -Compatibility Win8
 
         #Register the new scheduled task
-        Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger -User $credentials.UserName -Password $credentials.GetNetworkCredential().Password -Settings $STSettings -RunLevel Highest -Force        
+        Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger -User $credentials.UserName -Password $credentials.GetNetworkCredential().Password -Settings $STSettings -RunLevel Highest -Force
     } -ArgumentList $scriptsDirectory, $credentials
 
 
-    <# 
+    <#
     ============================================================
     Reboot Task
     ============================================================
@@ -344,33 +356,11 @@ namespace Willys.LsaSecurity
     Invoke-Command -Session $session -ScriptBlock {
         $STTrigger = New-ScheduledTaskTrigger -Daily -At 11pm
         [string]$STName = "Restart Agent Host"
-        
+
         Unregister-ScheduledTask -TaskName $STName -Confirm:$false -ErrorAction SilentlyContinue
-        
+
         #Action to run as
         $STAction = New-ScheduledTaskAction -Execute "$Env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoLogo -Sta -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File $scriptsDirectory\Build.Infrastructure\Src\Scripts\restart-agent-host.ps1" -WorkingDirectory $scriptsDirectory
-        $STSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -Compatibility Win8
-
-        $principal = New-ScheduledTaskPrincipal -UserID tfsbuildservice$ -LogonType Password -RunLevel Highest
-        #Register the new scheduled task
-        Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger –Principal $principal -Settings $STSettings -Force          
-     } -ArgumentList $scriptsDirectory
-
-
-    <# 
-    ============================================================
-    Refresh Task
-    ============================================================
-    #>
-    Invoke-Command -Session $session -ScriptBlock {
-        $interval = New-TimeSpan -Minutes 15
-        $STTrigger = New-ScheduledTaskTrigger -Once -At (Get-Date).Date -RepetitionInterval $interval
-        [string]$STName = "Refresh Agent Host Scripts"
-        
-        Unregister-ScheduledTask -TaskName $STName -Confirm:$false -ErrorAction SilentlyContinue
-        
-        #Action to run as
-        $STAction = New-ScheduledTaskAction -Execute "$Env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoLogo -Sta -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File $scriptsDirectory\Build.Infrastructure\Src\Scripts\refresh-agent-host.ps1" -WorkingDirectory $scriptsDirectory        
         $STSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -Compatibility Win8
 
         $principal = New-ScheduledTaskPrincipal -UserID tfsbuildservice$ -LogonType Password -RunLevel Highest
@@ -379,7 +369,29 @@ namespace Willys.LsaSecurity
      } -ArgumentList $scriptsDirectory
 
 
-    <# 
+    <#
+    ============================================================
+    Refresh Task
+    ============================================================
+    #>
+    Invoke-Command -Session $session -ScriptBlock {
+        $interval = New-TimeSpan -Minutes 15
+        $STTrigger = New-ScheduledTaskTrigger -Once -At (Get-Date).Date -RepetitionInterval $interval
+        [string]$STName = "Refresh Agent Host Scripts"
+
+        Unregister-ScheduledTask -TaskName $STName -Confirm:$false -ErrorAction SilentlyContinue
+
+        #Action to run as
+        $STAction = New-ScheduledTaskAction -Execute "$Env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoLogo -Sta -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File $scriptsDirectory\Build.Infrastructure\Src\Scripts\refresh-agent-host.ps1" -WorkingDirectory $scriptsDirectory
+        $STSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -Compatibility Win8
+
+        $principal = New-ScheduledTaskPrincipal -UserID tfsbuildservice$ -LogonType Password -RunLevel Highest
+        #Register the new scheduled task
+        Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger –Principal $principal -Settings $STSettings -Force
+     } -ArgumentList $scriptsDirectory
+
+
+    <#
     ============================================================
     Docker Task
     ============================================================
@@ -395,7 +407,7 @@ namespace Willys.LsaSecurity
 
             $interval = New-TimeSpan -Minutes 1
             $STTrigger = New-ScheduledTaskTrigger -AtStartup -RandomDelay ($interval)
-            
+
             [string]$STName = "Run Docker for Windows"
             Unregister-ScheduledTask -TaskName $STName -Confirm:$false -ErrorAction SilentlyContinue
 
@@ -417,19 +429,19 @@ namespace Willys.LsaSecurity
         $interval = New-TimeSpan -Minutes 5
         $STTrigger = New-ScheduledTaskTrigger -Once -At (Get-Date).Date -RepetitionInterval $interval
         [string]$STName = "Reclaim Space"
-        
+
         Unregister-ScheduledTask -TaskName $STName -Confirm:$false -ErrorAction SilentlyContinue
-        
+
         # Action to run as
-        $STAction = New-ScheduledTaskAction -Execute "$Env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoLogo -Sta -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File $scriptsDirectory\Build.Infrastructure\Src\Scripts\make-free-space-vnext.ps1" -WorkingDirectory $scriptsDirectory        
+        $STAction = New-ScheduledTaskAction -Execute "$Env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoLogo -Sta -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File $scriptsDirectory\Build.Infrastructure\Src\Scripts\make-free-space-vnext.ps1" -WorkingDirectory $scriptsDirectory
         $STSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -Compatibility Win8
 
         $principal = New-ScheduledTaskPrincipal -UserID tfsbuildservice$ -LogonType Password -RunLevel Highest
         # Register the new scheduled task
-        Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger –Principal $principal -Settings $STSettings -Force 
+        Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger –Principal $principal -Settings $STSettings -Force
     } -ArgumentList $scriptsDirectory
 
-    <# 
+    <#
     ============================================================
     Cleanup NuGet Task
     ============================================================
@@ -438,16 +450,16 @@ namespace Willys.LsaSecurity
         $interval = New-TimeSpan -Hours 2
         $STTrigger = New-ScheduledTaskTrigger -Once -At (Get-Date).Date -RepetitionInterval $interval
         [string]$STName = "Remove NuGet Cache"
-        
+
         Unregister-ScheduledTask -TaskName $STName -Confirm:$false -ErrorAction SilentlyContinue
-        
+
         # Action to run as
-        $STAction = New-ScheduledTaskAction -Execute "$Env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoLogo -Sta -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File $scriptsDirectory\Build.Infrastructure\Src\Scripts\make-free-space-vnext.ps1 -strategy nuget" -WorkingDirectory $scriptsDirectory        
+        $STAction = New-ScheduledTaskAction -Execute "$Env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoLogo -Sta -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File $scriptsDirectory\Build.Infrastructure\Src\Scripts\make-free-space-vnext.ps1 -strategy nuget" -WorkingDirectory $scriptsDirectory
         $STSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -Compatibility Win8
 
         $principal = New-ScheduledTaskPrincipal -UserID tfsbuildservice$ -LogonType Password -RunLevel Highest
         # Register the new scheduled task
-        Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger –Principal $principal -Settings $STSettings -Force 
+        Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger –Principal $principal -Settings $STSettings -Force
     } -ArgumentList $scriptsDirectory
 
 
