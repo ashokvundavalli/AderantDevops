@@ -183,6 +183,7 @@ function CreateToolArgumentString($context, $remainingArgs) {
 
         if ($null -ne $context.BuildMetadata) {
             if ($context.BuildMetadata.DebugLoggingEnabled) {
+                Write-Information "Debug Logging Enabled"
                 $set.Add("/flp:Verbosity=Diag")
             } else {
                 $set.Add("/flp:Verbosity=Normal")
