@@ -129,13 +129,13 @@ function RunActionExclusive([scriptblock]$action, [string]$mutexName) {
             $mutexName = $mutexName.Replace("\", "|")
 
             Write-Debug "Creating mutex: $mutexName"
-            
+
             $mutex = [System.Threading.Mutex]::new($false, "Local\$mutexName")
 
             try {
                 $runTool = $mutex.WaitOne(0)
                 Write-Debug "Aquired mutex: $mutexName"
-            } catch [System.AbandonedMutexException] {
+            } catch [System.Threading.AbandonedMutexException] {
                 $mutex.WaitOne(0)
             }
 
@@ -149,7 +149,7 @@ function RunActionExclusive([scriptblock]$action, [string]$mutexName) {
         Write-Debug $action.Ast
         $action.Invoke()
     }
-    
+
     return $runTool
 }
 
@@ -157,14 +157,35 @@ function RefreshSources([bool]$pull, [string]$head) {
     $action = {
        if ($pull) {
            & git -C $PSScriptRoot pull --ff-only
-       }      
+       }
     }
 
     Write-Information "Updating submodules..."
-    & git -C $PSScriptRoot submodule update --init --recursive
+    $job = Start-Job -Name "submodule update" -ScriptBlock {
+        Param($path)
+
+        $result = (& git -C $path submodule update --init --recursive)
+        if ($LASTEXITCODE -ne 0) {
+            throw $result
+        }
+        return $result
+    } -ArgumentList $PSScriptRoot
+
+    $null = Register-ObjectEvent $job -EventName StateChanged -Action {
+        if ($EventArgs.JobStateInfo.State -ne [System.Management.Automation.JobState]::Completed) {
+            Write-Host ("Task has failed: " + $sender.ChildJobs[0].JobStateInfo.Reason.Message) -ForegroundColor red
+        } else {
+            $Host.UI.RawUI.WindowTitle = "Submodule update complete"
+        }
+
+        $Sender | Remove-Job -Force
+
+        $EventSubscriber | Unregister-Event -Force
+        $EventSubscriber.Action | Remove-Job -Force
+    }
 
     $lockName = "$head" + "_BUILD_UPDATE_LOCK"
-    
+
     $updated = RunActionExclusive $action $lockName
 
     if (-not ($updated)) {

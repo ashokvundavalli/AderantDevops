@@ -179,14 +179,16 @@ Branch information
 function Set-BranchPaths {
     Write-Debug "Setting information for branch from your defaults"
 
-    Import-Module "$PSScriptRoot\AderantTfs.psm1" -Global
-
     Set-LocalDirectory
     Set-BinariesDirectory
-    $ShellContext.BranchLocalDirectory = $global:BranchLocalDirectory
-    $ShellContext.BranchName = ResolveBranchName $global:BranchLocalDirectory
+    $ShellContext.BranchLocalDirectory = $global:BranchLocalDirectory    
     $ShellContext.BranchServerDirectory = (GetDefaultValue "DropRootUNCPath").ToLower()
-    $ShellContext.BranchModulesDirectory = Join-Path -Path $global:BranchLocalDirectory -ChildPath "\Modules"
+
+    if ($ShellContext.IsTfvcModuleEnabled) {
+        $ShellContext.BranchModulesDirectory = (Join-Path -Path $global:BranchLocalDirectory -ChildPath "\Modules")
+    } else {
+        $ShellContext.BranchModulesDirectory = $global:BranchLocalDirectory
+    }
 }
 
 <#
@@ -216,39 +218,37 @@ function Set-ScriptPaths {
 
     if ([System.IO.File]::Exists($ShellContext.BranchModulesDirectory + "\ExpertManifest.xml")) {
         [string]$root = Resolve-Path "$PSScriptRoot\..\..\..\"
-
+    
         $ShellContext.BuildScriptsDirectory = Join-Path -Path $root -ChildPath "Src\Build"
         $ShellContext.PackageScriptsDirectory = Join-Path -Path $root -ChildPath "Src\Package"
         $ShellContext.ProductManifestPath = Join-Path -Path $ShellContext.BranchModulesDirectory -ChildPath "ExpertManifest.xml"
-    } else {
-        $ShellContext.BuildScriptsDirectory = Join-Path -Path $ShellContext.BranchModulesDirectory -ChildPath "\Build.Infrastructure\Src\Build"
-        $ShellContext.PackageScriptsDirectory = Join-Path -Path $ShellContext.BranchModulesDirectory -ChildPath "\Build.Infrastructure\Src\Package"
-        $ShellContext.ProductManifestPath = Join-Path -Path $ShellContext.PackageScriptsDirectory -ChildPath "\ExpertManifest.xml"
+    } else {        
+        $ShellContext.PackageScriptsDirectory = Join-Path -Path $ShellContext.BuildScriptsDirectory -ChildPath "..\Package"
+        $ShellContext.ProductManifestPath = Join-Path -Path $ShellContext.BranchModulesDirectory -ChildPath "\Build\ExpertManifest.xml"
     }
 }
 
 <#
 Find the Install Location of programs
 #>
-
 function Find-InstallLocation ($programName) {
-    $registryItem = Get-ChildItem HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall | Get-ItemProperty | ?{ $_.PSObject.Properties.Name -match 'DisplayName' -and -not [string]::IsNullOrEmpty($_.DisplayName) -and $_.DisplayName -like $programName }
+    $entries = Get-ChildItem 'HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall'
+    $registryItem = $entries | Get-ItemProperty | ?{ $_.PSObject.Properties.Name -match 'DisplayName' -and -not [string]::IsNullOrEmpty($_.DisplayName) -and $_.DisplayName -like $programName }
 
-    if($registryItem){
+    if ($registryItem){
         return $registryItem.InstallLocation
     } else {
-        return $null;
+        return $null
     }
 }
 
 <#
 Set Expert specific variables
 #>
-
 function Set-ExpertVariables {
     $global:InstallPath = Find-InstallLocation -programName 'Expert Deployment Manager'
 
-    if($global:InstallPath){
+    if ($global:InstallPath){
         $ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentEngine -Value { Join-Path -Path $global:InstallPath -ChildPath 'DeploymentEngine.exe' }
         $ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentManager -Value { Join-Path -Path $global:InstallPath -ChildPath 'DeploymentManager.exe' }
     } else {
@@ -270,8 +270,6 @@ function Set-ExpertVariables {
 function Initialize-BuildLibraries {
     . ($ShellContext.BuildScriptsDirectory + "\Build-Libraries.ps1")
 }
-
-
 
 function Set-CurrentModule {
     param (
@@ -505,7 +503,6 @@ function Install-LatestVisualStudioExtensionImpl($installDetails, [switch]$local
         [xml]$manifest = Get-Content $ShellContext.ProductManifestPath
         [System.Xml.XmlNode]$module = $manifest.ProductManifest.Modules.SelectNodes("Module") | Where-Object { $_.Name.Contains($info.ProductManifestName)}
 
-        Invoke-Expression "$ShellContext.BuildScriptsDirectory\Build-Libraries.ps1"
         $dropPathVSIX = (GetPathToBinaries $module $ShellContext.BranchServerDirectory)
 
         if (!(Test-Path $localInstallDirectory)) {
@@ -570,14 +567,16 @@ function Set-Environment {
 
     process {
         if ($ShellContext.IsTfvcModuleEnabled) {
-            if ($Initialize.IsPresent) {
-                Set-BranchPaths
-            }
-
-            Set-ScriptPaths
-            Set-ExpertSourcePath
-            Set-ExpertVariables
+            Import-Module "$PSScriptRoot\AderantTfs.psm1" -Global            
         }
+
+        if ($Initialize.IsPresent) {
+            Set-BranchPaths
+        }
+
+        Set-ScriptPaths
+        Set-ExpertSourcePath
+        Set-ExpertVariables
 
         Initialize-BuildLibraries
         Set-VisualStudioVersion
@@ -591,24 +590,46 @@ function Set-Environment {
     }
 }
 
-function Set-VisualStudioVersion() {
-    #$job = Start-Job -Name "Set-VisualStudioVersion" -ScriptBlock {
-    #    Param($path)
-        $file = [System.IO.Path]::Combine($ShellContext.BuildScriptsDirectory, "vsvars.ps1")
-        . $file
-    #} -ArgumentList $ShellContext.BuildScriptsDirectory
+function Set-LocalDirectory {
+    $global:BranchLocalDirectory = (GetDefaultValue "DevBranchFolder")
 
-    #$jobEvent = Register-ObjectEvent $job StateChanged -Action {
-    #    $jobEvent | Unregister-Event
-    #
-    #    $data = Receive-Job $sender.Name
-    #
-    #    foreach ($item in $data.GetEnumerator()) {
-    #        Set-Item -Force -Path "ENV:\$($item.Key)" -Value $item.Value
-    #    }
-    #
-    #    $Host.UI.RawUI.WindowTitle = "Visual Studio environment ready"
-    #}
+    if (-not (Test-Path $global:BranchLocalDirectory)) {
+        Write-Host ""
+        Write-Host "*********************************************************************************************************************************"
+        Write-Warning "The directory does not exist. Call Set-ExpertBranchInfo for initial setup of local directory and branch info"
+        Write-Host "*********************************************************************************************************************************"
+        Write-Host ""
+
+        throw "Please setup environment"
+    }
+}
+
+
+function Set-VisualStudioVersion() {
+    $job = Start-Job -Name "SetVisualStudioVersion" -ScriptBlock {
+        Param($path)           
+            $file = [System.IO.Path]::Combine($path, "vsvars.ps1")
+            . $file
+    } -ArgumentList $ShellContext.BuildScriptsDirectory
+
+   $null = Register-ObjectEvent $job -EventName StateChanged -Action {            
+       if ($EventArgs.JobStateInfo.State -ne [System.Management.Automation.JobState]::Completed) {
+           Write-Host ("Task has failed: " + $sender.ChildJobs[0].JobStateInfo.Reason.Message) -ForegroundColor Red
+       }
+
+       $data = Receive-Job $Sender.Id
+       
+       foreach ($item in $data.GetEnumerator()) {
+           Set-Item -Force -Path "ENV:\$($item.Key)" -Value $item.Value
+       }
+       
+       $Host.UI.RawUI.WindowTitle = "Visual Studio environment ready $($Env:DevEnvDir)"
+       
+       $Sender | Remove-Job -Force
+   
+       $EventSubscriber | Unregister-Event -Force
+       $EventSubscriber.Action | Remove-Job -Force
+   }
 }
 
 # sets a value in the global defaults storage

@@ -718,20 +718,6 @@ function Set-ExpertBranchInfo([string] $devBranchFolder, [string] $dropUncPath) 
     Write-Host "In future when changing branches you should use the Switch-Branch command with the -SetAsDefault parameter to make it permanent."
 }
 
-function Set-LocalDirectory {
-    $global:BranchLocalDirectory = (GetDefaultValue "DevBranchFolder").ToLower()
-
-    if (-not (Test-Path $global:BranchLocalDirectory)) {
-        Write-Host ""
-        Write-Host "*********************************************************************************************************************************"
-        Write-Warning "The directory does not exist. Call Set-ExpertBranchInfo for initial setup of local directory and branch info"
-        Write-Host "*********************************************************************************************************************************"
-        Write-Host ""
-
-        throw "Please setup environment"
-    }
-}
-
 Set-Alias merge Merge-Branch -Scope Global
 Set-Alias bmerge Merge-Baseless -Scope Global
 Export-ModuleMember -function Merge-Branch -alias merge
@@ -753,3 +739,5 @@ Add-BranchExpansionParameter –CommandName "New-ExpertManifestForBranch" –Par
 Add-BranchExpansionParameter –CommandName "New-ExpertManifestForBranch" –ParameterName "TargetBranch"
 Add-BranchExpansionParameter -CommandName "Move-Shelveset" -ParameterName "TargetBranch"
 Add-BranchExpansionParameter -CommandName "Move-Shelveset" -ParameterName "SourceBranch"
+
+Set-LocalDirectory
