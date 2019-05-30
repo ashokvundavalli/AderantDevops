@@ -92,7 +92,7 @@
       PackageProduct;
       ProduceUpdatePackage;
       CreateServerImage;
-      <!--MSBuildRunIntegrationTests;-->
+      MSBuildRunIntegrationTests;
       CopyToDrop;
     </BuildAndPackageDependsOn>
   </PropertyGroup>
