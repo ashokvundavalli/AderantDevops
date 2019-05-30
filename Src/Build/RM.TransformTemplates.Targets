@@ -203,12 +203,7 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
   </Target>
 
 
-  <!--
-    *************************************************************************************************************
-    rmT4AssemblyReferencePaths
-    *************************************************************************************************************
-  -->
-  <Target Name="rmT4AssemblyReferencePaths" DependsOnTargets="FindInstalledToolVersions">
+  <Target Name="TextTransformFindReferencePaths" DependsOnTargets="FindInstalledToolVersions" Returns="$(rmT4AssemblyReferencePaths);@(TextTemplatingBuildTasks);@(DslDirectiveProcessors)">
     <PropertyGroup>
       <VSSDKPath Condition="'$(VSSDK120Install)' != ''">$(VSSDK120Install)</VSSDKPath>
       <VSSDKPath Condition="'$(VSSDK140Install)' != ''">$(VSSDK140Install)</VSSDKPath>
@@ -224,12 +219,20 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
     </ItemGroup>
 
     <ItemGroup>
+      <PublicAssemblies Include="$([System.IO.Directory]::GetDirectories('$(ProgramFiles32)\Microsoft Visual Studio', 'PublicAssemblies', System.IO.SearchOption.AllDirectories))" />
+    </ItemGroup>
+
+    <ItemGroup>
       <VSSDKPaths Include="@(VisualStudioIntegrationPaths->DirectoryName()->Distinct())" />
     </ItemGroup>
 
     <ItemGroup>
-      <TextTemplatingBuildTasks Include="%(InstalledToolVersion.Identity)\..\..\Microsoft\VisualStudio\*\TextTemplating\Microsoft.TextTemplating.Build.Tasks.dll" />
-      <TextTemplatingBuildTasks Include="%(InstalledToolVersion.Identity)\MSBuild\Microsoft\VisualStudio\*\TextTemplating\Microsoft.TextTemplating.Build.Tasks.dll" />
+      <DslDirectiveProcessors Include="%(VSSDKPaths.FullPath)\Microsoft.VisualStudio.Modeling.Sdk.DslDefinition.*.dll">
+        <IsDslDirectiveProcessor>true</IsDslDirectiveProcessor>
+      </DslDirectiveProcessors>
+    </ItemGroup>
+
+    <ItemGroup>
       <RoslynAssemblies Include="%(InstalledToolVersion.Identity)\Roslyn\Microsoft.CodeAnalysis.dll" />
       <RoslynAssemblies Include="%(InstalledToolVersion.Identity)\Roslyn\Microsoft.CodeAnalysis.CSharp.dll" />
       <RoslynAssemblies Include="%(InstalledToolVersion.Identity)\Microsoft.CodeAnalysis.dll" />
@@ -237,16 +240,89 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
     </ItemGroup>
 
     <ItemGroup>
-      <rmT4AssemblyReferences Include="@(RoslynAssemblies)" Condition="Exists(%(FullPath))" />
+      <rmT4AssemblyReferences Include="@(RoslynAssemblies)" Condition="Exists('%(FullPath)')" />
     </ItemGroup>
 
     <ItemGroup>
       <RoslynPaths Include="@(RoslynAssemblies->DirectoryName()->Distinct())" />
     </ItemGroup>
 
-    <!-- Path to reference dlls required by DSLs -->
     <PropertyGroup>
-      <rmT4AssemblyReferencePaths>$(rmT4AssemblyReferencePaths);@(VSSDKPaths);@(RoslynPaths)</rmT4AssemblyReferencePaths>
+      <rmT4AssemblyReferencePaths>$(rmT4AssemblyReferencePaths);@(VSSDKPaths);@(RoslynPaths);@(PublicAssemblies)</rmT4AssemblyReferencePaths>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <TextTemplatingBuildTasks Include="%(InstalledToolVersion.Identity)\..\..\Microsoft\VisualStudio\*\TextTemplating\Microsoft.TextTemplating.Build.Tasks.dll">
+        <IsTaskAssembly>true</IsTaskAssembly>
+      </TextTemplatingBuildTasks>
+      <TextTemplatingBuildTasks Include="%(InstalledToolVersion.Identity)\MSBuild\Microsoft\VisualStudio\*\TextTemplating\Microsoft.TextTemplating.Build.Tasks.dll">
+        <IsTaskAssembly>true</IsTaskAssembly>
+      </TextTemplatingBuildTasks>
+    </ItemGroup>
+
+    <GetOrPutContextVariable
+      ContextEndpoint="$(ContextEndpoint)"
+      VariableName="ResolvedTextTransformReferencePaths"
+      Properties="$(rmT4AssemblyReferencePaths)">
+    </GetOrPutContextVariable>
+
+    <GetOrPutContextVariable
+      ContextEndpoint="$(ContextEndpoint)"
+      VariableName="TextTemplatingBuildTasksPaths"
+      Properties="@(TextTemplatingBuildTasks)">
+    </GetOrPutContextVariable>
+
+    <GetOrPutContextVariable
+      ContextEndpoint="$(ContextEndpoint)"
+      VariableName="DslDirectiveProcessors"
+      Properties="@(DslDirectiveProcessors)">
+    </GetOrPutContextVariable>
+
+  </Target>
+
+
+  <!--
+    *************************************************************************************************************
+    rmT4AssemblyReferencePaths
+    *************************************************************************************************************
+  -->
+  <Target Name="rmT4AssemblyReferencePaths">
+
+    <GetOrPutContextVariable
+      ContextEndpoint="$(ContextEndpoint)"
+      AllowInProcLookup="true"
+      VariableName="ResolvedTextTransformReferencePaths">
+      <Output TaskParameter="Values" ItemName="ResolvedTextTransformReferencePaths" />
+    </GetOrPutContextVariable>
+
+    <GetOrPutContextVariable
+      ContextEndpoint="$(ContextEndpoint)"
+      AllowInProcLookup="true"
+      VariableName="TextTemplatingBuildTasksPaths">
+      <Output TaskParameter="Values" ItemName="TextTemplatingBuildTasks" />
+    </GetOrPutContextVariable>
+
+    <GetOrPutContextVariable
+      ContextEndpoint="$(ContextEndpoint)"
+      AllowInProcLookup="true"
+      VariableName="DslDirectiveProcessors">
+      <Output TaskParameter="Values" ItemName="DslDirectiveProcessors" />
+    </GetOrPutContextVariable>
+
+    <CallTarget Targets="TextTransformFindReferencePaths" Condition="'@(ResolvedTextTransformReferencePaths)' == ''">
+      <Output TaskParameter="TargetOutputs" ItemName="_TargetOutputs" />
+    </CallTarget>
+
+    <ItemGroup>
+      <ResolvedTextTransformReferencePaths Include="@(_TargetOutputs)" Condition="'%(_TargetOutputs.IsTaskAssembly)' != 'true'" />
+      <TextTemplatingBuildTasks Include="@(_TargetOutputs)" Condition="'%(_TargetOutputs.IsTaskAssembly)' == 'true'" />
+      <DslDirectiveProcessors Include="@(_TargetOutputs)" Condition="'%(_TargetOutputs.IsDslDirectiveProcessor)' == 'true'" />
+    </ItemGroup>
+
+    <Error Condition="'@(TextTemplatingBuildTasks)' == ''" Text="TextTemplatingBuildTasks is empty" />
+
+    <PropertyGroup>
+      <rmT4AssemblyReferencePaths>$(rmT4AssemblyReferencePaths);@(ResolvedTextTransformReferencePaths)</rmT4AssemblyReferencePaths>
     </PropertyGroup>
   </Target>
 
@@ -279,13 +355,9 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
     </PropertyGroup>
 
     <ItemGroup>
-      <DslDirectiveProcessor Include="%(VSSDKPaths.FullPath)\Microsoft.VisualStudio.Modeling.Sdk.DslDefinition.*.dll" />
-    </ItemGroup>
-
-    <ItemGroup>
       <rmT4DslDirectiveProcessors Include="DslDirectiveProcessor">
         <Class>Microsoft.VisualStudio.Modeling.DslDefinition.DslDirectiveProcessor</Class>
-        <CodeBase>%(DslDirectiveProcessor.FullPath)</CodeBase>
+        <CodeBase>%(DslDirectiveProcessors.FullPath)</CodeBase>
       </rmT4DslDirectiveProcessors>
 
       <rmT4DslDirectiveProcessors Condition="'$(rmSoftwareFactoryVersion)' != ''"

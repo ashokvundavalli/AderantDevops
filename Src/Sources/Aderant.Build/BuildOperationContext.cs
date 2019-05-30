@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -281,6 +282,13 @@ namespace Aderant.Build {
         }
 
         public void PutVariable(string scope, string variableName, string value) {
+            ErrorUtilities.IsNotNull(variableName, nameof(variableName));
+
+            if (string.IsNullOrEmpty(scope)) {
+                Variables[variableName] = value;
+                return;
+            }
+
             var bags = ScopedVariables;
 
             IDictionary<string, string> bag;
@@ -293,8 +301,14 @@ namespace Aderant.Build {
         }
 
         public string GetVariable(string scope, string variableName) {
-            ErrorUtilities.IsNotNull(scope, nameof(scope));
             ErrorUtilities.IsNotNull(variableName, nameof(variableName));
+
+            if (string.IsNullOrEmpty(scope)) {
+                string value;
+                Variables.TryGetValue(variableName, out value);
+
+                return value;
+            }
 
             var bags = ScopedVariables;
 
@@ -302,7 +316,6 @@ namespace Aderant.Build {
             if (bags.TryGetValue(scope, out bag)) {
                 string value;
                 bag.TryGetValue(variableName, out value);
-
                 return value;
             }
 

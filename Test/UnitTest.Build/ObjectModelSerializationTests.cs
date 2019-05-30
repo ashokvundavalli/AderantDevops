@@ -61,6 +61,54 @@ namespace UnitTest.Build {
         }
 
         [TestMethod]
+        public void Variables_from_PutVariable_can_survive_round_trip() {
+            var metadata = new BuildOperationContext();
+            metadata.PutVariable("", "abc", "def");
+
+            var instance = RoundTrip(metadata);
+
+            Assert.IsNotNull(instance);
+            Assert.AreEqual("def", instance.Variables["abc"]);
+        }
+
+        [TestMethod]
+        public void Variables_are_returned_from_GetVariable_can_survive_round_trip() {
+            var metadata = new BuildOperationContext();
+            metadata.PutVariable("", "abc", "def");
+
+            var instance = RoundTrip(metadata);
+
+            Assert.IsNotNull(instance);
+
+            string value = instance.GetVariable("", "abc");
+
+            Assert.AreEqual("def", value);
+            Assert.AreEqual("def", instance.Variables["abc"]);
+        }
+
+        [TestMethod]
+        public void Scoped_variables_can_be_survive_round_trip() {
+            var metadata = new BuildOperationContext();
+            metadata.PutVariable("1", "abc", "def");
+
+            var instance = RoundTrip(metadata);
+            
+            Assert.IsNotNull(instance);
+            Assert.AreEqual(1, metadata.ScopedVariables["1"].Keys.Count);
+        }
+
+        [TestMethod]
+        public void Variables_can_be_survive_round_trip() {
+            var metadata = new BuildOperationContext();
+            metadata.Variables["abc"] = "def";
+
+            var instance = RoundTrip(metadata);
+
+            Assert.IsNotNull(instance);
+            Assert.AreEqual("def", instance.Variables["abc"]);
+        }
+
+        [TestMethod]
         public void SourceChangeSerialization() {
             var change = new SourceChange("A", "B", FileStatus.Added);
             var instance = RoundTrip(change);

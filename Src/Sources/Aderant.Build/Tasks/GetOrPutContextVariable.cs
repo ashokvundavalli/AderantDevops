@@ -1,13 +1,17 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Text;
 using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks {
     public sealed class GetOrPutContextVariable : BuildOperationContextTask {
-        private static ConcurrentDictionary<string, string> lookupCache = new ConcurrentDictionary<string, string>();
+        private static ConcurrentDictionary<string, string> lookupCache = new ConcurrentDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         private static char[] splitChar = new char[] { '=' };
+
+        private bool hasChanges;
 
         public string Scope { get; set; }
 
@@ -15,6 +19,16 @@ namespace Aderant.Build.Tasks {
 
         [Output]
         public string Value { get; set; }
+
+        [Output]
+        public string[] Values {
+            get {
+                if (!string.IsNullOrEmpty(Value)) {
+                    return Value.Split(';').ToArray();
+                }
+                return null;
+            }
+        }
 
         public ITaskItem[] Properties { get; set; }
 
@@ -25,15 +39,24 @@ namespace Aderant.Build.Tasks {
 
         public override bool ExecuteTask() {
             if (!string.IsNullOrEmpty(VariableName)) {
-                if (string.IsNullOrEmpty(Value)) {
-                    Value = GetExistingVariable();
+                if (string.IsNullOrEmpty(Value) && NoProperties()) {
+                    var value = GetExistingVariable();
 
-                    Log.LogMessage($"Retrieved variable: {VariableName} with value {Value}");
+                    if (string.IsNullOrEmpty(Scope) && !string.IsNullOrEmpty(Value)) {
+                        lookupCache.TryAdd(VariableName, value);
+                    }
+
+                    Log.LogMessage(MessageImportance.Low, $"Retrieved variable: {VariableName} with value {value}");
+
+                    Value = value;
+
                     return !Log.HasLoggedErrors;
                 }
             }
 
             if (Properties != null) {
+                StringBuilder sb = new StringBuilder();
+
                 foreach (var item in Properties) {
                     string[] parts = item.ItemSpec.Split(splitChar, StringSplitOptions.RemoveEmptyEntries);
 
@@ -41,43 +64,73 @@ namespace Aderant.Build.Tasks {
                         string variableName = parts[0];
                         string value = parts[1];
 
-                        Log.LogMessage($"Variable {variableName} -> {value}");
-
                         if (string.IsNullOrEmpty(Scope)) {
-                            Context.Variables[variableName] = value;
+                            AddVariable(variableName, value);
                         } else {
                             PipelineService.PutVariable(Scope, variableName, value);
                         }
+                    } else if (parts.Length == 1) {
+                        sb.Append(item.ItemSpec);
+                        sb.Append(";");
                     }
+                }
+
+                if (sb.Length > 0) {
+                    AddVariable(VariableName, sb.ToString());
                 }
             }
 
+            SendChangesToService();
+
             return !Log.HasLoggedErrors;
+        }
+
+        private void SendChangesToService() {
+            if (hasChanges) {
+                // Post the values up to the build coordinator
+                foreach (var item in Context.Variables) {
+                    Service.PutVariable("", item.Key, item.Value);
+                }
+            }
+        }
+
+        private void AddVariable(string variableName, string value) {
+            hasChanges = true;
+
+            Log.LogMessage($"Variable {variableName} -> {value}");
+
+            Context.Variables[variableName] = value;
+            lookupCache.TryAdd(variableName, value);
+        }
+
+        private bool NoProperties() {
+            return Properties == null || Properties.Length == 0;
         }
 
         private string GetExistingVariable() {
             Log.LogMessage(MessageImportance.Low, "Looking up variable: " + VariableName);
 
             if (string.IsNullOrEmpty(Scope)) {
-
                 string value;
+
                 if (AllowInProcLookup) {
                     if (lookupCache.TryGetValue(VariableName, out value)) {
                         // Cache hit
+                        Log.LogMessage(MessageImportance.Low, "In process cache hit variable: " + VariableName);
                         return value;
                     }
                 }
 
                 if (Context.Variables.TryGetValue(VariableName, out value)) {
-                    lookupCache.TryAdd(VariableName, value);
+                    Log.LogMessage(MessageImportance.Low, "Local context copy contained variable: " + VariableName);
                     return value;
                 }
-            } else {
-                return PipelineService.GetVariable(Scope, VariableName);
+
+                Log.LogMessage(MessageImportance.Low, "Requesting variable from build service: " + VariableName);
+                return PipelineService.GetVariable(string.Empty, VariableName);
             }
 
-            return null;
+            return PipelineService.GetVariable(Scope, VariableName);
         }
     }
-
 }

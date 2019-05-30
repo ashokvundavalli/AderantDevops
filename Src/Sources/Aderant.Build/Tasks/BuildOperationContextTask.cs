@@ -17,9 +17,7 @@ namespace Aderant.Build.Tasks {
         public virtual string ContextEndpoint { get; set; }
 
         protected BuildOperationContext Context {
-            get {
-                return context ?? (context = ObtainContext());
-            }
+            get { return context ?? (context = ObtainContext()); }
         }
 
         protected ILogger Logger {
