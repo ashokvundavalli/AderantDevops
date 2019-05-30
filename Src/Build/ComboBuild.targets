@@ -158,6 +158,7 @@
       <ExcludePaths Include="\.git" />
       <ExcludePaths Include="\.vs" />
       <ExcludePaths Include="\_" />
+      <ExcludePaths Include="\obj" />
       <ExcludePaths Include="$([MSBuild]::Escape('*tmp.csproj'))" />
       <ExcludePaths Include="TempTemplateTransform\" />
       <ExcludePaths Include="Applications.MatterCenterIntegration\" />
