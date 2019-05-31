@@ -203,7 +203,7 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
   </Target>
 
 
-  <Target Name="TextTransformFindReferencePaths" DependsOnTargets="FindInstalledToolVersions" Returns="$(rmT4AssemblyReferencePaths);@(TextTemplatingBuildTasks);@(DslDirectiveProcessors);@(VisualStudioDslAssemblies)">
+  <Target Name="TextTransformFindReferencePaths" DependsOnTargets="FindInstalledToolVersions" Returns="$(rmT4AssemblyReferencePaths);@(TextTemplatingBuildTasks);@(DslDirectiveProcessors);@(VisualStudioDslAssemblies);@(RoslynAssemblies)">
     <PropertyGroup>
       <VSSDKPath Condition="'$(VSSDK120Install)' != ''">$(VSSDK120Install)</VSSDKPath>
       <VSSDKPath Condition="'$(VSSDK140Install)' != ''">$(VSSDK140Install)</VSSDKPath>
@@ -244,7 +244,7 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
     </ItemGroup>
 
     <PropertyGroup>
-      <rmT4AssemblyReferencePaths>$(rmT4AssemblyReferencePaths);@(VSSDKPaths);@(RoslynPaths);@(PublicAssemblies);@(VisualStudioDslAssemblies)</rmT4AssemblyReferencePaths>
+      <rmT4AssemblyReferencePaths>$(rmT4AssemblyReferencePaths);@(VSSDKPaths);@(RoslynPaths);@(PublicAssemblies);@(VisualStudioDslAssemblies);@(RoslynAssemblies)</rmT4AssemblyReferencePaths>
     </PropertyGroup>
 
     <ItemGroup>
