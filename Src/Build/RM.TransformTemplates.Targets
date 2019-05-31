@@ -244,7 +244,7 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
     </ItemGroup>
 
     <PropertyGroup>
-      <rmT4AssemblyReferencePaths>$(rmT4AssemblyReferencePaths);@(VSSDKPaths);@(RoslynPaths);@(PublicAssemblies)</rmT4AssemblyReferencePaths>
+      <rmT4AssemblyReferencePaths>$(rmT4AssemblyReferencePaths);@(VSSDKPaths);@(RoslynPaths);@(PublicAssemblies);@(VisualStudioDslAssemblies)</rmT4AssemblyReferencePaths>
     </PropertyGroup>
 
     <ItemGroup>
