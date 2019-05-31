@@ -201,6 +201,10 @@
     </ItemGroup>
 
     <PropertyGroup>
+      <ProgramFiles32>$(MSBuildProgramFiles32)</ProgramFiles32>
+    </PropertyGroup>
+
+    <PropertyGroup>
       <!-- Create the assembly search paths property. This defines where\how references are resolved.
            This path order places our search paths first.
            ReferencePath may not have been set when AssemblySearchPaths was defined. So we set it in the candidate list again just in case. -->
@@ -211,15 +215,10 @@
         @(AssemblySearchDirectories);
         $(AssemblySearchPaths);
         $(ReferencePath);
+        $(ProgramFiles32)\Microsoft Visual Studio\2017\Enterprise\VSSDK\VisualStudioIntegration\Common\Assemblies\v4.0;
+        $(ProgramFiles32)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\PublicAssemblies;
       </AssemblySearchPaths>
 
-      <AssemblySearchPaths Condition="'$(VS160COMNTOOLS)' != ''">
-        $(AssemblySearchPaths);$(VS160COMNTOOLS)..\..\MSBuild\Microsoft\VisualStudio\v16.0\TextTemplating
-      </AssemblySearchPaths>
-
-      <AssemblySearchPaths Condition="'$(VS150COMNTOOLS)' != ''">
-        $(AssemblySearchPaths);$(VS150COMNTOOLS)..\..\MSBuild\Microsoft\VisualStudio\v15.0\TextTemplating
-      </AssemblySearchPaths>
     </PropertyGroup>
 
 

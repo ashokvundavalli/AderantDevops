@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
 
   <!--
@@ -203,7 +203,7 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
   </Target>
 
 
-  <Target Name="TextTransformFindReferencePaths" DependsOnTargets="FindInstalledToolVersions" Returns="$(rmT4AssemblyReferencePaths);@(TextTemplatingBuildTasks);@(DslDirectiveProcessors)">
+  <Target Name="TextTransformFindReferencePaths" DependsOnTargets="FindInstalledToolVersions" Returns="$(rmT4AssemblyReferencePaths);@(TextTemplatingBuildTasks);@(DslDirectiveProcessors);@(VisualStudioDslAssemblies)">
     <PropertyGroup>
       <VSSDKPath Condition="'$(VSSDK120Install)' != ''">$(VSSDK120Install)</VSSDKPath>
       <VSSDKPath Condition="'$(VSSDK140Install)' != ''">$(VSSDK140Install)</VSSDKPath>
@@ -214,16 +214,12 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
     </PropertyGroup>
 
     <ItemGroup>
-      <VisualStudioIntegrationPaths Include="$(VSSDKPath)VisualStudioIntegration\Common\Assemblies\v4.0\Microsoft.VisualStudio.Modeling.Sdk.*.dll" />
-      <VisualStudioIntegrationPaths Include="$(ProgramFiles32)\Microsoft Visual Studio\*\*\VSSDK\VisualStudioIntegration\Common\Assemblies\v4.0\Microsoft.VisualStudio.Modeling.Sdk.*.dll" />
+      <VisualStudioDslAssemblies Include="$(VSSDKPath)VisualStudioIntegration\Common\Assemblies\v4.0\Microsoft.VisualStudio.Modeling.Sdk.*.dll" />
+      <VisualStudioDslAssemblies Include="$(ProgramFiles32)\Microsoft Visual Studio\*\*\VSSDK\VisualStudioIntegration\Common\Assemblies\v4.0\Microsoft.VisualStudio.Modeling.Sdk.*.dll" />
     </ItemGroup>
 
     <ItemGroup>
-      <PublicAssemblies Include="$([System.IO.Directory]::GetDirectories('$(ProgramFiles32)\Microsoft Visual Studio', 'PublicAssemblies', System.IO.SearchOption.AllDirectories))" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <VSSDKPaths Include="@(VisualStudioIntegrationPaths->DirectoryName()->Distinct())" />
+      <VSSDKPaths Include="@(VisualStudioDslAssemblies->DirectoryName()->Distinct())" />
     </ItemGroup>
 
     <ItemGroup>
@@ -233,14 +229,14 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
     </ItemGroup>
 
     <ItemGroup>
+      <PublicAssemblies Include="$([System.IO.Directory]::GetDirectories('$(ProgramFiles32)\Microsoft Visual Studio', 'PublicAssemblies', System.IO.SearchOption.AllDirectories))" />
+    </ItemGroup>
+
+    <ItemGroup>
       <RoslynAssemblies Include="%(InstalledToolVersion.Identity)\Roslyn\Microsoft.CodeAnalysis.dll" />
       <RoslynAssemblies Include="%(InstalledToolVersion.Identity)\Roslyn\Microsoft.CodeAnalysis.CSharp.dll" />
       <RoslynAssemblies Include="%(InstalledToolVersion.Identity)\Microsoft.CodeAnalysis.dll" />
       <RoslynAssemblies Include="%(InstalledToolVersion.Identity)\Microsoft.CodeAnalysis.CSharp.dll" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <rmT4AssemblyReferences Include="@(RoslynAssemblies)" Condition="Exists('%(FullPath)')" />
     </ItemGroup>
 
     <ItemGroup>
