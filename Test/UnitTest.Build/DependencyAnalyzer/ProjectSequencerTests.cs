@@ -91,7 +91,8 @@ namespace UnitTest.Build.DependencyAnalyzer {
                 IsDirty = false,
                 IncludeInBuild = true,
                 IsWebProject = false,
-                ProjectTypeGuids = new[] { WellKnownProjectTypeGuids.TestProject }
+                ProjectTypeGuids = new[] { WellKnownProjectTypeGuids.TestProject },
+                BuildReason = new BuildReason()
             };
 
             var p2 = new TestConfiguredProject(null) {
@@ -100,7 +101,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
                 IncludeInBuild = true,
                 IsWebProject = true,
                 ProjectTypeGuids = new[] { WellKnownProjectTypeGuids.WorkflowFoundation },
-
+                BuildReason = new BuildReason()
             };
 
             p1.AddResolvedDependency(null, p2);
@@ -208,7 +209,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
 
             var sequencer = new ProjectSequencer(NullLogger.Default, null);
             bool hasLoggedUpToDate = false;
-            sequencer.ApplyStateFile(file, "", null, p1, ref hasLoggedUpToDate);
+            sequencer.ApplyStateFile(file, string.Empty, p1, ref hasLoggedUpToDate);
 
             Assert.AreEqual(p1.BuildReason.Flags, BuildReasonTypes.ProjectOutputNotFound);
             Assert.IsTrue(p1.IsDirty);
