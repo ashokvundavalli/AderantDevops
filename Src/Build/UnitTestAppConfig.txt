@@ -1,3 +1,0 @@
-<assemblyBinding xmlns="urn:schemas-microsoft-com:asm.v1">
-    <probing privatePath="ModuleBin;Dependencies" />
-</assemblyBinding>
