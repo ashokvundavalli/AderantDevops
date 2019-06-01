@@ -116,17 +116,14 @@ namespace Aderant.Build.Tasks {
                 if (AllowInProcLookup) {
                     if (lookupCache.TryGetValue(VariableName, out value)) {
                         // Cache hit
-                        Log.LogMessage(MessageImportance.Low, "In process cache hit variable: " + VariableName);
                         return value;
                     }
                 }
 
                 if (Context.Variables.TryGetValue(VariableName, out value)) {
-                    Log.LogMessage(MessageImportance.Low, "Local context copy contained variable: " + VariableName);
                     return value;
                 }
 
-                Log.LogMessage(MessageImportance.Low, "Requesting variable from build service: " + VariableName);
                 return PipelineService.GetVariable(string.Empty, VariableName);
             }
 
