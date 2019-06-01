@@ -45,7 +45,7 @@ namespace Aderant.Build.Tasks {
         public override bool Execute() {
             if (lookupCache.IsEmpty) {
                 var results = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-                var props = new Dictionary<string, string> { { "IsVisualStudio2019OrHigher", "true" } };
+                var props = new Dictionary<string, string> { { "IsVisualStudio2019OrHigher", IsVisualStudio2019OrHigher.ToString() } };
 
                 const string target = "TextTransformFindReferencePaths";
 
