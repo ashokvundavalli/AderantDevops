@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿extern alias Buildv35;
+using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using Aderant.Build;
@@ -6,8 +8,11 @@ using Aderant.Build.Packaging;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.VersionControl.Model;
+using Buildv35::Microsoft.Build.Utilities;
+using Microsoft.Build.Framework;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ProtoBuf;
+using ProtoBuf.Meta;
 
 namespace UnitTest.Build {
     [TestClass]
@@ -92,7 +97,7 @@ namespace UnitTest.Build {
             metadata.PutVariable("1", "abc", "def");
 
             var instance = RoundTrip(metadata);
-            
+
             Assert.IsNotNull(instance);
             Assert.AreEqual(1, metadata.ScopedVariables["1"].Keys.Count);
         }

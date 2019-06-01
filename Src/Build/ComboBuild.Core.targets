@@ -23,21 +23,21 @@
   -->
   <Target Name="DispatchToInnerBuild" DependsOnTargets="$(DispatchToInnerBuildDependsOn)">
 
+    <HappyCat
+      BuildGroupId="$(BuildGroupId)"
+      TotalNumberOfBuildGroups="$(TotalNumberOfBuildGroups)">
+      <Output TaskParameter="PadLeft" PropertyName="PadLeft" />
+      <Output TaskParameter="PadRight" PropertyName="PadRight" />
+    </HappyCat>
+
     <PropertyGroup>
       <LogId>$([System.Guid]::NewGuid())</LogId>
-
-      <D1>$([MSBuild]::Divide($(BuildGroupId), $(TotalNumberOfBuildGroups)))</D1>
-      <D2>$([MSBuild]::Multiply($(D1), 100))</D2>
-      <D3>$([System.Math]::Round($(D2)))</D3>
-      <D4>$([MSBuild]::Subtract(100, $(D3)))</D4>
-
-      <PadLeft>$([System.String]::new(' ', $(D3)))</PadLeft>
-      <PadRight>$([System.String]::new(' ', $(D4)))</PadRight>
       <HappyCat>😸</HappyCat>
       <Icecream>🍦</Icecream>
     </PropertyGroup>
 
     <PrintBanner Text="Group $(BuildGroupId) / $(TotalNumberOfBuildGroups)" />
+
     <SetProgress
       CurrentOperation="Building Group"
       Activity="$(LogId)"

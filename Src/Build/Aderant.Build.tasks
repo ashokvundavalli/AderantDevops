@@ -149,4 +149,99 @@
       </Task>
     </UsingTask>
 
+    <UsingTask
+TaskName="GetBranchRootFromServerPath"
+TaskFactory="CodeTaskFactory"
+AssemblyFile="$(CodeTaskFactoryAssembly)">
+    <ParameterGroup>
+      <BuildProjectFolderPath ParameterType="System.String" Required="true" />
+      <BranchRoot ParameterType="System.String" Output="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System.Reflection" />
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.Diagnostics" />
+      <Code Type="Fragment" Language="cs">
+        int pos = BuildProjectFolderPath.IndexOf("Modules/", StringComparison.OrdinalIgnoreCase);
+        BranchRoot = BuildProjectFolderPath.Substring(0, pos);
+      </Code>
+    </Task>
+  </UsingTask>
+
+    <UsingTask
+    TaskName="XDocumentPoke"
+    TaskFactory="CodeTaskFactory"
+    AssemblyFile="$(CodeTaskFactoryAssembly)" >
+    <ParameterGroup>
+      <File ParameterType="System.String" Required="true" />
+      <Query ParameterType="System.String" Required="true" />
+      <Value ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Reference Include="System.Core" />
+      <Reference Include="System.Xml" />
+      <Reference Include="System.Xml.Linq" />
+      <Using Namespace="System" />
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.Linq" />
+      <Using Namespace="System.Xml.Linq" />
+      <Using Namespace="System.Text.RegularExpressions" />
+      <Code>
+        <![CDATA[
+var doc = XDocument.Load(File);
+
+var root = doc.Root;
+
+var parts = Query.Split('/');
+
+// Skip(1) is a bit of a hack - assumes the XPath includes the root element
+foreach (string element in parts.Skip(1)) {
+    var descendant = root.Descendants(element).FirstOrDefault();
+    if (descendant == null) {
+        descendant = new XElement(element);
+        root.Add(descendant);
+    }
+    root = descendant;
+}
+
+var contentToAdd = XElement.Parse(Value);
+
+if (!root.Descendants(contentToAdd.Name).Any()) {
+  root.Add(contentToAdd);
+}
+
+doc.Save(File);
+]]>
+      </Code>
+    </Task>
+  </UsingTask>
+
+    <UsingTask
+      Condition="$(CodeTaskFactoryAssembly) != ''"
+      TaskName="HappyCat"
+      TaskFactory="$(TargetTaskFactory)"
+      AssemblyFile="$(CodeTaskFactoryAssembly)" >
+      <ParameterGroup>
+        <BuildGroupId ParameterType="System.Int32" Required="true"/>
+        <TotalNumberOfBuildGroups ParameterType="System.Int32" Required="true"/>
+        <PadLeft ParameterType="System.String" Output="true" />
+        <PadRight ParameterType="System.String" Output="true" />
+      </ParameterGroup>
+      <Task>
+        <Using Namespace="System"/>
+        <Using Namespace="System.IO"/>
+        <Code>
+<![CDATA[
+           var d1 = (double)BuildGroupId / (double)TotalNumberOfBuildGroups;
+           var d2 = d1 * 100;
+           var d3 = (int)Math.Round(d2);
+           var d4 = 100 - d3;
+
+           PadLeft = new string(' ', d3);
+           PadRight = new string(' ', d4);
+]]>
+        </Code>
+      </Task>
+    </UsingTask>
+
 </Project>
