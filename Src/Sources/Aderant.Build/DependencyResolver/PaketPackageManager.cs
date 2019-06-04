@@ -46,19 +46,19 @@ namespace Aderant.Build.DependencyResolver {
 
         private void OnTraceEvent(object sender, Paket.Logging.Trace args) {
             if (args.Level == TraceLevel.Verbose) {
-                logger.Debug(args.Text);
+                logger.Debug(args.Text, null);
             }
 
             if (args.Level == TraceLevel.Info) {
-                logger.Info(args.Text);
+                logger.Info(args.Text, null);
             }
 
             if (args.Level == TraceLevel.Warning) {
-                logger.Warning(args.Text);
+                logger.Warning(args.Text, null);
             }
 
             if (args.Level == TraceLevel.Error) {
-                logger.Error(args.Text);
+                logger.Error(args.Text, null);
             }
         }
 
@@ -152,8 +152,10 @@ namespace Aderant.Build.DependencyResolver {
                 sources = RemoveSource(Constants.DefaultNuGetServer, sources);
             }
 
-            if (isMainGroup && isUsingMultipleInputFiles) {
-                //sources = AddSource(Constants.DefaultNuGetServer, sources);
+            if (isMainGroup && !isUsingMultipleInputFiles) {
+                if (group.Sources.Any(s => object.Equals(s.NuGetType, PackageSources.KnownNuGetSources.OfficialNuGetGallery))) {
+                    sources = AddSource(Constants.DefaultNuGetServer, sources);
+                }
             }
 
             if (addDatabasePackageUrl) {
@@ -166,8 +168,7 @@ namespace Aderant.Build.DependencyResolver {
 
         private static InstallOptions CreateInstallOptions(IEnumerable<IDependencyRequirement> requirements, KeyValuePair<Domain.GroupName, DependenciesGroup> groupEntry, DependenciesGroup group) {
             bool isStrict = requirements.OfType<IDependencyGroup>()
-                .Where(
-                    s => s.DependencyGroup != null && s.DependencyGroup.GroupName == groupEntry.Key.Name)
+                .Where(s => s.DependencyGroup != null && s.DependencyGroup.GroupName == groupEntry.Key.Name)
                 .Any(s => s.DependencyGroup.Strict);
 
             InstallOptions options = group.Options;
@@ -358,8 +359,9 @@ namespace Aderant.Build.DependencyResolver {
             return file.Groups.Select(s => s.Key.Name);
         }
 
-        public void Parse(string lines) {
+        public void SetDependenciesFile(string lines) {
             this.dependenciesFile = Paket.DependenciesFile.FromSource(this.root, lines);
+            this.dependenciesFile.Save();
         }
     }
 }

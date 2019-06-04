@@ -81,7 +81,7 @@ nuget Gotta.Have.It 4.20 ci";
                 GetTestDirectoryPath(),
                 new Mock<IFileSystem2>().Object,
                 NullLogger.Default)) {
-                packageManager.Parse(lines);
+                packageManager.SetDependenciesFile(lines);
 
                 DependencyGroup dependencyGroup = packageManager.GetDependencies("Test");
 
@@ -112,6 +112,59 @@ nuget Gotta.Have.It 4.20 ci";
 
             Assert.AreEqual($"source {Constants.PackageServerUrl}", packageManagerLines[0]);
             Assert.AreEqual($"source {Constants.DatabasePackageUri}", packageManagerLines[1]);
+        }
+
+        [TestMethod]
+        public void When_a_single_module_is_in_the_build_official_nuget_source_allowed() {
+            string lines = @"
+source https://www.nuget.org/api/v2
+nuget ThePackageFromNuget";
+
+            var fs = new Mock<IFileSystem2>();
+            fs.Setup(s => s.Root).Returns(GetTestDirectoryPath());
+            string[] packageManagerLines;
+
+            var request = new ResolverRequest(NullLogger.Default);
+            request.AddModule("C:\\SingleModule");
+
+            using (var packageManager = new PaketPackageManager(GetTestDirectoryPath(), fs.Object, new NullLogger())) {
+                packageManager.SetDependenciesFile(lines);
+
+                packageManager.Add(
+                    new[] {
+                        DependencyRequirement.Create("SomeOtherPackage", "Main"),
+                    },
+                    request);
+
+                packageManagerLines = packageManager.Lines;
+            }
+
+            Assert.AreEqual(4, packageManagerLines.Length);
+            Assert.AreEqual($"source {Constants.DefaultNuGetServer}", packageManagerLines[1]);
+        }
+
+        [TestMethod]
+        public void When_multiple_modules_in_the_build_official_nuget_source_is_not_allowed() {
+            var fs = new Mock<IFileSystem2>();
+            fs.Setup(s => s.Root).Returns(GetTestDirectoryPath());
+            string[] packageManagerLines;
+
+            var request = new ResolverRequest(NullLogger.Default);
+            request.AddModule("C:\\Module1");
+            request.AddModule("C:\\Module2");
+
+            using (var packageManager = new PaketPackageManager(GetTestDirectoryPath(), fs.Object, new NullLogger())) {
+                packageManager.Add(
+                    new[] {
+                        DependencyRequirement.Create("SomeOtherPackage", "Main"),
+                    },
+                    request);
+
+                packageManagerLines = packageManager.Lines;
+            }
+
+            Assert.AreEqual(2, packageManagerLines.Length);
+            Assert.AreNotEqual($"source {Constants.DefaultNuGetServer}", packageManagerLines[1]);
         }
 
         private string GetTestDirectoryPath() {

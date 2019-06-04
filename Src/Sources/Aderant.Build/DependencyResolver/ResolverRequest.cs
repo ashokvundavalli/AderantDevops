@@ -96,10 +96,18 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         public virtual void AddModule(string fullPath) {
-            Logger.Info($"Adding module {fullPath}");
+            Logger.Info($"Adding module {fullPath}", null);
 
             if (!Path.IsPathRooted(fullPath)) {
                 throw new InvalidOperationException("Path must be rooted");
+            }
+
+            fullPath = PathUtility.TrimTrailingSlashes(fullPath);
+
+            foreach (var entry in modules) {
+                if (string.Equals(entry.Item.FullPath, fullPath, StringComparison.OrdinalIgnoreCase)) {
+                    return;
+                }
             }
 
             string name = PathUtility.GetFileName(fullPath);
