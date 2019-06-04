@@ -129,9 +129,14 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
       <TrackFileAccess Condition=" '$(TrackFileAccess)' =='' ">false</TrackFileAccess>
     </PropertyGroup>
 
+    <ItemGroup>
+      <ExcludedInputPaths Include="$(MSBuildProgramFiles32);$(WinDir)\ASSEMBLY;$(WinDir)\MICROSOFT.NET" />
+    </ItemGroup>
+
     <!-- Do the Transform, for newer version customization builds, where ExpertSourceDirectory is fed in CustomizationBuilder.exe -->
     <Aderant.TextTransform.Tasks.Transform
       Condition="'$(ExpertSourceDirectory)' != ''"
+
       SolutionDirectory="$(SolutionDirectoryPath)"
       TemplatesToProcess="@(rmT4TransformItems)"
       ReferencePaths="@(AssemblyReferencePaths)"
@@ -143,9 +148,9 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
       MinimalRebuildFromTracking="$(TransformOutOfDateOnly)"
       OverwriteReadOnlyOutputFiles="true"
       TempDirectoryOverride="$(ModuleBuildTempDirectory)"
-      SearchPaths="@(SearchPaths)"
-      EnvironmentVariables="$(EnvironmentVariableProperties)">
-
+      EnvironmentVariables="$(EnvironmentVariableProperties)"
+      ExcludedInputPaths="@(ExcludedInputPaths)"
+      SearchPaths="@(SearchPaths)">
       <Output ItemName="GeneratedFiles"
               TaskParameter="GeneratedFiles" />
       <Output ItemName="NonGeneratedFiles"
@@ -165,8 +170,8 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
         TrackFileAccess="$(TrackFileAccess)"
         MinimalRebuildFromTracking="$(TransformOutOfDateOnly)"
         OverwriteReadOnlyOutputFiles="true"
-        TempDirectoryOverride="$(ModuleBuildTempDirectory)">
-
+        TempDirectoryOverride="$(ModuleBuildTempDirectory)"
+        ExcludedInputPaths="@(ExcludedInputPaths)">
       <Output ItemName="GeneratedFiles"
               TaskParameter="GeneratedFiles" />
       <Output ItemName="NonGeneratedFiles"
