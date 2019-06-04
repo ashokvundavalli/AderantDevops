@@ -424,7 +424,6 @@ namespace Aderant.Build.Packaging {
         }
 
         public BuildStateMetadata GetBuildStateMetadata(string[] bucketIds, string[] tags, string dropLocation, CancellationToken token = default(CancellationToken)) {
-            //System.Diagnostics.Debugger.Launch();
             if (bucketIds != null && tags != null && bucketIds.Length > 0 && tags.Length != 0) {
                 if (bucketIds.Length != tags.Length) {
                     // The two vectors must have the same length
@@ -435,11 +434,6 @@ namespace Aderant.Build.Packaging {
                         "SourceFiles"));
                 }
             }
-
-            //var s = bucketIds.ToList();
-            //    s.RemoveAt(Array.IndexOf(tags, "Customization"));
-            //    s.RemoveAt(Array.IndexOf(tags, "Billing"));
-            //bucketIds = s.ToArray();
 
             logger.Info($"Querying prebuilt artifacts from: {dropLocation}");
 

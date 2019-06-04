@@ -78,7 +78,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
             }
 
             logger = resolverRequest.Logger;
-            logger.Info("Resolving packages...");
+            logger.Info("Resolving packages...", null);
 
             if (resolverRequest.Modules.Count() == 1) {
                 SingleModuleRestore(resolverRequest, requirements, cancellationToken);
@@ -119,7 +119,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
             var grouping = requirements.GroupBy(requirement => resolverRequest.GetDependenciesDirectory(requirement));
 
             foreach (var group in grouping) {
-                logger.Info("Resolving packages for path: " + group.Key);
+                logger.Info("Resolving packages for path: " + group.Key, null);
 
                 PackageRestore(resolverRequest, group.Key, new PhysicalFileSystem(), group.ToList(), cancellationToken);
             }
