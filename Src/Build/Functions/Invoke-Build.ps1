@@ -447,6 +447,8 @@ function AssignSwitches() {
         $script:Target = "CreatePlan"
     }
 
+    Write-Information ("VerbosePreference " + $global:VerbosePreference)
+
     if ($boundParameters.ContainsKey("Verbose")) {
         if ($boundParameters["Verbose"].IsPresent) {
             $context.BuildMetadata.DebugLoggingEnabled = $true
