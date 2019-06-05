@@ -447,7 +447,7 @@ function AssignSwitches() {
         $script:Target = "CreatePlan"
     }
 
-    Write-Information ("VerbosePreference " + $global:VerbosePreference)
+        Write-Information ("VerbosePreference2 " + $boundParameters)
 
     if ($boundParameters.ContainsKey("Verbose")) {
         if ($boundParameters["Verbose"].IsPresent) {
