@@ -181,10 +181,6 @@ function CreateToolArgumentString($context, $remainingArgs) {
             $set.Add("/clp:verbosity=minimal")
         }
 
-        $v = $Env:system_debug
-        Write-Information "zzzzzz $v"
-
-
         if ($null -ne $context.BuildMetadata) {
             if ($context.BuildMetadata.DebugLoggingEnabled) {
                 Write-Information "Debug Logging Enabled"
