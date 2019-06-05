@@ -12,7 +12,7 @@
         /// <value>The group name.</value>
         string Group { get; }
 
-        VersionRequirement VersionRequirement { get; }
+        VersionRequirement VersionRequirement { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether this instance can override (blat) any constraint expression in your dependency file.

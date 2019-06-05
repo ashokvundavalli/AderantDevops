@@ -53,7 +53,7 @@ namespace Aderant.Build.DependencyResolver {
         /// Gets or sets the version required.
         /// </summary>
         /// <value>The version requirement.</value>
-        public VersionRequirement VersionRequirement { get; protected set; }
+        public VersionRequirement VersionRequirement { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether this instance can override (blat) any constraint expression in your dependency
@@ -105,6 +105,10 @@ namespace Aderant.Build.DependencyResolver {
                 hashCode = (hashCode * 397) ^ (VersionRequirement != null ? VersionRequirement.GetHashCode() : 0);
                 return hashCode;
             }
+        }
+
+        public override string ToString() {
+            return $"{GetType().Name}: Name - {Name}, Group - {Group}.";
         }
 
         public static IDependencyRequirement Create(ExpertModule reference) {

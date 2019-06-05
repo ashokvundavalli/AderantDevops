@@ -44,6 +44,10 @@ namespace Aderant.Build.DependencyAnalyzer {
                     if (!string.IsNullOrEmpty(module.Branch)) {
                         moduleElement.Add(new XAttribute("Path", module.Branch));
                     }
+
+                    if (module.ReplaceVersionConstraint) {
+                        moduleElement.Add(new XAttribute(nameof(ExpertModule.ReplaceVersionConstraint), module.ReplaceVersionConstraint));
+                    }
                 }
 
                 moduleElement.Add(new XAttribute("ExcludeFromPackaging", module.ExcludeFromPackaging));
@@ -153,6 +157,8 @@ namespace Aderant.Build.DependencyAnalyzer {
             SetPropertyValue("Target", value => expertModule.Target = value);
 
             SetPropertyValue("ReplicateToDependencies", value => expertModule.ReplicateToDependencies = ToBoolean(value));
+
+            SetPropertyValue("ReplaceVersionConstraint", value => expertModule.ReplaceVersionConstraint = ToBoolean(value));
 
             SetPropertyValue("DependencyGroup", value => expertModule.DependencyGroup = value);
 

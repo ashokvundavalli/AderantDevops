@@ -17,6 +17,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         private IList<XAttribute> customAttributes;
         private ModuleType? type;
         private bool? replicateToDependencies = null;
+        private bool? replaceVersionConstraints = null;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ExpertModule"/> class.
@@ -202,6 +203,15 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         public bool HasReplicateToDependenciesValue {
             get { return replicateToDependencies != null; }
+        }
+
+        public bool ReplaceVersionConstraint {
+            get {
+                return replaceVersionConstraints ?? false;
+            }
+            set {
+                replaceVersionConstraints = value;
+            }
         }
 
         internal VersionRequirement VersionRequirement {

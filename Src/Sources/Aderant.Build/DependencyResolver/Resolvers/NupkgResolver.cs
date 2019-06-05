@@ -30,7 +30,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
         public IEnumerable<IDependencyRequirement> GetDependencyRequirements(ResolverRequest resolverRequest, ExpertModule module) {
             logger = resolverRequest.Logger;
             logger.Info("Calculating dependency requirements for {0}", module.Name);
-
+            
             string moduleDirectory = resolverRequest.GetModuleDirectory(module);
 
             if (!string.IsNullOrEmpty(moduleDirectory)) {
@@ -64,6 +64,8 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
                             if (replicationEnabled) {
                                 SetReplicationFlag(resolverRequest, requirement);
                             }
+
+                            ReplaceVersionConstraint(resolverRequest, requirement);
 
                             yield return requirement;
                         }
@@ -103,6 +105,16 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
                     } else {
                         requirement.ReplicateToDependencies = true;
                     }
+                }
+            }
+        }
+
+        private static void ReplaceVersionConstraint(ResolverRequest resolverRequest, IDependencyRequirement requirement) {
+            var expertModule = resolverRequest.ModuleFactory?.GetModule(requirement.Name);
+            if (expertModule != null) {
+                if (expertModule.ReplaceVersionConstraint && expertModule.VersionRequirement != null) {
+                    requirement.VersionRequirement = expertModule.VersionRequirement;
+                    requirement.ReplaceVersionConstraint = true;
                 }
             }
         }

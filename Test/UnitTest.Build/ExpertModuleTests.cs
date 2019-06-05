@@ -59,6 +59,38 @@ CustomAttribute='true' />"));
         }
 
         [TestMethod]
+        public void ReplaceVersionConstraintAttributeCanBeLoaded() {
+            var manifest = XElement.Parse($@"<Module ExcludeFromPackaging=""false"" 
+Name=""TestModule"" 
+GetAction=""NuGet"" 
+Version=""13.0.0-build4966"" 
+ReplaceVersionConstraint=""true""/>");
+
+            var module = new ExpertModule();
+            IList<XAttribute> customAttributes;
+            ExpertModuleMapper.MapFrom(manifest, module, out customAttributes);
+            
+            Assert.AreEqual("TestModule", module.Name);
+            Assert.IsTrue(module.ReplaceVersionConstraint);
+        }
+
+        [TestMethod]
+        public void ReplaceVersionConstraintPropertyCanBeSaved() {
+            var module = new ExpertModule("TestModule") {
+                ReplaceVersionConstraint = true,
+                GetAction = GetAction.NuGet
+            };
+
+            var mapper = new ExpertModuleMapper();
+            var element = mapper.Save(new[] {module}, true);
+            var moduleElement = element.Element("Module");
+            var attribute = moduleElement?.Attribute(nameof(ExpertModule.ReplaceVersionConstraint));
+
+            Assert.IsNotNull(attribute);
+            Assert.AreEqual("true", attribute?.Value);
+        }
+
+        [TestMethod]
         public void Default_dependency_group_is_main() {
             var module = new ExpertModule();
 
