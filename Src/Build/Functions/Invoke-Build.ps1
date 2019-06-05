@@ -447,7 +447,9 @@ function AssignSwitches() {
         $script:Target = "CreatePlan"
     }
 
-        Write-Information ("VerbosePreference2 " + $boundParameters)
+    foreach ($item in $boundParameters.GetEnumerator()) {
+        Write-Information ("VerbosePreference2 " + $item)
+    }
 
     if ($boundParameters.ContainsKey("Verbose")) {
         if ($boundParameters["Verbose"].IsPresent) {
