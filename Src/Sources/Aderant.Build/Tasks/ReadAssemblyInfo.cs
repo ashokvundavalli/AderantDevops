@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading;
 using Aderant.Build.Utilities;
 using Microsoft.Build.Framework;
@@ -107,14 +108,30 @@ namespace Aderant.Build.Tasks {
         private void InitializeParseTextMethod() {
             string pathToBuildTools = ToolLocationHelper.GetPathToBuildTools(ToolLocationHelper.CurrentToolsVersion);
             var locator = new RoslynLocator(pathToBuildTools);
-
+            
             var assembly = locator.GetCodeAnalysisCSharpAssembly();
 
             ErrorUtilities.IsNotNull(assembly, nameof(assembly));
 
-            parseTextMethod = assembly.GetType("Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree")
+            var methods = assembly.GetType("Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree")
                 .GetMethods(BindingFlags.Public | BindingFlags.Static)
-                .FirstOrDefault(x => x.Name == "ParseText" && x.GetParameters()[0].ParameterType == typeof(string));
+                .Where(x => x.Name == "ParseText");
+
+            foreach (var method in methods) {
+                var parameters = method.GetParameters();
+
+                if (parameters.Length == 5) {
+                    if (parameters[0].ParameterType == typeof(string) &&
+                        parameters[1].ParameterType.Name == "CSharpParseOptions" &&
+                        parameters[2].ParameterType == typeof(string) &&
+                        parameters[3].ParameterType == typeof(Encoding) &&
+                        parameters[4].ParameterType == typeof(CancellationToken)) {
+                        parseTextMethod = method;
+                        return;
+                    } 
+                        
+                }
+            }
         }
 
         private static void SetMetadata(TaskItem taskItem, Version version) {
