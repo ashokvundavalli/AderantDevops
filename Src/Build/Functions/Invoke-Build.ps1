@@ -441,13 +441,14 @@ function AssignSwitches() {
     $switches.RestrictToProvidedPaths = $RestrictToProvidedPaths.IsPresent
     $switches.ExcludeTestProjects = $ExcludeTestProjects.IsPresent
 
-    if ($PSCmdLet.MyInvocation.BoundParameters.ContainsKey("WhatIf")) {
+    $boundParameters = $PSCmdLet.MyInvocation.BoundParameters
+
+    if ($boundParameters.ContainsKey("WhatIf")) {
         $script:Target = "CreatePlan"
     }
 
-    if ($PSCmdLet.MyInvocation.BoundParameters.ContainsKey("Verbose")) {
-        $value = $PSCmdLet.MyInvocation.BoundParameters["Verbose"]
-        if ($value) {
+    if ($boundParameters.ContainsKey("Verbose")) {
+        if ($boundParameters["Verbose"].IsPresent) {
             $context.BuildMetadata.DebugLoggingEnabled = $true
         }
     }
