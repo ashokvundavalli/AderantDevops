@@ -14,8 +14,9 @@
     <BuildScriptsDirectory Condition="'$(BuildScriptsDirectory)' != '' and !HasTrailingSlash('$(BuildScriptsDirectory)')">$(BuildScriptsDirectory)\</BuildScriptsDirectory>
 
     <!-- Inject per CSharp project overrides. This target is imported once for each CSharp project and allows us access to project level variables -->
-    <CustomAfterMicrosoftCSharpTargets>$(BuildScriptsDirectory)Aderant.CSharp.targets</CustomAfterMicrosoftCSharpTargets>
+    <CustomBeforeMicrosoftCommonTargets Condition="'$(IsCustomBuild)' != 'true'">$(BuildScriptsDirectory)Aderant.CustomBeforeMicrosoftCommon.targets</CustomBeforeMicrosoftCommonTargets>
     <CustomAfterMicrosoftCommonTargets Condition="'$(IsCustomBuild)' != 'true'">$(BuildScriptsDirectory)Aderant.CustomAfterMicrosoftCommon.targets</CustomAfterMicrosoftCommonTargets>
+    <CustomAfterMicrosoftCSharpTargets>$(BuildScriptsDirectory)Aderant.CSharp.targets</CustomAfterMicrosoftCSharpTargets>
     <CustomAfterWixTargets Condition="'$(IsCustomBuild)' != 'true'">$(BuildScriptsDirectory)Aderant.Wix.Extensions.targets</CustomAfterWixTargets>
 
     <BuildToolsDirectory Condition="'$(BuildToolsDirectory)' == ''">$(BuildScriptsDirectory)..\Build.Tools\</BuildToolsDirectory>

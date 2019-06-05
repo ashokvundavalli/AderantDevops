@@ -377,6 +377,7 @@
         BuildFlavor=$(BuildFlavor);
         ArtifactStagingDirectory=$(ArtifactStagingDirectory);
         CustomAfterMicrosoftCSharpTargets=$(CustomAfterMicrosoftCSharpTargets);
+        CustomBeforeMicrosoftCommonTargets=$(CustomBeforeMicrosoftCommonTargets);
         CustomAfterMicrosoftCommonTargets=$(CustomAfterMicrosoftCommonTargets);
         CompileBuildSystem=false;
         $(WixProperties)
