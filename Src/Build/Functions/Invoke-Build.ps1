@@ -181,6 +181,10 @@ function CreateToolArgumentString($context, $remainingArgs) {
             $set.Add("/clp:verbosity=minimal")
         }
 
+        $v = $Env:system_debug
+        Write-Information "zzzzzz $v"
+
+
         if ($null -ne $context.BuildMetadata) {
             if ($context.BuildMetadata.DebugLoggingEnabled) {
                 Write-Information "Debug Logging Enabled"
@@ -447,12 +451,9 @@ function AssignSwitches() {
         $script:Target = "CreatePlan"
     }
 
-    foreach ($item in $boundParameters.GetEnumerator()) {
-        Write-Information ("VerbosePreference2 " + $item)
-    }
-
     if ($boundParameters.ContainsKey("Verbose")) {
         if ($boundParameters["Verbose"].IsPresent) {
+            Write-Information "Enabling debug logging"
             $context.BuildMetadata.DebugLoggingEnabled = $true
         }
     }
