@@ -38,6 +38,9 @@ function Get-AmbientBuildMetadata {
             $buildInfo.BuildSourcesDirectory = Get-EnvironmentVariable 'BUILD_SOURCESDIRECTORY'
 
             if (Get-EnvironmentVariable 'SYSTEM_DEBUG' -eq "true") {
+                Write-Information "zzzzzzzzzzzzz"
+                Write-Information ($Env:SYSTEM_DEBUG)
+                Write-Information (Get-EnvironmentVariable 'SYSTEM_DEBUG')
                 #$buildInfo.DebugLoggingEnabled = $true
             }
 
