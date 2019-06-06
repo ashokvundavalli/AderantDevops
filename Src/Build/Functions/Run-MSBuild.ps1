@@ -106,7 +106,7 @@ function Exec-CommandCore([string]$command, [string]$commandArgs, [switch]$useCo
       $out = $process.StandardOutput
       while (-not $out.EndOfStream) {
         $line = $out.ReadLine()
-        Write-Output $line
+        Write-Information $line
       }
     }
 
@@ -122,8 +122,7 @@ function Exec-CommandCore([string]$command, [string]$commandArgs, [switch]$useCo
     if ($process.ExitCode -ne 0) {
         throw "Command failed to execute successfully: $command $commandArgs"
     }
-  }
-  finally {
+  } finally {
     # If we didn't finish then an error occurred or the user hit ctrl-c.  Either
     # way kill the process
     if (-not $finished) {
@@ -149,12 +148,12 @@ function AttachDebuger([System.Diagnostics.Process]$parentProcess, [int]$id) {
 
 # Lets the process re-use the current console.
 # This means items like colored output will function correctly.
-function Exec-Console([string]$command, [string]$commandArgs, [HashTable]$variables, [System.Diagnostics.Process]$parentProcess) {
+function Exec-Console([string]$command, [string]$commandArgs, [HashTable]$variables, [System.Diagnostics.Process]$parentProcess, [bool]$isDesktopBuild) {
     Set-StrictMode -Version 'Latest'
-    Exec-CommandCore -command $command -commandArgs $commandArgs -useConsole:$true -variables:$variables -parentProcess:$parentProcess
+    Exec-CommandCore -command $command -commandArgs $commandArgs -useConsole:$isDesktopBuild -variables:$variables -parentProcess:$parentProcess
 }
 
-function Run-MSBuild([string]$projectFilePath, [string]$buildArgs = "", [string]$logFileName = "") {
+function Run-MSBuild([string]$projectFilePath, [string]$buildArgs = "", [string]$logFileName = "", [bool]$isDesktopBuild = $true) {
     Set-StrictMode -Version 'Latest'
 
     $type = [Type]::GetType("System.Management.Automation.PsUtils, System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35")
@@ -224,7 +223,7 @@ function Run-MSBuild([string]$projectFilePath, [string]$buildArgs = "", [string]
     }
 
     try {
-        Exec-Console $tool "$projectFilePath $buildArgs" $environmentBlock $process
+        Exec-Console $tool "$projectFilePath $buildArgs" $environmentBlock $process $isDesktopBuild
     } finally {
         if (Test-Path $logFileName) {
             Write-Host "##vso[task.uploadfile]$logFileName"

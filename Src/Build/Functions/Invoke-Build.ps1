@@ -680,7 +680,7 @@ function global:Invoke-Build2 {
 
         $global:LASTEXITCODE = 0
 
-        Run-MSBuild "$($context.BuildScriptsDirectory)ComboBuild.targets" "/target:$($Target) /p:ContextEndpoint=$contextEndpoint /p:SKIP_BUILD_SYSTEM_COMPILE=true $args" -logFileName $context.LogFile
+        Run-MSBuild "$($context.BuildScriptsDirectory)ComboBuild.targets" "/target:$($Target) /p:ContextEndpoint=$contextEndpoint /p:SKIP_BUILD_SYSTEM_COMPILE=true $args" -logFileName $context.LogFile -IsDesktopBuild $context.IsDesktopBuild
 
         $succeeded = $true
 

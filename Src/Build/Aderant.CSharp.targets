@@ -144,8 +144,10 @@
   <Target Name="AssignPropertiesForCustomSearchPaths">
     <PropertyGroup>
       <!-- Walk up and find the solution root -->
-      <RootFolder>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', 'Paket.Dependencies'))</RootFolder>
+      <RootFolder>$(SolutionPath)</RootFolder>
+      <RootFolder Condition="'$(RootFolder)' == ''">$(SolutionRoot)</RootFolder>
       <RootFolder Condition="'$(RootFolder)' == ''">$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', 'dir.proj'))</RootFolder>
+      <RootFolder Condition="'$(RootFolder)' == ''">$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', 'Paket.Dependencies'))</RootFolder>
 
       <CopyLocalDependenciesWhenParentReferenceInGac>false</CopyLocalDependenciesWhenParentReferenceInGac>
       <DoNotCopyLocalIfInGac>true</DoNotCopyLocalIfInGac>
@@ -159,9 +161,9 @@
 
 
   <PropertyGroup>
-    <!--PERF: Avoid looking for winmd files.
-          Put the most likely extensions first for reference resolution speed.
-      -->
+     <!--PERF: Avoid looking for winmd files.
+         Put the most likely extensions first for reference resolution speed.
+     -->
     <AllowedReferenceAssemblyFileExtensions>
       .dll;
       .exe
@@ -171,8 +173,8 @@
     <!--
         These are the extensions that reference resolution will consider when looking for files related
         to resolved references. Here we ignore pdb and xml for test projets to avoid pulling in that baggage.
-        A dummy name is provided to fool the ResolveAssemblyReference task.
-      -->
+        A dummy name is provided to fool the ResolveAssemblyReference task
+    -->
     <AllowedReferenceRelatedFileExtensions Condition=" $(ProjectTypeGuids.Contains('3AC096D0-A1C2-E12C-1390-A8335801FDAB')) == 'true' ">
       _
     </AllowedReferenceRelatedFileExtensions>
@@ -202,6 +204,9 @@
 
     <PropertyGroup>
       <ProgramFiles32>$(MSBuildProgramFiles32)</ProgramFiles32>
+      <_VSSDKSuffix>VSSDK\VisualStudioIntegration\Common\Assemblies\v4.0</_VSSDKSuffix>
+      <_PublicAssembliesSuffix>Common7\IDE\PublicAssemblies</_PublicAssembliesSuffix>
+      <_VS2017InstallDirectory>$(ProgramFiles32)\Microsoft Visual Studio\2017\</_VS2017InstallDirectory>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -215,8 +220,10 @@
         @(AssemblySearchDirectories);
         $(AssemblySearchPaths);
         $(ReferencePath);
-        $(ProgramFiles32)\Microsoft Visual Studio\2017\Enterprise\VSSDK\VisualStudioIntegration\Common\Assemblies\v4.0;
-        $(ProgramFiles32)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\PublicAssemblies;
+        $(_VS2017InstallDirectory)Enterprise\$(_VSSDKSuffix);
+        $(_VS2017InstallDirectory)Enterprise\$(_PublicAssembliesSuffix);
+        $(_VS2017InstallDirectory)Professional\$(_VSSDKSuffix);
+        $(_VS2017InstallDirectory)Professional\$(_PublicAssembliesSuffix);
       </AssemblySearchPaths>
 
     </PropertyGroup>
