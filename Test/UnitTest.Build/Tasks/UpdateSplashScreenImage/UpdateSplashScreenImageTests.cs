@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
 using Aderant.Build;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -20,7 +19,6 @@ namespace UnitTest.Build.Tasks.UpdateSplashScreenImage {
                 "Expert_SplashScreen_Domain Customization Wizard.png");
 
             updater.Version = "Version 8 (Development)";
-            updater.Year = 2018.ToString();
             updater.UpdateSplashScreen(
                 image,
                 "My Awesome Product",
