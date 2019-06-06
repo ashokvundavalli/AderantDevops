@@ -63,6 +63,7 @@ namespace Aderant.Build.Analyzer {
                     new CodeQualitySessionTransactionRule(),
                     new CodeQualitySqlQueryRule(),
                     new CodeQualityNewExceptionRule(),
+                    new CodeQualityMathRoundRule(), 
 
                     // IDisposable
                     new IDisposableClassRule(),

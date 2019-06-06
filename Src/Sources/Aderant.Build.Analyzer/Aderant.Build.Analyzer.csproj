@@ -84,6 +84,7 @@
     <Compile Include="Lists\QueryAll\QueryAllWhitelists.cs" />
     <Compile Include="Rules\CodeQuality\CodeQualityDbConnectionStringRule.cs" />
     <Compile Include="Rules\CodeQuality\CodeQualityDefaultTransactionScopeRule.cs" />
+    <Compile Include="Rules\CodeQuality\CodeQualityMathRoundRule.cs" />
     <Compile Include="Rules\CodeQuality\CodeQualityNewExceptionRule.cs" />
     <Compile Include="Rules\CodeQuality\CodeQualitySessionTransactionRule.cs" />
     <Compile Include="Rules\CodeQuality\CodeQualitySqlQueryRule.cs" />

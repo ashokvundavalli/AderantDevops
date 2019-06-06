@@ -1,7 +1,7 @@
 ﻿[CmdletBinding()]
 param(
     [Parameter(Mandatory=$false)][int]$agentsToProvision = 0,
-    [bool]$removeAllAgents = $true,
+    [Switch]$removeAllAgents = $true,
     [Parameter(Mandatory=$false)][string]$agentArchive,
     [Parameter(Mandatory=$false)][string]$tfsHost = "https://tfs.aderant.com/tfs",
     [Parameter(Mandatory=$false)][string]$agentPool,
@@ -46,8 +46,7 @@ process {
     if ([string]::IsNullOrWhiteSpace($agentArchive)) {
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
         $ProgressPreference = 'SilentlyContinue'
-        $agentArchive = "$env:SystemDrive\Scripts\vsts-agent.zip"
-        #Invoke-WebRequest "https://github.com/Microsoft/azure-pipelines-agent/releases/download/v2.119.1/vsts-agent-win7-x64-2.119.1.zip" -OutFile $agentArchive
+        $agentArchive = "$env:SystemDrive\Scripts\vsts-agent.zip"        
         Invoke-WebRequest "https://vstsagentpackage.azureedge.net/agent/2.141.2/vsts-agent-win-x64-2.141.2.zip" -OutFile $agentArchive
     }
 
@@ -56,215 +55,29 @@ process {
     }
 
     # Based on https://github.com/docker/docker/blob/master/pkg/namesgenerator/names-generator.go
+    [string]$agentPrefixes = "$PSScriptRoot\Agents\Prefixes.txt"
+    [string]$agentSuffixes = "$PSScriptRoot\Agents\Suffixes.txt"
 
-    [string]$agentPrefixes = '\\SVNAS301.ap.aderant.com\internal\team\DevOps\Agents\Prefixes.txt'
-    [string]$agentSuffixes = '\\SVNAS301.ap.aderant.com\internal\team\DevOps\Agents\Suffixes.txt'
-
-    if ((Test-Path -Path $agentPrefixes) -and (Test-Path -Path $agentSuffixes)) {
-        [string[]]$prefixes = [System.IO.File]::ReadAllLines($agentPrefixes)
-        [string[]]$suffixes = [System.IO.File]::ReadAllLines($agentSuffixes)
-    } else {
-        [string[]]$prefixes = @(
-            "admiring",
-            "adoring",
-            "affectionate",
-            "agitated",
-            "amazing",
-            "angry",
-            "awesome",
-            "backstabbing",
-            "berserk",
-            "big",
-            "blessed",
-            "boring",
-            "bothersome",
-            "cached",
-            "clever",
-            "cocky",
-            "compassionate",
-            "condescending",
-            "cranky",
-            "dank",
-            "daijoubu",
-            "derelict",
-            "desperate",
-            "determined",
-            "disappointed",
-            "distracted",
-            "disguised",
-            "dreamy",
-            "drunk",
-            "eager",
-            "ecstatic",
-            "elastic",
-            "elated",
-            "elegant",
-            "elusive",
-            "evil",
-            "fervent",
-            "flaming",
-            "focused",
-            "furious",
-            "gangsta",
-            "gigantic",
-            "gloomy",
-            "goofy",
-            "grave",
-            "happy",
-            "hardcore",
-            "high",
-            "hopeful",
-            "hungry",
-            "infallible",
-            "intoxicated",
-            "jolly",
-            "jovial",
-            "kawaii",
-            "kickass",
-            "lonely",
-            "lost",
-            "loving",
-            "mad",
-            "majestic",
-            "maniacal",
-            "modest",
-            "naughty",
-            "nauseous",
-            "nostalgic",
-            "numberwang",
-            "oscillating",
-            "peaceful",
-            "pedantic",
-            "pensive",
-            "prickly",
-            "psychopathic",
-            "psychedelic",
-            "quality",
-            "reluctant",
-            "reverent",
-            "romantic",
-            "sad",
-            "serene",
-            "sharp",
-            "sick",
-            "silly",
-            "sleepy",
-            "small",
-            "stoic",
-            "stupefied",
-            "stylish",
-            "surprised",
-            "suspicious",
-            "swagalicious",
-            "swish",
-            "tender",
-            "thirsty",
-            "tiny",
-            "trusting",
-            "unsuspecting",
-            "vulnerable",
-            "zen"
-        )
-
-        [string[]]$suffixes = @(
-            "aardvark",
-            "ai-chan",
-            "ant",
-            "albatross",
-            "alligator",
-            "badger",
-            "bee",
-            "bread",
-            "bug",
-            "camel",
-            "cake",
-            "cat",
-            "cheetah",
-            "chicken",
-            "chimpanzee",
-            "chancellor",
-            "chupacabra",
-            "crayfish",
-            "crocodile",
-            "cthulhu",
-            "deer",
-            "dog",
-            "dolphin",
-            "doge",
-            "donkey",
-            "dragon",
-            "duck",
-            "dumpling",
-            "eagle",
-            "elephant",
-            "fish",
-            "fly",
-            "fox",
-            "frog",
-            "giraffe",
-            "goat",
-            "godzilla",
-            "goldfish",
-            "goose",
-            "hamster",
-            "hippopotamus",
-            "homura",
-            "horse",
-            "ibex",
-            "jello",
-            "kangaroo",
-            "kiev",
-            "kitten",
-            "kyubey"
-            "lion",
-            "lobster",
-            "madoka",
-            "memelord",
-            "monkey",
-            "nekomimi",
-            "octopus",
-            "owl",
-            "ocelot",
-            "ox",
-            "pancake",
-            "panda",
-            "phoenix",
-            "pig",
-            "pikachu",
-            "puffin",
-            "puppy",
-            "qilin",
-            "rabbit",
-            "rat",
-            "roper",
-            "scorpion",
-            "seal",
-            "shark",
-            "sheep",
-            "snail",
-            "snake",
-            "spider",
-            "squirrel",
-            "stroganoff",
-            "taniwha",
-            "tiger",
-            "trogdor",
-            "turtle",
-            "unicorn",
-            "userstory",
-            "wizard",
-            "wolf",
-            "wonton",
-            "workflow",
-            "zebra"
-        )
+    if (-not (Test-Path -Path $agentPrefixes) -and (Test-Path -Path $agentSuffixes)) {
+        Write-Error -Message 'Failed to generate agent names.'
     }
+
+    [string[]]$prefixes = [System.IO.File]::ReadAllLines($agentPrefixes)
+    [string[]]$suffixes = [System.IO.File]::ReadAllLines($agentSuffixes)
 
     function Get-RandomName {
         $prefixesRnd = Get-Random -Minimum 0 -Maximum $prefixes.Length
         $suffixesRnd = Get-Random -Minimum 0 -Maximum $suffixes.Length
 
         return ("$($env:COMPUTERNAME)_{0}_{1}" -f ($prefixes[$prefixesRnd], $suffixes[$suffixesRnd]))
+    }
+
+    function DeleteRecursive([string] $workingDirectory) {
+        # Work around PowerShell bugs: https://github.com/powershell/powershell/issues/621
+        if (Test-Path $workingDirectory) {
+            Get-ChildItem -LiteralPath $workingDirectory -Recurse -Attributes ReparsePoint | % { $_.Delete() }
+            Remove-Item -Path $workingDirectory -Force -Recurse -Verbose -ErrorAction SilentlyContinue
+        }
     }
 
     function RemoveAllAgents() {
@@ -284,9 +97,8 @@ process {
             $directories = Get-ChildItem -LiteralPath $AgentRootDirectory
 
             foreach ($directory in $directories) {
-                cmd /c "$($directory.FullName)\config.cmd remove --auth Integrated"
-
-                Remove-Item -Path $directory.FullName -Force -Recurse -Verbose -ErrorAction SilentlyContinue
+                cmd /c "$($directory.FullName)\config.cmd remove --auth Integrated"\                      
+                DeleteRecursive $directory.FullName                
             }
         }
 
@@ -299,11 +111,8 @@ process {
 
         # If the path doesn't exist Get-ChildItem will happily pick the working directory instead which could delete C:\Windows\ ...
         # https://github.com/PowerShell/PowerShell/issues/5699
-        if (Test-Path $workingDirectory) {
-            # Work around PowerShell bugs: https://github.com/powershell/powershell/issues/621
-            Get-ChildItem -LiteralPath $workingDirectory -Recurse -Attributes ReparsePoint | % { $_.Delete() }
-
-            Remove-Item -Path $workingDirectory -Force -Recurse -Verbose -ErrorAction SilentlyContinue
+        if (Test-Path $workingDirectory) {            
+            DeleteRecursive $workingDirectory
         }
 
         & $PSScriptRoot\iis-cleanup.ps1
@@ -313,8 +122,12 @@ process {
     }
 
     function SetHighPower() {
-        $powerPlan = Get-WmiObject -Namespace root\cimv2\power -Class Win32_PowerPlan -Filter "ElementName = 'High Performance'"
-        $powerPlan.Activate()
+        try  {
+            $powerPlan = Get-WmiObject -Namespace root\cimv2\power -Class Win32_PowerPlan -Filter "ElementName = 'High Performance'"
+            $powerPlan.Activate()
+        } catch {
+            Write-Warning $Error[0]
+        }
     }
 
     function ConfigureGit() {
