@@ -53,10 +53,23 @@ begin {
         )
 
         process {
-            if (Test-Path $binariesDirectory) {
-                if (Test-Path ("$binariesDirectory\.git")) {
-                    throw 'Refusing a clean a source controlled directory'
+            if (Test-Path -Path $binariesDirectory) {
+				if ($binariesDirectory -eq [System.IO.path]::GetPathRoot($binariesDirectory)) {
+					throw 'Refusing to clean a drive root.'
+				}
+
+				if ($binariesDirectory -match 'Windows') {
+					throw 'Refusing to clean a path containing Windows.'
+				}
+
+				if ($binariesDirectory -match 'Program') {
+					throw 'Refusing to clean a path containing Program Files/Data.'
+				}
+
+                if (Test-Path -Path ([System.IO.Path]::Combine($binariesDirectory, '.git'))) {
+                    throw 'Refusing a clean a source controlled directory.'
                 }
+
                 Write-Information "Clearing directory: $($binariesDirectory)"
                 Remove-Item $binariesDirectory\* -Recurse -Force -Exclude $exclusions
             }
@@ -122,8 +135,6 @@ begin {
             [switch]$clearBinariesDirectory
         )
 
-        New-Item -Path $binariesDirectory -ItemType 'Directory' -Force -ErrorAction 'SilentlyContinue' | Out-Null
-
         $components = $components | Sort-Object -Unique
 
         if (-not (Test-Path -Path $dropRoot)) {
@@ -135,11 +146,11 @@ begin {
             Clear-Environment -binariesDirectory $binariesDirectory
         }
 
-            if (-not (Test-Path -Path $binariesDirectory)) {
-                New-Item -Path $binariesDirectory -ItemType 'Directory' -Force | Out-Null
-            }
+        if (-not (Test-Path -Path $binariesDirectory)) {
+            New-Item -Path $binariesDirectory -ItemType 'Directory' -Force | Out-Null
+        }
 
-            [double]$totalTime = 0
+        [double]$totalTime = 0
 
         foreach ($component in $components) {
             [string]$componentPath = Join-Path -Path $dropRoot -ChildPath $component
@@ -224,6 +235,8 @@ begin {
 
 process {
     [double]$totalTime = 0
+
+	$binariesDirectory = [System.IO.Path]::GetFullPath($binariesDirectory)
 
     switch ($PSCmdlet.ParameterSetName) {
         'Branch' {

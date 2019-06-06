@@ -33,7 +33,7 @@ function Get-Product {
     [string]$dropRoot = '\\dfs.aderant.com\expert-ci'
 
     if ([string]::IsNullOrWhiteSpace($binariesDirectory)) {
-        $binariesDirectory = $ShellContext.BranchBinariesDirectory
+        $binariesDirectory = "$Env:SystemDrive\AderantExpert\Binaries"
     }
 
     if ([string]::IsNullOrWhiteSpace($branch)) {
