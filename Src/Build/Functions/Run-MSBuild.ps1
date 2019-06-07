@@ -225,8 +225,12 @@ function Run-MSBuild([string]$projectFilePath, [string]$buildArgs = "", [string]
     try {
         Exec-Console $tool "$projectFilePath $buildArgs" $environmentBlock $process $isDesktopBuild
     } finally {
-        if (Test-Path $logFileName) {
-            Write-Host "##vso[task.uploadfile]$logFileName"
+        if (Test-Path -Path $logFileName) {
+            if ([System.Environment]::UserInteractive) {
+                Write-Host "Build log written to: $logFileName"
+            } else {
+                Write-Host "##vso[task.uploadfile]$logFileName"
+            }
         }
 
         if ($process) {
