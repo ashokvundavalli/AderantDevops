@@ -42,6 +42,8 @@ function BuildProjects($BuildScriptsDirectory, [bool]$forceCompile) {
         return
     }
 
+    Write-Information "Preparing build environment..."
+
     $target = "PrepareBuildEnvironment"
     $projectPath = [System.IO.Path]::Combine($BuildScriptsDirectory, "Aderant.Build.Common.targets")
 
@@ -52,7 +54,12 @@ function BuildProjects($BuildScriptsDirectory, [bool]$forceCompile) {
     }
 
     $logger = [Microsoft.Build.BuildEngine.ConsoleLogger]::new()
-    $logger.Verbosity = [Microsoft.Build.Framework.LoggerVerbosity]::Quiet
+    if ($DebugPreference -eq 'Continue' -or $VerbosePreference -eq 'Continue') {
+        $logger.Verbosity = [Microsoft.Build.Framework.LoggerVerbosity]::Normal
+    } else {
+        $logger.Verbosity = [Microsoft.Build.Framework.LoggerVerbosity]::Quiet
+    }
+
     $arraylog = New-Object collections.generic.list[Microsoft.Build.Framework.ILogger]
     $arraylog.Add($logger)
 
@@ -66,6 +73,7 @@ function BuildProjects($BuildScriptsDirectory, [bool]$forceCompile) {
     $params = [Microsoft.Build.Execution.BuildParameters]::new()
     $params.Loggers = $arraylog
     $params.GlobalProperties = $globals
+    $params.ShutdownInProcNodeOnBuildFinish = $true
 
     $targets = @($target)
 
@@ -191,6 +199,7 @@ function RefreshSources([bool]$pull, [string]$head) {
     if (-not ($updated)) {
         Write-Warning "Update skipped as another PowerShell instance is running"
     }
+    return [string](& git -C $PSScriptRoot rev-parse HEAD)
 }
 
 function LoadLibGit2Sharp([string]$buildToolsDirectory) {
@@ -215,10 +224,18 @@ function DownloadPaket() {
 Set-StrictMode -Version Latest
 # Without this git will look on H:\ for .gitconfig
 $Env:HOME = $Env:USERPROFILE
+
+# Redirect ERROR to OUTPUT
+$Env:GIT_REDIRECT_STDERR = '2>&1'
+
 $InformationPreference = 'Continue'
 $ErrorActionPreference = 'Stop'
 
-$isUsingProfile = $null -ne $MyInvocation.MyCommand.Module
+$isUsingProfile = $false
+$command = (Get-PSCallStack)[1].Command
+if ($command -eq "Aderant.psm1") {
+    $isUsingProfile = $true
+}
 
 try {
     [void][Aderant.Build.BuildOperationContext]
@@ -226,9 +243,6 @@ try {
 } catch {
     # Type not found - we need to bootstrap
 }
-
-# Redirect ERROR to OUTPUT
-$Env:GIT_REDIRECT_STDERR = '2>&1'
 
 $pull = $false
 $branch = [Guid]::NewGuid().ToString()
@@ -252,13 +266,13 @@ if ($isUsingProfile) {
     }
 }
 
-RefreshSources $pull $branch
+$commit = RefreshSources $pull $branch
 
 $assemblyPathRoot = [System.IO.Path]::Combine("$BuildScriptsDirectory\..\Build.Tools")
 
 DownloadPaket
 
-BuildProjects $BuildScriptsDirectory $isUsingProfile
+BuildProjects $BuildScriptsDirectory $isUsingProfile $commit
 
 LoadAssembly "$assemblyPathRoot\Aderant.Build.dll" $true
 LoadAssembly "$assemblyPathRoot\protobuf-net.dll" $false
