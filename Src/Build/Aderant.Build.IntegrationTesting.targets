@@ -7,7 +7,7 @@
     <!-- Allows environment variables to override RSP parameters -->
     <_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">$([System.Environment]::GetEnvironmentVariable('RunIntegrationTests'))</_RunIntegrationTests>
     <_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">$(RunIntegrationTests)</_RunIntegrationTests>
-    <_RunIntegrationTests Condition="'$(RunDesktopIntegrationTests)' != ''">$(RunDesktopIntegrationTests)</_RunIntegrationTests>
+    <_RunIntegrationTests Condition="'$(IsDesktopBuild)' == 'true' And '$(RunDesktopIntegrationTests)' != ''">$(RunDesktopIntegrationTests)</_RunIntegrationTests>
     <_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">false</_RunIntegrationTests>
 
     <RunIntegrationTestsDependsOn>
