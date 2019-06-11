@@ -7,7 +7,7 @@
 function global:Start-DeploymentManager {
     if (Test-Path $ShellContext.DeploymentManager) {
         Write-Host "Starting Deployment Manager..."
-        $shell = $ShellContext.DeploymentManager                
+        $shell = $ShellContext.DeploymentManager
     } else {
         $shell = $null
         Write-Warning "Please ensure that the DeploymentManager.exe is located at: $($ShellContext.DeploymentManager)"
@@ -44,20 +44,25 @@ Export-ModuleMember -Function 'Start-DeploymentManager'
 function Start-DeploymentEngine {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory = $true)][ValidateSet("Deploy", "Remove", "ExportEnvironmentManifest", "ImportEnvironmentManifest", "EnableFilestream", "DeploySilent", "RemoveSilent")] [string]$command,
-        [Parameter(Mandatory = $false)][string]$serverName,
-        [Parameter(Mandatory = $false)][string]$databaseName,
-        [Parameter(Mandatory = $false)][switch]$skipPackageImports,
-        [Parameter(Mandatory = $false)][switch]$skipHelpDeployment
+        [Parameter(Mandatory = $true)][ValidateSet("Deploy", "Remove", "ExportEnvironmentManifest", "ImportEnvironmentManifest", "EnableFilestream", "DeploySilent", "RemoveSilent")][string]$command,
+        [Parameter(Mandatory = $false)][ValidateNotNullOrEmpty()][string]$serverName,
+        [Parameter(Mandatory = $false)][ValidateNotNullOrEmpty()][string]$databaseName,
+        [switch]$skipPackageImports,
+        [switch]$skipHelpDeployment,
+        [Paramter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$binariesDirectory
     )
 
     process {
         if (-not (Test-Path $ShellContext.DeploymentEngine)) {
-            Write-Error "Couldn't locate the DeploymentEngine.exe, please place it at $($ShellContext.DeploymentEngine)"   
+            Write-Error "Couldn't locate the DeploymentEngine.exe, please place it at $($ShellContext.DeploymentEngine)"
         }
 
-        $environmentXml = [System.IO.Path]::Combine($ShellContext.BranchBinariesDirectory, "environment.xml")
-        $pathToDeploymentEngineScript = Join-Path -Path $ShellContext.BranchBinariesDirectory -ChildPath "AutomatedDeployment\DeploymentEngine.ps1"
+        if ([string]::IsNullOrWhiteSpace($binariesDirectory)) {
+            $binariesDirectory = "$Env:SystemDrive\AderantExpert\Binaries"
+        }
+
+        $environmentXml = [System.IO.Path]::Combine($binariesDirectory, "environment.xml")
+        $pathToDeploymentEngineScript = Join-Path -Path $binariesDirectory -ChildPath "AutomatedDeployment\DeploymentEngine.ps1"
 
         if ([string]::IsNullOrWhiteSpace($serverName)) {
             $serverName = Get-DatabaseServer
@@ -104,8 +109,17 @@ Export-ModuleMember Start-DeploymentEngine
         Installs Deployment Manager from the current branch binaries directory.
 #>
 function global:Install-DeploymentManager {
-    $pathToInstallScript = Join-Path -Path $ShellContext.BranchBinariesDirectory -ChildPath "\AutomatedDeployment\InstallDeploymentManager.ps1"
-    & $pathToInstallScript -deploymentManagerMsiDirectory $ShellContext.BranchBinariesDirectory
+    [CmdletBinding()]
+    param (
+        [Paramter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$binariesDirectory
+    )
+
+    if ([string]::IsNullOrWhiteSpace($binariesDirectory)) {
+        $binariesDirectory = "$Env:SystemDrive\AderantExpert\Binaries"
+    }
+
+    $pathToInstallScript = [System.IO.Path]::Combine($binariesDirectory, 'AutomatedDeployment\InstallDeploymentManager.ps1')
+    & $pathToInstallScript -deploymentManagerMsiDirectory $binariesDirectory
 }
 
 Export-ModuleMember -Function 'Install-DeploymentManager'
@@ -120,8 +134,17 @@ Export-ModuleMember -Function 'Install-DeploymentManager'
         Uninstalls Deployment Manager using the .msi in the current branch binaries directory.
 #>
 function global:Uninstall-DeploymentManager {
-    $pathToUninstallScript = Join-Path -Path $ShellContext.BranchBinariesDirectory -ChildPath "\AutomatedDeployment\UninstallDeploymentManager.ps1"
-    & $pathToUninstallScript -deploymentManagerMsiDirectory $ShellContext.BranchBinariesDirectory
+    [CmdletBinding()]
+    param (
+        [Paramter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$binariesDirectory
+    )
+
+    if ([string]::IsNullOrWhiteSpace($binariesDirectory)) {
+        $binariesDirectory = "$Env:SystemDrive\AderantExpert\Binaries"
+    }
+
+    $pathToUninstallScript = [System.IO.Path]::Combine($binariesDirectory, 'AutomatedDeployment\UninstallDeploymentManager.ps1')
+    & $pathToUninstallScript -deploymentManagerMsiDirectory $binariesDirectory
 }
 
 Export-ModuleMember -Function 'Uninstall-DeploymentManager'
@@ -133,8 +156,17 @@ Export-ModuleMember -Function 'Uninstall-DeploymentManager'
     Uses Get-EnvironmentFromXml to return the Database Server\Instance for the current local deployment.
 #>
 function Get-DatabaseServer() {
-    if (-Not (Test-Path ([System.IO.Path]::Combine($ShellContext.BranchBinariesDirectory, "environment.xml")))) {
-        $databaseServer = $env:COMPUTERNAME    
+    [CmdletBinding()]
+    param (
+        [Paramter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$binariesDirectory
+    )
+
+    if ([string]::IsNullOrWhiteSpace($binariesDirectory)) {
+        $binariesDirectory = "$Env:SystemDrive\AderantExpert\Binaries"
+    }
+
+    if (-Not (Test-Path ([System.IO.Path]::Combine($binariesDirectory, "environment.xml")))) {
+        $databaseServer = $env:COMPUTERNAME
         Write-Host "Server instance set to: $databaseServer"
         return $databaseServer
     } else {
@@ -146,7 +178,7 @@ function Get-DatabaseServer() {
         }
 
         [string]$serverInstance = Get-EnvironmentFromXml "/environment/expertDatabaseServer/@serverInstance"
-        
+
         if (-not [string]::IsNullOrWhiteSpace($serverInstance)) {
             [string]$serverInstance = [regex]::Match($serverInstance, "[^/]*$").ToString()
             $databaseServer = "$($databaseServer)\$($serverInstance)"
@@ -169,8 +201,17 @@ Export-ModuleMember -Function Get-DatabaseServer
     Uses Get-EnvironmentFromXml to return the the database name for the current local deployment.
 #>
 function Get-Database() {
-    Write-Host "Searching for environment.xml in BranchBinariesDirectory: $($ShellContext.BranchBinariesDirectory)" 
-    if (-Not (Test-Path ([System.IO.Path]::Combine($ShellContext.BranchBinariesDirectory, "environment.xml")))) {
+    [CmdletBinding()]
+    param (
+        [Paramter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$binariesDirectory
+    )
+
+    if ([string]::IsNullOrWhiteSpace($binariesDirectory)) {
+        $binariesDirectory = "$Env:SystemDrive\AderantExpert\Binaries"
+    }
+
+    Write-Host "Searching for environment.xml in BranchBinariesDirectory: $binariesDirectory"
+    if (-Not (Test-Path ([System.IO.Path]::Combine($binariesDirectory, "environment.xml")))) {
         $database = Read-Host -Prompt "No environment.xml found. Please specify a database name"
         return $database
     } else {
