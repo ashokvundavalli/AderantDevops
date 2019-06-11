@@ -254,14 +254,13 @@ namespace Willys.LsaSecurity
             Push-Location -Path $scriptsDirectory
 
             if (-not $skipDownload) {
-                Write-Information -MessageData 'Downloading build agent zip'
                 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
                 $currentProgressPreference = $ProgressPreference
                 $ProgressPreference = 'SilentlyContinue'
 
                 try {
                     $agentArchive = "$env:SystemDrive\Scripts\vsts-agent.zip"
-                    Invoke-WebRequest "https://vstsagentpackage.azureedge.net/agent/2.141.2/vsts-agent-win-x64-2.141.2.zip" -OutFile $agentArchive -UseBasicParsing
+                    [void](Invoke-WebRequest "https://vstsagentpackage.azureedge.net/agent/2.141.2/vsts-agent-win-x64-2.141.2.zip" -OutFile $agentArchive -UseBasicParsing)
                 } finally {
                     $ProgressPreference = $currentProgressPreference
                 }

@@ -25,6 +25,8 @@ function global:Restore-ExpertDatabase {
     begin {
         Set-StrictMode -Version 'Latest'
         $ErrorActionPreference = 'Stop'
+
+        [string]$binariesDirectory = "$Env:SystemDrive\AderantExpert\Binaries"
     }
 
     process {
@@ -41,7 +43,7 @@ function global:Restore-ExpertDatabase {
         }
 
         if ([string]::IsNullOrWhiteSpace($backup)) {
-            $backupPath = [System.IO.Path]::Combine($ShellContext.BranchBinariesDirectory, "Database")
+            $backupPath = [System.IO.Path]::Combine($binariesDirectory, "Database")
             if (-not $backupPath) {
                 throw 'Backup path does not exist'
             }
@@ -55,17 +57,17 @@ function global:Restore-ExpertDatabase {
 
         Write-Host "Note: This is a database restore operation - the existing database will be replaced" -ForegroundColor Yellow
 
-        if (-not $env:ForceRestoreDatabase -or ($env:ForceRestoreDatabase -eq $false)) {
+        if (-not $env:ForceRestoreDatabase -or ($Env:ForceRestoreDatabase -eq $false)) {
             if (-not $PSCmdlet.ShouldProcess($database, "Restore Database: $database")) {
                 return
             }
             [Environment]::SetEnvironmentVariable("ForceRestoreDatabase", "True", "User")
         }
 
-        . "$($ShellContext.BranchBinariesDirectory)\AutomatedDeployment\ProvisionDatabase.ps1" -serverInstance $serverInstance -databaseName $database -backupPath $backup
+        . "$binariesDirectory\AutomatedDeployment\ProvisionDatabase.ps1" -serverInstance $serverInstance -databaseName $database -backupPath $backup
 
         if (-not $skipManifestImport.IsPresent) {
-            [string]$environmentManifest = [System.IO.Path]::Combine($ShellContext.BranchBinariesDirectory, "environment.xml")
+            [string]$environmentManifest = [System.IO.Path]::Combine($binariesDirectory, "environment.xml")
 
             if (Test-Path ($environmentManifest)) {
                 [xml]$environmentXml = Get-Content $environmentManifest
@@ -161,7 +163,7 @@ function global:Backup-ExpertDatabase {
         }
 
         if ([String]::IsNullOrWhiteSpace($backupPath)) {
-            $backupPath = Join-Path -Path "C:\AderantExpert\DatabaseBackups" -ChildPath "$database.bak"
+            $backupPath = Join-Path -Path "$Env:SystemDrive\AderantExpert\DatabaseBackups" -ChildPath "$database.bak"
         }
     }
 
@@ -171,7 +173,7 @@ function global:Backup-ExpertDatabase {
             return
         }
 
-        [string]$assembly = Join-Path -Path $ShellContext.BranchBinariesDirectory -ChildPath "AutomatedDeployment\API.Database.dll"
+        [string]$assembly = Join-Path -Path "$Env:SystemDrive\AderantExpert\Binaries" -ChildPath "AutomatedDeployment\API.Database.dll"
 
         if (-not (Test-Path $assembly)) {
             Write-Error "Unable to locate API.Database assembly at: $($assembly)"
