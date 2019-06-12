@@ -152,6 +152,20 @@ namespace UnitTest.Build {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to &lt;ProductManifest Name=&quot;Expert&quot; ExpertVersion=&quot;8.2.0&quot;&gt;
+        ///  &lt;Modules&gt;
+        ///    &lt;Module ExcludeFromPackaging=&quot;false&quot; Name=&quot;Aderant.Deployment.Core&quot; GetAction=&quot;NuGet&quot; Version=&quot;&amp;gt;= 12.0.0 build&quot; /&gt;
+        ///    &lt;Module ExcludeFromPackaging=&quot;false&quot; Name=&quot;Aderant.Libraries.Models&quot; GetAction=&quot;NuGet&quot; Version=&quot;13.0.0-build4978&quot; /&gt;
+        ///  &lt;/Modules&gt;
+        ///&lt;/ProductManifest&gt;.
+        /// </summary>
+        internal static string ReferenceExpertManifest {
+            get {
+                return ResourceManager.GetString("ReferenceExpertManifest", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
         ///&lt;Project ToolsVersion=&quot;12.0&quot; DefaultTargets=&quot;Build&quot; xmlns=&quot;http://schemas.microsoft.com/developer/msbuild/2003&quot;&gt;
         ///  &lt;ItemGroup&gt;

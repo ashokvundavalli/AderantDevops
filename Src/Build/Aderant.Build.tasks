@@ -77,6 +77,7 @@
 
     <!-- For integration testing -->
     <UsingTask TaskName="Aderant.Build.Tasks.RoleManifestPackageIdentifier"                       AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.GeneratePaketDependencies"                           AssemblyFile="$(BuildAssembly)" />
 
     <!-- Debugging task -->
     <UsingTask TaskName="Aderant.Build.Tasks.InspectItemGroup"                                    AssemblyFile="$(BuildAssembly)" />

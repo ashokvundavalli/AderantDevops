@@ -115,7 +115,7 @@
       <ImpactedTestAssemblies>@(ImpactedTestAssemblies)</ImpactedTestAssemblies>
     </PropertyGroup>
 
-    <MSBuild Projects="$(MSBuildProjectFile)" Targets="RunIntegrationTests" Properties="TestPattern=IntegrationTest;ImpactedTestAssemblies=$(ImpactedTestAssemblies);ExpertSourceDirectory=$(ExpertSourceDirectory)" />
+    <MSBuild Projects="$(MSBuildProjectFile)" Targets="RunIntegrationTests" Properties="TestPattern=IntegrationTest;ImpactedTestAssemblies=$(ImpactedTestAssemblies);ExpertSourceDirectory=$(ExpertSourceDirectory);" />
 
   </Target>
 

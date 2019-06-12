@@ -208,4 +208,12 @@ SRCSRV: end ------------------------------------------------</value>
   <data name="buildstate" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>resources\buildstate.json;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
+  <data name="ReferenceExpertManifest" xml:space="preserve">
+    <value>&lt;ProductManifest Name="Expert" ExpertVersion="8.2.0"&gt;
+  &lt;Modules&gt;
+    &lt;Module ExcludeFromPackaging="false" Name="Aderant.Deployment.Core" GetAction="NuGet" Version="&amp;gt;= 12.0.0 build" /&gt;
+    &lt;Module ExcludeFromPackaging="false" Name="Aderant.Libraries.Models" GetAction="NuGet" Version="13.0.0-build4978" /&gt;
+  &lt;/Modules&gt;
+&lt;/ProductManifest&gt;</value>
+  </data>
 </root>

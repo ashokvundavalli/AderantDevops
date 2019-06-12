@@ -123,6 +123,7 @@
     <EmbeddedResource Include="Tasks\PowerShell\Resources\SetBuildTags.ps1" />
     <Compile Include="Tasks\CopyCustomSolution.cs" />
     <Compile Include="Tasks\CopyRelatedFiles.cs" />
+    <Compile Include="Tasks\GeneratePaketDependencies.cs" />
     <Compile Include="Tasks\TextTemplatingPathResolver.cs" />
     <Compile Include="Utilities\InspectionDomainInitializer.cs" />
     <Compile Include="Tasks\RoleManifestPackageIdentifier.cs" />

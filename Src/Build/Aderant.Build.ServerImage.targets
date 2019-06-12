@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
-<!-- External variables: ArtifactStagingDirectory, BuildToolsDirectory, ExpertSourceDirectory, SolutionRoot -->
+<!-- External variables: ArtifactStagingDirectory, BuildToolsDirectory, ExpertSourceDirectory, SolutionRoot, ServerImageDependencyMappings -->
 
   <PropertyGroup>
     <CreateServerImageDependsOn>
@@ -11,7 +11,6 @@
     <ImageWorkingDirectory>$(ArtifactStagingDirectory)ServerImage\</ImageWorkingDirectory>
     <ImageToolingDirectory>$(ImageWorkingDirectory)packages\Aderant.Deployment.Internal\lib\</ImageToolingDirectory>
     <DeploymentEngine>$(ImageWorkingDirectory)packages\Aderant.Deployment.Internal\lib\DeploymentEngine.exe</DeploymentEngine>
-    <ServerImageDependencies>$(SolutionRoot)Build\ServerImage.dependencies</ServerImageDependencies>
 
     <_CreateServerImage Condition="'$(IsDesktopBuild)' == 'true'">false</_CreateServerImage>
     <_CreateServerImage Condition="'$(_CreateServerImage)' == ''">$([System.Environment]::GetEnvironmentVariable('CreateServerImage'))</_CreateServerImage>
@@ -19,15 +18,11 @@
   </PropertyGroup>
 
 
-  <Target Name="GetServerImageDependencies" Condition="Exists('$(ServerImageDependencies)')">
+  <Target Name="GetServerImageDependencies" Condition="'@(ServerImageDependencyMappings)' != ''">
 
-    <PropertyGroup>
-      <PackageDependencyFile>$(ImageWorkingDirectory)paket.dependencies</PackageDependencyFile>
-    </PropertyGroup>
-
-    <Copy SourceFiles="$(ServerImageDependencies)"
-      DestinationFiles="$(PackageDependencyFile)"
-      SkipUnchangedFiles="true" />
+    <GeneratePaketDependencies OutputDirectory="$(ImageWorkingDirectory)"
+      ExpertManifest="$(SolutionRoot)Build\ExpertManifest.xml"
+      DependencyMappings="@(ServerImageDependencyMappings)" />
 
     <Exec Command="$(BuildToolsDirectory)paket.exe update"
       WorkingDirectory="$(ImageWorkingDirectory)" />
@@ -40,7 +35,7 @@
   </Target>
 
 
-  <Target Name="CreateServerImage" Condition="Exists('$(ServerImageDependencies)') And '$(_CreateServerImage)' == 'true'" DependsOnTargets="CreateServerImageCore;$(CreateServerImageDependsOn)">
+  <Target Name="CreateServerImage" Condition="'$(_CreateServerImage)' == 'true'" DependsOnTargets="CreateServerImageCore;$(CreateServerImageDependsOn)">
 
     <PropertyGroup>
       <_SkipHelp Condition="'$(SkipHelp)' != 'false'">/skh</_SkipHelp>
