@@ -111,7 +111,7 @@ Export-ModuleMember Start-DeploymentEngine
 function global:Install-DeploymentManager {
     [CmdletBinding()]
     param (
-        [Paramter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$binariesDirectory
+        [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$binariesDirectory
     )
 
     if ([string]::IsNullOrWhiteSpace($binariesDirectory)) {
@@ -136,7 +136,7 @@ Export-ModuleMember -Function 'Install-DeploymentManager'
 function global:Uninstall-DeploymentManager {
     [CmdletBinding()]
     param (
-        [Paramter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$binariesDirectory
+        [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$binariesDirectory
     )
 
     if ([string]::IsNullOrWhiteSpace($binariesDirectory)) {
@@ -158,7 +158,7 @@ Export-ModuleMember -Function 'Uninstall-DeploymentManager'
 function Get-DatabaseServer() {
     [CmdletBinding()]
     param (
-        [Paramter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$binariesDirectory
+        [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$binariesDirectory
     )
 
     if ([string]::IsNullOrWhiteSpace($binariesDirectory)) {
@@ -203,7 +203,7 @@ Export-ModuleMember -Function Get-DatabaseServer
 function Get-Database() {
     [CmdletBinding()]
     param (
-        [Paramter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$binariesDirectory
+        [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$binariesDirectory
     )
 
     if ([string]::IsNullOrWhiteSpace($binariesDirectory)) {
