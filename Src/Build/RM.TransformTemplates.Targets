@@ -237,6 +237,10 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
     </ItemGroup>
 
     <ItemGroup>
+      <PrivateAssemblies Include="$([System.IO.Directory]::GetDirectories('$(ProgramFiles32)\Microsoft Visual Studio', 'PrivateAssemblies', System.IO.SearchOption.AllDirectories))" />
+    </ItemGroup>
+
+    <ItemGroup>
       <RoslynAssemblies Include="%(InstalledToolVersion.Identity)\Roslyn\Microsoft.CodeAnalysis.dll" />
       <RoslynAssemblies Include="%(InstalledToolVersion.Identity)\Roslyn\Microsoft.CodeAnalysis.CSharp.dll" />
       <RoslynAssemblies Include="%(InstalledToolVersion.Identity)\Microsoft.CodeAnalysis.dll" />
@@ -248,7 +252,7 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
     </ItemGroup>
 
     <ItemGroup>
-      <rmT4AssemblyReferencePaths Include="$(rmT4AssemblyReferencePaths);@(VSSDKPaths);@(RoslynPaths);@(PublicAssemblies);@(VisualStudioDslAssemblies)" />
+      <rmT4AssemblyReferencePaths Include="$(rmT4AssemblyReferencePaths);@(VSSDKPaths);@(RoslynPaths);@(PublicAssemblies);@(PrivateAssemblies);@(VisualStudioDslAssemblies)" />
     </ItemGroup>
 
     <ItemGroup>
