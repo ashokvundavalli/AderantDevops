@@ -113,7 +113,8 @@
              AssemblyFile="$(BuildScriptsDirectory)\Build.Tools\Aderant.Build.dll" />
 
 
-  <Target Name="CollectNugetPackagePaths">
+  <Target Name="CollectNugetPackagePaths"
+	Condition="'$(IsCustomBuild)' != 'true'">
     <Error Condition="'$(RootFolder)' == ''" Text="RootFolder is undefined" />
 
     <PropertyGroup>
@@ -161,9 +162,9 @@
 
 
   <PropertyGroup>
-     <!--PERF: Avoid looking for winmd files.
-         Put the most likely extensions first for reference resolution speed.
-     -->
+    <!--PERF: Avoid looking for winmd files.
+          Put the most likely extensions first for reference resolution speed.
+      -->
     <AllowedReferenceAssemblyFileExtensions>
       .dll;
       .exe
@@ -173,13 +174,12 @@
     <!--
         These are the extensions that reference resolution will consider when looking for files related
         to resolved references. Here we ignore pdb and xml for test projets to avoid pulling in that baggage.
-        A dummy name is provided to fool the ResolveAssemblyReference task
-    -->
+        A dummy name is provided to fool the ResolveAssemblyReference task.
+      -->
     <AllowedReferenceRelatedFileExtensions Condition=" $(ProjectTypeGuids.Contains('3AC096D0-A1C2-E12C-1390-A8335801FDAB')) == 'true' ">
       _
     </AllowedReferenceRelatedFileExtensions>
   </PropertyGroup>
-
 
   <Target Name="SetAssemblySearchPaths" BeforeTargets="GetReferenceAssemblyPaths;BeforeResolveReferences" DependsOnTargets="AssignPropertiesForCustomSearchPaths;CollectNugetPackagePaths">
 
@@ -414,6 +414,7 @@
 
 
     <RecordProjectOutputs
+	    Condition="'$(IsCustomBuild)' != 'true'"
       ContextEndpoint="$(ContextEndpoint)"
       SolutionRoot="$(SolutionRoot)"
       ProjectGuid="$(ProjectGuid)"
@@ -426,7 +427,6 @@
       FileWrites="@(FileWrites);$(PackageFileName)" />
 
   </Target>
-
 
   <PropertyGroup Condition="'$(IsDesktopBuild)' == 'false' And '$(CreateHardLinksForCopyLocal)' != ''">
     <CreateHardLinksForCopyLocalIfPossible>$(CreateHardLinksForCopyLocal)</CreateHardLinksForCopyLocalIfPossible>

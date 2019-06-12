@@ -58,7 +58,7 @@
   <Import Project="Aderant.Build.IntegrationTesting.targets" />
 
   <Import Project="Aderant.Build.GitLink.targets" />
-  
+
   <!-- Stub for customizers to override -->
   <Target Name="PostBuild" />
 
@@ -238,9 +238,9 @@ doc.Save(File);
     <CallTarget Targets="Build" />
     <CallTarget Targets="ApplyGitLink" />
     <CallTarget Targets="ZipWorkflowTemplateSource" />
-    <CallTarget Targets="RunTests" />
-    <CallTarget Targets="RunIntegrationTests" />
-    <CallTarget Targets="RunAutomationTests" />
+    <CallTarget Targets="RunTests" Condition="'$(IsCustomBuild)' != 'true'"/>
+    <CallTarget Targets="RunIntegrationTests" Condition="'$(IsCustomBuild)' != 'true'"/>
+    <CallTarget Targets="RunAutomationTests" Condition="'$(IsCustomBuild)' != 'true'"/>
     <CallTarget Targets="PublishModule" />
     <CallTarget Targets="IndexSourcesAndPublishSymbols" />
     <CallTarget Targets="MobileBuild" Condition="'$(ModuleName.StartsWith(`Mobile`))' == 'true' And '$(PackageMobile)' == 'true'" />
@@ -404,7 +404,7 @@ doc.Save(File);
     <MakeDir Directories="$(ModuleBuildTempDirectory)"
       Condition="'$(ModuleBuildTempDirectory)' != ''" />
   </Target>
-  
+
 
   <!-- 
     ==========================================================================================
@@ -1361,7 +1361,7 @@ doc.Save(File);
 
     <WriteLinesToFile
       Condition="('$(BuildAll)'=='true')"
-      File="$(ModuleDropLocation)$(FileVersion)\BuildLog.txt" 
+      File="$(ModuleDropLocation)$(FileVersion)\BuildLog.txt"
       Lines="Build succeeded via BuildAll - 0 Error(s)"/>
 
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
@@ -1416,7 +1416,7 @@ doc.Save(File);
       TeamProject="$(TeamProject)" />
 
   </Target>
- 
+
   <!--
     ==========================================================================================
         MarkBuildStepAsFailed

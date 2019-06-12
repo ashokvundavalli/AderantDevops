@@ -20,6 +20,7 @@
     <CustomAfterWixTargets Condition="'$(IsCustomBuild)' != 'true'">$(BuildScriptsDirectory)Aderant.Wix.Extensions.targets</CustomAfterWixTargets>
 
     <BuildToolsDirectory Condition="'$(BuildToolsDirectory)' == ''">$(BuildScriptsDirectory)..\Build.Tools\</BuildToolsDirectory>
+    <BuildToolsDirectory Condition="'$(IsCustomBuild)' == 'true'">$(BuildScriptsDirectory)\Build.Tools\</BuildToolsDirectory>
     <BuildSourcesDirectory Condition="'$(BuildSourcesDirectory)' == ''">$(BuildScriptsDirectory)..\Sources\</BuildSourcesDirectory>
 
     <BuildToolsDirectory>$([System.IO.Path]::GetFullPath('$(BuildToolsDirectory)'))</BuildToolsDirectory>
@@ -54,8 +55,8 @@
 
     <CompileBuildSystem Condition="'$(SKIP_BUILD_SYSTEM_COMPILE)' != ''">false</CompileBuildSystem>
   </PropertyGroup>
-
-  <Import Project="Aderant.Build.tasks" Condition="'$(IsCustomBuild)' != 'true'" />
+  
+  <Import Project="Aderant.Build.tasks"/>
   <Import Project="$(MSBuildCommunityTasksPath)\MSBuild.Community.Tasks.Targets" Condition="'$(NoMSBuildCommunityTasks)' != 'true'" />
   <Import Project="Aderant.Build.Versioning.targets" />
 
