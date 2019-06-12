@@ -49,7 +49,7 @@ function Start-DeploymentEngine {
         [Parameter(Mandatory = $false)][ValidateNotNullOrEmpty()][string]$databaseName,
         [switch]$skipPackageImports,
         [switch]$skipHelpDeployment,
-        [Paramter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$binariesDirectory
+        [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$binariesDirectory
     )
 
     process {
