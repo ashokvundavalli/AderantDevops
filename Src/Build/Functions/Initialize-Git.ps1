@@ -1,4 +1,4 @@
-function Initialize-Git
+function global:Initialize-Git
 {
     <#
     .SYNOPSIS
@@ -7,7 +7,7 @@ function Initialize-Git
     [CmdletBinding()]
     param(
         [Aderant.Build.BuildOperationContext]
-        $Context = (Get-BuildContext)
+        $Context = (Get-BuildContext -CreateIfNeeded)
     )
 
     Set-StrictMode -Version 'Latest'
@@ -63,8 +63,7 @@ function AddGitCommandIntercept() {
     }
 }
 
-function ConfigureGit([Aderant.Build.BuildOperationContext]$context)
-{
+function ConfigureGit([Aderant.Build.BuildOperationContext]$context) {
     Write-Debug "Configuring .gitconfig"
 
     try {

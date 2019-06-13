@@ -29,9 +29,6 @@ function Initialize-Module {
     . $PSScriptRoot\ShellContext.ps1
     $global:ShellContext = [ShellContext]::new()
     $MyInvocation.MyCommand.Module.PrivateData.ShellContext = $global:ShellContext
-
-    AddGitCommandIntercept
-    CreateDummyGitDirectory 'C:\AderantExpert\Local\SharedBin\'
 }
 
 Initialize-Module
@@ -235,13 +232,17 @@ function Set-ScriptPaths {
 Find the Install Location of programs
 #>
 function Find-InstallLocation ($programName) {
-    $entries = Get-ChildItem 'HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall'
-    $registryItem = $entries | Get-ItemProperty | ?{ $_.PSObject.Properties.Name -match 'DisplayName' -and -not [string]::IsNullOrEmpty($_.DisplayName) -and $_.DisplayName -like $programName }
+    $key = [Microsoft.Win32.Registry]::LocalMachine.OpenSubKey('SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall')
+    foreach ($installKey in $key.GetSubKeyNames()) {
+        $productKey = $key.OpenSubKey($installKey)
 
-    if ($registryItem){
-        return $registryItem.InstallLocation
-    } else {
-        return $null
+        foreach ($productEntry in $productKey.GetValueNames()) {
+            if ($productEntry -eq "DisplayName") {
+                if ($productKey.GetValue($productEntry) -eq "Expert Deployment Manager") {
+                    return $productKey.GetValue("InstallLocation")
+                }
+            }
+        }
     }
 }
 
@@ -575,6 +576,8 @@ function Set-Environment {
 
         if ($Initialize.IsPresent) {
             Set-BranchPaths
+            AddGitCommandIntercept
+            CreateDummyGitDirectory 'C:\AderantExpert\Local\SharedBin\'
         }
 
         Set-ScriptPaths
@@ -986,42 +989,6 @@ function Help ($searchText) {
     $sortedFunctions | Format-Table Command, Synopsis
 }
 
-<#
-.Synopsis
-    Wrapper function that deals with Powershell's peculiar error output when Git uses the error stream.
-#>
-function Invoke-Git {
-    [CmdletBinding()]
-    param(
-        [parameter(ValueFromRemainingArguments = $true)]
-        [string[]]$Arguments
-    )
-
-    & {
-        [CmdletBinding()]
-        param(
-            [parameter(ValueFromRemainingArguments = $true)]
-            [string[]]$InnerArgs
-        )
-        $process = New-Object System.Diagnostics.Process
-        $process.StartInfo.Arguments = "$InnerArgs"
-        $process.StartInfo.UseShellExecute = $false
-        $process.StartInfo.RedirectStandardOutput = $true
-        $process.StartInfo.RedirectStandardError = $true
-        $process.StartInfo.CreateNoWindow = $true
-        $process.StartInfo.WorkingDirectory = (Get-Item -Path ".\" -Verbose).FullName
-        $process.StartInfo.FileName = "git"
-        $process.Start() | Out-Null
-        $process.WaitForExit()
-        return $process.StandardError.ReadToEnd()
-
-    } -ErrorAction SilentlyContinue -ErrorVariable fail @Arguments
-
-    if ($fail) {
-        $fail.Exception
-    }
-}
-
 function Reset-DeveloperShell() {
   Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath '..\..\Build\Functions') -Filter '*.ps1' | ForEach-Object { . $_.FullName }
 }
@@ -1114,6 +1081,7 @@ Export-ModuleMember -Function Reset-DeveloperShell
 #$ShellContext.LastVsixCheckCommit("", "LastVsixCheckCommit", $ShellContext.CurrentCommit) | Out-Null
 
 Set-Environment -Initialize
+
 
 Write-Host ""
 Write-Host "Type " -NoNewLine

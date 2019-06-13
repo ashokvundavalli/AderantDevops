@@ -1,12 +1,48 @@
 <#
 .Synopsis
+    Wrapper function that deals with Powershell's peculiar error output when Git uses the error stream.
+#>
+function Invoke-Git {
+    [CmdletBinding()]
+    param(
+        [parameter(ValueFromRemainingArguments = $true)]
+        [string[]]$Arguments
+    )
+
+    & {
+        [CmdletBinding()]
+        param(
+            [parameter(ValueFromRemainingArguments = $true)]
+            [string[]]$InnerArgs
+        )
+        $process = New-Object System.Diagnostics.Process
+        $process.StartInfo.Arguments = "$InnerArgs"
+        $process.StartInfo.UseShellExecute = $false
+        $process.StartInfo.RedirectStandardOutput = $true
+        $process.StartInfo.RedirectStandardError = $true
+        $process.StartInfo.CreateNoWindow = $true
+        $process.StartInfo.WorkingDirectory = (Get-Item -Path ".\" -Verbose).FullName
+        $process.StartInfo.FileName = "git"
+        $process.Start() | Out-Null
+        $process.WaitForExit()
+        return $process.StandardError.ReadToEnd()
+
+    } -ErrorAction SilentlyContinue -ErrorVariable fail @Arguments
+
+    if ($fail) {
+        $fail.Exception
+    }
+}
+
+<#
+.Synopsis
     Starts a merge workflow for all Pull Requests linked to a specific work item.
-.Description   
+.Description
     Takes the bug work item ID that needs to be merged, the merge work item ID that the merge PR should be attached with and the target Git branch name as input.
     It then tries to cherry pick each linked Pull Request of the bug work item ID to a new feature branch off the given target branch, commit it and create a PR.
     If a merge conflict occurs, Visual Studio (Experimental Instance, for performance reasons) opens up automatically for manual conflict resolving.
     After successfully resolving the merge conflict, just close Visual Studio and run this command again. It will remember your last inputs for convenience.
-    Once a Pull Request for the merge operation is created, Internet Explorer will open up automatically and show the created PR which is set to auto-complete. 
+    Once a Pull Request for the merge operation is created, Internet Explorer will open up automatically and show the created PR which is set to auto-complete.
     Additionally, it will automatically do a squash merge and delete the feature branch.
     The CRTDev group will be associated automatically as an optional reviewer which can be changed manually.
 #>
@@ -90,7 +126,7 @@ function Git-Merge {
             }
             $bugId = Read-Host -Prompt "`nWhich bug ID to you want to merge"
         }
-    
+
         while (!$mergeBugId -or $mergeBugId.Length -le 5 -or $mergeBugId -eq $bugId) {
             $mergeBugId = Read-Host -Prompt "`nWhich merge bug ID to you want the merge operation to be associated with (enter 'c' to automatically create one)"
             if ($mergeBugId -eq 'c' -or $mergeBugId -eq "'c'") {
@@ -133,7 +169,7 @@ function Git-Merge {
             }
             'releases/10.8102' {
                 $assumedIterationPath += "\\8.1.1 (SP)"
-            }    
+            }
         }
 
         # automatically create the merge work item in TFS
@@ -219,7 +255,7 @@ function Git-Merge {
         $pullRequestUri = $relation.url
         $pullRequestPath = @($pullRequestUri.Split('/'))[5].Replace("%2f", "/").Replace("%2F", "/")
         $pullRequestPathParts = @($pullRequestPath.Split('/'))
-    
+
         $repositoryId = $pullRequestPathParts[1]
         $pullRequestId = $pullRequestPathParts[2]
         $getPullRequestUri = "$($tfsUrl)/_apis/git/repositories/$repositoryId/pullrequests/$pullRequestId"
@@ -491,7 +527,7 @@ function Git-Merge {
 
                     Write-Host "git commit -m ""Cherry picked commit of PR $($pullRequest.pullRequestId)"" --allow-empty" -ForegroundColor Blue
                     $gitError = Invoke-Git commit -m """Cherry picked commit of PR $($pullRequest.pullRequestId)""" --allow-empty
-        
+
                     if ($gitError) {
                         Write-Host $gitError
                         $solutionFilePath = Join-Path $currentRepositoryPath "$currentRepositoryName.sln"
@@ -508,14 +544,14 @@ function Git-Merge {
             #publish feature branch
             Write-Host "Pushing changes to feature branch" -ForegroundColor Gray
             Write-Host "git push origin $featureBranch" -ForegroundColor Blue
-            $gitError = Invoke-Git push origin $featureBranch   
+            $gitError = Invoke-Git push origin $featureBranch
 
             if ($gitError.Contains("Everything up-to-date")) {
                 Write-Host "No more changes to push to origin for repository $currentRepositoryName, skipping PR creation"
             } else {
                 Invoke-Git notes add -m """Merged: $bugId"""
-                Invoke-Git push origin refs/notes/commits        
-              
+                Invoke-Git push origin refs/notes/commits
+
                 $createPullRequestUri = "$($tfsUrl)/_apis/git/repositories/$repositoryId/pullrequests?api-version=3.0"
                 $createPullRequestBody = @"
 {
@@ -602,7 +638,7 @@ function Git-Merge {
             (cmd /c rmdir /s /q $gitReposPath) | Out-Null # do it again as rmdir deletes the directories one by one
         }
     } catch {
-        [System.Exception]           
+        [System.Exception]
         Write-Host $_.Exception.ToString()
         Write-Host "Could not automatically delete $gitReposPath. You need to clean it up manually." -ForegroundColor Red
     }
