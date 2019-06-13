@@ -110,7 +110,7 @@
   </Target>
 
 
-  <Target Name="EnsureWixToolsetInstalled" AfterTargets="PrepareBuildEnvironment">
+  <Target Name="EnsureWixToolsetInstalled" AfterTargets="PrepareBuildEnvironment" Condition="'$(IsCustomBuild)' != 'true'">
     <!-- With Build 15.0 MSBuildExtensionsPath32 now looks in the VS directory like this: Program Files (x86)\Microsoft Visual Studio\2017\Professional\MSBuild\
          Lots of software does not place objects here - eg WiX.
          Traditionally WiX has been a global install and so lives in the legacy MSBuildExtensionsPath32 location 'Program Files (x86)\MSBuild'
