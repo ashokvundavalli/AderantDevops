@@ -27,8 +27,11 @@ $global:ShellContext = $null
 
 function Initialize-Module {
     . $PSScriptRoot\ShellContext.ps1
-    $global:ShellContext = [ShellContext]::new()    
+    $global:ShellContext = [ShellContext]::new()
     $MyInvocation.MyCommand.Module.PrivateData.ShellContext = $global:ShellContext
+
+    AddGitCommandIntercept
+    CreateDummyGitDirectory 'C:\AderantExpert\Local\SharedBin\'
 }
 
 Initialize-Module
@@ -181,7 +184,7 @@ function Set-BranchPaths {
 
     Set-LocalDirectory
     Set-BinariesDirectory
-    $ShellContext.BranchLocalDirectory = $global:BranchLocalDirectory    
+    $ShellContext.BranchLocalDirectory = $global:BranchLocalDirectory
     $ShellContext.BranchServerDirectory = (GetDefaultValue "DropRootUNCPath").ToLower()
 
     if ($ShellContext.IsTfvcModuleEnabled) {
@@ -218,11 +221,11 @@ function Set-ScriptPaths {
 
     if ([System.IO.File]::Exists($ShellContext.BranchModulesDirectory + "\ExpertManifest.xml")) {
         [string]$root = Resolve-Path "$PSScriptRoot\..\..\..\"
-    
+
         $ShellContext.BuildScriptsDirectory = Join-Path -Path $root -ChildPath "Src\Build"
         $ShellContext.PackageScriptsDirectory = Join-Path -Path $root -ChildPath "Src\Package"
         $ShellContext.ProductManifestPath = Join-Path -Path $ShellContext.BranchModulesDirectory -ChildPath "ExpertManifest.xml"
-    } else {        
+    } else {
         $ShellContext.PackageScriptsDirectory = Join-Path -Path $ShellContext.BuildScriptsDirectory -ChildPath "..\Package"
         $ShellContext.ProductManifestPath = Join-Path -Path $ShellContext.BranchModulesDirectory -ChildPath "\Build\ExpertManifest.xml"
     }
@@ -567,7 +570,7 @@ function Set-Environment {
 
     process {
         if ($ShellContext.IsTfvcModuleEnabled) {
-            Import-Module "$PSScriptRoot\AderantTfs.psm1" -Global            
+            Import-Module "$PSScriptRoot\AderantTfs.psm1" -Global
         }
 
         if ($Initialize.IsPresent) {
@@ -607,26 +610,26 @@ function Set-LocalDirectory {
 
 function Set-VisualStudioVersion() {
     $job = Start-Job -Name "SetVisualStudioVersion" -ScriptBlock {
-        Param($path)           
+        Param($path)
             $file = [System.IO.Path]::Combine($path, "vsvars.ps1")
             . $file
     } -ArgumentList $ShellContext.BuildScriptsDirectory
 
-   $null = Register-ObjectEvent $job -EventName StateChanged -Action {            
+   $null = Register-ObjectEvent $job -EventName StateChanged -Action {
        if ($EventArgs.JobStateInfo.State -ne [System.Management.Automation.JobState]::Completed) {
            Write-Host ("Task has failed: " + $sender.ChildJobs[0].JobStateInfo.Reason.Message) -ForegroundColor Red
        }
 
        $data = Receive-Job $Sender.Id
-       
+
        foreach ($item in $data.GetEnumerator()) {
            Set-Item -Force -Path "ENV:\$($item.Key)" -Value $item.Value
        }
-       
+
        $Host.UI.RawUI.WindowTitle = "Visual Studio environment ready $($Env:DevEnvDir)"
-       
+
        $Sender | Remove-Job -Force
-   
+
        $EventSubscriber | Unregister-Event -Force
        $EventSubscriber.Action | Remove-Job -Force
    }

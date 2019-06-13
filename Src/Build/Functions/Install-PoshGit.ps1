@@ -4,11 +4,11 @@ function CheckModuleVersion() {
     $packageManagerVerion = (Get-Module PackageManagement).Version
     if (!$packageManagerVerion) {
         Write-Warning "PackageManagement not detected, please install PackageManagement ver. 1.0.0.1 or later"
-        return $false 
+        return $false
     }
     if ($packageManagerVerion.ToString().Equals("1.0.0.0")) {
         Write-Warning "PackageManagement Version 1.0.0.0 detected - this version is buggy and may prevent the installation of tools which enhance the developer experience. If you have issues installing tools such as posh-git using Install-Module you can try replacing the version of PackageManagement in C:\Program Files (x86)\WindowsPowerShell\Modules with a newer version from another machine"
-        return $false 
+        return $false
     }
     return $true
 }
@@ -16,7 +16,7 @@ function CheckModuleVersion() {
 function global:Install-PoshGit() {
     [CmdletBinding()]
     param(
-        [Aderant.Build.BuildOperationContext]       
+        [Aderant.Build.BuildOperationContext]
         $Context = (Get-BuildContext -CreateIfNeeded)
     )
 
@@ -25,8 +25,8 @@ function global:Install-PoshGit() {
     }
 
     Set-StrictMode -Version 'Latest'
-    Use-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState    
- 
+    Use-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
+
     if (-not ($Context.IsDesktopBuild)) {
         Write-Debug "Install-PoshGit skipped - not a desktop"
         return
@@ -35,7 +35,7 @@ function global:Install-PoshGit() {
     if (-not (CheckModuleVersion)) {
         Write-Debug "Install-PoshGit skipped - Buggy PackageManagement infrastructure present"
         return
-    }   
+    }
 
     # We need Windows 10 or WMF 5 for Install-Module
     if ($host.Version.Major -ge 5) {
@@ -52,13 +52,13 @@ function global:Install-PoshGit() {
                 Write-Debug "PoshGit already installed"
                 return
             }
-    
+
             if (-not (Get-InstalledModule posh-git -ErrorAction SilentlyContinue)) {
                 Install-Module posh-git -Scope CurrentUser
-            }            
+            }
         } finally {
-            Import-Module posh-git -Global            
-            $global:GitPromptSettings.EnableWindowTitle = $false            
+            Import-Module posh-git -Global
+            $global:GitPromptSettings.EnableWindowTitle = $false
             $ShellContext.PoshGitAvailable = (Get-Module posh-git) -ne $null
         }
     } else {

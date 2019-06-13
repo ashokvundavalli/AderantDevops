@@ -6,21 +6,68 @@ function Initialize-Git
     #>
     [CmdletBinding()]
     param(
-        [Aderant.Build.BuildOperationContext]       
+        [Aderant.Build.BuildOperationContext]
         $Context = (Get-BuildContext)
     )
 
     Set-StrictMode -Version 'Latest'
-    Use-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState    
+    Use-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
 
     ConfigureGit $Context
+}
+
+function CreateDummyGitDirectory([string]$directory) {
+    # Will cause Git to not remove this directory unless you are in the directory itself
+    if (Test-Path ($directory)) {
+        if (-not (Test-Path ("$directory\.git"))) {
+            & git init $directory
+        }
+    }
+}
+
+<#
+.SYNOPSIS
+    Ensures that 'git clean' always preserves the SharedBin
+#>
+function AddGitCommandIntercept() {
+    $ExecutionContext.SessionState.InvokeCommand.PreCommandLookupAction = {
+        param($command, $eventArgs)
+
+        # not executed internally by PowerShell
+        if ($command -eq 'git' -and $eventArgs.CommandOrigin -eq 'Runspace') {
+            # tell PowerShell what to do instead of
+            # running the original command
+            $eventArgs.CommandScriptBlock = {
+
+            $(
+                $newArgs = $args
+
+                $dirsToKeep  = @("SharedBin", ".vscode", ".vs")
+
+                if ($newArgs.Count -eq 0) {
+                  & $command
+                } else {
+                  foreach ($arg in $args) {
+                    if ($arg -eq "clean") {
+                      foreach ($dirToKeep in $dirsToKeep) {
+                        $newArgs += "-e"
+                        $newArgs += $dirToKeep
+                      }
+                    }
+                  }
+                  & $command $newArgs
+                  }
+                )
+            }.GetNewClosure()
+        }
+    }
 }
 
 function ConfigureGit([Aderant.Build.BuildOperationContext]$context)
 {
     Write-Debug "Configuring .gitconfig"
 
-    try {        
+    try {
         $result = [bool]::Parse((& git config --get core.autocrlf))
         if ($result) {
             Write-Host (New-Object string -ArgumentList '*', 80) -ForegroundColor Red
