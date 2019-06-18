@@ -175,7 +175,12 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         public virtual bool IsWebProject {
-            get { return isWebProject.Evaluate(this); }
+            get {
+                if (isWebProject == null) {
+                    return false;
+                }
+                return isWebProject.Evaluate(this);
+            }
             set {
                 if (value) {
                     isWebProject = Memoizer<ConfiguredProject>.True;

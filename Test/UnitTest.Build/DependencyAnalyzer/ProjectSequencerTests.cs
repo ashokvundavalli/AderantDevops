@@ -13,6 +13,7 @@ using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using UnitTest.Build.StateTracking;
 
 namespace UnitTest.Build.DependencyAnalyzer {
     [TestClass]
@@ -213,6 +214,52 @@ namespace UnitTest.Build.DependencyAnalyzer {
 
             Assert.AreEqual(p1.BuildReason.Flags, BuildReasonTypes.ProjectOutputNotFound);
             Assert.IsTrue(p1.IsDirty);
+        }
+
+        [TestMethod]
+        public void Build_with_no_state_file_and_tracked_files_marks_project_with_InputsChanged() {
+            var tree = new Mock<IProjectTree>();
+
+            var p1 = new TestConfiguredProject(tree.Object) {
+                outputAssembly = "P1",
+                IsDirty = false,
+                IncludeInBuild = true,
+                SolutionFile = "C:\\Repos\\Folder1\\MyFile1.sln",
+            };
+
+            var p2 = new TestConfiguredProject(tree.Object) {
+                outputAssembly = "P2",
+                IsDirty = false,
+                IncludeInBuild = true,
+                SolutionFile = "C:\\Repos\\Folder2\\MyFile2.sln",
+            };
+
+            var p3 = new TestConfiguredProject(tree.Object) {
+                outputAssembly = "P3",
+                IsDirty = false,
+                IncludeInBuild = true,
+                SolutionFile = "C:\\Repos\\Folder3\\MyFile2.sln",
+            };
+
+            p2.AddResolvedDependency(null, p1);
+            p3.AddResolvedDependency(null, p2);
+
+            var sequencer = new ProjectSequencer(NullLogger.Default, null);
+            sequencer.TrackedInputFilesCheck = new TestTrackedInputFilesController(null, null) {
+                Files = new []{ new TrackedInputFile("File") },
+            };
+            bool hasLoggedUpToDate = false;
+            sequencer.ApplyStateFile(null, string.Empty, p1, ref hasLoggedUpToDate);
+
+            var graph = new ProjectDependencyGraph(p1, p2, p3);
+
+            var list = sequencer.GetProjectsBuildList(graph, new[] { p1, p2, p3 }, null, false, ChangesToConsider.None, DependencyRelationshipProcessing.Direct);
+
+            Assert.AreEqual(p1.BuildReason.Flags, BuildReasonTypes.CachedBuildNotFound | BuildReasonTypes.InputsChanged);
+            Assert.IsTrue(p1.IsDirty);
+            Assert.IsTrue(p2.IsDirty);
+            Assert.AreEqual(BuildReasonTypes.DependencyChanged, p2.BuildReason.Flags);
+            Assert.IsNull(p3.BuildReason, "Transitive dependency should not be considered");
         }
 
         [TestMethod]

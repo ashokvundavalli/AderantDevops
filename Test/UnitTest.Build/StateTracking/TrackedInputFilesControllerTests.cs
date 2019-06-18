@@ -88,6 +88,15 @@ namespace UnitTest.Build.StateTracking {
         public TestTrackedInputFilesController(IFileSystem fileSystem, ILogger logger) : base(fileSystem, logger) {
         }
 
+        public IReadOnlyCollection<TrackedInputFile> Files { get; set; }
+
+        public override IReadOnlyCollection<TrackedInputFile> GetFilesToTrack(string directory) {
+            if (Files != null) {
+                return Files;
+            }
+            return base.GetFilesToTrack(directory);
+        }
+
         public XmlReader ProjectReader { get; set; }
 
         protected override Project LoadProject(string directoryPropertiesFile, ProjectCollection collection) {

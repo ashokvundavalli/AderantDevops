@@ -50,11 +50,11 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                 DiffHashtables(newTable, oldTable, out commonKeys, out uniqueKeysInNewTable, out uniqueKeysInOldTable);
 
                 if (uniqueKeysInNewTable.Count > 0 || uniqueKeysInOldTable.Count > 0) {
-                    logger.Debug($"Correlated tracked files: UniqueKeysInTable1: {uniqueKeysInNewTable.Count} | UniqueKeysInTable2:{uniqueKeysInOldTable.Count}");
+                    logger.Debug($"Correlated tracked files: UniqueKeysInTable1: {uniqueKeysInNewTable.Count} | UniqueKeysInTable2:{uniqueKeysInOldTable.Count}", null);
 
                     foreach (var key in uniqueKeysInNewTable) {
                         TrackedInputFile inputFile = newTable[key];
-                        logger.Info($"File is detected as modified or new: {inputFile.FileName}");
+                        logger.Info($"File is detected as modified or new: {inputFile.FileName}", null);
                     }
 
                     return new InputFilesDependencyAnalysisResult(false, trackedInputFiles);
@@ -103,11 +103,11 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             }
         }
 
-        public IReadOnlyCollection<TrackedInputFile> GetFilesToTrack(string directory) {
+        public virtual IReadOnlyCollection<TrackedInputFile> GetFilesToTrack(string directory) {
             var directoryPropertiesFile = Path.Combine(directory, "dir.props");
 
             if (fileSystem.FileExists(directoryPropertiesFile)) {
-                logger.Info($"Using file: {directoryPropertiesFile} to get tracked inputs from");
+                logger.Info($"Using file: {directoryPropertiesFile} to get tracked inputs from", null);
 
                 return GetFilesToTrack(directoryPropertiesFile, directory);
             }
@@ -128,7 +128,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                 const string target = "GenerateTrackedInputFiles";
 
                 if (projectInstance.Targets.ContainsKey(target)) {
-                    logger.Info($"Evaluating target {target} in {directoryPropertiesFile}");
+                    logger.Info($"Evaluating target {target} in {directoryPropertiesFile}", null);
 
                     using (BuildManager manager = new BuildManager()) {
                         var result = manager.Build(
@@ -182,9 +182,21 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             }
 
             public void Initialize(IEventSource eventSource) {
-                eventSource.MessageRaised += (sender, args) => { this.logger.Info(args.Message); };
-                eventSource.ErrorRaised += (sender, args) => { this.logger.Error(args.Message); };
-                eventSource.WarningRaised += (sender, args) => { this.logger.Warning(args.Message); };
+                eventSource.MessageRaised += OnMessageRaised;
+                eventSource.ErrorRaised += OnErrorRaised;
+                eventSource.WarningRaised += OnWarningRaised;
+            }
+
+            private void OnWarningRaised(object sender, BuildWarningEventArgs args) {
+                logger.Warning(args.Message, null);
+            }
+
+            private void OnErrorRaised(object sender, BuildErrorEventArgs args) {
+                logger.Error(args.Message, null);
+            }
+
+            private void OnMessageRaised(object sender, BuildMessageEventArgs args) {
+                logger.Info(args.Message, null);
             }
 
             public void Shutdown() {

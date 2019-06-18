@@ -10,19 +10,27 @@ namespace UnitTest.Build.Helpers {
         }
 
         public void Debug(string message, params object[] args) {
-            testContext.WriteLine(message, args);
+            LogChecked(message, args);
         }
 
         public void Info(string message, params object[] args) {
-            testContext.WriteLine(message, args);
+            LogChecked(message, args);
         }
 
         public void Warning(string message, params object[] args) {
-            testContext.WriteLine(message, args);
+            LogChecked(message, args);
         }
 
         public void Error(string message, params object[] args) {
-            testContext.WriteLine(message, args);
+            LogChecked(message, args);
+        }
+
+        private void LogChecked(string message, object[] args) {
+            if (args == null) {
+                testContext.WriteLine(message);
+            } else {
+                testContext.WriteLine(message, args);
+            }
         }
     }
 }
