@@ -349,7 +349,7 @@ namespace Aderant.Build.Packaging {
             List<PathSpec> pathSpecs = new List<PathSpec>();
 
             foreach (ArtifactPathSpec item in paths) {
-                IEnumerable<string> artifactContents = fileSystem.GetFiles(item.Source, "*", true);
+                IEnumerable<string> artifactContents = fileSystem.GetFiles(item.Source, "*.zip", false);
                 pathSpecs.AddRange(artifactContents.Select(x => new PathSpec(x, x.Replace(item.Source, item.Destination, StringComparison.OrdinalIgnoreCase))));
             }
 
