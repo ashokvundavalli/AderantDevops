@@ -46,6 +46,11 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// </summary>
         public string MetaprojectXml { get; set; }
 
+        internal TrackedInputFilesController TrackedInputFilesCheck {
+            get { return trackedInputFilesCheck; }
+            set { trackedInputFilesCheck = value; }
+        }
+
 
         public BuildPlan CreatePlan(BuildOperationContext context, OrchestrationFiles files, DependencyGraph graph, bool considerStateFiles = true) {
             isDesktopBuild = context.IsDesktopBuild;
@@ -86,10 +91,6 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             FindAllChangedProjectsAndDisableBuildCache(projectGraph);
 
-            if (string.Equals(System.Environment.GetEnvironmentVariable("SYSTEM_PULLREQUEST_PULLREQUESTID"), "25441")) {
-                System.Diagnostics.Debugger.Launch();
-            }
-
             filteredProjects = SecondPassAnalysis(filteredProjects, projectGraph);
 
             LogProjectsExcluded(filteredProjects, projectGraph);
@@ -104,7 +105,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             string treeText = PrintBuildTree(groups, true);
             if (logger != null) {
-                logger.Info(treeText);
+                logger.Info(treeText, null);
 
                 WriteBuildTree(fileSystem, context.BuildRoot, treeText);
             }
@@ -125,7 +126,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         private void LogPrebuiltStatus(IReadOnlyList<IDependable> filteredProjects) {
             foreach (var project in filteredProjects.OfType<DirectoryNode>().Distinct()) {
                 if (!project.IsPostTargets) {
-                    logger.Info($"{project.DirectoryName} retrieve prebuilts: {(project.RetrievePrebuilts.HasValue ? project.RetrievePrebuilts.Value.ToString() : "?")}");
+                    logger.Info($"{project.DirectoryName} retrieve prebuilts: {(project.RetrievePrebuilts.HasValue ? project.RetrievePrebuilts.Value.ToString() : "?")}", null);
                 }
             }
         }
@@ -241,7 +242,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
             }
 
-            logger.Info(sb.ToString());
+            logger.Info(sb.ToString(), null);
         }
 
         /// <summary>
@@ -324,15 +325,15 @@ namespace Aderant.Build.DependencyAnalyzer {
                     files = buildStateMetadata.QueryCacheForBuckets(buckets, out missingIds);
 
                     foreach (var stateFile in files) {
-                        logger.Info($"Using state file: {stateFile.Id} -> {stateFile.BuildId} -> {stateFile.Location}:{stateFile.BucketId.Tag}");
+                        logger.Info($"Using state file: {stateFile.Id} -> {stateFile.BuildId} -> {stateFile.Location}:{stateFile.BucketId.Tag}", null);
                     }
 
                     foreach (var missingId in missingIds) {
-                        logger.Info($"No state file: {missingId.Id} -> {missingId.Tag}");
+                        logger.Info($"No state file: {missingId.Id} -> {missingId.Tag}", null);
                     }
                 }
 
-                logger.Info($"Found {files.Count}/{bucketCount} state files.");
+                logger.Info($"Found {files.Count}/{bucketCount} state files.", null);
             }
 
             return files.ToList();
@@ -379,8 +380,6 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             foreach (var group in grouping) {
                 List<ConfiguredProject> dirtyProjects = group.Where(g => g.IsDirty).ToList();
-
-                var dirtyProjectsLogLine = dirtyProjects.Select(s => s.Id);
 
                 string solutionDirectoryName = PathUtility.GetFileName(group.Key ?? "");
 
@@ -584,7 +583,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             if (upToDate && hasTrackedFiles && !hasLoggedUpToDate) {
-                logger.Info("All tracked files are up to date: " + solutionRoot);
+                logger.Info("All tracked files are up to date: " + solutionRoot, null);
                 hasLoggedUpToDate = true;
             }
 
@@ -630,7 +629,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                         }
                     }
                 } else {
-                    logger.Info($"No artifacts exist for '{stateFileKey}' or there are no project outputs.");
+                    logger.Info($"No artifacts exist for '{stateFileKey}' or there are no project outputs.", null);
                 }
 
                 MarkDirty(project, BuildReasonTypes.ProjectOutputNotFound, (string)null);
@@ -638,7 +637,20 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             }
 
-            MarkDirty(project, BuildReasonTypes.CachedBuildNotFound, (string)null);
+            BuildReasonTypes type = BuildReasonTypes.CachedBuildNotFound;
+            if (hasTrackedFiles) {
+                // We have a balancing act here.
+                // We want to build as few things as possible but also need to maintain
+                // correctness.
+                // If there is no state file present then we don't know if something is out of date
+                // as we don't have the previous hashes to compare against.
+                // If we have tracked inputs the we will also flag the item as 'InputsChanged'
+                // This is because 'CachedBuildNotFound' is treated
+                // specially as a performance optimization to prevent overbuilding the tree
+                // and we want to disable this optimization here.
+                type |= BuildReasonTypes.InputsChanged;
+            }
+            MarkDirty(project, type, (string)null);
         }
 
         private InputFilesDependencyAnalysisResult BeginTrackingInputFiles(BuildStateFile stateFile, string solutionRoot) {
@@ -651,7 +663,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     if (PipelineService != null) {
                         if (inputFilesAnalysisResult.TrackedFiles != null && inputFilesAnalysisResult.TrackedFiles.Any()) {
                             var solutionRootName = PathUtility.GetFileName(solutionRoot);
-                            logger.Info($"Tracking {inputFilesAnalysisResult.TrackedFiles.Count} input files for {solutionRootName}");
+                            logger.Info($"Tracking {inputFilesAnalysisResult.TrackedFiles.Count} input files for {solutionRootName}", null);
 
                             PipelineService.TrackInputFileDependencies(solutionRootName, inputFilesAnalysisResult.TrackedFiles);
                         }
@@ -672,7 +684,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
             }
 
-            logger.Info($"No state files available for {stateFileKey}. Build will not be able to use prebuilt objects.");
+            logger.Info($"No state files available for {stateFileKey}. Build will not be able to use prebuilt objects.", null);
             return null;
         }
 
@@ -680,16 +692,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             project.IsDirty = true;
             project.IncludeInBuild = true;
             project.SetReason(reasonTypes, reasonDescription);
-        }
-
-        private static void MarkDirty(ConfiguredProject project, BuildReasonTypes reasonTypes, IEnumerable<string> changedProjects) {
-            MarkDirty(project, reasonTypes, (string)null);
-
-            if (changedProjects != null) {
-                if (project.BuildReason.ChangedDependentProjects == null || project.BuildReason.ChangedDependentProjects.Count == 0) {
-                    project.BuildReason.ChangedDependentProjects = changedProjects.ToArray();
-                }
-            }
         }
 
         /// <summary>
@@ -712,8 +714,8 @@ namespace Aderant.Build.DependencyAnalyzer {
             ChangesToConsider changesToConsider,
             DependencyRelationshipProcessing dependencyProcessing) {
 
-            logger.Info("ChangesToConsider:" + changesToConsider);
-            logger.Info("DependencyRelationshipProcessing:" + dependencyProcessing);
+            logger.Info("ChangesToConsider:" + changesToConsider, null);
+            logger.Info("DependencyRelationshipProcessing:" + dependencyProcessing, null);
 
             var projects = buildableProjects.OfType<ConfiguredProject>().ToList();
 
@@ -782,8 +784,9 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (configuredProject != null) {
                 var reason = configuredProject.BuildReason;
 
-                return configuredProject.IsDirty &&
-                        !reason.Flags.HasFlag(BuildReasonTypes.CachedBuildNotFound) && !reason.Flags.HasFlag(BuildReasonTypes.AlwaysBuild);
+                return
+                    configuredProject.IsDirty
+                    && reason.Flags != BuildReasonTypes.CachedBuildNotFound && !reason.Flags.HasFlag(BuildReasonTypes.AlwaysBuild);
             }
 
             return false;
