@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
 using Aderant.Build.Utilities;
@@ -276,6 +275,18 @@ namespace Aderant.Build.Tasks {
         public string[] AssemblyDependencies { get; set; }
         public object Logger { get; set; }
 
+        private string assemblyLocation;
+
+        private Assembly ReflectionOnlyAssemblyResolveEventHandler(object sender, ResolveEventArgs args) {
+            string assembly = Path.Combine(assemblyLocation, string.Concat(new AssemblyName(args.Name).Name, ".dll"));
+
+            if (File.Exists(assembly)) {
+                return Assembly.ReflectionOnlyLoadFrom(assembly);
+            }
+
+            return null;
+        }
+
         /// <param name="assembly"></param>
         /// <param name="checkCiStatus"></param>
         /// <param name="referenceArchitectures">
@@ -311,7 +322,10 @@ namespace Aderant.Build.Tasks {
             asm.ManifestModule.GetPEKind(out peKind, out imageFileMachine);
 
             if (checkCiStatus) {
-                Tuple <bool, string> ciProperties = DetermineCiStatus(asm.CustomAttributes.ToArray());
+                assemblyLocation = Path.GetDirectoryName(asm.Location);
+                AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve += ReflectionOnlyAssemblyResolveEventHandler;
+
+                Tuple<bool, string> ciProperties = DetermineCiStatus(asm.CustomAttributes);
                 ciEnabled = ciProperties.Item1;
                 ciCategory = ciProperties.Item2;
             } else {
@@ -332,7 +346,7 @@ namespace Aderant.Build.Tasks {
             return peKind;
         }
 
-        internal static Tuple<bool, string> DetermineCiStatus(CustomAttributeData[] customAttributeData) {
+        internal static Tuple<bool, string> DetermineCiStatus(IEnumerable<CustomAttributeData> customAttributeData) {
             bool ciEnabled = false;
             string ciCategory = null;
 
