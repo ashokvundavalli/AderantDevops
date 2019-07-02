@@ -71,6 +71,7 @@ namespace Aderant.Build.Tasks {
         public string StagingPackageDrop { get; set; }
 
         public override bool ExecuteTask() {
+
             if (!Directory.Exists(SeedPackageSrc)) {
                 Log.LogMessage("No seed package found. Exiting.");
                 return true;
@@ -203,7 +204,7 @@ namespace Aderant.Build.Tasks {
 
         private bool SeedContentHasChanges() {
             var context = PipelineService.GetContext();
-            var changes = context.SourceTreeMetadata?.Changes.ToList();
+            var changes = context.SourceTreeMetadata?.Changes?.ToList();
             if (context.BuildMetadata.IsPullRequest && changes != null && changes.Any(c => c.Path.IndexOf("SeedPackage", StringComparison.OrdinalIgnoreCase) > 0)) {
                 return true;
             }
