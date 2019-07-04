@@ -150,6 +150,10 @@ namespace Aderant.Build {
         /// <param name="productManifestPath">The product manifest path.</param>
         /// <remarks>Called from the PowerShell host.</remarks>
         public string[] GetModuleMatches(string modulePath, string currentModulePath, string productManifestPath = null) {
+            if (productManifestPath == null || !File.Exists(productManifestPath)) {
+                return new string[] { };
+            }
+
             ExpertManifest manifest = ExpertManifest.Load(productManifestPath);
             manifest.ModulesDirectory = modulePath;
 
@@ -166,6 +170,10 @@ namespace Aderant.Build {
         /// <remarks>Called from the PowerShell host.</remarks>
         public string[] GetModuleMatches(string wordToComplete, string currentModulePath, string modulePath, string productManifestPath = null) {
             lastWord = wordToComplete;
+
+            if (productManifestPath == null || !File.Exists(productManifestPath)) {
+                return new string[] { };
+            }
 
             ExpertManifest manifest = ExpertManifest.Load(productManifestPath);
             manifest.ModulesDirectory = modulePath;
