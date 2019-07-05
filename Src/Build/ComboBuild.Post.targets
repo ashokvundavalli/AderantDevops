@@ -7,6 +7,7 @@
   <Import Project="Aderant.Build.Publish.targets" />
   <Import Project="Aderant.CodeSigning.targets" />
   <Import Project="Mobile.targets" />
+  <Import Project="$(SolutionRoot)\..\Build\Parameters.props" Condition="Exists('$(SolutionRoot)\..\Build\Parameters.props')" />
 
   <PropertyGroup>
     <RunTestsDependsOn>
@@ -28,6 +29,7 @@
       SignInstallers;
       CopyRelatedFiles;
       PackageArtifactsCore;
+      PaketPack;
     </EndToEndDependsOn>
 
     <PackageArtifactsDependsOn>
@@ -40,6 +42,10 @@
   <PropertyGroup>
     <SignApplications Condition="'$(SignApplications)' == ''">true</SignApplications>
   </PropertyGroup>
+
+  <ItemGroup>
+    <InvokePaket Include="$(SolutionRoot)\*paket.template" />
+  </ItemGroup>
 
   <!--Stub-->
   <Target Name="PackageArtifacts" />
@@ -66,6 +72,7 @@
 
 
   <Target Name="CreateDefaultArtifacts">
+    
     <ItemGroup>
       <_PackageArtifact Include="$(BinTestDirectory)\**\*;">
         <ArtifactId>$(ModuleName).default.tests</ArtifactId>
@@ -79,15 +86,20 @@
         <ArtifactType>Prebuilt</ArtifactType>
       </_PackageArtifact>
     </ItemGroup>
+    
   </Target>
+
   
   <Target Name="CopyRelatedFiles">
+    
     <CopyRelatedFiles
       SourceLocation ="$(BinModuleDirectory)"
       Destination="$(UpdateStagingDirectory)BinFiles" />
+    
   </Target>
 
-    <Target Name="PackageArtifactsCore" DependsOnTargets="$(PackageArtifactsDependsOn)">
+  
+  <Target Name="PackageArtifactsCore" DependsOnTargets="$(PackageArtifactsDependsOn)">
 
     <CreateArtifacts
       ContextEndpoint="$(ContextEndpoint)"
@@ -124,5 +136,22 @@
   <!-- Pull the entry targets into our context. This lets us call into PostBuild for people who want to customize the workflow -->
   <Import Project="$(SolutionDirectoryPath)Build\TFSBuild.proj" Condition="'$(RunUserTargets)' != 'false' And Exists('$(SolutionDirectoryPath)Build\TFSBuild.proj')" />
   <Import Project="$(SolutionDirectoryPath)packaging.targets" Condition="'$(RunUserTargets)' != 'false' And Exists('$(SolutionDirectoryPath)packaging.targets')" />
+
+  
+  <Target Name="PaketPack" Condition="'@(InvokePaket)' != ''">
+    
+    <PropertyGroup>
+      <paketLockFile>$(SolutionRoot)\paket.lock</paketLockFile>
+    </PropertyGroup>
+    
+    <WriteLinesToFile
+     File="$(paketLockFile)"
+     Lines=""
+     Overwrite="false"
+     Condition="!Exists('$(paketLockFile)')"/>
+    
+    <Exec Command="$(BuildToolsDirectory)paket.exe pack $(ArtifactStagingDirectory)packages --version $(PackageVersion) --verbose" WorkingDirectory="$(SolutionRoot)" />
+  
+  </Target>
 
 </Project>
