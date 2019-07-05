@@ -138,7 +138,7 @@
   <Import Project="$(SolutionDirectoryPath)packaging.targets" Condition="'$(RunUserTargets)' != 'false' And Exists('$(SolutionDirectoryPath)packaging.targets')" />
 
   
-  <Target Name="PaketPack" Condition="'@(InvokePaket)' != ''">
+  <Target Name="PaketPack" Condition="'@(InvokePaket)' != '' And '$(PackageVersion)' != ''">
     
     <PropertyGroup>
       <paketLockFile>$(SolutionRoot)\paket.lock</paketLockFile>
