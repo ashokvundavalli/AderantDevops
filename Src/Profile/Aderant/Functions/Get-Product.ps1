@@ -145,11 +145,12 @@ function Get-ProductNoDebugFiles {
     If specified the Build version will be copied to the clipboard.
 #>
 function Get-ProductBuild([switch]$copyToClipboard) {
-    $buildVersionFile = Get-ChildItem -Path $ShellContext.BranchBinariesDirectory -Filter Expert_Build_*.url
+    $binariesDirectory = "$Env:SystemDrive\AderantExpert\Binaries"
+    $buildVersionFile = Get-ChildItem -Path $binariesDirectory -Filter Expert_Build_*.url
     
     if ($buildVersionFile) {
     
-        $buildVersionFilePath = Join-Path -Path $ShellContext.BranchBinariesDirectory -ChildPath $buildVersionFile
+        $buildVersionFilePath = Join-Path -Path $binariesDirectory -ChildPath $buildVersionFile
         Invoke-Item $buildVersionFilePath
         Write-Host "Current Build information is visible at: $($buildVersionFilePath)" 
 
@@ -159,6 +160,6 @@ function Get-ProductBuild([switch]$copyToClipboard) {
         }
 
     } else {
-        Write-Error "No url containing build information is present in: $($ShellContext.BranchBinariesDirectory) "
+        Write-Error "No url containing build information is present in: $($binariesDirectory) "
     }
 }
