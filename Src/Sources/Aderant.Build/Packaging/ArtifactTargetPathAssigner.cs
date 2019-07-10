@@ -29,6 +29,10 @@ namespace Aderant.Build.Packaging {
                     continue;
                 }
 
+                if (artifact.IsAutomationTestPackage) {
+                    AddArtifact(pathMap, @"Test\Automation", artifact);
+                }
+
                 if (includeGeneratedArtifacts) {
                     AddArtifact(pathMap, "", artifact);
                 } else {

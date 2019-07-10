@@ -57,6 +57,10 @@ namespace Aderant.Build.Packaging {
             }
         }
 
+        [IgnoreDataMember]
+        [ProtoIgnore]
+        internal bool IsAutomationTestPackage => Name.EndsWith(".Automation", StringComparison.OrdinalIgnoreCase);
+
         /// <summary>
         /// Creates a path to the artifact which TFS can use
         /// </summary>
