@@ -22,6 +22,9 @@ namespace Aderant.Build.Packaging {
         public bool IsAutomaticallyGenerated { get; set; }
 
         public bool IsInternalDevelopmentPackage { get; set; }
+
+        public bool IsAutomationPackage { get; set; }
+
         public ArtifactType ArtifactType { get; set; }
 
         public string Id { get; }

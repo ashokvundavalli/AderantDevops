@@ -39,6 +39,9 @@ namespace Aderant.Build.Packaging {
         public bool IsInternalDevelopmentPackage { get; set; }
 
         [DataMember]
+        public bool IsAutomationPackage { get; set; }
+
+        [DataMember]
         public bool SendToArtifactCache { get; set; }
 
         [IgnoreDataMember]
@@ -56,10 +59,6 @@ namespace Aderant.Build.Packaging {
                 return false;
             }
         }
-
-        [IgnoreDataMember]
-        [ProtoIgnore]
-        internal bool IsAutomationTestPackage => Name.EndsWith(".Automation", StringComparison.OrdinalIgnoreCase);
 
         /// <summary>
         /// Creates a path to the artifact which TFS can use

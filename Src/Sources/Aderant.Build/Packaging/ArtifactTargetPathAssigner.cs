@@ -19,18 +19,25 @@ namespace Aderant.Build.Packaging {
             var pathMap = new SortedDictionary<string, List<BuildArtifact>>(StringComparer.OrdinalIgnoreCase);
 
             foreach (BuildArtifact artifact in associatedArtifacts) {
+                bool deliverToRoot = true;
+
                 if (artifact.IsInternalDevelopmentPackage) {
                     AddArtifact(pathMap, "Development", artifact);
-                    continue;
+                    deliverToRoot = false;
                 }
 
                 if (artifact.IsTestPackage) {
                     AddArtifact(pathMap, "Test", artifact);
-                    continue;
+                    deliverToRoot = false;
                 }
 
-                if (artifact.IsAutomationTestPackage) {
+                if (artifact.IsAutomationPackage) {
                     AddArtifact(pathMap, @"Test\Automation", artifact);
+                    deliverToRoot = false;
+                }
+
+                if (!deliverToRoot) {
+                    continue;
                 }
 
                 if (includeGeneratedArtifacts) {

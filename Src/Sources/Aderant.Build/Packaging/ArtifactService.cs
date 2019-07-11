@@ -246,6 +246,7 @@ namespace Aderant.Build.Packaging {
                 Type = VsoBuildArtifactType.FilePath,
                 IsAutomaticallyGenerated = definition.IsAutomaticallyGenerated,
                 IsInternalDevelopmentPackage = definition.IsInternalDevelopmentPackage,
+                IsAutomationPackage = definition.IsAutomationPackage,
                 SendToArtifactCache = sendToArtifactCache
             };
         }
