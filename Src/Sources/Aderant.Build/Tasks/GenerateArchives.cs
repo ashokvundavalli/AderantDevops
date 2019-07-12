@@ -82,7 +82,7 @@ namespace Aderant.Build.Tasks {
         }
 
         internal static List<PathSpec> ConstructPathSpecs(ITaskItem[] directoriesToArchive, ITaskItem[] outputArchives, string[] excludeFilter = null, TaskLoggingHelper log = null) {
-            List<PathSpec> outputs = new List<PathSpec>();
+            var outputs = new HashSet<PathSpec>();
 
             for (var i = 0; i < directoriesToArchive.Length; i++) {
                 var item = directoriesToArchive[i];
@@ -108,7 +108,7 @@ namespace Aderant.Build.Tasks {
                 }
             }
 
-            return outputs;
+            return outputs.ToList();
         }
 
         internal static void ProcessDirectories(IList<PathSpec> directoriesToArchive, CompressionLevel compressionLevel) {

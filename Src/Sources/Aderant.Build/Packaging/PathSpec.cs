@@ -6,7 +6,7 @@ namespace Aderant.Build.Packaging {
 
     [DebuggerDisplay("{Location} => {Destination}")]
     [Serializable]
-    public struct PathSpec {
+    public struct PathSpec : IEquatable<PathSpec> {
 
         public PathSpec(string location, string destination) {
             this.Location = location;
@@ -24,6 +24,10 @@ namespace Aderant.Build.Packaging {
         /// </summary>
         /// <value>The location.</value>
         public string Location { get; }
+
+        public bool Equals(PathSpec other) {
+            return EqualsInternal(other);
+        }
 
         public override bool Equals(object obj) {
             if (!(obj is PathSpec)) {
