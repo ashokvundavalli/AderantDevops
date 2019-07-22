@@ -146,7 +146,7 @@
 
     <Exec ContinueOnError="true"
       IgnoreExitCode="false"
-      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; &apos;$(DeploymentEngine)&apos; TeardownServerImage /name:$(ExpertEnvironmentName)&quot;" />
+      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; &apos;$(DeploymentEngine)&apos; TeardownServerImage /image:&apos;$(ImagePath)&apos; /name:$(ExpertEnvironmentName)&quot;" />
 
   </Target>
 
