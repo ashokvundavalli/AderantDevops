@@ -77,9 +77,10 @@
         Include="$(ModuleSourceDirectory)**\*.tt;
                  $(ModuleTestDirectory)**\*.tt;"
         Exclude="$(ModuleSourceDirectory)**\__*.tt;
+                 $(ModuleSourceDirectory)**\PackageTmp\**\*.tt
                  $(ModuleSourceDirectory)**\obj\**\*.tt;
-                 $(ModuleTestDirectory)**\obj\**\*.tt;
-                 $(ModuleSourceDirectory)**\PackageTmp\**\*.tt">
+                 $(ModuleTestDirectory)**\__*.tt;
+                 $(ModuleTestDirectory)**\obj\**\*.tt">
         <Generator>TextTemplatingFileGenerator</Generator>
       </rmT4TextTemplates>
     </ItemGroup>
