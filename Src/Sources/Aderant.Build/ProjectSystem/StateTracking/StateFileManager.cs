@@ -50,6 +50,10 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         }
 
         private void EvictNotExistentProjects(List<BuildStateFile> stateFiles, SourceTreeMetadata sourceTreeMetadata) {
+            if (sourceTreeMetadata == null) {
+                return;
+            }
+
             // here we evict deleted projects from the previous builds metadata
             // This is so we do not consider the outputs of this project in the artifact restore phase
             if (sourceTreeMetadata.Changes != null) {
