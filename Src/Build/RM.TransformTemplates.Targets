@@ -136,7 +136,6 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
     <!-- Do the Transform, for newer version customization builds, where ExpertSourceDirectory is fed in CustomizationBuilder.exe -->
     <Aderant.TextTransform.Tasks.Transform
       Condition="'$(ExpertSourceDirectory)' != ''"
-
       SolutionDirectory="$(SolutionDirectoryPath)"
       TemplatesToProcess="@(rmT4TransformItems)"
       ReferencePaths="@(AssemblyReferencePaths)"
@@ -218,8 +217,26 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
     </PropertyGroup>
 
     <ItemGroup>
+      <_VisualStudioVersion Include="2019">
+        <Edition>Enterprise</Edition>
+      </_VisualStudioVersion>
+
+      <_VisualStudioVersion Include="2019">
+        <Edition>Professional</Edition>
+      </_VisualStudioVersion>
+
+      <_VisualStudioVersion Include="2017">
+        <Edition>Enterprise</Edition>
+      </_VisualStudioVersion>
+
+      <_VisualStudioVersion Include="2017">
+        <Edition>Professional</Edition>
+      </_VisualStudioVersion>
+    </ItemGroup>
+
+    <ItemGroup>
       <VisualStudioDslAssemblies Include="$(VSSDKPath)VisualStudioIntegration\Common\Assemblies\v4.0\Microsoft.VisualStudio.Modeling.Sdk.*.dll" />
-      <VisualStudioDslAssemblies Include="$(ProgramFiles32)\Microsoft Visual Studio\*\*\VSSDK\VisualStudioIntegration\Common\Assemblies\v4.0\Microsoft.VisualStudio.Modeling.Sdk.*.dll" />
+      <VisualStudioDslAssemblies Include="$(ProgramFiles32)\Microsoft Visual Studio\%(_VisualStudioVersion.Identity)\%(_VisualStudioVersion.Edition)\VSSDK\VisualStudioIntegration\Common\Assemblies\v4.0\Microsoft.VisualStudio.Modeling.Sdk.*.dll" />
     </ItemGroup>
 
     <ItemGroup>

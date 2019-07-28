@@ -207,6 +207,8 @@
       <_VSSDKSuffix>VSSDK\VisualStudioIntegration\Common\Assemblies\v4.0</_VSSDKSuffix>
       <_PublicAssembliesSuffix>Common7\IDE\PublicAssemblies</_PublicAssembliesSuffix>
       <_VS2017InstallDirectory>$(ProgramFiles32)\Microsoft Visual Studio\2017\</_VS2017InstallDirectory>
+      <_WIXLib>$(ProgramFiles32)\WiX Toolset v3.11\bin</_WIXLib>
+      <_Pia2010>$(ProgramFiles32)\Microsoft Visual Studio 14.0\Visual Studio Tools for Office\PIA\Office14\</_Pia2010>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -216,6 +218,8 @@
       <AssemblySearchPaths>
         $(AlternativeOutputDirectory);
         $(AlternativeOutputDirectory)StoredProcedures;
+        $(_WIXLib);
+        $(_Pia2010);
         $(RootFolder)\Dependencies\;
         @(AssemblySearchDirectories);
         $(AssemblySearchPaths);

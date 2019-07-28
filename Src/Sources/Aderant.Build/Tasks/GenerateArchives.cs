@@ -94,7 +94,7 @@ namespace Aderant.Build.Tasks {
                     foreach (var filter in excludeFilter) {
                         if (item.ItemSpec.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0) {
                             if (log != null) {
-                                log.LogMessage(MessageImportance.Low, $"Ignoring file {item.ItemSpec} as it contains filter {filter}");
+                                log.LogMessage(MessageImportance.Low, $"Ignoring file {item.ItemSpec} as it contains filter {filter}", null);
                             }
 
                             add = false;

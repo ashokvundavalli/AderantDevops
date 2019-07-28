@@ -45,27 +45,34 @@ namespace Aderant.Build.Tasks {
 
         public override bool Execute() {
             if (AssemblyInfoFiles == null || AssemblyInfoFiles.Length == 0) {
-                Log.LogMessage(MessageImportance.Low, "No files provided");
+                Log.LogMessage(MessageImportance.Low, "No files provided", null);
                 return true;
             }
 
             if (AssemblyInfoFiles.Length > 1) {
-                Log.LogError("More than 1 file provided: " + String.Join(",", AssemblyInfoFiles.Select(s => s.ItemSpec)));
+                Log.LogError("More than 1 file provided: " + String.Join(",", AssemblyInfoFiles.Select(s => s.ItemSpec)), null);
                 return false;
             }
 
             string assemblyInfoFile = AssemblyInfoFiles[0].GetMetadata("FullPath");
 
-            if (!File.Exists(assemblyInfoFile)) {
-                return true;
-            }
-
             Tuple<TaskItem, TaskItem, TaskItem> attributes;
             if (infoCache.TryGetValue(assemblyInfoFile, out attributes)) {
-                Log.LogMessage(MessageImportance.Low, $"Reading attributes for {assemblyInfoFile} from cache.");
+                if (attributes == null) {
+                    // No file sentinel found
+                    return true;
+                }
+
+                Log.LogMessage(MessageImportance.Low, $"Reading attributes for {assemblyInfoFile} from cache.", null);
                 assemblyVersion = attributes.Item1;
                 assemblyInformationalVersion = attributes.Item2;
                 assemblyFileVersion = attributes.Item3;
+                return true;
+            }
+
+
+            if (!File.Exists(assemblyInfoFile)) {
+                infoCache.TryAdd(assemblyInfoFile, null);
                 return true;
             }
 
@@ -83,7 +90,7 @@ namespace Aderant.Build.Tasks {
             dynamic tree = parseTextMethod.Invoke(null, new object[] { text, null, "", null, CancellationToken.None });
             var root = tree.GetRoot();
 
-            var attributeLists = root.DescendantNodes(); /*.OfType<AttributeListSyntax>();*/
+            var attributeLists = root.DescendantNodes();
             foreach (var p in attributeLists) {
                 if (p.GetType().Name != "AttributeListSyntax") {
                     continue;
@@ -108,7 +115,7 @@ namespace Aderant.Build.Tasks {
         private void InitializeParseTextMethod() {
             string pathToBuildTools = ToolLocationHelper.GetPathToBuildTools(ToolLocationHelper.CurrentToolsVersion);
             var locator = new RoslynLocator(pathToBuildTools);
-            
+
             var assembly = locator.GetCodeAnalysisCSharpAssembly();
 
             ErrorUtilities.IsNotNull(assembly, nameof(assembly));
@@ -128,8 +135,8 @@ namespace Aderant.Build.Tasks {
                         parameters[4].ParameterType == typeof(CancellationToken)) {
                         parseTextMethod = method;
                         return;
-                    } 
-                        
+                    }
+
                 }
             }
         }
@@ -161,5 +168,4 @@ namespace Aderant.Build.Tasks {
             }
         }
     }
-
 }

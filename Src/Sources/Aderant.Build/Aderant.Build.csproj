@@ -106,6 +106,7 @@
     <Compile Include="Annotations\ReSharperAttributes.cs" />
     <Compile Include="Commands\GetSourceTreeMetadataCommand.cs" />
     <Compile Include="Commands\GetBuildStateMetadataCommand.cs" />
+    <Compile Include="ProjectSystem\StateTracking\StateFileManager.cs" />
     <Compile Include="DependencyResolver\IDependencyGroup.cs" />
     <Compile Include="DependencyResolver\ResolverWorkflow.cs" />
     <Compile Include="DependencyAnalyzer\ProjectDependencyGraph.cs" />
@@ -124,6 +125,8 @@
     <Compile Include="Tasks\CopyCustomSolution.cs" />
     <Compile Include="Tasks\CopyRelatedFiles.cs" />
     <Compile Include="Tasks\GeneratePaketDependencies.cs" />
+    <Compile Include="Tasks\HappyCat.cs" />
+    <Compile Include="Tasks\SourceTransformationTask.cs" />
     <Compile Include="Tasks\TextTemplatingPathResolver.cs" />
     <Compile Include="Utilities\InspectionDomainInitializer.cs" />
     <Compile Include="Tasks\RoleManifestPackageIdentifier.cs" />

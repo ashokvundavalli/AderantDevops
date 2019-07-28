@@ -3,8 +3,7 @@
 
   <PropertyGroup>
     <PackagesDirectory Condition="'$(PackagesDirectory)' == ''">$(MSBuildThisFileDirectory)packages\</PackagesDirectory>
-    <ThisProject>$([System.IO.Path]::GetFileName($(MSBuildProjectFullPath)))</ThisProject>
-    <IsIntegrationTest>$(ThisProject.StartsWith('IntegrationTest.'))</IsIntegrationTest>
+    <ThisProject>$(MSBuildProjectName)</ThisProject>    
     <IsWeb>$(ThisProject.StartsWith('Web.'))</IsWeb>
     <IsMobile>$(ThisProject.StartsWith('Mobile.'))</IsMobile>
     <IsWebOrMobile>false</IsWebOrMobile>

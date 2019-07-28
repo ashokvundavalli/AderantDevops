@@ -12,7 +12,7 @@
       $(SetVersionAttributesDependsOn);
       ReadVersionInfo;
       GenerateAssemblyInfo;
-      AsemblyInfoUpdateCopyright;
+      AssemblyInfoUpdateCopyright;
     </SetVersionAttributesDependsOn>
   </PropertyGroup>
 
@@ -25,7 +25,16 @@
   <!-- Stub that lets us hook BeforeCompile without breaking others that also override BeforeCompile -->
   <Target Name="SetVersionAttributes" BeforeTargets="$(PrepareResourcesDependsOn);$(SetVersionAttributesBeforeTargets)" DependsOnTargets="$(SetVersionAttributesDependsOn)" />
 
-  <Target Name="GenerateAssemblyAttributes">
+
+  <PropertyGroup>
+    <CreateGeneratedAssemblyInfoInputsCacheFileDependsOn>
+      GatherAssemblyAttributes;
+      FindRoleFiles
+    </CreateGeneratedAssemblyInfoInputsCacheFileDependsOn>
+  </PropertyGroup>
+
+
+  <Target Name="GatherAssemblyAttributes">
 
     <PropertyGroup>
       <!-- Path.Combine to try handle trailing/non-trailing slashes -->
@@ -37,6 +46,8 @@
       <!-- Slurp in the paket.lock data as well -->
       <_PaketLockFile>$([System.IO.Path]::Combine($(SolutionDirectoryPath), 'paket.lock'))</_PaketLockFile>
       <_PaketLockText Condition="Exists($(_PaketLockFile))">$([System.IO.File]::ReadAllText($(_PaketLockFile)))</_PaketLockText>
+
+      <IsIntegrationTest>$(MSBuildProjectName.StartsWith('IntegrationTest.'))</IsIntegrationTest>
 
       <CIEnabled Condition="'$(IsIntegrationTest)' == 'true' And '$(CIEnabled)' == ''">false</CIEnabled>
     </PropertyGroup>
@@ -94,7 +105,10 @@
         <_Parameter2>$(CICategory)</_Parameter2>
       </_AssemblyAttributes>
     </ItemGroup>
+  </Target>
 
+
+  <Target Name="FindRoleFiles">
     <RoleManifestPackageIdentifier Condition="'$(IsIntegrationTest)' == 'true'"
       ManifestSearchDirectories="@(ManifestSearchDirectories)"
       DependentRoles="@(DependentRoles)"
@@ -105,7 +119,6 @@
     <ItemGroup>
       <_AssemblyAttributes Condition="'$(IsIntegrationTest)' == 'true'" Include="@(DependentPackages)" />
     </ItemGroup>
-
   </Target>
 
 
@@ -115,7 +128,7 @@
     assembly attribute values and MS Build will then execute CoreGenerateAssembly to generate a new file.
   -->
   <Target Name="CreateGeneratedAssemblyInfoInputsCacheFile"
-          DependsOnTargets="GenerateAssemblyAttributes">
+          DependsOnTargets="$(CreateGeneratedAssemblyInfoInputsCacheFileDependsOn)">
 
     <PropertyGroup>
       <GeneratedAssemblyInfoInputsCacheFile>$(IntermediateOutputPath)Versioning.AssemblyInfoInputs.cache</GeneratedAssemblyInfoInputsCacheFile>
@@ -192,7 +205,7 @@
       Creates modified version of CommonAssemblyInfo.cs without touching the original file so we don't upset
       incremental builds
   -->
-  <Target Name="AsemblyInfoUpdateCopyright"
+  <Target Name="AssemblyInfoUpdateCopyright"
           DependsOnTargets="FindCommonAssemblyInfo"
           Inputs="@(CommonAssemblyInfoFile)"
           Outputs="$(NewCommonAssemblyInfoFile)">

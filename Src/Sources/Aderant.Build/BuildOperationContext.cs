@@ -89,7 +89,7 @@ namespace Aderant.Build {
         private string[] include;
         /// <summary>
         /// Includes solutions and projects found under these paths into the build tree.
-        /// </summary>        
+        /// </summary>
         public string[] Include {
             get {
                 return include ?? new string[] { BuildRoot };
@@ -490,26 +490,6 @@ namespace Aderant.Build {
         /// <value>The project file absolute path.</value>
         [DataMember]
         public string ProjectFileAbsolutePath { get; set; }
-
-        /// <summary>
-        /// Gets the just the file names of the output items.
-        /// </summary>
-        public string[] FileNamesWritten { get; private set; }
-
-        /// <summary>
-        /// Populates the see <see cref="FileNamesWritten" /> property.
-        /// </summary>
-        public void BuildFileNamesWritten() {
-            FileNamesWritten = FilesWritten.Select(
-                file => {
-                    if (file.StartsWith(OutputPath, StringComparison.OrdinalIgnoreCase)) {
-                        return file.Remove(0, OutputPath.Length);
-                    }
-
-                    return file;
-                }
-            ).ToArray();
-        }
     }
 
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]

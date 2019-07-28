@@ -14,8 +14,6 @@ using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.Utilities;
-using Aderant.Build.VersionControl;
-using Aderant.Build.VersionControl.Model;
 
 namespace Aderant.Build.DependencyAnalyzer {
 
@@ -24,7 +22,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         private readonly IFileSystem fileSystem;
         private readonly ILogger logger;
         private bool isDesktopBuild;
-        private List<BucketId> missingIds;
+
         private BuildCachePackageChecker packageChecker;
         private List<BuildStateFile> stateFiles;
         private TrackedInputFilesController trackedInputFilesCheck;
@@ -51,21 +49,19 @@ namespace Aderant.Build.DependencyAnalyzer {
             set { trackedInputFilesCheck = value; }
         }
 
-
         public BuildPlan CreatePlan(BuildOperationContext context, OrchestrationFiles files, DependencyGraph graph, bool considerStateFiles = true) {
             isDesktopBuild = context.IsDesktopBuild;
 
             bool isBuildCacheEnabled = true;
 
             if (context.StateFiles == null) {
-                FindStateFiles(context);
-
-                if (stateFiles != null) {
-                    EvictNotExistentProjects(context);
-                }
+                var manager = new StateFileController();
+                stateFiles = manager.GetApplicableStateFiles(logger, context);
 
                 if (context.StateFiles == null || context.StateFiles.Count == 0) {
                     isBuildCacheEnabled = false;
+                } else {
+                    context.StateFiles = stateFiles;
                 }
             }
 
@@ -281,63 +277,11 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        private void EvictNotExistentProjects(BuildOperationContext context) {
-            // here we evict deleted projects from the previous builds metadata
-            // This is so we do not consider the outputs of this project in the artifact restore phase
-            if (context.SourceTreeMetadata?.Changes != null) {
-                IEnumerable<SourceChange> changes = context.SourceTreeMetadata.Changes;
 
-                foreach (var sourceChange in changes) {
-                    if (sourceChange.Status == FileStatus.Deleted) {
 
-                        foreach (var file in stateFiles) {
-                            if (file.Outputs.ContainsKey(sourceChange.Path)) {
-                                file.Outputs.Remove(sourceChange.Path);
-                            }
-                        }
-                    }
-                }
-            }
-        }
 
-        private void FindStateFiles(BuildOperationContext context) {
-            var files = GetBuildStateFiles(context);
 
-            if (files != null) {
-                stateFiles = context.StateFiles = files;
-            }
-        }
 
-        private List<BuildStateFile> GetBuildStateFiles(BuildOperationContext context) {
-            IList<BuildStateFile> files = new List<BuildStateFile>();
-
-            // Here we select an appropriate tree to reuse
-            var buildStateMetadata = context.BuildStateMetadata;
-
-            int bucketCount = -1;
-
-            if (buildStateMetadata != null && context.SourceTreeMetadata != null) {
-                if (buildStateMetadata.BuildStateFiles != null) {
-                    IReadOnlyCollection<BucketId> buckets = context.SourceTreeMetadata.GetBuckets();
-
-                    bucketCount = buckets.Count;
-
-                    files = buildStateMetadata.QueryCacheForBuckets(buckets, out missingIds);
-
-                    foreach (var stateFile in files) {
-                        logger.Info($"Using state file: {stateFile.Id} -> {stateFile.BuildId} -> {stateFile.Location}:{stateFile.BucketId.Tag}", null);
-                    }
-
-                    foreach (var missingId in missingIds) {
-                        logger.Info($"No state file: {missingId.Id} -> {missingId.Tag}", null);
-                    }
-                }
-
-                logger.Info($"Found {files.Count}/{bucketCount} state files.", null);
-            }
-
-            return files.ToList();
-        }
 
         private void MarkWebProjectsDirty(ProjectDependencyGraph graph) {
             // Web projects always need to be built as they have paths that reference content that needs to be deployed

@@ -89,6 +89,8 @@
                Condition="'$(IsCustomBuild)' != 'true'" />
 
     <UsingTask TaskName="Aderant.Build.Tasks.TextTemplatingPathResolver"                          AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.HappyCat"                                            AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.SourceTransformationTask"                            AssemblyFile="$(BuildAssembly)" />
 
 
   <PropertyGroup>
@@ -216,33 +218,5 @@ doc.Save(File);
       </Code>
     </Task>
   </UsingTask>
-
-    <UsingTask
-      Condition="$(CodeTaskFactoryAssembly) != ''"
-      TaskName="HappyCat"
-      TaskFactory="$(TargetTaskFactory)"
-      AssemblyFile="$(CodeTaskFactoryAssembly)" >
-      <ParameterGroup>
-        <BuildGroupId ParameterType="System.Int32" Required="true"/>
-        <TotalNumberOfBuildGroups ParameterType="System.Int32" Required="true"/>
-        <PadLeft ParameterType="System.String" Output="true" />
-        <PadRight ParameterType="System.String" Output="true" />
-      </ParameterGroup>
-      <Task>
-        <Using Namespace="System"/>
-        <Using Namespace="System.IO"/>
-        <Code>
-<![CDATA[
-           var d1 = (double)BuildGroupId / (double)TotalNumberOfBuildGroups;
-           var d2 = d1 * 100;
-           var d3 = (int)Math.Round(d2);
-           var d4 = 100 - d3;
-
-           PadLeft = new string(' ', d3);
-           PadRight = new string(' ', d4);
-]]>
-        </Code>
-      </Task>
-    </UsingTask>
 
 </Project>

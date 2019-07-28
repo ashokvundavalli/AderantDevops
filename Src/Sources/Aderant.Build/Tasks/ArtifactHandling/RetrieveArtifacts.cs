@@ -51,7 +51,7 @@ namespace Aderant.Build.Tasks.ArtifactHandling {
                 var whitelist = StagingDirectoryWhitelist.Select(s => s.ItemSpec).ToArray();
                 service.StagingDirectoryWhitelist = whitelist;
 
-                Log.LogMessage("The following items are in the replication whitelist: " + string.Join(";", whitelist));
+                Log.LogMessage("The following items are in the replication whitelist: " + string.Join(";", whitelist), null);
             }
 
             service.Resolve(Context, containerKey, SolutionRoot, WorkingDirectory);

@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Microsoft.Build.Evaluation;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
@@ -85,7 +84,7 @@ namespace Aderant.Build.Tasks {
 
                 LoadTemplateTask();
             } else {
-                Log.LogMessage(MessageImportance.Low, "Using cached text template path information");
+                Log.LogMessage(MessageImportance.Low, "Using cached text template path information", null);
             }
 
             return !Log.HasLoggedErrors;

@@ -5,6 +5,7 @@ using System.Xml;
 using System.Xml.Linq;
 using Aderant.Build.Logging;
 using Aderant.Build.ProjectSystem;
+using Aderant.Build.ProjectSystem.StateTracking;
 using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks {
@@ -40,11 +41,6 @@ namespace Aderant.Build.Tasks {
         /// </summary>
         [Required]
         public string AfterProjectFile { get; set; }
-
-        /// <summary>
-        /// Gets or sets the project which can define properties to inject into each build group execution.
-        /// </summary>
-        public string CommonProjectFile { get; set; }
 
         public string ConfigurationToBuild { get; set; }
 
@@ -92,7 +88,7 @@ namespace Aderant.Build.Tasks {
                     // When resuming we need to reconstruct the TrackedProjects collection.
                     // This is typically done in the sequencer but since we aren't entering that code path
                     // we need to load the existing set of known projects from our previous plan
-                    RebuildFromExistingPlan(BuildPlan);
+                    RebuildFromExistingPlan(context, BuildPlan);
                     return;
                 }
             }
@@ -150,7 +146,13 @@ namespace Aderant.Build.Tasks {
             }
         }
 
-        private void RebuildFromExistingPlan(string planFile) {
+        private void RebuildFromExistingPlan(BuildOperationContext context, string planFile) {
+            if (context.StateFiles == null) {
+                var stateFileController = new StateFileController();
+                context.StateFiles = stateFileController.GetApplicableStateFiles(this.Logger, context);
+                PipelineService.Publish(context);
+            }
+
             var planLoader = new ExistingPlanLoader();
             DirectoriesInBuild = planLoader.LoadPlan(planFile, PipelineService).ToArray();
         }
