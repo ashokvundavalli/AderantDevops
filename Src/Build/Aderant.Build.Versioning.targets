@@ -27,6 +27,7 @@
 
 
   <PropertyGroup>
+    <IsIntegrationTest>$(MSBuildProjectName.StartsWith('IntegrationTest.'))</IsIntegrationTest>
     <CreateGeneratedAssemblyInfoInputsCacheFileDependsOn>
       GatherAssemblyAttributes;
       FindRoleFiles
@@ -46,8 +47,6 @@
       <!-- Slurp in the paket.lock data as well -->
       <_PaketLockFile>$([System.IO.Path]::Combine($(SolutionDirectoryPath), 'paket.lock'))</_PaketLockFile>
       <_PaketLockText Condition="Exists($(_PaketLockFile))">$([System.IO.File]::ReadAllText($(_PaketLockFile)))</_PaketLockText>
-
-      <IsIntegrationTest>$(MSBuildProjectName.StartsWith('IntegrationTest.'))</IsIntegrationTest>
 
       <CIEnabled Condition="'$(IsIntegrationTest)' == 'true' And '$(CIEnabled)' == ''">false</CIEnabled>
     </PropertyGroup>
