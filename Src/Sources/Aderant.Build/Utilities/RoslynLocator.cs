@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,6 +10,7 @@ namespace Aderant.Build.Utilities {
         private readonly string pathToBuildTools;
 
         private static readonly List<string> acceptedCodeAnalysisCSharpVersions = new List<string> {
+            "3.2.0.0",  // VS 2019
             "3.1.0.0",  // VS 2019
             "3.0.0.0",  // VS 2019
             "2.10.0.0", // VS 2017
@@ -70,10 +71,11 @@ namespace Aderant.Build.Utilities {
             const string fullNameUnformatted = "Microsoft.CodeAnalysis.CSharp, Version={0}, Culture=neutral, PublicKeyToken=31bf3856ad364e35";
 
             //try load each of the accepted versions
-            foreach (var version in acceptedCodeAnalysisCSharpVersions) {
+            foreach (string version in acceptedCodeAnalysisCSharpVersions) {
                 try {
                     return Assembly.Load(string.Format(fullNameUnformatted, version));
                 } catch {
+                    // Ignored.
                 }
             }
 
