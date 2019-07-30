@@ -58,10 +58,10 @@ namespace Aderant.Build.DependencyAnalyzer {
                 var manager = new StateFileController();
                 stateFiles = manager.GetApplicableStateFiles(logger, context);
 
-                if (context.StateFiles == null || context.StateFiles.Count == 0) {
-                    isBuildCacheEnabled = false;
-                } else {
+                if (stateFiles != null && stateFiles.Count > 0) {
                     context.StateFiles = stateFiles;
+                } else {
+                    isBuildCacheEnabled = false;
                 }
             }
 
