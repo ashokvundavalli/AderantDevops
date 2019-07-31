@@ -218,12 +218,12 @@
       <AssemblySearchPaths>
         $(AlternativeOutputDirectory);
         $(AlternativeOutputDirectory)StoredProcedures;
-        $(_WIXLib);
-        $(_Pia2010);
-        $(RootFolder)\Dependencies\;
-        @(AssemblySearchDirectories);
-        $(AssemblySearchPaths);
+        $(AssemblySearchPaths);		
         $(ReferencePath);
+		$(RootFolder)\Dependencies\;
+		@(AssemblySearchDirectories);
+		$(_WIXLib);
+        $(_Pia2010);
         $(_VS2017InstallDirectory)Enterprise\$(_VSSDKSuffix);
         $(_VS2017InstallDirectory)Enterprise\$(_PublicAssembliesSuffix);
         $(_VS2017InstallDirectory)Professional\$(_VSSDKSuffix);
