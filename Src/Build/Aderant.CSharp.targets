@@ -179,9 +179,9 @@
     <PropertyGroup>
       <!--This path order places out search paths first-->
       <AssemblySearchPaths>        
+        $(AssemblySearchPaths);
         $(RootFolder)\Dependencies\;
         @(PackageDirectories);
-        $(AssemblySearchPaths);
       </AssemblySearchPaths>
     </PropertyGroup>
 
