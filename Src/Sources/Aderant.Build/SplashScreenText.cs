@@ -25,6 +25,7 @@ namespace Aderant.Build {
             get { return fonts.FirstOrDefault(); }
         }
 
+#pragma warning disable CS0618
         public FormattedText FormattedText {
             get {
                 var text = new FormattedText(Text,
@@ -38,6 +39,7 @@ namespace Aderant.Build {
                 return text;
             }
         }
+#pragma warning restore CS0618
 
         public TextAlignment Alignment { get; set; }
 
@@ -46,13 +48,13 @@ namespace Aderant.Build {
         public int FontSize { get; set; }
 
         public Typeface Typeface { get; set; }
-        
+
         public Point Position { get; set; }
 
         public SolidColorBrush Brush { get; set; }
 
         public FlowDirection FlowDirection { get; set; }
-        
+
         public static SplashScreenText Create(string type, string text) {
             switch (type) {
                 case Product:
