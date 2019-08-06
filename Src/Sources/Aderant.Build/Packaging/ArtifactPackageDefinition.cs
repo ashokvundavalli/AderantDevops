@@ -29,6 +29,8 @@ namespace Aderant.Build.Packaging {
 
         public string Id { get; }
 
+        public bool? UseHardLinks { get; set; }
+
         // Match "test" or "tests" at the start or end of the phrase
         private static Regex matchRegex = new Regex("test[s]?\\.|\\.test[s]?", RegexOptions.IgnoreCase);
 
@@ -53,7 +55,7 @@ namespace Aderant.Build.Packaging {
             return pathSpecs;
         }
 
-        public static PathSpec CreatePathSpecification(string[] trimPaths, string fullPath, string targetPath) {
+        public static PathSpec CreatePathSpecification(string[] trimPaths, string fullPath, string targetPath, bool? useHardLinks = null) {
             string outputRelativePath = null;
 
             if (trimPaths != null) {
@@ -65,7 +67,7 @@ namespace Aderant.Build.Packaging {
                 }
             }
 
-            return new PathSpec(fullPath, Path.Combine(targetPath ?? string.Empty, outputRelativePath ?? Path.GetFileName(fullPath)));
+            return new PathSpec(fullPath, Path.Combine(targetPath ?? string.Empty, outputRelativePath ?? Path.GetFileName(fullPath)), useHardLinks);
         }
 
         public static ArtifactPackageDefinition Create(string name, Action<ArtifactPackageDefinitionBuilder> builder) {
