@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
-<!-- External targets: GetServerImageDependencies, RunTests
+  <!-- External targets: GetServerImageDependencies, RunTests
      External variables: ArtifactStagingDirectory, BuildToolsDirectory, ExpertSourceDirectory, SolutionRoot, ImageWorkingDirectory, ImageToolingDirectory, DeploymentEngine, SharedDependencyDirectory, ImpactedTestProjects -->
 
   <PropertyGroup>
@@ -9,6 +9,8 @@
     <_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">$(RunIntegrationTests)</_RunIntegrationTests>
     <_RunIntegrationTests Condition="'$(IsDesktopBuild)' == 'true' And '$(RunDesktopIntegrationTests)' != ''">$(RunDesktopIntegrationTests)</_RunIntegrationTests>
     <_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">false</_RunIntegrationTests>
+
+    <PowerShellExe Condition=" '$(PowerShellExe)' == ''">%WINDIR%\System32\WindowsPowerShell\v1.0\powershell.exe</PowerShellExe>
 
     <RunIntegrationTestsDependsOn>
       DeployCIEnvironment;
@@ -51,7 +53,7 @@
 
     <Exec ContinueOnError="false"
       IgnoreExitCode="false"
-      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; &apos;$(APIDatabaseDirectory)ProvisionDatabase.ps1&apos; -serverInstance &apos;LocalHost&apos; -databaseName &apos;$(DatabaseName)&apos; -backupPath &apos;$(DatabaseBackup)&apos;&quot;" />
+      Command="$(PowerShellExe) -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command &quot;&amp; &apos;$(APIDatabaseDirectory)ProvisionDatabase.ps1&apos; -serverInstance &apos;LocalHost&apos; -databaseName &apos;$(DatabaseName)&apos; -backupPath &apos;$(DatabaseBackup)&apos;&quot;" />
 
   </Target>
 
@@ -64,15 +66,15 @@
     <Exec Command="&quot;$(BuildToolsDirectory)7z.exe&quot; x &quot;$(ImageZip)&quot; -o&quot;$(ImagePath)&quot;" />
 
     <PropertyGroup>
-       <!-- RoleFiles in future should be in the module build. Right now they were managed by Libraries.Roles so we need to load from the server image with all role files. --> 
+      <!-- RoleFiles in future should be in the module build. Right now they were managed by Libraries.Roles so we need to load from the server image with all role files. -->
       <RoleFiles>$(ImagePath)\Roles\</RoleFiles>
       <ModuleFiles>$(SharedDependencyDirectory)</ModuleFiles>
     </PropertyGroup>
-    
-    <!--Update Server Image--> 
+
+    <!--Update Server Image-->
     <Exec ContinueOnError="false"
       IgnoreExitCode="false"
-      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; &apos;$(DeploymentEngine)&apos; UpdateServerImage /image:&apos;$(ImagePath)&apos; /name:&apos;$(ExpertEnvironmentName)&apos; /roles:&apos;$(RoleFiles)&apos; /modules:&apos;$(ModuleFiles)&apos;&quot;" />
+      Command="$(PowerShellExe) -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command &quot;&amp; &apos;$(DeploymentEngine)&apos; UpdateServerImage /image:&apos;$(ImagePath)&apos; /name:&apos;$(ExpertEnvironmentName)&apos; /roles:&apos;$(RoleFiles)&apos; /modules:&apos;$(ModuleFiles)&apos;&quot;" />
 
   </Target>
 
@@ -84,7 +86,7 @@
 
     <Exec ContinueOnError="false"
       IgnoreExitCode="false"
-      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; &apos;$(APIDatabaseDirectory)ExecuteSQLFile.ps1&apos; -serverInstance &apos;LocalHost&apos; -databaseName &apos;$(DatabaseName)&apos; -sqlFilePath &apos;$(ImagePath)\ExpertQuery.SqlViews.sql&apos;&quot;" />
+      Command="$(PowerShellExe) -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command &quot;&amp; &apos;$(APIDatabaseDirectory)ExecuteSQLFile.ps1&apos; -serverInstance &apos;LocalHost&apos; -databaseName &apos;$(DatabaseName)&apos; -sqlFilePath &apos;$(ImagePath)\ExpertQuery.SqlViews.sql&apos;&quot;" />
 
     <OnError ExecuteTargets="LightsOff" />
 
@@ -99,7 +101,7 @@
     <!-- Light up server image -->
     <Exec ContinueOnError="false"
       IgnoreExitCode="false"
-      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; &apos;$(DeploymentEngine)&apos; LightUpServerImage /image:&apos;$(ImagePath)&apos; /server:LocalHost /database:$(DatabaseName) /serviceaccount:$(ServiceAccount) /name:$(ExpertEnvironmentName)&quot;" />
+      Command="$(PowerShellExe) -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command &quot; . &apos;$(ImagePath)\AppServerLightup.ps1&apos;;Invoke-LightUp -expertRootPath &apos;$(ImagePath)&apos; -environmentName $(ExpertEnvironmentName) -serviceAccountName $(ServiceAccount) -databaseServer &apos;LocalHost&apos; -databaseName $(DatabaseName)&quot;"/>
 
     <OnError ExecuteTargets="LightsOff" />
 
@@ -127,7 +129,7 @@
 
 
   <Target Name="LightsOffWrap" DependsOnTargets="RunIntegrationTests" AfterTargets="RunIntegrationTests">
-      <CallTarget Targets="LightsOff" />
+    <CallTarget Targets="LightsOff" />
   </Target>
 
 
@@ -146,7 +148,7 @@
 
     <Exec ContinueOnError="true"
       IgnoreExitCode="false"
-      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; &apos;$(DeploymentEngine)&apos; TeardownServerImage /image:&apos;$(ImagePath)&apos; /name:$(ExpertEnvironmentName)&quot;" />
+      Command="$(PowerShellExe) -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command &quot;. &apos;$(ImagePath)\TeardownServerImage.ps1&apos; -imageName:$(ExpertEnvironmentName) -removeWindowsServices &quot;" />
 
   </Target>
 
@@ -157,7 +159,7 @@
 
     <Exec ContinueOnError="true"
       IgnoreExitCode="false"
-      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; &apos;$(APIDatabaseDirectory)DropDatabase.ps1&apos; -serverInstance &apos;LocalHost&apos; -databaseName &apos;$(DatabaseName)&apos;&quot;" />
+      Command="$(PowerShellExe) -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command &quot;&amp; &apos;$(APIDatabaseDirectory)DropDatabase.ps1&apos; -serverInstance &apos;LocalHost&apos; -databaseName &apos;$(DatabaseName)&apos;&quot;" />
 
   </Target>
 
