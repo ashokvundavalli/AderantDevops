@@ -101,7 +101,7 @@
     <!-- Light up server image -->
     <Exec ContinueOnError="false"
       IgnoreExitCode="false"
-      Command="$(PowerShellExe) -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command &quot; . &apos;$(ImagePath)\AppServerLightup.ps1&apos;;Invoke-LightUp -expertRootPath &apos;$(ImagePath)&apos; -environmentName $(ExpertEnvironmentName) -serviceAccountName $(ServiceAccount) -databaseServer &apos;LocalHost&apos; -databaseName $(DatabaseName)&quot;"/>
+      Command="$(PowerShellExe) -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; &apos;$(DeploymentEngine)&apos; LightUpServerImage /image:&apos;$(ImagePath)&apos; /server:LocalHost /database:$(DatabaseName) /serviceaccount:$(ServiceAccount) /name:$(ExpertEnvironmentName)&quot;" />
 
     <OnError ExecuteTargets="LightsOff" />
 
@@ -148,7 +148,7 @@
 
     <Exec ContinueOnError="true"
       IgnoreExitCode="false"
-      Command="$(PowerShellExe) -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command &quot;. &apos;$(ImagePath)\TeardownServerImage.ps1&apos; -imageName:$(ExpertEnvironmentName) -removeWindowsServices &quot;" />
+      Command="$(PowerShellExe) -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; &apos;$(DeploymentEngine)&apos; TeardownServerImage /image:&apos;$(ImagePath)&apos; /name:$(ExpertEnvironmentName)&quot;" />
 
   </Target>
 
