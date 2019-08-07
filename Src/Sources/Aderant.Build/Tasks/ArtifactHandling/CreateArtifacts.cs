@@ -1,8 +1,8 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using Aderant.Build.Packaging;
 using Aderant.Build.Packaging.Handlers;
 using Microsoft.Build.Framework;
-using Microsoft.Build.Tasks;
 
 namespace Aderant.Build.Tasks.ArtifactHandling {
     public sealed class CreateArtifacts : BuildOperationContextTask {
@@ -20,14 +20,10 @@ namespace Aderant.Build.Tasks.ArtifactHandling {
 
         public override bool ExecuteTask() {
             if (ArtifactDefinitions != null) {
-                var artifacts = ArtifactPackageHelper.MaterializeArtifactPackages(ArtifactDefinitions, RelativeFrom, false);
+                List<ArtifactPackageDefinition> artifacts = ArtifactPackageHelper.MaterializeArtifactPackages(ArtifactDefinitions, RelativeFrom, false);
 
-                var artifactService = new ArtifactService(PipelineService, new PhysicalFileSystem(), Logger);
+                ArtifactService artifactService = new ArtifactService(PipelineService, new PhysicalFileSystem(), Logger);
                 artifactService.RegisterHandler(new PullRequestHandler());
-
-                if (!Context.IsDesktopBuild) {
-                    //artifactService.RegisterHandler(new XamlDropHandler(FileVersion, AssemblyVersion));
-                }
 
                 artifactService.CreateArtifacts(Context, Path.GetFileName(SolutionRoot), artifacts);
             }
