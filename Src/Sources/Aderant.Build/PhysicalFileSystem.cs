@@ -290,23 +290,17 @@ namespace Aderant.Build {
                         }
                     }
 
-                    switch (file.UseHardLink) {
-                        case true:
-                            CopyViaLink(file, PhysicalFileSystem.createHardlink);
+                    if (link != null) {
+                        try {
+                            TryCopyViaLink(file.Location, file.Destination, link);
+                        } catch (UnauthorizedAccessException) {
+                            logger?.Warning("File " + file.Destination + " is in use or can not be accessed. Trying to rename.");
 
-                            break;
-                        case false:
-                            CopyFileInternal(file.Location, file.Destination, overwrite);
-
-                            break;
-                        default:
-                            if (link != null) {
-                                CopyViaLink(file, link);
-                            } else {
-                                CopyFileInternal(file.Location, file.Destination, overwrite);
-                            }
-
-                            break;
+                            MoveFile(file.Destination, file.Destination + ".__LOCKED");
+                            TryCopyViaLink(file.Location, file.Destination, link);
+                        }
+                    } else {
+                        CopyFileInternal(file.Location, file.Destination, overwrite);
                     }
                 },
                 actionBlockOptions);
@@ -318,17 +312,6 @@ namespace Aderant.Build {
             bulkCopy.Complete();
 
             return bulkCopy;
-        }
-
-        private void CopyViaLink(PathSpec file, CreateSymlinkLink link) {
-            try {
-                TryCopyViaLink(file.Location, file.Destination, link);
-            } catch (UnauthorizedAccessException) {
-                logger?.Warning("File " + file.Destination + " is in use or can not be accessed. Trying to rename.");
-
-                MoveFile(file.Destination, file.Destination + ".__LOCKED");
-                TryCopyViaLink(file.Location, file.Destination, link);
-            }
         }
 
         public void ExtractZipToDirectory(string sourceArchiveFileName, string destination, bool overwrite = false) {

@@ -59,7 +59,7 @@ namespace Aderant.Build.Packaging {
 
             this.pathBuilder = new ArtifactStagingPathBuilder(context.ArtifactStagingDirectory, context.BuildMetadata.BuildId, context.SourceTreeMetadata);
 
-            IReadOnlyCollection<BuildArtifact> buildArtifacts = ProcessDefinitions(context, container, definitions);
+            var buildArtifacts = ProcessDefinitions(context, container, definitions);
 
             if (pipelineService != null) {
                 pipelineService.AssociateArtifacts(buildArtifacts);
@@ -124,6 +124,7 @@ namespace Aderant.Build.Packaging {
                     var artifact = CreateBuildCacheArtifact(container, copyList, definition, files);
                     if (artifact != null) {
                         buildArtifacts.Add(artifact);
+
                     }
 
                     foreach (var handler in handlers) {
@@ -225,12 +226,7 @@ namespace Aderant.Build.Packaging {
 
             foreach (PathSpec pathSpec in files) {
                 // Path spec destination is relative.
-                PathSpec spec;
-                if (definition.UseHardLinks != null) {
-                    spec = new PathSpec(pathSpec.Location, Path.Combine(artifactPath, pathSpec.Destination), definition.UseHardLinks);
-                } else {
-                    spec = new PathSpec(pathSpec.Location, Path.Combine(artifactPath, pathSpec.Destination));
-                }
+                var spec = new PathSpec(pathSpec.Location, Path.Combine(artifactPath, pathSpec.Destination));
 
                 sb.AppendFormat("Adding file ({0})", spec.Location);
                 sb.AppendLine();
@@ -297,11 +293,10 @@ namespace Aderant.Build.Packaging {
                 return null;
             }
 
-            bool useHardLinks = true;
-            ActionBlock<PathSpec> bulkCopy = fileSystem.BulkCopy(filesToRestore, allowOverwrite, false, useHardLinks);
+            ActionBlock<PathSpec> bulkCopy = fileSystem.BulkCopy(filesToRestore, allowOverwrite, false, true);
 
             foreach (PathSpec file in filesToRestore) {
-                logger.Info("Copying: '{0}' -> '{1}'. UseHardlink: '{2}'.", file.Location, file.Destination, file.UseHardLink != null ? file.UseHardLink.ToString() : useHardLinks.ToString());
+                logger.Info("Copying: {0} -> {1}", file.Location, file.Destination);
             }
 
             bulkCopy.Completion

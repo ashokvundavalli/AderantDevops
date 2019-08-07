@@ -8,13 +8,9 @@ namespace Aderant.Build.Packaging {
     [Serializable]
     public struct PathSpec : IEquatable<PathSpec> {
 
-        public PathSpec(string location, string destination) : this(location, destination, null) {
-        }
-
-        public PathSpec(string location, string destination, bool? useHardLinks) {
+        public PathSpec(string location, string destination) {
             this.Location = location;
             this.Destination = destination;
-            this.UseHardLink = useHardLinks;
         }
 
         /// <summary>
@@ -28,12 +24,6 @@ namespace Aderant.Build.Packaging {
         /// </summary>
         /// <value>The location.</value>
         public string Location { get; }
-
-        /// <summary>
-        /// An override to determine whether or not a hardlink is used.
-        /// </summary>
-        /// <value>Override on whether to use hard link.</value>
-        public bool? UseHardLink { get; set; }
 
         public bool Equals(PathSpec other) {
             return EqualsInternal(other);
@@ -75,6 +65,7 @@ namespace Aderant.Build.Packaging {
             return new PathSpec(
                 source.TrimEnd(Path.DirectorySeparatorChar),
                 destination.TrimEnd(Path.DirectorySeparatorChar));
+
         }
     }
 }

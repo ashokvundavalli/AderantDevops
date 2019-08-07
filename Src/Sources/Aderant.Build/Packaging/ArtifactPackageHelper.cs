@@ -14,7 +14,7 @@ namespace Aderant.Build.Packaging {
         /// definition instead of files.
         /// </param>
         internal static List<ArtifactPackageDefinition> MaterializeArtifactPackages(ITaskItem[] artifactDefinitions, string[] relativeFrom, bool includeDirectoryPathsOnly) {
-            Dictionary<string, List<ITaskItem>> artifactMap = BuildOrderedArtifactPackageDefinitionList(artifactDefinitions);
+            var artifactMap = BuildOrderedArtifactPackageDefinitionList(artifactDefinitions);
 
             List<ArtifactPackageDefinition> artifacts = new List<ArtifactPackageDefinition>();
             HashSet<string> claimedFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -25,7 +25,6 @@ namespace Aderant.Build.Packaging {
                 bool isAutomaticallyGenerated = false;
                 bool isInternalDevelopmentPackage = false;
                 bool isAutomationPackage = false;
-                bool? useHardLinks = null;
                 ArtifactType artifactType = ArtifactType.None;
 
                 foreach (var file in group.Value) {
@@ -34,25 +33,18 @@ namespace Aderant.Build.Packaging {
                     ParseMetadata(file, "IsAutomationPackage", ref isAutomationPackage);
                     ParseMetadata(file, "ArtifactType", ref artifactType);
 
-                    string hardlinkMetadata = file.GetMetadata("UseHardLinks");
-                    if (!string.IsNullOrWhiteSpace(hardlinkMetadata)) {
-                        useHardLinks = bool.Parse(hardlinkMetadata);
-                    }
-
                     PathSpec pathSpec;
                     if (!includeDirectoryPathsOnly) {
                         pathSpec = ArtifactPackageDefinition.CreatePathSpecification(
                             relativeFrom,
                             file.GetMetadata("FullPath"),
-                            file.GetMetadata("TargetPath"), // The destination location (assumed to be relative to "RelativeFrom")
-                            useHardLinks
+                            file.GetMetadata("TargetPath") // The destination location (assumed to be relative to "RelativeFrom")
                         );
                     } else {
                         pathSpec = ArtifactPackageDefinition.CreatePathSpecification(
                             relativeFrom,
                             file.GetMetadata("RootDir") + file.GetMetadata("Directory"),
-                            file.GetMetadata("TargetPath"),
-                            useHardLinks
+                            file.GetMetadata("TargetPath")
                         );
                     }
 
@@ -79,7 +71,6 @@ namespace Aderant.Build.Packaging {
                     IsInternalDevelopmentPackage = isInternalDevelopmentPackage,
                     IsAutomationPackage = isAutomationPackage,
                     ArtifactType = artifactType,
-                    UseHardLinks = useHardLinks
                 };
 
                 if (artifact.GetFiles().Count > 0) {
