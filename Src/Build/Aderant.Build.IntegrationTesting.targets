@@ -10,7 +10,7 @@
     <_RunIntegrationTests Condition="'$(IsDesktopBuild)' == 'true' And '$(RunDesktopIntegrationTests)' != ''">$(RunDesktopIntegrationTests)</_RunIntegrationTests>
     <_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">false</_RunIntegrationTests>
 
-    <PowerShellExe Condition=" '$(PowerShellExe)' == ''">%WINDIR%\System32\WindowsPowerShell\v1.0\powershell.exe</PowerShellExe>
+    <PowerShellExe Condition=" '$(PowerShellExe)' == ''">$(SystemRoot)\sysnative\WindowsPowerShell\v1.0\powershell.exe</PowerShellExe>
 
     <RunIntegrationTestsDependsOn>
       DeployCIEnvironment;
