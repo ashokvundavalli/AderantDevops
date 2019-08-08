@@ -91,6 +91,7 @@
       WriteStateFiles;
       PackageProduct;
       ProduceUpdatePackage;
+      CreateContainerImage;
       CreateServerImage;
       MSBuildRunIntegrationTests;
       CopyToDrop;
@@ -129,6 +130,7 @@
 
 
   <Target Name="CleanStagingDirectory" DependsOnTargets="RemoveLockedFilesFromLastBuild">
+
     <RemoveDir Condition="'$(IsDesktopBuild)' == 'false'"
                Directories="$(ArtifactStagingDirectory)" />
 
