@@ -229,7 +229,8 @@ function Run-MSBuild([string]$projectFilePath, [string]$buildArgs = "", [string]
             if ([System.Environment]::UserInteractive) {
                 Write-Host "Build log written to: $logFileName"
             } else {
-                Write-Host "##vso[task.uploadfile]$logFileName"
+                # Binlogs for full builds can be 1+ GB
+                #Write-Host "##vso[task.uploadfile]$logFileName"
             }
         }
 
