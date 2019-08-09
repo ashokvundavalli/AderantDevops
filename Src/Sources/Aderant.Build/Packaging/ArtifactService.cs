@@ -226,8 +226,8 @@ namespace Aderant.Build.Packaging {
             foreach (PathSpec pathSpec in files) {
                 // Path spec destination is relative.
                 PathSpec spec;
-                if (definition.UseHardLinks != null) {
-                    spec = new PathSpec(pathSpec.Location, Path.Combine(artifactPath, pathSpec.Destination), definition.UseHardLinks);
+                if (pathSpec.UseHardLink != null) {
+                    spec = new PathSpec(pathSpec.Location, Path.Combine(artifactPath, pathSpec.Destination), pathSpec.UseHardLink);
                 } else {
                     spec = new PathSpec(pathSpec.Location, Path.Combine(artifactPath, pathSpec.Destination));
                 }
