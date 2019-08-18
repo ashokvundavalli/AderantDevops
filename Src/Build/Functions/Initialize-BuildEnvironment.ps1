@@ -20,7 +20,7 @@ function BuildProjects($BuildScriptsDirectory, [bool]$forceCompile) {
     $file = [System.IO.Path]::Combine($BuildScriptsDirectory, "..\Build.Tools\Aderant.Build.dll")
     $file = [System.IO.Path]::GetFullPath($file)
 
-    $msbuildPath = . "$PSScriptRoot\Resolve-MSBuild" "*" "x86"
+    $msbuildPath = . "$PSScriptRoot\Resolve-MSBuild" "*" "64"
 
     [void][System.Reflection.Assembly]::LoadFrom("$msbuildPath\Microsoft.Build.dll")
     [void][System.Reflection.Assembly]::LoadFrom("$msbuildPath\Microsoft.Build.Engine.dll")
