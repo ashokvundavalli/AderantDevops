@@ -11,9 +11,6 @@ namespace Aderant.Build.Tasks.ArtifactHandling {
     /// </summary>
     public sealed class CollectArtifactsForPublishing : BuildOperationContextTask {
 
-        [Required]
-        public string DestinationRootPath { get; set; }
-
         public string ArtifactStagingDirectory { get; set; }
 
         [Required]

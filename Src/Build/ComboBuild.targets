@@ -627,7 +627,6 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
     <CollectArtifactsForPublishing
       ArtifactStagingDirectory="$(ArtifactStagingDirectory)"
       Artifacts="@(AdditionalArtifacts)"
-      DestinationRootPath="$(PrimaryDropLocation)"
       AllowNullScmBranch="$(AllowNullScmBranch)">
       <Output TaskParameter="ArtifactPaths" ItemName="ArtifactPaths" />
       <Output TaskParameter="LinkCommands" ItemName="LinkCommands" />

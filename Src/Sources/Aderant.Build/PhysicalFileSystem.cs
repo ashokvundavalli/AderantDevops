@@ -346,7 +346,18 @@ namespace Aderant.Build {
             return false;
         }
 
-        private static void CopyFileInternal(string source, string destination, bool overwrite) {
+        internal static void CopyFileInternal(string source, string destination, bool overwrite) {
+            FilesRelationship destinationState = CheckFileExistence(source, destination);
+
+            switch (destinationState) {
+                case FilesRelationship.Junction:
+                    return;
+                case FilesRelationship.DestinationExists:
+                    return;
+                case FilesRelationship.NonExistent:
+                    break;
+            }
+
             File.Copy(source, destination, overwrite);
         }
 
@@ -453,7 +464,11 @@ namespace Aderant.Build {
             }
         }
 
-        private void TryCopyViaLink(string fileLocation, string fileDestination, CreateSymlinkLink createLink) {
+        internal static FilesRelationship CheckFileExistence(string fileLocation, string fileDestination) {
+            if (fileLocation.Equals(fileDestination, StringComparison.OrdinalIgnoreCase)) {
+                return FilesRelationship.DestinationExists;
+            }
+
             // This can be subject to race conditions - if we are invoked by multiple projects
             // e.g as part of the CopyLocal process then another project may have already created the destination.
             // Unfortunately we cannot get hold of the full copy local closure so we need to use careful error
@@ -462,11 +477,32 @@ namespace Aderant.Build {
 
             if (links != null && links.Length > 1) {
                 // Test if source and destination are already the same file.
-                foreach (var link in links) {
+                foreach (string link in links) {
                     if (string.Equals(link, fileDestination, StringComparison.OrdinalIgnoreCase)) {
-                        return;
+                        return FilesRelationship.Junction;
                     }
                 }
+            }
+
+            return FilesRelationship.NonExistent;
+        }
+
+        internal enum FilesRelationship {
+            NonExistent,
+            DestinationExists,
+            Junction
+        }
+
+        private void TryCopyViaLink(string fileLocation, string fileDestination, CreateSymlinkLink createLink) {
+            FilesRelationship destinationState = CheckFileExistence(fileLocation, fileDestination);
+
+            switch (destinationState) {
+                case FilesRelationship.Junction:
+                    return;
+                case FilesRelationship.DestinationExists:
+                    return;
+                case FilesRelationship.NonExistent:
+                    break;
             }
 
             // CreateHardLink and CreateSymbolicLink cannot overwrite an existing file or link

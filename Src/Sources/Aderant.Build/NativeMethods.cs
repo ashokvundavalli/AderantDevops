@@ -108,6 +108,5 @@ namespace Aderant.Build {
             SYMBOLIC_LINK_FLAG_FILE = 0,
             SYMBOLIC_LINK_FLAG_DIRECTORY = 1
         }
-
     }
 }

@@ -12,6 +12,10 @@ namespace Aderant.Build.Packaging {
         }
 
         public PathSpec(string location, string destination, bool? useHardLinks) {
+            if (string.IsNullOrWhiteSpace(location)) {
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(location));
+            }
+
             this.Location = location;
             this.Destination = destination;
             this.UseHardLink = useHardLinks;
