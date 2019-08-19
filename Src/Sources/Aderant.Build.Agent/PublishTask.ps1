@@ -2,7 +2,7 @@
 [Cmdletbinding()]
 param(
    [Parameter(Mandatory=$true)][string]$TaskPath,
-   [Parameter(Mandatory=$false)][string]$TfsUrl = "http://tfs:8080/tfs/Aderant",
+   [Parameter(Mandatory=$false)][string]$TfsUrl = 'https://tfs.aderant.com/tfs/Aderant',
    [Parameter(Mandatory=$true)]
    [bool]$Overwrite = $false
 )
@@ -25,7 +25,7 @@ if (Test-Path $taskZip) { Remove-Item $taskZip }
 Add-Type -AssemblyName "System.IO.Compression.FileSystem"
 
 # Clean up before publish
-gci -Path $taskFolder -Filter "Thumbs.db" -Hidden -Recurse | Remove-Item -Force
+Get-ChildItem -Path $taskFolder -Filter "Thumbs.db" -Hidden -Recurse | Remove-Item -Force
 
 [IO.Compression.ZipFile]::CreateFromDirectory($taskFolder, $taskZip)
 
