@@ -7,6 +7,10 @@ $ErrorActionPreference = 'Stop'
 [string]$version = Get-VstsInput -Name 'Branch'
 [string]$CustomSource = Get-VstsInput -Name 'CustomSource'
 
+if ([string]::IsNullOrWhiteSpace($version)) {
+    $version = 'master'
+}
+
 Write-Host "Repository: $repository"
 Write-Host "Version: $version"
 Write-Host "CustomSource: $CustomSource"
@@ -93,7 +97,7 @@ function CloneRepo {
 
 if ($repository -eq "default" -or -not $CustomSource) {
     # By default use script from checked in code at Build.Infrastructure at TFS
-    CloneRepo -repo "http://tfs:8080/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure" -version $version -shallow
+    CloneRepo -repo 'https://tfs.aderant.com/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure' -version $version -shallow
 } else {
     # During debug of this script it is necessary to use a local copy
     if ($CustomSource -and -not [string]::IsNullOrEmpty($CustomSource)) {
