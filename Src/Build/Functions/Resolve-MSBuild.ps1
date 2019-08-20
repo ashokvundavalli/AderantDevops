@@ -15,7 +15,7 @@ function Get-MSBuildPath {
         [string]$Bitness
     )
 
-    if ([System.IntPtr]::Size -eq 4 -and $Bitness -eq 'x86') {
+    if ($Bitness -eq 'x86') {
         return "MSBuild\$Version\Bin\MSBuild.exe"
     } else {
         return "MSBuild\$Version\Bin\amd64\MSBuild.exe"
