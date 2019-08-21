@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0" TreatAsLocalProperty="ImageName">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
 <!-- External variables: ArtifactStagingDirectory, BuildToolsDirectory, ExpertSourceDirectory, SolutionRoot, ServerImageDependencyMappings -->
 
   <PropertyGroup>
@@ -15,8 +15,6 @@
     <_CreateServerImage Condition="'$(IsDesktopBuild)' == 'true'">false</_CreateServerImage>
     <_CreateServerImage Condition="'$(_CreateServerImage)' == ''">$([System.Environment]::GetEnvironmentVariable('CreateServerImage'))</_CreateServerImage>
     <_CreateServerImage Condition="'$(_CreateServerImage)' == ''">$([MSBuild]::ValueOrDefault('$(CreateServerImage)', 'false'))</_CreateServerImage>
-
-    <ImageName>$(azure-repository-name)/$(BUILD_REPOSITORY_NAME.ToLower()):$(BUILD_BUILDID)</ImageName>
   </PropertyGroup>
 
 
@@ -52,16 +50,6 @@
         <ArtifactType>Branch</ArtifactType>
       </AdditionalArtifacts>
     </ItemGroup>
-
-  </Target>
-
-  
-  <!-- Create a Container Image -->
-  <Target Name="CreateContainerImage" Condition="'$(CreateContainerImage)' == 'true'" DependsOnTargets="CreateServerImage">
-
-    <Message Text="Creating container image: $(ImageName)" />
-
-    <Exec Command="docker.exe build -t $(ImageName) ." WorkingDirectory="$(ImageWorkingDirectory)ExpertServerImage" />
 
   </Target>
 

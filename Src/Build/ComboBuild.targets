@@ -91,7 +91,6 @@
       WriteStateFiles;
       PackageProduct;
       ProduceUpdatePackage;
-      CreateContainerImage;
       CreateServerImage;
       MSBuildRunIntegrationTests;
       CopyToDrop;
