@@ -140,7 +140,7 @@ nuget ThePackageFromNuget";
             }
 
             Assert.AreEqual(4, packageManagerLines.Length);
-            Assert.AreEqual($"source {Constants.DefaultNuGetServer}", packageManagerLines[1]);
+            Assert.AreEqual($"source {Constants.OfficialNuGetUrlV3}", packageManagerLines[1]);
         }
 
         [TestMethod]
@@ -164,7 +164,7 @@ nuget ThePackageFromNuget";
             }
 
             Assert.AreEqual(2, packageManagerLines.Length);
-            Assert.AreNotEqual($"source {Constants.DefaultNuGetServer}", packageManagerLines[1]);
+            Assert.AreNotEqual($"source {Constants.OfficialNuGetUrlV3}", packageManagerLines[1]);
         }
 
         private string GetTestDirectoryPath() {

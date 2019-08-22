@@ -27,7 +27,7 @@ namespace Aderant.Build.Packaging {
             var sw = new Stopwatch();
             sw.Start();
 
-            this.logger.Info("Pushing paket templates to internal nuget server {0}", Constants.PackageServerUrl);
+            this.logger.Info("Pushing paket templates to nuget server {0}", Constants.PackageServerUrlV3);
             try {
                 var tasks = new List<Task>();
 
@@ -40,7 +40,12 @@ namespace Aderant.Build.Packaging {
                     this.logger.Info("Pushing {0}...", moduleFolder.Split('\\').Last());
 
                     // push nuget package to the server
+#if FEATURE_AZURE_NUGET
+                    var arguments = string.Format(@"push url {0} file {1} apikey {2}", Constants.PackageServerUrlV3, packageFile, Constants.NugetServerApiKey);
+#else
                     var arguments = string.Format(@"push url {0} file {1} apikey {2}", Constants.PackageServerUrl, packageFile, Constants.NugetServerApiKey);
+#endif
+
                     var processFilePath = Path.Combine(buildScriptsDirectory, "paket.exe");
                     if (executeInParallel) {
                         tasks.Add(BuildInfrastructureHelper.StartProcessAsync(processFilePath, arguments, moduleFolder, OnReceiveStandardErrorOrOutputData));
@@ -50,11 +55,6 @@ namespace Aderant.Build.Packaging {
                 }
 
                 Task.WaitAll(tasks.ToArray());
-
-                this.logger.Info(string.Empty);
-                this.logger.Info("Clearing nuget package cache...");
-                var client = new WebClient();
-                client.DownloadString(Constants.NugetServerClearCacheUrl);
 
                 sw.Stop();
                 this.logger.Info(string.Empty);

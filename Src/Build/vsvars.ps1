@@ -1,3 +1,14 @@
+<#
+.SYNOPSIS
+    Allows PowerShell to work like the Visual Studio developer console by placing interesting
+    executables onto the current PATH and setting key environment varibles.
+.PARAMETER IsBuildAgent
+    Specifies that this script is running in the context of the build agent.
+#>
+param(
+    [switch]$IsBuildAgent
+)
+
 ##
 ## Sets environment variables used to interop with the Visual Studio Developer Command Prompt
 ##
@@ -27,11 +38,14 @@ function LoadEnvVariables([string]$environmentVariableName, [string]$vsYear, [st
             }
         })
 
-        foreach ($item in $vars.GetEnumerator()) {
-            Set-Item -Force -Path "ENV:\$($item.Key)" -Value $item.Value
+        # If this is an agent then we need to set the variables here
+        if ($isBuildAgent) {
+            foreach ($item in $vars.GetEnumerator()) {
+                [System.Environment]::SetEnvironmentVariable($item.Key, $item.Value, [System.EnvironmentVariableTarget]::Process)
+            }
         }
 
-        # When executing in a job return the values so the caller can apply them to that context as well
+        # When executing in a job return the values so the caller can apply them to that context
         $script:vars = $vars
         return $true
     }

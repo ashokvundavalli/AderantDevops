@@ -5,11 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Aderant.Build.TeamFoundation")]
+[assembly: AssemblyTitle("UnitTest.Legacy")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Aderant.Build.TeamFoundation")]
+[assembly: AssemblyProduct("UnitTest.Legacy")]
+[assembly: AssemblyCopyright("Copyright ©  2019")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -19,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("bd56b34b-db85-4154-a560-0bc1fe6386da")]
+[assembly: Guid("c7d01765-1a77-4200-a094-a9558baaaf42")]
 
 // Version information for an assembly consists of the following four values:
 //
@@ -33,7 +34,3 @@ using System.Runtime.InteropServices;
 // [assembly: AssemblyVersion("1.0.*")]
 [assembly: AssemblyVersion("1.0.0.0")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
-
-[assembly: InternalsVisibleTo("UnitTest.Build")]
-[assembly: InternalsVisibleTo("UnitTest.Legacy")]
-[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]

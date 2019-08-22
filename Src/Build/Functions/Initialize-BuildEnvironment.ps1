@@ -16,10 +16,36 @@ if ($PSVersionTable.PSVersion.Major -lt 5 -or ($PSVersionTable.PSVersion.Major -
     exit 1
 }
 
-function BuildProjects($BuildScriptsDirectory, [bool]$forceCompile) {
-    $file = [System.IO.Path]::Combine($BuildScriptsDirectory, "..\Build.Tools\Aderant.Build.dll")
-    $file = [System.IO.Path]::GetFullPath($file)
+function GetAlternativeStreamValue($file, [string]$streamName) {
+    return Get-Content -Path $file -Stream $streamName -ErrorAction "SilentlyContinue"
+}
 
+function SetAlternativeStreamValue($file, [string]$streamName, [string]$value) {
+    Set-Content -Path $file -Value $value -Stream $streamName
+}
+
+. "$PSScriptRoot\InProcessJobs.ps1"
+
+
+Set-StrictMode -Version "Latest"
+$buildCommitStreamName = "Build.Commit"
+
+function DoActionIfNeeded([scriptblock]$action, $file) {
+    $version = GetAlternativeStreamValue $file $buildCommitStreamName
+
+    $commit = $ExecutionContext.SessionState.Module.PrivateData[$buildCommitStreamName]
+
+    if ($version -ne $commit) {
+        Write-Debug "Running action $($action.Ast) for $file because '$version' != '$commit'"
+
+        $action.Invoke()
+        SetAlternativeStreamValue $file $buildCommitStreamName $commit
+    } else {
+        Write-Debug "Skipping $($action.Ast) for $file because '$version' == '$commit'"
+    }
+}
+
+function BuildProjects([string]$mainAssembly, [bool]$forceCompile, [string]$commit) {
     $msbuildPath = . "$PSScriptRoot\Resolve-MSBuild" "*" "x86"
 
     [void][System.Reflection.Assembly]::LoadFrom("$msbuildPath\Microsoft.Build.dll")
@@ -27,18 +53,25 @@ function BuildProjects($BuildScriptsDirectory, [bool]$forceCompile) {
     [void][System.Reflection.Assembly]::LoadFrom("$msbuildPath\Microsoft.Build.Tasks.Core.dll")
     [void][System.Reflection.Assembly]::LoadFrom("$msbuildPath\Microsoft.Build.Utilities.Core.dll")
 
-    $info = [System.IO.FileInfo]::new($file)
+    $info = [System.IO.FileInfo]::new($mainAssembly)
 
     if ($info.Exists) {
         if ($info.Length -gt 0 -and $forceCompile -eq $false) {
             return
         }
+
+        $buildCommit = GetAlternativeStreamValue $info.FullName $buildCommitStreamName
+
+        if ($buildCommit -eq $commit) {
+            Write-Debug "Skipped compiling $info as it was for your current commit."
+            return
+        }
     }
 
     try {
-        [System.IO.File]::OpenWrite($file).Close()
+        $info.OpenWrite().Close()
     } catch {
-        Write-Warning "Skipped compiling $file due to file lock."
+        Write-Warning "Skipped compiling $info due to file lock."
         return
     }
 
@@ -47,42 +80,46 @@ function BuildProjects($BuildScriptsDirectory, [bool]$forceCompile) {
     $target = "PrepareBuildEnvironment"
     $projectPath = [System.IO.Path]::Combine($BuildScriptsDirectory, "Aderant.Build.Common.targets")
 
-    if ($msbuildPath.Contains("2017")) {
-        # 2017 is a mess of binding redirects so give up and invoke the compiler as a tool - this is slower than invoking it in-proc
-        & "$msbuildPath\MSBuild.exe" $projectPath "/t:$target" "/p:project-set=minimal" "/p:BuildScriptsDirectory=$BuildScriptsDirectory"
-        return
+    try {
+        if ($msbuildPath.Contains("2017")) {
+            # 2017 is a mess of binding redirects so give up and invoke the compiler as a tool - this is slower than invoking it in-proc
+            & "$msbuildPath\MSBuild.exe" $projectPath "/t:$target" "/p:project-set=minimal" "/p:BuildScriptsDirectory=$BuildScriptsDirectory"
+            return
+        }
+
+        $logger = [Microsoft.Build.BuildEngine.ConsoleLogger]::new()
+        if ($DebugPreference -eq 'Continue' -or $VerbosePreference -eq 'Continue') {
+            $logger.Verbosity = [Microsoft.Build.Framework.LoggerVerbosity]::Normal
+        } else {
+            $logger.Verbosity = [Microsoft.Build.Framework.LoggerVerbosity]::Quiet
+        }
+
+        $arraylog = New-Object collections.generic.list[Microsoft.Build.Framework.ILogger]
+        $arraylog.Add($logger)
+
+        $globals = [System.Collections.Generic.Dictionary`2[System.String,System.String]]::new()
+        $globals.Add("BuildScriptsDirectory", $BuildScriptsDirectory)
+        $globals.Add("nologo", $null)
+        $globals.Add("nr", "false")
+        $globals.Add("m", $null)
+        $globals.Add("project-set", "minimal")
+
+        $params = [Microsoft.Build.Execution.BuildParameters]::new()
+        $params.Loggers = $arraylog
+        $params.GlobalProperties = $globals
+        $params.ShutdownInProcNodeOnBuildFinish = $true
+
+        $targets = @($target)
+
+        $request = new-object Microsoft.Build.Execution.BuildRequestData($projectPath, $targets)
+
+        $manager = [Microsoft.Build.Execution.BuildManager]::DefaultBuildManager
+        $result = $manager.Build($params, $request)
+
+        HandleResult $result
+    } finally {
+        SetAlternativeStreamValue $info.FullName $buildCommitStreamName $commit
     }
-
-    $logger = [Microsoft.Build.BuildEngine.ConsoleLogger]::new()
-    if ($DebugPreference -eq 'Continue' -or $VerbosePreference -eq 'Continue') {
-        $logger.Verbosity = [Microsoft.Build.Framework.LoggerVerbosity]::Normal
-    } else {
-        $logger.Verbosity = [Microsoft.Build.Framework.LoggerVerbosity]::Quiet
-    }
-
-    $arraylog = New-Object collections.generic.list[Microsoft.Build.Framework.ILogger]
-    $arraylog.Add($logger)
-
-    $globals = [System.Collections.Generic.Dictionary`2[System.String,System.String]]::new()
-    $globals.Add("BuildScriptsDirectory", $BuildScriptsDirectory)
-    $globals.Add("nologo", $null)
-    $globals.Add("nr", "false")
-    $globals.Add("m", $null)
-    $globals.Add("project-set", "minimal")
-
-    $params = [Microsoft.Build.Execution.BuildParameters]::new()
-    $params.Loggers = $arraylog
-    $params.GlobalProperties = $globals
-    $params.ShutdownInProcNodeOnBuildFinish = $true
-
-    $targets = @($target)
-
-    $request = new-object Microsoft.Build.Execution.BuildRequestData($projectPath, $targets)
-
-    $manager = [Microsoft.Build.Execution.BuildManager]::DefaultBuildManager
-    $result = $manager.Build($params, $request)
-
-    HandleResult $result
 }
 
 function HandleResult($result) {
@@ -99,15 +136,7 @@ function LoadAssembly([string]$assemblyPath, [bool]$loadAsModule) {
 
         #Loads the assembly without locking it on disk
         $assemblyBytes = [System.IO.File]::ReadAllBytes($assemblyPath)
-        $pdb = [System.IO.Path]::ChangeExtension($assemblyPath, "pdb");
-
-        if (Test-Path $pdb) {
-            Write-Debug "Importing assembly $assemblyPath with symbols"
-            $assembly = [System.Reflection.Assembly]::Load($assemblyBytes, [System.IO.File]::ReadAllBytes($pdb))
-        } else {
-            Write-Debug "Importing assembly $assemblyPath without symbols"
-            $assembly = [System.Reflection.Assembly]::Load($assemblyBytes)
-        }
+        $assembly = [System.Reflection.Assembly]::Load($assemblyBytes)
 
         if ($loadAsModule) {
             # This load process was built after many days of head scratching trying to get -Global to work.
@@ -153,52 +182,58 @@ function RunActionExclusive([scriptblock]$action, [string]$mutexName) {
     }
 
     if ($runTool) {
-        Write-Debug "Running action in exclusive lock"
-        Write-Debug $action.Ast
+        if ($DebugPreference -ne 'SilentlyContinue') {
+            Write-Debug "Running action in exclusive lock"
+            Write-Debug $action.Ast
+        }
+
         $action.Invoke()
     }
 
     return $runTool
 }
 
-function RefreshSources([bool]$pull, [string]$head) {
+function RefreshSources([bool]$pull, [string]$branch) {
     $action = {
        if ($pull) {
            & git -C $PSScriptRoot pull --ff-only
        }
     }
 
-    Write-Information "Updating submodules..."
-    $job = Start-Job -Name "submodule update" -ScriptBlock {
-        Param($path)
-
-        $result = (& git -C $path submodule update --init --recursive)
-        if ($LASTEXITCODE -ne 0) {
-            throw $result
-        }
-        return $result
-    } -ArgumentList $PSScriptRoot
-
-    $null = Register-ObjectEvent $job -EventName StateChanged -Action {
-        if ($EventArgs.JobStateInfo.State -ne [System.Management.Automation.JobState]::Completed) {
-            Write-Host ("Task has failed: " + $sender.ChildJobs[0].JobStateInfo.Reason.Message) -ForegroundColor red
-        } else {
-            $Host.UI.RawUI.WindowTitle = "Submodule update complete"
-        }
-
-        $Sender | Remove-Job -Force
-
-        $EventSubscriber | Unregister-Event -Force
-        $EventSubscriber.Action | Remove-Job -Force
-    }
-
-    $lockName = "$head" + "_BUILD_UPDATE_LOCK"
-
+    $lockName = $branch + "_BUILD_UPDATE_LOCK"
     $updated = RunActionExclusive $action $lockName
 
     if (-not ($updated)) {
-        Write-Warning "Update skipped as another PowerShell instance is running"
+        Write-Information "Update skipped as another PowerShell instance is running"
+    } else {
+        # Only update submodules if we tried to update since we may have a new commit
+        # This is quite slow
+        Write-Information "Updating submodules..."
+
+        $job = Start-JobInProcess -Name "submodule update" -ScriptBlock {
+            Param($path)
+            $result = (& git -C $path submodule update --init --recursive)
+            if ($LASTEXITCODE -ne 0) {
+                throw $result
+            }
+            return $result
+        } -ArgumentList $PSScriptRoot
+
+        $null = Register-ObjectEvent $job -EventName StateChanged -Action {
+            if ($EventArgs.JobStateInfo.State -ne [System.Management.Automation.JobState]::Completed) {
+                Write-Host ("Task has failed: " + $sender.ChildJobs[0].JobStateInfo.Reason.Message) -ForegroundColor red
+            } else {
+                $millisecondsTaken = [int]($Sender.PSEndTime - $Sender.PSBeginTime).TotalMilliseconds
+                $Host.UI.RawUI.WindowTitle = "Submodule update complete ($millisecondsTaken ms)"
+            }
+
+            $Sender | Remove-Job -Force
+
+            $EventSubscriber | Unregister-Event -Force
+            $EventSubscriber.Action | Remove-Job -Force
+        }
     }
+
     return [string](& git -C $PSScriptRoot rev-parse HEAD)
 }
 
@@ -206,36 +241,48 @@ function LoadLibGit2Sharp([string]$buildToolsDirectory) {
     [void][System.Reflection.Assembly]::LoadFrom("$buildToolsDirectory\LibGit2Sharp.dll")
 }
 
-function DownloadPaket() {
+function SetNuGetProviderPath([string]$buildToolsDirectory) {
+    $credentialProviderPath = [System.IO.Path]::Combine($buildToolsDirectory, "NuGet.CredentialProvider")
+    [System.Environment]::SetEnvironmentVariable("NUGET_CREDENTIALPROVIDERS_PATH", $credentialProviderPath, [System.EnvironmentVariableTarget]::Process)
+}
+
+function DownloadPaket([string]$commit) {
     $bootstrapper = "$BuildScriptsDirectory\paket.bootstrapper.exe"
+
     if (Test-Path $bootstrapper) {
+        $paketExecutable = "$BuildScriptsDirectory\paket.exe"
+
+        $value = GetAlternativeStreamValue $paketExecutable $buildCommitStreamName
+
+        if ($value -eq $commit) {
+            Write-Debug "Skipping paket upload because '$value' == '$commit'"
+            return
+        }
+
         $action = {
             # Download the paket dependency tool
             Start-Process -FilePath $bootstrapper -ArgumentList  "5.198.0" -NoNewWindow -PassThru -Wait
-            Start-Process -FilePath "$BuildScriptsDirectory\paket.exe" -ArgumentList @("restore", "--group", "DevTools") -NoNewWindow -PassThru -Wait -WorkingDirectory ("$BuildScriptsDirectory\..\.\..")
+            Start-Process -FilePath $paketExecutable -ArgumentList @("restore", "--group", "DevTools") -NoNewWindow -PassThru -Wait -WorkingDirectory ("$BuildScriptsDirectory\..\.\..")
         }
 
         RunActionExclusive $action ("PAKET_UPDATE_LOCK_" + $BuildScriptsDirectory)
+        SetAlternativeStreamValue $paketExecutable $buildCommitStreamName $commit
     } else {
         throw "FATAL: $bootstrapper does not exist."
     }
 }
 
-Set-StrictMode -Version Latest
 # Without this git will look on H:\ for .gitconfig
 $Env:HOME = $Env:USERPROFILE
 
 # Redirect ERROR to OUTPUT
-$Env:GIT_REDIRECT_STDERR = '2>&1'
+#$Env:GIT_REDIRECT_STDERR = '2>&1'
+[System.Environment]::SetEnvironmentVariable("GIT_REDIRECT_STDERR", "2>&1", [System.EnvironmentVariableTarget]::Process)
 
 $InformationPreference = 'Continue'
 $ErrorActionPreference = 'Stop'
 
-$isUsingProfile = $false
-$command = (Get-PSCallStack)[1].Command
-if ($command -eq "Aderant.psm1") {
-    $isUsingProfile = $true
-}
+$isUsingProfile = ($null -ne $ExecutionContext.SessionState.Module)
 
 try {
     [void][Aderant.Build.BuildOperationContext]
@@ -270,12 +317,19 @@ $commit = RefreshSources $pull $branch
 
 $assemblyPathRoot = [System.IO.Path]::Combine("$BuildScriptsDirectory\..\Build.Tools")
 
-DownloadPaket
+DownloadPaket $commit
 
-BuildProjects $BuildScriptsDirectory $isUsingProfile $commit
+$mainAssembly = "$assemblyPathRoot\Aderant.Build.dll"
 
-LoadAssembly "$assemblyPathRoot\Aderant.Build.dll" $true
+BuildProjects $mainAssembly $isUsingProfile $commit
+
+LoadAssembly  $mainAssembly $true
 LoadAssembly "$assemblyPathRoot\protobuf-net.dll" $false
-LoadLibGit2Sharp "$BuildScriptsDirectory\..\Build.Tools"
+LoadLibGit2Sharp $assemblyPathRoot
+SetNuGetProviderPath $assemblyPathRoot
 
 [System.AppDomain]::CurrentDomain.SetData("BuildScriptsDirectory", $BuildScriptsDirectory)
+
+if ($isUsingProfile) {
+    $ExecutionContext.SessionState.Module.PrivateData[$buildCommitStreamName] = $commit
+}
