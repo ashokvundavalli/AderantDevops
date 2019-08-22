@@ -2,7 +2,7 @@ try {
     if ($null -ne [InProcess.InMemoryJob]) {
         return
     }
-} catch [System.Management.Automation.RuntimeException] {
+} catch [Exception] {
 
 }
 
