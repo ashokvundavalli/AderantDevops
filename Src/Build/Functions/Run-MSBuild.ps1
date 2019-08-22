@@ -106,7 +106,7 @@ function Exec-CommandCore([string]$command, [string]$commandArgs, [switch]$useCo
             $out = $process.StandardOutput
             while (-not $out.EndOfStream) {
             $line = $out.ReadLine()
-            Write-Information $line
+            Write-Information -MessageData $line
         }
     }
 
@@ -155,17 +155,27 @@ function Exec-Console([string]$command, [string]$commandArgs, [HashTable]$variab
 
 function Run-MSBuild([string]$projectFilePath, [string]$buildArgs = "", [string]$logFileName = "", [bool]$isDesktopBuild = $true) {
     Set-StrictMode -Version 'Latest'
+    $ErrorActionPreference = 'Stop'
+    $InformationPreference = 'Continue'
 
-    $type = [Type]::GetType("System.Management.Automation.PsUtils, System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35")
-    $method = $type.GetMethod("GetParentProcess", [System.Reflection.BindingFlags]::NonPublic -bor [System.Reflection.BindingFlags]::Static)
-    $process = $method.Invoke($null, ([System.Diagnostics.Process]::GetCurrentProcess()))
+    try {
+        $type = [Type]::GetType("System.Management.Automation.PsUtils, System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35")
+        $method = $type.GetMethod("GetParentProcess", [System.Reflection.BindingFlags]::NonPublic -bor [System.Reflection.BindingFlags]::Static)
+        $process = $method.Invoke($null, ([System.Diagnostics.Process]::GetCurrentProcess()))
+        
+        $debugMode = $false
+        if ($null -ne $process) {
+            if ($process.ProcessName -eq "devenv") {
+                Write-Information -MessageData "PowerShell was started from Visual Studio ... assuming you wish to debug"
+                $debugMode = $true
+            } else {
+                Write-Information -MessageData "Process was started from: $($process.Name)"
+                $process = $null
+            }
+        }
 
-    $debugMode = $false
-    if ($process.ProcessName -eq "devenv") {
-        Write-Information "PowerShell was started from Visual Studio ... assuming you wish to debug"
-        $debugMode = $true
-    } else {
-        $process = $null
+    } catch {
+        throw "Problem occurred while getting the current process: $($_.Exception.Message). Please try restarting your PowerShell instance."
     }
 
     #     As part of our builds, quite a few projects copy files to the binaries directory or other locations.
