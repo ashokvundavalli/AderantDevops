@@ -62,13 +62,11 @@ namespace Aderant.Build.DependencyResolver {
 
             ExpertModule module = null;
 
-            const string buildAnalyzer = "Aderant.Build.Analyzer";
-
             if (resolverRequest.ModuleFactory != null) {
-                module = resolverRequest.ModuleFactory.GetModule(buildAnalyzer);
+                module = resolverRequest.ModuleFactory.GetModule("Aderant.Build.Analyzer");
             }
 
-            IDependencyRequirement analyzer = requirements.FirstOrDefault(r => string.Equals(r.Name, buildAnalyzer));
+            IDependencyRequirement analyzer = requirements.FirstOrDefault(r => string.Equals(r.Name, "Aderant.Build.Analyzer"));
 
             if (analyzer != null) {
                 requirements.Remove(analyzer);
@@ -78,7 +76,7 @@ namespace Aderant.Build.DependencyResolver {
             if (module != null) {
                 requirement = DependencyRequirement.Create(module);
             } else {
-                requirement = DependencyRequirement.Create(buildAnalyzer, Constants.MainDependencyGroup);
+                requirement = DependencyRequirement.Create("Aderant.Build.Analyzer", Constants.MainDependencyGroup);
             }
 
             requirement.ReplaceVersionConstraint = true;

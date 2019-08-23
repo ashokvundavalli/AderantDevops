@@ -147,14 +147,14 @@ namespace Aderant.Build.DependencyResolver {
 
             FSharpList<PackageSources.PackageSource> sources = group.Sources;
 
-            // We created this file so remove the default NuGet sources
+            // We created this file so remove the default NuGet source
             if (createdNew && isMainGroup) {
-                sources = RemoveSource(sources, Constants.OfficialNuGetUrlV3, Constants.OfficialNuGetUrl);
+                sources = RemoveSource(Constants.DefaultNuGetServer, sources);
             }
 
             if (isMainGroup && !isUsingMultipleInputFiles) {
                 if (group.Sources.Any(s => object.Equals(s.NuGetType, PackageSources.KnownNuGetSources.OfficialNuGetGallery))) {
-                    sources = AddSource(Constants.OfficialNuGetUrlV3, sources);
+                    sources = AddSource(Constants.DefaultNuGetServer, sources);
                 }
             }
 
@@ -162,23 +162,13 @@ namespace Aderant.Build.DependencyResolver {
                 sources = AddSource(Constants.DatabasePackageUri, sources);
             }
 
-            // Upgrade any V2 to V3 sources
-            if (sources.Any(s => object.Equals(s.NuGetType, PackageSources.KnownNuGetSources.OfficialNuGetGallery) && s.IsNuGetV2)) {
-                sources = RemoveSource(sources, Constants.OfficialNuGetUrl);
-                sources = AddSource(Constants.OfficialNuGetUrlV3, sources);
-            }
-
             sources = AddSource(Constants.PackageServerUrl, sources);
-#if FEATURE_AZURE_NUGET
-            sources = AddSource(Constants.PackageServerUrlV3, sources);
-#endif
-
             return sources;
         }
 
         private static InstallOptions CreateInstallOptions(IEnumerable<IDependencyRequirement> requirements, KeyValuePair<Domain.GroupName, DependenciesGroup> groupEntry, DependenciesGroup group) {
             bool isStrict = requirements.OfType<IDependencyGroup>()
-                .Where(s => s.DependencyGroup != null && string.Equals(s.DependencyGroup.GroupName, groupEntry.Key.Name, StringComparison.OrdinalIgnoreCase))
+                .Where(s => s.DependencyGroup != null && s.DependencyGroup.GroupName == groupEntry.Key.Name)
                 .Any(s => s.DependencyGroup.Strict);
 
             InstallOptions options = group.Options;
@@ -204,17 +194,13 @@ namespace Aderant.Build.DependencyResolver {
             return false;
         }
 
-        private FSharpList<PackageSources.PackageSource> RemoveSource(FSharpList<PackageSources.PackageSource> sources, params string[] urls) {
-            foreach (var url in urls) {
-                sources = ListModule.Except(sources.Where(s => string.Equals(s.Url, url, StringComparison.OrdinalIgnoreCase)), sources);
-            }
-
-            return sources;
+        private FSharpList<PackageSources.PackageSource> RemoveSource(string url, FSharpList<PackageSources.PackageSource> sources) {
+            return ListModule.Except(sources.Where(s => string.Equals(s.Url, url, StringComparison.OrdinalIgnoreCase)), sources);
         }
 
         private static FSharpList<PackageSources.PackageSource> AddSource(string source, FSharpList<PackageSources.PackageSource> sources) {
             if (sources.All(s => !string.Equals(s.Url, source, StringComparison.OrdinalIgnoreCase))) {
-                sources = FSharpList<PackageSources.PackageSource>.Cons(PackageSources.PackageSource.NuGetV3Source(source), sources);
+                sources = FSharpList<PackageSources.PackageSource>.Cons(PackageSources.PackageSource.NuGetV2Source(source), sources);
             }
 
             return sources;

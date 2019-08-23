@@ -321,7 +321,7 @@ function PrepareEnvironment($BuildScriptsDirectory, $isBuildAgent) {
     }
 
     if ($isBuildAgent) {
-        . "$BuildScriptsDirectory\vsvars.ps1" -IsBuildAgent
+        . "$BuildScriptsDirectory\vsvars.ps1"
     }
 
     try {

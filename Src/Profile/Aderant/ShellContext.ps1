@@ -1,5 +1,5 @@
 <#
-    Provides a context object that stores state for when the build tool chain is running interactively
+    Provides a context object that stores state for when the build tool chain is running interactively 
 #>
 class ShellContext {
     hidden $autoProperties = @{
@@ -10,18 +10,24 @@ class ShellContext {
     hidden [string] $configFile = $null
 
     ShellContext() {
+        $path = "HKCU:\Software\Aderant\PowerShell"
+        if (-not (Test-Path $path)) {
+            New-Item -Path $path -ErrorAction SilentlyContinue | Out-Null 
+        }
+        $this.RegistryHome = $path       
+
         $this.ProfileHome = [System.IO.Path]::Combine([Environment]::GetFolderPath([Environment+SpecialFolder]::LocalApplicationData), "Aderant", "ContinuousDelivery")
 
         if (-not (Test-Path $this.ProfileHome)) {
-            New-Item -Type Directory -Path $this.ProfileHome -ErrorAction SilentlyContinue | Out-Null
+            New-Item -Type Directory -Path $this.ProfileHome -ErrorAction SilentlyContinue | Out-Null 
         }
 
-        $this.configFile = [System.IO.Path]::Combine($this.ProfileHome, "config.json")
+        $this.configFile = [System.IO.Path]::Combine($this.ProfileHome, "config.json")        
         $this.AddPublicMembers()
 
         if (Test-Path $this.configFile) {
             $data = Get-Content -Path $this.configFile | ConvertFrom-Json
-            $data.psobject.properties | Foreach { $this.autoProperties[$_.Name] = $_.Value }
+            $data.psobject.properties | Foreach { $this.autoProperties[$_.Name] = $_.Value }            
         }
     }
 
@@ -50,10 +56,10 @@ $this.autoProperties | ConvertTo-Json | Out-File {1}
             $this | Add-Member @AddMemberParams
         }
     }
-
+        
     [string] $BuildScriptsDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, "..\..\Build"))
     [string] $BuildToolsDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, "..\..\Build.Tools"))
-    [string] $PackagingTool = [System.IO.Path]::Combine($this.BuildScriptsDirectory, "paket.exe")
+    [string] $PackagingTool = [System.IO.Path]::Combine($this.BuildScriptsDirectory, "paket.exe")    
     [string] $ProfileHome
     [string] $RegistryHome
 
@@ -66,7 +72,7 @@ $this.autoProperties | ConvertTo-Json | Out-File {1}
     [string] $BranchExpertSourceDirectory = ""
     [string] $BranchExpertVersion = ""
     [string] $BranchEnvironmentDirectory = ""
-
+             
     [string] $PackageScriptsDirectory = ""
     [string] $ModuleCreationScripts = ""
     [string] $ProductManifestPath = ""
@@ -75,5 +81,40 @@ $this.autoProperties | ConvertTo-Json | Out-File {1}
     [string] $CurrentModuleBuildPath = ""
 
     [bool] $IsGitRepository = $false
-    [bool] $PoshGitAvailable = $false
+    [bool] $PoshGitAvailable = $false    
+
+    [object] SetRegistryValue([string]$path, [string]$name, $value) {
+        $fullPath = ($this.RegistryHome + "\" + $path).TrimEnd("\")
+        if (-not (Test-Path $fullPath)) {
+            Write-Debug "Creating path: $fullPath"
+            New-Item -Path $this.RegistryHome -Name $path -Force
+        }  
+
+        Write-Debug "Updating key: $fullPath\$name"
+        $key = New-ItemProperty -Path $fullPath -Name $name -Value $value -Force
+
+        return $key
+    }
+
+    [object] GetRegistryValue([string]$path, [string]$name) {
+        if ([string]::IsNullOrWhitespace($path)) {
+          $path = [string]::Empty
+        }
+        
+        $fullPath = ($this.RegistryHome + "\" + $path).TrimEnd("\")
+        
+        Write-Debug "Retrieving value: $fullPath\$name"
+        
+        if (Test-Path -Path $fullPath) {
+          try {
+            $value = Get-ItemPropertyValue -Path $fullPath -Name $name -ErrorAction SilentlyContinue
+            Write-Debug $value
+            return $value
+          } catch {
+            # Property/value may not exist
+          }
+        }
+
+        return $null
+    }
 }

@@ -69,9 +69,9 @@ function Check-Vsix() {
         if (-Not $idInVsixmanifest) {
             $idInVsixmanifest = $vsixId
         }
-
+       
         $version = ""
-
+              
         $currentVsixFile = Join-Path -Path $ShellContext.BuildToolsDirectory -ChildPath "$vsixName.vsix"
 
         $extensionsFolder = Join-Path -Path $env:LOCALAPPDATA -ChildPath \Microsoft\VisualStudio\14.0\Extensions\
@@ -80,16 +80,16 @@ function Check-Vsix() {
         $developerTools.ForEach( {
                 $manifest = Join-Path -Path $_.DirectoryName -ChildPath extension.vsixmanifest
                 if (Test-Path $manifest) {
-                    [xml]$manifestContent = Get-Content $manifest
+                    [xml]$manifestContent = Get-Content $manifest  
                     $manifestVersion = $manifestContent.PackageManifest.Metadata.Identity.Version
 
                     $version = [System.Version]::Parse($manifestVersion)
-                }
-            })
+                }  
+            })       
 
         $zipFile = $null
         $reader = $null
-
+        
         if ($version -eq "") {
             Write-Host -ForegroundColor Red " $vsixName for Visual Studio is not installed."
             Write-Host -ForegroundColor Red " If you want it, install them manually from $currentVsixFile"
@@ -100,7 +100,7 @@ function Check-Vsix() {
                 if ($lastVsixCheckCommit -eq $ShellContext.CurrentCommit) {
                     Write-Debug "CurrentCommit: $($ShellContext.CurrentCommit)"
                     Write-Debug "LastVsixCheckCommit: $($lastVsixCheckCommit)"
-
+                    
                     Write-Host -ForegroundColor DarkGreen "Your $vsixName is up to date."
                     return
                 }
@@ -112,21 +112,21 @@ function Check-Vsix() {
                 Write-Host -ForegroundColor Red "Error: could not find file $currentVsixFile"
                 return
             }
-
+            
             $zipFile = [System.IO.Compression.ZipFile]::OpenRead($currentVsixFile)
-            $rawFiles = $zipFile.Entries
-
+            $rawFiles = $zipFile.Entries      
+            
             foreach ($rawFile in $rawFiles) {
-                if ($rawFile.Name -eq "extension.vsixmanifest") {
-                    try {
+                if ($rawFile.Name -eq "extension.vsixmanifest") {    
+                    try {            
                         $archiveEntryStream = $rawFile.Open()
-
+                    
                         $reader = [System.IO.StreamReader]::new($archiveEntryStream)
                         [xml]$currentManifestContent = $reader.ReadToEnd()
-
+                    
                         $foundVersion = [System.Version]::Parse($currentManifestContent.PackageManifest.Metadata.Identity.Version)
                         Write-Host " * Current version is $foundVersion"
-
+                    
                         if ($foundVersion -gt $version) {
                             Write-Host
                             Write-Host "Updating $vsixName..."
@@ -138,7 +138,7 @@ function Check-Vsix() {
                         $archiveEntryStream.Dispose()
                         $reader.Dispose()
                     }
-                    break
+                    break               
                 }
             }
         }

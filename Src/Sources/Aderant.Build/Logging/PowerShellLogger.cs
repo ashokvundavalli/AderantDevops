@@ -3,7 +3,7 @@ using System.Management.Automation.Host;
 
 namespace Aderant.Build.Logging {
     /// <summary>
-    /// A PowerShell implementation of the <see cref="ILogger"/> interface.
+    /// A PowerShell implementation of the <see cref="ILogger"/> interface. 
     /// Allows internal components to write to a PowerShell host.
     /// </summary>
     public class PowerShellLogger : ILogger {
@@ -14,7 +14,7 @@ namespace Aderant.Build.Logging {
         /// </summary>
         /// <param name="host">The host.</param>
         public PowerShellLogger(PSHost host) : this(host.UI) {
-
+            
         }
 
         public PowerShellLogger(PSHostUserInterface userInterface) {
@@ -58,7 +58,7 @@ namespace Aderant.Build.Logging {
         }
 
         private static string FormatMessage(string message, object[] args) {
-            if (args != null && args.Length > 0) {
+            if (args != null) {
                 message = string.Format(CultureInfo.CurrentCulture, message, args);
             }
             return message;

@@ -43,9 +43,6 @@ namespace Aderant.Build.Tasks {
         internal static string GeneratePaketDependenciesContent(ExpertManifest expertManifest, ITaskItem[] dependencyMappings) {
             StringBuilder paketDependenciesContent = new StringBuilder();
 
-#if FEATURE_AZURE_NUGET
-            paketDependenciesContent.AppendLine($"source {Constants.PackageServerUrlV3}");
-#endif
             paketDependenciesContent.AppendLine($"source {Constants.PackageServerUrl}");
             paketDependenciesContent.AppendLine($"source {Constants.DatabasePackageUri}");
 
