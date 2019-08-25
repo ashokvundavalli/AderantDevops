@@ -146,8 +146,8 @@
       <TestRunDirectory>%(_Assemblies.TestRunDirectory)</TestRunDirectory>
       <AssembliesUnderTest>@(_Assemblies->'"%(FullPath)"', ',')</AssembliesUnderTest>
       <AdditionalVariables Condition="'$(TestPattern)' != '' And $(TestPattern.Equals('IntegrationTest', StringComparison.OrdinalIgnoreCase))">
-        $additionalEnvironmentVariables.Add('EXPERT_ENVIRONMENT_URL', $(ExpertEnvironmentUrl));
-        $additionalEnvironmentVariables.Add('EXPERT_SOURCE_DIRECTORY', $(ExpertSourceDirectory));
+$additionalEnvironmentVariables.Add('EXPERT_ENVIRONMENT_URL', '$(ExpertEnvironmentUrl)');
+$additionalEnvironmentVariables.Add('EXPERT_SOURCE_DIRECTORY', '$(ExpertSourceDirectory)');
       </AdditionalVariables>
     </PropertyGroup>
 
