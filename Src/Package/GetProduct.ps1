@@ -157,7 +157,12 @@ begin {
         $splitBuildUri = $buildUri.Split('/')
         $tfsBuildId = $splitBuildUri[$splitBuildUri.Length - 1]
 
-        $result = Package-ExpertRelease -ProductManifestXml $productManifestXml.InnerXml -Modules $modules -Folders $folders -ProductDirectory $expertSourceDirectory -TfvcSourceGetVersion $tfvcSourceGetVersion -TeamProject $teamProject -TfvcBranch $tfvcBranchName -TfsBuildId $tfsBuildId -TfsBuildNumber $tfsBuildNumber
+        try {
+            $result = Package-ExpertRelease -ProductManifestXml $productManifestXml.InnerXml -Modules $modules -Folders $folders -ProductDirectory $expertSourceDirectory -TfvcSourceGetVersion $tfvcSourceGetVersion -TeamProject $teamProject -TfvcBranch $tfvcBranchName -TfsBuildId $tfsBuildId -TfsBuildNumber $tfsBuildNumber
+        } catch [Exception] {
+            Write-Error "PackageExpertReleaseCommand failed. Exception: '$($_.Exception.Message)' Stack trace: '$($_.Exception.StackTrace)'."
+            throw
+        }
         if ($result) {
             GenerateThirdPartyAttributionFile $result.ThirdPartyLicenses $expertSourceDirectory
         }
