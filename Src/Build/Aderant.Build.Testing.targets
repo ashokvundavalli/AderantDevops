@@ -145,6 +145,10 @@
       <TestCaseFilter Condition="'%(_Assemblies.CICategory)' != ''">/TestCaseFilter:`&quot;%(_Assemblies.CICategory)`&quot;</TestCaseFilter>
       <TestRunDirectory>%(_Assemblies.TestRunDirectory)</TestRunDirectory>
       <AssembliesUnderTest>@(_Assemblies->'"%(FullPath)"', ',')</AssembliesUnderTest>
+      <AdditionalVariables Condition="'$(TestPattern)' != '' And $(TestPattern.Equals('IntegrationTest', StringComparison.OrdinalIgnoreCase))">
+        $additionalEnvironmentVariables.Add('EXPERT_ENVIRONMENT_URL', $(ExpertEnvironmentUrl));
+        $additionalEnvironmentVariables.Add('EXPERT_SOURCE_DIRECTORY', $(ExpertSourceDirectory));
+      </AdditionalVariables>
     </PropertyGroup>
 
     <!-- TaskObjectKey will be the task object from GetAssemblyPlatform -->
@@ -161,10 +165,8 @@ $workingDirectory = "$(SolutionRoot)"
 $isDesktopBuild = $$(IsDesktopBuild)
 $referencePaths = $(AllDirectoriesWithDlls)
 $testFiles = $(AssembliesUnderTest)
-$additionalEnvironmentVariables = @{
-    "EXPERT_ENVIRONMENT_URL" = "$(ExpertEnvironmentUrl)";
-    "EXPERT_SOURCE_DIRECTORY" = "$(ExpertSourceDirectory)";
-}
+$additionalEnvironmentVariables = @{}
+$(AdditionalVariables)
 
 . Testing\RunTests.ps1 -PathToTestTool $testTool -ToolArgs $testToolArgs -WorkingDirectory $workingDirectory -SolutionRoot $testRunDirectory -IsDesktopBuild:$isDesktopBuild -ReferencePaths $referencePaths -TestAssemblies $testFiles -AdditionalEnvironmentVariables $additionalEnvironmentVariables'
       OnErrorReason="Test failure"
