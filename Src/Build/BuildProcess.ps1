@@ -318,9 +318,14 @@ task GetDependencies {
         # https://github.com/GitTools/GitVersion/issues/993
         # https://github.com/GitTools/GitVersion/issues/912
         # Basically VSTS is annoying, like all build systems.
-        & git -C $inputRepository fetch --tags --prune --progress origin
+        try {
+            & git -C $inputRepository fetch --tags --prune --progress origin
 
-        . $Env:EXPERT_BUILD_DIRECTORY\Build\LoadDependencies.ps1 -modulesRootPath $Repository
+            . $Env:EXPERT_BUILD_DIRECTORY\Build\LoadDependencies.ps1 -modulesRootPath $Repository
+        } catch [Exception] {
+            $Error[0] | Format-List -Force
+            throw
+        }
     }
 }
 
