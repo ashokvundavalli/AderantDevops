@@ -323,7 +323,7 @@ task GetDependencies {
         try {
             & git -C $inputRepository fetch --tags --prune --progress origin
         } catch [Exception] {
-            $Error[0] | Format-List -Force
+            Write-Host "Exception occurred: '$($_.Exception.Message)'. Stack trace: '$($_.Exception.StackTrace)'."
             throw
         }
 
