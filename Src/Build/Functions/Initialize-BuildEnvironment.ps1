@@ -317,7 +317,7 @@ function EnsureClientCertificateAvailable() {
         if ($certificates.Count -eq 0) {
             # Request a client certificate if we are a service account
             if ([Environment]::UserName.EndsWith("$")) {
-                Get-Certificate -Template "ADERANTgMSAUser" -Url "ldap:" -CertStoreLocation "Cert:\CurrentUser\My"
+                Get-Certificate -Template "ADERANTgMSAUser" -Url "ldap:" -SubjectName "CN=tfsbuildservice$" -CertStoreLocation "Cert:\CurrentUser\My"
             } else {
                 Write-Warning "No certificates for client authentication are available"
             }
