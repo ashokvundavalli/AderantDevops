@@ -316,8 +316,9 @@ function EnsureClientCertificateAvailable() {
 
         if ($certificates.Count -eq 0) {
             # Request a client certificate if we are a service account
-            if ([Environment]::UserName.EndsWith("$")) {
-                Get-Certificate -Template "ADERANTgMSAUser" -Url "ldap:" -SubjectName "CN=tfsbuildservice$" -CertStoreLocation "Cert:\CurrentUser\My"
+            $username = [Environment]::UserName
+            if ($username.EndsWith("$")) {
+                Get-Certificate -Template "ADERANTgMSAUser" -Url "ldap:" -SubjectName "CN=$username" -CertStoreLocation "Cert:\CurrentUser\My"
             } else {
                 Write-Warning "No certificates for client authentication are available"
             }
@@ -333,6 +334,21 @@ function EnsureServiceEndpointsAvailable() {
         $endpoint = Get-VstsEndpoint -Name $serviceConnectionName -Require
 
         # Connection API key can be accessed via $endpoint.Auth.parameters.nugetkey
+    }
+}
+
+function LoadVstsTaskLibrary {
+    $vstsTaskLib = [System.Environment]::GetEnvironmentVariable("VSTS_TASK_LIB_HOME")
+    if ($vstsTaskLib) {
+        $taskModule = [System.IO.Path]::Combine($vstsTaskLib, "VstsTaskSdk.psd1")
+        Import-Module $taskModule        
+    } else {
+        $vstsTaskLib = (Get-Module VstsTaskSdk)
+        if ($vstsTaskLib) {        
+            $taskHomeDirectory = $vstsTaskLib.ModuleBase
+            [System.Environment]::SetEnvironmentVariable("VSTS_TASK_LIB_HOME", $taskHomeDirectory, [System.EnvironmentVariableTarget]::Process)
+            Write-Debug "Set VSTS_TASK_LIB_HOME => $taskHomeDirectory"
+        }
     }
 }
 
@@ -393,6 +409,7 @@ try {
     LoadAssembly  $mainAssembly $true
     LoadAssembly "$assemblyPathRoot\protobuf-net.dll" $false
     LoadLibGit2Sharp $assemblyPathRoot
+    LoadVstsTaskLibrary
     SetNuGetProviderPath $assemblyPathRoot
     EnsureClientCertificateAvailable
     EnsureServiceEndpointsAvailable
