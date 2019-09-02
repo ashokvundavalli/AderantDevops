@@ -24,7 +24,7 @@ namespace Aderant.Build.Packaging {
             dependencies = parser["dependencies"];
 
             if (dependencies == null) {
-                dependencies = new Section("dependencies");
+                dependencies = new ListSection("dependencies");
                 parser.AddSection(dependencies);
             }
         }

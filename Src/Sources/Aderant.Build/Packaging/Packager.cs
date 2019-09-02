@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
 using Aderant.Build.Logging;
@@ -20,7 +19,7 @@ namespace Aderant.Build.Packaging {
             this.logger = logger;
         }
 
-        public PackResult Pack(string version, bool replicate) {
+        public PackResult Pack(string version, bool replicate) {            
             var files = fs.GetFiles(fs.Root, "paket.dependencies", false);
 
             string dependenciesFilePath = null;
@@ -30,6 +29,7 @@ namespace Aderant.Build.Packaging {
                 if (file.IndexOf(BuildInfrastructureWorkingDirectory, StringComparison.OrdinalIgnoreCase) >= 0) {
                     continue;
                 }
+
                 dependenciesFilePath = file;
                 break;
             }
@@ -48,17 +48,21 @@ namespace Aderant.Build.Packaging {
 
                 var lockFile = LockFile.LoadFrom(dependenciesFile.FindLockfile().FullName);
 
-                var mainGroup = lockFile.GetGroupedResolution().Where(g => string.Equals(g.Key.Item1, Domain.GroupName(BuildConstants.MainDependencyGroup)));
-                var dependencyMap = mainGroup.ToDictionary(d => d.Key.Item2, d => d.Value.Version);
+                var mainGroup = lockFile.GetGroupedResolution().Where(g => Equals(g.Key.Item1, Domain.GroupName(BuildConstants.MainDependencyGroup)));
 
+                Dictionary<Domain.PackageName, SemVerInfo> dependencyMap = null;
                 if (replicate) {
-                    ReplicateDependenciesToTemplate(dependencyMap, () => fs.OpenFileForWrite(fs.GetFullPath(file)));
+                    dependencyMap = mainGroup.ToDictionary(d => d.Key.Item2, d => d.Value.Version);
                 }
+
+                ReplicateDependenciesToTemplate(dependencyMap, () => fs.OpenFileForWrite(fs.GetFullPath(file)));
+
 
                 try {
                     logger.Info("Processing " + file);
 
-                    PackageProcess.Pack(workingDir: fs.Root,
+                    PackageProcess.Pack(
+                        workingDir: fs.Root,
                         dependenciesFile: dependenciesFile,
                         packageOutputPath: spec.OutputPath,
                         buildConfig: FSharpOption<string>.Some("Release"),
@@ -94,15 +98,15 @@ namespace Aderant.Build.Packaging {
                 templateFile = new PackageTemplateFile(reader.ReadToEnd());
             }
 
-            foreach (var item in dependencyMap) {
-                templateFile.AddDependency(item.Key);
+            if (dependencyMap != null) {
+                foreach (var item in dependencyMap) {
+                    templateFile.AddDependency(item.Key);
+                }
+
+                templateFile.RemoveSelfReferences();
             }
 
-            templateFile.RemoveSelfReferences();
-
-            if (templateFile.IsDirty) {
-                templateFile.Save(templateFileStream());
-            }
+            templateFile.Save(templateFileStream());
 
             return templateFile.Dependencies;
         }
@@ -122,7 +126,8 @@ namespace Aderant.Build.Packaging {
                 if (file.StartsWith(".git")) {
                     continue;
                 }
-                // Ignore files under the Build Infrastructure working directory, as it mat contain test resources 
+
+                // Ignore files under the Build Infrastructure working directory, as it may contain test resources 
                 // which would erroneously be picked up
                 if (file.IndexOf(BuildInfrastructureWorkingDirectory, StringComparison.OrdinalIgnoreCase) >= 0) {
                     continue;
