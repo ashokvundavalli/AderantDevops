@@ -54,5 +54,12 @@ namespace Aderant.Build.Packaging.Parsing {
             }
             return null;
         }
+
+        internal static Section Create(string line) {
+            if (string.Equals(line, "dependencies")) {
+                return new ListSection(line);
+            }
+            return new Section(line);
+        }
     }
 }

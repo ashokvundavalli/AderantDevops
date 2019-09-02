@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
+using System.Text;
 using System.Threading;
 using Aderant.Build.Tasks.PowerShell;
 
@@ -100,6 +101,10 @@ namespace Aderant.Build {
                                         ErrorRecord record = error as ErrorRecord;
 
                                         if (record != null && record.Exception != null) {
+                                            string errorString = ErrorRecordToString(record);
+
+                                            RaiseError(errorString);
+
                                             throw record.Exception;
                                         }
 
@@ -114,11 +119,31 @@ namespace Aderant.Build {
                     }
                 } catch (ParseException ex) {
                     // This should only happen in case of script syntax errors
-                    if (ErrorReady != null) {
-                        ErrorReady(this, new Collection<object> { ex.Message });
-                    }
+                    RaiseError(ex.Message);
                 }
             }
+        }
+
+        private void RaiseError(object obj) {
+            var handler = ErrorReady;
+            if (handler != null) {
+                handler(this, new Collection<object> { obj });
+            }
+        }
+
+        private static string ErrorRecordToString(ErrorRecord error) {
+            StringBuilder sb = new StringBuilder(error.ToString());
+
+            if (error.ScriptStackTrace != null) {
+                sb.AppendLine("");
+                sb.AppendLine(error.ScriptStackTrace);
+            }
+            if (error.Exception != null && error.Exception.StackTrace != null) {
+                sb.AppendLine("");
+                sb.AppendLine(error.Exception.StackTrace);
+            }
+
+            return sb.ToString();
         }
 
         private void HandleErrorReady(object sender, EventArgs e) {
@@ -130,10 +155,7 @@ namespace Aderant.Build {
                     var item = reader.Read();
 
                     if (item != null) {
-
-                        if (ErrorReady != null) {
-                            ErrorReady(this, new[] { item });
-                        }
+                        RaiseError(item);
                     }
                 }
             }

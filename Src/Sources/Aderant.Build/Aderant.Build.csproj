@@ -13,11 +13,11 @@
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
+    <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
+    <DebugType>embedded</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>..\..\Build.Tools\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
@@ -26,11 +26,9 @@
     <Prefer32Bit>false</Prefer32Bit>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
-    <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
+    <DebugType>embedded</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>..\..\Build.Tools\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
@@ -264,7 +262,6 @@
     <Compile Include="Tasks\GenerateBuildPlan.cs" />
     <Compile Include="Commands\BuildCmdlet.cs" />
     <Compile Include="Commands\GetExpertDependenciesForModule.cs" />
-    <Compile Include="Commands\Legacy\PushPaketTemplates.cs" />
     <Compile Include="BuildNotFoundException.cs" />
     <Compile Include="DependencyAnalyzer\ExpertModuleExtensions.cs" />
     <Compile Include="DependencyResolver\FolderBasedRequirement.cs" />
@@ -285,6 +282,7 @@
     <Compile Include="MSBuild\MSBuildProjectElement.cs" />
     <Compile Include="Packaging\Package.cs" />
     <Compile Include="Packaging\PackageProcessor.cs" />
+    <Compile Include="Packaging\Parsing\ListSection.cs" />
     <Compile Include="Packaging\Parsing\IndendedFileParser.cs" />
     <Compile Include="Packaging\IProductAssemblyResult.cs" />
     <Compile Include="Packaging\NuGet\NuspecTokenProcessor.cs" />
@@ -338,7 +336,6 @@
     <Compile Include="Packaging\PackResult.cs" />
     <Compile Include="Packaging\PackSpecification.cs" />
     <Compile Include="Packaging\ProductAssembler.cs" />
-    <Compile Include="Packaging\PushPaketTemplatesAction.cs" />
     <Compile Include="Packaging\VersionParser.cs" />
     <Compile Include="PathUtility.cs" />
     <Compile Include="PhysicalFileSystem.cs" />
@@ -350,7 +347,6 @@
     <Compile Include="Tasks\SeedPackagePacking.cs" />
     <Compile Include="Tasks\OrmMappingValidator.cs" />
     <Compile Include="Tasks\ProjectConformityController.cs" />
-    <Compile Include="Tasks\Legacy\PushPaketTemplatesTask.cs" />
     <Compile Include="Packaging\NuGet\StringNuspecValue.cs" />
     <Compile Include="Tasks\ThirdPartyPackager.cs" />
     <Compile Include="DependencyResolver\UpdateAction.cs" />

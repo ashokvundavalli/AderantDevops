@@ -34,6 +34,10 @@ namespace Aderant.Build.Packaging.Parsing {
             while ((line = reader.ReadLine()) != null) {
                 if (line.Length > 0 && char.IsWhiteSpace(line[0])) {
 
+                    if (string.IsNullOrWhiteSpace(line)) {
+                        continue;
+                    }
+
                     // replace tabs with spaces
                     line = line.Replace("\t", "    ");
 
@@ -44,7 +48,7 @@ namespace Aderant.Build.Packaging.Parsing {
                 } else {
                     if (line.Length > 0) {
                         State = ParserState.Initial;
-                        sections.Add(currentSection = new Section(line));
+                        sections.Add(currentSection = Section.Create(line));
                     }
                 }
             }

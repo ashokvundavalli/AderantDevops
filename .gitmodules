@@ -10,3 +10,7 @@
 	path = Src/Build.Tools/GitLink
 	url = https://tfs.aderant.com/tfs/ADERANT/ExpertSuite/_git/ThirdParty.GitLink
 	branch = master
+[submodule "Src/Build.Tools/NuGet.CredentialProvider"]
+	path = Src/Build.Tools/NuGet.CredentialProvider
+	url = https://tfs.aderant.com/tfs/ADERANT/ExpertSuite/_git/NuGet.CredentialProvider
+	branch = master

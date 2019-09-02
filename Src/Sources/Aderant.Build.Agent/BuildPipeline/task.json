@@ -1,56 +1,64 @@
-{
-  "id": "415ab5a5-955f-4631-9bdc-a12c2c911f58",
-  "name": "ExpertBuildPipeline",
-  "friendlyName": "Expert Build Pipeline",
-  "description": "Encapsulates the Expert build pipeline",
-  "category": "Build",
-  "author": "Aderant",
-  "version": {
-    "Major": 0,
-    "Minor": 2,
-    "Patch": 64
-  },
-  "demands": [
-    "MSBuild"
-  ],
-  "minimumAgentVersion": "1.83.0",
-  "inputs": [
-    {
-      "name": "Repository",
-      "type": "pickList",
-      "label": "Build Infrastructure Source",
-      "defaultValue": "Default",
-      "required": true,
-      "helpMarkDown": "Repository which contains the Build Infrastructure tool chain to use.\r\nYou can also specify a custom http git repository or a UNC path which is useful for rapid testing.\r\nIf using a UNC path it must point to the root folder e.g. \\<machine>\\c$\\Source\\Build.Infrastructure\\",
-      "options": {
-        "Default": "Default",
-        "CustomSource": "Custom"
-      }
+﻿{
+    "id": "415ab5a5-955f-4631-9bdc-a12c2c911f58",
+    "name": "ExpertBuildPipeline",
+    "friendlyName": "Expert Build Pipeline",
+    "description": "Encapsulates the Expert build pipeline",
+    "category": "Build",
+    "author": "Aderant",
+    "version": {
+        "Major": 2,
+        "Minor": 0,
+        "Patch": 11
     },
-    {
-      "name": "Branch",
-      "type": "string",
-      "label": "Branch",
-      "required": false,
-      "helpMarkDown": "The branch in Build.Infrastructure you want to use.",
-      "visibleRule": "Repository != Default"
-    },
-    {
-      "name": "CustomSource",
-      "type": "string",
-      "label": "Repository or Path",
-      "required": false,
-      "helpMarkDown": "The custom repository address or path to the the tool chain you want to use.",
-      "visibleRule": "Repository != None && Repository != Default"
+    "demands": [
+        "MSBuild"
+    ],
+    "minimumAgentVersion": "1.97.0",
+    "inputs": [
+        {
+            "name": "Repository",
+            "type": "pickList",
+            "label": "Build Infrastructure Source",
+            "defaultValue": "Default",
+            "required": true,
+            "helpMarkDown":
+                "Repository which contains the Build Infrastructure tool chain to use.\r\nYou can also specify a custom http git repository or a UNC path which is useful for rapid testing.\r\nIf using a UNC path it must point to the root folder e.g. \\\u003cmachine\u003e\\c$\\Source\\Build.Infrastructure\\",
+            "options": {
+                "Default": "Default",
+                "CustomSource": "Custom"
+            }
+        },
+        {
+            "name": "Branch",
+            "type": "string",
+            "label": "Branch",
+            "required": false,
+            "helpMarkDown": "The branch in Build.Infrastructure you want to use.",
+            "visibleRule": "Repository != Default"
+        },
+        {
+            "name": "CustomSource",
+            "type": "string",
+            "label": "Repository or Path",
+            "required": false,
+            "helpMarkDown": "The custom repository address or path to the the tool chain you want to use.",
+            "visibleRule": "Repository != None \u0026\u0026 Repository != Default"
+        },
+        {
+            "name": "nuGetServiceConnection",
+            "type": "connectedService:ExternalNuGetFeed",
+            "label": "Service connection for NuGet feed",
+            "required": true,
+            "helpMarkDown": "NuGet service connection name."
+        }
+    ],
+    "instanceNameFormat": "Run build pipeline",
+    "execution": {
+        "PowerShell3": {
+            "target": "$(currentDirectory)\\Pipeline.ps1",
+            "platforms": [
+                "windows"
+            ]
+        }
     }
-  ],
-  "instanceNameFormat": "Run build pipeline",
-  "execution": {
-    "PowerShell3": {
-      "target": "$(currentDirectory)\\Pipeline.ps1",
-      "platforms": [
-        "windows"
-      ]
-    }
-  }
 }

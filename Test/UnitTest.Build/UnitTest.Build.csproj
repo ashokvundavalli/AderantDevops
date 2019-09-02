@@ -111,7 +111,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BucketTests.cs" />
-    <Compile Include="Legacy\BuildControllerTests.cs" />
     <Compile Include="BuildLogProcessorTests.cs" />
     <Compile Include="BuildMetadataTests.cs" />
     <Compile Include="BuildProjectCheckTests.cs" />
@@ -173,7 +172,6 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="DependencyResolver\DependencyManifestTests.cs" />
-    <Compile Include="Legacy\ExpertBuildConfigurationTests.cs" />
     <Compile Include="ExpertManifestTests.cs" />
     <Compile Include="ModuleDependencyResolverTests.cs" />
     <Compile Include="IndendedFileParserTests.cs" />
@@ -341,10 +339,6 @@
     <ProjectReference Include="..\..\Src\Sources\Aderant.Build.Tasks\Aderant.Build.Tasks.csproj">
       <Project>{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}</Project>
       <Name>Aderant.Build.Tasks</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\src\Sources\Aderant.Build.TeamFoundation\Aderant.Build.TeamFoundation.csproj">
-      <Project>{bd56b34b-db85-4154-a560-0bc1fe6386da}</Project>
-      <Name>Aderant.Build.TeamFoundation</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\Src\Sources\Aderant.Build\Aderant.Build.csproj">
       <Project>{66E50D39-8E73-4D16-944B-43F18C308FE0}</Project>

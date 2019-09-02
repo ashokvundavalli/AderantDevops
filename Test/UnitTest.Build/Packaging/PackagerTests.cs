@@ -231,7 +231,7 @@ dependencies
                     stream2.Position = 0;
                     actual = reader.ReadToEnd();
 
-                    Assert.AreEqual(expected.TrimEnd(), actual.TrimEnd());
+                    Assert.AreEqual(expected, actual);
                 }
             }
         }
@@ -283,8 +283,8 @@ dependencies
         }
 
         [TestMethod]
-        public void Empty_dependencies_section_is_preserved() {
-            string expected =
+        public void Empty_dependencies_section_is_removed() {
+            string input =
                 @"type file
 id Aderant.Deployment.Core
 authors Aderant
@@ -297,8 +297,19 @@ dependencies
 excludeddependencies
     Aderant.AccountsPayable";
 
-            var packageTemplateFile = new PackageTemplateFile(expected);
-          
+            string expected =
+                @"type file
+id Aderant.Deployment.Core
+authors Aderant
+description
+    Provides libraries and services for deploying an Expert environment.
+files
+    Bin/Module/*.config ==> lib
+excludeddependencies
+    Aderant.AccountsPayable";
+
+            var packageTemplateFile = new PackageTemplateFile(input);
+
             string actual;
 
             using (var stream = new MemoryStream()) {
@@ -310,7 +321,7 @@ excludeddependencies
                 }
             }
 
-            Assert.AreEqual(expected.Trim(), actual.Trim());
+            Assert.AreEqual(expected, actual);
         }
 
         [TestMethod]
@@ -321,7 +332,7 @@ id Aderant.Deployment.Core
 authors Aderant
 description
     Provides libraries and services for deploying an Expert environment.
-dependencies";
+";
 
             var packageTemplateFile = new PackageTemplateFile(expected);
             packageTemplateFile.AddDependency(Domain.PackageName("Aderant.Deployment.Core"));
@@ -347,7 +358,7 @@ dependencies";
                 stream2.Position = 0;
                 actual = reader.ReadToEnd();
 
-                Assert.AreEqual(expected.TrimEnd(), actual.TrimEnd());
+                Assert.AreEqual(expected, actual);
             }
         }
 
@@ -368,7 +379,7 @@ dependencies";
             }
 
             packageTemplateFile = new PackageTemplateFile(actual);
-            
+
             var stream2 = new MemoryStream();
             using (var reader = new StreamReader(stream2)) {
                 packageTemplateFile.Save(stream2);
@@ -376,7 +387,7 @@ dependencies";
                 stream2.Position = 0;
                 actual = reader.ReadToEnd();
 
-                Assert.AreEqual(Resources.test_paket_template_with_exclude_section.Trim(), actual.Trim());
+                Assert.AreEqual(Resources.test_paket_template_with_exclude_section, actual);
             }
         }
     }

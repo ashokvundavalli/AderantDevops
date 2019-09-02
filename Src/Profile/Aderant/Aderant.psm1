@@ -1,4 +1,4 @@
-﻿Set-StrictMode -Version Latest
+﻿Set-StrictMode -Version "Latest"
 
 # Need to load Aderant.Build.dll first as it defines types used in later scripts
 . "$PSScriptRoot\..\..\Build\Functions\Initialize-BuildEnvironment.ps1"
@@ -14,6 +14,7 @@ foreach ($directory in $imports) {
     foreach ($file in $directory) {
         if ($file.Extension -eq ".ps1") {
             . $file.FullName
+            continue
         }
 
         if ($file.Extension -eq ".psm1") {
@@ -21,14 +22,22 @@ foreach ($directory in $imports) {
         }
     }
 }
-Update-FormatData -PrependPath (Join-Path -Path $PSScriptRoot -ChildPath '..\..\Build\Functions\Formats\SourceTreeMetadata.format.ps1xml')
 
 $global:ShellContext = $null
 
 function Initialize-Module {
     . $PSScriptRoot\ShellContext.ps1
+
     $global:ShellContext = [ShellContext]::new()
     $MyInvocation.MyCommand.Module.PrivateData.ShellContext = $global:ShellContext
+
+    $formatDataFile = (Join-Path -Path $PSScriptRoot -ChildPath '..\..\Build\Functions\Formats\SourceTreeMetadata.format.ps1xml')
+
+    $updateFormatData = {
+        Update-FormatData -PrependPath $formatDataFile
+    }
+
+    DoActionIfNeeded $updateFormatData $formatDataFile
 }
 
 Initialize-Module
@@ -43,7 +52,6 @@ Initialize-Module
 [string]$global:BuildScriptsDirectory = $global:ShellContext.BuildScriptsDirectory
 [string]$global:PackageScriptsDirectory = ""
 [string]$global:ProductManifestPath = ""
-[string]$global:InstallPath = ""
 [PSModuleInfo]$currentModuleFeature = $null
 [string[]]$global:LastBuildBuiltModules = @()
 [string[]]$global:LastBuildRemainingModules = @()
@@ -250,11 +258,11 @@ function Find-InstallLocation ($programName) {
 Set Expert specific variables
 #>
 function Set-ExpertVariables {
-    $global:InstallPath = Find-InstallLocation -programName 'Expert Deployment Manager'
+    $installPath = Find-InstallLocation -programName 'Expert Deployment Manager'
 
-    if ($global:InstallPath){
-        $ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentEngine -Value { Join-Path -Path $global:InstallPath -ChildPath 'DeploymentEngine.exe' }
-        $ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentManager -Value { Join-Path -Path $global:InstallPath -ChildPath 'DeploymentManager.exe' }
+    if ($installPath){
+        $ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentEngine -Value { Join-Path -Path $installPath -ChildPath 'DeploymentEngine.exe' }
+        $ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentManager -Value { Join-Path -Path $installPath -ChildPath 'DeploymentManager.exe' }
     } else {
         $pathToDeploymentEngine = 'C:\AderantExpert\Install\DeploymentEngine.exe'
         $pathToDeploymentManager = 'C:\AderantExpert\Install\DeploymentManager.exe'
@@ -263,7 +271,7 @@ function Set-ExpertVariables {
         $ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentManager -Value { $pathToDeploymentManager }
 
         if (-not (Test-Path $ShellContext.DeploymentManager)) {
-            Write-Warning "Please ensure that the DeploymentManager.exe is located at: $($pathToDeploymentManager)"
+            Write-Warning "Please ensure that DeploymentManager.exe is located at: $($pathToDeploymentManager)"
         }
     }
 }
@@ -584,15 +592,9 @@ function Set-Environment {
         Set-ExpertSourcePath
         Set-ExpertVariables
 
-        Initialize-BuildLibraries
+        #Initialize-BuildLibraries
         Set-VisualStudioVersion
-
-        OutputEnvironmentDetails
-
-        if ($Initialize.IsPresent) {
-            # Setup PowerShell script unit test environment
-            Install-Pester
-        }
+        #OutputEnvironmentDetails
     }
 }
 
@@ -612,7 +614,7 @@ function Set-LocalDirectory {
 
 
 function Set-VisualStudioVersion() {
-    $job = Start-Job -Name "SetVisualStudioVersion" -ScriptBlock {
+    $job = Start-JobInProcess -Name "SetVisualStudioVersion" -ScriptBlock {
         Param($path)
             $file = [System.IO.Path]::Combine($path, "vsvars.ps1")
             . $file
@@ -626,10 +628,11 @@ function Set-VisualStudioVersion() {
        $data = Receive-Job $Sender.Id
 
        foreach ($item in $data.GetEnumerator()) {
-           Set-Item -Force -Path "ENV:\$($item.Key)" -Value $item.Value
+           [System.Environment]::SetEnvironmentVariable($item.Key, $item.Value, [System.EnvironmentVariableTarget]::Process)
        }
 
-       $Host.UI.RawUI.WindowTitle = "Visual Studio environment ready $($Env:DevEnvDir)"
+       $millisecondsTaken = [int]($Sender.PSEndTime - $Sender.PSBeginTime).TotalMilliseconds
+       $Host.UI.RawUI.WindowTitle = "Visual Studio environment ready ($millisecondsTaken ms) $($Env:DevEnvDir)"
 
        $Sender | Remove-Job -Force
 
@@ -989,10 +992,6 @@ function Help ($searchText) {
     $sortedFunctions | Format-Table Command, Synopsis
 }
 
-function Reset-DeveloperShell() {
-  Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath '..\..\Build\Functions') -Filter '*.ps1' | ForEach-Object { . $_.FullName }
-}
-
 # export functions and variables we want external to this script
 $functionsToExport = @(
     [PSCustomObject]@{ function = 'Run-ExpertUITests'; alias = $null; },
@@ -1066,7 +1065,6 @@ Export-ModuleMember -variable BranchName
 Export-ModuleMember -variable BranchModulesDirectory
 Export-ModuleMember -variable ProductManifestPath
 Export-ModuleMember -Function Get-DependenciesFrom
-Export-ModuleMember -Function Reset-DeveloperShell
 
 #TODO move
 #. $PSScriptRoot\Feature.Database.ps1
@@ -1082,9 +1080,28 @@ Export-ModuleMember -Function Reset-DeveloperShell
 
 Set-Environment -Initialize
 
-
 Write-Host ""
 Write-Host "Type " -NoNewLine
 Write-Host '"help"' -ForegroundColor Green -NoNewLine
 Write-Host " for a command list." -NoNewLine
 Write-Host ""
+
+function Test-ExpertPackageFeed {
+
+    $p = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), [System.IO.Path]::GetRandomFileName())
+    new-item -type directory $p
+    Push-Location $p
+
+
+$c = @'
+source https://expertpackages.azurewebsites.net/v3/index.json
+nuget Aderant.Build.Analyzer
+'@
+
+    Set-Content -Path "$p\paket.dependencies" $c
+    & $ShellContext.PackagingTool update
+
+    Pop-Location
+}
+
+Export-ModuleMember -Function Test-ExpertPackageFeed
