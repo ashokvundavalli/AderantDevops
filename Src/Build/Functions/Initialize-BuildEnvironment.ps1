@@ -341,7 +341,7 @@ function LoadVstsTaskLibrary {
     $vstsTaskLib = [System.Environment]::GetEnvironmentVariable("VSTS_TASK_LIB_HOME")
     if ($vstsTaskLib) {
         $taskModule = [System.IO.Path]::Combine($vstsTaskLib, "VstsTaskSdk.psd1")
-        Import-Module $taskModule -ArgumentList @{ NonInteractive = $true }
+        Import-Module -Name $taskModule -ArgumentList @{ NonInteractive = $true }
     } else {
         $vstsTaskLib = (Get-Module VstsTaskSdk)
         if ($vstsTaskLib) {        
