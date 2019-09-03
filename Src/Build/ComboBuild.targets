@@ -453,7 +453,7 @@
     <Exec Condition="'$(GetProduct)' != 'false'"
           ContinueOnError="false"
           IgnoreExitCode="false"
-          Command="Powershell -NonInteractive -NoProfile $(PackageScriptsDirectory)GetProduct.ps1 -productManifestPath $(ProductManifestPath) -dropRoot $(XamlBuildDropLocation) -binariesDirectory $(LocalExpertBinariesDirectory) -getDebugFiles:1 -skipDeploymentCheck"
+          Command="Powershell -NonInteractive -NoProfile &quot;&amp; { try { $(PackageScriptsDirectory)GetProduct.ps1 -productManifestPath $(ProductManifestPath) -dropRoot $(XamlBuildDropLocation) -binariesDirectory $(LocalExpertBinariesDirectory) -getDebugFiles:1 -skipDeploymentCheck } catch [Exception] { $Error[0] | Format-List -Force;throw } }&quot;"
           WorkingDirectory="$(LocalExpertBinariesDirectory)" />
 
     <Message Text="Updating product with outputs from this build..." />

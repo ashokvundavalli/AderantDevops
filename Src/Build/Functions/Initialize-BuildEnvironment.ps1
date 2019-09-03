@@ -320,7 +320,7 @@ function EnsureClientCertificateAvailable() {
             if ($username.EndsWith("$")) {
                 Get-Certificate -Template "ADERANTgMSAUser" -Url "ldap:" -SubjectName "CN=$username" -CertStoreLocation "Cert:\CurrentUser\My"
             } else {
-                Write-Warning "No certificates for client authentication are available"
+                Write-Warning "No certificates for client authentication are available."
             }
         }
     } finally {
@@ -330,8 +330,15 @@ function EnsureClientCertificateAvailable() {
 
 function EnsureServiceEndpointsAvailable() {
     if ([System.Environment]::GetEnvironmentVariable("SYSTEM_TEAMFOUNDATIONCOLLECTIONURI")) {
-        $serviceConnectionName = Get-VstsInput -Name "nuGetServiceConnection" -Require
-        $endpoint = Get-VstsEndpoint -Name $serviceConnectionName -Require
+        $serviceConnectionName = Get-VstsInput -Name "nuGetServiceConnection"
+
+        if ([string]::IsNullOrWhiteSpace($serviceConnectionName)) {
+            Write-Warning -Message "nuGetServiceConnection is Unavailable."
+        } else {
+            Write-Host "ServiceConnectionName: $serviceConnectionName"
+            $endpoint = Get-VstsEndpoint -Name $serviceConnectionName -Require
+            Write-Host "VstsEndpoint: $endpoint"
+        }
 
         # Connection API key can be accessed via $endpoint.Auth.parameters.nugetkey
     }
