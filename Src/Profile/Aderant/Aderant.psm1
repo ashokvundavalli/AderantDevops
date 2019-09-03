@@ -1099,7 +1099,7 @@ nuget Aderant.Build.Analyzer
 '@
 
     Set-Content -Path "$p\paket.dependencies" $c
-    & $ShellContext.PackagingTool update
+    & $ShellContext.PackagingTool update --verbose
 
     Pop-Location
 }
