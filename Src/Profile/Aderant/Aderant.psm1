@@ -258,11 +258,11 @@ function Find-InstallLocation ($programName) {
 Set Expert specific variables
 #>
 function Set-ExpertVariables {
-    $installPath = Find-InstallLocation -programName 'Expert Deployment Manager'
+    $script:installPath = Find-InstallLocation -programName 'Expert Deployment Manager'
 
-    if ($installPath){
-        $ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentEngine -Value { Join-Path -Path $installPath -ChildPath 'DeploymentEngine.exe' }
-        $ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentManager -Value { Join-Path -Path $installPath -ChildPath 'DeploymentManager.exe' }
+    if ($script:installPath){
+        $ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentEngine -Value { Join-Path -Path $script:installPath -ChildPath 'DeploymentEngine.exe' }
+        $ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentManager -Value { Join-Path -Path $script:installPath -ChildPath 'DeploymentManager.exe' }
     } else {
         $pathToDeploymentEngine = 'C:\AderantExpert\Install\DeploymentEngine.exe'
         $pathToDeploymentManager = 'C:\AderantExpert\Install\DeploymentManager.exe'
