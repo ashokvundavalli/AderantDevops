@@ -3,8 +3,8 @@
 param(
    [Parameter(Mandatory=$true)][string]$TaskPath,
    [Parameter(Mandatory=$false)][string]$TfsUrl = 'https://tfs.aderant.com/tfs/Aderant',
-   [Parameter(Mandatory=$true)]
-   [bool]$Overwrite = $false
+   [switch]$Overwrite,
+   [switch]$Publish
 )
 
 function RemovePathQuiet([string]$path) {
@@ -15,6 +15,8 @@ function DownloadLatestSdk([string]$TaskPath) {
     # Refer to https://github.com/microsoft/azure-pipelines-task-lib/blob/master/powershell/Docs/Consuming.md for package structure
     $vstsTaskSdk = "VstsTaskSdk"
     $psModulePath = [System.IO.Path]::Combine($TaskPath, "ps_modules")
+    
+    [System.IO.Directory]::CreateDirectory($psModulePath)
 
     $vstsTaskSdkHome = [System.IO.Path]::Combine($psModulePath, $vstsTaskSdk)
     RemovePathQuiet $vstsTaskSdkHome
@@ -60,8 +62,7 @@ try {
 
     [IO.Compression.ZipFile]::CreateFromDirectory($taskFolder, $taskZip)
 
-    # Prepare to upload the task
-    Write-Output "Uploading task content"
+    # Prepare to upload the task    
     $headers = @{ "Accept" = "application/json; api-version=2.0-preview"; "X-TFS-FedAuthRedirect" = "Suppress" }
     $taskZipItem = Get-Item $taskZip
     $headers.Add("Content-Range", "bytes 0-$($taskZipItem.Length - 1)/$($taskZipItem.Length)")
@@ -70,8 +71,11 @@ try {
        $url += "?overwrite=true"
     }
 
-    # Actually upload it
-    Invoke-RestMethod -Uri $url -Headers $headers -ContentType application/octet-stream -Method Put -InFile $taskZipItem -UseDefaultCredentials
+    if ($Publish) {
+      Write-Output "Uploading task content"
+      # Actually upload it
+      Invoke-RestMethod -Uri $url -Headers $headers -ContentType application/octet-stream -Method Put -InFile $taskZipItem -UseDefaultCredentials
+    }
 } finally {
     $ErrorActionPreference = $originalErrorActionPreference
 }
