@@ -1,8 +1,5 @@
 ﻿Set-StrictMode -Version "Latest"
 
-# Need to load Aderant.Build.dll first as it defines types used in later scripts
-. "$PSScriptRoot\..\..\Build\Functions\Initialize-BuildEnvironment.ps1"
-
 # Import extensibility functions
 $imports = @(
     (Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath "..\..\Build\Functions") -Filter "*.ps1"),
@@ -12,6 +9,10 @@ $imports = @(
 
 foreach ($directory in $imports) {
     foreach ($file in $directory) {
+        if ($file.Name -eq "Initialize-BuildEnvironment.ps1") {
+            continue
+        }
+
         if ($file.Extension -eq ".ps1") {
             . $file.FullName
             continue

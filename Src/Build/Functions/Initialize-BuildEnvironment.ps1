@@ -1,15 +1,12 @@
 ﻿[CmdletBinding()]
 param(
     [string]$BuildScriptsDirectory = {
-        # Find our caller, $MyInvocation will not work here
-        $command = (Get-PSCallStack)[0].Command
-        if ($command -eq "Aderant.psm1") {
-            return [System.IO.Path]::GetFullPath("$PSScriptRoot\..\..\Build\")
-        }
-
         return [System.IO.Path]::GetFullPath("$PSScriptRoot\..\")
     }.Invoke()
 )
+
+$script:currentCommit = $null
+$script:isUsingProfile = $null
 
 if ($PSVersionTable.PSVersion.Major -lt 5 -or ($PSVersionTable.PSVersion.Major -eq 5 -and $PSVersionTable.PSVersion.Minor -lt 1)) {
     Write-Error "PowerShell version is lower than the minimum required version of 5.1. Please update PowerShell."
@@ -42,7 +39,7 @@ $buildCommitStreamName = "Build.Commit"
 function DoActionIfNeeded([scriptblock]$action, $file) {
     $version = GetAlternativeStreamValue $file $buildCommitStreamName
 
-    $commit = $ExecutionContext.SessionState.Module.PrivateData[$buildCommitStreamName]
+    $commit = $script:currentCommit
 
     if ($version -ne $commit) {
         Write-Debug "Running action $($action.Ast) for $file because '$version' != '$commit'"
@@ -181,7 +178,7 @@ function RunActionExclusive {
 
     $runTool = $true
 
-    if ($null -ne $MyInvocation.MyCommand.Module) {
+    if ($script:isUsingProfile) {
         if ($Host.Runspace.ApartmentState -eq [Threading.ApartmentState]::STA) {
             $mutexName = $MutexName.Replace("\", "_").Replace(":", "")
 
@@ -199,7 +196,7 @@ function RunActionExclusive {
             }
 
             # Prevent GC
-            $MyInvocation.MyCommand.Module.PrivateData[$mutexName] = $mutex
+            [System.AppDomain]::CurrentDomain.SetData($mutexName, $mutex)
         }
     }
 
@@ -351,7 +348,7 @@ function LoadVstsTaskLibrary {
         Import-Module -Name $taskModule -ArgumentList @{ NonInteractive = $true }
     } else {
         $vstsTaskLib = (Get-Module VstsTaskSdk)
-        if ($vstsTaskLib) {        
+        if ($vstsTaskLib) {
             $taskHomeDirectory = $vstsTaskLib.ModuleBase
             [System.Environment]::SetEnvironmentVariable("VSTS_TASK_LIB_HOME", $taskHomeDirectory, [System.EnvironmentVariableTarget]::Process)
             Write-Debug "Set VSTS_TASK_LIB_HOME => $taskHomeDirectory"
@@ -374,7 +371,8 @@ try {
     # Redirect ERROR to OUTPUT
     [System.Environment]::SetEnvironmentVariable("GIT_REDIRECT_STDERR", "2>&1", [System.EnvironmentVariableTarget]::Process)
 
-    $isUsingProfile = ($null -ne $ExecutionContext.SessionState.Module)
+    # Where we loaded from the default profile script?
+    $isUsingProfile = ($null -ne (Get-PSCallStack | Where-Object { $_.Command.EndsWith("_profile.ps1") }))
 
     $InformationPreference = 'Continue'
     $ErrorActionPreference = 'Stop'
@@ -424,7 +422,7 @@ try {
     [System.AppDomain]::CurrentDomain.SetData("BuildScriptsDirectory", $BuildScriptsDirectory)
 
     if ($isUsingProfile) {
-        $ExecutionContext.SessionState.Module.PrivateData[$buildCommitStreamName] = $commit
+        $script:currentCommit = $commit
     }
 } finally {
     $ErrorActionPreference = $originalErrorActionPreference

@@ -201,7 +201,7 @@ namespace InProcess {
             $memoryMappedStream.Position = $pos
 
             $buffer = [System.Byte[]]::new($fs.Length)
-            $memoryMappedStream.Read($buffer, 0, $fs.Length)
+            [void]$memoryMappedStream.Read($buffer, 0, $fs.Length)
 
             [System.AppDomain]::CurrentDomain.SetData("IN_PROCESS_JOB_FILE", $fs)
         }
@@ -222,7 +222,7 @@ namespace InProcess {
     }
 
     if ($null -ne $buffer) {
-        [System.Reflection.Assembly]::Load($buffer)
+        [void][System.Reflection.Assembly]::Load($buffer)
     }
 
 }.Invoke($MyInvocation.MyCommand.Path)
