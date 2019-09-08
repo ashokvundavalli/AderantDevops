@@ -39,6 +39,7 @@ namespace Aderant.Build.Packaging {
             }
         }
 
+        // TODO: Remove this once the we are not longer pushing to packages.ap.aderant.com and have garbage collection in place for Azure
         internal void AssociatePackageToBuild(string nuspecText, VsoCommandBuilder vsoCommandsBuilder) {
             var nuspec = new NuGet.Nuspec(nuspecText);
 

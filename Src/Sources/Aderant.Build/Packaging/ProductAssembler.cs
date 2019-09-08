@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyResolver;
+using Aderant.Build.DependencyResolver.Resolvers;
 using Aderant.Build.Logging;
 using Aderant.Build.Packaging.NuGet;
 using Newtonsoft.Json;
@@ -84,7 +85,7 @@ namespace Aderant.Build.Packaging {
 
             var fs = new RetryingPhysicalFileSystem();
 
-            using (var manager = new PaketPackageManager(workingDirectory, fs, logger)) {
+            using (var manager = new PaketPackageManager(workingDirectory, fs, WellKnownPackageSources.Default, logger)) {
                 manager.Add(context.Modules.Select(DependencyRequirement.Create));
                 manager.Restore();
             }

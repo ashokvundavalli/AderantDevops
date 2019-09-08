@@ -30,11 +30,11 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
         public IEnumerable<IDependencyRequirement> GetDependencyRequirements(ResolverRequest resolverRequest, ExpertModule module) {
             logger = resolverRequest.Logger;
             logger.Info("Calculating dependency requirements for {0}", module.Name);
-            
+
             string moduleDirectory = resolverRequest.GetModuleDirectory(module);
 
             if (!string.IsNullOrEmpty(moduleDirectory)) {
-                using (var manager = new PaketPackageManager(moduleDirectory, new PhysicalFileSystem(), logger)) {
+                using (var manager = new PaketPackageManager(moduleDirectory, new PhysicalFileSystem(), WellKnownPackageSources.Default, logger)) {
                     var groupList = manager.FindGroups();
 
                     foreach (string groupName in groupList) {
@@ -138,7 +138,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
         }
 
         private void PackageRestore(ResolverRequest resolverRequest, string directory, IFileSystem2 fileSystem, IEnumerable<IDependencyRequirement> requirements, CancellationToken cancellationToken) {
-            using (var manager = new PaketPackageManager(directory, fileSystem, logger)) {
+            using (var manager = new PaketPackageManager(directory, fileSystem, WellKnownPackageSources.Default, logger)) {
                 manager.Add(requirements, resolverRequest);
 
                 if (resolverRequest.Update) {

@@ -1,8 +1,10 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.DependencyResolver;
 
 namespace Aderant.Build.Tasks {
     public class GeneratePaketDependencies : Task {
@@ -43,11 +45,11 @@ namespace Aderant.Build.Tasks {
         internal static string GeneratePaketDependenciesContent(ExpertManifest expertManifest, ITaskItem[] dependencyMappings) {
             StringBuilder paketDependenciesContent = new StringBuilder();
 
-#if FEATURE_AZURE_NUGET
-            paketDependenciesContent.AppendLine($"source {Constants.PackageServerUrlV3}");
-#endif
-            paketDependenciesContent.AppendLine($"source {Constants.PackageServerUrl}");
-            paketDependenciesContent.AppendLine($"source {Constants.DatabasePackageUri}");
+            IWellKnownSources sources = WellKnownPackageSources.Default;
+            IReadOnlyList<PackageSource> packageSources = sources.GetSources();
+            foreach (var source in packageSources) {
+                paketDependenciesContent.AppendLine($"source {source.Url}");
+            }
 
             foreach (ITaskItem mapping in dependencyMappings) {
                 string versionRequirement = AcquireVersionRequirement(expertManifest, mapping.GetMetadata("ReferenceRequirement"));

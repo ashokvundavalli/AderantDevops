@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Aderant.Build.DependencyResolver.Models;
+using Aderant.Build.DependencyResolver.Resolvers;
 using Aderant.Build.Logging;
 using Microsoft.FSharp.Collections;
 using Microsoft.FSharp.Control;
@@ -19,13 +20,15 @@ namespace Aderant.Build.DependencyResolver {
 
         private readonly FSharpHandler<Paket.Logging.Trace> logMessageDelegate;
         private readonly string root;
+        private readonly IWellKnownSources wellKnownSources;
         private bool createdNew;
 
         private Dependencies dependencies;
         private DependenciesFile dependenciesFile;
 
-        public PaketPackageManager(string root, IFileSystem2 fileSystem, ILogger logger) {
+        public PaketPackageManager(string root, IFileSystem2 fileSystem, IWellKnownSources wellKnownSources, ILogger logger) {
             this.root = root;
+            this.wellKnownSources = wellKnownSources;
             this.logger = logger;
             this.FileSystem = fileSystem;
             dependencies = Initialize(root);
@@ -143,7 +146,9 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         private FSharpList<PackageSources.PackageSource> CreateSources(KeyValuePair<Domain.GroupName, DependenciesGroup> groupEntry, DependenciesGroup group, bool isMainGroup, bool isUsingMultipleInputFiles) {
-            bool addDatabasePackageUrl = AddDatabasePackageUrl(groupEntry);
+            IReadOnlyList<PackageSource> packageSources = wellKnownSources.GetSources();
+
+            bool addDatabasePackageUrl = ShouldAddDatabasePackageUrl(groupEntry, packageSources);
 
             FSharpList<PackageSources.PackageSource> sources = group.Sources;
 
@@ -168,10 +173,9 @@ namespace Aderant.Build.DependencyResolver {
                 sources = AddSource(Constants.OfficialNuGetUrlV3, sources);
             }
 
-            sources = AddSource(Constants.PackageServerUrl, sources);
-#if FEATURE_AZURE_NUGET
-            sources = AddSource(Constants.PackageServerUrlV3, sources);
-#endif
+            foreach (var source in packageSources) {
+                sources = AddSource(source.Url, sources);
+            }
 
             return sources;
         }
@@ -194,10 +198,14 @@ namespace Aderant.Build.DependencyResolver {
             return options;
         }
 
-        private static bool AddDatabasePackageUrl(KeyValuePair<Domain.GroupName, DependenciesGroup> groupEntry) {
-            foreach (var item in groupEntry.Value.Packages) {
-                if (string.Equals(item.Name.Name, "Aderant.Database.Backup", StringComparison.OrdinalIgnoreCase)) {
-                    return true;
+        private bool ShouldAddDatabasePackageUrl(KeyValuePair<Domain.GroupName, DependenciesGroup> groupEntry, IReadOnlyList<PackageSource> packageSources) {
+            // Only fallback to adding the database source if we are not using Azure hosted packages
+            // This was needed as the private NuGet server could not handle the size of the database packages, but the Azure service can.
+            if (packageSources.Any(s => string.Equals(s.Url, Constants.DatabasePackageUri, StringComparison.OrdinalIgnoreCase))) {
+                foreach (var item in groupEntry.Value.Packages) {
+                    if (string.Equals(item.Name.Name, "Aderant.Database.Backup", StringComparison.OrdinalIgnoreCase)) {
+                        return true;
+                    }
                 }
             }
 

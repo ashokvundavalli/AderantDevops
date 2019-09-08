@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Aderant.Build.DependencyResolver;
+using Aderant.Build.DependencyResolver.Resolvers;
 using Aderant.Build.Logging;
 using Aderant.Build.Packaging;
 using Aderant.Build.Packaging.NuGet;
@@ -76,7 +77,7 @@ namespace Aderant.Build.Tasks {
         private bool DownloadPackage(string packageName) {
             // Download the existing package
             try {
-                using (PaketPackageManager packageManager = new PaketPackageManager(Folder, fileSystem, logger)) {
+                using (PaketPackageManager packageManager = new PaketPackageManager(Folder, fileSystem, WellKnownPackageSources.Default, logger)) {
                     var requirement = DependencyRequirement.Create(
                         packageName,
                         Constants.MainDependencyGroup,

@@ -104,6 +104,7 @@
     <Compile Include="Annotations\ReSharperAttributes.cs" />
     <Compile Include="Commands\GetSourceTreeMetadataCommand.cs" />
     <Compile Include="Commands\GetBuildStateMetadataCommand.cs" />
+    <Compile Include="DependencyResolver\WellKnownSources.cs" />
     <Compile Include="ProjectSystem\StateTracking\StateFileManager.cs" />
     <Compile Include="DependencyResolver\IDependencyGroup.cs" />
     <Compile Include="DependencyResolver\ResolverWorkflow.cs" />
