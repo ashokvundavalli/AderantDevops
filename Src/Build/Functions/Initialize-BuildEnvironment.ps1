@@ -294,7 +294,7 @@ function DownloadPaket([string]$commit) {
 
         $action = {
             # Download the paket dependency tool
-            Start-Process -FilePath $bootstrapper -ArgumentList  "5.198.0" -NoNewWindow -PassThru -Wait
+            Start-Process -FilePath $bootstrapper -ArgumentList  "5.219.0" -NoNewWindow -PassThru -Wait
             Start-Process -FilePath $paketExecutable -ArgumentList @("restore", "--group", "DevTools") -NoNewWindow -PassThru -Wait -WorkingDirectory ("$BuildScriptsDirectory\..\.\..")
         }
 
