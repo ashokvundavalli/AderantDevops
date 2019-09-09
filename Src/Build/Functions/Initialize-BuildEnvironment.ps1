@@ -356,6 +356,18 @@ function LoadVstsTaskLibrary {
     }
 }
 
+function SetTimeouts {
+    $timeoutMillseconds = [TimeSpan]::FromMinutes(5).TotalMilliseconds
+    # Timeout for the request
+    $Env:PAKET_REQUEST_TIMEOUT = $timeoutMillseconds
+
+    #Timeout for the response of the request
+    $Env:PAKET_RESPONSE_STREAM_TIMEOUT = $timeoutMillseconds
+
+    # Timeout for streaming the read and write operations
+    $Env:PAKET_STREAMREADWRITE_TIMEOUT = $timeoutMillseconds
+}
+
 try {
     [void][Aderant.Build.BuildOperationContext]
     return
@@ -418,6 +430,7 @@ try {
     SetNuGetProviderPath $assemblyPathRoot
     EnsureClientCertificateAvailable
     EnsureServiceEndpointsAvailable
+    SetTimeouts
 
     [System.AppDomain]::CurrentDomain.SetData("BuildScriptsDirectory", $BuildScriptsDirectory)
 
