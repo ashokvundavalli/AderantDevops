@@ -258,7 +258,7 @@ process {
         }
 
         if (IsThirdParty $module) {
-            Write-Information "Ignored: {0}" $module.Name
+            Write-Information ("Ignored: {0}" -f $module.Name)
             continue
         }
 

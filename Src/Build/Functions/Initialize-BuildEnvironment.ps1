@@ -358,6 +358,9 @@ function LoadVstsTaskLibrary {
 
 function SetTimeouts {
     $timeoutMillseconds = [TimeSpan]::FromMinutes(5).TotalMilliseconds
+
+    $Env:PAKET_SKIP_RESTORE_TARGETS = "false"
+
     # Timeout for the request
     $Env:PAKET_REQUEST_TIMEOUT = $timeoutMillseconds
 
@@ -421,6 +424,7 @@ try {
     $assemblyPathRoot = [System.IO.Path]::Combine("$BuildScriptsDirectory\..\Build.Tools")
     $mainAssembly = "$assemblyPathRoot\Aderant.Build.dll"
 
+    SetTimeouts
     DownloadPaket $commit
     BuildProjects $mainAssembly $isUsingProfile $commit
     LoadAssembly  $mainAssembly $true
@@ -430,7 +434,6 @@ try {
     SetNuGetProviderPath $assemblyPathRoot
     EnsureClientCertificateAvailable
     EnsureServiceEndpointsAvailable
-    SetTimeouts
 
     [System.AppDomain]::CurrentDomain.SetData("BuildScriptsDirectory", $BuildScriptsDirectory)
 
