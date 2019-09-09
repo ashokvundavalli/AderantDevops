@@ -359,7 +359,7 @@ function LoadVstsTaskLibrary {
 function SetTimeouts {
     $timeoutMillseconds = [TimeSpan]::FromMinutes(5).TotalMilliseconds
 
-    $Env:PAKET_SKIP_RESTORE_TARGETS = "false"
+    $Env:PAKET_SKIP_RESTORE_TARGETS = "true"
 
     # Timeout for the request
     $Env:PAKET_REQUEST_TIMEOUT = $timeoutMillseconds
