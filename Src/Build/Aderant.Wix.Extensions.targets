@@ -18,6 +18,18 @@
       <Output TaskParameter="DestinationFiles" ItemName="FileWrites"/>
     </Copy>
 
+    <Copy
+      SourceFiles="@(IntermediateAssembly->'$(OutputPath)%(Filename)%(Extension)')"
+      Condition="'$(UseSharedDependencyDirectory)' == 'true' And Exists('@(IntermediateAssembly->'$(OutputPath)%(Filename)%(Extension)')')"
+      DestinationFolder="$(SharedDependencyDirectory)"
+      UseHardlinksIfPossible="true"
+      OverwriteReadOnlyFiles="$(OverwriteReadOnlyFiles)"
+      Retries="$(CopyRetryCount)"
+      RetryDelayMilliseconds="$(CopyRetryDelayMilliseconds)"
+      ContinueOnError="true">
+      <Output TaskParameter="DestinationFiles" ItemName="FileWrites"/>
+    </Copy>
+
     <RecordProjectOutputs
         ContextEndpoint="$(ContextEndpoint)"
         SolutionRoot="$(SolutionRoot)"
