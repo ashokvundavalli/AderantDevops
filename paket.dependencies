@@ -1,7 +1,6 @@
 references: strict
 framework: net462
-source http://packages.ap.aderant.com/packages/nuget
-source https://www.nuget.org/api/v2
+source https://api.nuget.org/v3/index.json
 nuget WindowsAPICodePack-Core
 nuget Microsoft.WindowsAPICodePack-Shell
 nuget Moq
@@ -24,8 +23,7 @@ nuget Microsoft.AspNet.WebHooks.Receivers.VSTS
 group Analyzer
 framework:  net462
 references: strict
-source http://packages.ap.aderant.com/packages/nuget
-source https://www.nuget.org/api/v2
+source https://api.nuget.org/v3/index.json
 nuget Microsoft.CodeAnalysis.Common ~> 2.10.0
 nuget Microsoft.CodeAnalysis.CSharp ~> 2.10.0
 nuget Microsoft.CodeAnalysis.CSharp.Workspaces ~> 2.10.0
@@ -40,7 +38,7 @@ nuget System.Composition.TypedParts = 1.0.31
 nuget System.Threading.Tasks.Extensions ~> 4.3.0
 
 group DevTools
-source https://www.nuget.org/api/v2
+source https://api.nuget.org/v3/index.json
 references: strict
 framework: net462
 nuget LibGit2Sharp

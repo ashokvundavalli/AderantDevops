@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyResolver;
@@ -19,7 +20,7 @@ namespace UnitTest.Build.DependencyResolver {
             fs.Setup(s => s.Root).Returns(GetTestDirectoryPath());
             DependencyGroup items1;
             DependencyGroup items2;
-            using (var packageManager = new PaketPackageManager(GetTestDirectoryPath(), fs.Object, new NullLogger())) {
+            using (var packageManager = CreatePackageManager(fs)) {
                 packageManager.Add(
                     new[] {
                         DependencyRequirement.Create("Foo", "Main"),
@@ -34,12 +35,16 @@ namespace UnitTest.Build.DependencyResolver {
             Assert.AreEqual(1, items2.Requirements.Count);
         }
 
+        private PaketPackageManager CreatePackageManager(Mock<IFileSystem2> fs = null) {
+            return new PaketPackageManager(GetTestDirectoryPath(), fs?.Object, new WellKnownPackageSources(), new NullLogger());
+        }
+
         [TestMethod]
         public void Local_package_server_is_listed_first() {
             var fs = new Mock<IFileSystem2>();
             fs.Setup(s => s.Root).Returns(GetTestDirectoryPath());
             string[] packageManagerLines;
-            using (var packageManager = new PaketPackageManager(GetTestDirectoryPath(), fs.Object, new NullLogger())) {
+            using (var packageManager = CreatePackageManager(fs)) {
                 packageManager.Add(
                     new[] {
                         DependencyRequirement.Create("Foo", "Main"),
@@ -57,7 +62,8 @@ namespace UnitTest.Build.DependencyResolver {
         public void Package_manager_fails_on_constraint_conflicts() {
             var fs = new Mock<IFileSystem2>();
             fs.Setup(s => s.Root).Returns(GetTestDirectoryPath());
-            using (var packageManager = new PaketPackageManager(GetTestDirectoryPath(), fs.Object, new NullLogger())) {
+
+            using (var packageManager = CreatePackageManager(fs)) {
                 packageManager.Add(
                     new[] {
                         DependencyRequirement.Create("Foo", "Main", new VersionRequirement { ConstraintExpression = ">= 1.0.0" }),
@@ -77,10 +83,7 @@ group Test
 source test
 nuget Gotta.Have.It 4.20 ci";
 
-            using (var packageManager = new PaketPackageManager(
-                GetTestDirectoryPath(),
-                new Mock<IFileSystem2>().Object,
-                NullLogger.Default)) {
+            using (var packageManager = CreatePackageManager()) {
                 packageManager.SetDependenciesFile(lines);
 
                 DependencyGroup dependencyGroup = packageManager.GetDependencies("Test");
@@ -100,7 +103,7 @@ nuget Gotta.Have.It 4.20 ci";
             request.AddModule("C:\\Abc");
             request.AddModule("C:\\Def");
 
-            using (var packageManager = new PaketPackageManager(GetTestDirectoryPath(), fs.Object, new NullLogger())) {
+            using (var packageManager = CreatePackageManager(fs)) {
                 packageManager.Add(
                     new[] {
                         DependencyRequirement.Create("Aderant.Database.Backup", "Main"),
@@ -127,7 +130,7 @@ nuget ThePackageFromNuget";
             var request = new ResolverRequest(NullLogger.Default);
             request.AddModule("C:\\SingleModule");
 
-            using (var packageManager = new PaketPackageManager(GetTestDirectoryPath(), fs.Object, new NullLogger())) {
+            using (var packageManager = CreatePackageManager(fs)) {
                 packageManager.SetDependenciesFile(lines);
 
                 packageManager.Add(
@@ -153,7 +156,7 @@ nuget ThePackageFromNuget";
             request.AddModule("C:\\Module1");
             request.AddModule("C:\\Module2");
 
-            using (var packageManager = new PaketPackageManager(GetTestDirectoryPath(), fs.Object, new NullLogger())) {
+            using (var packageManager = CreatePackageManager(fs)) {
                 packageManager.Add(
                     new[] {
                         DependencyRequirement.Create("SomeOtherPackage", "Main"),
