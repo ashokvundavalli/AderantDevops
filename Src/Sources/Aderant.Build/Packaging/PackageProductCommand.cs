@@ -70,8 +70,17 @@ namespace Aderant.Build.Packaging {
                 var result = assembler.AssembleProduct(itemMap, Folders, ProductDirectory, TfvcSourceGetVersion, TeamProject, TfvcBranch, TfsBuildId, TfsBuildNumber);
 
                 WriteObject(result);
-            } catch (AggregateException ex) {
-                throw ex.Flatten().InnerException;
+            } catch (AggregateException aggregateException) {
+                AggregateException exception = aggregateException.Flatten();
+                
+                WriteWarning(exception.Message);
+                WriteWarning(exception.StackTrace);
+
+                if (exception.InnerException != null) {
+                    throw exception.InnerException;
+                }
+
+                throw exception;
             }
         }
     }
