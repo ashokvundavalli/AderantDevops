@@ -43,27 +43,37 @@ namespace Aderant.Build.DependencyResolver {
             return NonAzureHostedSources.Sources;
         }
 
-        internal class NonAzureHostedSources {
+        /// <summary>
+        /// Encapsulates the internally hosted package source information.
+        /// </summary>
+        internal class NonAzureHostedSources : IWellKnownSources {
             static NonAzureHostedSources() {
                 Sources = new List<PackageSource> {
+                    new PackageSource("DatabasePackages", Constants.DatabasePackageUri),
                     new PackageSource("Packages", Constants.PackageServerUrl),
-                    new PackageSource("DatabasePackages", Constants.DatabasePackageUri)
                 };
             }
 
-            public static IReadOnlyList<PackageSource> Sources { get; }
+            internal static IReadOnlyList<PackageSource> Sources { get; }
+
+            public IReadOnlyList<PackageSource> GetSources() {
+                return Sources;
+            }
         }
 
-        internal class AzureHostedSources {
+        internal class AzureHostedSources : IWellKnownSources {
             static AzureHostedSources() {
                 Sources = new List<PackageSource> {
                     new PackageSource("ExpertPackagesOnAzure", Constants.PackageServerUrlV3)
                 };
             }
 
-            public static IReadOnlyList<PackageSource> Sources { get; }
+            internal static IReadOnlyList<PackageSource> Sources { get; }
+
+            public IReadOnlyList<PackageSource> GetSources() {
+                return Sources;
+            }
         }
     }
-
 
 }

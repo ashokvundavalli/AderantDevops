@@ -35,16 +35,20 @@ namespace UnitTest.Build.DependencyResolver {
             Assert.AreEqual(1, items2.Requirements.Count);
         }
 
-        private PaketPackageManager CreatePackageManager(Mock<IFileSystem2> fs = null) {
-            return new PaketPackageManager(GetTestDirectoryPath(), fs?.Object, new WellKnownPackageSources(), new NullLogger());
+        private PaketPackageManager CreatePackageManager(Mock<IFileSystem2> fs = null, IWellKnownSources source = null) {
+            return new PaketPackageManager(
+                GetTestDirectoryPath(),
+                fs?.Object,
+                source ?? new WellKnownPackageSources(),
+                new NullLogger());
         }
 
         [TestMethod]
-        public void Local_package_server_is_listed_first() {
+        public void Auckland_package_server_is_listed_first() {
             var fs = new Mock<IFileSystem2>();
             fs.Setup(s => s.Root).Returns(GetTestDirectoryPath());
             string[] packageManagerLines;
-            using (var packageManager = CreatePackageManager(fs)) {
+            using (var packageManager = CreatePackageManager(fs, new WellKnownPackageSources.NonAzureHostedSources())) {
                 packageManager.Add(
                     new[] {
                         DependencyRequirement.Create("Foo", "Main"),
@@ -54,7 +58,25 @@ namespace UnitTest.Build.DependencyResolver {
                 packageManagerLines = packageManager.Lines;
             }
 
-            Assert.AreEqual(packageManagerLines[0], "source " + Constants.PackageServerUrl);
+            Assert.AreEqual("source " + Constants.PackageServerUrl, packageManagerLines[0]);
+        }
+
+        [TestMethod]
+        public void Azure_package_server_is_listed_first() {
+            var fs = new Mock<IFileSystem2>();
+            fs.Setup(s => s.Root).Returns(GetTestDirectoryPath());
+            string[] packageManagerLines;
+            using (var packageManager = CreatePackageManager(fs, new WellKnownPackageSources.AzureHostedSources())) {
+                packageManager.Add(
+                    new[] {
+                        DependencyRequirement.Create("Foo", "Main"),
+                        DependencyRequirement.Create("Foo", "Bar"),
+                    });
+
+                packageManagerLines = packageManager.Lines;
+            }
+
+            Assert.AreEqual("source " + Constants.PackageServerUrlV3, packageManagerLines[0]);
         }
 
         [TestMethod]
@@ -103,7 +125,7 @@ nuget Gotta.Have.It 4.20 ci";
             request.AddModule("C:\\Abc");
             request.AddModule("C:\\Def");
 
-            using (var packageManager = CreatePackageManager(fs)) {
+            using (var packageManager = CreatePackageManager(fs, new WellKnownPackageSources.NonAzureHostedSources())) {
                 packageManager.Add(
                     new[] {
                         DependencyRequirement.Create("Aderant.Database.Backup", "Main"),
