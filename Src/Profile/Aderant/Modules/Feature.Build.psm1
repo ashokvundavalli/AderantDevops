@@ -1,7 +1,8 @@
 # builds the current module using default parameters
 function Start-BuildForCurrentModule([string]$clean, [bool]$debug, [bool]$release, [bool]$codeCoverage, [bool]$integration) {
     begin {
-        Set-StrictMode -Version Latest
+        Set-StrictMode -Version 'Latest'
+        $ErrorActionPreference = 'Stop'
     }
 
     process {
@@ -22,9 +23,9 @@ function Start-BuildForCurrentModule([string]$clean, [bool]$debug, [bool]$releas
             $commonArgs += " -codeCoverage"
         }
 
-        pushd $ShellContext.BuildScriptsDirectory
+        Push-Location -Path $ShellContext.BuildScriptsDirectory
         Invoke-Expression -Command ".\BuildModule.ps1 $($commonArgs)"
-        popd
+        Pop-Location
     }
 }
 
@@ -61,13 +62,12 @@ function Get-GitDirectory($searchDirectory) {
     return [string]::Empty
 }
 
-<#
-.Synopsis
-    Retrieves the dependencies required to build the current module
-    If run at the root will crawl all modules and get dependencies for everything
-
-#>
-function Get-DependenciesForCurrentModule {
+function Get-Dependencies {
+    <#
+    .Synopsis
+        Retrieves the dependencies required to build the current module
+        If run at the root will crawl all modules and get dependencies for everything
+    #>
     [CmdletBinding()]
     param(
         [switch]$noUpdate,
@@ -78,18 +78,13 @@ function Get-DependenciesForCurrentModule {
     begin {
         Set-StrictMode -Version 'Latest'
         $ErrorActionPreference = 'Stop'
-
-        [string]$currentPath = (Get-Location).Path
     }
 
     process {
-        if (-Not ([string]::IsNullOrEmpty($ShellContext.CurrentModulePath)) -And [System.IO.File]::Exists([System.IO.Path]::Combine($ShellContext.CurrentModulePath, 'Build\TFSBuild.proj'))) {
-            try {
-                Push-Location -Path $ShellContext.BuildScriptsDirectory
-                & '.\LoadDependencies.ps1' -modulesRootPath $ShellContext.CurrentModulePath -dropPath $ShellContext.BranchServerDirectory -update:$(-not $noUpdate.IsPresent) -showOutdated:$($showOutdated.IsPresent) -force:$($force.IsPresent)
-            } finally {
-                Pop-Location
-            }
+        [string]$currentPath = (Get-Location).Path
+
+        if ([System.IO.File]::Exists([System.IO.Path]::Combine($currentPath, 'Build\TFSBuild.proj'))) {
+            & "$($global:ShellContext.BuildScriptsDirectory)\LoadDependencies.ps1" -modulesRootPath $currentPath -dropPath $global:ShellContext.BranchServerDirectory -update:$(-not $noUpdate.IsPresent) -showOutdated:$($showOutdated.IsPresent) -force:$($force.IsPresent)
         } else {
 			[string]$root = Get-GitDirectory -searchDirectory $currentPath
 
@@ -107,7 +102,7 @@ function Get-DependenciesForCurrentModule {
 
             [string]$branchConfigPath = Join-Path -Path $root -ChildPath 'Build\BranchConfig.xml'
 
-            [string]$branchConfig = ""
+            [string]$branchConfig = [string]::Empty
             if (Test-Path $branchConfigPath) {
                 $branchConfig = Get-Content $branchConfigPath                
             } else {
@@ -157,30 +152,15 @@ function Get-DependenciesForCurrentModule {
     }
 }
 
-Export-ModuleMember Get-DependenciesForCurrentModule
-
-# gets dependencies for current module using default parameters
-function Get-LocalDependenciesForCurrentModule {
-    if (Test-Path $ShellContext.BuildScriptsDirectory\Load-LocalDependencies.ps1) {
-        $shell = ".\Load-LocalDependencies.ps1 -moduleName $ShellContext.CurrentModuleName -localModulesRootPath $ShellContext.BranchModulesDirectory -serverRootPath $ShellContext.BranchServerDirectory"
-        try {
-            pushd $ShellContext.BuildScriptsDirectory
-            invoke-expression $shell
-        } finally {
-            popd
-        }
-    }
-}
-
-Export-ModuleMember Get-LocalDependenciesForCurrentModule
+Export-ModuleMember Get-Dependencies
 
 function Copy-BinariesFromCurrentModule() {
     if ([string]::IsNullOrEmpty($ShellContext.CurrentModulePath)) {
         Write-Warning "The current module is not set so the binaries will not be copied"
     } else {
-        pushd $ShellContext.BuildScriptsDirectory
+        Push-Location -Path $ShellContext.BuildScriptsDirectory
         ResolveAndCopyUniqueBinModuleContent -modulePath $ShellContext.CurrentModulePath -copyToDirectory $ShellContext.BranchServerDirectory -suppressUniqueCheck $true
-        popd
+        Pop-Location
     }
 }
 
@@ -248,7 +228,8 @@ function Build-ExpertModules {
     )
 
     begin {
-        Set-StrictMode -Version Latest
+        Set-StrictMode -Version 'Latest'
+        $InformationPreference = 'Continue'
     }
 
     process {
@@ -269,7 +250,7 @@ function Build-ExpertModules {
 
             if (!$workflowModuleNames) {
                 if (($ShellContext.CurrentModulePath) -and (Test-Path $ShellContext.CurrentModulePath)) {
-                    $moduleBeforeBuild = (New-Object System.IO.DirectoryInfo $ShellContext.CurrentModulePath | foreach {$_.Name})
+                    $moduleBeforeBuild = (New-Object System.IO.DirectoryInfo $ShellContext.CurrentModulePath | ForEach-Object {$_.Name})
                     $workflowModuleNames = @($moduleBeforeBuild)
                 }
             }
@@ -286,7 +267,7 @@ function Build-ExpertModules {
 
             if ($continue) {
                 if (!$global:LastBuildRemainingModules) {
-                    write "No previously failed build found"
+                    Write-Information -MessageData "No previously failed build found"
                     return
                 }
 
@@ -301,10 +282,10 @@ function Build-ExpertModules {
             }
 
             if ($changeset) {
-                write ""
-                write "Retrieving Expert modules for current changeset ..."
+                Write-Information -MessageData [string]::Empty
+                Write-Information -MessageData "Retrieving Expert modules for current changeset ..."
                 [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$workflowModuleNames = $global:Workspace.GetModulesWithPendingChanges($ShellContext.BranchModulesDirectory)
-                write "Done."
+                Write-Information -MessageData "Done."
             }
 
             # Set the new last build configuration
@@ -317,14 +298,14 @@ function Build-ExpertModules {
             $global:LastBuildExclude = $exclude
 
             if (-not $workflowModuleNames) {
-                write "No modules specified."
+                Write-Information -MessageData "No modules specified."
                 return
             }
 
             [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$workflowModuleNames = $global:Workspace.GetModules($workflowModuleNames)
 
             if ((Test-Path $ShellContext.BranchLocalDirectory) -ne $true) {
-                write "Branch Root path does not exist: '$ShellContext.BranchLocalDirectory'"
+                Write-Information -MessageData "Branch Root path does not exist: '$ShellContext.BranchLocalDirectory'"
             }
 
             [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$modules = Sort-ExpertModulesByBuildOrder -BranchPath $ShellContext.BranchModulesDirectory -Modules $workflowModuleNames -ProductManifestPath $ShellContext.ProductManifestPath
@@ -343,30 +324,30 @@ function Build-ExpertModules {
                 $result = $host.UI.PromptForChoice($null, $message, $options, 0)
 
                 if ($result -ne 0) {
-                    write "Module(s) not found."
+                    Write-Information -MessageData "Module(s) not found."
                     return
                 }
             }
 
-            if ($exclude -eq $null) {
+            if ($null -eq $exclude) {
                 $exclude = @()
             }
 
             if ($downstream -eq $true) {
-                write ""
-                write "Retrieving downstream modules"
+                Write-Information -MessageData ""
+                Write-Information -MessageData "Retrieving downstream modules"
 
                 [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$modules = $global:Workspace.DependencyAnalyzer.GetDownstreamModules($modules)
 
                 $modules = Sort-ExpertModulesByBuildOrder -BranchPath $ShellContext.BranchModulesDirectory -Modules $modules -ProductManifestPath $ShellContext.ProductManifestPath
-                $modules = $modules | Where { $_.ModuleType -ne [Aderant.Build.DependencyAnalyzer.ModuleType]::Test }
-                write "Done."
+                $modules = $modules | Where-Object { $_.ModuleType -ne [Aderant.Build.DependencyAnalyzer.ModuleType]::Test }
+                Write-Information -MessageData "Done."
             }
 
-            $modules = $modules | Where {$exclude -notcontains $_}
+            $modules = $modules | Where-Object { $exclude -notcontains $_ }
 
-            write ""
-            write "********** Build Overview *************"
+            Write-Information -MessageData ""
+            Write-Information -MessageData "********** Build Overview *************"
             $count = 0
             $weHaveSkipped = $false
 
@@ -382,12 +363,12 @@ function Build-ExpertModules {
                     $skipMarkup = " (skipped)"
                 }
 
-                write "$count. $module $skipMarkup"
+                Write-Information -MessageData "$count. $module $skipMarkup"
             }
 
-            write ""
-            write ""
-            write "Press Ctrl+C to abort"
+            Write-Information -MessageData [string]::Empty
+            Write-Information -MessageData [string]::Empty
+            Write-Information -MessageData "Press Ctrl+C to abort"
             Start-Sleep -m 2000
 
             $weHaveSkipped = $false
@@ -415,7 +396,7 @@ function Build-ExpertModules {
                     }
 
                     if ($getDependencies -eq $true) {
-                        Get-DependenciesForCurrentModule
+                        Get-Dependencies
                     }
 
                     if ($builtModules -and $builtModules.Count -gt 0) {
@@ -425,7 +406,7 @@ function Build-ExpertModules {
                         foreach ($dependencyModule in $dependencies) {
                             Write-Debug "Module dependency: $dependencyModule"
 
-                            if (($dependencyModule -and $dependencyModule.Name -and $builtModules.ContainsKey($dependencyModule.Name)) -or ($getLocal | Where {$_ -eq $dependencyModule})) {
+                            if (($dependencyModule -and $dependencyModule.Name -and $builtModules.ContainsKey($dependencyModule.Name)) -or ($getLocal | Where-Object { $_ -eq $dependencyModule })) {
                                 $sourcePath = Join-Path $ShellContext.BranchLocalDirectory Modules\$dependencyModule\Bin\Module
 
                                 if ($dependencyModule.ModuleType -eq [Aderant.Build.DependencyAnalyzer.ModuleType]::ThirdParty) {
@@ -457,7 +438,7 @@ function Build-ExpertModules {
                     if ($module.ModuleType -ne [Aderant.Build.DependencyAnalyzer.ModuleType]::ThirdParty) {
                         Start-BuildForCurrentModule $clean $debug -codeCoverage $codeCoverage -integration $integration.IsPresent
 
-                        pushd $currentWorkingDirectory
+                        Push-Location -Path $currentWorkingDirectory
 
                         # Check for errors
                         if ($LASTEXITCODE -eq 1) {
@@ -486,7 +467,7 @@ function Build-ExpertModules {
                     }
                 }
 
-                [string[]]$global:LastBuildRemainingModules = $global:LastBuildRemainingModules | Where {$_ -ne $module}
+                [string[]]$global:LastBuildRemainingModules = $global:LastBuildRemainingModules | Where-Object {$_ -ne $module}
             }
 
             $global:LastBuildRemainingModules = $null
@@ -495,7 +476,7 @@ function Build-ExpertModules {
                 cm $moduleBeforeBuild
             }
         } finally {
-            pushd $currentWorkingDirectory
+            Push-Location -Path $currentWorkingDirectory
             [Console]::TreatControlCAsInput = $false
         }
     }

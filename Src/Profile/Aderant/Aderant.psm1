@@ -1,10 +1,12 @@
-﻿Set-StrictMode -Version "Latest"
+﻿Set-StrictMode -Version 'Latest'
+$ErrorActionPreference = 'Stop'
+$InformationPreference = 'Continue'
 
 # Import extensibility functions
 $imports = @(
-    (Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath "..\..\Build\Functions") -Filter "*.ps1"),
-    (Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath "Functions") -Filter "*.ps1"),
-    (Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath "Modules") -Filter "*.psm1")
+    (Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath '..\..\Build\Functions') -Filter '*.ps1'),
+    (Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath 'Functions') -Filter '*.ps1'),
+    (Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath 'Modules') -Filter '*.psm1')
 )
 
 foreach ($directory in $imports) {
@@ -19,7 +21,11 @@ foreach ($directory in $imports) {
         }
 
         if ($file.Extension -eq ".psm1") {
-            Import-Module $file.FullName -DisableNameChecking
+            if ($DebugPreference -eq 'SilentlyContinue') {
+                Import-Module $file.FullName -DisableNameChecking
+            } else {
+                Import-Module $file.FullName
+            }
         }
     }
 }
@@ -424,16 +430,6 @@ function Get-SystemMapConnectionString {
     return (GetDefaultValue "systemMapConnectionString").ToLower()
 }
 
-function New-BuildModule {
-    param (
-        [string]$name
-    )
-
-    process {
-        & "$PSScriptRoot..\..\ModuleCreator\create_module.ps1" -ModuleName $name -DestinationFolder $ShellContext.BranchModulesDirectory
-    }
-}
-
 <#
 .Synopsis
     Installs the latest version of the Software Factory
@@ -708,7 +704,7 @@ function Open-ModuleSolution() {
 
         if ($getDependencies) {
             Write-Host "Getting Dependencies for module: $ModuleName"
-            Get-DependenciesForCurrentModule
+            Get-Dependencies
         }
 
         if ($getLatest) {
@@ -832,7 +828,6 @@ function Add-ModuleExpansionParameter {
     Add-BranchExpansionParameter -CommandName SwitchBranchTo -ParameterName newBranch -IsDefault
 
     Will add tab expansion of branch names on the newBranch command where the current parameter is the newBranch parameter and this is also the first (default) parameter
-
 #>
 function Add-BranchExpansionParameter([string]$CommandName, [string]$ParameterName, [switch] $IsDefault) {
     if ([string]::IsNullOrWhiteSpace($CommandName)) {
@@ -859,10 +854,6 @@ Add-ModuleExpansionParameter -CommandName "Build-ExpertModules" -ParameterName "
 Add-ModuleExpansionParameter -CommandName "Build-ExpertModules" -ParameterName "exclude"
 Add-ModuleExpansionParameter -CommandName "Build-ExpertModules" -ParameterName "skipUntil"
 Add-ModuleExpansionParameter -CommandName "Build-ExpertModulesOnServer" -ParameterName "workflowModuleNames"
-Add-ModuleExpansionParameter -CommandName "Get-DependenciesForCurrentModule" -ParameterName "onlyUpdated"
-Add-ModuleExpansionParameter -CommandName "Get-DependenciesForCurrentModule" -ParameterName "onlyUpdated"
-Add-ModuleExpansionParameter -CommandName "Get-DependenciesFrom" -ParameterName "ProviderModules"
-Add-ModuleExpansionParameter -CommandName "Get-DependenciesFrom" -ParameterName "ConsumerModules"
 Add-ModuleExpansionParameter -CommandName "Get-ExpertModuleDependencies" -ParameterName "SourceModuleName"
 Add-ModuleExpansionParameter -CommandName "Get-ExpertModuleDependsOn" -ParameterName "TargetModuleName"
 Add-ModuleExpansionParameter -CommandName "Get-DownstreamExpertModules" -ParameterName "ModuleName"
@@ -1010,14 +1001,12 @@ $functionsToExport = @(
     [PSCustomObject]@{ function = 'Generate-SystemMap'; alias = $null; },
     [PSCustomObject]@{ function = 'Get-AderantModuleLocation'; advanced = $true; alias = $null; },
     [PSCustomObject]@{ function = 'Get-CurrentModule'; alias = $null; },
-    [PSCustomObject]@{ function = 'Get-DependenciesForCurrentModule'; alias = 'gd'; },
-    [PSCustomObject]@{ function = 'Get-DependenciesFrom'; alias = 'gdf'; },
+    [PSCustomObject]@{ function = 'Get-Dependencies'; alias = 'gd'; },
     [PSCustomObject]@{ function = 'Get-EnvironmentFromXml'; alias = $null; },
     [PSCustomObject]@{ function = 'Get-ExpertModulesInChangeset'; alias = $null; },
     [PSCustomObject]@{ function = 'Get-Database'; alias = $null; },
     [PSCustomObject]@{ function = 'Get-DatabaseServer'; alias = $null; },
     [PSCustomObject]@{ function = 'Get-Latest'; alias = $null; },
-    [PSCustomObject]@{ function = 'Get-LocalDependenciesForCurrentModule'; alias = 'gdl'; },
     [PSCustomObject]@{ function = 'Get-Product'; alias = $null; },
     [PSCustomObject]@{ function = 'Get-ProductBuild'; alias = 'gpb'; },
     [PSCustomObject]@{ function = 'Git-Merge'; alias = $null; },
@@ -1025,7 +1014,6 @@ $functionsToExport = @(
 #    [PSCustomObject]@{ function = 'Install-LatestSoftwareFactory'; alias = 'usf'; },
 #    [PSCustomObject]@{ function = 'Install-LatestVisualStudioExtension'; alias = $null; },
     [PSCustomObject]@{ function = 'Move-Shelveset'; alias = $null; },
-    [PSCustomObject]@{ function = 'New-BuildModule'; alias = $null; },
     [PSCustomObject]@{ function = 'Open-ModuleSolution'; alias = 'vs'; },
     [PSCustomObject]@{ function = 'Set-CurrentModule'; alias = 'cm'; },
     [PSCustomObject]@{ function = 'Set-Environment'; advanced = $true; alias = $null; },
@@ -1065,6 +1053,7 @@ Export-ModuleMember -variable BranchBinariesDirectory
 Export-ModuleMember -variable BranchName
 Export-ModuleMember -variable BranchModulesDirectory
 Export-ModuleMember -variable ProductManifestPath
+Export-ModuleMember -variable ShellContext
 Export-ModuleMember -Function Get-DependenciesFrom
 
 #TODO move
