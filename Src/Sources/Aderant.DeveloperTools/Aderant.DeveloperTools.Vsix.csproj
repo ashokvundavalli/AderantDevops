@@ -174,7 +174,6 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <None Include="paket.references" />
     <None Include="paket.template" />
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>

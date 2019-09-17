@@ -267,3 +267,4 @@ ModelManifest.xml
 /.paket
 /Src/Build/Functions/InProcessJobs.dll
 **/*/ps_modules/VstsTaskSdk/*
+/UnitTestProject1

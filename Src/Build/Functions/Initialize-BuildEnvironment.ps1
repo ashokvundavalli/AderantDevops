@@ -62,15 +62,18 @@ function BuildProjects([string]$mainAssembly, [bool]$forceCompile, [string]$comm
     $info = [System.IO.FileInfo]::new($mainAssembly)
 
     if ($info.Exists) {
-        if ($info.Length -gt 0 -and $forceCompile -eq $false) {
-            return
-        }
+        # Should a build fail we may end up with a zero byte file
+        if ($info.Length -gt 0) {
+          if ($forceCompile -eq $false) {
+              return
+          }
 
-        $buildCommit = GetAlternativeStreamValue $info.FullName $buildCommitStreamName
+          $buildCommit = GetAlternativeStreamValue $info.FullName $buildCommitStreamName
 
-        if ($buildCommit -eq $commit) {
-            Write-Debug "Skipped compiling $info as it was for your current commit."
-            return
+          if ($buildCommit -eq $commit) {
+              Write-Debug "Skipped compiling $info as it was for your current commit."
+              return
+          }
         }
     }
 
@@ -147,7 +150,12 @@ function LoadAssembly([string]$assemblyPath, [bool]$loadAsModule) {
 
         #Loads the assembly without locking it on disk
         $assemblyBytes = [System.IO.File]::ReadAllBytes($assemblyPath)
-        $assembly = [System.Reflection.Assembly]::Load($assemblyBytes)
+
+        try {
+            $assembly = [System.Reflection.Assembly]::Load($assemblyBytes)
+        } catch [System.BadImageFormatException] {
+            Write-Error "Failed to load $assemblyPath $_"
+        }
 
         if ($loadAsModule) {
             # This load process was built after many days of head scratching trying to get -Global to work.
@@ -284,8 +292,13 @@ function DownloadPaket([string]$commit) {
 
     if (Test-Path $bootstrapper) {
         $paketExecutable = "$BuildScriptsDirectory\paket.exe"
+        $packageDirectory = "$BuildScriptsDirectory\..\.\.."
 
         $value = GetAlternativeStreamValue $paketExecutable $buildCommitStreamName
+
+        if ($null -eq (Get-ChildItem $packageDirectory  -Filter "*.nupkg")) {
+            $value = ""
+        }
 
         if ($value -eq $commit) {
             Write-Debug "Skipping paket update because '$value' == '$commit'"
@@ -295,7 +308,7 @@ function DownloadPaket([string]$commit) {
         $action = {
             # Download the paket dependency tool
             Start-Process -FilePath $bootstrapper -ArgumentList  "5.219.0" -NoNewWindow -PassThru -Wait
-            Start-Process -FilePath $paketExecutable -ArgumentList @("restore", "--group", "DevTools") -NoNewWindow -PassThru -Wait -WorkingDirectory ("$BuildScriptsDirectory\..\.\..")
+            Start-Process -FilePath $paketExecutable -ArgumentList @("restore", "--group", "DevTools") -NoNewWindow -PassThru -Wait -WorkingDirectory $packageDirectory
         }
 
         RunActionExclusive $action ("PAKET_UPDATE_LOCK_" + $BuildScriptsDirectory)

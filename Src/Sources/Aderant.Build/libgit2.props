@@ -8,18 +8,6 @@
     <LibGit2SharpNativeBinaries>(MSBuildThisFileDirectory)\..\..\..\..\packages\devtools\LibGit2Sharp.NativeBinaries\</LibGit2SharpNativeBinaries>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ContentWithTargetPath Condition="Exists('$(LibGit2SharpNativeBinaries)runtimes\win-x64\native\git2-572e4d8.dll')" Include="$(LibGit2SharpNativeBinaries)runtimes\win-x64\native\git2-572e4d8.dll">
-      <TargetPath>lib\win32\x64\git2-572e4d8.dll</TargetPath>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </ContentWithTargetPath>
-    <ContentWithTargetPath Condition="Exists('$(LibGit2SharpNativeBinaries)runtimes\win-x86\native\git2-572e4d8.dll')" Include="$(LibGit2SharpNativeBinaries)runtimes\win-x86\native\git2-572e4d8.dll">
-      <TargetPath>lib\win32\x86\git2-572e4d8.dll</TargetPath>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </ContentWithTargetPath>
-    <ContentWithTargetPath Include="$(LibGit2SharpNativeBinaries)libgit2\LibGit2Sharp.dll.config">
-      <TargetPath>LibGit2Sharp.dll.config</TargetPath>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </ContentWithTargetPath>
-  </ItemGroup>
+  <Import Project="$(LibGit2SharpNativeBinaries)Build\net46\LibGit2Sharp.NativeBinaries.props" />
+
 </Project>
