@@ -26,12 +26,12 @@ function Build-ExpertPatch() {
         Get-ProductZip
     }
 
-    [string]$cmd = "xcopy \\dfs.aderant.com\expertsuite\Main\Build.Tools\Current\* /S /Y $ShellContext.PackageScriptsDirectory"
+    [string]$cmd = "xcopy \\dfs.aderant.com\expertsuite\Main\Build.Tools\Current\* /S /Y $($global:ShellContext.PackageScriptsDirectory)"
     if ($Pre803.IsPresent) {
-        $cmd = "xcopy \\dfs.aderant.com\expertsuite\Main\Build.Tools\Pre803\* /S /Y $ShellContext.PackageScriptsDirectory"         
+        $cmd = "xcopy \\dfs.aderant.com\expertsuite\Main\Build.Tools\Pre803\* /S /Y $($global:ShellContext.PackageScriptsDirectory)"
         if (-not $noget.IsPresent) {
-            New-Item -Path "$ShellContext.PackageScriptsDirectory\Patching" -ItemType Directory -Force| Out-Null
-            $cmd += "; xcopy \\dfs.aderant.com\expertsuite\Main\Build.Tools\Current\Patching\* /S /Y $ShellContext.PackageScriptsDirectory\Patching" 
+            New-Item -Path "$($global:ShellContext.PackageScriptsDirectory)\Patching" -ItemType Directory -Force| Out-Null
+            $cmd += "; xcopy \\dfs.aderant.com\expertsuite\Main\Build.Tools\Current\Patching\* /S /Y $($global:ShellContext.PackageScriptsDirectory)\Patching"
         }
     }
 
@@ -39,5 +39,5 @@ function Build-ExpertPatch() {
         Invoke-Expression $cmd
     }
 
-    & "$ShellContext.PackageScriptsDirectory\Patching\BuildPatch.ps1" -noVerify:$noverify.IsPresent -repositoryPatchBranch $repositoryPatchBranch
+    & "$($global:ShellContext.PackageScriptsDirectory)\Patching\BuildPatch.ps1" -noVerify:$noverify.IsPresent -repositoryPatchBranch $repositoryPatchBranch
 }

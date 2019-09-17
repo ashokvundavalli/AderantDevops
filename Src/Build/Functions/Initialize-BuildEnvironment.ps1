@@ -311,7 +311,7 @@ function DownloadPaket([string]$commit) {
             Start-Process -FilePath $paketExecutable -ArgumentList @("restore", "--group", "DevTools") -NoNewWindow -PassThru -Wait -WorkingDirectory $packageDirectory
         }
 
-        RunActionExclusive $action ("PAKET_UPDATE_LOCK_" + $BuildScriptsDirectory)
+        [void](RunActionExclusive $action ("PAKET_UPDATE_LOCK_" + $BuildScriptsDirectory))
         SetAlternativeStreamValue $paketExecutable $buildCommitStreamName $commit
     } else {
         throw "FATAL: $bootstrapper does not exist."

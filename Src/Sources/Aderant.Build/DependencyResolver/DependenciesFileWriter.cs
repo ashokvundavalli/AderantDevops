@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using Microsoft.FSharp.Collections;
 using Paket;
 
 namespace Aderant.Build.DependencyResolver.Models {
@@ -37,7 +39,12 @@ namespace Aderant.Build.DependencyResolver.Models {
                         string preReleaseString = string.Empty;
                         PreReleaseStatus status = packageRequirement.VersionRequirement.PreReleases;
                         if (status.IsConcrete) {
-                            preReleaseString = string.Join(" ", ((PreReleaseStatus.Concrete)status).Item);
+                            FSharpList<string> preReleaseStatuses = ((PreReleaseStatus.Concrete) status).Item;
+                            string versionRequirement = packageRequirement.VersionRequirement.ToString();
+
+                            if (preReleaseStatuses.All(x => versionRequirement.IndexOf(x, StringComparison.OrdinalIgnoreCase) == -1)) {
+                                preReleaseString = string.Join(" ", ((PreReleaseStatus.Concrete)status).Item);
+                            }
                         }
 
                         sb.AppendFormat(

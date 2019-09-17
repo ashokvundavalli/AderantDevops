@@ -59,7 +59,7 @@ function global:Install-PoshGit() {
         } finally {
             Import-Module posh-git -Global
             $global:GitPromptSettings.EnableWindowTitle = $false
-            $ShellContext.PoshGitAvailable = (Get-Module posh-git) -ne $null
+            $global:ShellContext.PoshGitAvailable = $null -ne (Get-Module posh-git)
         }
     } else {
         Write-Host "You do not have Windows 10 or PowerShell 5. Windows 10 provides a much improved PowerShell experience." -ForegroundColor Yellow
