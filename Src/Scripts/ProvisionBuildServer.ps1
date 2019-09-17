@@ -8,7 +8,7 @@ param (
 )
 
 begin {
-    Set-StrictMode -Version Latest
+    Set-StrictMode -Version 'Latest'
     $InformationPreference = 'Continue'
 }
 
@@ -269,11 +269,20 @@ namespace Willys.LsaSecurity
             Import-Module ServerManager
 
             try {
-                if (-not (Get-WindowsFeature | Where-Object {$_.Name -eq "Hyper-V"}).InstallState -eq "Installed") {
-                    Enable-WindowsOptionalFeature -Online -FeatureName:Microsoft-Hyper-V -All
+                if (-not (Get-WindowsFeature | Where-Object { $_.Name -eq 'Hyper-V' }).InstallState -eq 'Installed') {
+                    Enable-WindowsOptionalFeature -Online -FeatureName 'Microsoft-Hyper-V' -All
                 }
+
+                if (-not (Get-WindowsFeature | Where-Object { $_.Name -eq 'Containers' }).InstallState -eq 'Installed') {
+                    Enable-WindowsOptionalFeature -Online -FeatureName 'Containers'
+                }
+
+                Install-PackageProvider -Name 'NuGet' -MinimumVersion '2.8.5.201' -Force
+                Install-Module -Name 'DockerMsftProvider' -Repository 'PSGallery' -Force
+                Install-Package -Name 'docker' -ProviderName 'DockerMsftProvider' -Force
+                Start-Service Docker
             } catch {
-                Write-Warning $Error[0]
+                Write-Warning $Error[0] | Format-List -Force
             }
         }
     }
