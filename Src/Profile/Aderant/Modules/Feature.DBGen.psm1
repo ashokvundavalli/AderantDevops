@@ -6,7 +6,7 @@
 #>
 function Start-DBGen() {
     #Normally found at: C:\CMS.NET\Bin\dbgen.exe
-    $dbgen = [System.IO.Path]::Combine($global:ShellContext.BranchServerDirectory, "dbgen\dbgen.exe")
+    $dbgen = [System.IO.Path]::Combine($ShellContext.BranchServerDirectory, "dbgen\dbgen.exe")
     Invoke-Expression $dbgen
 }
 
@@ -66,8 +66,8 @@ function Prepare-Database (
         New-Item $cmsPath -ItemType File -Value $cmsConnection
     }
 
-    $dbPreparePath = "$($global:ShellContext.BranchServerDirectory)\dbgen\dbprepare.exe"
-    $dbPrepareArgs = "target=$server$instance.$database autostart=1 autoclose=1 installshield=1 login=SA password=`"$saPassword`" ERRORLOG=`"$($global:ShellContext.BranchBinariesDirectory)\Logs\dbprep.log`" version=$version prep=database,other"
+    $dbPreparePath = "$ShellContext.BranchServerDirectory\dbgen\dbprepare.exe"
+    $dbPrepareArgs = "target=$server$instance.$database autostart=1 autoclose=1 installshield=1 login=SA password=`"$saPassword`" ERRORLOG=`"$($ShellContext.BranchBinariesDirectory)\Logs\dbprep.log`" version=$version prep=database,other"
 
     if (-not $interactive.IsPresent) {
         $dbPrepareArgs = $dbPrepareArgs + " hide=1"
@@ -96,14 +96,14 @@ function Update-Database([string]$manifestName, [switch]$interactive) {
 
     return
 
-    if ($global:ShellContext.BranchExpertVersion.StartsWith("8")) {
-        $fullManifest = Join-Path -Path $global:ShellContext.BranchBinariesDirectory -ChildPath 'environment.xml'
+    if ($ShellContext.BranchExpertVersion.StartsWith("8")) {
+        $fullManifest = Join-Path -Path $ShellContext.BranchBinariesDirectory -ChildPath 'environment.xml'
     } else {
         if ($manifestName -eq $null) {
             Write-Host "Usage: Update-BranchDatabase <manifestName>"
             return
         } else {
-            $fullManifest = Join-Path -Path $global:ShellContext.BranchBinariesDirectory -ChildPath "\$manifestName.environment.xml"
+            $fullManifest = Join-Path -Path $ShellContext.BranchBinariesDirectory -ChildPath "\$manifestName.environment.xml"
         }
     }
 
@@ -126,7 +126,7 @@ commit
         $command = "sqlcmd -S $server -d $db -E -Q `"" + [string]::Format($query, "Y") + "`""
         Invoke-Expression $command
 
-        $shell = "powershell -NoProfile -NoLogo `"$($global:ShellContext.PackageScriptsDirectory)\DeployDatabase.ps1`" -environmentManifestPath `"$fullManifest`" -expertSourceDirectory `"$global:ShellContext.BranchServerDirectory`" -interactive:$" + $interactive
+        $shell = "powershell -NoProfile -NoLogo `"$ShellContext.PackageScriptsDirectory\DeployDatabase.ps1`" -environmentManifestPath `"$fullManifest`" -expertSourceDirectory `"$ShellContext.BranchServerDirectory`" -interactive:$" + $interactive
         # Invoke-Expression falls on its face here due to a bug with [switch] - if used the switch argument cannot be converted to a switch parameter
         # which is very annoying
         # http://connect.microsoft.com/PowerShell/feedback/details/742084/powershell-v2-powershell-cant-convert-false-into-swtich-when-using-file-param

@@ -15,14 +15,14 @@ function global:Enable-GitPrompt {
         Write-Host ($global:ShellContext.CurrentModulePath) -NoNewline -ForegroundColor DarkCyan
         Write-Host ("]")
 
-        Write-Host "PS ${location}" -NoNewline
+        Write-Host "PS $(location)" -NoNewline
 
         if ($global:ShellContext.PoshGitAvailable) {
             Write-VcsStatus
 
             $status = Get-GitStatus
 
-            if ($null -ne $status) {
+            if ($status -ne $null) {
                 $repoName = Split-Path -Leaf (Split-Path $status.GitDir)
                 $Host.UI.RawUI.WindowTitle = "$script:adminHeader$repoName [$($status.Branch)]"
             }

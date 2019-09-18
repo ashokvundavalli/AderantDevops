@@ -5,12 +5,12 @@
     Starts DeploymentManager.exe
 #>
 function global:Start-DeploymentManager {
-    if (Test-Path $global:ShellContext.DeploymentManager) {
+    if (Test-Path $ShellContext.DeploymentManager) {
         Write-Host "Starting Deployment Manager..."
-        $shell = $global:ShellContext.DeploymentManager
+        $shell = $ShellContext.DeploymentManager
     } else {
         $shell = $null
-        Write-Warning "Please ensure that the DeploymentManager.exe is located at: $($global:ShellContext.DeploymentManager)"
+        Write-Warning "Please ensure that the DeploymentManager.exe is located at: $($ShellContext.DeploymentManager)"
     }
 
     if ($shell) {
@@ -53,8 +53,8 @@ function Start-DeploymentEngine {
     )
 
     process {
-        if (-not (Test-Path $global:ShellContext.DeploymentEngine)) {
-            Write-Error "Couldn't locate the DeploymentEngine.exe, please place it at $($global:ShellContext.DeploymentEngine)"
+        if (-not (Test-Path $ShellContext.DeploymentEngine)) {
+            Write-Error "Couldn't locate the DeploymentEngine.exe, please place it at $($ShellContext.DeploymentEngine)"
         }
 
         if ([string]::IsNullOrWhiteSpace($binariesDirectory)) {
@@ -74,25 +74,25 @@ function Start-DeploymentEngine {
 
         switch ($true) {
             ($skipPackageImports.IsPresent -and $skipHelpDeployment.IsPresent) {
-                . $pathToDeploymentEngineScript -command $command -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $global:ShellContext.DeploymentEngine -skipPackageImports -skipHelpDeployment
+                . $pathToDeploymentEngineScript -command $command -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $ShellContext.DeploymentEngine -skipPackageImports -skipHelpDeployment
                 break
             }
             $skipPackageImports.IsPresent {
-                . $pathToDeploymentEngineScript -command $command -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $global:ShellContext.DeploymentEngine -skipPackageImports
+                . $pathToDeploymentEngineScript -command $command -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $ShellContext.DeploymentEngine -skipPackageImports
                 break
             }
             $skipHelpDeployment.IsPresent {
-                . $pathToDeploymentEngineScript -command $command -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $global:ShellContext.DeploymentEngine -skipHelpDeployment
+                . $pathToDeploymentEngineScript -command $command -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $ShellContext.DeploymentEngine -skipHelpDeployment
                 break
             }
             default {
-                . $pathToDeploymentEngineScript -command $command -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $global:ShellContext.DeploymentEngine
+                . $pathToDeploymentEngineScript -command $command -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $ShellContext.DeploymentEngine
                 break
             }
         }
 
         if (($command -eq "Deploy" -or $command -eq "Remove") -and $LASTEXITCODE -eq 0) {
-            . $pathToDeploymentEngineScript -command "ExportEnvironmentManifest"  -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $global:ShellContext.DeploymentEngine
+            . $pathToDeploymentEngineScript -command "ExportEnvironmentManifest"  -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $ShellContext.DeploymentEngine
         }
     }
 }

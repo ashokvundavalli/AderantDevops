@@ -6,9 +6,9 @@
 .EXAMPLE
     Scorch Web.Presentation, Web.Foundation
 #>
-function Scorch($moduleNames = $global:ShellContext.CurrentModuleName) {
+function Scorch($moduleNames = $ShellContext.CurrentModuleName) {
     foreach ($moduleName in $moduleNames) {
-        $path = Join-Path $global:ShellContext.BranchLocalDirectory "Modules\$ModuleName"
+        $path = Join-Path $ShellContext.BranchLocalDirectory "Modules\$ModuleName"
         invoke-expression "tfpt scorch $path /recursive /noprompt";
     }
 }

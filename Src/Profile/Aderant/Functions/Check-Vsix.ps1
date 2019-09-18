@@ -28,7 +28,7 @@ function Check-Vsix() {
 
         function InstallVsix() {
             try {
-                $vsixFile = gci -Path $global:ShellContext.BuildToolsDirectory -File -Filter "$vsixName.vsix" -Recurse | Select-Object -First 1
+                $vsixFile = gci -Path $ShellContext.BuildToolsDirectory -File -Filter "$vsixName.vsix" -Recurse | Select-Object -First 1
 
                 if (-not ($vsixFile)) {
                     return
@@ -72,7 +72,7 @@ function Check-Vsix() {
 
         $version = ""
 
-        $currentVsixFile = Join-Path -Path $global:ShellContext.BuildToolsDirectory -ChildPath "$vsixName.vsix"
+        $currentVsixFile = Join-Path -Path $ShellContext.BuildToolsDirectory -ChildPath "$vsixName.vsix"
 
         $extensionsFolder = Join-Path -Path $env:LOCALAPPDATA -ChildPath \Microsoft\VisualStudio\14.0\Extensions\
         $developerTools = Get-ChildItem -Path $extensionsFolder -Recurse -Filter "$vsixName.dll" -Depth 1
@@ -95,10 +95,10 @@ function Check-Vsix() {
             Write-Host -ForegroundColor Red " If you want it, install them manually from $currentVsixFile"
         } else {
             # Bail out if we have already checked if this version is installed (most often the case)
-            $lastVsixCheckCommit = $global:ShellContext.GetRegistryValue("", "LastVsixCheckCommit")
+            $lastVsixCheckCommit = $ShellContext.GetRegistryValue("", "LastVsixCheckCommit")
             if ($lastVsixCheckCommit -ne $null) {
-                if ($lastVsixCheckCommit -eq $global:ShellContext.CurrentCommit) {
-                    Write-Debug "CurrentCommit: $($global:ShellContext.CurrentCommit)"
+                if ($lastVsixCheckCommit -eq $ShellContext.CurrentCommit) {
+                    Write-Debug "CurrentCommit: $($ShellContext.CurrentCommit)"
                     Write-Debug "LastVsixCheckCommit: $($lastVsixCheckCommit)"
 
                     Write-Host -ForegroundColor DarkGreen "Your $vsixName is up to date."

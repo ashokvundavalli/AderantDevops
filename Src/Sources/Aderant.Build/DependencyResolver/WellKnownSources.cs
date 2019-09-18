@@ -26,8 +26,6 @@ namespace Aderant.Build.DependencyResolver {
 
     internal class WellKnownPackageSources : IWellKnownSources {
 
-        internal static readonly string LegacySwitch = "DISABLE_AZURE_NUGET";
-
         /// <summary>
         /// Gets the default implementation of the NuGet sources known the system.
         /// Supports overrides via environment variables.
@@ -36,7 +34,7 @@ namespace Aderant.Build.DependencyResolver {
 
         public IReadOnlyList<PackageSource> GetSources() {
             // Escape hatch to fall back to the legacy sources.
-            string variable = Environment.GetEnvironmentVariable(LegacySwitch);
+            string variable = Environment.GetEnvironmentVariable("DISABLE_AZURE_NUGET");
 
             if (string.IsNullOrEmpty(variable)) {
                 return AzureHostedSources.Sources;

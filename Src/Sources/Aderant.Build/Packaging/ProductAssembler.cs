@@ -1,15 +1,14 @@
-﻿using Aderant.Build.DependencyAnalyzer;
-using Aderant.Build.DependencyResolver;
-using Aderant.Build.Logging;
-using Aderant.Build.Packaging.NuGet;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.DependencyResolver;
+using Aderant.Build.DependencyResolver.Resolvers;
+using Aderant.Build.Logging;
+using Aderant.Build.Packaging.NuGet;
+using Newtonsoft.Json;
 
 namespace Aderant.Build.Packaging {
     internal class ProductAssembler {
@@ -198,14 +197,14 @@ namespace Aderant.Build.Packaging {
 
             string[] nupkgEntries = new[] { "lib", "content" };
 
-            foreach (string packageDirectory in packages) {
+            foreach (var packageDirectory in packages) {
                 ExpertModule module = context.GetModuleByPackage(packageDirectory, group);
 
-                foreach (string packageDir in nupkgEntries) {
+                foreach (var packageDir in nupkgEntries) {
                     string nupkgDir = Path.Combine(packageDirectory, packageDir);
 
                     if (fs.DirectoryExists(nupkgDir)) {
-                        string packageName = Path.GetFileName(packageDirectory);
+                        var packageName = Path.GetFileName(packageDirectory);
 
                         if (module != null) {
                             if (context.RequiresContentProcessing(module)) {
@@ -269,7 +268,8 @@ namespace Aderant.Build.Packaging {
                         }
 
                         if (module == null || module.ExcludeFromPackaging != true) {
-                            ProcessDirectoryCopy(fs, nupkgDir, relativeDirectory, packageName.StartsWith("ThirdParty", StringComparison.OrdinalIgnoreCase));
+                            logger.Info("Copying {0} ==> {1}", nupkgDir, relativeDirectory);
+                            fs.CopyDirectory(nupkgDir, relativeDirectory);
                         }
                     }
                 }
@@ -278,64 +278,14 @@ namespace Aderant.Build.Packaging {
             return licenseText;
         }
 
-        private static readonly string[] IllegalExtensions = new string[] {
-            "._"
-        };
-
-        private void ProcessDirectoryCopy(IFileSystem fileSystem, string nupkgDir, string relativeDirectory, bool process) {
-            Regex regex = new Regex(@"(net)\d+\\");
-
-            string[] files = fileSystem.GetFiles(nupkgDir, "*", true).ToArray();
-
-            List<PathSpec> pathSpecs = new List<PathSpec>(files.Length);
-
-            logger.Info("Copying directory: '{0}' ==> '{1}'", nupkgDir, relativeDirectory);
-
-            foreach (string file in files) {
-                string extension = Path.GetExtension(file);
-                if (extension != null && IllegalExtensions.Contains(extension)) {
-                    logger.Info($"Skipping file: '{file}' due to extension.");
-                    continue;
-                }
-
-                string relativeFilePath = file.Replace(nupkgDir, string.Empty);
-                if (process && regex.IsMatch(relativeFilePath)) {
-                    relativeFilePath = Path.Combine(regex.Replace(relativeFilePath, string.Empty, 1));
-                }
-
-                PathSpec pathSpec = new PathSpec(file, Path.Combine(relativeDirectory, relativeFilePath.TrimStart(Path.DirectorySeparatorChar)), false);
-
-                logger.Info($"Source file: '{pathSpec.Location}' ==> Destination: '{pathSpec.Destination}'");
-
-                pathSpecs.Add(pathSpec);
-            }
-
-            Parallel.ForEach(pathSpecs, CopyPathSpec);
-        }
-
-        private void CopyPathSpec(PathSpec pathSpec) {
-            const int hResult = -2147024816;
-
-            try {
-                File.Copy(pathSpec.Location, pathSpec.Destination, false);
-            } catch (IOException exception) {
-                if (exception.HResult == hResult) {
-                    // Log a warning if the file already exists.
-                    logger.Warning(exception.Message);
-                }
-            }
-        }
-
         private static void ReadLicenseText(IFileSystem fs, string lib, string packageName, ConcurrentBag<string> licenseText) {
             IEnumerable<string> licenses = fs.GetFiles(lib, "*license*txt", true);
-            string separator = new string('=', 80);
-
-            foreach (string licenseFile in licenses) {
+            foreach (var licenseFile in licenses) {
                 using (Stream stream = fs.OpenFile(licenseFile)) {
-                    using (StreamReader reader = new StreamReader(stream)) {
-                        licenseText.Add(separator);
+                    using (var reader = new StreamReader(stream)) {
+                        licenseText.Add(new string('=', 80));
                         licenseText.Add(packageName);
-                        licenseText.Add(separator);
+                        licenseText.Add(new string('=', 80));
                         licenseText.Add(reader.ReadToEnd());
                     }
                 }

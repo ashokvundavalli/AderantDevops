@@ -7,7 +7,7 @@ function Start-BuildForCurrentModule([string]$clean, [bool]$debug, [bool]$releas
 
     process {
         # Parameter must be a string as we are shelling out which we can't pass [switch] to
-        [string]$commonArgs = "-moduleToBuildPath $global:ShellContext.CurrentModulePath -dropRoot $global:ShellContext.BranchServerDirectory -cleanBin $clean"
+        [string]$commonArgs = "-moduleToBuildPath $ShellContext.CurrentModulePath -dropRoot $ShellContext.BranchServerDirectory -cleanBin $clean"
 
         if ($debug) {
             $commonArgs += " -debug"
@@ -23,7 +23,7 @@ function Start-BuildForCurrentModule([string]$clean, [bool]$debug, [bool]$releas
             $commonArgs += " -codeCoverage"
         }
 
-        Push-Location -Path $global:ShellContext.BuildScriptsDirectory
+        Push-Location -Path $ShellContext.BuildScriptsDirectory
         Invoke-Expression -Command ".\BuildModule.ps1 $($commonArgs)"
         Pop-Location
     }
@@ -125,7 +125,7 @@ function Get-Dependencies {
             $getDependencies.ProductManifest = $productManifest
             $getDependencies.ConfigurationXml = $branchConfig
             $getDependencies.ModulesRootPath = $root
-            $getDependencies.DropPath = $global:ShellContext.BranchServerDirectory
+            $getDependencies.DropPath = $ShellContext.BranchServerDirectory
             $getDependencies.DependenciesDirectory = [System.IO.Path]::Combine($root, '_as\out')
             $getDependencies.ModulesInBuild = $modulesInBuildTasks
             $getDependencies.EnabledResolvers = @('NupkgResolver')
@@ -155,10 +155,10 @@ function Get-Dependencies {
 Export-ModuleMember Get-Dependencies
 
 function Copy-BinariesFromCurrentModule() {
-    if ([string]::IsNullOrEmpty($global:ShellContext.CurrentModulePath)) {
+    if ([string]::IsNullOrEmpty($ShellContext.CurrentModulePath)) {
         Write-Warning "The current module is not set so the binaries will not be copied"
     } else {
-        Push-Location -Path $global:ShellContext.BuildScriptsDirectory
+        Push-Location -Path $ShellContext.BuildScriptsDirectory
         ResolveAndCopyUniqueBinModuleContent -modulePath $ShellContext.CurrentModulePath -copyToDirectory $ShellContext.BranchServerDirectory -suppressUniqueCheck $true
         Pop-Location
     }
@@ -238,7 +238,7 @@ function Build-ExpertModules {
             return
         }
 
-        if ($global:ShellContext.IsGitRepository) {
+        if ($ShellContext.IsGitRepository) {
             Write-Error "You cannot run this command for a git repository. Use 'bm' or 'Invoke-Build' instead."
             return
         }
@@ -249,8 +249,8 @@ function Build-ExpertModules {
             $currentWorkingDirectory = Get-Location
 
             if (!$workflowModuleNames) {
-                if (($global:ShellContext.CurrentModulePath) -and (Test-Path $global:ShellContext.CurrentModulePath)) {
-                    $moduleBeforeBuild = (New-Object System.IO.DirectoryInfo $global:ShellContext.CurrentModulePath | foreach { $_.Name })
+                if (($ShellContext.CurrentModulePath) -and (Test-Path $ShellContext.CurrentModulePath)) {
+                    $moduleBeforeBuild = (New-Object System.IO.DirectoryInfo $ShellContext.CurrentModulePath | ForEach-Object {$_.Name})
                     $workflowModuleNames = @($moduleBeforeBuild)
                 }
             }
@@ -282,9 +282,9 @@ function Build-ExpertModules {
             }
 
             if ($changeset) {
-                Write-Information -MessageData ([string]::Empty)
+                Write-Information -MessageData [string]::Empty
                 Write-Information -MessageData "Retrieving Expert modules for current changeset ..."
-                [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$workflowModuleNames = $global:Workspace.GetModulesWithPendingChanges($global:ShellContext.BranchModulesDirectory)
+                [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$workflowModuleNames = $global:Workspace.GetModulesWithPendingChanges($ShellContext.BranchModulesDirectory)
                 Write-Information -MessageData "Done."
             }
 
@@ -304,11 +304,11 @@ function Build-ExpertModules {
 
             [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$workflowModuleNames = $global:Workspace.GetModules($workflowModuleNames)
 
-            if ((Test-Path $global:ShellContext.BranchLocalDirectory) -ne $true) {
+            if ((Test-Path $ShellContext.BranchLocalDirectory) -ne $true) {
                 Write-Information -MessageData "Branch Root path does not exist: '$ShellContext.BranchLocalDirectory'"
             }
 
-            [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$modules = Sort-ExpertModulesByBuildOrder -BranchPath $global:ShellContext.BranchModulesDirectory -Modules $workflowModuleNames -ProductManifestPath $global:ShellContext.ProductManifestPath
+            [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$modules = Sort-ExpertModulesByBuildOrder -BranchPath $ShellContext.BranchModulesDirectory -Modules $workflowModuleNames -ProductManifestPath $ShellContext.ProductManifestPath
 
             if (!$modules -or (($modules.Length -ne $workflowModuleNames.Length) -and $workflowModuleNames.Length -gt 0)) {
                 Write-Warning "After sorting builds by order the following modules were excluded."
@@ -339,7 +339,7 @@ function Build-ExpertModules {
 
                 [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$modules = $global:Workspace.DependencyAnalyzer.GetDownstreamModules($modules)
 
-                $modules = Sort-ExpertModulesByBuildOrder -BranchPath $global:ShellContext.BranchModulesDirectory -Modules $modules -ProductManifestPath $global:ShellContext.ProductManifestPath
+                $modules = Sort-ExpertModulesByBuildOrder -BranchPath $ShellContext.BranchModulesDirectory -Modules $modules -ProductManifestPath $ShellContext.ProductManifestPath
                 $modules = $modules | Where-Object { $_.ModuleType -ne [Aderant.Build.DependencyAnalyzer.ModuleType]::Test }
                 Write-Information -MessageData "Done."
             }
@@ -392,7 +392,7 @@ function Build-ExpertModules {
                     Set-CurrentModule $module.Name
 
                     if ($getLatest) {
-                        Get-LatestSourceForModule $module.Name -branchPath $global:ShellContext.BranchLocalDirectory
+                        Get-LatestSourceForModule $module.Name -branchPath $ShellContext.BranchLocalDirectory
                     }
 
                     if ($getDependencies -eq $true) {
@@ -400,24 +400,24 @@ function Build-ExpertModules {
                     }
 
                     if ($builtModules -and $builtModules.Count -gt 0) {
-                        $dependencies = Get-ExpertModuleDependencies -BranchPath $global:ShellContext.BranchLocalDirectory -SourceModule $module -IncludeThirdParty $true
+                        $dependencies = Get-ExpertModuleDependencies -BranchPath $ShellContext.BranchLocalDirectory -SourceModule $module -IncludeThirdParty $true
                         Write-Host "************* $module *************"
 
                         foreach ($dependencyModule in $dependencies) {
                             Write-Debug "Module dependency: $dependencyModule"
 
                             if (($dependencyModule -and $dependencyModule.Name -and $builtModules.ContainsKey($dependencyModule.Name)) -or ($getLocal | Where-Object { $_ -eq $dependencyModule })) {
-                                $sourcePath = Join-Path $global:ShellContext.BranchLocalDirectory, "Modules\$dependencyModule\Bin\Module"
+                                $sourcePath = Join-Path $ShellContext.BranchLocalDirectory Modules\$dependencyModule\Bin\Module
 
                                 if ($dependencyModule.ModuleType -eq [Aderant.Build.DependencyAnalyzer.ModuleType]::ThirdParty) {
                                     # Probe the new style ThirdParty path
-                                    $root = [System.IO.Path]::Combine($global:ShellContext.BranchLocalDirectory, "Modules", "ThirdParty")
+                                    $root = [System.IO.Path]::Combine($ShellContext.BranchLocalDirectory, "Modules", "ThirdParty")
 
                                     if ([System.IO.Directory]::Exists($root)) {
                                         $sourcePath = [System.IO.Path]::Combine($root, $dependencyModule, "Bin")
                                     } else {
                                         # Fall back to the old style path
-                                        $root = [System.IO.Path]::Combine($global:ShellContext.BranchLocalDirectory, "Modules")
+                                        $root = [System.IO.Path]::Combine($ShellContext.BranchLocalDirectory, "Modules")
                                         $sourcePath = [System.IO.Path]::Combine($root, $dependencyModule, "Bin")
                                     }
                                 }
@@ -428,7 +428,7 @@ function Build-ExpertModules {
 
                                 Write-Debug "Local dependency source path: $sourcePath"
 
-                                $targetPath = Join-Path $global:ShellContext.BranchLocalDirectory Modules\$module
+                                $targetPath = Join-Path $ShellContext.BranchLocalDirectory Modules\$module
                                 CopyContents $sourcePath "$targetPath\Dependencies"
                             }
                         }
@@ -444,7 +444,7 @@ function Build-ExpertModules {
                         if ($LASTEXITCODE -eq 1) {
                             throw "Build of $module Failed"
                         } elseif ($LASTEXITCODE -eq 0 -and $codeCoverage -and $codeCoverageReport.IsPresent) {
-                            [string]$codeCoverageReport = Join-Path -Path $global:ShellContext.CurrentModulePath -ChildPath "Bin\Test\CodeCoverage\dotCoverReport.html"
+                            [string]$codeCoverageReport = Join-Path -Path $ShellContext.CurrentModulePath -ChildPath "Bin\Test\CodeCoverage\dotCoverReport.html"
 
                             if (Test-Path ($codeCoverageReport)) {
                                 Write-Host "Displaying dotCover code coverage report."

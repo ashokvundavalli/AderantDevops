@@ -29,7 +29,7 @@ function Get-Product {
         [switch]$buildNumberCheck
     )
 
-    [string]$getProduct = Join-Path -Path $global:ShellContext.PackageScriptsDirectory -ChildPath 'Get-Product.ps1'
+    [string]$getProduct = Join-Path -Path $ShellContext.PackageScriptsDirectory -ChildPath 'Get-Product.ps1'
     [string]$dropRoot = '\\dfs.aderant.com\expert-ci'
 
     if ([string]::IsNullOrWhiteSpace($binariesDirectory)) {
@@ -51,7 +51,7 @@ function Get-Product {
 
     if (-not $buildNumberCheck.IsPresent -and $createBackup.IsPresent) {
         Write-Host "Creating backup of Binaries folder."
-        $backupPath = $global:ShellContext.BranchLocalDirectory + "\BinariesBackup"
+        $backupPath = $ShellContext.BranchLocalDirectory + "\BinariesBackup"
         if (-not (Test-Path $backupPath)) {
             New-Item -ItemType Directory -Path $backupPath
         }
@@ -81,6 +81,62 @@ Register-ArgumentCompleter -CommandName Get-Product -ParameterName "pullRequestI
 }
 
 <#
+.Synopsis
+    Gets the latest product zip from the BuildAll output and unzips to your BranchBinariesDirectory
+.Description
+    The binaries will be loaded into your branch binaries directory. e.g. <your_branch_source>\Binaries
+#>
+function Get-ProductZip([switch]$unstable) {
+    Write-Host "Getting latest product zip from [$ShellContext.BranchServerDirectory]"
+    $zipName = "ExpertBinaries.zip"
+    [string]$pathToZip = (PathToLatestSuccessfulPackage -pathToPackages $ShellContext.BranchServerDirectory -packageZipName $zipName -unstable $unstable)
+
+    if (-not $pathToZip) {
+        return
+    }
+
+    Write-Host "Selected " $pathToZip
+
+    $pathToZip = $pathToZip.Trim()
+    DeleteContentsFromExcludingFile -directory $BranchBinariesDirectory "environment.xml"
+    Copy-Item -Path $pathToZip -Destination $BranchBinariesDirectory
+    $localZip = (Join-Path -Path $BranchBinariesDirectory -ChildPath $zipName)
+    Write-Host "About to extract zip to [$BranchBinariesDirectory]"
+    
+    $zipExe = Join-Path -Path $ShellContext.BuildToolsDirectory -ChildPath "7z.exe"
+    if (Test-Path $zipExe) {
+        $SourceFile = $localZip
+        $Destination = $BranchBinariesDirectory
+        &$zipExe x $SourceFile "-o$Destination" -y
+    } else {
+        Write-Host "Falling back to using Windows zip util as 7-zip does not exist on this system"
+        $shellApplication = new-object -com shell.application
+        $zipPackage = $shellApplication.NameSpace($localZip)
+        $destinationFolder = $shellApplication.NameSpace($ShellContext.BranchBinariesDirectory)
+        $destinationFolder.CopyHere($zipPackage.Items())     
+    }
+    
+    Write-Host "Finished extracting zip"
+    [string]$versionFilePath = Join-Path $ShellContext.BranchBinariesDirectory "BuildAllZipVersion.txt"
+    echo $pathToZip | Out-File -FilePath $versionFilePath
+}
+
+<#
+.Synopsis
+    Runs a GetProduct for the current branch but will not contain the pdb's
+.Description
+    Uses the expertmanifest from the local Build.Infrastructure\Src\Package directory.
+    No pdb's returned
+    The binaries will be loaded into your branch binaries directory. e.g. <your_branch_source>\Binaries
+#>
+function Get-ProductNoDebugFiles {
+    $shell = ".\GetProduct.ps1 -ProductManifestPathPath $ShellContext.ProductManifestPath -dropRoot $ShellContext.BranchServerDirectory -binariesDirectory $ShellContext.BranchBinariesDirectory -systemMapConnectionString (Get-SystemMapConnectionString)"
+    pushd $ShellContext.PackageScriptsDirectory
+    invoke-expression $shell | Out-Host
+    popd
+}
+
+<#
 .Synopsis 
     Displays the Build version url located in the binaries directory of the current branch.
 .Description
@@ -93,6 +149,7 @@ function Get-ProductBuild([switch]$copyToClipboard) {
     $buildVersionFile = Get-ChildItem -Path $binariesDirectory -Filter Expert_Build_*.url
     
     if ($buildVersionFile) {
+    
         $buildVersionFilePath = Join-Path -Path $binariesDirectory -ChildPath $buildVersionFile
         Invoke-Item $buildVersionFilePath
         Write-Host "Current Build information is visible at: $($buildVersionFilePath)" 

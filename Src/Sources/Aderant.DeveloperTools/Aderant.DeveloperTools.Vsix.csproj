@@ -10,6 +10,10 @@
     </UpgradeBackupLocation>
     <OldToolsVersion>12.0</OldToolsVersion>
     <TargetFrameworkProfile />
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
     <DeployExtension>false</DeployExtension>
     <DeployExtension Condition="'$(BuildingInsideVisualStudio)' == 'true'">true</DeployExtension>
   </PropertyGroup>
