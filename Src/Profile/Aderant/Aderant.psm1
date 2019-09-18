@@ -30,13 +30,13 @@ foreach ($directory in $imports) {
     }
 }
 
-$global:ShellContext = $null
+$script:ShellContext = $null
 
 function Initialize-Module {
     . $PSScriptRoot\ShellContext.ps1
 
-    $global:ShellContext = [ShellContext]::new()
-    $MyInvocation.MyCommand.Module.PrivateData.ShellContext = $global:ShellContext
+    $script:ShellContext = [ShellContext]::new()
+    $MyInvocation.MyCommand.Module.PrivateData.ShellContext = $script:ShellContext
 
     $formatDataFile = (Join-Path -Path $PSScriptRoot -ChildPath '..\..\Build\Functions\Formats\SourceTreeMetadata.format.ps1xml')
 
@@ -49,16 +49,16 @@ function Initialize-Module {
 
 Initialize-Module
 
-[string]$global:BranchConfigPath = ""
-[string]$ShellContext.BranchName = ""
-[string]$global:BranchLocalDirectory = ""
-[string]$global:BranchServerDirectory = ""
-[string]$global:BranchModulesDirectory = ""
-[string]$global:BranchBinariesDirectory = ""
-[string]$global:BranchExpertSourceDirectory = ""
-[string]$global:BuildScriptsDirectory = $global:ShellContext.BuildScriptsDirectory
-[string]$global:PackageScriptsDirectory = ""
-[string]$global:ProductManifestPath = ""
+[string]$global:BranchConfigPath = [string]::Empty
+[string]$ShellContext.BranchName = [string]::Empty
+[string]$global:BranchLocalDirectory = [string]::Empty
+[string]$global:BranchServerDirectory = [string]::Empty
+[string]$global:BranchModulesDirectory = [string]::Empty
+[string]$global:BranchBinariesDirectory = [string]::Empty
+[string]$global:BranchExpertSourceDirectory = [string]::Empty
+[string]$global:BuildScriptsDirectory = $script:ShellContext.BuildScriptsDirectory
+[string]$global:PackageScriptsDirectory = [string]::Empty
+[string]$global:ProductManifestPath = [string]::Empty
 [PSModuleInfo]$currentModuleFeature = $null
 [string[]]$global:LastBuildBuiltModules = @()
 [string[]]$global:LastBuildRemainingModules = @()
@@ -243,41 +243,43 @@ function Set-ScriptPaths {
     }
 }
 
-<#
-Find the Install Location of programs
-#>
 function Find-InstallLocation ($programName) {
-    $key = [Microsoft.Win32.Registry]::LocalMachine.OpenSubKey('SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall')
-    foreach ($installKey in $key.GetSubKeyNames()) {
-        $productKey = $key.OpenSubKey($installKey)
-
-        foreach ($productEntry in $productKey.GetValueNames()) {
-            if ($productEntry -eq "DisplayName") {
-                if ($productKey.GetValue($productEntry) -eq "Expert Deployment Manager") {
-                    return $productKey.GetValue("InstallLocation")
+    <#
+    .SYNOPSIS
+        Find the Install Location of programs
+    #>
+        $key = [Microsoft.Win32.Registry]::LocalMachine.OpenSubKey('SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall')
+        foreach ($installKey in $key.GetSubKeyNames()) {
+            $productKey = $key.OpenSubKey($installKey)
+    
+            foreach ($productEntry in $productKey.GetValueNames()) {
+                if ($productEntry -eq "DisplayName") {
+                    if ($productKey.GetValue($productEntry) -eq "Expert Deployment Manager") {
+                        return $productKey.GetValue("InstallLocation")
+                    }
                 }
             }
         }
     }
-}
 
-<#
-Set Expert specific variables
-#>
 function Set-ExpertVariables {
-    $script:installPath = Find-InstallLocation -programName 'Expert Deployment Manager'
+    <#
+    .SYNOPSIS
+        Set Expert specific variables
+    #>
+    [string]$script:installPath = Find-InstallLocation -programName 'Expert Deployment Manager'
 
-    if ($script:installPath){
-        $ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentEngine -Value { Join-Path -Path $script:installPath -ChildPath 'DeploymentEngine.exe' }
-        $ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentManager -Value { Join-Path -Path $script:installPath -ChildPath 'DeploymentManager.exe' }
+    if ($script:installPath) {
+        $script:ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentEngine -Value { Join-Path -Path $script:installPath -ChildPath 'DeploymentEngine.exe' }
+        $script:ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentManager -Value { Join-Path -Path $script:installPath -ChildPath 'DeploymentManager.exe' }
     } else {
         $pathToDeploymentEngine = 'C:\AderantExpert\Install\DeploymentEngine.exe'
         $pathToDeploymentManager = 'C:\AderantExpert\Install\DeploymentManager.exe'
 
-        $ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentEngine -Value { $pathToDeploymentEngine }
-        $ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentManager -Value { $pathToDeploymentManager }
+        $script:ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentEngine -Value { $pathToDeploymentEngine }
+        $script:ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentManager -Value { $pathToDeploymentManager }
 
-        if (-not (Test-Path $ShellContext.DeploymentManager)) {
+        if (-not (Test-Path $script:ShellContext.DeploymentManager)) {
             Write-Warning "Please ensure that DeploymentManager.exe is located at: $($pathToDeploymentManager)"
         }
     }
@@ -315,9 +317,9 @@ function Set-CurrentModule {
         }
 
         if ([System.IO.Path]::IsPathRooted($name)) {
-            $global:ShellContext.CurrentModulePath = $name
-            $global:ShellContext.CurrentModuleName = ([System.IO.DirectoryInfo]::new($global:ShellContext.CurrentModulePath)).Name
-            Write-Debug "CurrentModuleName set to: $($global:ShellContext.CurrentModuleName)"
+            $script:ShellContext.CurrentModulePath = $name
+            $script:ShellContext.CurrentModuleName = ([System.IO.DirectoryInfo]::new($script:ShellContext.CurrentModulePath)).Name
+            Write-Debug "CurrentModuleName set to: $($script:ShellContext.CurrentModuleName)"
 
             Write-Debug "Setting repository: $name"
             Import-Module $PSScriptRoot\Git.psm1 -Global
@@ -414,15 +416,6 @@ function Get-CurrentModule {
     return Get-ExpertModule -ModuleName $ShellContext.CurrentModuleName
 }
 
-function OutputEnvironmentDetails {
-    Write-Host ""
-    Write-Host "-----------------------------"
-    Write-Host "Local Information"
-    Write-Host "-----------------------------"
-    Write-Host "Path :" $global:BranchLocalDirectory
-    Write-Host "-----------------------------"
-}
-
 <#
  return the connection string to be used for the sitemap builder
 #>
@@ -514,10 +507,10 @@ function Install-LatestVisualStudioExtensionImpl($installDetails, [switch]$local
 
         $dropPathVSIX = (GetPathToBinaries $module $ShellContext.BranchServerDirectory)
 
-        if (!(Test-Path $localInstallDirectory)) {
+        if (-not (Test-Path $localInstallDirectory)) {
             New-Item $localInstallDirectory -ItemType directory
         } else {
-            DeleteContentsFrom $localInstallDirectory
+            Remove-Item -Path "$localInstallDirectory\*" -Recurse -Force 
         }
 
         CopyContents -copyFrom $dropPathVSIX -copyTo $localInstallDirectory
@@ -591,7 +584,6 @@ function Set-Environment {
 
         #Initialize-BuildLibraries
         Set-VisualStudioVersion
-        #OutputEnvironmentDetails
     }
 }
 
@@ -860,14 +852,10 @@ Add-ModuleExpansionParameter -CommandName "Get-DownstreamExpertModules" -Paramet
 Add-ModuleExpansionParameter -CommandName "Get-ExpertModule" -ParameterName "ModuleName"
 Add-ModuleExpansionParameter -CommandName "Get-ExpertModules" -ParameterName "ModuleNames"
 Add-ModuleExpansionParameter –CommandName "Open-ModuleSolution" –ParameterName "ModuleName"
-Add-ModuleExpansionParameter –CommandName "Get-Latest" –ParameterName "ModuleName"
 Add-ModuleExpansionParameter –CommandName "Start-Redeployment" –ParameterName "CopyBinariesFrom"
 Add-ModuleExpansionParameter -CommandName "Copy-BinToEnvironment" -ParameterName "ModuleNames"
 Add-ModuleExpansionParameter -CommandName "Open-Directory" -ParameterName "ModuleName"
-Add-ModuleExpansionParameter -CommandName "New-ExpertBuildDefinition" -ParameterName "ModuleName"
-Add-ModuleExpansionParameter -CommandName "Clean" -ParameterName "moduleNames"
 Add-ModuleExpansionParameter -CommandName "CleanupIISCache" -ParameterName "moduleNames"
-Add-ModuleExpansionParameter -CommandName "Scorch" -ParameterName "moduleNames"
 Add-ModuleExpansionParameter –CommandName "Get-WebDependencies" –ParameterName "ModuleName"
 
 <#
@@ -989,9 +977,7 @@ $functionsToExport = @(
     [PSCustomObject]@{ function = 'Run-ExpertUITests'; alias = $null; },
     [PSCustomObject]@{ function = 'Run-ExpertSanityTests'; alias = 'rest'; },
     [PSCustomObject]@{ function = 'Run-ExpertVisualTests'; alias = 'revt'; },
-    [PSCustomObject]@{ function = 'Branch-Module'; alias = 'branch'; },
     [PSCustomObject]@{ function = 'Build-ExpertModules'; alias = $null; },
-    [PSCustomObject]@{ function = 'Build-ExpertModulesOnServer'; alias = 'bms'; },
     [PSCustomObject]@{ function = 'Build-ExpertPatch'; alias = $null; },
     [PSCustomObject]@{ function = 'Change-ExpertOwner'; alias = $null; },
     [PSCustomObject]@{ function = 'Clear-ExpertCache'; alias = 'ccache'; },
@@ -1003,17 +989,14 @@ $functionsToExport = @(
     [PSCustomObject]@{ function = 'Get-CurrentModule'; alias = $null; },
     [PSCustomObject]@{ function = 'Get-Dependencies'; alias = 'gd'; },
     [PSCustomObject]@{ function = 'Get-EnvironmentFromXml'; alias = $null; },
-    [PSCustomObject]@{ function = 'Get-ExpertModulesInChangeset'; alias = $null; },
     [PSCustomObject]@{ function = 'Get-Database'; alias = $null; },
     [PSCustomObject]@{ function = 'Get-DatabaseServer'; alias = $null; },
-    [PSCustomObject]@{ function = 'Get-Latest'; alias = $null; },
     [PSCustomObject]@{ function = 'Get-Product'; alias = $null; },
     [PSCustomObject]@{ function = 'Get-ProductBuild'; alias = 'gpb'; },
     [PSCustomObject]@{ function = 'Git-Merge'; alias = $null; },
     [PSCustomObject]@{ function = 'Help'; alias = $null; },
 #    [PSCustomObject]@{ function = 'Install-LatestSoftwareFactory'; alias = 'usf'; },
 #    [PSCustomObject]@{ function = 'Install-LatestVisualStudioExtension'; alias = $null; },
-    [PSCustomObject]@{ function = 'Move-Shelveset'; alias = $null; },
     [PSCustomObject]@{ function = 'Open-ModuleSolution'; alias = 'vs'; },
     [PSCustomObject]@{ function = 'Set-CurrentModule'; alias = 'cm'; },
     [PSCustomObject]@{ function = 'Set-Environment'; advanced = $true; alias = $null; },
@@ -1021,11 +1004,8 @@ $functionsToExport = @(
     [PSCustomObject]@{ function = 'Start-dbgen'; alias = 'dbgen'; },
     [PSCustomObject]@{ function = 'Start-DeploymentEngine'; alias = 'de'; },
     [PSCustomObject]@{ function = 'Start-DeploymentManager'; alias = 'dm'; },
-    [PSCustomObject]@{ function = 'SwitchBranchTo'; alias = 'Switch-Branch'; },
     [PSCustomObject]@{ function = 'Prepare-Database'; alias = 'dbprep'; },
     [PSCustomObject]@{ function = 'Update-Database'; alias = 'upd'; },
-    [PSCustomObject]@{ function = 'Scorch'; alias = $null; },
-    [PSCustomObject]@{ function = 'Clean'; alias = $null; },
     [PSCustomObject]@{ function = 'CleanupIISCache'; alias = $null; },
 
     # IIS related functions
@@ -1053,8 +1033,6 @@ Export-ModuleMember -variable BranchBinariesDirectory
 Export-ModuleMember -variable BranchName
 Export-ModuleMember -variable BranchModulesDirectory
 Export-ModuleMember -variable ProductManifestPath
-Export-ModuleMember -variable ShellContext
-Export-ModuleMember -Function Get-DependenciesFrom
 
 #TODO move
 #. $PSScriptRoot\Feature.Database.ps1
@@ -1095,3 +1073,4 @@ nuget Aderant.Build.Analyzer
 }
 
 Export-ModuleMember -Function Test-ExpertPackageFeed
+Export-ModuleMember -Variable $script:ShellContext

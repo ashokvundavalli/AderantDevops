@@ -13,9 +13,9 @@ function Test-PatchItems() {
         [Parameter(Mandatory=$false)][string]$repositoryPatchBranch
     )
     if (-not $noget.IsPresent) {
-        New-Item -Path "$ShellContext.PackageScriptsDirectory\Patching" -ItemType Directory -Force | Out-Null
-        Invoke-Expression "xcopy \\dfs.aderant.com\expertsuite\Main\Build.Tools\Current\Patching\* /S /Y $ShellContext.PackageScriptsDirectory\Patching"
+        New-Item -Path "$($global:ShellContext.PackageScriptsDirectory)\Patching" -ItemType Directory -Force | Out-Null
+        Invoke-Expression "xcopy \\dfs.aderant.com\expertsuite\Main\Build.Tools\Current\Patching\* /S /Y $($global:ShellContext.PackageScriptsDirectory)\Patching"
     }
 
-    & "$ShellContext.PackageScriptsDirectory\Patching\TestPatch.ps1" -repositoryPatchBranch $repositoryPatchBranch
+    & "$($global:ShellContext.PackageScriptsDirectory)\Patching\TestPatch.ps1" -repositoryPatchBranch $repositoryPatchBranch
 }

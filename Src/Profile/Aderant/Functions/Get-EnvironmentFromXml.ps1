@@ -4,8 +4,8 @@ function Get-EnvironmentFromXml([string]$xpath) {
         Write-Host -ForegroundColor Yellow "You need to specify an xpath expression";
         return $null;
     }
-    if (Test-Path $ShellContext.BranchBinariesDirectory) {
-        $environmentXmlPath = [System.IO.Path]::Combine($ShellContext.BranchBinariesDirectory, "environment.xml");
+    if (Test-Path $global:ShellContext.BranchBinariesDirectory) {
+        $environmentXmlPath = [System.IO.Path]::Combine($global:ShellContext.BranchBinariesDirectory, "environment.xml");
         [xml]$xml = Get-Content $environmentXmlPath;
         $returnValue = Select-Xml $xpath $xml;
         return $returnValue;
