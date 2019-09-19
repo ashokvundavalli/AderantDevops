@@ -384,10 +384,7 @@ namespace Aderant.Build {
         protected virtual void EnsureDirectory(string path) {
             path = GetFullPath(path);
 
-            // If the destination directory doesn't exist, create it.
-            if (!DirectoryExists(path)) {
-                Directory.CreateDirectory(path);
-            }
+            EnsureDirectoryInternal(path);
         }
 
         private void EnsureDirectoryInternal(string path) {
