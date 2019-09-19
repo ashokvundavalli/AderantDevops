@@ -128,7 +128,7 @@ namespace Aderant.Build.Packaging {
                     continue;
                 }
 
-                // Ignore files under the Build Infrastructure working directory, as it mat contain test resources
+                // Ignore files under the Build Infrastructure working directory, as it may contain test resources
                 // which would erroneously be picked up
                 if (file.IndexOf(BuildInfrastructureWorkingDirectory, StringComparison.OrdinalIgnoreCase) >= 0) {
                     continue;

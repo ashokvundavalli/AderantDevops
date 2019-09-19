@@ -284,6 +284,8 @@ namespace Willys.LsaSecurity
             } catch {
                 Write-Warning $Error[0] | Format-List -Force
             }
+
+            C:\Windows\Microsoft.NET\Framework64\v4.0.30319\Aspnet_regiis.exe -ga ADERANT_AP\tfsbuildservice$
         }
     }
 
