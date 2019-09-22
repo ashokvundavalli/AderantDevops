@@ -340,15 +340,10 @@ function EnsureClientCertificateAvailable() {
 
 function EnsureServiceEndpointsAvailable() {
     if ([System.Environment]::GetEnvironmentVariable("SYSTEM_TEAMFOUNDATIONCOLLECTIONURI")) {
-        $serviceConnectionName = Get-VstsInput -Name "nuGetServiceConnection"
-
-        if ([string]::IsNullOrWhiteSpace($serviceConnectionName)) {
-            Write-Warning -Message "nuGetServiceConnection is Unavailable."
-        } else {
-            Write-Host "ServiceConnectionName: $serviceConnectionName"
-            $endpoint = Get-VstsEndpoint -Name $serviceConnectionName -Require
-            Write-Host "VstsEndpoint: $endpoint"
-        }
+        $serviceConnectionName = Get-VstsInput -Name "nuGetServiceConnection" -Require
+        Write-Host "nuGetServiceConnection: $serviceConnectionName"
+        $endpoint = Get-VstsEndpoint -Name $serviceConnectionName -Require
+        Write-Host "VstsEndpoint: $endpoint"
 
         # Connection API key can be accessed via $endpoint.Auth.parameters.nugetkey
     }
@@ -446,7 +441,9 @@ try {
     LoadVstsTaskLibrary
     SetNuGetProviderPath $assemblyPathRoot
     EnsureClientCertificateAvailable
-    EnsureServiceEndpointsAvailable
+    if ((Get-Variable -Name 'skipEndpointCheck' -Scope 'Global' -ErrorAction 'SilentlyContinue') -and -not $global:skipEndpointCheck) {
+        EnsureServiceEndpointsAvailable
+    }
 
     [System.AppDomain]::CurrentDomain.SetData("BuildScriptsDirectory", $BuildScriptsDirectory)
 

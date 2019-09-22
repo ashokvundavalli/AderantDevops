@@ -23,6 +23,7 @@ begin {
     $ErrorActionPreference = 'Stop'
     $InformationPreference = 'Continue'
 
+    [bool]$global:skipEndpointCheck = $true
     . "$PSScriptRoot\..\Build\Functions\Initialize-BuildEnvironment.ps1"
 
     function IsThirdparty {

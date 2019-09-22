@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
@@ -75,7 +73,7 @@ namespace Aderant.Build.Tasks {
                     var libraryReferences = projectReferences.Where(p => p.ItemSpec.IndexOf(".Library", StringComparison.OrdinalIgnoreCase) >= 0);
                     if (libraryReferences.Any()) {
 
-                        var newprojectReferenes = projectReferences.Except(libraryReferences);
+                        var newProjectReferences = projectReferences.Except(libraryReferences);
 
                         foreach (var library in libraryReferences) {
                             var newReference =
@@ -87,7 +85,7 @@ namespace Aderant.Build.Tasks {
                             newAssemblyReferences.Add(newReference);
                         }
 
-                        ModifiedProjectReferences = newprojectReferenes.ToArray();
+                        ModifiedProjectReferences = newProjectReferences.ToArray();
                         ModifiedReferences = newAssemblyReferences.ToArray();
                     }
                 }
