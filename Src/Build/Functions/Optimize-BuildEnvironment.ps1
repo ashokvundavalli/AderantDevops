@@ -24,6 +24,7 @@ function Optimize-BuildEnvironment {
         "ServiceHub.RoslynCodeAnalysisService32.exe",
         "ServiceHub.VSDetouredHost.exe",
         "TE.ProcessHost.Managed.exe",
+        "testhost.exe",
         "testhost.x86.exe",
         "testhostw.exe",
         "VBCSCCompiler.exe",
