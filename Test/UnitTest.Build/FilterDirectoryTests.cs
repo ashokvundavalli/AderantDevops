@@ -1,5 +1,4 @@
-﻿extern alias Buildv35;
-using System;
+﻿using System;
 using System.Linq;
 using Microsoft.Build.Utilities;
 using Microsoft.Build.Framework;
