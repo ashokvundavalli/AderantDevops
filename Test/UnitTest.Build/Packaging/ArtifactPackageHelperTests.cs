@@ -5,6 +5,7 @@ using Microsoft.Build.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTest.Build.Packaging {
+    extern alias Buildv35;
 
     [TestClass]
     public class ArtifactPackageHelperTests {
