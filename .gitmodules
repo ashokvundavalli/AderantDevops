@@ -14,7 +14,3 @@
 	path = Src/Build.Tools/NuGet.CredentialProvider
 	url = https://tfs.aderant.com/tfs/ADERANT/ExpertSuite/_git/NuGet.CredentialProvider
 	branch = master
-[submodule "MSBuildTasks"]
-	path = Src/Build/Tasks/MSBuild.Community.Tasks
-	url = https://tfs.aderant.com/tfs/ADERANT/ExpertSuite/_git/ThirdParty.MSBuildTasks
-	branch = master
