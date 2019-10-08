@@ -254,7 +254,7 @@ process {
             }
 
             if (-not $PSCmdlet.ShouldProcess('Build number')) {
-               Write-Information "Build number: $buildNumber"
+                Write-Information "The latest successful Build Number for branch: $branch is: $buildNumber."
                 return $buildNumber
                 exit 0
             }
