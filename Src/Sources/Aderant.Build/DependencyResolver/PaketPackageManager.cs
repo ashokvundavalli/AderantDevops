@@ -170,7 +170,7 @@ namespace Aderant.Build.DependencyResolver {
             if (addDatabasePackageUrl) {
                 sources = AddSource(Constants.DatabasePackageUri, sources);
             }
-
+            
             // Upgrade any V2 to V3 sources
             if (sources.Any(s => object.Equals(s.NuGetType, PackageSources.KnownNuGetSources.OfficialNuGetGallery) && s.IsNuGetV2)) {
                 sources = RemoveSource(sources, Constants.OfficialNuGetUrl);

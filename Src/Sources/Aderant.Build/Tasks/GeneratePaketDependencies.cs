@@ -50,7 +50,7 @@ namespace Aderant.Build.Tasks {
             foreach (var source in packageSources) {
                 paketDependenciesContent.AppendLine($"source {source.Url}");
             }
-
+            
             foreach (ITaskItem mapping in dependencyMappings) {
                 string versionRequirement = AcquireVersionRequirement(expertManifest, mapping.GetMetadata("ReferenceRequirement"));
 
