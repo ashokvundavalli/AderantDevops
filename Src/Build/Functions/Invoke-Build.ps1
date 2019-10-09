@@ -200,6 +200,13 @@ function CreateToolArgumentString($context, $remainingArgs) {
             $set.Add("/m:" + $MaxCpuCount.ToString())
         } else {
             $numberOfCores = (Get-CimInstance -Class win32_Processor).NumberOfCores
+            if ($numberOfCores -is [Array]) {
+                # If the person is awkward and has more than 1 socket then give up and use the logical processors count.
+                # This property includes HyperThreaded cores which we are trying to ignore but if they have more than
+                # one socket then their computer is probably very powerful anyway.
+                $numberOfCores = (Get-CimInstance -Class Win32_ComputerSystem).NumberOfLogicalProcessors
+            }
+
             $set.Add("/m:" + ([Math]::Max(1, $numberOfCores)))
         }
 
