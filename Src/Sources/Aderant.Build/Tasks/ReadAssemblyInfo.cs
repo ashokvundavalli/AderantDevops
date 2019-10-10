@@ -19,7 +19,7 @@ namespace Aderant.Build.Tasks {
         private TaskItem assemblyInformationalVersion;
         private TaskItem assemblyVersion;
 
-        public ReadAssemblyInfo() {
+        public ReadAssemblyInfo() {            
             if (parseTextMethod == null) {
                 InitializeParseTextMethod();
             }

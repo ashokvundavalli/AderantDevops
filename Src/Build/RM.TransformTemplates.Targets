@@ -272,14 +272,33 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
       <rmT4AssemblyReferencePaths Include="$(rmT4AssemblyReferencePaths);@(VSSDKPaths);@(RoslynPaths);@(PublicAssemblies);@(PrivateAssemblies);@(VisualStudioDslAssemblies)" />
     </ItemGroup>
 
+    <PropertyGroup>
+      <TextTemplatingSegment>Microsoft\VisualStudio\*\TextTemplating\Microsoft.TextTemplating.Build.Tasks.dll</TextTemplatingSegment>
+    </PropertyGroup>
+
     <ItemGroup>
-      <TextTemplatingBuildTasks Include="%(InstalledToolVersion.Identity)\..\..\Microsoft\VisualStudio\*\TextTemplating\Microsoft.TextTemplating.Build.Tasks.dll">
+      <_TextTemplatingBuildTasks Include="%(InstalledToolVersion.Identity)\..\..\$(TextTemplatingSegment)">
         <IsTaskAssembly>true</IsTaskAssembly>
-      </TextTemplatingBuildTasks>
-      <TextTemplatingBuildTasks Include="%(InstalledToolVersion.Identity)\MSBuild\Microsoft\VisualStudio\*\TextTemplating\Microsoft.TextTemplating.Build.Tasks.dll">
+      </_TextTemplatingBuildTasks>
+
+      <_TextTemplatingBuildTasks Include="%(InstalledToolVersion.Identity)\MSBuild\$(TextTemplatingSegment)">
         <IsTaskAssembly>true</IsTaskAssembly>
-      </TextTemplatingBuildTasks>
+      </_TextTemplatingBuildTasks>
+
+      <!-- InstalledToolVersion will not contain 2017 if 2019 is installed so we need to include fallbacks -->
+      <_TextTemplatingBuildTasks Include="$(ProgramFiles32)\Microsoft Visual Studio\%(_VisualStudioVersion.Identity)\%(_VisualStudioVersion.Edition)\MSBuild\$(TextTemplatingSegment)">
+        <IsTaskAssembly>true</IsTaskAssembly>
+      </_TextTemplatingBuildTasks>
     </ItemGroup>
+
+    <ItemGroup>
+      <TextTemplatingBuildTasks Include="@(_TextTemplatingBuildTasks->Distinct())" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <VisualStudioDslAssemblies Include="$(ProgramFiles32)\Microsoft Visual Studio\%(_VisualStudioVersion.Identity)\%(_VisualStudioVersion.Edition)\VSSDK\VisualStudioIntegration\Common\Assemblies\v4.0\Microsoft.VisualStudio.Modeling.Sdk.*.dll" />
+    </ItemGroup>
+
   </Target>
 
 

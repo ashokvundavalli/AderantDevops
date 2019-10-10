@@ -93,7 +93,7 @@ function BuildProjects([string]$mainAssembly, [bool]$forceCompile, [string]$comm
         try {
             if ($msbuildPath.Contains("2017")) {
                 # 2017 is a mess of binding redirects so give up and invoke the compiler as a tool - this is slower than invoking it in-proc
-                & "$msbuildPath\MSBuild.exe" $projectPath "/t:$target" "/p:project-set=minimal" "/p:BuildScriptsDirectory=$BuildScriptsDirectory"
+                & "$msbuildPath\MSBuild.exe" $projectPath "/t:$target" "/p:project-set=minimal" "/p:BuildScriptsDirectory=$BuildScriptsDirectory" "/nr:false"
                 return
             }
 
@@ -128,6 +128,9 @@ function BuildProjects([string]$mainAssembly, [bool]$forceCompile, [string]$comm
 
             HandleResult $result
         } finally {
+            if ($LASTEXITCODE -ne 0) {
+                throw "FATAL: Compile failed"
+            }
             SetAlternativeStreamValue $info.FullName $buildCommitStreamName $commit
         }
     }
