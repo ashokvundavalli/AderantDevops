@@ -61,7 +61,7 @@ $pathToGit = "C:\Program Files\Git\cmd\git.exe"
 # Clean up other cloned repositories in case we are recycling a working dir
 Get-ChildItem -Path $Env:BUILD_SOURCESDIRECTORY -Depth 1 -Filter "*_BUILD_*" -Directory | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
 
-$buildFolder = [System.IO.Path]::Combine($Env:BUILD_SOURCESDIRECTORY, "_BUILD_" + (Get-Random))
+$buildFolder = [System.IO.Path]::Combine($Env:BUILD_SOURCESDIRECTORY, "_BUILD_" + $ENV:BUILD_BUILDID)
 
 function SetGitOptions() {
     if (-not (Test-Path $pathToGit)) {
