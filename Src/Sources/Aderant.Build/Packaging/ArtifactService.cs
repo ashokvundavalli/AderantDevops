@@ -68,6 +68,10 @@ namespace Aderant.Build.Packaging {
             return buildArtifacts;
         }
 
+        internal void SetPathBuilder(ArtifactStagingPathBuilder builder) {
+            this.pathBuilder = builder;
+        }
+
         private IReadOnlyCollection<BuildArtifact> ProcessDefinitions(BuildOperationContext context, string container, IReadOnlyCollection<ArtifactPackageDefinition> packages) {
             // Process custom packages first
             // Then create auto-packages taking into consideration any items from custom packages
@@ -208,7 +212,9 @@ namespace Aderant.Build.Packaging {
         /// <summary>
         /// Creates an artifact that will be stored into the build cache
         /// </summary>
-        private BuildArtifact CreateBuildCacheArtifact(string container, IList<PathSpec> copyList, ArtifactPackageDefinition definition, IReadOnlyCollection<PathSpec> files) {
+        internal BuildArtifact CreateBuildCacheArtifact(string container, IList<PathSpec> copyList, ArtifactPackageDefinition definition, IReadOnlyCollection<PathSpec> files) {
+            ErrorUtilities.IsNotNull(pathBuilder, nameof(pathBuilder));
+
             bool sendToArtifactCache;
             string basePath = pathBuilder.CreatePath(container, out sendToArtifactCache);
 
@@ -224,6 +230,10 @@ namespace Aderant.Build.Packaging {
             sb.AppendLine();
 
             foreach (PathSpec pathSpec in files) {
+                if (!fileSystem.FileExists(pathSpec.Location)) {
+                    throw new FileNotFoundException(string.Format("The file {0} for package {1} does not exist", pathSpec.Location, definition.Id), pathSpec.Location);
+                }
+
                 // Path spec destination is relative.
                 PathSpec spec;
                 if (pathSpec.UseHardLink != null) {

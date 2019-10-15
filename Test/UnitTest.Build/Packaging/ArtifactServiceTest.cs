@@ -73,37 +73,6 @@ namespace UnitTest.Build.Packaging {
             Assert.IsTrue(Path.IsPathRooted(result[0].Destination));
         }
 
-        //[TestMethod]
-        //public void BuildArtifactResolveOperation_returns_paths_from_artifact() {
-        //    var state = new BuildStateFile();
-        //    state.Outputs = new ProjectTreeOutputSnapshot();
-        //    state.Outputs["Foo\\Bar.cspoj"] = new ProjectOutputSnapshot {
-        //        FilesWritten = new string[] {
-        //            @"..\..\bin\foo.dll"
-        //        },
-        //        OutputPath = @"..\..\bin\"
-        //    };
-
-        //    var fsMock = new Mock<IFileSystem>();
-        //    fsMock.Setup(s => s.FileExists(It.IsAny<string>())).Returns(true);
-
-        //    var stateFile = new BuildStateFile();
-        //    stateFile.BucketId = new BucketId(Path.GetRandomFileName(), "a");
-        //    stateFile.AddArtifact("a");
-
-        //    var context = new BuildOperationContext {
-        //        StateFiles = new List<BuildStateFile> {
-
-
-        //        }
-        //    };
-
-        //    var artifactService = new ArtifactService(null, fsMock.Object, NullLogger.Default);
-        //    List<ArtifactPathSpec> paths = artifactService.BuildArtifactResolveOperation(context, "a", "bar");
-
-        //    Assert.AreEqual(1, paths.Count);
-        //}
-
         [TestMethod]
         public void CreateLinkCommands() {
             var mock = new Mock<IBuildPipelineService>();
@@ -188,6 +157,24 @@ namespace UnitTest.Build.Packaging {
             var result = artifactService.OrderBuildsByBuildNumber(new[] { "0", "5", "8" });
 
             CollectionAssert.AreEquivalent(new[] { "8", "5", "0" }, result);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(FileNotFoundException))]
+        public void CreateBuildCacheArtifact_throws_when_source_file_is_missing() {
+            var fsMock = new Mock<IFileSystem>();
+            fsMock.Setup(s => s.FileExists(It.IsAny<string>())).Returns(false);
+
+            var definition = new ArtifactPackageDefinitionBuilder("MyPackage", (a) => { a.AddFile("Alpha", ""); }).Build();
+
+            var artifactService = new ArtifactService(null, fsMock.Object, NullLogger.Default);
+            artifactService.SetPathBuilder(new ArtifactStagingPathBuilder("", 1, new SourceTreeMetadata()));
+
+            var paths = artifactService.CreateBuildCacheArtifact(
+                "",
+                new[] { PathSpec.Create("A", "") },
+                definition,
+                definition.GetFiles());
         }
     }
 }
