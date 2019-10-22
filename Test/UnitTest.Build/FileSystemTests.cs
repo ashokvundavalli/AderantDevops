@@ -3,6 +3,7 @@ using System.IO;
 using System.Reflection;
 using Aderant.Build;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
 
 namespace UnitTest.Build {
     [TestClass]
@@ -44,6 +45,19 @@ namespace UnitTest.Build {
             } finally {
                 File.Delete(targetFile);
             }
+        }
+
+        [TestMethod]
+        public void DeleteFile_invokes_FileDelete() {
+            var fs = new Moq.Mock<PhysicalFileSystem>();
+            fs.CallBase = true;
+            fs.Setup(s => s.FileExists("abc")).Returns(true).Verifiable();
+            fs.Setup(s => s.MakeFileWritable(It.IsAny<string>()));
+            fs.Setup(s => s.DeleteFileCore(It.IsAny<string>() /* Service will call GetFullPath so must match anything */)).Verifiable();
+
+            fs.Object.DeleteFile("abc");
+
+            fs.VerifyAll();
         }
     }
 }

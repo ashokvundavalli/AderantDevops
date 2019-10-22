@@ -188,7 +188,7 @@ namespace Aderant.Build {
             return File.Create(fullPath);
         }
 
-        public void MakeFileWritable(string path) {
+        public virtual void MakeFileWritable(string path) {
             path = GetFullPath(path);
             FileAttributes attributes = File.GetAttributes(path);
             if (attributes.HasFlag(FileAttributes.ReadOnly)) {
@@ -217,7 +217,7 @@ namespace Aderant.Build {
 
                 File.Move(srcFull, destFull);
             } catch (IOException) {
-                File.Delete(srcFull);
+                DeleteFileCore(srcFull);
             }
         }
 
@@ -516,8 +516,8 @@ namespace Aderant.Build {
             }
         }
 
-        private void DeleteFile(string path, bool skipChecks) {
-            if (FileExists(path)) {
+        internal void DeleteFile(string path, bool skipChecks) {
+            if (!FileExists(path)) {
                 return;
             }
 
@@ -527,10 +527,14 @@ namespace Aderant.Build {
                 }
 
                 path = GetFullPath(path);
-                File.Delete(path);
+                DeleteFileCore(path);
             } catch (FileNotFoundException) {
 
             }
+        }
+
+        internal virtual void DeleteFileCore(string path) {
+            File.Delete(path);
         }
 
         delegate bool CreateSymlinkLink(string lpSymlinkFileName, string lpTargetFileName, uint dwFlags);
