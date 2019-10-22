@@ -42,3 +42,4 @@ source https://api.nuget.org/v3/index.json
 references: strict
 framework: net462
 nuget LibGit2Sharp
+nuget Microsoft.Tpl.Dataflow ~> 4.5.24

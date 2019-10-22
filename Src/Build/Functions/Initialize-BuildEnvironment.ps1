@@ -440,6 +440,7 @@ try {
     BuildProjects $mainAssembly $isUsingProfile $commit
     LoadAssembly  $mainAssembly $true
     LoadAssembly "$assemblyPathRoot\protobuf-net.dll" $false
+    LoadAssembly "$assemblyPathRoot\System.Threading.Tasks.Dataflow.dll" $false
     LoadLibGit2Sharp $assemblyPathRoot
     LoadVstsTaskLibrary
     SetNuGetProviderPath $assemblyPathRoot

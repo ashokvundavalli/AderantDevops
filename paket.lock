@@ -248,3 +248,4 @@ NUGET
     LibGit2Sharp (0.26.1)
       LibGit2Sharp.NativeBinaries (2.0.289)
     LibGit2Sharp.NativeBinaries (2.0.289)
+    Microsoft.Tpl.Dataflow (4.5.24)
