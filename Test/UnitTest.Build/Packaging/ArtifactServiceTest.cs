@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks.Dataflow;
 using Aderant.Build;
 using Aderant.Build.Logging;
 using Aderant.Build.Packaging;
@@ -21,7 +22,16 @@ namespace UnitTest.Build.Packaging {
             var bucketMock = new Mock<IBucketPathBuilder>();
             bucketMock.Setup(s => s.GetBucketId(It.IsAny<string>())).Returns("");
 
-            var artifactService = new ArtifactService(new BuildPipelineServiceImpl(), new Mock<IFileSystem>().Object, NullLogger.Default);
+            var fs = new Mock<IFileSystem>();
+            fs.Setup(s => s.FileExists("Baz")).Returns(true);
+            fs.Setup(s => s.BulkCopy(It.IsAny<IEnumerable<PathSpec>>(), true, false, true)).Returns(
+                () => {
+                    var block = new ActionBlock<PathSpec>(spec => { });
+                    block.Complete();
+                    return block;
+                });
+
+            var artifactService = new ArtifactService(new BuildPipelineServiceImpl(), fs.Object, NullLogger.Default);
             artifactService.RegisterHandler(new XamlDropHandler("1.0.0.0", "9.9.9.9"));
 
             IEnumerable<PathSpec> specs = new List<PathSpec> { new PathSpec("Baz", "") };
