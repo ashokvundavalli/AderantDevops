@@ -138,7 +138,7 @@
   var fullPath = AssemblyInfo.GetMetadata("FullPath");
   string text = System.IO.File.ReadAllText(fullPath);
 
-  var assemblyTitleExpression = new Regex(@"(AssemblyProduct|AssemblyTitle)\((.*?)\)");
+  var assemblyTitleExpression = new Regex(@"(AssemblyProduct|AssemblyTitle|AssemblyProductAttribute|AssemblyTitleAttribute)\((.*?)\)");
   GroupCollection match = assemblyTitleExpression.Match(text).Groups;
   string value = match[match.Count - 1].Value;
 
