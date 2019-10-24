@@ -1,8 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
   <!-- External targets: GetServerImageDependencies, RunTests
-     External variables: ArtifactStagingDirectory, BuildToolsDirectory, ExpertSourceDirectory, SolutionRoot, ImageWorkingDirectory, ImageToolingDirectory, DeploymentEngine, SharedDependencyDirectory, ImpactedTestProjects -->
+     External variables: ArtifactStagingDirectory, BuildToolsDirectory, ExpertSourceDirectory, SolutionRoot, ImageWorkingDirectory, ImageToolingDirectory, DeploymentEngine, SharedDependencyDirectory, ImpactedTestProjects, ParametersFile -->
+  <PropertyGroup>
+    <DeploymentTargets>$(SharedDependencyDirectory)\packages\Aderant.Deployment.Internal\lib\Targets\</DeploymentTargets>
+    <ServerImageTargetExists Condition="Exists('$(DeploymentTargets)Aderant.Build.ServerImage.targets')">true</ServerImageTargetExists>
+    <DeployTargetExists Condition="Exists('$(DeploymentTargets)Aderant.Build.DeployCI.targets')">true</DeployTargetExists>
+  </PropertyGroup>
 
+  <Import Project="$(ParametersFile)" Condition="Exists($(ParametersFile))" />
+  
+  <Import Project="Aderant.Build.Testing.targets" />
+  <Import Project="$(DeploymentTargets)Aderant.Build.ServerImage.targets" Condition="'$(ServerImageTargetExists)' == 'true'" />
+  <Import Project="$(DeploymentTargets)Aderant.Build.DeployCI.targets" Condition="'$(DeployTargetExists)' == 'true'" />
   <PropertyGroup>
     <!-- Allows environment variables to override RSP parameters -->
     <_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">$([System.Environment]::GetEnvironmentVariable('RunIntegrationTests'))</_RunIntegrationTests>
@@ -16,112 +26,7 @@
       DeployCIEnvironment;
     </RunIntegrationTestsDependsOn>
 
-    <DeployCIEnvironment>
-      GetServerImageDependencies;
-      ProvisionExpertDatabase;
-      <!-- UpdateServerImage; -->
-      ExecuteQueryViewsScript;
-      CreateEnvironmentManifestXml;
-      LightUpServerImage;
-    </DeployCIEnvironment>
-
-    <ExpertEnvironmentName>Local_$([System.DateTime]::Now.ToFileTimeUtc())</ExpertEnvironmentName>
-    <ExpertEnvironmentUrl Condition="'$(ExpertEnvironmentUrl)' == '' And '$(IsDesktopBuild)' != 'true'">http://localhost/Expert_$(ExpertEnvironmentName)</ExpertEnvironmentUrl>
-    <DatabaseName>$([System.Guid]::NewGuid())</DatabaseName>
-    <SMTPHost>smtp.dev.ap.aderant.com</SMTPHost>
-    <ServiceAccount Condition="'$(ServiceAccount)' == ''">ADERANT_AP\tfsbuildservice$</ServiceAccount>
-    <SecurityGroup Condition="'$(SecurityGroup)' == ''">ADERANT_AP\SG_AP_TFSBuild_Hosts</SecurityGroup>    
-
-    <APIDatabaseDirectory>$(ImageToolingDirectory)APIDatabase\</APIDatabaseDirectory>
-    <DatabaseBackup>$(ImageWorkingDirectory)packages\Aderant.Database.Backup\lib\Expert.bak</DatabaseBackup>
-
-    <ImagePath>$(ImageWorkingDirectory)ExpertServerImage</ImagePath>
-    <ImageZip>$(ImagePath).zip</ImageZip>
-
-    <_DeployEnvironment Condition="'$(_DeployEnvironment)' == ''">$([System.Environment]::GetEnvironmentVariable('DeployEnvironment'))</_DeployEnvironment>
-    <_DeployEnvironment Condition="'$(_DeployEnvironment)' == ''">$(DeployEnvironment)</_DeployEnvironment>
-    <_DeployEnvironment Condition="'$(_DeployEnvironment)' == '' And '$(IsDesktopBuild)' != 'true' And '$(_RunIntegrationTests)' == 'true'">true</_DeployEnvironment>
-    <_DeployEnvironment Condition="'$(_DeployEnvironment)' == ''">false</_DeployEnvironment>
   </PropertyGroup>
-
-
-  <Target Name="DeployCIEnvironment" Condition="'$(_DeployEnvironment)' == 'true'" DependsOnTargets="$(DeployCIEnvironment)" />
-
-
-  <Target Name="ProvisionExpertDatabase"
-    Condition="'$(_DeployEnvironment)' == 'true'">
-
-    <Message Text="Provisioning Expert database: $(DatabaseName)" />
-
-    <Exec ContinueOnError="false"
-      IgnoreExitCode="false"
-      Command="$(PowerShellExe) -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command &quot;&amp; &apos;$(APIDatabaseDirectory)ProvisionDatabase.ps1&apos; -serverInstance &apos;LocalHost&apos; -databaseName &apos;$(DatabaseName)&apos; -backupPath &apos;$(DatabaseBackup)&apos;&quot;" />
-
-  </Target>
-
-
-  <Target Name="UpdateServerImage"
-    Condition="'$(_DeployEnvironment)' == 'true' And !Exists('$(ImagePath)')">
-
-    <Message Text="Updating Expert server image: $(ExpertEnvironmentName)." />
-
-    <Exec Command="&quot;$(BuildToolsDirectory)7z.exe&quot; x &quot;$(ImageZip)&quot; -o&quot;$(ImagePath)&quot;" />
-
-    <PropertyGroup>
-      <!-- RoleFiles in future should be in the module build. Right now they were managed by Libraries.Roles so we need to load from the server image with all role files. -->
-      <RoleFiles>$(ImagePath)\Roles\</RoleFiles>
-      <ModuleFiles>$(SharedDependencyDirectory)</ModuleFiles>
-    </PropertyGroup>
-
-    <!--Update Server Image-->
-    <Exec ContinueOnError="false"
-      IgnoreExitCode="false"
-      Command="$(PowerShellExe) -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command &quot;&amp; &apos;$(DeploymentEngine)&apos; UpdateServerImage /image:&apos;$(ImagePath)&apos; /name:&apos;$(ExpertEnvironmentName)&apos; /roles:&apos;$(RoleFiles)&apos; /modules:&apos;$(ModuleFiles)&apos;&quot;" />
-
-  </Target>
-
-
-  <Target Name="ExecuteQueryViewsScript"
-    Condition="'$(_DeployEnvironment)' == 'true'">
-
-    <Message Text="Executing QueryViews Script: ExpertQuery.SqlViews.sql" />
-
-    <Exec ContinueOnError="false"
-      IgnoreExitCode="false"
-      Command="$(PowerShellExe) -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command &quot;&amp; &apos;$(APIDatabaseDirectory)ExecuteSQLFile.ps1&apos; -serverInstance &apos;LocalHost&apos; -databaseName &apos;$(DatabaseName)&apos; -sqlFilePath &apos;$(ImagePath)\ExpertQuery.SqlViews.sql&apos;&quot;" />
-
-    <OnError ExecuteTargets="LightsOff" />
-
-  </Target>
-
-  <Target Name="CreateEnvironmentManifestXml"
-    Condition="'$(_DeployEnvironment)' == 'true'">
-
-    <Message Text="Creating Expert Environment Manifest: Expert_$(ExpertEnvironmentName)." />
-
-    <!-- Store environment manifest xml -->
-    <Exec ContinueOnError="false"
-      IgnoreExitCode="false"
-      Command="$(PowerShellExe) -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command &quot;import-module $(SharedDependencyDirectory)Aderant.Framework.Deployment.dll;$environment = New-ExpertEnvironment -EnvironmentName $(ExpertEnvironmentName) -SourcePath &apos;$(ExpertSourceDirectory)&apos; -ServiceAccount &apos;$(ServiceAccount)&apos; -DatabaseServerInstance &apos;LocalHost&apos; -DatabaseName &apos;$(DatabaseName)&apos; -SmtpHost &apos;$(SMTPHost)&apos; -SecurityGroup &apos;$(SecurityGroup)&apos; -ApplicationServers &apos;LocalHost&apos; -UseEnhancedSecurity $true -IsDevEnvironment $false;Save-ExpertEnvironment –Environment $environment -SkipAddToEnvironmentRegistry&quot;"/>
-
-    <OnError ExecuteTargets="LightsOff" />
-
-  </Target>
-  
-  <Target Name="LightUpServerImage"
-    Condition="'$(_DeployEnvironment)' == 'true'">
-
-    <Message Text="Lighting up Expert server image: Expert_$(ExpertEnvironmentName)." />
-
-    <!-- Light up server image -->
-    <Exec ContinueOnError="false"
-      IgnoreExitCode="false"
-      Command="$(PowerShellExe) -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command &quot; . &apos;$(ImagePath)\AppServerLightup.ps1&apos;;Invoke-LightUp -expertRootPath &apos;$(ImagePath)&apos; -environmentName $(ExpertEnvironmentName) -serviceAccountName $(ServiceAccount) -databaseServer &apos;LocalHost&apos; -databaseName $(DatabaseName)&quot;"/>
-
-    <OnError ExecuteTargets="LightsOff" />
-
-  </Target>
-
 
   <Target Name="RunIntegrationTestsCore" BeforeTargets="RunIntegrationTests">
   </Target>
@@ -138,44 +43,13 @@
     <!-- Invoke the RunTests target from Aderant.Build.Testing.targets -->
     <CallTarget Targets="RunTests" />
 
-    <OnError ExecuteTargets="LightsOff;ShowTestFailureHelp" />
+    <OnError ExecuteTargets="LightsOff;ShowTestFailureHelp" Condition="'$(DeployTargetExists)' == 'true'"/>
 
   </Target>
 
 
   <Target Name="LightsOffWrap" DependsOnTargets="RunIntegrationTests" AfterTargets="RunIntegrationTests">
-    <CallTarget Targets="LightsOff" />
-  </Target>
-
-
-  <Target Name="LightsOff"
-    Condition="'$(_DeployEnvironment)' == 'true' And '$(_RunIntegrationTests)' == 'true' And '$(IsCustomBuild)' != 'true' And '$(RemoveEnvironment)' != 'false'">
-
-    <CallTarget Targets="RemoveServerImage" Condition="'$(_DeployEnvironment)' == 'true'" />
-    <CallTarget Targets="DropDatabase" Condition="'$(_DeployEnvironment)' == 'true'" />
-
-  </Target>
-
-
-  <Target Name="RemoveServerImage">
-
-    <Message Text="Removing server image: Expert_$(ExpertEnvironmentName)." />
-
-    <Exec ContinueOnError="true"
-      IgnoreExitCode="false"
-      Command="$(PowerShellExe) -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command &quot;. &apos;$(ImagePath)\TeardownServerImage.ps1&apos; -imageName:$(ExpertEnvironmentName) -removeWindowsServices &quot;" />
-
-  </Target>
-
-
-  <Target Name="DropDatabase">
-
-    <Message Text="Dropping database: $(DatabaseName)." />
-
-    <Exec ContinueOnError="true"
-      IgnoreExitCode="false"
-      Command="$(PowerShellExe) -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command &quot;&amp; &apos;$(APIDatabaseDirectory)DropDatabase.ps1&apos; -serverInstance &apos;LocalHost&apos; -databaseName &apos;$(DatabaseName)&apos;&quot;" />
-
+    <CallTarget Targets="LightsOff" Condition="'$(DeployTargetExists)' == 'true'"/>
   </Target>
 
 </Project>

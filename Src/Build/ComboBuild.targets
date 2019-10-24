@@ -74,8 +74,6 @@
   <Import Project="Aderant.Build.Common.targets" />
   <Import Project="Aderant.CodeSigning.targets" />
   <Import Project="Aderant.Build.Testing.targets" />
-  <Import Project="Aderant.Build.ServerImage.targets" />
-  <Import Project="Aderant.Build.IntegrationTesting.targets" />
 
   <PropertyGroup>
     <BuildAndPackageDependsOn>
@@ -90,8 +88,7 @@
       MSBuildRunTests;
       WriteStateFiles;
       PackageProduct;
-      ProduceUpdatePackage;
-      CreateServerImage;
+      ProduceUpdatePackage;    
       MSBuildRunIntegrationTests;
       CopyToDrop;
     </BuildAndPackageDependsOn>
@@ -115,10 +112,15 @@
       <ImpactedTestAssemblies>@(ImpactedTestAssemblies)</ImpactedTestAssemblies>
     </PropertyGroup>
 
-    <MSBuild Projects="$(MSBuildProjectFile)" Targets="RunIntegrationTests" Properties="TestPattern=IntegrationTest;ImpactedTestAssemblies=$(ImpactedTestAssemblies);ExpertSourceDirectory=$(ExpertSourceDirectory);" />
-
+    <MSBuild Projects="Aderant.Build.IntegrationTesting.targets" 
+             Targets="RunIntegrationTests" 
+             Properties="ParametersFile=$(ParametersFile);
+                         SolutionRoot=$(SolutionRoot);
+                         ArtifactStagingDirectory=$(ArtifactStagingDirectory);
+                         SharedDependencyDirectory=$(SharedDependencyDirectory);
+                         TestPattern=IntegrationTest;ImpactedTestAssemblies=$(ImpactedTestAssemblies);
+                         ExpertSourceDirectory=$(ExpertSourceDirectory);" />
   </Target>
-
 
   <Target Name="RemoveLockedFilesFromLastBuild">
     <ItemGroup>
