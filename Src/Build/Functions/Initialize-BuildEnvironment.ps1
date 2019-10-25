@@ -237,7 +237,7 @@ function UpdateSubmodules {
        [switch]$Updated
     )
 
-    if (-not $Updated.IsPresent) {
+    if (-not $Updated.IsPresent -and $script:isUsingProfile) {
         Write-Information -MessageData 'Submodule update skipped.'
     } else {
         # Only update submodules if we tried to update since we may have a new commit
