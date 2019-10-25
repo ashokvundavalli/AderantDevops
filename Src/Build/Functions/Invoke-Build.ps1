@@ -438,7 +438,9 @@ function AssignSwitches() {
     $switches.Downstream = $Downstream.IsPresent
 
     if (-not $context.IsDesktopBuild) {
-        $switches.Downstream = $true
+		if ([string]::IsNullOrWhiteSpace([System.Environment]::GetEnvironmentVariable("MAGIC_MODE"))) {
+			$switches.Downstream = $true
+		}
     }
 
     $switches.Transitive = $Transitive.IsPresent
