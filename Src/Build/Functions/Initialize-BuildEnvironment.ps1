@@ -345,7 +345,7 @@ function DownloadPaket([string]$commit) {
             return
         }
 
-        [string]$paketVersion = Get-Content -Path [System.IO.Path]::Combine($script:repositoryRoot, "Build\paket.version")
+        [string]$paketVersion = Get-Content -Path ([System.IO.Path]::Combine($script:repositoryRoot, "Build\paket.version"))
 
         $action = {
             # Download the paket dependency tool
