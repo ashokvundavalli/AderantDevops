@@ -8,6 +8,7 @@ namespace Aderant.Build.DependencyAnalyzer.Model {
     /// </summary>
     [DebuggerDisplay("DirectoryNode: {" + nameof(Id) + "}")]
     internal sealed class DirectoryNode : AbstractArtifact {
+        private bool? retrievePrebuilts;
 
         public DirectoryNode(string id, string directory, bool isPostTargets) {
             IsPostTargets = isPostTargets;
@@ -45,7 +46,13 @@ namespace Aderant.Build.DependencyAnalyzer.Model {
         /// </summary>
         public bool IsBuildingAnyProjects { get; set; }
 
-        public bool? RetrievePrebuilts { get; set; }
+        public bool? RetrievePrebuilts {
+            get {
+                return retrievePrebuilts; }
+            set {
+                retrievePrebuilts = value;
+            }
+        }
 
         private static string CreateName(string name, bool isPostTargets) {
             if (isPostTargets) {

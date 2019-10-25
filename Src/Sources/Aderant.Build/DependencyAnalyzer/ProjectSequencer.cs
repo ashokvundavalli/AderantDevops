@@ -754,14 +754,13 @@ namespace Aderant.Build.DependencyAnalyzer {
             ConfiguredProject configuredProject = dependable as ConfiguredProject;
 
             if (configuredProject != null) {
-                if (configuredProject.IncludeInBuild || configuredProject.IsDirty) {
-
+                if (configuredProject.IncludeInBuild) {
                     var children = new List<TreePrinter.Node>();
                     if (showPath) {
                         children.Add(new TreePrinter.Node { Name = "Path: " + configuredProject.FullPath, });
                     }
 
-                    if (configuredProject.DirtyFiles != null) {
+                    if (configuredProject.DirtyFiles?.Count > 0) {
                         children.Add(
                             new TreePrinter.Node {
                                 Name = "Dirty files",
@@ -770,7 +769,6 @@ namespace Aderant.Build.DependencyAnalyzer {
                     }
 
                     if (configuredProject.BuildReason != null) {
-
                         string reason = string.Empty;
                         if (!string.IsNullOrWhiteSpace(configuredProject.BuildReason.Description)) {
                             reason = "Reason: " + configuredProject.BuildReason.Description;

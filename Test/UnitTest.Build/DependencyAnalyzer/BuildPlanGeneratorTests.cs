@@ -55,6 +55,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
             };
 
             configuredProject.Initialize(null, "some_file.csproj");
+            configuredProject.ProjectTypeGuids = new Guid[0];
 
             var items = new List<List<IDependable>> {
                 new List<IDependable> {

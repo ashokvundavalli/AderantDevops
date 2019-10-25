@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Aderant.Build.Utilities {
     internal class TreePrinter {
@@ -52,6 +53,10 @@ namespace Aderant.Build.Utilities {
             public string Name { get; set; }
 
             public List<Node> Children { get; set; } = new List<Node>();
+
+            internal void AddChild(string name, IEnumerable<Node> children = null)  {
+                Children.Add(new Node { Name = name, Children = new List<Node>(children ?? Enumerable.Empty<Node>()) });
+            }
         }
     }
 }

@@ -23,6 +23,9 @@ function LoadEnvVariables([string]$environmentVariableName, [string]$vsYear, [st
         $globalEnvironmentVariables = [Environment]::GetEnvironmentVariables()
         $vars = @{}
 
+        # Disable telemetry when running VsDevCmd.bat
+        [System.Environment]::SetEnvironmentVariable('VSCMD_SKIP_SENDTELEMETRY', '1', [System.EnvironmentVariableTarget]::Process)
+
         $variablesFromScript = cmd /c "`"$vsPath\VsDevCmd.bat`"&set"
 
         $variablesFromScript.ForEach({

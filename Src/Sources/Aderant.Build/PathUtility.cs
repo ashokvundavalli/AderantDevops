@@ -3,9 +3,21 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Management.Automation;
+using Aderant.Build.IO;
 
 namespace Aderant.Build {
     public static class PathUtility {
+
+        internal static char[] DirectorySeparatorCharArray = new[] { Path.DirectorySeparatorChar };
+
+        private static char[] AltDirectorySeparatorCharArray = new[] { Path.AltDirectorySeparatorChar };
+
+        /// <summary>
+        /// Used to separate directory levels in a path string
+        /// </summary>
+        public static string DirectorySeparator { get; private set; } = Path.DirectorySeparatorChar.ToString();
+
+        public static string AltDirectorySeparator { get; private set; } = Path.AltDirectorySeparatorChar.ToString();
 
         /// <summary>
         /// If the given path doesn't have a trailing slash then add one.
@@ -138,30 +150,27 @@ namespace Aderant.Build {
         /// Trims trailing path separators.
         /// </summary>
         public static string TrimTrailingSlashes(this string path) {
-            return path.TrimEnd(Path.DirectorySeparatorChar).TrimEnd(Path.AltDirectorySeparatorChar);
+            return path.TrimEnd(DirectorySeparatorCharArray).TrimEnd(AltDirectorySeparatorCharArray);
         }
 
         /// <summary>
         /// Trims leading path separators.
         /// </summary>
         public static string TrimLeadingSlashes(string path) {
-            return path.TrimStart(Path.DirectorySeparatorChar).TrimEnd(Path.AltDirectorySeparatorChar);
+            return path.TrimStart(DirectorySeparatorCharArray).TrimStart(AltDirectorySeparatorCharArray);
         }
 
         /// <summary>
         /// Path.GetFileName returns "" when given a path ending with a trailing slash
         /// </summary>
         public static string GetFileName(string fullPath) {
-            return Path.GetFileName(fullPath.TrimEnd(Path.DirectorySeparatorChar));
+            return Path.GetFileName(fullPath.TrimEnd(DirectorySeparatorCharArray));
         }
 
         /// <summary>
         /// Test if the provided path is excluded by a set of filter patterns.
         /// Wildcards supported.
         /// </summary>
-        /// <param name="path"></param>
-        /// <param name="excludeFilterPatterns"></param>
-        /// <returns></returns>
         public static bool IsPathExcludedByFilters(string path, IReadOnlyList<string> excludeFilterPatterns) {
             if (excludeFilterPatterns != null) {
                 for (var i = 0; i < excludeFilterPatterns.Count; i++) {
@@ -188,12 +197,5 @@ namespace Aderant.Build {
 
             return false;
         }
-
-        /// <summary>
-        /// Used to separate directory levels in a path string
-        /// </summary>
-        public static string DirectorySeparator { get; private set; } = Path.DirectorySeparatorChar.ToString();
-
-        public static string AltDirectorySeparator { get; private set; } = Path.AltDirectorySeparatorChar.ToString();
     }
 }

@@ -74,9 +74,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             string projectFileFullPath = ProjectFile;
 
             if (SourcesDirectory != null && projectFile.StartsWith(SourcesDirectory, StringComparison.OrdinalIgnoreCase)) {
-                projectFile = projectFile.Substring(SourcesDirectory.Length)
-                    .TrimStart(Path.DirectorySeparatorChar)
-                    .TrimStart(Path.AltDirectorySeparatorChar);
+                projectFile = PathUtility.TrimLeadingSlashes(projectFile.Substring(SourcesDirectory.Length));
             }
 
             bool isTestProject = IsTestProject();

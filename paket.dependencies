@@ -1,5 +1,5 @@
 references: strict
-framework: net462
+framework: net48
 source https://api.nuget.org/v3/index.json
 nuget WindowsAPICodePack-Core
 nuget Microsoft.WindowsAPICodePack-Shell
@@ -21,7 +21,7 @@ nuget Microsoft.AspNet.WebHooks.Receivers.Generic
 nuget Microsoft.AspNet.WebHooks.Receivers.VSTS
 
 group Analyzer
-framework:  net462
+framework:  net48
 references: strict
 source https://api.nuget.org/v3/index.json
 nuget Microsoft.CodeAnalysis.Common ~> 2.10.0
@@ -40,6 +40,7 @@ nuget System.Threading.Tasks.Extensions ~> 4.3.0
 group DevTools
 source https://api.nuget.org/v3/index.json
 references: strict
-framework: net462
+framework: net48
 nuget LibGit2Sharp
-nuget Microsoft.Tpl.Dataflow ~> 4.5.24
+nuget MSBuildTasks = 1.5.0.235
+nuget System.Threading.Tasks.Dataflow = 4.10.0

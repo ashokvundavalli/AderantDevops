@@ -76,9 +76,7 @@ namespace Aderant.Build.Packaging {
         /// Creates a new path spec, taking into account Robocopy trailing slash bugs.
         /// </summary>
         public static PathSpec Create(string source, string destination) {
-            return new PathSpec(
-                source.TrimEnd(Path.DirectorySeparatorChar),
-                destination.TrimEnd(Path.DirectorySeparatorChar));
+            return new PathSpec(source.TrimEnd(PathUtility.DirectorySeparatorCharArray), destination.TrimEnd(PathUtility.DirectorySeparatorCharArray));
         }
     }
 }

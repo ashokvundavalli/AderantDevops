@@ -13,21 +13,24 @@ if ($PSVersionTable.PSVersion.Major -lt 5 -or ($PSVersionTable.PSVersion.Major -
     exit 1
 }
 
+[string]$script:repositoryRoot = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($BuildScriptsDirectory, "..\..\"))
+
 function GetAlternativeStreamValue {
     [CmdletBinding()]
     param (
-        $File,
-        [string] $StreamName
+        [string]$File,
+        [string]$StreamName
     )
+
     return Get-Content -Path $File -Stream $StreamName -ErrorAction "SilentlyContinue"
 }
 
 function SetAlternativeStreamValue {
     [CmdletBinding()]
     param (
-        $File,
-        [string] $StreamName,
-        $Value
+        [string]$File,
+        [string]$StreamName,
+        [string]$Value
     )
 
     Set-Content -Path $File -Value $Value -Stream $StreamName
@@ -36,12 +39,12 @@ function SetAlternativeStreamValue {
 Set-StrictMode -Version "Latest"
 $buildCommitStreamName = "Build.Commit"
 
-function DoActionIfNeeded([scriptblock]$action, $file) {
-    $version = GetAlternativeStreamValue $file $buildCommitStreamName
+function DoActionIfNeeded([scriptblock]$action, [string]$file) {
+    $version = GetAlternativeStreamValue -File $file -StreamName $buildCommitStreamName
 
     $commit = $script:currentCommit
 
-    if ($version -ne $commit) {
+    if ($null -eq $commit -or $version -ne $commit) {
         Write-Debug "Running action $($action.Ast) for $file because '$version' != '$commit'"
 
         $action.Invoke()
@@ -147,7 +150,13 @@ function HandleResult($result) {
     }
 }
 
-function LoadAssembly([string]$assemblyPath, [bool]$loadAsModule) {
+function LoadAssembly {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$assemblyPath,
+        [switch]$loadAsModule
+    )
+
     if ([System.IO.File]::Exists($assemblyPath)) {
         [System.Reflection.Assembly]$assembly = $null
 
@@ -160,7 +169,7 @@ function LoadAssembly([string]$assemblyPath, [bool]$loadAsModule) {
             Write-Error "Failed to load $assemblyPath $_"
         }
 
-        if ($loadAsModule) {
+        if ($loadAsModule.IsPresent) {
             # This load process was built after many days of head scratching trying to get -Global to work.
             # The -Global switch appears to be bug ridden with compiled modules not backed by an on disk assembly which is our use case.
             # Even with the -Global flag the commands within the module are not imported into the global space.
@@ -176,7 +185,7 @@ function LoadAssembly([string]$assemblyPath, [bool]$loadAsModule) {
             Import-Module $module -Global -DisableNameChecking -ErrorAction Stop
         }
     } else {
-        throw "Fatal error. Assembly $loadAsModule not found"
+        throw "Fatal error. Assembly $assemblyPath not found"
     }
 }
 
@@ -225,37 +234,59 @@ function RunActionExclusive {
 
 function UpdateSubmodules {
     param(
-       [bool]$Updated
+       [switch]$Updated
     )
 
-    if (-not ($Updated)) {
-        Write-Information "Submodule update skipped as another PowerShell instance is running"
+    if (-not $Updated.IsPresent) {
+        Write-Information -MessageData 'Submodule update skipped.'
     } else {
         # Only update submodules if we tried to update since we may have a new commit
         # This is quite slow
         Write-Information "Updating submodules..."
 
-        $job = Start-JobInProcess -Name "submodule update" -ScriptBlock {
-            Param($path)
-            $result = (& git -C $path submodule update --init --recursive)
-            if ($LASTEXITCODE -ne 0) {
-                throw $result
-            }
-            return $result
-        } -ArgumentList $PSScriptRoot
+        [string]$root = git.exe -C $PSScriptRoot rev-parse --show-toplevel
+        [string[]]$submodules = git.exe -C $root submodule status
 
-        $null = Register-ObjectEvent $job -EventName StateChanged -Action {
-            if ($EventArgs.JobStateInfo.State -ne [System.Management.Automation.JobState]::Completed) {
-                Write-Host ("Task has failed: " + $sender.ChildJobs[0].JobStateInfo.Reason.Message) -ForegroundColor red
-            } else {
-                $millisecondsTaken = [int]($Sender.PSEndTime - $Sender.PSBeginTime).TotalMilliseconds
-                $Host.UI.RawUI.WindowTitle = "Submodule update complete ($millisecondsTaken ms)"
+        [bool]$interactive = ($null -ne [System.Environment]::UserInteractive -or [System.Environment]::UserInteractive)
+
+        foreach ($submodule in $submodules) {
+            [string]$submodulePath = $submodule.Split(' ', [System.StringSplitOptions]::RemoveEmptyEntries)[1]
+            [string]$submoduleName = $submodulePath.Substring($submodulePath.LastIndexOf('/') + 1)
+
+            if ($submoduleName -eq 'DevTools' -and -not $interactive) {
+                continue
             }
 
-            $Sender | Remove-Job -Force
+            [ScriptBlock]$submoduleUpdate = {
+                param(
+                    [string]$root,
+                    [string]$submodulePath
+                )
 
-            $EventSubscriber | Unregister-Event -Force
-            $EventSubscriber.Action | Remove-Job -Force
+                $result = (& git.exe -C $root submodule update --init --recursive --remote "./$submodulePath")
+                if ($LASTEXITCODE -ne 0) {
+                    throw $result
+                }
+
+                return $result
+            }
+
+            Write-Information -MessageData "Updating submodule: $submoduleName with path: './$submodulePath'."
+            $job = Start-JobInProcess -Name "submodule_update_$submoduleName" -ScriptBlock $submoduleUpdate -ArgumentList $root, $submodulePath
+
+            $null = Register-ObjectEvent $job -MessageData $submoduleName -EventName StateChanged -Action {
+                if ($EventArgs.JobStateInfo.State -ne [System.Management.Automation.JobState]::Completed) {
+                    Write-Host ("Task has failed: " + $sender.ChildJobs[0].JobStateInfo.Reason.Message) -ForegroundColor red
+                } else {
+                    $millisecondsTaken = [int]($Sender.PSEndTime - $Sender.PSBeginTime).TotalMilliseconds
+                    $Host.UI.RawUI.WindowTitle = "Submodule update complete ($millisecondsTaken ms)"
+                }
+    
+                $Sender | Remove-Job -Force
+    
+                $EventSubscriber | Unregister-Event -Force
+                $EventSubscriber.Action | Remove-Job -Force
+            }
         }
     }
 }
@@ -266,6 +297,8 @@ function RefreshSource {
        [string]$Branch
     )
 
+    $initialVersion = [string](& git -C $PSScriptRoot rev-parse HEAD)
+
     $action = {
        if ($Pull) {
            & git -C $PSScriptRoot pull --ff-only
@@ -275,9 +308,13 @@ function RefreshSource {
     $lockName = $Branch + "_BUILD_UPDATE_LOCK"
     $updated = RunActionExclusive $action $lockName
 
-    $version = [string](& git -C $PSScriptRoot rev-parse HEAD)
+    $updatedVersion = [string](& git -C $PSScriptRoot rev-parse HEAD)
 
-    return [PsCustomObject]@{ Updated = $updated; Version = $version }
+    if ($updated -and $initialVersion -eq $updatedVersion) {
+        $updated = $false
+    }
+
+    return [PsCustomObject]@{ Updated = $updated; Version = $updatedVersion }
 }
 
 function LoadLibGit2Sharp([string]$buildToolsDirectory) {
@@ -294,13 +331,13 @@ function DownloadPaket([string]$commit) {
     $bootstrapper = "$BuildScriptsDirectory\paket.bootstrapper.exe"
 
     if (Test-Path $bootstrapper) {
-        $paketExecutable = "$BuildScriptsDirectory\paket.exe"
-        $packageDirectory = "$BuildScriptsDirectory\..\.\.."
+        $paketExecutable = [System.IO.Path]::Combine($BuildScriptsDirectory, "paket.exe")
+        $packageDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($script:repositoryRoot, "packages\devtools"))
 
         $value = GetAlternativeStreamValue $paketExecutable $buildCommitStreamName
 
-        if ($null -eq (Get-ChildItem $packageDirectory  -Filter "*.nupkg")) {
-            $value = ""
+        if (-not [System.IO.Directory]::Exists($packageDirectory)) {
+            $value = [string]::Empty
         }
 
         if ($value -eq $commit) {
@@ -308,16 +345,47 @@ function DownloadPaket([string]$commit) {
             return
         }
 
+        [string]$paketVersion = Get-Content -Path [System.IO.Path]::Combine($script:repositoryRoot, "Build\paket.version")
+
         $action = {
             # Download the paket dependency tool
-            Start-Process -FilePath $bootstrapper -ArgumentList  "5.219.0" -NoNewWindow -PassThru -Wait
-            Start-Process -FilePath $paketExecutable -ArgumentList @("restore", "--group", "DevTools") -NoNewWindow -PassThru -Wait -WorkingDirectory $packageDirectory
+            Start-Process -FilePath $bootstrapper -ArgumentList $paketVersion -NoNewWindow -PassThru -Wait
+            [void](New-Item -Path $packageDirectory -ItemType 'Directory' -Force)
+            Start-Process -FilePath $paketExecutable -ArgumentList @("restore", "--group", "DevTools") -NoNewWindow -PassThru -Wait -WorkingDirectory $script:repositoryRoot
         }
 
         [void](RunActionExclusive $action ("PAKET_UPDATE_LOCK_" + $BuildScriptsDirectory))
         SetAlternativeStreamValue $paketExecutable $buildCommitStreamName $commit
+
     } else {
         throw "FATAL: $bootstrapper does not exist."
+    }
+}
+
+function UpdateMsBuildTasks {
+    [string]$mSBuildTasksPath = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($script:repositoryRoot, "packages\devtools\MSBuildTasks\tools"))
+
+    if ([System.IO.Directory]::Exists($mSBuildTasksPath)) {
+        [System.IO.FileInfo[]]$files = Get-ChildItem -Path $mSBuildTasksPath -Filter 'MSBuild.Community.Tasks.*' -File
+
+        [string]$mSBuildTasksDestination = [System.IO.Path]::GetFullPath("$PSScriptRoot\..\Tasks\MSBuild.Community.Tasks\")
+
+        if (-not [System.IO.Directory]::Exists($mSBuildTasksDestination)) {
+            [void](New-Item -Path $mSBuildTasksDestination -ItemType 'Directory' -Force)
+        }
+
+        foreach ($file in $files) {
+            [string]$location = $file.FullName
+            [string]$destination = [System.IO.Path]::Combine($mSBuildTasksDestination, $file.Name)
+
+            [ScriptBlock]$copyAction = {
+                if (-not [System.IO.File]::Exists($destination)) {
+                    Copy-Item -Path $location -Destination $destination -Force
+                }
+            }
+            $copyAction = $copyAction.GetNewClosure()
+            DoActionIfNeeded -action $copyAction -File $location
+        }
     }
 }
 
@@ -428,32 +496,38 @@ try {
     $updateInfo = RefreshSource $pull $branch
     $commit = $updateInfo.Version
 
+    if ($isUsingProfile) {
+        $script:currentCommit = $commit
+    }
+
     . "$PSScriptRoot\InProcessJobs.ps1" -Version $commit
 
-    UpdateSubmodules ($updateInfo.Updated)
+    UpdateSubmodules -Updated:$updateInfo.Updated
 
-    $assemblyPathRoot = [System.IO.Path]::Combine("$BuildScriptsDirectory\..\Build.Tools")
-    $mainAssembly = "$assemblyPathRoot\Aderant.Build.dll"
+    [string]$assemblyPathRoot = [System.IO.Path]::GetFullPath("$BuildScriptsDirectory..\Build.Tools")
+    [string]$mainAssembly = "$assemblyPathRoot\Aderant.Build.dll"
 
     SetTimeouts
     DownloadPaket $commit
+    UpdateMsBuildTasks
     BuildProjects $mainAssembly $isUsingProfile $commit
-    LoadAssembly  $mainAssembly $true
-    LoadAssembly "$assemblyPathRoot\protobuf-net.dll" $false
-    LoadAssembly "$assemblyPathRoot\System.Threading.Tasks.Dataflow.dll" $false
+    LoadAssembly -assemblyPath "$assemblyPathRoot\System.Threading.Tasks.Dataflow.dll"
+    LoadAssembly -assemblyPath "$assemblyPathRoot\protobuf-net.dll"
+    LoadAssembly -assemblyPath $mainAssembly -loadAsModule
     LoadLibGit2Sharp $assemblyPathRoot
     LoadVstsTaskLibrary
     SetNuGetProviderPath $assemblyPathRoot
     EnsureClientCertificateAvailable
-    if ((Get-Variable -Name 'skipEndpointCheck' -Scope 'Global' -ErrorAction 'SilentlyContinue') -and -not $global:skipEndpointCheck) {
+
+    # Endpoints are unavailable in the event Initialize-BuildEnvironment is not loaded from the BuildPipeline process.
+    $skipEndpointCheck = (Get-Variable -Name 'skipEndpointCheck' -Scope 'Global' -ErrorAction 'SilentlyContinue')
+    if ($null -eq $skipEndpointCheck -or -not $skipEndpointCheck) {
         EnsureServiceEndpointsAvailable
+    } else {
+        Write-Debug 'Service endpoint check skipped.'
     }
 
     [System.AppDomain]::CurrentDomain.SetData("BuildScriptsDirectory", $BuildScriptsDirectory)
-
-    if ($isUsingProfile) {
-        $script:currentCommit = $commit
-    }
 } finally {
     $ErrorActionPreference = $originalErrorActionPreference
 }

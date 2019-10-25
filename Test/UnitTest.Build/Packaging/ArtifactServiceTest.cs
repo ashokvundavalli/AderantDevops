@@ -48,6 +48,7 @@ namespace UnitTest.Build.Packaging {
             Assert.IsNotNull(results);
         }
 
+
         [TestMethod]
         [ExpectedException(typeof(InvalidOperationException))]
         public void Double_writes_in_artifacts_are_detected() {

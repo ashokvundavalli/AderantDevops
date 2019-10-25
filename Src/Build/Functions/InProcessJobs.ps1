@@ -252,7 +252,16 @@ function Start-JobInProcess {
     }
 
     if ($ArgumentList) {
-        $PowerShell = [PowerShell]::Create().AddScript($ScriptBlock).AddArgument($argumentlist)
+        $PowerShell = [PowerShell]::Create().AddScript($ScriptBlock)
+
+        if ($ArgumentList -is [Array]) {
+            foreach ($argument in $ArgumentList) {
+                $PowerShell = $PowerShell.AddArgument($argument)
+            }
+        } else {
+            $PowerShell = $PowerShell.AddArgument($ArgumentList)
+        }
+
         $MemoryJob = [InProcess.InMemoryJob]::new($PowerShell, $Name)
     } else {
         $MemoryJob = [InProcess.InMemoryJob]::new($ScriptBlock, $Name)

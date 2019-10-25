@@ -2,15 +2,11 @@
 	path = Src/Build.Tools/Chutzpah
 	url = https://tfs.aderant.com/tfs/ADERANT/ExpertSuite/_git/ThirdParty.Chutzpah
 	branch = master
-[submodule "dotCover"]
-	path = Src/Build.Tools/dotCover
-	url = https://tfs.aderant.com/tfs/ADERANT/ExpertSuite/_git/ThirdParty.dotCover
-	branch = master
 [submodule "GitLink"]
 	path = Src/Build.Tools/GitLink
 	url = https://tfs.aderant.com/tfs/ADERANT/ExpertSuite/_git/ThirdParty.GitLink
 	branch = master
-[submodule "Src/Build.Tools/NuGet.CredentialProvider"]
+[submodule "NuGet.CredentialProvider"]
 	path = Src/Build.Tools/NuGet.CredentialProvider
 	url = https://tfs.aderant.com/tfs/ADERANT/ExpertSuite/_git/NuGet.CredentialProvider
 	branch = master

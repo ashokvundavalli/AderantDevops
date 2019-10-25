@@ -25,54 +25,6 @@ namespace Aderant.Build.ProjectSystem {
     [DebuggerDisplay("{ProjectGuid}::{FullPath}")]
     internal class ConfiguredProject : AbstractArtifact, IReference, IBuildDependencyProjectReference, IAssemblyReference {
 
-        private static Memoizer<ConfiguredProject, bool> isWebProjectMemoizer = new Memoizer<ConfiguredProject, bool>(
-            configuredProject => {
-                var guids = configuredProject.ProjectTypeGuids;
-                if (guids != null) {
-                    return guids.Intersect(WellKnownProjectTypeGuids.WebProjectGuids).Any();
-                }
-
-                return false;
-            });
-
-
-        private static Memoizer<ConfiguredProject, string> outputTypeMemoizer = new Memoizer<ConfiguredProject, string>(configuredProject => configuredProject.project.Value.GetPropertyValue("OutputType"));
-
-        private static Memoizer<ConfiguredProject, string> outputAssemblyMemoizer = new Memoizer<ConfiguredProject, string>(
-            configuredProject => {
-                var projectProperty = configuredProject.project.Value.GetProperty("AssemblyName");
-
-                if (projectProperty == null || projectProperty.IsImported) {
-                    // Windows Installer projects define a default AssemblyName in an import, we ignore it and go straight for the
-                    // output name instead
-                    return configuredProject.project.Value.GetPropertyValue("OutputName");
-                }
-
-                return projectProperty.EvaluatedValue;
-            });
-
-        private static Memoizer<ConfiguredProject, IReadOnlyList<Guid>> extractTypeGuidsMemoizer = new Memoizer<ConfiguredProject, IReadOnlyList<Guid>>(
-            args => {
-                var propertyElement = args.project.Value.GetPropertyValue("ProjectTypeGuids");
-
-                if (!string.IsNullOrEmpty(propertyElement)) {
-                    var guids = propertyElement.Split(';');
-
-                    List<Guid> guidList = new List<Guid>();
-
-                    foreach (var guidString in guids) {
-                        Guid result;
-                        if (Guid.TryParse(guidString, out result)) {
-                            guidList.Add(result);
-                        }
-                    }
-
-                    return guidList;
-                }
-
-                return new Guid[0];
-            });
-
         private static IDictionary<string, string> globalProperties = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
             { "WebDependencyVersion", "-1" },
             { "SolutionDir", "" }
@@ -83,32 +35,20 @@ namespace Aderant.Build.ProjectSystem {
             "$(Configuration)|$(Platform)==" + ProjectBuildConfiguration.DebugOnAnyCpu.ToString()
         };
 
+        private Lazy<Project> project;
+
         private List<string> dirtyFiles;
-        private Memoizer<ConfiguredProject, IReadOnlyList<Guid>> extractTypeGuids;
+
         private string fileName;
         private Memoizer<ConfiguredProject, bool> isWebProject;
-
         private Memoizer<ConfiguredProject, string> outputType;
-
-        private Lazy<Project> project;
+        private Memoizer<ConfiguredProject, IReadOnlyList<Guid>> extractTypeGuids;
         private Memoizer<ConfiguredProject, Guid> projectGuid;
-
-        private Memoizer<ConfiguredProject, Guid> projectGuidMemoizer =
-            new Memoizer<ConfiguredProject, Guid>(
-                arg => {
-                    var propertyElement = arg.project.Value.GetPropertyValue("ProjectGuid");
-                    if (propertyElement != null) {
-                        try {
-                            return Guid.Parse(propertyElement);
-                        } catch (FormatException ex) {
-                            throw new FormatException(ex.Message + " " + propertyElement + " in " + arg.FullPath, ex);
-                        }
-                    }
-
-                    return Guid.Empty;
-                });
+        private Memoizer<ConfiguredProject, string> outputAssembly;
 
         private List<IResolvedDependency> textTemplateDependencies;
+
+        private static readonly List<string> emptyFileList = new List<string>(0);
 
         [ImportingConstructor]
         public ConfiguredProject(IProjectTree tree) {
@@ -144,8 +84,8 @@ namespace Aderant.Build.ProjectSystem {
 
         public virtual string OutputAssembly {
             get {
-                if (outputAssemblyMemoizer != null) {
-                    return outputAssemblyMemoizer.Evaluate(this);
+                if (outputAssembly != null) {
+                    return outputAssembly.Evaluate(this);
                 }
 
                 return null;
@@ -245,7 +185,7 @@ namespace Aderant.Build.ProjectSystem {
         public bool IsDirty { get; set; }
 
         public IReadOnlyList<string> DirtyFiles {
-            get { return dirtyFiles; }
+            get { return dirtyFiles ?? emptyFileList; }
         }
 
         internal BuildReason BuildReason { get; set; }
@@ -328,12 +268,84 @@ namespace Aderant.Build.ProjectSystem {
 
             if (projectElement != null) {
                 project = InitializeProject(projectElement);
-
-                outputType = outputTypeMemoizer;
-                extractTypeGuids = extractTypeGuidsMemoizer;
-                isWebProject = isWebProjectMemoizer;
-                projectGuid = projectGuidMemoizer;
             }
+
+            isWebProject = new Memoizer<ConfiguredProject, bool>(
+                configuredProject => {
+                  var guids = configuredProject.ProjectTypeGuids;
+                  if (guids != null) {
+                      return guids.Intersect(WellKnownProjectTypeGuids.WebProjectGuids).Any();
+                  }
+
+                  return false;
+            });
+
+
+            outputType = new Memoizer<ConfiguredProject, string>(
+                configuredProject => {
+                    var projectInstance = configuredProject.project.Value;
+
+                    // Purity violation - this class knows to interrogate a WIX project, C# project and test projects. If we add any more cross type concerns
+                    // then moving the logic out to separate classes would be an improvement.
+                    var wixLibTarget = projectInstance.GetProperty("TargetExt");
+                    if (wixLibTarget != null) {
+                        var value = wixLibTarget.EvaluatedValue;
+                        if (!string.Equals(value, ".msi")) {
+                            return value;
+                        }
+                    }
+
+                    return projectInstance.GetPropertyValue("OutputType");
+                });
+
+            outputAssembly = new Memoizer<ConfiguredProject, string>(
+                configuredProject => {
+                    var projectProperty = configuredProject.project.Value.GetProperty("AssemblyName");
+
+                    if (projectProperty == null || projectProperty.IsImported) {
+                        // Windows Installer projects define a default AssemblyName in an import, we ignore it and go straight for the
+                        // output name instead
+                        return configuredProject.project.Value.GetPropertyValue("OutputName");
+                    }
+
+                    return projectProperty.EvaluatedValue;
+                });
+
+            extractTypeGuids = new Memoizer<ConfiguredProject, IReadOnlyList<Guid>>(
+                args => {
+                    var propertyElement = args.project.Value.GetPropertyValue("ProjectTypeGuids");
+
+                    if (!string.IsNullOrEmpty(propertyElement)) {
+                        var guids = propertyElement.Split(';');
+
+                        List<Guid> guidList = new List<Guid>();
+
+                        foreach (var guidString in guids) {
+                            Guid result;
+                            if (Guid.TryParse(guidString, out result)) {
+                                guidList.Add(result);
+                            }
+                        }
+
+                        return guidList;
+                    }
+
+                    return new Guid[0];
+                });
+
+            projectGuid = new Memoizer<ConfiguredProject, Guid>(
+              arg => {
+                  var propertyElement = arg.project.Value.GetPropertyValue("ProjectGuid");
+                  if (propertyElement != null) {
+                      try {
+                          return Guid.Parse(propertyElement);
+                      } catch (FormatException ex) {
+                          throw new FormatException(ex.Message + " " + propertyElement + " in " + arg.FullPath, ex);
+                      }
+                  }
+
+                  return Guid.Empty;
+              });
         }
 
         protected virtual Lazy<Project> InitializeProject(Lazy<ProjectRootElement> projectElement) {
@@ -509,11 +521,11 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         public void CalculateDirtyStateFromChanges(IList<ISourceChange> changes) {
-            MarkThisFileDirty(changes);
-
             if (IsDirty && dirtyFiles != null) {
                 return;
             }
+
+            MarkThisFileDirty(changes);
 
             // check if this proj contains needed files
             List<ProjectItem> items = new List<ProjectItem>();
@@ -545,7 +557,7 @@ namespace Aderant.Build.ProjectSystem {
                         MarkDirty(BuildReasonTypes.ProjectItemChanged);
 
                         if (dirtyFiles == null) {
-                            dirtyFiles = new List<string>();
+                            dirtyFiles = new List<string>(64);
                         }
 
                         dirtyFiles.Add(file.Path);
@@ -560,6 +572,15 @@ namespace Aderant.Build.ProjectSystem {
                         }
                     }
                 }
+
+                if (dirtyFiles != null) {
+                    dirtyFiles.TrimExcess();
+                }
+            }
+
+            if (dirtyFiles == null) {
+                // Sentinel value indicates that that next time we get called that there was no work to do
+                dirtyFiles = emptyFileList;
             }
         }
 
@@ -592,6 +613,14 @@ namespace Aderant.Build.ProjectSystem {
 
             if (string.Equals(OutputType, "package", StringComparison.OrdinalIgnoreCase)) {
                 return OutputAssembly + ".msi";
+            }
+
+            if (string.Equals(OutputType, ".msi", StringComparison.OrdinalIgnoreCase)) {
+                return OutputAssembly + ".msi";
+            }
+
+            if (string.Equals(OutputType, ".wixlib", StringComparison.OrdinalIgnoreCase)) {
+                return OutputAssembly + ".wixlib";
             }
 
             throw new NotSupportedException($"Unable to determine output extension from type: '{OutputType}' for project: '{FullPath}'.");

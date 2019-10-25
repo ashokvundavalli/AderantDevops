@@ -234,5 +234,26 @@ namespace UnitTest.Build.ProjectSystem {
 
             Assert.IsTrue(project.IsDirty);
         }
+
+        [TestMethod]
+        public void WixLib_projects_have_ouput_type_of_wixlib() {
+            var tree = new Mock<IProjectTree>();
+
+            var project = new ConfiguredProject(tree.Object);
+            project.RequireSynchronizedOutputPaths = true;
+
+            project.Initialize(
+                new Lazy<ProjectRootElement>(
+                    () => {
+                        var element = ProjectRootElement.Create();
+                        ProjectPropertyGroupElement propertyGroup1 = element.AddPropertyGroup();
+                        propertyGroup1.AddProperty("TargetExt", @".wixlib");
+
+                        return element;
+                    }),
+                "");
+
+            Assert.AreEqual(".wixlib", project.OutputType);
+        }
     }
 }

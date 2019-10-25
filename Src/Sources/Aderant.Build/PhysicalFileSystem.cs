@@ -52,7 +52,7 @@ namespace Aderant.Build {
         }
 
         public string GetParent(string path) {
-            return Directory.GetParent(path.TrimEnd(Path.DirectorySeparatorChar)).FullName;
+            return Directory.GetParent(path.TrimEnd(PathUtility.DirectorySeparatorCharArray)).FullName;
         }
 
         public virtual string AddFile(string path, Stream stream) {
@@ -332,9 +332,7 @@ namespace Aderant.Build {
         }
 
         public void ExtractZipToDirectory(string sourceArchiveFileName, string destination, bool overwrite = false) {
-            using (ZipArchive zipArchive = ZipFile.OpenRead(sourceArchiveFileName)) {
-                ExtractToDirectory(zipArchive, destination, overwrite);
-            }
+            ExtractToDirectory(sourceArchiveFileName, destination, overwrite);
         }
 
         public bool IsSymlink(string directory) {
@@ -433,31 +431,39 @@ namespace Aderant.Build {
             }
         }
 
-        private void ExtractToDirectory(ZipArchive archive, string destinationDirectoryName, bool overwrite) {
+        private void ExtractToDirectory(string zipArchive, string destinationDirectoryName, bool overwrite) {
             if (!overwrite) {
-                archive.ExtractToDirectory(destinationDirectoryName);
+                ZipFile.ExtractToDirectory(zipArchive, destinationDirectoryName);
                 return;
             }
 
-            Dictionary<string, byte> directoriesKnownToExist = new Dictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
+            using (ZipArchive archive = new ZipArchive(File.OpenRead(zipArchive), ZipArchiveMode.Read)) {
+                Dictionary<string, byte> directoriesKnownToExist =
+                    new Dictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
 
-            foreach (ZipArchiveEntry file in archive.Entries) {
-                string completeFileName = Path.Combine(destinationDirectoryName, file.FullName);
+                foreach (ZipArchiveEntry file in archive.Entries) {
+                    string completeFileName = Path.Combine(destinationDirectoryName, file.FullName);
 
-                var destinationFolder = Path.GetDirectoryName(completeFileName);
+                    var destinationFolder = Path.GetDirectoryName(completeFileName);
 
-                if (!string.IsNullOrEmpty(destinationFolder) && !directoriesKnownToExist.ContainsKey(destinationFolder)) {
-                    if (!DirectoryExists(destinationFolder)) {
-                        Directory.CreateDirectory(destinationFolder);
+                    if (!string.IsNullOrEmpty(destinationFolder) &&
+                        !directoriesKnownToExist.ContainsKey(destinationFolder)) {
+                        if (!DirectoryExists(destinationFolder)) {
+                            Directory.CreateDirectory(destinationFolder);
+                        }
+
+                        // It's very common for a lot of files to be copied to the same folder.
+                        // Eg., "c:\foo\a"->"c:\bar\a", "c:\foo\b"->"c:\bar\b" and so forth.
+                        // We don't want to check whether this folder exists for every single file we copy. So store which we've checked.
+                        directoriesKnownToExist.Add(destinationFolder, 0);
                     }
 
-                    // It's very common for a lot of files to be copied to the same folder.
-                    // Eg., "c:\foo\a"->"c:\bar\a", "c:\foo\b"->"c:\bar\b" and so forth.
-                    // We don't want to check whether this folder exists for every single file we copy. So store which we've checked.
-                    directoriesKnownToExist.Add(destinationFolder, 0);
+                    using (FileStream fileStream = File.Create(completeFileName)) {
+                        using (Stream stream = file.Open()) {
+                            stream.CopyTo(fileStream);
+                        }
+                    }
                 }
-
-                file.ExtractToFile(completeFileName, true);
             }
         }
 
