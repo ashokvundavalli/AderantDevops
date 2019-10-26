@@ -7,6 +7,9 @@
   <Import Project="Aderant.Build.Common.targets" Condition="'$(AderantCommonTargetsImported)' != 'true'" />
 
   <PropertyGroup>
+    <HappyCat>😸</HappyCat>
+    <Icecream>🍦</Icecream>
+
     <DispatchToInnerBuildDependsOn>
       $(DispatchToInnerBuildDependsOn);
       GetContextVariables;
@@ -24,6 +27,7 @@
   <Target Name="DispatchToInnerBuild" DependsOnTargets="$(DispatchToInnerBuildDependsOn)">
 
     <HappyCat
+      Condition="'$(IsDesktopBuild)' == 'true'"
       BuildGroupId="$(BuildGroupId)"
       TotalNumberOfBuildGroups="$(TotalNumberOfBuildGroups)">
       <Output TaskParameter="PadLeft" PropertyName="PadLeft" />
@@ -32,13 +36,12 @@
 
     <PropertyGroup>
       <LogId>$([System.Guid]::NewGuid())</LogId>
-      <HappyCat>😸</HappyCat>
-      <Icecream>🍦</Icecream>
     </PropertyGroup>
 
     <PrintBanner Text="Group $(BuildGroupId) / $(TotalNumberOfBuildGroups)" />
 
     <SetProgress
+      Condition="'$(IsDesktopBuild)' == 'true'"
       CurrentOperation="Building Group"
       Activity="$(LogId)"
       StatusDescription="$(BuildGroupId) / $(TotalNumberOfBuildGroups) [$(PadLeft) $(HappyCat) $(PadRight) $(Icecream)]" />

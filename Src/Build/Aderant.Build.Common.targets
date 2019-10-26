@@ -55,7 +55,7 @@
 
     <CompileBuildSystem Condition="'$(SKIP_BUILD_SYSTEM_COMPILE)' != ''">false</CompileBuildSystem>
   </PropertyGroup>
-  
+
   <Import Project="Aderant.Build.tasks"/>
   <Import Project="$(MSBuildCommunityTasksPath)\MSBuild.Community.Tasks.Targets" Condition="'$(NoMSBuildCommunityTasks)' != 'true'" />
   <Import Project="Aderant.Build.Versioning.targets" />
@@ -110,7 +110,7 @@
   </Target>
 
 
-  <Target Name="EnsureWixToolsetInstalled" AfterTargets="PrepareBuildEnvironment" Condition="'$(IsCustomBuild)' != 'true'">
+  <Target Name="EnsureWixToolsetInstalled" Condition="'$(IsCustomBuild)' != 'true' And '$(UseWixShim)' == 'true'">
     <!-- With Build 15.0 MSBuildExtensionsPath32 now looks in the VS directory like this: Program Files (x86)\Microsoft Visual Studio\2017\Professional\MSBuild\
          Lots of software does not place objects here - eg WiX.
          Traditionally WiX has been a global install and so lives in the legacy MSBuildExtensionsPath32 location 'Program Files (x86)\MSBuild'
@@ -139,12 +139,6 @@
     <MSBuild.Community.Tasks.Prompt
       Condition=" '$(NoMSBuildCommunityTasks)' != 'true' And '$(IsDesktopBuild)' == 'true' And '$(UseWixShim)' == 'true' And '$(project-set)' != 'minimal'" />
   </Target>
-
-  <!--
-    Import the users project into our project space if they supplied a project to call back into
-    This makes all of the properties and tasks loaded here available to ProjectToBuild natively
-  -->
-  <Import Project="$(ProjectToBuild)" Condition="'$(ProjectToBuild)' != ''" />
 
 
   <Target Name="FindProductManifest"

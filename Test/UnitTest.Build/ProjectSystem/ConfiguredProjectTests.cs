@@ -247,7 +247,7 @@ namespace UnitTest.Build.ProjectSystem {
                     () => {
                         var element = ProjectRootElement.Create();
                         ProjectPropertyGroupElement propertyGroup1 = element.AddPropertyGroup();
-                        propertyGroup1.AddProperty("TargetExt", @".wixlib");
+                        propertyGroup1.AddProperty("TargetExt", ".wixlib");
 
                         return element;
                     }),
@@ -256,4 +256,5 @@ namespace UnitTest.Build.ProjectSystem {
             Assert.AreEqual(".wixlib", project.OutputType);
         }
     }
+
 }

@@ -5,6 +5,12 @@
             : base("Reference") {
         }
 
+        protected AssemblyReferencesServiceBase(string projectItemReferenceType)
+            : base(projectItemReferenceType) {
+        }
+
         public abstract IAssemblyReference SynthesizeResolvedReferenceForProjectOutput(IUnresolvedAssemblyReference unresolved);
     }
+
+
 }

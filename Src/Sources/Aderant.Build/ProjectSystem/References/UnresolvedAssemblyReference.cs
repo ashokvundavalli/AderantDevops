@@ -4,7 +4,7 @@ namespace Aderant.Build.ProjectSystem.References {
     [DebuggerDisplay("UnresolvedAssemblyReference: {Id}")]
     internal class UnresolvedAssemblyReference : UnresolvedReferenceBase<IUnresolvedAssemblyReference, IAssemblyReference, UnresolvedAssemblyReferenceMoniker>, IUnresolvedAssemblyReference {
 
-        public UnresolvedAssemblyReference(AssemblyReferencesService service, UnresolvedAssemblyReferenceMoniker moniker)
+        public UnresolvedAssemblyReference(AssemblyReferencesServiceBase service, UnresolvedAssemblyReferenceMoniker moniker)
             : base(service, moniker) {
         }
 
