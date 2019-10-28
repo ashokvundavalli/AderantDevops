@@ -27,9 +27,6 @@ namespace Aderant.Build.ProjectSystem.References {
         protected TMoniker Moniker { get; private set; }
     }
 
-    /// <summary>
-    /// Represents a reference to a unresolved arbitrary dependency
-    /// </summary>
     public interface IUnresolvedDependency : IDependable {
     }
 }

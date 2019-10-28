@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.Linq;
-using Aderant.Build.Model;
 using Aderant.Build.ProjectSystem.References;
 
 namespace Aderant.Build.ProjectSystem {
@@ -10,8 +7,8 @@ namespace Aderant.Build.ProjectSystem {
     [ExportMetadata("Scope", nameof(ConfiguredProject))]
     internal class ConfiguredProjectServices : ProjectServices, IConfiguredProjectServices, IProjectCommonServices {
 
-        [ImportMany()]
-        private ICollection<IAssemblyReferencesService> assemblyReferences;
+        [Import(AllowDefault = true)]
+        private Lazy<IAssemblyReferencesService> assemblyReferences;
 
         private ConfiguredProject configuredProject;
 
@@ -27,7 +24,6 @@ namespace Aderant.Build.ProjectSystem {
             textTemplateReferences = null;
             assemblyReferences = null;
             projectReferences = null;
-            assemblyReferences = new List<IAssemblyReferencesService>();
 
             this.configuredProject = configuredProject;
         }
@@ -36,7 +32,7 @@ namespace Aderant.Build.ProjectSystem {
         /// Gets the assembly references service.
         /// </summary>
         public IAssemblyReferencesService AssemblyReferences {
-            get { return new AggregateReferenceService(assemblyReferences); }
+            get { return assemblyReferences?.Value; }
         }
 
         /// <summary>
@@ -52,43 +48,6 @@ namespace Aderant.Build.ProjectSystem {
         /// </summary>
         public ITextTemplateReferencesServices TextTemplateReferences {
             get { return textTemplateReferences?.Value; }
-        }
-    }
-
-    internal class AggregateReferenceService : IAssemblyReferencesService {
-        private readonly ICollection<IAssemblyReferencesService> assemblyReferences;
-
-        public AggregateReferenceService(ICollection<IAssemblyReferencesService> assemblyReferences) {
-            this.assemblyReferences = assemblyReferences;
-        }
-
-        public IReadOnlyCollection<IUnresolvedAssemblyReference> GetUnresolvedReferences() {
-            List< IUnresolvedAssemblyReference> unresolvedReferences= new List<IUnresolvedAssemblyReference>();
-            foreach (var service in assemblyReferences) {
-                unresolvedReferences.AddRange(service.GetUnresolvedReferences());
-            }
-
-            return unresolvedReferences;
-        }
-
-        public IReadOnlyCollection<ResolvedDependency<IUnresolvedAssemblyReference, IAssemblyReference>> GetResolvedReferences(IReadOnlyCollection<IUnresolvedReference> references, Dictionary<string, string> aliasMap) {
-            List<ResolvedDependency<IUnresolvedAssemblyReference, IAssemblyReference>> unresolvedReferences = new List<ResolvedDependency<IUnresolvedAssemblyReference, IAssemblyReference>>();
-            foreach (var service in assemblyReferences) {
-                unresolvedReferences.AddRange(service.GetResolvedReferences(references, aliasMap));
-            }
-
-            return unresolvedReferences;
-        }
-
-        public IAssemblyReference SynthesizeResolvedReferenceForProjectOutput(IUnresolvedAssemblyReference unresolved) {
-            foreach (var service in assemblyReferences) {
-                var result = service.SynthesizeResolvedReferenceForProjectOutput(unresolved);
-                if (result != null) {
-                    return result;
-                }
-            }
-
-            return null;
         }
     }
 }

@@ -10,7 +10,6 @@ using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.Model;
 using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem.References;
-using Aderant.Build.ProjectSystem.References.Wix;
 using Aderant.Build.Utilities;
 using Aderant.Build.VersionControl.Model;
 using Microsoft.Build.Construction;
@@ -36,20 +35,20 @@ namespace Aderant.Build.ProjectSystem {
             "$(Configuration)|$(Platform)==" + ProjectBuildConfiguration.DebugOnAnyCpu.ToString()
         };
 
-        private static readonly List<string> emptyFileList = new List<string>(0);
+        private Lazy<Project> project;
 
         private List<string> dirtyFiles;
-        private Memoizer<ConfiguredProject, IReadOnlyList<Guid>> extractTypeGuids;
 
         private string fileName;
         private Memoizer<ConfiguredProject, bool> isWebProject;
-        private Memoizer<ConfiguredProject, string> outputAssembly;
         private Memoizer<ConfiguredProject, string> outputType;
-
-        private Lazy<Project> project;
+        private Memoizer<ConfiguredProject, IReadOnlyList<Guid>> extractTypeGuids;
         private Memoizer<ConfiguredProject, Guid> projectGuid;
+        private Memoizer<ConfiguredProject, string> outputAssembly;
 
         private List<IResolvedDependency> textTemplateDependencies;
+
+        private static readonly List<string> emptyFileList = new List<string>(0);
 
         [ImportingConstructor]
         public ConfiguredProject(IProjectTree tree) {
@@ -120,7 +119,6 @@ namespace Aderant.Build.ProjectSystem {
                 if (isWebProject == null) {
                     return false;
                 }
-
                 return isWebProject.Evaluate(this);
             }
             set {
@@ -247,11 +245,6 @@ namespace Aderant.Build.ProjectSystem {
         /// </summary>
         public bool RequireSynchronizedOutputPaths { get; set; }
 
-        /// <summary>
-        /// The path to the WIX tool chain targets file (optional)
-        /// </summary>
-        public string WixTargetsPath { get; set; }
-
         public virtual Guid ProjectGuid {
             get { return projectGuid.Evaluate(this); }
         }
@@ -279,13 +272,14 @@ namespace Aderant.Build.ProjectSystem {
 
             isWebProject = new Memoizer<ConfiguredProject, bool>(
                 configuredProject => {
-                    var guids = configuredProject.ProjectTypeGuids;
-                    if (guids != null) {
-                        return guids.Intersect(WellKnownProjectTypeGuids.WebProjectGuids).Any();
-                    }
+                  var guids = configuredProject.ProjectTypeGuids;
+                  if (guids != null) {
+                      return guids.Intersect(WellKnownProjectTypeGuids.WebProjectGuids).Any();
+                  }
 
-                    return false;
-                });
+                  return false;
+            });
+
 
             outputType = new Memoizer<ConfiguredProject, string>(
                 configuredProject => {
@@ -296,7 +290,7 @@ namespace Aderant.Build.ProjectSystem {
                     var wixLibTarget = projectInstance.GetProperty("TargetExt");
                     if (wixLibTarget != null) {
                         var value = wixLibTarget.EvaluatedValue;
-                        if (!string.Equals(value, WixReferenceService.WindowsInstaller)) {
+                        if (!string.Equals(value, ".msi")) {
                             return value;
                         }
                     }
@@ -340,33 +334,22 @@ namespace Aderant.Build.ProjectSystem {
                 });
 
             projectGuid = new Memoizer<ConfiguredProject, Guid>(
-                arg => {
-                    var propertyElement = arg.project.Value.GetPropertyValue("ProjectGuid");
-                    if (propertyElement != null) {
-                        try {
-                            return Guid.Parse(propertyElement);
-                        } catch (FormatException ex) {
-                            throw new FormatException(ex.Message + " " + propertyElement + " in " + arg.FullPath, ex);
-                        }
-                    }
+              arg => {
+                  var propertyElement = arg.project.Value.GetPropertyValue("ProjectGuid");
+                  if (propertyElement != null) {
+                      try {
+                          return Guid.Parse(propertyElement);
+                      } catch (FormatException ex) {
+                          throw new FormatException(ex.Message + " " + propertyElement + " in " + arg.FullPath, ex);
+                      }
+                  }
 
-                    return Guid.Empty;
-                });
+                  return Guid.Empty;
+              });
         }
 
         protected virtual Lazy<Project> InitializeProject(Lazy<ProjectRootElement> projectElement) {
-            var properties = new Dictionary<string, string>(globalProperties);
-            if (!string.IsNullOrEmpty(WixTargetsPath)) {
-                properties["WixTargetsPath"] = WixTargetsPath;
-            }
-
-            return new Lazy<Project>(
-                () => new Project(
-                    projectElement.Value,
-                    properties,
-                    null,
-                    CreateProjectCollection(),
-                    ProjectLoadSettings.IgnoreMissingImports));
+            return new Lazy<Project>(() => new Project(projectElement.Value, globalProperties, null, CreateProjectCollection(), ProjectLoadSettings.IgnoreMissingImports));
         }
 
         private ProjectCollection CreateProjectCollection() {
@@ -444,7 +427,7 @@ namespace Aderant.Build.ProjectSystem {
                     // OK boots, start walking...
                     var t1 = Task.Run(
                         () => {
-                            if (services.TextTemplateReferences != null) {
+                            if (Services.TextTemplateReferences != null) {
                                 IReadOnlyCollection<IUnresolvedReference> references = services.TextTemplateReferences.GetUnresolvedReferences();
                                 AddUnresolvedReferences(collector, references);
                             }
@@ -452,7 +435,7 @@ namespace Aderant.Build.ProjectSystem {
 
                     var t2 = Task.Run(
                         () => {
-                            if (services.ProjectReferences != null) {
+                            if (Services.ProjectReferences != null) {
                                 IReadOnlyCollection<IUnresolvedReference> references = services.ProjectReferences.GetUnresolvedReferences();
                                 AddUnresolvedReferences(collector, references);
                             }
@@ -460,7 +443,7 @@ namespace Aderant.Build.ProjectSystem {
 
                     var t3 = Task.Run(
                         () => {
-                            if (services.AssemblyReferences != null) {
+                            if (Services.AssemblyReferences != null) {
                                 IReadOnlyCollection<IUnresolvedReference> references = services.AssemblyReferences.GetUnresolvedReferences();
                                 AddUnresolvedReferences(collector, references);
                             }
@@ -616,13 +599,28 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         public string GetOutputAssemblyWithExtension() {
-            string name;
-            if (AssemblyReferencesService.TryGetOutputAssemblyWithExtension(OutputType, OutputAssembly, out name)) {
-                return name;
+            if (string.Equals(OutputType, "Library", StringComparison.OrdinalIgnoreCase)) {
+                return OutputAssembly + ".dll";
             }
 
-            if (WixReferenceService.TryGetOutputAssemblyWithExtension(OutputType, OutputAssembly, out name)) {
-                return name;
+            if (string.Equals(OutputType, "winexe", StringComparison.OrdinalIgnoreCase)) {
+                return OutputAssembly + ".exe";
+            }
+
+            if (string.Equals(OutputType, "exe", StringComparison.OrdinalIgnoreCase)) {
+                return OutputAssembly + ".exe";
+            }
+
+            if (string.Equals(OutputType, "package", StringComparison.OrdinalIgnoreCase)) {
+                return OutputAssembly + ".msi";
+            }
+
+            if (string.Equals(OutputType, ".msi", StringComparison.OrdinalIgnoreCase)) {
+                return OutputAssembly + ".msi";
+            }
+
+            if (string.Equals(OutputType, ".wixlib", StringComparison.OrdinalIgnoreCase)) {
+                return OutputAssembly + ".wixlib";
             }
 
             throw new NotSupportedException($"Unable to determine output extension from type: '{OutputType}' for project: '{FullPath}'.");

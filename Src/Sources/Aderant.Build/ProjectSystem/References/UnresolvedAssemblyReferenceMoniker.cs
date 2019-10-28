@@ -22,9 +22,6 @@ namespace Aderant.Build.ProjectSystem.References {
             return AssemblyName.FullName;
         }
 
-        /// <summary>
-        /// Wraps a project item for use in dependency analysis.
-        /// </summary>
         public static UnresolvedAssemblyReferenceMoniker Create(ProjectItem unresolved) {
             string evaluatedInclude = unresolved.EvaluatedInclude;
 

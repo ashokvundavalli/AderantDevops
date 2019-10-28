@@ -17,6 +17,8 @@ namespace Aderant.Build.Services {
         public ServiceContainer(ILogger logger, IReadOnlyCollection<Assembly> catalogAssemblies) {
             List<Type> types = new List<Type>();
 
+            VisualStudioEnvironmentContext.SetupContext();
+
             foreach (var asm in catalogAssemblies) {
                 try {
                     types.AddRange(asm.GetTypes());
@@ -26,7 +28,7 @@ namespace Aderant.Build.Services {
             }
 
             var catalog = new AggregateCatalog(new TypeCatalog(types));
-
+            
             var unfilteredCatalog = catalog.Filter(cpd => !cpd.ExportDefinitions.Any(ed => ed.Metadata.ContainsKey("Scope")));
             var filteredCatalog = catalog.Filter(cpd => cpd.ExportDefinitions.Any(ed => ed.Metadata.ContainsKey("Scope") && ed.Metadata["Scope"].ToString() == nameof(ConfiguredProject)));
 

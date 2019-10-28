@@ -67,9 +67,6 @@
     <AlwaysBuildWebProjects Condition="'$(AlwaysBuildWebProjects)' == ''">true</AlwaysBuildWebProjects>
     <RequireSynchronizedOutputPaths Condition="'$(RequireSynchronizedOutputPaths)' == ''">false</RequireSynchronizedOutputPaths>
     <CreateHardLinksForCopyLocal Condition="'$(CreateHardLinksForCopyLocal)' == ''">false</CreateHardLinksForCopyLocal>
-
-    <!-- Default to the machine install of the WiX toolset -->
-    <UseWixShim Condition="'$(UseWixShim)' == ''">true</UseWixShim>
   </PropertyGroup>
 
   <Import Project="$(ParametersFile)" Condition="Exists($(ParametersFile))" />
@@ -83,7 +80,6 @@
   <PropertyGroup>
     <BuildAndPackageDependsOn>
       PrepareBuildEnvironment;
-      EnsureWixToolsetInstalled;
       CleanStagingDirectory;
       MakeStagingDirectory;
       GetTfvc;
@@ -228,7 +224,6 @@
       ExtensibilityFiles="@(ExtensibilityFiles)"
       MakeFiles="@(DirectoryMakeFiles)"
       ProjectFiles="@(ProjectFiles)"
-      WixTargetsPath="$(WixTargetsPath)"
       AlwaysBuildWebProjects="$(AlwaysBuildWebProjects)"
       RequireSynchronizedOutputPaths="$(RequireSynchronizedOutputPaths)"
       CreateHardLinksForCopyLocal="$(CreateHardLinksForCopyLocal)"
@@ -396,9 +391,11 @@
 
     <MSBuild Projects="$(BuildPlan)"
              Properties="$(CommonBuildProperties);BuildEnabled=true"
+             StopOnFirstFailure="true"
              BuildInParallel="$(BuildInParallel)" />
 
   </Target>
+
 
 
   <PropertyGroup>

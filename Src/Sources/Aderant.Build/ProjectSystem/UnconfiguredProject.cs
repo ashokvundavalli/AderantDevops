@@ -16,23 +16,25 @@ namespace Aderant.Build.ProjectSystem {
     internal class UnconfiguredProject {
         private static XmlNameTable nameTable = new XmlNameTableThreadSafe();
 
+        private static readonly Memoizer<UnconfiguredProject, Guid> projectGuidMemoizer = new Memoizer<UnconfiguredProject, Guid>(
+            project => {
+                foreach (var propertyElement in project.projectElement.Value.Properties) {
+                    if (propertyElement.Name == "ProjectGuid") {
+                        if (propertyElement.Value != null) {
+                            return Guid.Parse(propertyElement.Value);
+                        }
+                    }
+                }
+
+                return Guid.Empty;
+            }
+        );
+
         private bool isTemplateProject;
         private Lazy<ProjectRootElement> projectElement;
         private Memoizer<UnconfiguredProject, Guid> projectGuid;
 
         public UnconfiguredProject() {
-            projectGuid = new Memoizer<UnconfiguredProject, Guid>(
-                project => {
-                    foreach (var propertyElement in project.projectElement.Value.Properties) {
-                        if (propertyElement.Name == "ProjectGuid") {
-                            if (propertyElement.Value != null) {
-                                return Guid.Parse(propertyElement.Value);
-                            }
-                        }
-                    }
-
-                    return Guid.Empty;
-                });
         }
 
         public Guid ProjectGuid {
@@ -44,14 +46,9 @@ namespace Aderant.Build.ProjectSystem {
 
         public string FullPath { get; private set; }
 
+
         public ProjectCollection ProjectCollection { get; set; }
-
         public bool AllowConformityModification { get; set; }
-
-        /// <summary>
-        /// The path to the WIX tool chain targets file (optional)
-        /// </summary>
-        public string WixTargetsPath { get; set; }
 
         public bool IsTemplateProject() {
             if (isTemplateProject) {
@@ -117,6 +114,8 @@ namespace Aderant.Build.ProjectSystem {
 
                 },
                 LazyThreadSafetyMode.PublicationOnly);
+
+            projectGuid = projectGuidMemoizer;
         }
 
         private void AssignPath(string projectLocation, ProjectRootElement element) {
@@ -171,7 +170,6 @@ namespace Aderant.Build.ProjectSystem {
                 }
             }
 
-            configuredProject.WixTargetsPath = WixTargetsPath;
             configuredProject.Initialize(projectElement, FullPath);
             return configuredProject;
         }
