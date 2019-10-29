@@ -154,7 +154,7 @@ function LoadAssembly {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$assemblyPath,
-        [switch]$loadAsModule
+        [bool]$loadAsModule
     )
 
     if ([System.IO.File]::Exists($assemblyPath)) {
@@ -169,7 +169,7 @@ function LoadAssembly {
             Write-Error "Failed to load $assemblyPath $_"
         }
 
-        if ($loadAsModule.IsPresent) {
+        if ($loadAsModule) {
             # This load process was built after many days of head scratching trying to get -Global to work.
             # The -Global switch appears to be bug ridden with compiled modules not backed by an on disk assembly which is our use case.
             # Even with the -Global flag the commands within the module are not imported into the global space.
@@ -234,12 +234,11 @@ function RunActionExclusive {
 
 function UpdateSubmodules {
     param(
-       [switch]$Updated
+       [bool]$Updated,
+       [string]$Commit
     )
 
-    if (-not $Updated.IsPresent -and $script:isUsingProfile) {
-        Write-Information -MessageData 'Submodule update skipped.'
-    } else {
+    $action = {
         # Only update submodules if we tried to update since we may have a new commit
         # This is quite slow
         Write-Information "Updating submodules..."
@@ -281,14 +280,17 @@ function UpdateSubmodules {
                     $millisecondsTaken = [int]($Sender.PSEndTime - $Sender.PSBeginTime).TotalMilliseconds
                     $Host.UI.RawUI.WindowTitle = "Submodule update complete ($millisecondsTaken ms)"
                 }
-    
+
                 $Sender | Remove-Job -Force
-    
+
                 $EventSubscriber | Unregister-Event -Force
                 $EventSubscriber.Action | Remove-Job -Force
             }
         }
     }
+
+    $markerFile = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), "Submodule_" + $commit)
+    DoActionIfNeeded $action $markerFile
 }
 
 function RefreshSource {
@@ -502,7 +504,7 @@ try {
 
     . "$PSScriptRoot\InProcessJobs.ps1" -Version $commit
 
-    UpdateSubmodules -Updated:$updateInfo.Updated
+    UpdateSubmodules ($updateInfo.Updated) $commit
 
     [string]$assemblyPathRoot = [System.IO.Path]::GetFullPath("$BuildScriptsDirectory..\Build.Tools")
     [string]$mainAssembly = "$assemblyPathRoot\Aderant.Build.dll"
@@ -513,7 +515,7 @@ try {
     BuildProjects $mainAssembly $isUsingProfile $commit
     LoadAssembly -assemblyPath "$assemblyPathRoot\System.Threading.Tasks.Dataflow.dll"
     LoadAssembly -assemblyPath "$assemblyPathRoot\protobuf-net.dll"
-    LoadAssembly -assemblyPath $mainAssembly -loadAsModule
+    LoadAssembly -assemblyPath $mainAssembly $true
     LoadLibGit2Sharp $assemblyPathRoot
     LoadVstsTaskLibrary
     SetNuGetProviderPath $assemblyPathRoot
