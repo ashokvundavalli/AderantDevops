@@ -124,7 +124,7 @@ namespace Aderant.Build.ProjectSystem {
             };
 
             ActionBlock<string> parseBlock = new ActionBlock<string>(
-                s => LoadAndParseProjectFile(s),
+                s => LoadAndParseProjectFile(s, null),
                 new ExecutionDataflowBlockOptions {
                     MaxDegreeOfParallelism = ParallelismHelper.MaxDegreeOfParallelism,
                     CancellationToken = cancellationToken
@@ -250,7 +250,7 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         public async Task<BuildPlan> ComputeBuildPlan(BuildOperationContext context, AnalysisContext analysisContext, IBuildPipelineService pipelineService, OrchestrationFiles jobFiles) {
-            LoadProjects(analysisContext.ProjectFiles);
+            LoadProjects(analysisContext);
 
             var collector = new BuildDependenciesCollector();
             collector.ProjectConfiguration = context.ConfigurationToBuild;
@@ -395,11 +395,11 @@ namespace Aderant.Build.ProjectSystem {
             MetaprojectXml = generator.CreateSolutionProject(projectsInSolutions);
         }
 
-        private void LoadProjects(IReadOnlyCollection<string> analysisContextProjectFiles) {
+        private void LoadProjects(AnalysisContext analysisContext) {
             EnsureUnconfiguredProjects();
 
-            foreach (string projectFile in analysisContextProjectFiles) {
-                LoadAndParseProjectFile(projectFile);
+            foreach (string projectFile in analysisContext.ProjectFiles) {
+                LoadAndParseProjectFile(projectFile, analysisContext.WixTargetsPath);
             }
 
             UnconfiguredProject.ClearCaches();
@@ -462,7 +462,7 @@ namespace Aderant.Build.ProjectSystem {
             return parser;
         }
 
-        private void LoadAndParseProjectFile(string file) {
+        private void LoadAndParseProjectFile(string file, string wixTargetsPath) {
             using (Stream stream = Services.FileSystem.OpenFile(file)) {
                 using (var reader = XmlReader.Create(stream)) {
                     UnconfiguredProject unconfiguredProject;
@@ -472,6 +472,8 @@ namespace Aderant.Build.ProjectSystem {
 
                         unconfiguredProject.ProjectCollection = projectCollection;
                         unconfiguredProject.AllowConformityModification = true;
+                        unconfiguredProject.WixTargetsPath = wixTargetsPath;
+
                         unconfiguredProject.Initialize(reader, file);
 
                         loadedUnconfiguredProjects.Add(unconfiguredProject);

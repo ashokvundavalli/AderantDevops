@@ -70,6 +70,11 @@ namespace Aderant.Build.Tasks {
         /// </summary>
         public bool CreateHardLinksForCopyLocal { get; set; }
 
+        /// <summary>
+        /// Specifies the WIX targets path. WIX may not be installed globally and this will be the branch provided target path.
+        /// </summary>
+        public string WixTargetsPath { get; set; }
+
         [Output]
         public string[] DirectoriesInBuild { get; set; }
 
@@ -82,7 +87,6 @@ namespace Aderant.Build.Tasks {
         }
 
         private void ExecuteCore(BuildOperationContext context) {
-
             if (context.Switches.Resume) {
                 if (File.Exists(BuildPlan)) {
                     // When resuming we need to reconstruct the TrackedProjects collection.
@@ -114,6 +118,7 @@ namespace Aderant.Build.Tasks {
 
             var analysisContext = new AnalysisContext();
             analysisContext.ProjectFiles = ProjectFiles;
+            analysisContext.WixTargetsPath = WixTargetsPath;
 
             var buildPlan = projectTree.ComputeBuildPlan(context, analysisContext, PipelineService, jobFiles).Result;
             if (buildPlan.DirectoriesInBuild != null) {

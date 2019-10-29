@@ -82,10 +82,10 @@ namespace Aderant.Build.Packaging {
             return artifactItems;
         }
 
-        private static readonly string[] ExtensionWhitelist = new string[] {".zip", ".msi", ".role.xml", ".wixlib"};
+        private static readonly string[] extensionWhitelist = new string[] {".zip", ".msi", ".role.xml", ".wixlib"};
 
         private static bool PackageOtherExtensions(PathSpec file) {
-            foreach (string extension in ExtensionWhitelist) {
+            foreach (string extension in extensionWhitelist) {
                 if (file.Location.EndsWith(extension, StringComparison.OrdinalIgnoreCase)) {
                     return true;
                 }

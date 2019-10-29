@@ -101,6 +101,8 @@
     <Compile Include="Commands\GetSourceTreeMetadataCommand.cs" />
     <Compile Include="Commands\GetBuildStateMetadataCommand.cs" />
     <Compile Include="DependencyResolver\WellKnownSources.cs" />
+    <Compile Include="ProjectSystem\References\Wix\UnresolvedWixReference.cs" />
+    <Compile Include="ProjectSystem\References\Wix\WixReferenceService.cs" />
     <Compile Include="ProjectSystem\StateTracking\StateFileManager.cs" />
     <Compile Include="DependencyResolver\IDependencyGroup.cs" />
     <Compile Include="DependencyResolver\ResolverWorkflow.cs" />

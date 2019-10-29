@@ -125,6 +125,8 @@
     </Compile>
     <Compile Include="DependencyResolver\ResolverWorkflowTests.cs" />
     <Compile Include="PipelineService\BuildPipelineServiceTests.cs" />
+    <Compile Include="ProjectSystem\UnresolvedBuildDependencyProjectReferenceTests.cs" />
+    <Compile Include="ProjectSystem\WixReferenceServiceTests.cs" />
     <Compile Include="Tasks\GetDependenciesTaskTests.cs" />
     <Compile Include="DirectoryMetadataServiceTests.cs" />
     <Compile Include="Packaging\FileRestoreTests.cs" />
