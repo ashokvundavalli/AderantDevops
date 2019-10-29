@@ -67,9 +67,6 @@
     <AlwaysBuildWebProjects Condition="'$(AlwaysBuildWebProjects)' == ''">true</AlwaysBuildWebProjects>
     <RequireSynchronizedOutputPaths Condition="'$(RequireSynchronizedOutputPaths)' == ''">false</RequireSynchronizedOutputPaths>
     <CreateHardLinksForCopyLocal Condition="'$(CreateHardLinksForCopyLocal)' == ''">false</CreateHardLinksForCopyLocal>
-
-    <!-- Default to the machine install of the WiX toolset -->
-    <UseWixShim Condition="'$(UseWixShim)' == ''">true</UseWixShim>
   </PropertyGroup>
 
   <Import Project="$(ParametersFile)" Condition="Exists($(ParametersFile))" />
