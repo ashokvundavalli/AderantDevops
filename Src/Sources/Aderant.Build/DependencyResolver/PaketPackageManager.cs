@@ -2,12 +2,15 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net.Http;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using Aderant.Build.DependencyResolver.Models;
 using Aderant.Build.DependencyResolver.Resolvers;
 using Aderant.Build.Logging;
 using Microsoft.FSharp.Collections;
 using Microsoft.FSharp.Control;
+using Microsoft.FSharp.Core;
 using Paket;
 
 namespace Aderant.Build.DependencyResolver {
@@ -25,6 +28,10 @@ namespace Aderant.Build.DependencyResolver {
 
         private Dependencies dependencies;
         private DependenciesFile dependenciesFile;
+
+        static PaketPackageManager() {
+            PaketHttpMessageHandlerFactory.Configure();
+        }
 
         public PaketPackageManager(string root, IFileSystem2 fileSystem, IWellKnownSources wellKnownSources, ILogger logger) {
             this.root = root;
@@ -170,7 +177,7 @@ namespace Aderant.Build.DependencyResolver {
             if (addDatabasePackageUrl) {
                 sources = AddSource(Constants.DatabasePackageUri, sources);
             }
-            
+
             // Upgrade any V2 to V3 sources
             if (sources.Any(s => object.Equals(s.NuGetType, PackageSources.KnownNuGetSources.OfficialNuGetGallery) && s.IsNuGetV2)) {
                 sources = RemoveSource(sources, Constants.OfficialNuGetUrl);
