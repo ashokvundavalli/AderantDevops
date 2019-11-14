@@ -25,6 +25,10 @@ param(
   [Hashtable]
   $AdditionalEnvironmentVariables,
 
+  [Parameter(Mandatory=$false)]
+  [bool]
+  $RunInParallel,
+
   [Parameter(Mandatory=$false, ValueFromRemainingArguments=$true)]
   [string[]]
   $TestAssemblies
@@ -68,6 +72,10 @@ function CreateRunSettingsXml() {
 
     # VS SDK
     AddSearchDirectory $assemblyResolution ("$Env:VSSDK140Install" + "VisualStudioIntegration\Common\Assemblies\v4.0") -includeSubDirectories:$false -prepend:$false
+
+    if ($script:RunInParallel -eq $false) {
+        $settingsDocument.RunSettings.RunConfiguration.MaxCpuCount = '1'
+    }
 
     $sw = [System.IO.StringWriter]::new()
     $writer = New-Object System.Xml.XmlTextWriter($sw)
