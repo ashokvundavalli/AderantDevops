@@ -118,6 +118,8 @@ namespace Aderant.Build.Packaging {
                     logger.Info($"Calculating files to restore for project: {Path.GetFileNameWithoutExtension(project.Key)}");
 
                     foreach (string fileWrite in project.Value.FilesWritten) {
+                        var actualTargetDirectories = new HashSet<string>(targetDirectories, StringComparer.OrdinalIgnoreCase);
+
                         // Must reset the path for each iteration
                         outputPath = originalOutputPath;
 
@@ -125,7 +127,7 @@ namespace Aderant.Build.Packaging {
 
                         // A new project relative output path was calculated, add this allowed path to the path collector
                         if (!string.Equals(originalOutputPath, outputPath)) {
-                            if (targetDirectories.Add(outputPath)) {
+                            if (actualTargetDirectories.Add(outputPath)) {
                                 logger.Info($"File write '{filePath}' outside of project output path was allowed: => {outputPath}");
                             }
                         }
@@ -155,10 +157,10 @@ namespace Aderant.Build.Packaging {
                         // There can be only one.
                         LocalArtifactFile artifactFile = distinctLocalSourceFiles.First();
 
-                        CheckWhitelistForFile(filePath, targetDirectories);
+                        CheckWhitelistForFile(filePath, actualTargetDirectories);
 
                         int copyCount = copyOperations.Count;
-                        foreach (string targetDirectory in targetDirectories) {
+                        foreach (string targetDirectory in actualTargetDirectories) {
                             string destination = Path.GetFullPath(Path.Combine(targetDirectory, filePath));
 
                             AddFileDestination(
