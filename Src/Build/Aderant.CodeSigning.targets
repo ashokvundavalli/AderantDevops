@@ -11,6 +11,9 @@
     <!-- Sign Tool -->
     <WindowsKits_81 Condition="'$(WindowsKits_81)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows Kits\Installed Roots@KitsRoot81)</WindowsKits_81>
     <WindowsKits_81 Condition="'$(WindowsKits_81)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Kits\Installed Roots@KitsRoot81)</WindowsKits_81>
+    
+    <WindowsKits_10 Condition="'$(WindowsKits_10)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows Kits\Installed Roots@KitsRoot10)</WindowsKits_10>
+    <WindowsKits_10 Condition="'$(WindowsKits_10)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Kits\Installed Roots@KitsRoot10)</WindowsKits_10>
 
     <!-- Mage -->
     <WindowsSdkDir_71A Condition="'$(WindowsSdkDir_71A)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.1A@InstallationFolder)</WindowsSdkDir_71A>
@@ -32,6 +35,11 @@
     <When Condition="'$(WindowsKits_81)' != ''">
       <PropertyGroup>
         <WindowsKitRoot>$(WindowsKits_81)</WindowsKitRoot>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(WindowsKitsRoot)' == '' And '$(WindowsKits_10)' != ''">
+      <PropertyGroup>
+        <WindowsKitRoot>$(WindowsKits_10)</WindowsKitRoot>
       </PropertyGroup>
     </When>
   </Choose>
