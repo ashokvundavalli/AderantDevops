@@ -143,6 +143,7 @@ nuget Gotta.Have.It 4.20 ci";
         public void When_a_single_module_is_in_the_build_official_nuget_source_allowed() {
             string lines = @"
 source https://www.nuget.org/api/v2
+references: strict
 nuget ThePackageFromNuget";
 
             var fs = new Mock<IFileSystem2>();
@@ -164,7 +165,7 @@ nuget ThePackageFromNuget";
                 packageManagerLines = packageManager.Lines;
             }
 
-            Assert.AreEqual(4, packageManagerLines.Length);
+            Assert.AreEqual(5, packageManagerLines.Length);
             Assert.AreEqual($"source {Constants.OfficialNuGetUrlV3}", packageManagerLines[1]);
         }
 
@@ -188,7 +189,7 @@ nuget ThePackageFromNuget";
                 packageManagerLines = packageManager.Lines;
             }
 
-            Assert.AreEqual(2, packageManagerLines.Length);
+            Assert.AreEqual(3, packageManagerLines.Length);
             Assert.AreNotEqual($"source {Constants.OfficialNuGetUrlV3}", packageManagerLines[1]);
         }
 

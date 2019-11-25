@@ -72,6 +72,10 @@ namespace Aderant.Build.Commands {
             workflow.Force = Force.ToBool();
             workflow.Update = Update.ToBool();
 
+            if (!string.IsNullOrEmpty(ModulesRootPath)) {
+                workflow.Request.AddModule(ModulesRootPath);
+            }
+
             workflow.Run(cancellationTokenSource.Token);
         }
 

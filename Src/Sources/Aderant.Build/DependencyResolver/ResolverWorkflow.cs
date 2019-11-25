@@ -8,7 +8,7 @@ using Aderant.Build.Logging;
 
 namespace Aderant.Build.DependencyResolver {
     internal class ResolverWorkflow {
-        private string configurationXml;
+        private XDocument configurationXml;
         private HashSet<string> enabledResolvers;
 
         private ResolverRequest request;
@@ -44,7 +44,7 @@ namespace Aderant.Build.DependencyResolver {
         /// <summary>
         /// Settings document that controls resolver options.
         /// </summary>
-        public string ConfigurationXml {
+        public XDocument ConfigurationXml {
             get { return configurationXml; }
             set {
                 configurationXml = value;
@@ -53,10 +53,6 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         public void Run(CancellationToken cancellationToken) {
-            if (!string.IsNullOrEmpty(ModulesRootPath)) {
-                Request.AddModule(ModulesRootPath);
-            }
-
             if (!string.IsNullOrEmpty(DependenciesDirectory)) {
                 Request.SetDependenciesDirectory(DependenciesDirectory);
             }
@@ -104,17 +100,13 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         private void InitializeResolvers() {
-            string xml = ConfigurationXml;
-            if (!string.IsNullOrEmpty(xml)) {
-
-                var document = XDocument.Parse(xml);
+            XDocument xml = ConfigurationXml;
+            if (xml != null) {
                 XElement element;
-                if (document.Root.Name.LocalName == "DependencyResolvers") {
-                    element = document.Root;
+                if (xml.Root.Name.LocalName.Equals("DependencyResolvers")) {
+                    element = xml.Root;
                 } else {
-                    element = document
-                        .Root
-                        .Element("DependencyResolvers");
+                    element = xml.Root.Element("DependencyResolvers");
                 }
 
                 enabledResolvers = ParseProperties(element);

@@ -303,13 +303,9 @@
       Condition="!Exists('$(SharedDependencyDirectory)packages)')"
       Directories="$(SharedDependencyDirectory)packages" />
 
-    <PropertyGroup>
-      <BranchConfigurationXml Condition="Exists($(BranchConfigFile))">$([System.IO.File]::ReadAllText($(BranchConfigFile)))</BranchConfigurationXml>
-    </PropertyGroup>
-
     <GetDependencies
       ProductManifest="$(ProductManifestPath)"
-      ConfigurationXml="$(BranchConfigurationXml)"
+      BranchConfigFile="$(BranchConfigFile)"
       ModulesRootPath="$(SolutionRoot)"
       DependenciesDirectory="$(SharedDependencyDirectory)"
       DropPath="$(XamlBuildDropLocation)"

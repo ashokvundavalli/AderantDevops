@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.DependencyResolver.Models;
 using Aderant.Build.Logging;
 using Aderant.Build.Providers;
 
@@ -35,10 +36,10 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
 
             if (!string.IsNullOrEmpty(moduleDirectory)) {
                 using (var manager = new PaketPackageManager(moduleDirectory, new PhysicalFileSystem(), WellKnownPackageSources.Default, logger)) {
-                    var groupList = manager.FindGroups();
+                    IEnumerable<string> groupList = manager.FindGroups();
 
                     foreach (string groupName in groupList) {
-                        var dependencyGroup = manager.GetDependencies(groupName);
+                        DependencyGroup dependencyGroup = manager.GetDependencies(groupName);
 
                         if (dependencyGroup.FrameworkRestrictions != null) {
                             foreach (string restriction in dependencyGroup.FrameworkRestrictions) {
@@ -120,11 +121,10 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
         }
 
         private void SingleModuleRestore(ResolverRequest resolverRequest, IEnumerable<IDependencyRequirement> requirements, CancellationToken cancellationToken) {
-            string directory = resolverRequest.GetDependenciesDirectory(requirements.First());
+            string directory = resolverRequest.GetDependenciesDirectory(requirements.First(), resolverRequest.ReplicationExplicitlyDisabled);
 
             var fs = new PhysicalFileSystem();
-            PackageRestore(resolverRequest, Path.GetDirectoryName(directory), fs, requirements, cancellationToken);
-
+            PackageRestore(resolverRequest, directory, fs, requirements, cancellationToken);
         }
 
         private void ServerBuildRestore(ResolverRequest resolverRequest, IEnumerable<IDependencyRequirement> requirements, CancellationToken cancellationToken) {

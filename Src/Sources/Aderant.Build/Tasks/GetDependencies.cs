@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Xml.Linq;
 using Aderant.Build.Commands;
@@ -11,8 +12,7 @@ using Microsoft.Build.Utilities;
 namespace Aderant.Build.Tasks {
     public class GetDependencies : Task, ICancelableTask {
         private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-
-
+        
         public string ModulesRootPath { get; set; }
 
         public string DropPath { get; set; }
@@ -41,14 +41,32 @@ namespace Aderant.Build.Tasks {
         /// </value>
         public ITaskItem[] ModulesInBuild { get; set; }
 
-        public string ConfigurationXml { get; set; }
+        /// <summary>
+        /// Gets or sets the path to the branch configuration file.
+        /// </summary>
+        /// <value>
+        /// The branch configuration file.
+        /// </value>
+        public string BranchConfigFile { get; set; }
+
+        /// <summary>
+        /// Determines if Paket update should be run.
+        /// </summary>
+        /// <value>
+        /// Whether or not to run the update command.
+        /// </value>
+        public bool Update { get; set; }
+
+        public bool DisableSharedDependencyDirectory { get; set; }
+
+        internal XDocument ConfigurationXml { get; set; }
 
         public string[] EnabledResolvers {
             get {
                 return new string[0];
             }
             set {
-                if (string.IsNullOrEmpty(ConfigurationXml)) {
+                if (ConfigurationXml == null) {
                     if (value != null && value.Length > 0) {
                         var resolvers = new XElement("DependencyResolvers");
                         foreach (string name in value) {
@@ -58,7 +76,7 @@ namespace Aderant.Build.Tasks {
                         var doc = new XDocument();
                         doc.Add(new XElement("BranchConfig", resolvers));
 
-                        ConfigurationXml = doc.ToString();
+                        ConfigurationXml = doc;
                     }
                 }
             }
@@ -76,18 +94,41 @@ namespace Aderant.Build.Tasks {
             ModulesRootPath = Path.GetFullPath(ModulesRootPath);
 
             ExpertManifest productManifest = null;
-            if (ProductManifest != null) {
+            if (!string.IsNullOrWhiteSpace(ProductManifest)) {
                 ProductManifest = Path.GetFullPath(ProductManifest);
-                productManifest = ExpertManifest.Load(ProductManifest);
-                productManifest.ModulesDirectory = ModulesRootPath;
+
+                if (File.Exists(ProductManifest)) {
+                    productManifest = ExpertManifest.Load(ProductManifest);
+                    productManifest.ModulesDirectory = ModulesRootPath;
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(BranchConfigFile)) {
+                ConfigurationXml = XDocument.Load(BranchConfigFile);
             }
 
             LogParameters(logger);
 
-            var workflow = new ResolverWorkflow(logger);
-            workflow.ConfigurationXml = ConfigurationXml;
-            workflow.ModulesRootPath = ModulesRootPath;
-            workflow.DropPath = DropPath;
+            var workflow = new ResolverWorkflow(logger) {
+                ConfigurationXml = ConfigurationXml,
+                ModulesRootPath = ModulesRootPath,
+                DropPath = DropPath
+            };
+
+            if (DisableSharedDependencyDirectory) {
+                workflow.Request.ReplicationExplicitlyDisabled = true;
+            } else {
+                if (string.IsNullOrWhiteSpace(DependenciesDirectory)) {
+                    string dependenciesSubDirectory = ConfigurationXml.Descendants("DependenciesDirectory").FirstOrDefault()?.Value;
+
+                    if (!string.IsNullOrWhiteSpace(dependenciesSubDirectory)) {
+                        DependenciesDirectory = Path.Combine(ModulesRootPath, dependenciesSubDirectory);
+                    } else {
+                        workflow.Request.ReplicationExplicitlyDisabled = true;
+                    }
+                }
+            }
+
             workflow.DependenciesDirectory = DependenciesDirectory;
             workflow.Request.ModuleFactory = productManifest;
 
@@ -99,6 +140,10 @@ namespace Aderant.Build.Tasks {
                 foreach (ITaskItem module in ModulesInBuild) {
                     workflow.Request.AddModule(module.ItemSpec);
                 }
+            }
+
+            if (Update) {
+                workflow.Request.Update = Update;
             }
 
             workflow.Run(cancellationTokenSource.Token);
@@ -113,12 +158,12 @@ namespace Aderant.Build.Tasks {
                 cancellationTokenSource.Cancel();
             }
         }
-
-
+        
         private void LogParameters(Logging.ILogger logger) {
             logger.Info($"ModulesRootPath: {ModulesRootPath}");
             logger.Info($"DropPath: {DropPath}");
             logger.Info($"ProductManifest: {ProductManifest}");
+            logger.Info($"Branch configuration file: {BranchConfigFile}");
         }
     }
 }

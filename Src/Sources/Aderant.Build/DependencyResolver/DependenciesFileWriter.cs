@@ -34,8 +34,7 @@ namespace Aderant.Build.DependencyResolver.Models {
                 sb.AppendLine();
 
                 foreach (var packageRequirement in group.Packages) {
-                    if (packageRequirement.Sources.HeadOrDefault.IsNuGetV2) {
-
+                    if (packageRequirement.Sources.HeadOrDefault.IsNuGetV2 || packageRequirement.Sources.HeadOrDefault.IsNuGetV3) {
                         string preReleaseString = string.Empty;
                         PreReleaseStatus status = packageRequirement.VersionRequirement.PreReleases;
                         if (status.IsConcrete) {
@@ -76,18 +75,18 @@ namespace Aderant.Build.DependencyResolver.Models {
         /// <summary>
         /// The name of the group.
         /// </summary>
-        public string GroupName { get; }
+        internal string GroupName { get; }
 
         /// <summary>
         /// Do not resolve transitive dependencies
         /// </summary>
-        public bool Strict { get; set; }
+        internal bool Strict { get; set; }
 
         /// <summary>
         /// Any .NET framework restrictions.
         /// </summary>
-        public IEnumerable<string> FrameworkRestrictions { get; set; }
+        internal IEnumerable<string> FrameworkRestrictions { get; set; }
 
-        public IDictionary<string, VersionRequirement> Requirements { get; private set; }
+        internal IDictionary<string, VersionRequirement> Requirements { get; private set; }
     }
 }

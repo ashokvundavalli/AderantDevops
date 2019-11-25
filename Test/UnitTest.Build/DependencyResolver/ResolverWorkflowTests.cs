@@ -1,4 +1,5 @@
-﻿using Aderant.Build.DependencyResolver;
+﻿using System.Xml.Linq;
+using Aderant.Build.DependencyResolver;
 using Aderant.Build.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -15,7 +16,7 @@ namespace UnitTest.Build.DependencyResolver {
   </DependencyResolvers>";
 
             var workflow = new ResolverWorkflow(NullLogger.Default);
-            workflow.ConfigurationXml = xml;
+            workflow.ConfigurationXml = XDocument.Parse(xml);
 
             Assert.IsTrue(workflow.Request.ValidatePackageConstraints);
         }

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
@@ -99,7 +98,7 @@ namespace Aderant.Build.DependencyResolver {
                     IEnumerable<IDependencyRequirement> dependencyRequirements = resolver.GetDependencyRequirements(resolverRequest, module);
 
                     if (dependencyRequirements != null) {
-                        loopRequirements.AddRange(dependencyRequirements.ToList());
+                        loopRequirements.AddRange(dependencyRequirements);
                     }
                 }
 

@@ -82,14 +82,18 @@ namespace Aderant.Build.DependencyResolver {
             return module.FullPath ?? string.Empty;
         }
 
-        public virtual string GetDependenciesDirectory(IDependencyRequirement requirement) {
+        public virtual string GetDependenciesDirectory(IDependencyRequirement requirement, bool replicationDisabled = false) {
             if (!string.IsNullOrEmpty(dependenciesDirectory)) {
                 return dependenciesDirectory;
             }
 
             ExpertModule module = GetOrAdd(requirement).Module;
             if (module == null) {
-                throw new InvalidOperationException(string.Format("Resolver error. Unable to determine the directory to place requirement {0} into.", requirement.Name));
+                throw new InvalidOperationException(string.Format("Resolver error. Unable to determine the directory to place requirement: {0} into.", requirement.Name));
+            }
+
+            if (replicationDisabled) {
+                return GetModuleDirectory(module);
             }
 
             return Path.Combine(GetModuleDirectory(module), "Dependencies");

@@ -1,4 +1,5 @@
-﻿using Aderant.Build.Tasks;
+﻿using System.Xml.Linq;
+using Aderant.Build.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTest.Build.Tasks {
@@ -7,18 +8,20 @@ namespace UnitTest.Build.Tasks {
 
         [TestMethod]
         public void Task_item_property_sets_ConfigurationXml_property() {
-            var gd = new GetDependencies();
-            gd.EnabledResolvers = new string[] { "abc", "def" };
+            var gd = new GetDependencies {
+                EnabledResolvers = new string[] {
+                    "abc", "def"
+                }
+            };
 
             Assert.IsNotNull(gd.ConfigurationXml);
-            Assert.AreEqual(
-                @"<BranchConfig>
+            Assert.AreEqual(@"<BranchConfig>
   <DependencyResolvers>
     <abc />
     <def />
   </DependencyResolvers>
 </BranchConfig>",
-                gd.ConfigurationXml);
+                gd.ConfigurationXml.ToString());
         }
     }
 }

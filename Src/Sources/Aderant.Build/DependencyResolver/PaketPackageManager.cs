@@ -108,48 +108,46 @@ namespace Aderant.Build.DependencyResolver {
             // Indicates if the system is resolving for a single directory or multiple directories.
             bool isUsingMultipleInputFiles = resolverRequest != null && resolverRequest.Modules.Count() > 1;
 
-            if (createdNew) {
-                FSharpMap<Domain.GroupName, DependenciesGroup> groups = dependenciesFile.Groups;
+            FSharpMap<Domain.GroupName, DependenciesGroup> groups = dependenciesFile.Groups;
 
-                List<DependenciesGroup> groupList = new List<DependenciesGroup>();
+            List<DependenciesGroup> groupList = new List<DependenciesGroup>();
 
-                foreach (var groupEntry in groups) {
-                    var group = dependenciesFile.GetGroup(groupEntry.Key);
+            foreach (var groupEntry in groups) {
+                DependenciesGroup group = dependenciesFile.GetGroup(groupEntry.Key);
 
-                    bool isMainGroup = string.Equals(group.Name.Name, Constants.MainDependencyGroup, StringComparison.OrdinalIgnoreCase);
+                bool isMainGroup = string.Equals(group.Name.Name, Constants.MainDependencyGroup, StringComparison.OrdinalIgnoreCase);
 
-                    var sources = CreateSources(groupEntry, group, isMainGroup, isUsingMultipleInputFiles);
-                    var options = CreateInstallOptions(requirements, groupEntry, group);
+                FSharpList<PackageSources.PackageSource> sources = CreateSources(groupEntry, group, isMainGroup, isUsingMultipleInputFiles);
+                InstallOptions options = CreateInstallOptions(requirements, groupEntry, group, isMainGroup);
 
-                    var newGroup = new DependenciesGroup(
-                        group.Name,
-                        sources,
-                        group.Caches,
-                        options,
-                        group.Packages,
-                        group.ExternalLocks,
-                        group.RemoteFiles);
+                DependenciesGroup newGroup = new DependenciesGroup(
+                    group.Name,
+                    sources,
+                    group.Caches,
+                    options,
+                    group.Packages,
+                    group.ExternalLocks,
+                    group.RemoteFiles);
 
-                    if (isMainGroup) {
-                        groupList.Insert(0, newGroup);
-                    } else {
-                        groupList.Add(newGroup);
-                    }
+                if (isMainGroup) {
+                    groupList.Insert(0, newGroup);
+                } else {
+                    groupList.Add(newGroup);
                 }
-
-                DependenciesFileWriter fileWriter = new DependenciesFileWriter();
-                var result = fileWriter.Write(groupList, resolverRequest?.GetFrameworkRestrictions());
-
-                FSharpMap<Domain.GroupName, DependenciesGroup> map = MapModule.Empty<Domain.GroupName, DependenciesGroup>();
-                foreach (DependenciesGroup group in groupList) {
-                    map = map.Add(group.Name, group);
-                }
-
-                dependenciesFile = new DependenciesFile(
-                    dependenciesFile.FileName,
-                    map,
-                    result.Split(Environment.NewLine.ToCharArray(), StringSplitOptions.RemoveEmptyEntries));
             }
+
+            DependenciesFileWriter fileWriter = new DependenciesFileWriter();
+            var result = fileWriter.Write(groupList, resolverRequest?.GetFrameworkRestrictions());
+
+            FSharpMap<Domain.GroupName, DependenciesGroup> map = MapModule.Empty<Domain.GroupName, DependenciesGroup>();
+            foreach (DependenciesGroup group in groupList) {
+                map = map.Add(group.Name, group);
+            }
+
+            dependenciesFile = new DependenciesFile(
+                dependenciesFile.FileName,
+                map,
+                result.Split(Environment.NewLine.ToCharArray(), StringSplitOptions.RemoveEmptyEntries));
 
             dependenciesFile.Save();
 
@@ -191,10 +189,15 @@ namespace Aderant.Build.DependencyResolver {
             return sources;
         }
 
-        private static InstallOptions CreateInstallOptions(IEnumerable<IDependencyRequirement> requirements, KeyValuePair<Domain.GroupName, DependenciesGroup> groupEntry, DependenciesGroup group) {
-            bool isStrict = requirements.OfType<IDependencyGroup>()
-                .Where(s => s.DependencyGroup != null && string.Equals(s.DependencyGroup.GroupName, groupEntry.Key.Name, StringComparison.OrdinalIgnoreCase))
-                .Any(s => s.DependencyGroup.Strict);
+        private static InstallOptions CreateInstallOptions(IEnumerable<IDependencyRequirement> requirements, KeyValuePair<Domain.GroupName, DependenciesGroup> groupEntry, DependenciesGroup group, bool isMainGroup) {
+            bool isStrict;
+            if (isMainGroup) {
+                isStrict = true;
+            } else {
+                isStrict = requirements.OfType<IDependencyGroup>()
+                    .Where(s => s.DependencyGroup != null && string.Equals(s.DependencyGroup.GroupName, groupEntry.Key.Name, StringComparison.OrdinalIgnoreCase))
+                    .Any(s => s.DependencyGroup.Strict);
+            }
 
             InstallOptions options = group.Options;
             if (isStrict) {
@@ -388,7 +391,8 @@ namespace Aderant.Build.DependencyResolver {
 
         public IEnumerable<string> FindGroups() {
             Dependencies dependenciesFile = Dependencies.Locate(root);
-            var file = dependenciesFile.GetDependenciesFile();
+            DependenciesFile file = dependenciesFile.GetDependenciesFile();
+
             return file.Groups.Select(s => s.Key.Name);
         }
 
