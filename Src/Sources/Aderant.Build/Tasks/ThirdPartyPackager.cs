@@ -26,6 +26,8 @@ namespace Aderant.Build.Tasks {
 
         public bool VersionByTimestamp { get; set; }
 
+        public bool EnableVerboseLogging { get; set; }
+
         public override bool Execute() {
             fileSystem = new PhysicalFileSystem(Folder);
 
@@ -76,7 +78,7 @@ namespace Aderant.Build.Tasks {
         private bool DownloadPackage(string packageName) {
             // Download the existing package
             try {
-                using (PackageManager packageManager = new PackageManager(fileSystem, logger)) {
+                using (PackageManager packageManager = new PackageManager(fileSystem, logger, EnableVerboseLogging)) {
                     var requirement = DependencyRequirement.Create(
                         packageName,
                         BuildConstants.MainDependencyGroup,

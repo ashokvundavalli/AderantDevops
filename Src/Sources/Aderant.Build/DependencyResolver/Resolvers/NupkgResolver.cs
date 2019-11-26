@@ -11,6 +11,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
     internal class NupkgResolver : IDependencyResolver {
         private ILogger logger;
         public IModuleProvider ModuleFactory { get; set; }
+        public bool EnableVerboseLogging { get; set; }
 
         public IEnumerable<IDependencyRequirement> GetDependencyRequirements(ResolverRequest resolverRequest, ExpertModule module) {
             logger = resolverRequest.Logger;
@@ -19,11 +20,11 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
             string moduleDirectory = resolverRequest.GetModuleDirectory(module);
 
             if (!string.IsNullOrEmpty(moduleDirectory)) {
-                using (var pm = new PackageManager(new PhysicalFileSystem(moduleDirectory), logger)) {
-                    var groupList = pm.FindGroups();
+                using (PackageManager manager = new PackageManager(new PhysicalFileSystem(moduleDirectory), logger, EnableVerboseLogging)) {
+                    var groupList = manager.FindGroups();
 
                     foreach (string groupName in groupList) {
-                        var requirements = pm.GetDependencies(groupName);
+                        var requirements = manager.GetDependencies(groupName);
                         foreach (var item in requirements) {
                             var requirement = DependencyRequirement.Create(item.Key, groupName, item.Value);
                             requirement.ReplicateToDependencies = true;
@@ -70,7 +71,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
         }
 
         private void PackageRestore(ResolverRequest resolverRequest, IFileSystem2 fileSystem, IEnumerable<IDependencyRequirement> requirements, CancellationToken cancellationToken) {
-            using (var manager = new PackageManager(fileSystem, logger)) {
+            using (var manager = new PackageManager(fileSystem, logger, EnableVerboseLogging)) {
                 manager.Add(requirements);
 
                 if (resolverRequest.Update) {

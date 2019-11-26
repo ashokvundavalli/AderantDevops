@@ -11,6 +11,8 @@ namespace Aderant.Build.Tasks {
     public class GetDependencies : Microsoft.Build.Utilities.Task, ICancelableTask {
         private CancellationTokenSource cancellationToken = new CancellationTokenSource();
 
+        public bool EnableVerboseLogging { get; set; }
+
         [Required]
         public string ModulesRootPath { get; set; }
 
@@ -85,7 +87,7 @@ namespace Aderant.Build.Tasks {
                 moduleResolver.AddDependencySource(DropPath, ExpertModuleResolver.DropLocation);
 
                 Resolver resolver = new Resolver(logger, moduleResolver, new NupkgResolver());
-                resolver.ResolveDependencies(request, cancellationToken.Token);
+                resolver.ResolveDependencies(request, cancellationToken.Token, EnableVerboseLogging);
 
                 return !Log.HasLoggedErrors;
             } finally {

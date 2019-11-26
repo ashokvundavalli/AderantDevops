@@ -478,7 +478,8 @@ doc.Save(File);
       ModuleName="$(ModuleName)"
       BuildType="ContinuousIntegration"
       DependenciesDirectory="$(DependenciesDirectory)"
-      DropPath="$(BaseDropDirectory)" />
+      DropPath="$(BaseDropDirectory)"
+      EnableVerboseLogging="$(PaketVerboseLogging)" />
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true') And '$(UseSharedDependencyDirectory)' != 'true'"

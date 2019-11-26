@@ -101,7 +101,7 @@ namespace Aderant.Build.Commands {
             moduleResolver.AddDependencySource(DropPath, ExpertModuleResolver.DropLocation);
 
             Resolver resolver = new Resolver(Logger, moduleResolver, new NupkgResolver());
-            resolver.ResolveDependencies(request, cancellationToken.Token);
+            resolver.ResolveDependencies(request, cancellationToken.Token, MyInvocation.BoundParameters.ContainsKey("Verbose")); 
         }
 
         protected override void StopProcessing() {

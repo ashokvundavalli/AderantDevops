@@ -27,7 +27,7 @@ namespace Aderant.Build.DependencyResolver {
         /// </summary>
         /// <param name="resolverRequest">The resolver request.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
-        public void ResolveDependencies(ResolverRequest resolverRequest, CancellationToken cancellationToken = default(CancellationToken)) {
+        public void ResolveDependencies(ResolverRequest resolverRequest, CancellationToken cancellationToken = default(CancellationToken), bool enableVerboseLogging = false) {
             resolverRequest.Modules.ToList().ForEach(s => logger.Info($"Resolving dependencies for {s.Name}"));
 
             List<IDependencyRequirement> requirements = new List<IDependencyRequirement>();
@@ -43,6 +43,7 @@ namespace Aderant.Build.DependencyResolver {
             logger.Info("Required inputs: {0}", string.Join(",", distinctRequirements.Select(s => s.Name)));
 
             foreach (IDependencyResolver resolver in resolvers) {
+                resolver.EnableVerboseLogging = enableVerboseLogging;
                 resolver.Resolve(resolverRequest, distinctRequirements, cancellationToken);
 
                 IEnumerable<IDependencyRequirement> unresolved = resolverRequest.GetRequirementsByType(DependencyState.Unresolved);

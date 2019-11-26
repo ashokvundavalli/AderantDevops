@@ -12,6 +12,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
       
         private readonly IFileSystem2 fileSystem;
         private List<DependencySource> sources = new List<DependencySource>();
+        public bool EnableVerboseLogging { get; set; }
 
         public string Root { get; set; }
 

@@ -68,7 +68,8 @@
       ModulesRootPath="$(SolutionRoot)"
       DependenciesDirectory="$(SharedDependencyDirectory)"
       DropPath="$(DropLocation)"
-      ModulesInBuild="@(ModulesInBuild)" />
+      ModulesInBuild="@(ModulesInBuild)"
+      EnableVerboseLogging="$(PaketVerboseLogging)" />
 
     <ItemGroup>
       <ModuleDirectories Include="$([System.IO.Directory]::GetDirectories('$(SolutionRoot)'))"

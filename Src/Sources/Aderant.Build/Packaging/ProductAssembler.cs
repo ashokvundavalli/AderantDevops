@@ -21,6 +21,7 @@ namespace Aderant.Build.Packaging {
         private string tfsBuildNumber;
         private bool isLocalBuild;
         private SourceCodeInfo sourceCodeInfo;
+        public bool EnableVerboseLogging { get; set; }
 
         public ProductAssembler(string productManifestPath, ILogger logger) {
             this.logger = logger;
@@ -84,7 +85,7 @@ namespace Aderant.Build.Packaging {
         private IEnumerable<string> RetrievePackages(ProductAssemblyContext context) {
             var fs = new RetryingPhysicalFileSystem(Path.Combine(context.ProductDirectory, "package." + Path.GetRandomFileName()));
 
-            using (var manager = new PackageManager(fs, logger)) {
+            using (var manager = new PackageManager(fs, logger, EnableVerboseLogging)) {
                 manager.Add(context.Modules.Select(DependencyRequirement.Create));
                 manager.Restore();
             }

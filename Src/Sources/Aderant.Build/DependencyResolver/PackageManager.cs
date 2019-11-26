@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -20,7 +20,7 @@ namespace Aderant.Build.DependencyResolver {
 
         private Dependencies dependencies;
 
-        public PackageManager(IFileSystem2 fileSystem, ILogger logger) {
+        public PackageManager(IFileSystem2 fileSystem, ILogger logger, bool enableVerboseLogging = false) {
             this.logger = logger;
             this.FileSystem = fileSystem;
             dependencies = Initialize();
@@ -28,11 +28,13 @@ namespace Aderant.Build.DependencyResolver {
             this.logMessageDelegate = OnTraceEvent;
 
             Paket.Logging.@event.Publish.AddHandler(logMessageDelegate);
+
+            Paket.Logging.verbose = enableVerboseLogging;
         }
 
         private void OnTraceEvent(object sender, Paket.Logging.Trace args) {
             if (args.Level == TraceLevel.Verbose) {
-                logger.Debug(args.Text);
+                logger.Info(args.Text);
             }
 
             if (args.Level == TraceLevel.Info) {
