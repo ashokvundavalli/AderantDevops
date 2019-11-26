@@ -1,7 +1,9 @@
-# Getting Dependencies
+# Dependencies
 Currently, all of our external dependencies come in the form of NuGet packages, and are retrieved from one of two sources:
 * https://expertpackages.azurewebsites.net/ for packages published internally.
 * https://www.nuget.org/ for public packages.
+
+To read more about our internal package repository implementation, see [this article](https://aderant.sharepoint.com/RD/processes_wiki/SitePages/NuGet.aspx).
 
 We use a third party application called Paket to manage packages. Documentation on this tool can be found here: https://fsprojects.github.io/Paket/
 
