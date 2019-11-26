@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Threading;
 using System.Xml.Linq;
-using Aderant.Build.Commands;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyResolver;
 using Aderant.Build.Logging;
@@ -12,7 +11,9 @@ using Microsoft.Build.Utilities;
 namespace Aderant.Build.Tasks {
     public class GetDependencies : Task, ICancelableTask {
         private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-        
+
+        public bool EnableVerboseLogging { get; set; }
+
         public string ModulesRootPath { get; set; }
 
         public string DropPath { get; set; }
@@ -146,7 +147,7 @@ namespace Aderant.Build.Tasks {
                 workflow.Request.Update = Update;
             }
 
-            workflow.Run(cancellationTokenSource.Token);
+            workflow.Run(cancellationTokenSource.Token, EnableVerboseLogging);
         }
 
         /// <summary>

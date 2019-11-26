@@ -31,7 +31,11 @@ param(
 
   [Parameter(Mandatory=$false, ValueFromRemainingArguments=$true)]
   [string[]]
-  $TestAssemblies
+  $TestAssemblies,
+
+  [Parameter(Mandatory=$false)]
+  [string]
+  $TestAdapterPath
 )
 
 Set-StrictMode -Version "Latest"
@@ -186,6 +190,7 @@ try {
     $runSettingsFile = [System.IO.Path]::GetTempFileName()
     Add-Content -LiteralPath $runSettingsFile -Value $xml -Encoding UTF8
     $startInfo.Arguments += " /Settings:$runSettingsFile"
+    $startInfo.Arguments += " $TestAdapterPath"
 
     Write-Information "Starting runner: $($startInfo.FileName) $($startInfo.Arguments)"
 

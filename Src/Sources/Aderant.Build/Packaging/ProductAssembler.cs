@@ -24,6 +24,7 @@ namespace Aderant.Build.Packaging {
         private bool isLocalBuild;
         private SourceCodeInfo sourceCodeInfo;
         private ExpertManifest manifest;
+        public bool EnableVerboseLogging { get; set; }
 
         public ProductAssembler(string productManifestXml, ILogger logger) {
             this.logger = logger;
@@ -87,7 +88,7 @@ namespace Aderant.Build.Packaging {
 
             var fs = new RetryingPhysicalFileSystem();
 
-            using (var manager = new PaketPackageManager(workingDirectory, fs, WellKnownPackageSources.Default, logger)) {
+            using (var manager = new PaketPackageManager(workingDirectory, fs, WellKnownPackageSources.Default, logger, EnableVerboseLogging)) {
                 manager.Add(context.Modules.Select(DependencyRequirement.Create));
                 manager.Restore();
             }

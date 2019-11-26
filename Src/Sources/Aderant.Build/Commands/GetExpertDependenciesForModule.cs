@@ -76,7 +76,7 @@ namespace Aderant.Build.Commands {
                 workflow.Request.AddModule(ModulesRootPath);
             }
 
-            workflow.Run(cancellationTokenSource.Token);
+            workflow.Run(cancellationTokenSource.Token, MyInvocation.BoundParameters.ContainsKey("Verbose"));
         }
 
         protected override void StopProcessing() {

@@ -310,7 +310,8 @@
       DependenciesDirectory="$(SharedDependencyDirectory)"
       DropPath="$(XamlBuildDropLocation)"
       ModulesInBuild="@(DirectoriesInBuild)"
-      EnabledResolvers="@(EnabledResolvers)" />
+      EnabledResolvers="@(EnabledResolvers)"
+      EnableVerboseLogging="$(PaketVerboseLogging)" />
 
     <PropertyGroup>
       <SolutionRootNoSlash>$(SolutionRoot.TrimEnd('\'))</SolutionRootNoSlash>

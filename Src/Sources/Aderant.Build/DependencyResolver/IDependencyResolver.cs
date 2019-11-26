@@ -10,6 +10,11 @@ namespace Aderant.Build.DependencyResolver {
         IModuleProvider ModuleFactory { get; set; }
 
         /// <summary>
+        /// Determines whether or not to enable Verbose logging for Paket.
+        /// </summary>>
+        bool EnableVerboseLogging { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether replication explicitly disabled. 
         /// Modules can tell the build system to not replicate packages to the dependencies folder via DependencyReplication=false in the DependencyManifest.xml
         /// </summary>>

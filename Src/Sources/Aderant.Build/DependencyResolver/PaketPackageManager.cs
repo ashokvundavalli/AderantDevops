@@ -33,13 +33,13 @@ namespace Aderant.Build.DependencyResolver {
             PaketHttpMessageHandlerFactory.Configure();
         }
 
-        public PaketPackageManager(string root, IFileSystem2 fileSystem, IWellKnownSources wellKnownSources, ILogger logger) {
+        public PaketPackageManager(string root, IFileSystem2 fileSystem, IWellKnownSources wellKnownSources, ILogger logger, bool enableVerboseLogging = false) {
             this.root = root;
             this.wellKnownSources = wellKnownSources;
             this.logger = logger;
             this.FileSystem = fileSystem;
             dependencies = Initialize(root);
-
+            Paket.Logging.verbose = enableVerboseLogging;
             this.logMessageDelegate = OnTraceEvent;
 
             Paket.Logging.@event.Publish.AddHandler(logMessageDelegate);
@@ -56,7 +56,7 @@ namespace Aderant.Build.DependencyResolver {
 
         private void OnTraceEvent(object sender, Paket.Logging.Trace args) {
             if (args.Level == TraceLevel.Verbose) {
-                logger.Debug(args.Text, null);
+                logger.Info(args.Text, null);
             }
 
             if (args.Level == TraceLevel.Info) {

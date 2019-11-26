@@ -13,6 +13,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
     internal class NupkgResolver : IDependencyResolver {
 
         private ILogger logger;
+        public bool EnableVerboseLogging { get; set; }
 
         static NupkgResolver() {
             // Paket used to support being loaded as byte array but current versions have a hard dependency on Assembly.Location which is
@@ -35,7 +36,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
             string moduleDirectory = resolverRequest.GetModuleDirectory(module);
 
             if (!string.IsNullOrEmpty(moduleDirectory)) {
-                using (var manager = new PaketPackageManager(moduleDirectory, new PhysicalFileSystem(), WellKnownPackageSources.Default, logger)) {
+                using (var manager = new PaketPackageManager(moduleDirectory, new PhysicalFileSystem(), WellKnownPackageSources.Default, logger, EnableVerboseLogging)) {
                     IEnumerable<string> groupList = manager.FindGroups();
 
                     foreach (string groupName in groupList) {
@@ -138,7 +139,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
         }
 
         private void PackageRestore(ResolverRequest resolverRequest, string directory, IFileSystem2 fileSystem, IEnumerable<IDependencyRequirement> requirements, CancellationToken cancellationToken) {
-            using (var manager = new PaketPackageManager(directory, fileSystem, WellKnownPackageSources.Default, logger)) {
+            using (var manager = new PaketPackageManager(directory, fileSystem, WellKnownPackageSources.Default, logger, EnableVerboseLogging)) {
                 manager.Add(requirements, resolverRequest);
 
                 if (resolverRequest.Update) {

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Aderant.Build.DependencyResolver;
@@ -26,6 +25,8 @@ namespace Aderant.Build.Tasks {
         public string Folder { get; set; }
 
         public bool VersionByTimestamp { get; set; }
+
+        public bool EnableVerboseLogging { get; set; }
 
         public override bool Execute() {
             fileSystem = new PhysicalFileSystem();
@@ -77,7 +78,7 @@ namespace Aderant.Build.Tasks {
         private bool DownloadPackage(string packageName) {
             // Download the existing package
             try {
-                using (PaketPackageManager packageManager = new PaketPackageManager(Folder, fileSystem, WellKnownPackageSources.Default, logger)) {
+                using (PaketPackageManager packageManager = new PaketPackageManager(Folder, fileSystem, WellKnownPackageSources.Default, logger, EnableVerboseLogging)) {
                     var requirement = DependencyRequirement.Create(
                         packageName,
                         Constants.MainDependencyGroup,
