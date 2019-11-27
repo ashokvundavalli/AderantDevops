@@ -196,7 +196,7 @@
 
     <GetDependencies
       ProductManifest="$(ProductManifestPath)"
-      ConfigurationXml="$(BranchConfigurationXml)"
+      BranchConfigFile="$(BranchConfigFile)"
       ModulesRootPath="$(SolutionRoot)"
       ModuleName="$(SolutionRoot)"
       DropPath="$(XamlBuildDropLocation)"
