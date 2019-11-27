@@ -323,8 +323,8 @@
 
   <Target Name="AddAssemblyInfo"
           BeforeTargets="CoreCompile"
-          DependsOnTargets="PrepareForBuild;"
-          Condition="'$(GeneratedAssemblyInfoFile)' != ''">
+          DependsOnTargets="PrepareForBuild;"		  
+          Condition="'$(GeneratedAssemblyInfoFile)' != '' And $(GenerateAssemblyInfo) != false">
 
     <ItemGroup>
       <Compile Include="$(GeneratedAssemblyInfoFile)" />
