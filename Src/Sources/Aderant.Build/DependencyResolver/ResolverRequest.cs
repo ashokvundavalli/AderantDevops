@@ -83,7 +83,7 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         public virtual string GetDependenciesDirectory(IDependencyRequirement requirement, bool replicationDisabled = false) {
-            if (!string.IsNullOrEmpty(dependenciesDirectory)) {
+            if (!string.IsNullOrWhiteSpace(dependenciesDirectory)) {
                 return dependenciesDirectory;
             }
 

@@ -99,7 +99,7 @@
   </Target>
 
   
-  <Target Name="PackageArtifactsCore" DependsOnTargets="$(PackageArtifactsDependsOn)">
+  <Target Name="PackageArtifactsCore" Condition="'$(ArtifactStagingDirectory)' != ''" DependsOnTargets="$(PackageArtifactsDependsOn)">
 
     <CreateArtifacts
       ContextEndpoint="$(ContextEndpoint)"

@@ -53,7 +53,7 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         public void Run(CancellationToken cancellationToken, bool enableVerboseLogging) {
-            if (!string.IsNullOrEmpty(DependenciesDirectory)) {
+            if (!string.IsNullOrWhiteSpace(DependenciesDirectory)) {
                 Request.SetDependenciesDirectory(DependenciesDirectory);
             }
 

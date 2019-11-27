@@ -42,7 +42,8 @@
       UpdateContext;
       $(TargetsForCustomizationFiles);
       RepairDirectoryLinks;
-      RetrievePrebuilts;
+      GetDependencies;
+      RunRetrieveArtifacts;
       rmTransformTemplates;
     </RunBuildDependsOn>
   </PropertyGroup>
@@ -103,9 +104,15 @@
     <Message Text="AderantBuildClientTasksV100Lib-1_0_0_0: $(AderantBuildClientTasksV100Lib-1_0_0_0)" />
     <Message Text="rmT4AssemblyReferencePaths: $(rmT4AssemblyReferencePaths)" />
     <Message Text="rmT4TextTemplates: @(rmT4TextTemplates)" />
+
   </Target>
 
+
   <Target Name="_BeforeBuild">
+    <PropertyGroup>
+      <ModuleName Condition="'$(ModuleName)' == ''">$([System.IO.Directory]::GetParent(GetSolutionRoot).Name)</ModuleName>
+    </PropertyGroup>
+
     <PrintBanner Text="$(ModuleName)" />
   </Target>
 
@@ -117,12 +124,13 @@
     <Error Condition="'$(CustomAfterMicrosoftCommonTargets)' == '' And '$(IsCustomBuild)' != 'true'" Text="No custom Microsoft common targets file set." />
   </Target>
 
+
   <PropertyGroup>
     <DependenciesDirectory>$(SolutionDirectoryPath)\Dependencies</DependenciesDirectory>
   </PropertyGroup>
 
 
-  <Target Name="RepairDirectoryLinks" Condition="'$(SharedDependencyDirectory)' != ''">
+  <Target Name="RepairDirectoryLinks" Condition="'$(UseSharedDependencyDirectory)' == 'true' And '$(SharedDependencyDirectory)' != ''">
     <ItemGroup>
       <Link Include="$(DependenciesDirectory)">
         <LinkTarget>$(SharedDependencyDirectory)</LinkTarget>
@@ -184,15 +192,15 @@
   </Target>
 
 
-  <Target Name="RetrievePrebuilts" Condition="'$(RetrievePrebuilts)' != 'false'"
-          DependsOnTargets="CollectExtensibilityFiles;RunRetrieveArtifacts">
+  <Target Name="GetDependencies" Condition="'$(UseSharedDependencyDirectory)' != 'true' And '$(GetDependencies)' != 'false'">
 
-    <GetDependencies Condition="'$(UseSharedDependencyDirectory)' != 'true' And '$(NoDependencyFetch)' != 'true'"
+    <GetDependencies
       ProductManifest="$(ProductManifestPath)"
+      ConfigurationXml="$(BranchConfigurationXml)"
       ModulesRootPath="$(SolutionRoot)"
       ModuleName="$(SolutionRoot)"
-      DependenciesDirectory="$(DependenciesDirectory)"
-      DropPath="$(XamlBuildDropLocation)" />
+      DropPath="$(XamlBuildDropLocation)"
+      EnabledResolvers="@(EnabledResolvers)" />
 
   </Target>
 

@@ -68,7 +68,7 @@ namespace IntegrationTest.Build.EndToEnd {
                     { "GetProduct", bool.FalseString },
                     { "PackageProduct", bool.TrueString},
                     { "RunTests", bool.FalseString },
-                    { "NoDependencyFetch", bool.TrueString},
+                    { "GetDependencies", bool.FalseString},
                     { "AllowNullScmBranch", bool.TrueString},
                     { "GenerateFactory", bool.FalseString},
                     { "ExcludeArtifactStagingDirectory", bool.FalseString},

@@ -32,46 +32,32 @@ function Get-Branch {
     }
 }
 
-function Get-BuildManifest {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$manifest,
-        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$branch
-    )
-
-    process {
-        return (Invoke-WebRequest -Uri "http://tfs:8080/tfs/ADERANT/44f228f7-b636-4bd3-99ee-eb2f1570d768/316b9ba9-3a49-47b2-992e-a9a2a2835b3f/_api/_versioncontrol/itemContent?repositoryId=e6138670-7236-4e80-aa7c-6417eea253f5&path=%2FBuild%2F$($manifest)&version=GB$($branch)&contentOnly=false&__v=5" -UseBasicParsing -UseDefaultCredentials).Content
-    }
-}
-
 function Get-BuildDirectory {
-    if (-not [string]::IsNullOrWhiteSpace($global:BranchConfigPath)) {
-        If (Test-Path -Path $global:BranchConfigPath) {
-            [string]$manifest = Join-Path -Path $global:BranchConfigPath -ChildPath 'ExpertManifest.xml'
-            [string]$config = Join-Path -Path $global:BranchConfigPath -ChildPath 'BranchConfig.xml'
+    if (Test-Path -Path 'variable:global:BranchConfigPath') {
+        if (-not [string]::IsNullOrWhiteSpace($global:BranchConfigPath)) {
+            If (Test-Path -Path $global:BranchConfigPath) {
+                [string]$manifest = Join-Path -Path $global:BranchConfigPath -ChildPath 'ExpertManifest.xml'
+                [string]$config = Join-Path -Path $global:BranchConfigPath -ChildPath 'BranchConfig.xml'
 
-            if ((Test-Path -Path $manifest) -and (Test-Path -Path $config)) {
-                return
+                if ((Test-Path -Path $manifest) -and (Test-Path -Path $config)) {
+                    return $true
+                }
             }
         }
     }
 
-    $global:BranchConfigPath = Read-Host -Prompt 'Supply a valid path to the ExpertManifest.xml and BranchConfig.xml files'
-    Get-BuildDirectory
+   return $false
 }
 
-function ApplyBranchConfig($context, [string]$root, [switch]$EnableConfigDownload) {
+function ApplyBranchConfig($context, [string]$root) {
     $configPath = [System.IO.Path]::Combine($root, "Build\BranchConfig.xml")
 
     [xml]$config = $null
     if (-not (Test-Path -Path $configPath)) {
-        if (-not $EnableConfigDownload.IsPresent) {
-            Get-BuildDirectory
+        if (Get-BuildDirectory) {
             $config = Get-Content -Raw -LiteralPath (Join-Path -Path $global:BranchConfigPath -ChildPath "BranchConfig.xml")
         } else {
-            [string]$branch = Get-Branch -root $root
-
-            $config = Get-BuildManifest -manifest 'BranchConfig.xml' -branch $branch
+            return
         }
     } else {
         $config = Get-Content -Raw -LiteralPath $configPath
@@ -83,42 +69,12 @@ function ApplyBranchConfig($context, [string]$root, [switch]$EnableConfigDownloa
     $context.DropLocationInfo.XamlBuildDropLocation = $config.BranchConfig.DropLocations.XamlBuildDropLocation
 }
 
-function Get-BuildDirectory {
-    if (-not [string]::IsNullOrWhiteSpace($global:BranchConfigPath)) {
-        If (Test-Path -Path $global:BranchConfigPath) {
-            [string]$manifest = Join-Path -Path $global:BranchConfigPath -ChildPath 'ExpertManifest.xml'
-            [string]$config = Join-Path -Path $global:BranchConfigPath -ChildPath 'BranchConfig.xml'
-
-            if ((Test-Path -Path $manifest) -and (Test-Path -Path $config)) {
-                return
-            }
-        }
-    }
-
-    $global:BranchConfigPath = Read-Host -Prompt 'Please supply a valid path to the ExpertManifest.xml and BranchConfig.xml files'
-    Get-BuildDirectory
-}
-
-function FindProductManifest($context, [string]$root, [switch]$EnableConfigDownload) {
+function FindProductManifest($context, [string]$root) {
     [string]$configPath = [System.IO.Path]::Combine($root, 'Build\ExpertManifest.xml')
 
-    if (-not (Test-Path -Path $configPath)) {
-        if (-not $EnableConfigDownload.IsPresent) {
-            Get-BuildDirectory
-
-            $context.ProductManifestPath = Join-Path -Path $global:BranchConfigPath -ChildPath 'ExpertManifest.xml'
-            return
-        }
-
-        [string]$branch = Get-Branch -root $root
-
-        $config = Get-BuildManifest -manifest 'ExpertManifest.xml' -branch $branch
-        $temp = New-TemporaryFile
-        $config | Out-File -File $temp.FullName -Encoding 'UTF8'
-        $configPath = $temp.FullName
-    }
-
-    $context.ProductManifestPath = $configPath
+    if ([System.IO.File]::Exists($configPath)) {
+        $context.ProductManifestPath = $configPath
+    }    
 }
 
 function FindGitDir($context, [string]$searchDirectory) {
@@ -159,10 +115,10 @@ function SearchForFile($startingDirectory, $fileName, $isDirectory = $false) {
             # terminating our search
             $lookInDirectory = [System.IO.Path]::GetDirectoryName($lookInDirectory)
         }
-    } while ($lookInDirectory -ne $null)
+    } while ($null -ne $lookInDirectory)
 
     # When we didn't find the location, then return an empty string
-    return ""
+    return [string]::Empty
 }
 
 function CreateToolArgumentString($context, $remainingArgs) {
@@ -222,8 +178,10 @@ function CreateToolArgumentString($context, $remainingArgs) {
             $set.Add("/p:switch-clean=true")
         }
 
-        if ($NoDependencyFetch.IsPresent) {
-            $set.Add("/p:NoDependencyFetch=true")
+        if ($GetDependencies.IsPresent) {
+            $set.Add("/p:GetDependencies=true")
+        } else {
+            $set.Add("/p:GetDependencies=false")
         }
 
         if ($RunIntegrationTests.IsPresent) {
@@ -313,6 +271,11 @@ function GetBuildStateMetadata($context) {
         $ids = $stm.BucketIds | Select-Object -ExpandProperty Id
         $tags = $stm.BucketIds | Select-Object -ExpandProperty Tag
     }
+
+    if ($null -eq $context.DropLocationInfo.BuildCacheLocation) {
+        return
+    }
+
     $buildState = Get-BuildStateMetadata -BucketIds $ids -Tags $tags -DropLocation $context.DropLocationInfo.BuildCacheLocation
 
     $context.BuildStateMetadata = $buildState
@@ -431,7 +394,7 @@ function AssignIncludeExclude {
     }
 }
 
-function AssignSwitches() {
+function AssignSwitches {
     $switches = $context.Switches
 
     $switches.Branch = $Branch.IsPresent
@@ -449,7 +412,7 @@ function AssignSwitches() {
     $switches.Resume = $Resume.IsPresent
     $switches.SkipCompile = $SkipCompile.IsPresent
     $switches.ChangedFilesOnly = $ChangedFilesOnly.IsPresent
-    $switches.RestrictToProvidedPaths = $RestrictToProvidedPaths.IsPresent
+    $switches.RestrictToProvidedPaths = $RestrictToProvidedPaths.IsPresent -and -not $standalone
     $switches.ExcludeTestProjects = $ExcludeTestProjects.IsPresent
 
     $boundParameters = $PSCmdLet.MyInvocation.BoundParameters
@@ -487,7 +450,7 @@ function global:Invoke-Build2 {
     [CmdletBinding(DefaultParameterSetName="Build", SupportsShouldProcess=$true)]
     param (
         [Parameter(ParameterSetName="Build", Mandatory=$false, Position=0)]
-        [string]$ModulePath = "",
+        [string]$ModulePath = [string]::Empty,
 
         [Parameter()]
         [switch]$Branch,
@@ -586,10 +549,10 @@ function global:Invoke-Build2 {
         [int]$MaxCpuCount,
 
         <#
-        Disables fetching of dependencies. Used to bypass the default behaviour of keeping you up to date.
+        Enables fetching dependencies.
         #>
         [Parameter()]
-        [switch]$NoDependencyFetch,
+        [switch]$GetDependencies,
 
         <#
         Instructs the build to not expand the build tree.
@@ -614,14 +577,11 @@ function global:Invoke-Build2 {
         [Parameter()]
         [switch]$MinimalConsoleLogging,
 
-        [Parameter(HelpMessage = "Enables fetching build configuration files from TFS.")]
-        [switch]$EnableConfigDownload,
-
         [Parameter(ValueFromRemainingArguments)]
         [string[]]$RemainingArgs
     )
 
-    Set-StrictMode -Version Latest
+    Set-StrictMode -Version 'Latest'
     $ErrorActionPreference = 'Stop'
 
 
@@ -637,7 +597,7 @@ function global:Invoke-Build2 {
     [Aderant.Build.BuildOperationContext]$context = Get-BuildContext -CreateIfNeeded
 
     if ($null -eq $context) {
-        throw 'Fatal error. Failed to create context'
+        throw 'Fatal error. Failed to create context.'
     }
 
     [string]$repositoryPath = $null
@@ -656,11 +616,14 @@ function global:Invoke-Build2 {
 
     GetSourceTreeMetadata -context $context -repositoryPath $root
 
-    AssignSwitches
-    ApplyBranchConfig -context $context -root $root -enableConfigDownload:$EnableConfigDownload.IsPresent
-    FindProductManifest -context $context -root $root -enableConfigDownload:$EnableConfigDownload.IsPresent
+    ApplyBranchConfig -context $context -root $root
+    FindProductManifest -context $context -root $root
 
-    if (-not $NoBuildCache.IsPresent) {
+    [bool]$standalone = [string]::IsNullOrWhiteSpace($context.DropLocationInfo.PrimaryDropLocation)
+
+    AssignSwitches
+
+    if (-not $NoBuildCache.IsPresent -and -not $standalone) {
         GetBuildStateMetadata $context
     }
 

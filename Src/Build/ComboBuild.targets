@@ -24,12 +24,16 @@
     <!--Ensure root path is consistent-->
     <SolutionRoot Condition="'$(SolutionRoot)' != '' and !HasTrailingSlash('$(SolutionRoot)')">$(SolutionRoot)\</SolutionRoot>
 
+    <ParametersFile>$(SolutionRoot)Build\Parameters.props</ParametersFile>
+  </PropertyGroup>
+
+  <Import Project="$(ParametersFile)" Condition="Exists($(ParametersFile))" />
+
+  <PropertyGroup>
     <BuildInParallel Condition="'$(BuildInParallel)' != 'false' And '$(MSBuildNodeCount)' &gt; '1'">true</BuildInParallel>
 
     <!--Test configuration-->
     <RunTests Condition="'$(RunTests)' == ''">$([MSBuild]::ValueOrDefault('$(RunTests)', 'true'))</RunTests>
-
-    <EnableTFVCGet Condition="'$(EnableTFVCGet)' == ''">false</EnableTFVCGet>
 
     <!-- TODO: Move to each project -->
     <RunCodeAnalysis>$(RunCodeAnalysisSetting)</RunCodeAnalysis>
@@ -41,7 +45,7 @@
     <ExpertSourceDirectory>$(LocalExpertBinariesDirectory)ExpertSource\</ExpertSourceDirectory>
 
     <!-- Location to drop outputs to share within the build -->
-    <UseSharedDependencyDirectory Condition="'$(UseSharedDependencyDirectory)' == ''">true</UseSharedDependencyDirectory>
+    <UseSharedDependencyDirectory Condition="'$(UseSharedDependencyDirectory)' == ''">false</UseSharedDependencyDirectory>
     <SharedDependencyDirectory Condition="'$(SharedDependencyDirectory)' == ''">$(ArtifactStagingDirectory)out\</SharedDependencyDirectory>
 
     <!-- Specifies the drop location for patch/update content -->
@@ -59,17 +63,14 @@
     <BuildPlan Condition="'$(BuildPlan)' == ''">$(SolutionRoot)BuildPlan.proj</BuildPlan>
 
     <CopyToDropEnabled Condition="'$(CopyToDropEnabled)' == '' And '$(IsDesktopBuild)' != 'true'">true</CopyToDropEnabled>
-    <PackageProduct Condition="'$(CopyToDropEnabled)' == 'true'">true</PackageProduct>
+    <PackageProduct Condition="'$(BUILD_REPOSITORY_NAME)' == 'ExpertSuite' And '$(CopyToDropEnabled)' == 'true'">true</PackageProduct>
 
-    <ParametersFile>$(SolutionRoot)Build\Parameters.props</ParametersFile>
     <BranchConfigFile>$(SolutionRoot)Build\BranchConfig.xml</BranchConfigFile>
 
     <AlwaysBuildWebProjects Condition="'$(AlwaysBuildWebProjects)' == ''">true</AlwaysBuildWebProjects>
     <RequireSynchronizedOutputPaths Condition="'$(RequireSynchronizedOutputPaths)' == ''">false</RequireSynchronizedOutputPaths>
     <CreateHardLinksForCopyLocal Condition="'$(CreateHardLinksForCopyLocal)' == ''">false</CreateHardLinksForCopyLocal>
   </PropertyGroup>
-
-  <Import Project="$(ParametersFile)" Condition="Exists($(ParametersFile))" />
 
   <Import Project="Aderant.Build.Common.targets" />
   <Import Project="Aderant.CodeSigning.targets" />
@@ -81,7 +82,6 @@
       EnsureWixToolsetInstalled;
       CleanStagingDirectory;
       MakeStagingDirectory;
-      GetTfvc;
       GatherProjectsToBuild;
       GetAllDependencies;
       CreatePlan;
@@ -122,6 +122,7 @@
                          TestPattern=IntegrationTest;ImpactedTestAssemblies=$(ImpactedTestAssemblies);
                          ExpertSourceDirectory=$(ExpertSourceDirectory);" />
   </Target>
+
 
   <Target Name="RemoveLockedFilesFromLastBuild">
     <ItemGroup>
@@ -213,7 +214,7 @@
         <FlavorToBuild>Release</FlavorToBuild>
         <PlatformToBuild>Any CPU</PlatformToBuild>
       </ConfigurationToBuild>
-      <ConfigurationToBuild Condition="'$(BuildFlavor)' == 'Debug'"
+      <ConfigurationToBuild Condition="'$(BuildFlavor)' == 'Debug' Or @(ConfigurationToBuild) == ''"
         Include="Debug|Any CPU">
         <FlavorToBuild>Debug</FlavorToBuild>
         <PlatformToBuild>Any CPU</PlatformToBuild>
@@ -254,18 +255,7 @@
   </Target>
 
 
-  <PropertyGroup>
-    <InitialTargetsDependsOn>ValidateRequiredProperties</InitialTargetsDependsOn>
-  </PropertyGroup>
-
-
-  <Target Name="ValidateRequiredProperties">
-    <Error Condition="'$(XamlBuildDropLocation)' == ''" Text="XamlBuildDropLocation is undefined" />
-    <Error Condition="'$(ProductManifestPath)' == ''" Text="ProductManifestPath is undefined" />
-  </Target>
-
-
-  <Target Name="SetPropertiesFromContext" DependsOnTargets="$(InitialTargetsDependsOn)">
+  <Target Name="SetPropertiesFromContext">
 
     <WaitForDebugger Wait="$(WaitForDebugger)" />
 
@@ -285,7 +275,7 @@
 
 
   <Target Name="GetAllDependencies"
-          Condition="'$(UseSharedDependencyDirectory)' == 'true' And '$(NoDependencyFetch)' != 'true'">
+          Condition="'$(UseSharedDependencyDirectory)' == 'true' And '$(GetDependencies)' != 'false'">
     <!--
       We have an issue here.
       The construction of a plan requires external files to be available before the plan generation takes place.
@@ -438,7 +428,7 @@
   </Target>
 
 
-  <Target Name="GetProduct">
+  <Target Name="GetProduct" Condition="'$(GetProduct)' != 'false'">
 
     <ItemGroup>
       <FilesNotWanted Include="@(StateFiles)" />
@@ -449,8 +439,7 @@
       <LocalPackageFiles Remove="@(FilesNotWanted)" />
     </ItemGroup>
 
-    <Exec Condition="'$(GetProduct)' != 'false'"
-          ContinueOnError="false"
+    <Exec ContinueOnError="false"
           IgnoreExitCode="false"
           Command="Powershell -NonInteractive -NoProfile &quot;&amp; { try { $(PackageScriptsDirectory)AssembleProduct.ps1 -productManifestPath $(ProductManifestPath) -binariesDirectory $(LocalExpertBinariesDirectory) } catch [Exception] { $Error[0] | Format-List -Force;throw } }&quot;"
           WorkingDirectory="$(LocalExpertBinariesDirectory)" />
@@ -827,80 +816,6 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
       Status="Succeeded" />
 
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />-->
-  </Target>
-
-
-  <Target Name="GetTfvc" Condition="'$(IsDesktopBuild)' != 'true' And '$(EnableTFVCGet)' != 'false'">
-
-    <PropertyGroup>
-      <TfvcWorkFolder>$(SolutionRoot)</TfvcWorkFolder>
-      <TfvcBranch>$(XamlBuildDropLocation.Replace("\\dfs.aderant.com\expertsuite\", ""))</TfvcBranch>
-
-    </PropertyGroup>
-
-      <ItemGroup>
-        <TfvcExcludedModules Include="Administration.HubSetup;
-                                      Applications.Administration;
-                                      Applications.CCLogViewer;
-                                      Applications.ExpertAssistant;
-                                      Applications.ExpertOutlookAddIn;
-                                      Applications.HelpAdministration;
-                                      Applications.MatterCenterIntegration;
-                                      Applications.Rates;
-                                      Applications.TeamManager;
-                                      Build.T4Task;
-                                      Libraries.CheckRequest;
-                                      Libraries.Entities.CashManagement;
-                                      Libraries.Entities.Employee;
-                                      Libraries.Entities.Firm;
-                                      Libraries.Entities.Marketing;
-                                      Libraries.Entities.Parameters;
-                                      Libraries.Entities.Rates;
-                                      Libraries.Entities.Tax;
-                                      Libraries.Entities.Trust;
-                                      Libraries.Packaging;
-                                      Libraries.Presentation.Firm;
-                                      Libraries.Query;
-                                      Libraries.Roles;
-                                      Libraries.SoftwareFactory;
-                                      Libraries.Workflow;
-                                      Packages;
-                                      Performance.ExpertSuite;
-                                      SDK;
-                                      SDK.Workflow;
-                                      Services.Applications.CheckRequest;
-                                      Services.Applications.EmployeeIntake;
-                                      Services.Applications.FirmControl;
-                                      Services.Applications.Rates;
-                                      Services.Audit;
-                                      Services.Communication;
-                                      Services.Deployment;
-                                      Services.Integration;
-                                      Services.Metadata;
-                                      Services.Notes;
-                                      Services.Query;
-                                      Services.Query.Constants;
-                                      Services.Security;
-                                      SmartForms.CheckRequest;
-                                      Tests.Load;
-                                      Tests.Query;
-                                      Web.Expenses;
-                                      Web.HtmlEditor;
-                                      Web.SystemInformation;
-                                      Web.Workflow;
-                                      Workflow.CheckRequest;
-                                      Workflow.EmployeeIntake;
-                                      Workflow.EntityManager;
-                                      Workflow.FileOpening;
-                                      Workflow.Integration.Samples;
-                                      Workflow.Samples;
-                                      Workflow.TeamManager" />
-      </ItemGroup>
-
-    <Exec Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command &quot;&amp; &apos;$(BuildScriptsDirectory)TFVC-WorkSpace-Initialize.ps1&apos; -workfolder &apos;$(TfvcWorkFolder)&apos; -branch &apos;$(TfvcBranch)&apos; -ExcludedModules &apos;@(TfvcExcludedModules)&apos;&quot;"
-          ContinueOnError="false"
-          IgnoreExitCode="false" />
-
   </Target>
 
 </Project>

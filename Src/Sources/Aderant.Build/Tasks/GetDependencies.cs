@@ -110,6 +110,13 @@ namespace Aderant.Build.Tasks {
 
             LogParameters(logger);
 
+            // Enable NupkgResolver by default if no resolvers are specified.
+            if (EnabledResolvers == null || EnabledResolvers.Length == 0) {
+                EnabledResolvers = new string[] {
+                    "NupkgResolver"
+                };
+            }
+
             var workflow = new ResolverWorkflow(logger) {
                 ConfigurationXml = ConfigurationXml,
                 ModulesRootPath = ModulesRootPath,

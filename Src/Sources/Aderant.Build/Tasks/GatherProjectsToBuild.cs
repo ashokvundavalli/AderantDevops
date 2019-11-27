@@ -54,8 +54,9 @@ namespace Aderant.Build.Tasks {
                 Log.LogMessage("Excluding paths: " + Environment.NewLine + string.Join(Environment.NewLine + "-> ", ExcludedPaths));
             }
 
-            groveler = new DirectoryGroveler(new PhysicalFileSystem());
-            groveler.Logger = new BuildTaskLogger(Log);
+            groveler = new DirectoryGroveler(new PhysicalFileSystem()) {
+                Logger = new BuildTaskLogger(Log)
+            };
 
             HashSet<string> inputDirectories = new HashSet<string>(Context.Include, StringComparer.OrdinalIgnoreCase);
             if (!Context.Switches.RestrictToProvidedPaths) {

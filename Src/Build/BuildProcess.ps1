@@ -308,7 +308,7 @@ task EndToEnd {
     # Import extensibility functions
     Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath 'Functions') -Filter '*.ps1' | ForEach-Object { . $_.FullName }
 
-    Invoke-Build2 -ModulePath $Env:BUILD_SOURCESDIRECTORY
+    Invoke-Build2 -ModulePath $Env:BUILD_SOURCESDIRECTORY -GetDependencies
 }
 
 # task PostBuild -Jobs Init, Package, CopyToDrop, {
