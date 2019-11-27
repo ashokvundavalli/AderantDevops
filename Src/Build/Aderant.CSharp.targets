@@ -26,7 +26,7 @@
     Updates the product splash screen without touching the original file
   -->
   <Target Name="CommonBuildUpdateSplashscreen"
-          Condition="'$(IsCustomBuild)' != 'true' And '$(OutputType)' == 'WinExe' And $(PackageId.EndsWith('.Api')) != 'true'"
+          Condition="'$(IsCustomBuild)' != 'true' And '$(OutputType)' == 'WinExe' And $(PackageId.EndsWith('.Api', StringComparison.OrdinalIgnoreCase)) != 'true'"
           AfterTargets="SetVersionAttributes">
     <!--
       This needs to run before BeforeResolveReferences target otherwise changes Resources item group
