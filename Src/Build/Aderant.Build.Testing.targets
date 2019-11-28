@@ -146,7 +146,6 @@
       <PlatformSwitch>/Platform:%(_Assemblies.Platform)</PlatformSwitch>
       <TestCaseFilter Condition="'%(_Assemblies.CICategory)' != ''">/TestCaseFilter:`&quot;%(_Assemblies.CICategory)`&quot;</TestCaseFilter>
       <TestRunDirectory>%(_Assemblies.TestRunDirectory)</TestRunDirectory>
-      <TestAdapterPath>/TestAdapterPath:%(_Assemblies.TestRunDirectory)</TestAdapterPath>
       <AssembliesUnderTest>@(_Assemblies->'"%(FullPath)"', ',')</AssembliesUnderTest>
       <AdditionalVariables Condition="'$(TestPattern)' != '' And $(TestPattern.Equals('IntegrationTest', StringComparison.OrdinalIgnoreCase))">
 $additionalEnvironmentVariables.Add('EXPERT_ENVIRONMENT_URL', '$(ExpertEnvironmentUrl)');
@@ -169,11 +168,10 @@ $isDesktopBuild = $$(IsDesktopBuild)
 $referencePaths = $(AllDirectoriesWithDlls)
 $testFiles = $(AssembliesUnderTest)
 $RunInParallel = $$(RunTestsInParallel)
-$testAdapterPath = "$(TestAdapterPath)"
 $additionalEnvironmentVariables = @{}
 $(AdditionalVariables)
 
-. Testing\RunTests.ps1 -PathToTestTool $testTool -ToolArgs $testToolArgs -WorkingDirectory $workingDirectory -SolutionRoot $testRunDirectory -IsDesktopBuild:$isDesktopBuild -ReferencePaths $referencePaths -TestAssemblies $testFiles -AdditionalEnvironmentVariables $additionalEnvironmentVariables -TestAdapterPath $testAdapterPath -RunInParallel $RunInParallel'
+. Testing\RunTests.ps1 -PathToTestTool $testTool -ToolArgs $testToolArgs -WorkingDirectory $workingDirectory -SolutionRoot $testRunDirectory -IsDesktopBuild:$isDesktopBuild -ReferencePaths $referencePaths -TestAssemblies $testFiles -AdditionalEnvironmentVariables $additionalEnvironmentVariables -RunInParallel $RunInParallel'
       OnErrorReason="Test failure"
       TaskObjects="$(AssemblyPlatformDataKey)" />
 

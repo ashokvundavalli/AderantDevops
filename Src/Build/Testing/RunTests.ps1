@@ -190,7 +190,10 @@ try {
     $runSettingsFile = [System.IO.Path]::GetTempFileName()
     Add-Content -LiteralPath $runSettingsFile -Value $xml -Encoding UTF8
     $startInfo.Arguments += " /Settings:$runSettingsFile"
-    $startInfo.Arguments += " $TestAdapterPath"
+
+    if (-not [string]::IsNullOrWhiteSpace($TestAdapterPath)) {
+        $startInfo.Arguments += " /TestAdapterPath:$TestAdapterPath"
+    }
 
     Write-Information "Starting runner: $($startInfo.FileName) $($startInfo.Arguments)"
 
