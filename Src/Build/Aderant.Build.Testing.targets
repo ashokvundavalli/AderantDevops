@@ -131,7 +131,7 @@
         <SolutionRoot>$(SolutionRoot)</SolutionRoot>
         <TestRunDirectory>$(TestRunDirectory)</TestRunDirectory>
       </_Assemblies>
-      <_Assemblies Condition="'@(_Assemblies)' == '' And '$(DeployEnvironment)' == 'false'" Include="@(AssembliesWithTargetPlatform)">
+      <_Assemblies Condition="'@(_Assemblies)' == '' And '$(DeployEnvironment)' != 'true'" Include="@(AssembliesWithTargetPlatform)">
         <SolutionRoot>$(SolutionRoot)</SolutionRoot>
         <TestRunDirectory>$(TestRunDirectory)</TestRunDirectory>
       </_Assemblies>
