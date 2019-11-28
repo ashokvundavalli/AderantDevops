@@ -22,7 +22,7 @@
 
     <PowerShellExe Condition=" '$(PowerShellExe)' == ''">$(SystemRoot)\sysnative\WindowsPowerShell\v1.0\powershell.exe</PowerShellExe>
 
-    <RunIntegrationTestsDependsOn>
+    <RunIntegrationTestsDependsOn Condition="'$(DeployTargetExists)' == 'true'">
       DeployCIEnvironment;
     </RunIntegrationTestsDependsOn>
 
