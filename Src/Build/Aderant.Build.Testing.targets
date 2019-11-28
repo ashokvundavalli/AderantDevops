@@ -127,7 +127,11 @@
     <Message Condition="'@(AssembliesWithTargetPlatform)' != '' And $(TestPattern.Equals('IntegrationTest', StringComparison.OrdinalIgnoreCase))" Text="Assembly: %(AssembliesWithTargetPlatform.FileName) -> CIEnabled: %(AssembliesWithTargetPlatform.CIEnabled)" />
 
     <ItemGroup>
-      <_Assemblies Condition="$(TestPattern.Equals('IntegrationTest', StringComparison.OrdinalIgnoreCase)) != 'true'" Include="@(AssembliesWithTargetPlatform)">
+      <_Assemblies Condition="$(TestPattern.Equals('UnitTest', StringComparison.OrdinalIgnoreCase)) == 'true'" Include="@(AssembliesWithTargetPlatform)">
+        <SolutionRoot>$(SolutionRoot)</SolutionRoot>
+        <TestRunDirectory>$(TestRunDirectory)</TestRunDirectory>
+      </_Assemblies>
+      <_Assemblies Condition="'@(_Assemblies)' == '' And '$(DeployEnvironment)' == 'false'" Include="@(AssembliesWithTargetPlatform)">
         <SolutionRoot>$(SolutionRoot)</SolutionRoot>
         <TestRunDirectory>$(TestRunDirectory)</TestRunDirectory>
       </_Assemblies>
