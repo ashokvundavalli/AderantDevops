@@ -35,7 +35,11 @@ param(
 
   [Parameter(Mandatory=$false)]
   [string]
-  $TestAdapterPath
+  $TestAdapterPath,
+
+  [Parameter(Mandatory=$false)]
+  [int]
+  $TestSessionTimeout = 1200000
 )
 
 Set-StrictMode -Version "Latest"
@@ -80,6 +84,8 @@ function CreateRunSettingsXml() {
     if ($script:RunInParallel -eq $false) {
         $settingsDocument.RunSettings.RunConfiguration.MaxCpuCount = '1'
     }
+
+    $settingsDocument.RunSettings.RunConfiguration.TestSessionTimeout = $TestSessionTimeout.ToString()
 
     $sw = [System.IO.StringWriter]::new()
     $writer = New-Object System.Xml.XmlTextWriter($sw)
