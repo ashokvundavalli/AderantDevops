@@ -215,6 +215,14 @@ try {
         } catch {
             Write-Debug "Failed to delete temporary run settings file $runSettingsFile"
         }
+
+        try {
+            if ([System.IO.Directory]::Exists($TestAdapterPath)) {
+                Remove-Item -Path $TestAdapterPath -Force
+            }
+        } catch {
+            Write-Debug "Failed to delete temporary directory to test adapter $TestAdapterPath"
+        }
     }
 
     if ($lastExitCode -ne 0) {
