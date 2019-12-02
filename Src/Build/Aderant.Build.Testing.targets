@@ -155,6 +155,7 @@
 $additionalEnvironmentVariables.Add('EXPERT_ENVIRONMENT_URL', '$(ExpertEnvironmentUrl)');
 $additionalEnvironmentVariables.Add('EXPERT_SOURCE_DIRECTORY', '$(ExpertSourceDirectory)');
       </AdditionalVariables>
+      <TestAdapterPath>$([System.IO.Path]::GetTempPath())$([System.DateTime]::UtcNow.ToFileTimeUtc())\</TestAdapterPath>
     </PropertyGroup>
 
     <!-- TaskObjectKey will be the task object from GetAssemblyPlatform -->
@@ -164,9 +165,12 @@ $additionalEnvironmentVariables.Add('EXPERT_SOURCE_DIRECTORY', '$(ExpertSourceDi
 $ErrorActionPreference = "Stop"
 $InformationPreference = "Continue"
 
+New-Item -ItemType Directory -Path &quot;$(TestAdapterPath)&quot; -Force
+
 $testTool = "$(PathToTestTool)"
 $testToolArgs = "$(ResultsFileSwitch) $(PlatformSwitch) $(TestCaseFilter) $(ParallelSwitch)"
 $testRunDirectory = "$(TestRunDirectory)"
+$testAdapterPath = "$(TestAdapterPath)"
 $workingDirectory = "$(SolutionRoot)"
 $isDesktopBuild = $$(IsDesktopBuild)
 $referencePaths = $(AllDirectoriesWithDlls)
@@ -175,7 +179,12 @@ $RunInParallel = $$(RunTestsInParallel)
 $additionalEnvironmentVariables = @{}
 $(AdditionalVariables)
 
-. Testing\RunTests.ps1 -PathToTestTool $testTool -ToolArgs $testToolArgs -WorkingDirectory $workingDirectory -SolutionRoot $testRunDirectory -IsDesktopBuild:$isDesktopBuild -ReferencePaths $referencePaths -TestAssemblies $testFiles -AdditionalEnvironmentVariables $additionalEnvironmentVariables -RunInParallel $RunInParallel'
+try {
+  . Testing\RunTests.ps1 -PathToTestTool $testTool -ToolArgs $testToolArgs -WorkingDirectory $workingDirectory -SolutionRoot $testRunDirectory -TestAdapterPath &quot;$(TestAdapterPath)&quot; -IsDesktopBuild:$isDesktopBuild -ReferencePaths $referencePaths -TestAssemblies $testFiles -AdditionalEnvironmentVariables $additionalEnvironmentVariables -RunInParallel $RunInParallel
+} catch {
+    $Error[0] | Format-List -Force
+    throw
+}'
       OnErrorReason="Test failure"
       TaskObjects="$(AssemblyPlatformDataKey)" />
 
