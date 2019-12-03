@@ -925,53 +925,6 @@ function Get-AderantModuleLocation() {
     }
 }
 
-function Help ($searchText) {
-    if ($MyInvocation.ScriptName.EndsWith("_profile.ps1")) {
-        # Backwards compatibility quirk
-        # In some versions of the shell _Profile.ps1 script we call the function "Help" during start up.
-        # If we detect this version, we do not want to show help during the module load for performance reasons so
-        # we bail out if the caller is the _Profile.ps1 file
-        return
-    }
-
-    $theHelpList = @()
-
-    foreach ($toExport in $functionsToExport) {
-        if (-not $toExport.advanced) {
-            $ast = (Get-Command $toExport.function).ScriptBlock.Ast
-            if ($ast) {
-                $help = $ast.GetHelpContent()
-            }
-
-            if ($toExport.alias) {
-                $theHelpList += [PSCustomObject]@{Command = $toExport.alias; alias = $toExport.alias; Synopsis = $help.Synopsis}
-            } else {
-                $theHelpList += [PSCustomObject]@{Command = $toExport.function; alias = $null; Synopsis = $help.Synopsis}
-            }
-        }
-    }
-
-    if ($searchText) {
-        $searchText = "*$searchText*";
-        foreach ($func in $theHelpList) {
-            $functionName = $func.function
-            $aliasName = $func.alias
-
-            if (($functionName -like $searchText) -or ($aliasName -like $searchText)) {
-                Write-Host -ForegroundColor Green -NoNewline "$functionName, $aliasName "
-                Write-Host (Get-Help $functionName).Synopsis
-            }
-        }
-        return
-    }
-
-    $AderantModuleLocation = Get-AderantModuleLocation
-    Write-Host "Using Aderant Module from : $AderantModuleLocation"
-
-    $sortedFunctions = $theHelpList | Sort-Object -Property alias -Descending
-    $sortedFunctions | Format-Table Command, Synopsis
-}
-
 # export functions and variables we want external to this script
 $functionsToExport = @(
     [PSCustomObject]@{ function = 'Run-ExpertUITests'; alias = $null; },
@@ -994,7 +947,6 @@ $functionsToExport = @(
     [PSCustomObject]@{ function = 'Get-Product'; alias = $null; },
     [PSCustomObject]@{ function = 'Get-ProductBuild'; alias = 'gpb'; },
     [PSCustomObject]@{ function = 'Git-Merge'; alias = $null; },
-    [PSCustomObject]@{ function = 'Help'; alias = $null; },
 #    [PSCustomObject]@{ function = 'Install-LatestSoftwareFactory'; alias = 'usf'; },
 #    [PSCustomObject]@{ function = 'Install-LatestVisualStudioExtension'; alias = $null; },
     [PSCustomObject]@{ function = 'Open-ModuleSolution'; alias = 'vs'; },
@@ -1048,11 +1000,9 @@ Export-ModuleMember -variable ProductManifestPath
 
 Set-Environment -Initialize
 
-Write-Host ""
-Write-Host "Type " -NoNewLine
-Write-Host '"help"' -ForegroundColor Green -NoNewLine
-Write-Host " for a command list." -NoNewLine
-Write-Host ""
+Write-Information -MessageData "Type:
+    Get-Command -Module 'Aderant'
+For a list of commands.$([System.Environment]::NewLine)"
 
 function Test-ExpertPackageFeed {
 
