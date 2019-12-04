@@ -59,7 +59,7 @@ Initialize-Module
 [string]$global:BuildScriptsDirectory = $script:ShellContext.BuildScriptsDirectory
 [string]$global:PackageScriptsDirectory = [string]::Empty
 [string]$global:ProductManifestPath = [string]::Empty
-[PSModuleInfo]$currentModuleFeature = $null
+[PSModuleInfo[]]$script:loadedModuleFeatures = $null
 [string[]]$global:LastBuildBuiltModules = @()
 [string[]]$global:LastBuildRemainingModules = @()
 [string[]]$global:LastBuildGetLocal = @()
@@ -308,13 +308,16 @@ function Set-CurrentModule {
             $name = Resolve-Path $name
         }
 
-        if ($null -ne $currentModuleFeature) {
-            if (Get-Module | Where-Object -Property Name -eq $currentModuleFeature.Name) {
-                Remove-Module $currentModuleFeature
+        if ($null -ne $script:loadedModuleFeatures) {
+            foreach ($currentModuleFeature in $script:loadedModuleFeatures) {
+                if (Get-Module | Where-Object -Property Name -eq $currentModuleFeature.Name) {
+                    Remove-Module $currentModuleFeature
+                }
             }
-
-            $currentModuleFeature = $null
+            $script:loadedModuleFeatures = $null
         }
+
+        $ShellContext.IsGitRepository = $true
 
         if ([System.IO.Path]::IsPathRooted($name)) {
             $script:ShellContext.CurrentModulePath = $name
@@ -338,16 +341,14 @@ function Set-CurrentModule {
                 }
             }
 
-            if (IsGitRepository $ShellContext.CurrentModulePath) {
-                SetRepository $ShellContext.CurrentModulePath
+            if ((IsGitRepository $ShellContext.CurrentModulePath) -or (IsGitRepository ([System.IO.DirectoryInfo]::new($ShellContext.CurrentModulePath).Parent.FullName))) {
+                ImportFeatureModules $ShellContext.CurrentModulePath
                 Enable-GitPrompt
-                return
-            } elseif (IsGitRepository ([System.IO.DirectoryInfo]::new($ShellContext.CurrentModulePath).Parent.FullName)) {
-                Enable-GitPrompt
-                return
             } else {
+                $ShellContext.IsGitRepository = $false
                 Enable-ExpertPrompt
             }
+
         } else {
             $ShellContext.CurrentModuleName = $name
 
@@ -356,6 +357,7 @@ function Set-CurrentModule {
 
             Set-Location $ShellContext.CurrentModulePath
 
+            $ShellContext.IsGitRepository = $false
             Enable-ExpertPrompt
         }
 
@@ -368,8 +370,6 @@ function Set-CurrentModule {
 
         Write-Debug "Current module path [$($ShellContext.CurrentModulePath)]"
         $ShellContext.CurrentModuleBuildPath = Join-Path -Path $ShellContext.CurrentModulePath -ChildPath "Build"
-
-        $ShellContext.IsGitRepository = $true
     }
 }
 
@@ -390,24 +390,33 @@ function IsGitRepository {
     }
 }
 
-function SetRepository([string]$path) {
-    $ShellContext.IsGitRepository = $true
-
+function ImportFeatureModules([string]$path) {
     [string]$currentModuleBuildDirectory = "$path\Build"
 
     if (Test-Path $currentModuleBuildDirectory) {
-        # We only allow 1 feature*.psm1 file in the \build folder.
-        $featureModule = Get-ChildItem -Path $currentModuleBuildDirectory -File -Filter 'Feature*.psm1' | Select-object -First 1
+        $featureModules = Get-ChildItem -Path $currentModuleBuildDirectory -File -Filter 'Feature*.psm1'
 
-        if($featureModule -and $featureModule.FullName) {
-            ImportFeatureModule $featureModule.FullName
+        if ($null -eq $featureModules) {
+            return
         }
+
+        foreach ($featureModule in $featureModules) {
+            if($featureModule -and $featureModule.FullName) {
+                ImportFeatureModule $featureModule.FullName
+            }
+        }
+
     }
 }
 
 function ImportFeatureModule([string]$featureModule) {
     Import-Module -Name $featureModule -Scope Global -WarningAction SilentlyContinue
     $currentModuleFeature = Get-Module | Where-Object -Property Path -eq $featureModule
+    if ($null -eq $script:loadedModuleFeatures) {
+        $script:loadedModuleFeatures = @()
+    }
+    $script:loadedModuleFeatures += $currentModuleFeature
+
     Write-Host "`r`nImported module: $($currentModuleFeature.Name)" -ForegroundColor Cyan
     Get-Command -Module $currentModuleFeature.Name
 }
@@ -952,7 +961,6 @@ $functionsToExport = @(
     [PSCustomObject]@{ function = 'Open-ModuleSolution'; alias = 'vs'; },
     [PSCustomObject]@{ function = 'Set-CurrentModule'; alias = 'cm'; },
     [PSCustomObject]@{ function = 'Set-Environment'; advanced = $true; alias = $null; },
-    [PSCustomObject]@{ function = 'Set-ExpertBranchInfo'; alias = $null; },
     [PSCustomObject]@{ function = 'Start-dbgen'; alias = 'dbgen'; },
     [PSCustomObject]@{ function = 'Start-DeploymentEngine'; alias = 'de'; },
     [PSCustomObject]@{ function = 'Start-DeploymentManager'; alias = 'dm'; },
