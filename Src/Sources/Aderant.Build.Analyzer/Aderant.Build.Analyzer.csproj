@@ -82,6 +82,7 @@
     <Compile Include="Extensions\RoslynExtensions.cs" />
     <Compile Include="Lists\IDisposable\IDisposableWhitelist.cs" />
     <Compile Include="Lists\QueryAll\QueryAllWhitelists.cs" />
+    <Compile Include="Rules\CodeQuality\CodeQualityApprovalsReporterRule.cs" />
     <Compile Include="Rules\CodeQuality\CodeQualityDbConnectionStringRule.cs" />
     <Compile Include="Rules\CodeQuality\CodeQualityDefaultTransactionScopeRule.cs" />
     <Compile Include="Rules\CodeQuality\CodeQualityMathRoundRule.cs" />

@@ -94,6 +94,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Tests\AderantQueryServiceMigrationTests.cs" />
+    <Compile Include="Tests\CodeQuality\CodeQualityApprovalsReporterTests.cs" />
     <Compile Include="Tests\CodeQuality\CodeQualityDbConnectionStringTests.cs" />
     <Compile Include="Tests\CodeQuality\CodeQualityDefaultTransactionScopeTests.cs" />
     <Compile Include="Tests\CodeQuality\CodeQualityNewExceptionTests.cs" />
