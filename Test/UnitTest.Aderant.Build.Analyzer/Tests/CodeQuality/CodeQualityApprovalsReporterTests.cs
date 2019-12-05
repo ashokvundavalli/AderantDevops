@@ -26,13 +26,9 @@ namespace ApprovalTests.Reporters {
     public class FileLauncherReporter { }
 
     public class DiffReporter { }
-}
 
-namespace ApprovalTests.Reporters.ContinuousIntegration {
     public class TfsVnextReporter { }
-}
 
-namespace ApprovalTests.Reporters.TestFrameworks {
     public class MsTestReporter { }
 }
 

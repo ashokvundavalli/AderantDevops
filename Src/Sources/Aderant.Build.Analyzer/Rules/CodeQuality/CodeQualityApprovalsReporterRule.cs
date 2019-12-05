@@ -17,9 +17,9 @@ namespace Aderant.Build.Analyzer.Rules.CodeQuality {
             new Tuple<string, string>("\"Code Quality\"", $"\"{DiagnosticId}\"")
         };
 
-        private static HashSet<string> whitelistedReporters = new HashSet<string>(StringComparer.OrdinalIgnoreCase) {
-            "ApprovalTests.Reporters.ContinuousIntegration.TfsVnextReporter",
-            "ApprovalTests.Reporters.TestFrameworks.MsTestReporter",
+        private static HashSet<string> whitelistedReporters = new HashSet<string>() {
+            "ApprovalTests.Reporters.TfsVnextReporter",
+            "ApprovalTests.Reporters.MsTestReporter",
             "ApprovalTests.Reporters.QuietReporter"
         };
 
