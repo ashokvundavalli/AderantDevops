@@ -10,6 +10,7 @@ namespace Aderant.Build.Utilities {
         private readonly string pathToBuildTools;
 
         private static readonly List<string> acceptedCodeAnalysisCSharpVersions = new List<string> {
+            "3.4.0.0",  // VS 2019
             "3.3.0.0",  // VS 2019
             "3.2.0.0",  // VS 2019
             "3.1.0.0",  // VS 2019
