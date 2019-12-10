@@ -288,6 +288,14 @@
     <Message Text="Getting dependencies for build." />
 
     <Delete Files="$(SharedDependencyDirectory)paket.dependencies;$(SharedDependencyDirectory)paket.lock" />
+    
+    <ItemGroup>
+      <SharedPaketFiles Include="$(SolutionRoot)Build\shared.paket.dependencies;$(SolutionRoot)Build\paket.lock;" />
+    </ItemGroup>
+    
+    <Copy Condition="Exists('%(SharedPaketFiles.Identity)')"
+      SourceFiles="@(SharedPaketFiles)"
+      DestinationFolder="$(SharedDependencyDirectory)" />
 
     <MakeDir
       Condition="!Exists('$(SharedDependencyDirectory)packages)')"
