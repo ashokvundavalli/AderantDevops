@@ -23,7 +23,7 @@ namespace Aderant.Build.Packaging {
             foreach (var project in outputs) {
                 string outputPath = project.OutputPath;
 
-                // Normalize path as sometimes it ends with two slashes
+                // Normalize path as sometimes it ends with two slashes.
                 string projectOutputPath = outputPath.NormalizeTrailingSlashes();
 
                 if (outputPath != projectOutputPath) {
@@ -56,7 +56,7 @@ namespace Aderant.Build.Packaging {
                 var file = packageQueue[i];
 
                 foreach (var output in filesProducedByProjects) {
-                    if (file.Destination.EndsWith(output,StringComparison.OrdinalIgnoreCase)) {
+                    if (file.Destination.EndsWith(output, StringComparison.OrdinalIgnoreCase)) {
                         if (!artifactItems.Contains(file)) {
                             logger.Info(file.Location);
                             artifactItems.Add(file);
@@ -109,7 +109,7 @@ namespace Aderant.Build.Packaging {
                 allFiles.AddRange(packageContent);
 
                 if (packageContent.Count > 0) {
-                    yield return new ArtifactPackageDefinition(autoPackage.Id, packageContent) { IsAutomaticallyGenerated = true };
+                    yield return new ArtifactPackageDefinition(autoPackage.Id, packageContent) { IsAutomaticallyGenerated = true, PackageType = autoPackage.PackageType };
                 }
             }
         }
@@ -144,8 +144,6 @@ namespace Aderant.Build.Packaging {
                     uniqueContent.Add(path);
                 }
             }
-
-            bool isTestPackage = definition.IsAutomaticallyGenerated && definition.IsTestPackage;
 
             return BuildArtifact(uniqueContent, snapshot);
         }

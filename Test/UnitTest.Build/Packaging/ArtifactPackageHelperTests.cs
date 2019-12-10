@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using Aderant.Build.Packaging;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
@@ -42,6 +43,44 @@ namespace UnitTest.Build.Packaging {
 
             Assert.AreEqual(1, materializeArtifactPackages.Count);
             Assert.AreEqual("mypackage.custom", materializeArtifactPackages[0].Id);
+        }
+
+        [TestMethod]
+        public void Is_test_package_when_name_starts_with_test() {
+            string artifact = "IntegrationTest.bar";
+            TaskItem artifactDefinition = new TaskItem(artifact);
+            artifactDefinition.SetMetadata("Generated", bool.TrueString);
+            artifactDefinition.SetMetadata("ArtifactId", artifact);
+
+            var materializeArtifactPackages = ArtifactPackageHelper.MaterializeArtifactPackages(
+                new ITaskItem[] {
+                    artifactDefinition
+                },
+                new[] { "" },
+                false);
+
+            Assert.AreEqual(1, materializeArtifactPackages.Count);
+            Assert.IsTrue(string.Equals(artifact, materializeArtifactPackages[0].Id, StringComparison.OrdinalIgnoreCase));
+            Assert.IsTrue(materializeArtifactPackages[0].PackageType.Contains(ArtifactPackageType.TestPackage));
+        }
+
+        [TestMethod]
+        public void Is_test_package_when_name_ends_with_test() {
+            string artifact = "Web.admin.tests";
+            TaskItem artifactDefinition = new TaskItem(artifact);
+            artifactDefinition.SetMetadata("Generated", bool.TrueString);
+            artifactDefinition.SetMetadata("ArtifactId", artifact);
+
+            var materializeArtifactPackages = ArtifactPackageHelper.MaterializeArtifactPackages(
+                new ITaskItem[] {
+                    artifactDefinition
+                },
+                new[] { "" },
+                false);
+
+            Assert.AreEqual(1, materializeArtifactPackages.Count);
+            Assert.IsTrue(string.Equals(artifact, materializeArtifactPackages[0].Id, StringComparison.OrdinalIgnoreCase));
+            Assert.IsTrue(materializeArtifactPackages[0].PackageType.Contains(ArtifactPackageType.TestPackage));
         }
     }
 }

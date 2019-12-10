@@ -49,17 +49,5 @@ namespace UnitTest.Build.Packaging {
             PathSpec spec = ArtifactPackageDefinition.CreatePathSpecification(null, @"Foo\Bar\Baz.dll", "Foo");
             Assert.AreEqual(@"Foo\Baz.dll", spec.Destination);
         }
-
-        [TestMethod]
-        public void Is_test_package_when_name_starts_with_test() {
-            var definition = new ArtifactPackageDefinition("tests.bar", new List<PathSpec>());
-            Assert.IsTrue(definition.IsTestPackage);
-        }
-
-        [TestMethod]
-        public void Is_test_package_when_name_ends_with_test() {
-            var definition = new ArtifactPackageDefinition("Foo.Test", new List<PathSpec>());
-            Assert.IsTrue(definition.IsTestPackage);
-        }
     }
 }

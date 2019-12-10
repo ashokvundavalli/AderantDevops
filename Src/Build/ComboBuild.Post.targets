@@ -35,6 +35,7 @@
     <PackageArtifactsDependsOn>
       $(PackageArtifactsDependsOn);
       CreateDefaultArtifacts;
+      CreateWebArtifacts;
       PackageArtifacts
     </PackageArtifactsDependsOn>
   </PropertyGroup>
@@ -74,6 +75,7 @@
   <Target Name="CreateDefaultArtifacts">
     
     <ItemGroup>
+
       <_PackageArtifact Include="$(BinTestDirectory)\**\*;">
         <ArtifactId>$(ModuleName).default.tests</ArtifactId>
         <Generated>true</Generated>
@@ -85,8 +87,25 @@
         <Generated>true</Generated>
         <ArtifactType>Prebuilt</ArtifactType>
       </_PackageArtifact>
+
     </ItemGroup>
     
+  </Target>
+
+
+  <Target Name="CreateWebArtifacts">
+
+    <ItemGroup>
+
+      <_PackageArtifact Include="$(SolutionRoot)\Src\Web*\bin\Web*.dll;"> 
+        <ArtifactId>$(ModuleName).default.web</ArtifactId>
+        <Generated>true</Generated>
+        <ArtifactType>Prebuilt</ArtifactType>
+        <IsTestPackage>true</IsTestPackage>
+      </_PackageArtifact>
+
+    </ItemGroup>
+
   </Target>
 
   

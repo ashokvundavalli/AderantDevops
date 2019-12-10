@@ -21,22 +21,14 @@ namespace Aderant.Build.Packaging {
 
         public bool IsAutomaticallyGenerated { get; set; }
 
-        public bool IsInternalDevelopmentPackage { get; set; }
-
-        public bool IsAutomationPackage { get; set; }
+        public HashSet<ArtifactPackageType> PackageType { get; set; }
 
         public ArtifactType ArtifactType { get; set; }
 
         public string Id { get; }
 
         // Match "test" or "tests" at the start or end of the phrase
-        private static Regex matchRegex = new Regex("test[s]?\\.|\\.test[s]?", RegexOptions.IgnoreCase);
-
-        public bool IsTestPackage {
-            get {
-                return matchRegex.IsMatch(Id);
-            }
-        }
+        public static Regex MatchRegex = new Regex("test[s]?\\.|\\.test[s]?", RegexOptions.IgnoreCase);
 
         public IReadOnlyCollection<IDependable> GetDependencies() {
             return null;

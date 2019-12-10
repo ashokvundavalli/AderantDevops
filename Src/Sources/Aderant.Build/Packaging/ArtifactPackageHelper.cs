@@ -25,12 +25,14 @@ namespace Aderant.Build.Packaging {
                 bool isAutomaticallyGenerated = false;
                 bool isInternalDevelopmentPackage = false;
                 bool isAutomationPackage = false;
+                bool isTestPackage = false;
                 ArtifactType artifactType = ArtifactType.None;
 
                 foreach (var file in group.Value) {
                     ParseMetadata(file, "Generated", ref isAutomaticallyGenerated);
                     ParseMetadata(file, "IsInternalDevelopmentPackage", ref isInternalDevelopmentPackage);
                     ParseMetadata(file, "IsAutomationPackage", ref isAutomationPackage);
+                    ParseMetadata(file, "IsTestPackage", ref isTestPackage);
                     ParseMetadata(file, "ArtifactType", ref artifactType);
 
                     PathSpec pathSpec;
@@ -66,10 +68,24 @@ namespace Aderant.Build.Packaging {
                     }
                 }
 
+                HashSet<ArtifactPackageType> packageType = new HashSet<ArtifactPackageType>();
+                packageType.Add(ArtifactPackageType.Default);
+                
+                if (isInternalDevelopmentPackage) {
+                    packageType.Add(ArtifactPackageType.DevelopmentPackage);
+                }
+
+                if (isTestPackage || group.Key.IndexOf("IntegrationTest", StringComparison.OrdinalIgnoreCase) >= 0 || group.Key.EndsWith(".tests", StringComparison.OrdinalIgnoreCase)) {
+                    packageType.Add(ArtifactPackageType.TestPackage);
+                } 
+
+                if (isAutomationPackage) {
+                    packageType.Add(ArtifactPackageType.AutomationPackage);
+                }
+
                 var artifact = new ArtifactPackageDefinition(group.Key, pathSpecs) {
                     IsAutomaticallyGenerated = isAutomaticallyGenerated,
-                    IsInternalDevelopmentPackage = isInternalDevelopmentPackage,
-                    IsAutomationPackage = isAutomationPackage,
+                    PackageType = packageType,
                     ArtifactType = artifactType
                 };
 

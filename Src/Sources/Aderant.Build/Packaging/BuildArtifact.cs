@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization;
 using Aderant.Build.AzurePipelines;
@@ -36,28 +37,18 @@ namespace Aderant.Build.Packaging {
         public bool IsAutomaticallyGenerated { get; set; }
 
         [DataMember]
-        public bool IsInternalDevelopmentPackage { get; set; }
-
-        [DataMember]
-        public bool IsAutomationPackage { get; set; }
-
-        [DataMember]
         public bool SendToArtifactCache { get; set; }
 
-        [IgnoreDataMember]
-        [ProtoIgnore]
-        public bool IsTestPackage {
-            get {
-                if (Name.IndexOf("IntegrationTest", StringComparison.OrdinalIgnoreCase) >= 0) {
-                    return true;
-                }
+        [DataMember]
+        public HashSet<ArtifactPackageType> PackageType { get; set; }
 
-                if (Name.EndsWith(".tests", StringComparison.OrdinalIgnoreCase)) {
-                    return true;
-                }
+        public BuildArtifact() {
+            PackageType = new HashSet<ArtifactPackageType>();
+        }
 
-                return false;
-            }
+        internal BuildArtifact(string name) {
+            PackageType = new HashSet<ArtifactPackageType>();
+            this.Name = name;
         }
 
         /// <summary>
@@ -102,4 +93,16 @@ namespace Aderant.Build.Packaging {
         }
     }
 
+    [DataContract]
+    [ProtoContract]
+    public enum ArtifactPackageType {
+        [EnumMember]
+        Default,
+        [EnumMember]
+        TestPackage,
+        [EnumMember]
+        DevelopmentPackage,
+        [EnumMember]
+        AutomationPackage
+    }
 }

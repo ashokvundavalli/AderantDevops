@@ -15,23 +15,23 @@ namespace Aderant.Build.Packaging {
         public IDictionary<string, List<BuildArtifact>> Process(bool includeGeneratedArtifacts) {
             BuildArtifact[] associatedArtifacts = pipelineService.GetAssociatedArtifacts();
 
-            // Sorted for determinism
+            // Sorted for determinism.
             var pathMap = new SortedDictionary<string, List<BuildArtifact>>(StringComparer.OrdinalIgnoreCase);
 
             foreach (BuildArtifact artifact in associatedArtifacts) {
                 bool deliverToRoot = true;
 
-                if (artifact.IsInternalDevelopmentPackage) {
+                if (artifact.PackageType.Contains(ArtifactPackageType.DevelopmentPackage)) {
                     AddArtifact(pathMap, "Development", artifact);
                     deliverToRoot = false;
                 }
 
-                if (artifact.IsTestPackage) {
+                if (artifact.PackageType.Contains(ArtifactPackageType.TestPackage)) {
                     AddArtifact(pathMap, "Test", artifact);
                     deliverToRoot = false;
                 }
 
-                if (artifact.IsAutomationPackage) {
+                if (artifact.PackageType.Contains(ArtifactPackageType.AutomationPackage)) {
                     AddArtifact(pathMap, @"Test\Automation", artifact);
                     deliverToRoot = false;
                 }

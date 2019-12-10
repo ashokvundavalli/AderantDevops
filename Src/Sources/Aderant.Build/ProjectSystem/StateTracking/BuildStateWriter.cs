@@ -229,9 +229,9 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
             AddStateFileWrite(context, stateFile);
 
-            return new BuildArtifact {
+            return new BuildArtifact(containerName) { // Artifact name must be unique within the build artifacts or TFS will complain.
                 SourcePath = stateFileRoot,
-                Name = containerName, /* Name must be unique within the build artifacts or TFS will complain */
+                Name = containerName, 
                 Type = VsoBuildArtifactType.FilePath,
                 SendToArtifactCache = sendToArtifactCache
             };

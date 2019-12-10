@@ -118,14 +118,14 @@ namespace Aderant.Build.Packaging {
                     logger.Info($"Calculating files to restore for project: {Path.GetFileNameWithoutExtension(project.Key)}");
 
                     foreach (string fileWrite in project.Value.FilesWritten) {
-                        var actualTargetDirectories = new HashSet<string>(targetDirectories, StringComparer.OrdinalIgnoreCase);
+                        HashSet<string> actualTargetDirectories = new HashSet<string>(targetDirectories, StringComparer.OrdinalIgnoreCase);
 
-                        // Must reset the path for each iteration
+                        // Must reset the path for each iteration as it can be changed by the CalculateRestorePath function.
                         outputPath = originalOutputPath;
 
                         string filePath = CalculateRestorePath(fileWrite, ref outputPath, directoryOfProject, solutionRoot);
 
-                        // A new project relative output path was calculated, add this allowed path to the path collector
+                        // A new project relative output path was calculated, add this allowed path to the path collector.
                         if (!string.Equals(originalOutputPath, outputPath)) {
                             if (actualTargetDirectories.Add(outputPath)) {
                                 logger.Info($"File write '{filePath}' outside of project output path was allowed: => {outputPath}");

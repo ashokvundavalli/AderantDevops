@@ -20,9 +20,8 @@ namespace Aderant.Build.Packaging.Handlers {
                 copyList.Add(new PathSpec(pathSpec.Location, Path.Combine(destination, Path.GetFileName(pathSpec.Location))));
             }
 
-            return new BuildArtifact {
-                SourcePath = destination,
-                Name = artifactName,
+            return new BuildArtifact(artifactName) {
+                SourcePath = destination
             };
         }
 
