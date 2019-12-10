@@ -112,7 +112,7 @@ namespace Aderant.Build.Packaging {
         }
 
         private void ProcessDefinitionFiles(bool ignoreAutoPackages, BuildOperationContext context, string container, IEnumerable<ArtifactPackageDefinition> packages, IList<PathSpec> copyList, List<BuildArtifact> buildArtifacts) {
-            foreach (ArtifactPackageDefinition definition in packages) { // problem here, definition has no packagetype but packages does
+            foreach (ArtifactPackageDefinition definition in packages) { 
                 if (ignoreAutoPackages) {
                     if (definition.IsAutomaticallyGenerated) {
                         autoPackages.Add(definition);

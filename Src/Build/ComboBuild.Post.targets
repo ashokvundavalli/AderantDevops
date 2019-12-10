@@ -97,7 +97,7 @@
 
     <ItemGroup>
 
-      <_PackageArtifact Include="$(SolutionRoot)\Src\Web*\bin\Web*.dll;"> 
+      <_PackageArtifact Include="$(SolutionRoot)\Src\Web*\bin\Web*.dll;" Exclude="$(SolutionRoot)\Src\Web*\bin\Web.SMB.dll;"> 
         <ArtifactId>$(ModuleName).default.web</ArtifactId>
         <Generated>true</Generated>
         <ArtifactType>Prebuilt</ArtifactType>
