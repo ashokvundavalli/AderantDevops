@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -21,12 +20,19 @@ namespace Aderant.Build.DependencyAnalyzer {
     internal class ProjectSequencer : ISequencer {
         private readonly IFileSystem fileSystem;
         private readonly ILogger logger;
+        private DirectoryNodeFactory directoryNodeFactory;
         private bool isDesktopBuild;
 
         private BuildCachePackageChecker packageChecker;
         private List<BuildStateFile> stateFiles;
         private TrackedInputFilesController trackedInputFilesCheck;
         private Dictionary<string, InputFilesDependencyAnalysisResult> trackedInputs = new Dictionary<string, InputFilesDependencyAnalysisResult>(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>
+        /// A reasonable starting pint for lists that will hold directory entries. Source trees typically contain many folders
+        /// so we wan to have a good default capacity.
+        /// </summary>
+        private const int DefaultDirectoryListCapacity = 64;
 
         [ImportingConstructor]
         public ProjectSequencer(ILogger logger, IFileSystem fileSystem) {
@@ -36,6 +42,11 @@ namespace Aderant.Build.DependencyAnalyzer {
             this.trackedInputFilesCheck = new TrackedInputFilesController(fileSystem, logger);
         }
 
+        internal TrackedInputFilesController TrackedInputFilesCheck {
+            get { return trackedInputFilesCheck; }
+            set { trackedInputFilesCheck = value; }
+        }
+
         public IBuildPipelineService PipelineService { get; set; }
 
         /// <summary>
@@ -43,11 +54,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// This is the SolutionConfiguration data from the sln.metaproj
         /// </summary>
         public string MetaprojectXml { get; set; }
-
-        internal TrackedInputFilesController TrackedInputFilesCheck {
-            get { return trackedInputFilesCheck; }
-            set { trackedInputFilesCheck = value; }
-        }
 
         public BuildPlan CreatePlan(BuildOperationContext context, OrchestrationFiles files, DependencyGraph graph, bool considerStateFiles = true) {
             isDesktopBuild = context.IsDesktopBuild;
@@ -73,7 +79,8 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             var projectsInDependencyOrder = projectGraph.GetDependencyOrder();
 
-            List<string> directoriesInBuild = new List<string>();
+
+            List<string> directoriesInBuild = new List<string>(DefaultDirectoryListCapacity);
             TrackProjects(projectsInDependencyOrder, isBuildCacheEnabled, directoriesInBuild);
 
             // According to options, find out which projects are selected to build.
@@ -85,30 +92,17 @@ namespace Aderant.Build.DependencyAnalyzer {
                 context.GetChangeConsiderationMode(),
                 context.GetRelationshipProcessingMode());
 
-            FindAllChangedProjectsAndDisableBuildCache(projectGraph);
+            var option = files.ExtensibilityImposition.BuildCacheOptions;
 
-            filteredProjects = SecondPassAnalysis(filteredProjects, projectGraph);
+            filteredProjects = SecondPassAnalysis(filteredProjects, projectGraph, option);
 
             LogProjectsExcluded(filteredProjects, projectGraph);
 
-            if (filteredProjects.Count != projectsInDependencyOrder.Count) {
-                CacheSubstitutionFixup(projectsInDependencyOrder, filteredProjects);
-            }
-
             LogPrebuiltStatus(filteredProjects);
 
-            var groups = projectGraph.GetBuildGroups(filteredProjects);
+            var groups = DependencyGraph.GetBuildGroups(filteredProjects);
 
-            string treeText = PrintBuildTree(groups, true);
-            if (logger != null) {
-                logger.Info(treeText, null);
-
-                WriteBuildTree(fileSystem, context.BuildRoot, treeText);
-            }
-
-            if (isDesktopBuild) {
-                Thread.Sleep(2000);
-            }
+            LogTree(context, groups);
 
             var planGenerator = new BuildPlanGenerator(fileSystem);
             planGenerator.MetaprojectXml = MetaprojectXml;
@@ -117,6 +111,17 @@ namespace Aderant.Build.DependencyAnalyzer {
             return new BuildPlan(project) {
                 DirectoriesInBuild = directoriesInBuild,
             };
+        }
+
+        private void LogTree(BuildOperationContext context, IReadOnlyList<IReadOnlyList<IDependable>> groups) {
+            string treeText = PrintBuildTree(groups, true);
+            logger.Info(treeText, null);
+
+            WriteBuildTree(fileSystem, context.BuildRoot, treeText);
+
+            if (isDesktopBuild && !string.Equals(AppDomain.CurrentDomain.FriendlyName, "UnitTestAdapter: Running test")) {
+                Thread.Sleep(2000);
+            }
         }
 
         private void LogPrebuiltStatus(IReadOnlyList<IDependable> filteredProjects) {
@@ -134,8 +139,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 if (configuredProject != null) {
                     if (isBuildCacheEnabled == false) {
                         // No cache so mark everything as changed
-                        configuredProject.IsDirty = true;
-                        configuredProject.SetReason(BuildReasonTypes.Forced | BuildReasonTypes.CachedBuildNotFound);
+                        configuredProject.MarkDirtyAndSetReason(BuildReasonTypes.Forced | BuildReasonTypes.CachedBuildNotFound);
                     }
 
                     if (!directoriesInBuild.Contains(configuredProject.SolutionRoot)) {
@@ -164,17 +168,34 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// Here we check for this and add the projects back in if the directory which owns them is invalidated.
         /// TODO: This should be handled as part of <see cref="GetProjectsBuildList" />
         /// </summary>
-        internal IReadOnlyList<IDependable> SecondPassAnalysis(IReadOnlyList<IDependable> filteredProjects, ProjectDependencyGraph projectGraph) {
+        internal IReadOnlyList<IDependable> SecondPassAnalysis(IReadOnlyList<IDependable> filteredProjects, ProjectDependencyGraph projectGraph, BuildCacheOptions option) {
             var graph = new ProjectDependencyGraph();
+
+            bool disableBuildCache = option == BuildCacheOptions.DisableCacheWhenProjectChanged;
+
+            if (disableBuildCache) {
+                DisableBuildCache(projectGraph.Projects);
+            }
 
             foreach (var project in projectGraph.Projects) {
                 if (!project.IncludeInBuild) {
                     continue;
                 }
 
-                if (project.DirectoryNode.RetrievePrebuilts != null && project.DirectoryNode.RetrievePrebuilts.Value == false) {
-                    if (project.BuildReason == null) {
-                        project.SetReason(BuildReasonTypes.Forced, "SecondPassAnalysis");
+                if (project.IsDirty) {
+                    project.DirectoryNode.IsBuildingAnyProjects = true;
+                }
+
+                if (disableBuildCache) {
+                    if (project.DirectoryNode.RetrievePrebuilts != null && project.DirectoryNode.RetrievePrebuilts.Value == false) {
+                        if (project.BuildReason == null || !project.IsDirty) {
+                            project.MarkDirtyAndSetReason(BuildReasonTypes.Forced, "SecondPassAnalysis");
+                        } else {
+                            if (!project.IsDirty && project.BuildReason?.Flags == BuildReasonTypes.RequiredByTextTemplate) {
+                                project.IsDirty = true;
+                            }
+                        }
+
                         graph.Add(project);
                     }
                 }
@@ -241,30 +262,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             logger.Info(sb.ToString(), null);
         }
 
-        /// <summary>
-        /// Fixes the dependency graph.
-        /// <see cref="DependencyGraph.GetBuildGroups" /> will incorrectly group the graph when nodes are removed due to cache
-        /// substitution or if a project is flagged to not build because not all are provided to GetBuildGroups
-        /// (as they are not in the set returned by <see cref="GetProjectsBuildList" />.
-        /// To fix this we add a synthetic dependency to on all nodes not building to all projects but only if the node itself has
-        /// no items being built. This will introduce cycles but it doesn't matter as we have already sorted the graph but we just
-        /// need to fix the grouping.
-        /// </summary>
-        private static void CacheSubstitutionFixup(IReadOnlyList<IDependable> projectsInDependencyOrder, IReadOnlyList<IDependable> filteredProjects) {
-            foreach (var node in projectsInDependencyOrder.OfType<DirectoryNode>()) {
-                if (!node.IsPostTargets && !node.IsBuildingAnyProjects) {
-                    for (var i = 0; i < filteredProjects.Count; i++) {
-                        IDependable dependable = filteredProjects[i];
-                        ConfiguredProject artifact = dependable as ConfiguredProject;
-
-                        if (artifact != null) {
-                            artifact.AddResolvedDependency(null, node);
-                        }
-                    }
-                }
-            }
-        }
-
         internal static void WriteBuildTree(IFileSystem fileSystem, string destination, string treeText) {
             string treeFile = Path.Combine(destination, "BuildTree.txt");
 
@@ -276,12 +273,6 @@ namespace Aderant.Build.DependencyAnalyzer {
                 fileSystem.WriteAllText(treeFile, treeText);
             }
         }
-
-
-
-
-
-
 
         private void MarkWebProjectsDirty(ProjectDependencyGraph graph) {
             // Web projects always need to be built as they have paths that reference content that needs to be deployed
@@ -323,8 +314,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             var grouping = graph.ProjectsBySolutionRoot;
 
             foreach (var group in grouping) {
-                List<ConfiguredProject> dirtyProjects = group.Where(g => g.IsDirty).ToList();
-
                 string solutionDirectoryName = PathUtility.GetFileName(group.Key ?? "");
 
                 DirectoryNode startNode;
@@ -360,6 +349,15 @@ namespace Aderant.Build.DependencyAnalyzer {
                                 }
                             }
 
+                            // Configure the project to be dirty but not built to ensure correct ordering.
+                            ConfiguredProject configuredProject = dependency.ResolvedReference as ConfiguredProject;
+                            if (configuredProject != null) {
+                                if (!configuredProject.IsDirty) {
+                                    configuredProject.MarkDirtyAndSetReason(BuildReasonTypes.RequiredByTextTemplate);
+                                    configuredProject.IsDirty = false;
+                                }
+                            }
+
                             startNode.AddResolvedDependency(dependency.ExistingUnresolvedItem, dependency.ResolvedReference);
                         }
                     }
@@ -379,19 +377,17 @@ namespace Aderant.Build.DependencyAnalyzer {
             graph.ComputeReverseReferencesMap();
         }
 
-        private static void FindAllChangedProjectsAndDisableBuildCache(ProjectDependencyGraph graph) {
-            var projects = graph.Projects;
+        private static void DisableBuildCache(IReadOnlyCollection<ConfiguredProject> projects) {
+            foreach (var project in projects) {
+                if (project.IsDirty || project.BuildReason != null && (project.BuildReason.Flags.HasFlag(BuildReasonTypes.DependencyChanged) || project.BuildReason.Flags.HasFlag(BuildReasonTypes.InputsChanged))) {
 
-            var items = projects.Where(
-                project => project.BuildReason != null
-                           && (project.BuildReason.Flags.HasFlag(BuildReasonTypes.DependencyChanged) || project.BuildReason.Flags.HasFlag(BuildReasonTypes.InputsChanged)));
+                    if (project.DirectoryNode != null) {
+                        if (project.BuildReason != null && project.BuildReason.Flags.HasFlag(BuildReasonTypes.ProjectOutputNotFound)) {
+                            return;
+                        }
 
-            foreach (var item in items) {
-                if (item.DirectoryNode != null) {
-                    if (item.BuildReason.Flags.HasFlag(BuildReasonTypes.ProjectOutputNotFound)) {
-                        continue;
+                        project.DirectoryNode.RetrievePrebuilts = false;
                     }
-                    item.DirectoryNode.RetrievePrebuilts = false;
                 }
             }
         }
@@ -414,8 +410,8 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
             }
 
-            List<DirectoryNode> startNodes = new List<DirectoryNode>();
-            List<DirectoryNode> endNodes = new List<DirectoryNode>();
+            List<DirectoryNode> startNodes = new List<DirectoryNode>(DefaultDirectoryListCapacity);
+            List<DirectoryNode> endNodes = new List<DirectoryNode>(DefaultDirectoryListCapacity);
 
             Dictionary<string, DependencyManifest> manifestMap = new Dictionary<string, DependencyManifest>(StringComparer.OrdinalIgnoreCase);
 
@@ -442,10 +438,10 @@ namespace Aderant.Build.DependencyAnalyzer {
                                 if (!makeFiles.Contains(contribution.File)) {
                                     startNode.AddedByDependencyAnalysis = true;
                                     endNode.AddedByDependencyAnalysis = true;
+                                }
 
-                                    if (contribution.DependencyManifest != null) {
-                                        manifestMap[contribution.DependencyFile] = contribution.DependencyManifest;
-                                    }
+                                if (contribution.DependencyManifest != null) {
+                                    manifestMap[contribution.DependencyFile] = contribution.DependencyManifest;
                                 }
                             }
                         }
@@ -488,26 +484,15 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        private static void AddDirectoryNodes(DependencyGraph graph, string nodeName, string nodeFullPath, out DirectoryNode startNode, out DirectoryNode endNode) {
-            // Create a new node that represents the start of a directory
-            startNode = new DirectoryNode(nodeName, nodeFullPath, false);
-
-            var existing = graph.GetNodeById<DirectoryNode>(startNode.Id);
-            if (existing == null) {
-                graph.Add(startNode);
-            } else {
-                startNode = existing;
+        private void AddDirectoryNodes(DependencyGraph graph, string nodeName, string nodeFullPath, out DirectoryNode startNode, out DirectoryNode endNode) {
+            if (directoryNodeFactory == null) {
+                directoryNodeFactory = new DirectoryNodeFactory(fileSystem);
+                directoryNodeFactory.Initialize(graph);
             }
 
-            // Create a new node that represents the completion of a directory
-            endNode = new DirectoryNode(nodeName, nodeFullPath, true);
-            existing = graph.GetNodeById<DirectoryNode>(endNode.Id);
-            if (existing == null) {
-                graph.Add(endNode);
-                endNode.AddResolvedDependency(null, startNode);
-            } else {
-                endNode = existing;
-            }
+            var result = directoryNodeFactory.Create(graph, nodeName, nodeFullPath);
+            startNode = result.Item1;
+            endNode = result.Item2;
         }
 
         /// <summary>
@@ -594,6 +579,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 // and we want to disable this optimization here.
                 type |= BuildReasonTypes.InputsChanged;
             }
+
             MarkDirty(project, type, (string)null);
         }
 
@@ -635,7 +621,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         private static void MarkDirty(ConfiguredProject project, BuildReasonTypes reasonTypes, string reasonDescription) {
             project.IsDirty = true;
             project.IncludeInBuild = true;
-            project.SetReason(reasonTypes, reasonDescription);
+            project.MarkDirtyAndSetReason(reasonTypes, reasonDescription);
         }
 
         /// <summary>
@@ -680,8 +666,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 MarkWebProjectsDirty(studioProjects);
             }
 
-            HashSet<string> h = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            h.UnionWith(dirtyProjects);
+            HashSet<string> h = new HashSet<string>(dirtyProjects, StringComparer.OrdinalIgnoreCase);
 
             // According to DownStream option, either mark the directly affected or all the recursively affected downstream projects as dirty.
             switch (dependencyProcessing) {
@@ -719,7 +704,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     }
                 }
 
-                if (configuredProject.DirtyFiles != null && configuredProject.DirtyFiles.Count > 0) {
+                if (configuredProject.DirtyFiles?.Count > 0) {
                     return true;
                 }
 
@@ -743,8 +728,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 foreach (var project in visualStudioProjects) {
                     if (string.Equals(fileNameOfProject, Path.GetFileName(project.FullPath), StringComparison.OrdinalIgnoreCase)) {
                         project.IncludeInBuild = true;
-                        project.IsDirty = true;
-                        project.SetReason(BuildReasonTypes.AlwaysBuild);
+                        project.MarkDirtyAndSetReason(BuildReasonTypes.AlwaysBuild);
                     }
                 }
             }
@@ -753,9 +737,10 @@ namespace Aderant.Build.DependencyAnalyzer {
         private static List<TreePrinter.Node> DescribeChanges(IDependable dependable, bool showPath) {
             ConfiguredProject configuredProject = dependable as ConfiguredProject;
 
+            var children = new List<TreePrinter.Node>();
+
             if (configuredProject != null) {
-                if (configuredProject.IncludeInBuild) {
-                    var children = new List<TreePrinter.Node>();
+                if (configuredProject.RequiresBuilding()) {
                     if (showPath) {
                         children.Add(new TreePrinter.Node { Name = "Path: " + configuredProject.FullPath, });
                     }
@@ -779,7 +764,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                         if (configuredProject.BuildReason.ChangedDependentProjects != null)
                             children.Add(
                                 new TreePrinter.Node {
-                                    Name = "Changed Dependencies",
+                                    Name = "Changed dependencies",
                                     Children = configuredProject.BuildReason.ChangedDependentProjects.Select(s => new TreePrinter.Node { Name = s }).ToList()
                                 });
                     }
@@ -788,7 +773,14 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
             }
 
-            return null;
+            DirectoryNode node = dependable as DirectoryNode;
+            if (node != null) {
+                if (!node.IsPostTargets) {
+                    children.Add(new TreePrinter.Node { Name = "Is building any projects: " + node.IsBuildingAnyProjects });
+                }
+            }
+
+            return children;
         }
 
         /// <summary>
@@ -798,7 +790,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <param name="projectsToFind">The project name hashset to search for.</param>
         /// <returns>The list of projects that gets dirty because they depend on any project found in the search list.</returns>
         internal List<IDependable> MarkDirty(IReadOnlyCollection<IDependable> allProjects, HashSet<string> projectsToFind) {
-            List<IDependable> affectedProjects = new List<IDependable>();
+            List<IDependable> affectedProjects = new List<IDependable>(DefaultDirectoryListCapacity);
 
             foreach (var project in allProjects) {
                 ConfiguredProject configuredProject = project as ConfiguredProject;
@@ -845,12 +837,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             foreach (var group in groups) {
                 var topLevelNode = new TreePrinter.Node();
                 topLevelNode.Name = "Group " + i;
-                topLevelNode.Children = group.Select(
-                    s =>
-                        new TreePrinter.Node {
-                            Name = s.Id.Split(':').Last(),
-                            Children = DescribeChanges(s, showPath)
-                        }).ToList();
+                topLevelNode.Children = Describe(group, showPath).ToList();
                 i++;
 
                 topLevelNodes.Add(topLevelNode);
@@ -861,12 +848,28 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             return sb.ToString();
         }
+
+        private static IEnumerable<TreePrinter.Node> Describe(IReadOnlyList<IDependable> group, bool showPath) {
+            foreach (IDependable dependable in group) {
+                var changes = DescribeChanges(dependable, showPath);
+
+                yield return new TreePrinter.Node {
+                    Name = dependable.Id.Split(':').Last(),
+                    Children = changes
+                };
+            }
+        }
     }
 
     [Flags]
     internal enum BuildReasonTypes {
         None = 0,
+
+        /// <summary>
+        /// Indicates a file owned by this project has been modified
+        /// </summary>
         ProjectItemChanged = 1,
+
         CachedBuildNotFound = 2,
         OutputNotFoundInCachedBuild = 4,
         ProjectOutputNotFound = 8,
@@ -875,5 +878,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         Forced = 64,
         InputsChanged = 128,
         ProjectChanged = 256,
+        RequiredByTextTemplate = 512,
     }
 }

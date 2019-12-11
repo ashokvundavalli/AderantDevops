@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 
 namespace Aderant.Build.ProjectSystem {
     internal static class WellKnownProjectTypeGuids {
@@ -17,10 +16,4 @@ namespace Aderant.Build.ProjectSystem {
         public static Guid VisualStudioToolsForOffice { get; } = new Guid("{BAA0C2D2-18E2-41B9-852F-F413020CAA33}");
     }
 
-    internal static class ConfiguredProjectExtensions {
-
-        public static bool IsWorkflowProject(this ConfiguredProject project) {
-            return project.ProjectTypeGuids != null && project.ProjectTypeGuids.Contains(WellKnownProjectTypeGuids.WorkflowFoundation);
-        }
-    }
 }

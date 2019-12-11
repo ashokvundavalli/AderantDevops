@@ -74,7 +74,7 @@ function FindProductManifest($context, [string]$root) {
 
     if ([System.IO.File]::Exists($configPath)) {
         $context.ProductManifestPath = $configPath
-    }    
+    }
 }
 
 function FindGitDir($context, [string]$searchDirectory) {
@@ -401,9 +401,7 @@ function AssignSwitches {
     $switches.Downstream = $Downstream.IsPresent
 
     if (-not $context.IsDesktopBuild) {
-		if ([string]::IsNullOrWhiteSpace([System.Environment]::GetEnvironmentVariable("MAGIC_MODE"))) {
-			$switches.Downstream = $true
-		}
+		$switches.Downstream = $true
     }
 
     $switches.Transitive = $Transitive.IsPresent

@@ -61,6 +61,28 @@ namespace UnitTest.Build.TextTemplateAnalysis {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to &lt;#@ output extension=&quot;.ts&quot; #&gt;
+        ///&lt;#@ assembly name=&quot;$(SolutionDir)Dependencies\Web.Core.dll&quot; #&gt;
+        ///&lt;#@ assembly name=&quot;$(SolutionDir)Dependencies\Aderant.Smartforms.dll&quot; #&gt;
+        ///
+        ///&lt;#
+        ///var gen = new Aderant.Web.Foundation.Generators.TypeGenerator(new[] {
+        ///	 typeof(Aderant.Web.Presentation.Models.ArgumentDescriptor),
+        ///	 typeof(Aderant.SmartForms.Model.DynamicModelElementInfo),
+        ///	 typeof(Aderant.Web.Core.Models.Workflow.RuleDto),
+        ///	 typeof(Aderant.Web.Core.Models.Workflow.ActionDto)
+        ///});
+        ///#&gt;
+        ///&lt;#=gen.TransformText()#&gt;
+        /// [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string CustomOutputExtension {
+            get {
+                return ResourceManager.GetString("CustomOutputExtension", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to &lt;#@ template debug=&quot;false&quot; hostspecific=&quot;false&quot; language=&quot;C#&quot; #&gt;
         ///&lt;#@ assembly name=&quot;System.Core&quot; #&gt;
         ///&lt;#@ import namespace=&quot;System.Linq&quot; #&gt;

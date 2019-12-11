@@ -16,6 +16,7 @@ using Moq;
 using UnitTest.Build.StateTracking;
 
 namespace UnitTest.Build.DependencyAnalyzer {
+
     [TestClass]
     public class ProjectSequencerTests {
 
@@ -246,7 +247,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
 
             var sequencer = new ProjectSequencer(NullLogger.Default, null);
             sequencer.TrackedInputFilesCheck = new TestTrackedInputFilesController(null, null) {
-                Files = new []{ new TrackedInputFile("File") },
+                Files = new[] { new TrackedInputFile("File") },
             };
             bool hasLoggedUpToDate = false;
             sequencer.ApplyStateFile(null, string.Empty, p1, ref hasLoggedUpToDate);
@@ -297,6 +298,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
             var fs = new Mock<IFileSystem>();
             fs.Setup(s => s.FileExists(It.IsAny<string>())).Returns(true).Verifiable();
             fs.Setup(s => s.OpenFile("Temp\\Foo\\Build\\DependencyManifest.xml")).Returns("<root />".ToStream());
+            fs.Setup(s => s.FileExists(It.Is<string>(s1 => s1.EndsWith(".rsp")))).Returns(false);
 
             var sequencer = new ProjectSequencer(new NullLogger(), fs.Object);
 
@@ -349,7 +351,8 @@ namespace UnitTest.Build.DependencyAnalyzer {
                 outputAssembly = "P1",
                 IsDirty = false,
                 IsWebProject = false,
-                IncludeInBuild = true, SolutionFile = d1.Directory + "\\Solution.sln"
+                IncludeInBuild = true,
+                SolutionFile = d1.Directory + "\\Solution.sln"
             };
 
             var d2 = new DirectoryNode("Dir2", @"C:\Dir2", false);
@@ -360,7 +363,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
                 IncludeInBuild = true,
                 SolutionFile = d2.Directory + "\\Solution.sln"
             };
-            p2.SetReason(BuildReasonTypes.DependencyChanged);
+            p2.MarkDirtyAndSetReason(BuildReasonTypes.DependencyChanged);
             p2.AddResolvedDependency(null, p1);
 
             var graph = new ProjectDependencyGraph(d1, p1, d2, p2);
@@ -374,13 +377,101 @@ namespace UnitTest.Build.DependencyAnalyzer {
                 StateFiles = new List<BuildStateFile> { new BuildStateFile() }
             };
 
-            var sequencer = new ProjectSequencer(NullLogger.Default, null);
+            var sequencer = new ProjectSequencer(NullLogger.Default, new Mock<IFileSystem2>().Object);
             sequencer.CreatePlan(ctx, new OrchestrationFiles(), graph, false);
 
             string[] items = p2.GetDependencies().Select(s => s.Id).ToArray();
             Assert.AreEqual(3, items.Length);
             CollectionAssert.Contains(items, "Dir1.Pre");
             CollectionAssert.Contains(items, "Dir2.Pre");
+        }
+
+        [TestMethod]
+        public void DisableCacheWhenProjectChanged_marks_project_as_dirty() {
+            var tree = new ProjectTreeBuilder();
+
+            var d1 = tree.CreateDirectory("D1", true);
+
+            // A project scheduled to build
+            var p1 = tree.CreateProject("P1");
+            p1.IsDirty = true;
+            p1.SolutionFile = Path.Combine(d1.Directory, "Solution.sln");
+            p1.MarkDirtyAndSetReason(BuildReasonTypes.ProjectItemChanged);
+
+            // A project not scheduled to build
+            var p2 = tree.CreateProject("P2");
+            p2.SolutionFile = Path.Combine(d1.Directory, "Solution.sln");
+            p2.IsDirty = false;
+
+            p1.AddResolvedDependency(null, d1);
+            p2.AddResolvedDependency(null, d1);
+
+            var graph = new ProjectDependencyGraph(p1, p2, d1);
+            var files = new OrchestrationFiles();
+            files.ExtensibilityImposition.BuildCacheOptions = BuildCacheOptions.DisableCacheWhenProjectChanged;
+
+            var sequencer = new ProjectSequencer(NullLogger.Default, new Mock<IFileSystem2>().Object);
+            sequencer.CreatePlan(tree.CreateContext(), files, graph, false);
+
+            Assert.IsTrue(p2.RequiresBuilding());
+        }
+
+        [TestMethod]
+        public void DoNotDisableCache_does_not_mark_project_as_dirty() {
+            var tree = new ProjectTreeBuilder();
+
+            var d1 = tree.CreateDirectory("D1", true);
+
+            // A project scheduled to build
+            var p1 = tree.CreateProject("P1");
+            p1.SolutionFile = Path.Combine(d1.Directory, "Solution.sln");
+            p1.IsDirty = true;
+            p1.MarkDirtyAndSetReason(BuildReasonTypes.ProjectItemChanged);
+
+            // A project not scheduled to build
+            var p2 = tree.CreateProject("P2");
+            p2.SolutionFile = Path.Combine(d1.Directory, "Solution.sln");
+            p2.IsDirty = false;
+
+            p1.AddResolvedDependency(null, d1);
+            p2.AddResolvedDependency(null, d1);
+
+            var graph = new ProjectDependencyGraph(p1, p2, d1);
+            var files = new OrchestrationFiles();
+            files.ExtensibilityImposition.BuildCacheOptions = BuildCacheOptions.DoNotDisableCacheWhenProjectChanged;
+
+            var sequencer = new ProjectSequencer(NullLogger.Default, new Mock<IFileSystem2>().Object);
+            sequencer.CreatePlan(tree.CreateContext(), files, graph, false);
+
+            Assert.IsFalse(p2.RequiresBuilding());
+        }
+    }
+
+    internal class ProjectTreeBuilder {
+        IProjectTree tree = new Mock<IProjectTree>().Object;
+
+        public BuildOperationContext CreateContext() {
+            return new BuildOperationContext {
+                BuildRoot = "",
+                Switches = new BuildSwitches {
+                    Downstream = true
+                },
+                BuildMetadata = new BuildMetadata(),
+                StateFiles = new List<BuildStateFile> { new BuildStateFile() }
+            };
+        }
+
+        public ConfiguredProject CreateProject(string name) {
+            return new TestConfiguredProject(tree) {
+                outputAssembly = name,
+                IsDirty = false,
+                IsWebProject = false,
+                IncludeInBuild = true,
+            };
+        }
+
+        public DirectoryNode CreateDirectory(string name, bool prologue) {
+            return new DirectoryNode(name, $"file://{name}", !prologue);
         }
     }
 }

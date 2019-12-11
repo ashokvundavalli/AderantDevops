@@ -63,7 +63,7 @@ namespace Aderant.Build.Commands {
             var fs = new ProjectSequencer(logger, new PhysicalFileSystem());
             fs.Sequence(false, false, null, projectDependencyGraph);
 
-            var groups = projectDependencyGraph.GetBuildGroups(projectDependencyGraph.GetDependencyOrder());
+            var groups = projectDependencyGraph.GetBuildGroups();
 
             string treeText = ProjectSequencer.PrintBuildTree(groups, ShowPath.IsPresent);
 

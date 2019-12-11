@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml;
@@ -10,6 +11,7 @@ using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks {
     public sealed class GenerateBuildPlan : BuildOperationContextTask {
+        private BuildCacheOptions options;
 
         /// <summary>
         /// Gets or sets the build plan project file.
@@ -75,6 +77,16 @@ namespace Aderant.Build.Tasks {
         /// </summary>
         public string WixTargetsPath { get; set; }
 
+        /// <summary>
+        /// Controls the behaviour of the build cache.
+        /// </summary>
+        public string BuildCacheOptions {
+            get { return options.ToString(); }
+            set {
+                Enum.TryParse(value, true, out options);
+            }
+        }
+
         [Output]
         public string[] DirectoriesInBuild { get; set; }
 
@@ -102,6 +114,7 @@ namespace Aderant.Build.Tasks {
             extensibilityImposition.AlwaysBuildWebProjects = AlwaysBuildWebProjects;
             extensibilityImposition.RequireSynchronizedOutputPaths = RequireSynchronizedOutputPaths;
             extensibilityImposition.CreateHardLinksForCopyLocal = CreateHardLinksForCopyLocal;
+            extensibilityImposition.BuildCacheOptions = options;
 
             var projectTree = ProjectTree.CreateDefaultImplementation(new BuildTaskLogger(Log));
 

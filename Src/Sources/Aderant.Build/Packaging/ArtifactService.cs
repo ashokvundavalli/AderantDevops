@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Management.Automation.Security;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -272,16 +273,24 @@ namespace Aderant.Build.Packaging {
         }
 
         private void RunResolveOperation(BuildOperationContext context, string solutionRoot, string container, List<ArtifactPathSpec> artifactPaths) {
+            BuildStateFile stateFile = context.GetStateFile(container);
+
             IEnumerable<string> localArtifactArchives = FetchArtifacts(artifactPaths);
+            if (stateFile != null && (!localArtifactArchives.Any() && !stateFile.Outputs.IsNullOrEmpty())) {
+                var singleErrorLine = string.Join(
+                    Environment.NewLine + " -> ",
+                    artifactPaths.Select(path => path.Source));
+                throw new InvalidOperationException($"A state file from {stateFile.Location} defined outputs but no artifacts where found under: {singleErrorLine}. If the file server is using replication then it maybe slow. The build will now fail.");
+            }
+
             ExtractArtifactArchives(localArtifactArchives);
 
             IEnumerable<string> localArtifactFiles = artifactPaths.SelectMany(artifact => fileSystem.GetFiles(artifact.Destination, "*", true));
 
-            BuildStateFile stateFile = context.GetStateFile(container);
-
             var filesToRestore = CalculateFilesToRestore(stateFile, solutionRoot, container, localArtifactFiles);
 
             CopyFiles(filesToRestore, true);
+
         }
 
         private void ExtractArtifactArchives(IEnumerable<string> localArtifactArchives) {

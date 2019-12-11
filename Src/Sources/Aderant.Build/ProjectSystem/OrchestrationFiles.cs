@@ -1,7 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Aderant.Build.ProjectSystem {
     internal class OrchestrationFiles {
+        public OrchestrationFiles() {
+            ExtensibilityImposition = new ExtensibilityImposition(Array.Empty<string>());
+        }
+
         /// <summary>
         /// Gets or sets the project file to execute targets before entering a directory
         /// </summary>

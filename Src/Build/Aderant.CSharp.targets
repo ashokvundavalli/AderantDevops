@@ -114,7 +114,7 @@
 
 
   <Target Name="CollectNugetPackagePaths"
-	Condition="'$(IsCustomBuild)' != 'true'">
+	        Condition="'$(IsCustomBuild)' != 'true'">
     <Error Condition="'$(RootFolder)' == ''" Text="RootFolder is undefined" />
 
     <PropertyGroup>
@@ -181,7 +181,9 @@
     </AllowedReferenceRelatedFileExtensions>
   </PropertyGroup>
 
-  <Target Name="SetAssemblySearchPaths" BeforeTargets="GetReferenceAssemblyPaths;BeforeResolveReferences" DependsOnTargets="AssignPropertiesForCustomSearchPaths;CollectNugetPackagePaths">
+  <Target Name="SetAssemblySearchPaths"
+          BeforeTargets="GetReferenceAssemblyPaths;BeforeResolveReferences"
+          DependsOnTargets="AssignPropertiesForCustomSearchPaths;CollectNugetPackagePaths">
 
     <!--
         This changes the search path of the ResolveReferences task to look in the dependencies/packages folder. The normal probe sequence is
@@ -198,7 +200,7 @@
         (9) Look in the application's output folder (like bin\debug)
     -->
 
-    <ItemGroup>
+    <ItemGroup Condition="'$(UsePackagesDirectorySearchPath)' != 'false'">
       <AssemblySearchDirectories Include="$([MSBuild]::Unescape($(_PackageDirectoriesAsSingleItem)))" />
     </ItemGroup>
 
@@ -218,11 +220,11 @@
       <AssemblySearchPaths>
         $(AlternativeOutputDirectory);
         $(AlternativeOutputDirectory)StoredProcedures;
-        $(AssemblySearchPaths);		
+        $(AssemblySearchPaths);
         $(ReferencePath);
-		$(RootFolder)\Dependencies\;
-		@(AssemblySearchDirectories);
-		$(_WIXLib);
+        $(RootFolder)\Dependencies\;
+        @(AssemblySearchDirectories);
+        $(_WIXLib);
         $(_Pia2010);
         $(_VS2017InstallDirectory)Enterprise\$(_VSSDKSuffix);
         $(_VS2017InstallDirectory)Enterprise\$(_PublicAssembliesSuffix);
@@ -323,7 +325,7 @@
 
   <Target Name="AddAssemblyInfo"
           BeforeTargets="CoreCompile"
-          DependsOnTargets="PrepareForBuild;"		  
+          DependsOnTargets="PrepareForBuild;"
           Condition="'$(GeneratedAssemblyInfoFile)' != '' And $(GenerateAssemblyInfo) != false">
 
     <ItemGroup>

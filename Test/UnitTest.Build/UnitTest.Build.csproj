@@ -117,6 +117,7 @@
     <Compile Include="BuildMetadataTests.cs" />
     <Compile Include="BuildProjectCheckTests.cs" />
     <Compile Include="DependencyAnalyzer\BuildPlanGeneratorTests.cs" />
+    <Compile Include="DependencyAnalyzer\DirectoryNodeFactoryTests.cs" />
     <Compile Include="DependencyAnalyzer\ProjectDependencyGraphTests.cs" />
     <Compile Include="DependencyAnalyzer\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -127,6 +128,7 @@
     <Compile Include="PipelineService\BuildPipelineServiceTests.cs" />
     <Compile Include="ProjectSystem\UnresolvedBuildDependencyProjectReferenceTests.cs" />
     <Compile Include="ProjectSystem\WixReferenceServiceTests.cs" />
+    <Compile Include="Tasks\GenerateBuildPlanTests.cs" />
     <Compile Include="Tasks\GetDependenciesTaskTests.cs" />
     <Compile Include="DirectoryMetadataServiceTests.cs" />
     <Compile Include="Packaging\FileRestoreTests.cs" />
@@ -282,6 +284,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Resources\test-paket-template-with-exclude-section.txt" />
+    <Content Include="TextTemplateAnalysis\Resources\CustomOutputExtension.tt" />
     <Content Include="TextTemplateAnalysis\Resources\TextTemplateWithCustomProcessor.tt" />
     <Content Include="TextTemplateAnalysis\Resources\TextTemplateWithInclude.tt" />
     <Content Include="TextTemplateAnalysis\Resources\SimpleTextTemplate.tt" />
@@ -349,7 +352,9 @@
       <Name>Aderant.Build</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="..\TestDeployment.proj" />
 </Project>

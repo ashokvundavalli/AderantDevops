@@ -14,6 +14,7 @@ using Aderant.Build.Logging;
 using Aderant.Build.Model;
 using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem.SolutionParser;
+using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.Services;
 using Aderant.Build.Utilities;
 using Aderant.Build.VersionControl.Model;
@@ -33,16 +34,6 @@ namespace Aderant.Build.ProjectSystem {
         // Holds all projects that are applicable to the build tree
         private readonly ConcurrentDictionary<Guid, ConfiguredProject> loadedConfiguredProjects = new ConcurrentDictionary<Guid, ConfiguredProject>();
         private readonly ILogger logger = NullLogger.Default;
-
-        string[] directoryFilter = new[] {
-            "packages",
-            "dependencies",
-        };
-
-        string[] extensions = new[] {
-            "*.csproj",
-            "*.wixproj",
-        };
 
         private ConcurrentBag<UnconfiguredProject> loadedUnconfiguredProjects;
 
@@ -143,6 +134,7 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         public async Task CollectBuildDependencies(BuildDependenciesCollector collector, CancellationToken cancellationToken = default(CancellationToken)) {
+
             // Null checked to allow unit testing where projects are inserted directly
             if (LoadedUnconfiguredProjects != null) {
                 ErrorUtilities.IsNotNull(collector.ProjectConfiguration, nameof(collector.ProjectConfiguration));
@@ -197,16 +189,6 @@ namespace Aderant.Build.ProjectSystem {
             UnloadAllProjects();
         }
 
-        private void UnloadAllProjects() {
-            if (projectCollection != null) {
-                projectCollection.UnloadAllProjects();
-            }
-
-            projectCollection = null;
-
-            GetProjectCollection().UnloadAllProjects();
-        }
-
         public DependencyGraph CreateBuildDependencyGraph(BuildDependenciesCollector collector) {
             return CreateBuildDependencyGraph(collector, null);
         }
@@ -238,17 +220,6 @@ namespace Aderant.Build.ProjectSystem {
             return new DependencyGraph(graph);
         }
 
-        internal void FindRelatedFiles(string projectPath, IBuildPipelineService pipelineService) {
-            var projectDir = Path.GetDirectoryName(projectPath);
-
-            var manifests = Directory.GetFiles(projectDir, "*RelatedFiles.json", SearchOption.AllDirectories);
-            foreach (var manifest in manifests) {
-                var text = Services.FileSystem.ReadAllText(manifest);
-                var relatedFiles = JsonConvert.DeserializeObject<RelatedFilesManifest>(text).RelatedFiles;
-                pipelineService.RecordRelatedFiles(relatedFiles);
-            }
-        }
-
         public async Task<BuildPlan> ComputeBuildPlan(BuildOperationContext context, AnalysisContext analysisContext, IBuildPipelineService pipelineService, OrchestrationFiles jobFiles) {
             LoadProjects(analysisContext);
 
@@ -258,12 +229,23 @@ namespace Aderant.Build.ProjectSystem {
 
             await CollectBuildDependencies(collector);
 
+            IReadOnlyCollection<ISourceChange> changes = null;
             if (context.SourceTreeMetadata != null) {
                 if (context.SourceTreeMetadata.Changes != null) {
                     // Feed the file changes in so we can calculate the dirty projects.
-                    collector.SourceChanges = context.SourceTreeMetadata.Changes;
+                    changes = collector.SourceChanges = context.SourceTreeMetadata.Changes;
                 }
             }
+
+            //if (changes != null) {
+            //    // Because developers may have packaged up their projects the solution level or have just relied on the
+            //    // auto packager then there is a risk we will bring files back from the dead in 'DoNotDisableCacheWhenProjectChanged' mode.
+            //    // To prevent zombie files we take the slow path and rebuild the entire tree.
+            //    bool isAnyNonCSharpFileDeleted = changes.Any(s => (s.Status == FileStatus.Deleted || s.Status == FileStatus.Renamed) && !s.FullPath.EndsWith(".cs", StringComparison.OrdinalIgnoreCase));
+            //    if (isAnyNonCSharpFileDeleted) {
+            //        jobFiles.ExtensibilityImposition.BuildCacheOptions = BuildCacheOptions.DisableCacheWhenProjectChanged;
+            //    }
+            //}
 
             DependencyGraph graph = CreateBuildDependencyGraph(collector, pipelineService);
 
@@ -388,6 +370,27 @@ namespace Aderant.Build.ProjectSystem {
             return new SolutionSearchResult(solutionFile, projectInSolution);
         }
 
+        private void UnloadAllProjects() {
+            if (projectCollection != null) {
+                projectCollection.UnloadAllProjects();
+            }
+
+            projectCollection = null;
+
+            GetProjectCollection().UnloadAllProjects();
+        }
+
+        internal void FindRelatedFiles(string projectPath, IBuildPipelineService pipelineService) {
+            var projectDir = Path.GetDirectoryName(projectPath);
+
+            var manifests = Directory.GetFiles(projectDir, "*RelatedFiles.json", SearchOption.AllDirectories);
+            foreach (var manifest in manifests) {
+                var text = Services.FileSystem.ReadAllText(manifest);
+                var relatedFiles = JsonConvert.DeserializeObject<RelatedFilesManifest>(text).RelatedFiles;
+                pipelineService.RecordRelatedFiles(relatedFiles);
+            }
+        }
+
         private void GenerateCurrentSolutionConfigurationXml(ConfigurationToBuild collectorProjectConfiguration) {
             var projectsInSolutions = projectsByGuid.Values;
 
@@ -408,41 +411,6 @@ namespace Aderant.Build.ProjectSystem {
         private void EnsureUnconfiguredProjects() {
             if (loadedUnconfiguredProjects == null) {
                 loadedUnconfiguredProjects = new ConcurrentBag<UnconfiguredProject>();
-            }
-        }
-
-        private IEnumerable<string> GrovelForFiles(string directory, IReadOnlyList<string> excludeFilterPatterns) {
-            var filePathCollector = new List<string>();
-
-            GetFilesWithExtensionRecursive(filePathCollector, directory);
-
-            return filePathCollector.Where(s => !PathUtility.IsPathExcludedByFilters(s, excludeFilterPatterns));
-        }
-
-        private void GetFilesWithExtensionRecursive(List<string> filePathCollector, string directory) {
-            // For performance reasons it is important to avoid known symlink directories so here we do not traverse into them
-            IEnumerable<string> directories = Services.FileSystem.GetDirectories(directory, false);
-
-            foreach (var dir in directories) {
-                bool process = true;
-
-                bool doExtensionFilter = Services.FileSystem.GetFiles(dir, "*.sln", false).Any();
-                if (doExtensionFilter) {
-                    foreach (var dirFilter in directoryFilter) {
-                        if (dir.IndexOf(dirFilter, StringComparison.OrdinalIgnoreCase) >= 0) {
-                            process = false;
-                            break;
-                        }
-                    }
-                }
-
-                if (process) {
-                    foreach (var extension in extensions) {
-                        filePathCollector.AddRange(Services.FileSystem.GetFiles(directory, extension, false));
-                    }
-
-                    GetFilesWithExtensionRecursive(filePathCollector, dir);
-                }
             }
         }
 

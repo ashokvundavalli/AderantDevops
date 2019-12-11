@@ -120,16 +120,6 @@ namespace UnitTest.Build {
     }
 
     internal class FakeProvider : TestModuleProviderBase {
-        public XDocument ProductManifest {
-            get { return XDocument.Parse(@"<?xml version='1.0' encoding='utf-8'?>
-<ProductManifest Name='Expert' ExpertVersion='802'>
-    <Modules>
-        <Module Name='A' AssemblyVersion='1.8.0.0' />
-        <Module Name='B' AssemblyVersion='1.8.0.0' />
-        <Module Name='C' AssemblyVersion='1.8.0.0' />
-    </Modules>
-</ProductManifest>"); }
-        }
 
         public override string Branch {
             get { return @"Dev\Foo"; }
@@ -190,17 +180,6 @@ namespace UnitTest.Build {
     }
 
     internal class ParallelFakeProvider : TestModuleProviderBase {
-        public XDocument ProductManifest {
-            get { return XDocument.Parse(@"<?xml version='1.0' encoding='utf-8'?>
-<ProductManifest Name='Expert' ExpertVersion='802'>
-    <Modules>
-        <Module Name='A' AssemblyVersion='1.8.0.0' />
-        <Module Name='B' AssemblyVersion='1.8.0.0' />
-        <Module Name='C' AssemblyVersion='1.8.0.0' />
-        <Module Name='D' AssemblyVersion='1.8.0.0' />
-    </Modules>
-</ProductManifest>"); }
-        }
 
         public override string Branch {
             get { return @"Dev\Foo"; }
@@ -276,15 +255,6 @@ namespace UnitTest.Build {
     }
 
     internal class CircularReferenceProvider : TestModuleProviderBase {
-        public XDocument ProductManifest {
-            get { return XDocument.Parse(@"<?xml version='1.0' encoding='utf-8'?>
-<ProductManifest Name='Expert' ExpertVersion='802'>
-    <Modules>
-        <Module Name='A' AssemblyVersion='1.8.0.0' />
-        <Module Name='B' AssemblyVersion='1.8.0.0' />
-    </Modules>
-</ProductManifest>"); }
-        }
 
         public override IEnumerable<ExpertModule> GetAll() {
             return new ExpertModule[] {

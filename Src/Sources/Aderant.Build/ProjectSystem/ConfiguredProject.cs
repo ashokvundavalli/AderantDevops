@@ -183,6 +183,7 @@ namespace Aderant.Build.ProjectSystem {
         /// <summary>
         /// Flag for if the project has been changed.
         /// Used for reducing the build set.
+        /// This property is used to control if the project will be scheduled for building.
         /// </summary>
         public bool IsDirty { get; set; }
 
@@ -382,6 +383,10 @@ namespace Aderant.Build.ProjectSystem {
             return collection;
         }
 
+        /// <summary>
+        /// Returns the items with the provided <paramref name="itemType"/> name, such as Compile, Content etc
+        /// </summary>
+        /// <param name="itemType">The item group name</param>
         public virtual ICollection<ProjectItem> GetItems(string itemType) {
             return project.Value.GetItems(itemType);
         }
@@ -603,7 +608,7 @@ namespace Aderant.Build.ProjectSystem {
 
         private void MarkDirty(BuildReasonTypes type) {
             IsDirty = true;
-            this.SetReason(type);
+            this.MarkDirtyAndSetReason(type);
         }
 
         private void MarkThisFileDirty(ICollection<ISourceChange> changes) {
@@ -680,27 +685,18 @@ namespace Aderant.Build.ProjectSystem {
                 }
             }
         }
+
+        /// <summary>Returns a string that represents the current object.</summary>
+        /// <returns>A string that represents the current object.</returns>
+        public override string ToString() {
+            return this.FullPath;
+        }
     }
 
     internal class BuildReason {
         public string Description { get; set; }
         public BuildReasonTypes Flags { get; set; }
         public IReadOnlyCollection<string> ChangedDependentProjects { get; set; }
-    }
-
-    internal static class BuildReasonExtensions {
-
-        public static void SetReason(this ConfiguredProject project, BuildReasonTypes reasonTypes, string reasonDescription = null) {
-            if (project.BuildReason == null) {
-                project.BuildReason = new BuildReason { Flags = reasonTypes };
-            } else {
-                project.BuildReason.Flags |= reasonTypes;
-            }
-
-            if (reasonDescription != null) {
-                project.BuildReason.Description = reasonDescription;
-            }
-        }
     }
 
 }

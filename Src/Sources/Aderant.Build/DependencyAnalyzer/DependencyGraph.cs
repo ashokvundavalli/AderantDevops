@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using Aderant.Build.Model;
 using Aderant.Build.Utilities;
@@ -22,63 +21,34 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// Topologically sort artifacts to determine a reasonable order in which they must be built.
         /// </summary>
         public IReadOnlyList<IDependable> GetDependencyOrder() {
-            return TopologicalSort.IterativeSort(Nodes, dependable => (dependable as IArtifact)?.GetDependencies());
+            return Graph.TopologicalSort(artifacts, GetDependencies);
+        }
+
+        private static IEnumerable<IDependable> GetDependencies(IDependable input) {
+            if (input is IArtifact artifact) {
+                return artifact.GetDependencies();
+            }
+
+            return Enumerable.Empty<IDependable>();
         }
 
         /// <summary>
-        /// Groups the input into sets that do not depend on each other. Assumes the input is sorted.
+        /// Groups the input into sets that do not depend on each other.
         /// </summary>
-        /// <param name="projects"></param>
-        public IReadOnlyList<IReadOnlyList<IDependable>> GetBuildGroups(IReadOnlyList<IDependable> projects) {
-            return GetBuildGroupsInternal(projects);
+        public IReadOnlyList<IReadOnlyList<IDependable>> GetBuildGroups() {
+            return GetBuildGroups(artifacts);
         }
 
-        private static List<List<IDependable>> GetBuildGroupsInternal(IReadOnlyList<IDependable> sortedQueue) {
+        /// <summary>
+        /// Groups the input into sets that do not depend on each other.
+        /// </summary>
+        public static IReadOnlyList<IReadOnlyList<IDependable>> GetBuildGroups(IEnumerable<IDependable> projects) {
             // Now find critical path...
             // What we do here is iterate the sorted list looking for elements with no dependencies. These are the zero level modules.
             // Then we iterate again and check if the module depends on any of the zero level modules but not on anything else. These are the
             // level 1 elements. Then we iterate again and check if the module depends on any of the 0 or 1 level modules etc.
             // This places modules into levels which partitioning the groups to gain execution parallelism.
-            IDictionary<int, HashSet<IDependable>> levels = new Dictionary<int, HashSet<IDependable>>();
-
-            Queue<IDependable> projects = new Queue<IDependable>(sortedQueue);
-
-            int i = 0;
-            while (projects.Count > 0) {
-                IDependable project = projects.Peek();
-
-                if (!levels.ContainsKey(i)) {
-                    levels[i] = new HashSet<IDependable>();
-                }
-
-                bool add = true;
-
-                var artifact = project as IArtifact;
-                if (artifact != null) {
-                    IReadOnlyCollection<IDependable> dependencies = artifact.GetDependencies();
-
-                    var levelSet = levels[i];
-                    foreach (var item in levelSet) {
-                        if (dependencies.Contains(item)) {
-                            add = false;
-                        }
-                    }
-                }
-
-                if (add) {
-                    levels[i].Add(project);
-                    projects.Dequeue();
-                } else {
-                    i++;
-                }
-            }
-
-            var groups = new List<List<IDependable>>();
-            foreach (var pair in levels) {
-                groups.Add(new List<IDependable>(levels[pair.Key]));
-            }
-
-            return groups;
+            return Graph.BatchingTopologicalSort(projects, GetDependencies);
         }
 
         /// <summary>

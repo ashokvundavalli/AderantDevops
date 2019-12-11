@@ -15,7 +15,7 @@ namespace Aderant.Build.DependencyAnalyzer {
     internal class BuildPlanGenerator {
         private const string PropertiesKey = "Properties";
         private const string BuildGroupId = "BuildGroupId";
-        private static readonly char[] newLineArray = Environment.NewLine.ToCharArray();
+
         private readonly IFileSystem fileSystem;
         private readonly HashSet<string> observedProjects = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -150,20 +150,16 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         private IEnumerable<ItemGroupItem> CreateItemGroupMembers(string beforeProjectFile, string afterProjectFile, ExtensibilityImposition imposition, IReadOnlyList<IDependable> projectGroup, int buildGroup) {
-            return projectGroup.Select(
-                studioProject => {
-                    SetUseCommonOutputDirectory(projectGroup.OfType<ConfiguredProject>());
+            SetUseCommonOutputDirectory(projectGroup.OfType<ConfiguredProject>());
 
-                    var item = GenerateItem(beforeProjectFile, afterProjectFile, buildGroup, studioProject, imposition);
+            foreach (var studioProject in projectGroup) {
+                var item = GenerateItem(beforeProjectFile, afterProjectFile, buildGroup, studioProject, imposition);
 
-                    if (item != null) {
-                        item.Condition = $"('$(ResumeGroupId)' == '') Or ('{buildGroup}' >= '$(ResumeGroupId)')";
-                        return item;
-                    }
-
-                    return null;
+                if (item != null) {
+                    item.Condition = $"('$(ResumeGroupId)' == '') Or ('{buildGroup}' >= '$(ResumeGroupId)')";
+                    yield return item;
                 }
-            );
+            }
         }
 
         internal static void SetUseCommonOutputDirectory(IEnumerable<ConfiguredProject> projects) {
@@ -206,6 +202,11 @@ namespace Aderant.Build.DependencyAnalyzer {
                 if (!visualStudioProject.IncludeInBuild) {
                     return null;
                 }
+
+                if (!visualStudioProject.RequiresBuilding()) {
+                    return null;
+                }
+
                 var project = SetConfiguredProjectProperties(buildGroup, propertiesForProjectInstance, visualStudioProject, imposition, projectInstanceId);
                 return project;
             }
@@ -303,7 +304,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             // Perf optimization, we can disable T4 if we haven't seen any projects under this solution path
             // Don't do this on desktop to simplify things for developers
-            if (!IsDesktopBuild && !observedProjects.Contains(solutionDirectoryPath)) {
+            if (!IsDesktopBuild && !node.IsPostTargets && !node.IsBuildingAnyProjects) {
                 properties["T4TransformEnabled"] = bool.FalseString;
             }
 
@@ -328,20 +329,13 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         internal PropertyList AddBuildProperties(PropertyList propertiesForProjectInstance, IFileSystem fileSystem, string solutionDirectoryPath) {
-            string responseFile = Path.Combine(solutionDirectoryPath, "Build", Path.ChangeExtension(WellKnownPaths.EntryPointFileName, "rsp"));
+            string responseFile = ResponseFileParser.CreatePath(solutionDirectoryPath);
+            var parser = new ResponseFileParser(fileSystem);
 
-            PropertyList properties = null;
-
-            if (fileSystem.FileExists(responseFile)) {
-                string propertiesText;
-                using (StreamReader reader = new StreamReader(fileSystem.OpenFile(responseFile))) {
-                    propertiesText = reader.ReadToEnd();
-                }
-
-                properties = ParseRspContent(propertiesText.Split(newLineArray, StringSplitOptions.None));
+            var properties = parser.ParseFile(responseFile);
+            if (properties != null) {
                 // We want to be able to specify the flavor globally in a build all so remove it from the property set
                 properties.TryRemove("BuildFlavor");
-
                 propertiesForProjectInstance = ApplyPropertiesFromCommandLineArgs(properties);
             }
 
@@ -349,34 +343,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             AddDefault("SolutionDirectoryPath", PathUtility.EnsureTrailingSlash(solutionDirectoryPath), propertiesForProjectInstance, properties);
 
             return propertiesForProjectInstance;
-        }
-
-        private static void AddDefault(string key, string value, PropertyList propertiesForProjectInstance, PropertyList properties) {
-            if (properties == null || !properties.ContainsKey(key)) {
-                propertiesForProjectInstance.Add(key, value);
-            }
-        }
-
-        internal PropertyList ParseRspContent(string[] responseFileContent) {
-            PropertyList propertyList = new PropertyList();
-
-            if (responseFileContent == null || responseFileContent.Length == 0) {
-                return propertyList;
-            }
-
-            foreach (string line in responseFileContent) {
-                if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#")) {
-                    continue;
-                }
-
-                if (line.IndexOf("/p:", StringComparison.OrdinalIgnoreCase) >= 0) {
-                    string[] split = line.Replace("\"", "").Split(new char[] { '=' }, 2, StringSplitOptions.RemoveEmptyEntries);
-
-                    propertyList.Add(split[0].Substring(3, split[0].Length - 3), split[1]);
-                }
-            }
-
-            return propertyList;
         }
 
         /// <summary>
@@ -399,6 +365,12 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             return propertyList;
+        }
+
+        private static void AddDefault(string key, string value, PropertyList propertiesForProjectInstance, PropertyList properties) {
+            if (properties == null || !properties.ContainsKey(key)) {
+                propertiesForProjectInstance.Add(key, value);
+            }
         }
 
         private PropertyList AddSolutionConfigurationProperties(ConfiguredProject visualStudioProject, PropertyList propertyList) {

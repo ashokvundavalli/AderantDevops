@@ -70,6 +70,7 @@
     <AlwaysBuildWebProjects Condition="'$(AlwaysBuildWebProjects)' == ''">true</AlwaysBuildWebProjects>
     <RequireSynchronizedOutputPaths Condition="'$(RequireSynchronizedOutputPaths)' == ''">false</RequireSynchronizedOutputPaths>
     <CreateHardLinksForCopyLocal Condition="'$(CreateHardLinksForCopyLocal)' == ''">false</CreateHardLinksForCopyLocal>
+    <BuildCacheOptions Condition="'$(BuildCacheOptions)' == ''">DisableCacheWhenProjectChanged</BuildCacheOptions>
   </PropertyGroup>
 
   <Import Project="Aderant.Build.Common.targets" />
@@ -89,7 +90,7 @@
       MSBuildRunTests;
       WriteStateFiles;
       PackageProduct;
-      ProduceUpdatePackage;    
+      ProduceUpdatePackage;
       MSBuildRunIntegrationTests;
       CopyToDrop;
     </BuildAndPackageDependsOn>
@@ -113,8 +114,8 @@
       <ImpactedTestAssemblies>@(ImpactedTestAssemblies)</ImpactedTestAssemblies>
     </PropertyGroup>
 
-    <MSBuild Projects="Aderant.Build.IntegrationTesting.targets" 
-             Targets="RunIntegrationTests" 
+    <MSBuild Projects="Aderant.Build.IntegrationTesting.targets"
+             Targets="RunIntegrationTests"
              Properties="ParametersFile=$(ParametersFile);
                          SolutionRoot=$(SolutionRoot);
                          ArtifactStagingDirectory=$(ArtifactStagingDirectory);
@@ -232,6 +233,7 @@
       AlwaysBuildWebProjects="$(AlwaysBuildWebProjects)"
       RequireSynchronizedOutputPaths="$(RequireSynchronizedOutputPaths)"
       CreateHardLinksForCopyLocal="$(CreateHardLinksForCopyLocal)"
+      BuildCacheOptions="$(BuildCacheOptions)"
       GroupExecutionFile="$(MSBuildThisFileDirectory)ComboBuild.Core.targets"
       BeforeProjectFile="$(MSBuildThisFileDirectory)ComboBuild.Pre.targets"
       AfterProjectFile="$(MSBuildThisFileDirectory)ComboBuild.Post.targets"

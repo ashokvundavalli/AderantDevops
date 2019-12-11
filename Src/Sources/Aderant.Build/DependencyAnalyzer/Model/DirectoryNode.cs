@@ -54,7 +54,15 @@ namespace Aderant.Build.DependencyAnalyzer.Model {
             }
         }
 
-        private static string CreateName(string name, bool isPostTargets) {
+        /// <summary>
+        /// Gets a value indicating if this directory is using external text transformation.
+        /// </summary>
+        public bool? TextTransformEnabled { get; internal set; }
+
+        /// <summary>
+        /// Creates a node name.
+        /// </summary>
+        public static string CreateName(string name, bool isPostTargets) {
             if (isPostTargets) {
                 name += ".Post";
             } else {
@@ -62,6 +70,12 @@ namespace Aderant.Build.DependencyAnalyzer.Model {
             }
 
             return name;
+        }
+
+        /// <summary>Returns a string that represents the current object.</summary>
+        /// <returns>A string that represents the current object.</returns>
+        public override string ToString() {
+            return Id;
         }
     }
 }

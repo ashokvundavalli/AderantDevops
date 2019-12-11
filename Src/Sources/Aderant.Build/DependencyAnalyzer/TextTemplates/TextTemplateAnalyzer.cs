@@ -49,8 +49,12 @@ namespace Aderant.Build.DependencyAnalyzer.TextTemplates {
                     if (tokenizer.State == TokenizerState.DirectiveName) {
                         if (string.Equals(tokenizerValue, "assembly", StringComparison.OrdinalIgnoreCase)) {
                             isAssemblyElement = true;
-                        } else if (string.Equals(tokenizerValue, "include", StringComparison.InvariantCultureIgnoreCase)) {
+                        } else if (string.Equals(tokenizerValue, "include", StringComparison.OrdinalIgnoreCase)) {
                             isIncludeElement = true;
+                        } else if (string.Equals(tokenizerValue, "output", StringComparison.OrdinalIgnoreCase)) {
+
+                        } else if (string.Equals(tokenizerValue, "extension", StringComparison.OrdinalIgnoreCase)) {
+
                         } else {
                             isCustomDirective = true;
                         }

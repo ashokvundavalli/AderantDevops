@@ -1,20 +1,18 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using Aderant.Build.Model;
 using Aderant.Build.ProjectSystem.References;
-using Aderant.Build.VersionControl;
 using Aderant.Build.VersionControl.Model;
 
 namespace Aderant.Build.ProjectSystem {
     internal class BuildDependenciesCollector {
-        private List<IReference> resolvedReferences = new List<IReference>();
-        private List<IUnresolvedReference> unresolvedReferences = new List<IUnresolvedReference>();
+        private ConcurrentBag<IReference> resolvedReferences = new ConcurrentBag<IReference>();
+        private ConcurrentDictionary<IUnresolvedReference, byte> unresolvedReferences = new ConcurrentDictionary<IUnresolvedReference, byte>();
 
         public IReadOnlyCollection<IUnresolvedReference> UnresolvedReferences {
             get {
-                lock (this) {
-                    return unresolvedReferences.ToList();
-                }
+                return unresolvedReferences.Keys.ToList();
             }
         }
 
@@ -24,15 +22,14 @@ namespace Aderant.Build.ProjectSystem {
         public ConfigurationToBuild ProjectConfiguration { get; set; }
 
         public IReadOnlyCollection<ISourceChange> SourceChanges { get; set; }
+
         public ExtensibilityImposition ExtensibilityImposition { get; set; }
 
         public void AddUnresolvedReferences(IReadOnlyCollection<IUnresolvedReference> references) {
             ErrorUtilities.IsNotNull(references, nameof(references));
 
             foreach (var unresolvedReference in references) {
-                lock (this) {
-                    unresolvedReferences.Add(unresolvedReference);
-                }
+                unresolvedReferences.TryAdd(unresolvedReference, 0);
             }
         }
 
@@ -40,10 +37,10 @@ namespace Aderant.Build.ProjectSystem {
             ErrorUtilities.IsNotNull(existingUnresolvedItem, nameof(existingUnresolvedItem));
             ErrorUtilities.IsNotNull(dependency, nameof(dependency));
 
-            lock (this) {
-                resolvedReferences.Add(dependency);
-                unresolvedReferences.Remove(existingUnresolvedItem);
-            }
+            resolvedReferences.Add(dependency);
+
+            byte _;
+            unresolvedReferences.TryRemove(existingUnresolvedItem, out _);
         }
     }
 }

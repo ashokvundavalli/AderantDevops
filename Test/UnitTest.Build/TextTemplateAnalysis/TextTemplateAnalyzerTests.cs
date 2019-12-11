@@ -44,5 +44,17 @@ namespace UnitTest.Build.TextTemplateAnalysis {
                 Assert.AreEqual("DomainModelDslDirectiveProcessor", result.CustomProcessors[0]);
             }
         }
+
+        [TestMethod]
+        public void Custom_output_extension() {
+            var analyzer = new TextTemplateAnalyzer();
+
+            using (var reader = new StringReader(Resources.CustomOutputExtension)) {
+                TextTemplateAnalysisResult result = analyzer.Analyze(reader, TestContext.DeploymentDirectory);
+
+                Assert.AreEqual(0, result.CustomProcessors.Count);
+                Assert.AreEqual(2, result.AssemblyReferences.Count);
+            }
+        }
     }
 }

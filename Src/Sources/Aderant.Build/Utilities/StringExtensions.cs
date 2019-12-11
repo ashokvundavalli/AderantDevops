@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
 
 namespace Aderant.Build.Utilities {
@@ -44,4 +43,5 @@ namespace Aderant.Build.Utilities {
             return new[] { str };
         }
     }
+
 }
