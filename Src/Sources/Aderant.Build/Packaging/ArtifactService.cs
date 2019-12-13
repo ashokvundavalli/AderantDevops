@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Management.Automation.Security;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -113,7 +112,7 @@ namespace Aderant.Build.Packaging {
         }
 
         private void ProcessDefinitionFiles(bool ignoreAutoPackages, BuildOperationContext context, string container, IEnumerable<ArtifactPackageDefinition> packages, IList<PathSpec> copyList, List<BuildArtifact> buildArtifacts) {
-            foreach (ArtifactPackageDefinition definition in packages) { 
+            foreach (ArtifactPackageDefinition definition in packages) {
                 if (ignoreAutoPackages) {
                     if (definition.IsAutomaticallyGenerated) {
                         autoPackages.Add(definition);
@@ -272,18 +271,72 @@ namespace Aderant.Build.Packaging {
             RunResolveOperation(context, solutionRoot, containerKey, paths);
         }
 
+        internal List<Tuple<bool, string>> FetchArtifacts(IList<ArtifactPathSpec> paths) {
+            List<PathSpec> pathSpecs = new List<PathSpec>();
+
+            foreach (ArtifactPathSpec item in paths) {
+                IEnumerable<string> artifactContents = fileSystem.GetFiles(item.Source, "*.zip", false);
+                pathSpecs.AddRange(artifactContents.Select(x => new PathSpec(x, x.Replace(item.Source, item.Destination, StringComparison.OrdinalIgnoreCase))));
+            }
+
+            var validatedPaths = new List<Tuple<bool, string>>();
+            bool hasLogged = false;
+            for (var i = pathSpecs.Count - 1; i >= 0; i--) {
+                if (!hasLogged) {
+                    logger.Info("Performing copy for FetchArtifacts");
+                    hasLogged = true;
+                }
+
+                PathSpec pathSpec = pathSpecs[i];
+                var originFile = Path.Combine(pathSpec.Destination + ".origin.txt");
+
+                if (fileSystem.FileExists(originFile)) {
+                    var linesFromFile = fileSystem.ReadAllLines(originFile);
+
+                    var firstLine = linesFromFile[0];
+
+                    if (string.Equals(firstLine, pathSpec.Location, StringComparison.OrdinalIgnoreCase)) {
+                        if (fileSystem.FileExists(pathSpec.Destination)) {
+                            logger.Info("Artifact download skipped from: " + pathSpec.Location);
+                            validatedPaths.Add(Tuple.Create(true, pathSpec.Destination));
+                            pathSpecs.RemoveAt(i);
+                            continue;
+                        }
+                    }
+                }
+
+                validatedPaths.Add(Tuple.Create(false, pathSpec.Destination));
+
+                // Ensure the existing artifact is zapped
+                fileSystem.DeleteDirectory(Path.GetDirectoryName(pathSpec.Destination), true);
+
+                logger.Info("Copying: {0} -> {1}", pathSpec.Location, pathSpec.Destination);
+                fileSystem.WriteAllText(originFile, pathSpec.Location);
+            }
+
+            if (pathSpecs.Count > 0) {
+                ActionBlock<PathSpec> bulkCopy = fileSystem.BulkCopy(pathSpecs, true, false, false);
+                bulkCopy.Completion
+                    .ConfigureAwait(false)
+                    .GetAwaiter()
+                    .GetResult();
+            }
+
+            return validatedPaths;
+        }
+
         private void RunResolveOperation(BuildOperationContext context, string solutionRoot, string container, List<ArtifactPathSpec> artifactPaths) {
             BuildStateFile stateFile = context.GetStateFile(container);
 
-            IEnumerable<string> localArtifactArchives = FetchArtifacts(artifactPaths);
-            if (stateFile != null && (!localArtifactArchives.Any() && !stateFile.Outputs.IsNullOrEmpty())) {
+            IEnumerable<Tuple<bool, string>> localArtifactArchives = FetchArtifacts(artifactPaths);
+            if (stateFile != null && !localArtifactArchives.Any() && !stateFile.Outputs.IsNullOrEmpty()) {
                 var singleErrorLine = string.Join(
                     Environment.NewLine + " -> ",
                     artifactPaths.Select(path => path.Source));
                 throw new InvalidOperationException($"A state file from {stateFile.Location} defined outputs but no artifacts where found under: {singleErrorLine}. If the file server is using replication then it maybe slow. The build will now fail.");
             }
 
-            ExtractArtifactArchives(localArtifactArchives);
+            ExtractArtifactArchives(localArtifactArchives.Where(x => x.Item1 == false).Select(x => x.Item2));
 
             IEnumerable<string> localArtifactFiles = artifactPaths.SelectMany(artifact => fileSystem.GetFiles(artifact.Destination, "*", true));
 
@@ -366,56 +419,6 @@ namespace Aderant.Build.Packaging {
             }
 
             return paths;
-        }
-
-        private IEnumerable<string> FetchArtifacts(IList<ArtifactPathSpec> paths) {
-            List<PathSpec> pathSpecs = new List<PathSpec>();
-
-            foreach (ArtifactPathSpec item in paths) {
-                IEnumerable<string> artifactContents = fileSystem.GetFiles(item.Source, "*.zip", false);
-                pathSpecs.AddRange(artifactContents.Select(x => new PathSpec(x, x.Replace(item.Source, item.Destination, StringComparison.OrdinalIgnoreCase))));
-            }
-
-            bool hasLogged = false;
-            for (var i = pathSpecs.Count - 1; i >= 0; i--) {
-                if (!hasLogged) {
-                    logger.Info("Performing copy for FetchArtifacts");
-                    hasLogged = true;
-                }
-
-                PathSpec pathSpec = pathSpecs[i];
-                var originFile = Path.Combine(pathSpec.Destination + ".origin.txt");
-
-                if (fileSystem.FileExists(originFile)) {
-                    var linesFromFile = fileSystem.ReadAllLines(originFile);
-
-                    var firstLine = linesFromFile[0];
-
-                    if (string.Equals(firstLine, pathSpec.Location, StringComparison.OrdinalIgnoreCase)) {
-                        if (fileSystem.FileExists(pathSpec.Destination)) {
-                            logger.Info("Artifact download skipped from: " + pathSpec.Location);
-                            pathSpecs.RemoveAt(i);
-                            continue;
-                        }
-                    }
-                }
-
-                // Ensure the existing artifact is zapped
-                fileSystem.DeleteDirectory(pathSpec.Destination, true);
-
-                logger.Info("Copying: {0} -> {1}", pathSpec.Location, pathSpec.Destination);
-                fileSystem.WriteAllText(originFile, pathSpec.Location);
-            }
-
-            if (pathSpecs.Count > 0) {
-                ActionBlock<PathSpec> bulkCopy = fileSystem.BulkCopy(pathSpecs, true, false, false);
-                bulkCopy.Completion
-                    .ConfigureAwait(false)
-                    .GetAwaiter()
-                    .GetResult();
-            }
-
-            return pathSpecs.Select(s => s.Destination);
         }
 
         internal IList<PathSpec> CalculateFilesToRestore(BuildStateFile stateFile, string solutionRoot, string containerKey, IEnumerable<string> artifacts) {

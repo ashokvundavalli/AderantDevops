@@ -24,12 +24,7 @@ namespace UnitTest.Build.Packaging {
 
             var fs = new Mock<IFileSystem>();
             fs.Setup(s => s.FileExists("Baz")).Returns(true);
-            fs.Setup(s => s.BulkCopy(It.IsAny<IEnumerable<PathSpec>>(), true, false, true)).Returns(
-                () => {
-                    var block = new ActionBlock<PathSpec>(spec => { });
-                    block.Complete();
-                    return block;
-                });
+            MockBulkCopy(fs);
 
             var artifactService = new ArtifactService(new BuildPipelineServiceImpl(), fs.Object, NullLogger.Default);
             artifactService.RegisterHandler(new XamlDropHandler("1.0.0.0", "9.9.9.9"));
@@ -46,6 +41,15 @@ namespace UnitTest.Build.Packaging {
                 new[] { new ArtifactPackageDefinition("bar", specs) });
 
             Assert.IsNotNull(results);
+        }
+
+        private static void MockBulkCopy(Mock<IFileSystem> fs, bool overwrite = true, bool useSymlinks = false, bool useHardlinks = true) {
+            fs.Setup(s => s.BulkCopy(It.IsAny<IEnumerable<PathSpec>>(), overwrite, useSymlinks, useHardlinks)).Returns(
+                () => {
+                    var block = new ActionBlock<PathSpec>(spec => { });
+                    block.Complete();
+                    return block;
+                });
         }
 
 
@@ -186,6 +190,27 @@ namespace UnitTest.Build.Packaging {
                 new[] { PathSpec.Create("A", "") },
                 definition,
                 definition.GetFiles());
+        }
+
+        [TestMethod]
+        public void FetchArtifacts() {
+            var fsMock = new Mock<IFileSystem>();
+            fsMock.Setup(s => s.GetFiles(It.IsAny<string>(), "*.zip", false))
+                .Returns(new[] { "file://foo/files.zip" });
+
+            fsMock.Setup(s => s.FileExists("file://foo/files.zip.origin.txt")).Returns(false);
+
+            MockBulkCopy(fsMock, true, false, false);
+
+            var artifactService = new ArtifactService(null, fsMock.Object, NullLogger.Default);
+            var result = artifactService.FetchArtifacts(new[] { new ArtifactPathSpec {
+                ArtifactId = "Foo",
+                Source = "file://source/" ,
+                Destination = "file://destination"
+            } });
+
+            Assert.AreEqual(1, result.Count);
+            Assert.AreEqual("file://foo/files.zip", result[0].Item2);
         }
     }
 }
