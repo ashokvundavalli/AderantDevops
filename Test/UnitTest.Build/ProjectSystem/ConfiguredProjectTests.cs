@@ -255,6 +255,27 @@ namespace UnitTest.Build.ProjectSystem {
 
             Assert.AreEqual(".wixlib", project.OutputType);
         }
+
+        [TestMethod]
+        public void WinExe_projects_have_ouput_type_of_WinExe() {
+            var tree = new Mock<IProjectTree>();
+
+            var project = new ConfiguredProject(tree.Object);
+            project.RequireSynchronizedOutputPaths = true;
+
+            project.Initialize(
+                new Lazy<ProjectRootElement>(
+                    () => {
+                        var element = ProjectRootElement.Create();
+                        ProjectPropertyGroupElement propertyGroup1 = element.AddPropertyGroup();
+                        propertyGroup1.AddProperty("TargetExt", "WinExe");
+
+                        return element;
+                    }),
+                "");
+
+            Assert.AreEqual("WinExe", project.OutputType);
+        }
     }
 
 }

@@ -290,19 +290,27 @@ namespace Aderant.Build.ProjectSystem {
 
             outputType = new Memoizer<ConfiguredProject, string>(
                 configuredProject => {
-                    var projectInstance = configuredProject.project.Value;
-
+                    Project projectInstance = configuredProject.project.Value;
+                    string projectOutputType = projectInstance.GetPropertyValue("OutputType");
+                    ProjectProperty targetExtension = projectInstance.GetProperty("TargetExt");
+                    
                     // Purity violation - this class knows to interrogate a WIX project, C# project and test projects. If we add any more cross type concerns
                     // then moving the logic out to separate classes would be an improvement.
-                    var wixLibTarget = projectInstance.GetProperty("TargetExt");
-                    if (wixLibTarget != null) {
-                        var value = wixLibTarget.EvaluatedValue;
+                    if (targetExtension != null) {
+                        var value = targetExtension.EvaluatedValue;
+
+                        if (string.Equals(value, ".exe", StringComparison.OrdinalIgnoreCase) &&
+                            string.Equals(projectOutputType, AssemblyReferencesService.WindowsExecutable,
+                                StringComparison.OrdinalIgnoreCase)) {
+                            return projectOutputType;
+                        } 
+                        
                         if (!string.Equals(value, WixReferenceService.WindowsInstaller)) {
                             return value;
                         }
                     }
 
-                    return projectInstance.GetPropertyValue("OutputType");
+                    return projectOutputType;
                 });
 
             outputAssembly = new Memoizer<ConfiguredProject, string>(
@@ -621,6 +629,7 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         public string GetOutputAssemblyWithExtension() {
+
             string name;
             if (AssemblyReferencesService.TryGetOutputAssemblyWithExtension(OutputType, OutputAssembly, out name)) {
                 return name;
