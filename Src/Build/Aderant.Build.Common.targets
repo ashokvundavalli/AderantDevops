@@ -51,13 +51,14 @@
     <CodeTaskFactoryAssembly Condition="'$(VisualStudioVersion)' == '12.0'">$(MSBuildToolsPath)\Microsoft.Build.Tasks.v$(MSBuildToolsVersion).dll</CodeTaskFactoryAssembly>
     <CodeTaskFactoryAssembly Condition="'$(VisualStudioVersion)' &gt; 12.0">$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll</CodeTaskFactoryAssembly>
 
-    <MSBuildCommunityTasksPath Condition="'$(MSBuildCommunityTasksPath)' == ''">$(MSBuildThisFileDirectory)\Tasks\MSBuild.Community.Tasks\</MSBuildCommunityTasksPath>
+    <MSBuildCommunityTasksPath Condition="'$(MSBuildCommunityTasksPath)' == ''">$(MSBuildThisFileDirectory)Tasks\MSBuild.Community.Tasks\</MSBuildCommunityTasksPath>
+    <MSBuildCommunityTasksPath Condition="'$(MSBuildCommunityTasksPath)' != '' and !HasTrailingSlash('$(MSBuildCommunityTasksPath)')">$(MSBuildCommunityTasksPath)\</MSBuildCommunityTasksPath>
 
     <CompileBuildSystem Condition="'$(SKIP_BUILD_SYSTEM_COMPILE)' != ''">false</CompileBuildSystem>
   </PropertyGroup>
 
   <Import Project="Aderant.Build.tasks"/>
-  <Import Project="$(MSBuildCommunityTasksPath)\MSBuild.Community.Tasks.Targets" Condition="'$(NoMSBuildCommunityTasks)' != 'true'" />
+  <Import Project="$(MSBuildCommunityTasksPath)MSBuild.Community.Tasks.Targets" Condition="'$(NoMSBuildCommunityTasks)' != 'true'" />
   <Import Project="Aderant.Build.Versioning.targets" />
 
   <!--

@@ -15,15 +15,15 @@ namespace Aderant.Build.IO {
 
         public HashSet<string> PreviouslySeenDirectories { get; set; }
 
-        public IEnumerable<string> TraverseDirectoriesAndFindFiles(string root, string[] extensions) {
-            var files = new List<string>();
+        public IEnumerable<string> TraverseDirectoriesAndFindFiles(string root, IList<string> extensions) {
+            List<string> files = new List<string>();
 
             TraverseDirectoriesAndFindFilesInternal(root, extensions, files);
 
             return files;
         }
 
-        private void TraverseDirectoriesAndFindFilesInternal(string root, string[] extensions, List<string> files) {
+        private void TraverseDirectoriesAndFindFilesInternal(string root, IList<string> extensions, IList<string> files) {
             // This algorithm can result in a stack overflow if PreviouslySeenDirectories is not supplied
             List<string> directories = new List<string>();
             if (!string.IsNullOrEmpty(root)) {

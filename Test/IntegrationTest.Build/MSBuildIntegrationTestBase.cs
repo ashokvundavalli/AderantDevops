@@ -49,7 +49,8 @@ namespace IntegrationTest.Build {
 
             Dictionary<string, string> globalProperties = new Dictionary<string, string>(properties, StringComparer.OrdinalIgnoreCase) {
                 { "BuildToolsDirectory", TestContext.DeploymentDirectory },
-                { "NoMSBuildCommunityTasks", bool.TrueString }
+                { "NoMSBuildCommunityTasks", bool.TrueString },
+                { "BUILD_REPOSITORY_NAME", "Build.Infrastructure" }
             };
 
             using (ProjectCollection collection = new ProjectCollection(globalProperties)) {

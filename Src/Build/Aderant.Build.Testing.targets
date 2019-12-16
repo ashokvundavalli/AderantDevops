@@ -58,7 +58,9 @@
 
       <TestAdapterSwitch Condition="'$(PSTests)' == 'true'">/TestAdapterPath:"$(BuildScriptsDirectory)..\Build.Tools"</TestAdapterSwitch>
       <ResultsFileSwitch Condition="'$(ResultsFileSwitch)' == ''">/Logger:trx</ResultsFileSwitch>
-      <RunSettingsSwitch>/Settings:$(TestWorkingDirectory)default.runsettings</RunSettingsSwitch>
+      <RunSettingsFile Condition="'$(IsDesktopBuild)' != 'true' And '$(CustomRunSettings)' != ''">$(TestWorkingDirectory)$(CustomRunSettings)</RunSettingsFile>
+      <RunSettingsFile Condition="'$(RunSettingsFile)' == ''">$(TestWorkingDirectory)default.runsettings</RunSettingsFile>
+      <RunSettingsSwitch>/Settings:$(RunSettingsFile)</RunSettingsSwitch>
 
       <TestPattern>$([MSBuild]::ValueOrDefault('$(TestPattern)', 'UnitTest'))</TestPattern>
 

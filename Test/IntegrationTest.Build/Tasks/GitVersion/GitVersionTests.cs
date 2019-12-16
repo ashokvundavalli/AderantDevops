@@ -5,6 +5,7 @@ namespace IntegrationTest.Build.Tasks.GitVersion {
     [TestClass]
     public class GitVersionTests : MSBuildIntegrationTestBase {
         [TestInitialize]
+        [DeploymentItem("git2-7ce88e6.dll")]
         public void NativeLibraryAvailable() {
             var foo = typeof(Aderant.Build.Tasks.GitVersion);
             string nativeLibraryPath = LibGit2Sharp.GlobalSettings.NativeLibraryPath;

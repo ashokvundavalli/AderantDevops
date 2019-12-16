@@ -48,7 +48,9 @@ namespace Aderant.Build.ProjectSystem {
             var seenDirectories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var path in includePaths) {
-                filePathCollector.AddRange(GrovelForFiles(path, excludePaths, seenDirectories));
+                if (physicalFileSystem.DirectoryExists(path)) {
+                    filePathCollector.AddRange(GrovelForFiles(path, excludePaths, seenDirectories));
+                }
             }
 
             AssignPaths(filePathCollector);
@@ -77,11 +79,13 @@ namespace Aderant.Build.ProjectSystem {
         /// Internal API.
         /// </summary>
         internal IEnumerable<string> GrovelForFiles(string root, IReadOnlyList<string> excludeFilterPatterns, HashSet<string> seenDirectories = null) {
-            string[] extensions = new[] {
+            string[] extensions = new string[] {
                 "*.csproj",
+                "*.dbprojx",
                 "*.wixproj",
                 WellKnownPaths.EntryPointFileName,
                 "dir.props",
+                "*.sqlproj"
             };
 
             return new DirectoryScanner(physicalFileSystem, Logger) {

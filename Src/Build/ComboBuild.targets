@@ -138,7 +138,7 @@
     <RemoveDir Condition="'$(IsDesktopBuild)' == 'false'"
                Directories="$(ArtifactStagingDirectory)" />
 
-    <MakeDir Condition="!Exists('$(SharedDependencyDirectory))')"
+    <MakeDir Condition="!Exists('$(SharedDependencyDirectory)')"
              Directories="$(SharedDependencyDirectory)" />
 
     <MakeDir Directories="$(UpdateStagingDirectory)" />
@@ -164,6 +164,9 @@
       <ExcludePaths Include="\.git" />
       <ExcludePaths Include="\.vs" />
       <ExcludePaths Include="\_" />
+      <ExcludePaths Include="\Bin" />
+      <!-- TestResults directory is required for Build.Infrastructure tests to function. -->
+      <ExcludePaths Include="\TestResults" Condition="'$(BUILD_REPOSITORY_NAME)' != 'Build.Infrastructure'" />
       <ExcludePaths Include="\obj" />
       <ExcludePaths Include="$([MSBuild]::Escape('*tmp.csproj'))" />
       <ExcludePaths Include="TempTemplateTransform\" />
