@@ -21,7 +21,7 @@ class ShellContext {
 
         if (Test-Path $this.configFile) {
             $data = Get-Content -Path $this.configFile | ConvertFrom-Json
-            $data.psobject.properties | Foreach { $this.autoProperties[$_.Name] = $_.Value }
+            $data.psobject.properties | ForEach-Object { $this.autoProperties[$_.Name] = $_.Value }
         }
     }
 

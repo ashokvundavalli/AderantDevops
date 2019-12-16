@@ -2,7 +2,7 @@
 $ErrorActionPreference = 'Stop'
 $InformationPreference = 'Continue'
 
-# Import extensibility functions
+# Import extensibility functions.
 $imports = @(
     (Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath '..\..\Build\Functions') -Filter '*.ps1'),
     (Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath 'Functions') -Filter '*.ps1'),
@@ -11,16 +11,16 @@ $imports = @(
 
 foreach ($directory in $imports) {
     foreach ($file in $directory) {
-        if ($file.Name -eq "Initialize-BuildEnvironment.ps1") {
+        if ($file.Name -eq 'Initialize-BuildEnvironment.ps1') {
             continue
         }
 
-        if ($file.Extension -eq ".ps1") {
+        if ($file.Extension -eq '.ps1') {
             . $file.FullName
             continue
         }
 
-        if ($file.Extension -eq ".psm1") {
+        if ($file.Extension -eq '.psm1') {
             if ($DebugPreference -eq 'SilentlyContinue') {
                 Import-Module $file.FullName -DisableNameChecking
             } else {
@@ -33,67 +33,60 @@ foreach ($directory in $imports) {
 $script:ShellContext = $null
 
 function Initialize-Module {
-    . $PSScriptRoot\ShellContext.ps1
+    . "$PSScriptRoot\ShellContext.ps1"
 
     $script:ShellContext = [ShellContext]::new()
     $MyInvocation.MyCommand.Module.PrivateData.ShellContext = $script:ShellContext
 
-    $formatDataFile = (Join-Path -Path $PSScriptRoot -ChildPath '..\..\Build\Functions\Formats\SourceTreeMetadata.format.ps1xml')
+    [string]$formatDataFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, '..\..\Build\Functions\Formats\SourceTreeMetadata.format.ps1xml'))
 
     $updateFormatData = {
         Update-FormatData -PrependPath $formatDataFile
     }
 
-    DoActionIfNeeded $updateFormatData $formatDataFile
+    DoActionIfNeeded -action $updateFormatData -file $formatDataFile
 }
 
 Initialize-Module
 
 [string]$global:BranchConfigPath = [string]::Empty
 [string]$ShellContext.BranchName = [string]::Empty
-[string]$global:BranchLocalDirectory = [string]::Empty
+[string]$script:BranchLocalDirectory = [string]::Empty
 [string]$global:BranchServerDirectory = [string]::Empty
 [string]$global:BranchModulesDirectory = [string]::Empty
 [string]$global:BranchBinariesDirectory = [string]::Empty
 [string]$global:BranchExpertSourceDirectory = [string]::Empty
-[string]$global:BuildScriptsDirectory = $script:ShellContext.BuildScriptsDirectory
+[string]$global:BuildScriptsDirectory = [string]::Empty
 [string]$global:PackageScriptsDirectory = [string]::Empty
 [string]$global:ProductManifestPath = [string]::Empty
 [PSModuleInfo[]]$script:loadedModuleFeatures = $null
-[string[]]$global:LastBuildBuiltModules = @()
-[string[]]$global:LastBuildRemainingModules = @()
-[string[]]$global:LastBuildGetLocal = @()
-[bool]$global:LastBuildGetDependencies = $false
-[bool]$global:LastBuildCopyBinaries = $false
-[bool]$global:LastBuildDownstream = $false
-[bool]$global:LastBuildGetLatest = $false
 
 [string[]]$titles = @(
-    "Reticulating Splines",
-    "Attempting to Lock Back-Buffer",
-    "Calculating Inverse Probability Matrices",
-    "Compounding Inert Tessellations",
-    "Decomposing Singular Values",
-    "Dicing Models",
-    "Extracting Resources",
-    "Obfuscating Quigley Matrix",
-    "Fabricating Imaginary Infrastructure",
-    "Activating Deviance Threshold",
-    "Simulating Program Execution",
-    "Abstracting Loading Procedures",
-    "Unfolding Helix Packet",
-    "Iterating Chaos Array",
-    "Calculating Native Restlessness",
-    "Filling in the Blanks",
-    "Mitigating Time-Stream Discontinuities",
-    "Blurring Reality Lines",
-    "Reversing the Polarity of the Neutron Flow",
-    "Dropping Expert Database",
-    "Formatting C:\",
-    "Replacing Coffee Machine",
-    "Duplicating Offline Cache",
-    "Replacing Headlight Fluid",
-    "Dialing Roper Hotline"
+    'Reticulating Splines',
+    'Attempting to Lock Back-Buffer',
+    'Calculating Inverse Probability Matrices',
+    'Compounding Inert Tessellations',
+    'Decomposing Singular Values',
+    'Dicing Models',
+    'Extracting Resources',
+    'Obfuscating Quigley Matrix',
+    'Fabricating Imaginary Infrastructure',
+    'Activating Deviance Threshold',
+    'Simulating Program Execution',
+    'Abstracting Loading Procedures',
+    'Unfolding Helix Packet',
+    'Iterating Chaos Array',
+    'Calculating Native Restlessness',
+    'Filling in the Blanks',
+    'Mitigating Time-Stream Discontinuities',
+    'Blurring Reality Lines',
+    'Reversing the Polarity of the Neutron Flow',
+    'Dropping Expert Database',
+    'Formatting C:\',
+    'Replacing Coffee Machine',
+    'Duplicating Offline Cache',
+    'Replacing Headlight Fluid',
+    'Dialing Roper Hotline'
 )
 
 $Host.UI.RawUI.WindowTitle = Get-Random -InputObject $titles
@@ -135,38 +128,15 @@ function global:GetDefaultValue {
             return [Environment]::GetEnvironmentVariable("Expert$propertyName", "User")
         }
 
-        if ($propertyName -eq "DevBranchFolder") {
+        if ($propertyName -eq 'DevBranchFolder') {
             Clear-Host
-            return SetPathVariable "Where is your local path to the MAIN branch? e.g C:\tfs\ExpertSuite\Main" $propertyName
-        }
+            [string]$path = SetPathVariable -question 'What would you like your default path set to when you open PowerShell? e.g. C:\Source' -propertyName $propertyName
 
-        if ($propertyName -eq "DropRootUNCPath") {
-            return SetPathVariable "Where is the MAIN branch drop path? For e.g \\dfs.aderant.com\ExpertSuite\Main" $propertyName
-        }
-
-        if ($propertyName -eq "SystemMapConnectionString") {
-            $title = "SystemMapBuilder Setup"
-            $message = "Do you want to use the Expert ITE for SystemMap generation?"
-            $yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes"
-            $no = New-Object System.Management.Automation.Host.ChoiceDescription "&No"
-
-            $options = [System.Management.Automation.Host.ChoiceDescription[]]($yes, $no)
-            $result = $host.UI.PromptForChoice($title, $message, $options, 0)
-
-            if ($result -eq 0) {
-                $connection = "/pdbs:svsql303\mssql10 /pdbd:VMAKLITEGG /pdbid:cmsdbo /pdbpw:cmsdbo"
-                SetDefaultValue $propertyName $connection
-                return $connection
-            } else {
-                $server = Read-Host "What is the database server?"
-                $database = Read-Host "What is the database to use?"
-                $login = Read-Host "What is the database login?"
-                $password = Read-Host "What is the login password?"
-
-                $connection = "/pdbs:$server /pdbd:$database /pdbid:$login /pdbpw:$password"
-                SetDefaultValue $propertyName $connection
-                return $connection
+            if (-not [System.IO.Directory]::Exists($path)) {
+                New-Item -ItemType 'Directory' -Path $path -Force
             }
+
+            return $path
         }
 
         # Environment variable was not set, default it.
@@ -175,39 +145,25 @@ function global:GetDefaultValue {
     }
 }
 
-function Set-BinariesDirectory {
-    $environmentXml = [System.IO.Path]::Combine($global:BranchLocalDirectory, "environment.xml")
-
-    if (-not (Test-Path $environmentXml)) {
-        $global:BranchBinariesDirectory = Join-Path -Path $global:BranchLocalDirectory -ChildPath "\Binaries"
-    } else {
-        # If the environment xml exists in the DevBranchFolder, set it as the BranchBinariesDirectory
-        $global:BranchBinariesDirectory = $global:BranchLocalDirectory
-    }
-
-    $ShellContext.BranchBinariesDirectory = $global:BranchBinariesDirectory
-}
-
 <#
-Branch information
+    Default Path and Binaries Directory information.
 #>
-function Set-BranchPaths {
-    Write-Debug "Setting information for branch from your defaults"
+function Set-DefaultPaths {
+    Write-Debug 'Setting information from your defaults.'
 
-    Set-LocalDirectory
-    Set-BinariesDirectory
-    $ShellContext.BranchLocalDirectory = $global:BranchLocalDirectory
-    $ShellContext.BranchServerDirectory = (GetDefaultValue "DropRootUNCPath").ToLower()
+    $script:BranchLocalDirectory = (GetDefaultValue -propertyName 'DevBranchFolder')
+    $ShellContext.BranchBinariesDirectory = 'C:\AderantExpert\Binaries'
+    $ShellContext.BranchLocalDirectory = $script:BranchLocalDirectory
 
     if ($ShellContext.IsTfvcModuleEnabled) {
-        $ShellContext.BranchModulesDirectory = (Join-Path -Path $global:BranchLocalDirectory -ChildPath "\Modules")
+        $ShellContext.BranchModulesDirectory = (Join-Path -Path $script:BranchLocalDirectory -ChildPath "\Modules")
     } else {
-        $ShellContext.BranchModulesDirectory = $global:BranchLocalDirectory
+        $ShellContext.BranchModulesDirectory = $script:BranchLocalDirectory
     }
 }
 
 <#
-Set-ExpertSourcePath is called on startup and SwitchBranchTo.  It sets $ShellContext.BranchExpertVersion and $ShellContext.BranchServerDirectory.
+Set-ExpertSourcePath is called on startup.  It sets $ShellContext.BranchExpertVersion
 Pre-8.0 environments still use the old folder structure where everything was in the binaries folder, so BranchExpertSourceDirectory is set
 according to the setting in the ExpertManifest.xml file.
 #>
@@ -217,7 +173,7 @@ function Set-ExpertSourcePath {
         [string]$branchExpertVersion = $manifest.ProductManifest.ExpertVersion
 
         if ($branchExpertVersion.StartsWith("8")) {
-            $global:BranchExpertSourceDirectory = Join-Path -Path $global:BranchLocalDirectory -ChildPath "\Binaries\ExpertSource"
+            $global:BranchExpertSourceDirectory = Join-Path -Path $script:BranchLocalDirectory -ChildPath "\Binaries\ExpertSource"
 
             if (-not (Test-Path -Path $global:BranchExpertSourceDirectory)) {
                 [System.IO.Directory]::CreateDirectory($global:BranchExpertSourceDirectory) | Out-Null
@@ -228,25 +184,10 @@ function Set-ExpertSourcePath {
     }
 }
 
-function Set-ScriptPaths {
-    Write-Debug -Message "BranchModulesDirectory: $($ShellContext.BranchModulesDirectory)"
-
-    if ([System.IO.File]::Exists($ShellContext.BranchModulesDirectory + "\ExpertManifest.xml")) {
-        [string]$root = Resolve-Path "$PSScriptRoot\..\..\..\"
-
-        $ShellContext.BuildScriptsDirectory = Join-Path -Path $root -ChildPath "Src\Build"
-        $ShellContext.PackageScriptsDirectory = Join-Path -Path $root -ChildPath "Src\Package"
-        $ShellContext.ProductManifestPath = Join-Path -Path $ShellContext.BranchModulesDirectory -ChildPath "ExpertManifest.xml"
-    } else {
-        $ShellContext.PackageScriptsDirectory = Join-Path -Path $ShellContext.BuildScriptsDirectory -ChildPath "..\Package"
-        $ShellContext.ProductManifestPath = Join-Path -Path $ShellContext.BranchModulesDirectory -ChildPath "\Build\ExpertManifest.xml"
-    }
-}
-
 function Find-InstallLocation ($programName) {
     <#
     .SYNOPSIS
-        Find the Install Location of programs
+        Find the Install Location of programs.
     #>
         $key = [Microsoft.Win32.Registry]::LocalMachine.OpenSubKey('SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall')
         foreach ($installKey in $key.GetSubKeyNames()) {
@@ -265,7 +206,7 @@ function Find-InstallLocation ($programName) {
 function Set-ExpertVariables {
     <#
     .SYNOPSIS
-        Set Expert specific variables
+        Set Expert specific variables.
     #>
     [string]$script:installPath = Find-InstallLocation -programName 'Expert Deployment Manager'
 
@@ -283,13 +224,6 @@ function Set-ExpertVariables {
             Write-Warning "Please ensure that DeploymentManager.exe is located at: $($pathToDeploymentManager)"
         }
     }
-}
-
-<#
-    Initialize functions from Build-Libraries.ps1
-#>
-function Initialize-BuildLibraries {
-    . ($ShellContext.BuildScriptsDirectory + "\Build-Libraries.ps1")
 }
 
 function Set-CurrentModule {
@@ -421,17 +355,6 @@ function ImportFeatureModule([string]$featureModule) {
     Get-Command -Module $currentModuleFeature.Name
 }
 
-function Get-CurrentModule {
-    return Get-ExpertModule -ModuleName $ShellContext.CurrentModuleName
-}
-
-<#
- return the connection string to be used for the sitemap builder
-#>
-function Get-SystemMapConnectionString {
-    return (GetDefaultValue "systemMapConnectionString").ToLower()
-}
-
 <#
 .Synopsis
     Installs the latest version of the Software Factory
@@ -509,7 +432,7 @@ function Install-LatestVisualStudioExtensionImpl($installDetails, [switch]$local
         $vsixFile = [System.IO.Path]::Combine($ShellContext.BranchServerDirectory, $info.ExtensionFile)
     } else { # Take VSIX from drop folder
         Write-Host "Attempting to install $($info.ProductManifestName) from drop folder."
-        $localInstallDirectory = [System.IO.Path]::Combine($global:BranchLocalDirectory, $info.ProductManifestName + ".Install")
+        $localInstallDirectory = [System.IO.Path]::Combine($script:BranchLocalDirectory, $info.ProductManifestName + ".Install")
 
         [xml]$manifest = Get-Content $ShellContext.ProductManifestPath
         [System.Xml.XmlNode]$module = $manifest.ProductManifest.Modules.SelectNodes("Module") | Where-Object { $_.Name.Contains($info.ProductManifestName)}
@@ -582,36 +505,21 @@ function Set-Environment {
         }
 
         if ($Initialize.IsPresent) {
-            Set-BranchPaths
+            Set-DefaultPaths
             AddGitCommandIntercept
             CreateDummyGitDirectory 'C:\AderantExpert\Local\SharedBin\'
         }
 
-        Set-ScriptPaths
+        $ShellContext.PackageScriptsDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($ShellContext.BuildScriptsDirectory, '..\Package'))
+        $ShellContext.ProductManifestPath = Join-Path -Path $ShellContext.BranchModulesDirectory -ChildPath "\Build\ExpertManifest.xml"
+
         Set-ExpertSourcePath
         Set-ExpertVariables
-
-        #Initialize-BuildLibraries
         Set-VisualStudioVersion
     }
 }
 
-function Set-LocalDirectory {
-    $global:BranchLocalDirectory = (GetDefaultValue "DevBranchFolder")
-
-    if (-not (Test-Path $global:BranchLocalDirectory)) {
-        Write-Host ""
-        Write-Host "*********************************************************************************************************************************"
-        Write-Warning "The directory does not exist. Call Set-ExpertBranchInfo for initial setup of local directory and branch info"
-        Write-Host "*********************************************************************************************************************************"
-        Write-Host ""
-
-        throw "Please setup environment"
-    }
-}
-
-
-function Set-VisualStudioVersion() {
+function Set-VisualStudioVersion {
     $job = Start-JobInProcess -Name "SetVisualStudioVersion" -ScriptBlock {
         Param($path)
             $file = [System.IO.Path]::Combine($path, "vsvars.ps1")
@@ -649,23 +557,23 @@ function global:SetDefaultValue {
     [Environment]::SetEnvironmentVariable("Expert$propertyName", $defaultValue, "User")
 }
 
-<#
-.Synopsis
-    Opens the solution for a module in the current branch
-.Description
-    Opens a module's main solution in visual studio
-.PARAMETER ModuleName
-    The name of the module
-.PARAMETER getDependencies
-    This will get the latest dependencies for the selected module before opening it up in visual studio.
-.PARAMETER getLatest
-    This will get the latest source code for the selected module before opening it up in visual studio.
-.EXAMPLE
-        Open-ModuleSolution Libraries.Presentation
-    Will open the Libraries.Presentation solution in visual studio
+function Open-ModuleSolution {
+    <#
+    .Synopsis
+        Opens the solution for a module in the current branch
+    .Description
+        Opens a module's main solution in visual studio
+    .PARAMETER ModuleName
+        The name of the module
+    .PARAMETER getDependencies
+        This will get the latest dependencies for the selected module before opening it up in visual studio.
+    .PARAMETER getLatest
+        This will get the latest source code for the selected module before opening it up in visual studio.
+    .EXAMPLE
+            Open-ModuleSolution Libraries.Presentation
+        Will open the Libraries.Presentation solution in visual studio
 
-#>
-function Open-ModuleSolution() {
+    #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$ModuleName,
@@ -675,7 +583,11 @@ function Open-ModuleSolution() {
     )
 
     begin {
-        [string]$devenv = "devenv"
+        [string]$devenv = 'devenv'
+
+        function Get-CurrentModule {
+            return Get-ExpertModule -ModuleName $ShellContext.CurrentModuleName
+        }
     }
 
     process {
@@ -692,7 +604,7 @@ function Open-ModuleSolution() {
         [string]$rootPath = ""
 
         if (-not [string]::IsNullOrWhiteSpace($ModuleName)) {
-            $rootPath = Join-Path $global:BranchLocalDirectory "Modules\$ModuleName"
+            $rootPath = Join-Path $script:BranchLocalDirectory "Modules\$ModuleName"
         } else {
             $ModuleName = $ShellContext.CurrentModuleName
             $rootPath = $ShellContext.CurrentModulePath
@@ -774,21 +686,21 @@ function TabExpansion([string] $line, [string] $lastword) {
 
 $global:expertTabBranchExpansions = @()
 
-<#
-.Synopsis
-    Adds a parameter to the expert tab expansions for modules
-.Description
-    Tab Expansion is when pressing tab will auto-complete the value of a parameter.
-    This command allows you to configure autocomplete where a module name or comma separated list of module names is required
-.PARAMETER CommandName
-    The name of the command (not the alias)
-.PARAMETER ParameterName
-    The name of the parameter to match
-.EXAMPLE
-    Add-ModuleExpansionParameter -CommandName Build-ExpertModules -ParameterName ModuleNames -IsDefault
-    Will add tab expansion of module names on the Build-ExpertModules command where the current parameter is the ModuleNames parameter
-#>
 function Add-ModuleExpansionParameter {
+    <#
+    .Synopsis
+        Adds a parameter to the expert tab expansions for modules
+    .Description
+        Tab Expansion is when pressing tab will auto-complete the value of a parameter.
+        This command allows you to configure autocomplete where a module name or comma separated list of module names is required
+    .PARAMETER CommandName
+        The name of the command (not the alias)
+    .PARAMETER ParameterName
+        The name of the parameter to match
+    .EXAMPLE
+        Add-ModuleExpansionParameter -CommandName Build-ExpertModules -ParameterName ModuleNames -IsDefault
+        Will add tab expansion of module names on the Build-ExpertModules command where the current parameter is the ModuleNames parameter
+    #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$CommandName,
@@ -814,23 +726,23 @@ function Add-ModuleExpansionParameter {
     }
 }
 
-<#
-.Synopsis
-    Adds a parameter to the expert tab expansions for branches
-.Description
-    Tab Expansion is when pressing tab will auto-complete the value of a parameter. This command allows you to configure autocomplete where a branch name is required
-.PARAMETER CommandName
-    The name of the command (not the alias)
-.PARAMETER ParameterName
-    The name of the parameter to match
-.PARAMETER IsDefault
-    Set if this is the default index 0 parameter
-.EXAMPLE
-    Add-BranchExpansionParameter -CommandName SwitchBranchTo -ParameterName newBranch -IsDefault
+function Add-BranchExpansionParameter([string]$CommandName, [string]$ParameterName, [switch]$IsDefault) {
+    <#
+    .Synopsis
+        Adds a parameter to the expert tab expansions for branches
+    .Description
+        Tab Expansion is when pressing tab will auto-complete the value of a parameter. This command allows you to configure autocomplete where a branch name is required
+    .PARAMETER CommandName
+        The name of the command (not the alias)
+    .PARAMETER ParameterName
+        The name of the parameter to match
+    .PARAMETER IsDefault
+        Set if this is the default index 0 parameter
+    .EXAMPLE
+        Add-BranchExpansionParameter -CommandName Test -ParameterName parameter -IsDefault
 
-    Will add tab expansion of branch names on the newBranch command where the current parameter is the newBranch parameter and this is also the first (default) parameter
-#>
-function Add-BranchExpansionParameter([string]$CommandName, [string]$ParameterName, [switch] $IsDefault) {
+        Will add tab expansion of branch names on the newBranch command where the current parameter is the newBranch parameter and this is also the first (default) parameter
+    #>
     if ([string]::IsNullOrWhiteSpace($CommandName)) {
         Write-Error "No command name specified."
         return
@@ -863,17 +775,16 @@ Add-ModuleExpansionParameter -CommandName "Get-ExpertModules" -ParameterName "Mo
 Add-ModuleExpansionParameter –CommandName "Open-ModuleSolution" –ParameterName "ModuleName"
 Add-ModuleExpansionParameter –CommandName "Start-Redeployment" –ParameterName "CopyBinariesFrom"
 Add-ModuleExpansionParameter -CommandName "Copy-BinToEnvironment" -ParameterName "ModuleNames"
-Add-ModuleExpansionParameter -CommandName "Open-Directory" -ParameterName "ModuleName"
 Add-ModuleExpansionParameter -CommandName "CleanupIISCache" -ParameterName "moduleNames"
 Add-ModuleExpansionParameter –CommandName "Get-WebDependencies" –ParameterName "ModuleName"
 
-<#
-.Synopsis
-    Enables the Expert prompt with branch and module information
-.Description
-    Enable-ExpertPrompt
-#>
-function Enable-ExpertPrompt() {
+function Enable-ExpertPrompt {
+    <#
+    .Synopsis
+        Enables the Expert prompt with branch and module information
+    .Description
+        Enable-ExpertPrompt
+    #>
     Function global:Prompt {
         # set the window title to the branch name
         $Host.UI.RawUI.WindowTitle = "PS - [" + $ShellContext.CurrentModuleName + "] on branch [" + $ShellContext.BranchName + "]"
@@ -907,33 +818,6 @@ function Disable-ExpertPrompt() {
     }
 }
 
-function Test-ReparsePoint([string]$path) {
-    $file = Get-Item $path -Force -ea 0
-
-    if ($null -eq $file) {
-        return $false
-    }
-
-    return [bool]($file.Attributes -band [IO.FileAttributes]::ReparsePoint)
-}
-
-<#
-.Synopsis
-    Determines the location of the Aderant Module.
-.Description
-    Determines the location of the Aderant Module.
-#>
-function Get-AderantModuleLocation() {
-    $aderantModuleBase = (Get-Module -Name Aderant).ModuleBase
-    if (Test-ReparsePoint $aderantModuleBase ) {
-        # this is a symlink, get the target.
-        return Get-SymbolicLinkTarget $aderantModuleBase
-    } else {
-        # this is a normal folder.
-        return $aderantModuleBase
-    }
-}
-
 # export functions and variables we want external to this script
 $functionsToExport = @(
     [PSCustomObject]@{ function = 'Run-ExpertUITests'; alias = $null; },
@@ -947,7 +831,6 @@ $functionsToExport = @(
     [PSCustomObject]@{ function = 'Disable-ExpertPrompt'; advanced = $true; alias = $null; },
     [PSCustomObject]@{ function = 'Enable-ExpertPrompt'; advanced = $true; alias = $null; },
     [PSCustomObject]@{ function = 'Generate-SystemMap'; alias = $null; },
-    [PSCustomObject]@{ function = 'Get-AderantModuleLocation'; advanced = $true; alias = $null; },
     [PSCustomObject]@{ function = 'Get-CurrentModule'; alias = $null; },
     [PSCustomObject]@{ function = 'Get-Dependencies'; alias = 'gd'; },
     [PSCustomObject]@{ function = 'Get-EnvironmentFromXml'; alias = $null; },
@@ -994,9 +877,6 @@ Export-ModuleMember -variable BranchName
 Export-ModuleMember -variable BranchModulesDirectory
 Export-ModuleMember -variable ProductManifestPath
 
-#TODO move
-#. $PSScriptRoot\Feature.Database.ps1
-
 #Measure-Command {
 #    Enable-ExpertPrompt
 #} "Enable-ExpertPrompt"
@@ -1013,11 +893,9 @@ Write-Information -MessageData "Type:
 For a list of commands.$([System.Environment]::NewLine)"
 
 function Test-ExpertPackageFeed {
-
     $p = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), [System.IO.Path]::GetRandomFileName())
     new-item -type directory $p
     Push-Location $p
-
 
 $c = @'
 source https://expertpackages.azurewebsites.net/v3/index.json
@@ -1032,3 +910,5 @@ nuget Aderant.Build.Analyzer
 
 Export-ModuleMember -Function Test-ExpertPackageFeed
 Export-ModuleMember -Variable $script:ShellContext
+
+Set-Location -Path $script:BranchLocalDirectory
