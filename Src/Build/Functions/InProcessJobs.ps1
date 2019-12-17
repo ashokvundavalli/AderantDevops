@@ -174,7 +174,7 @@ namespace InProcess {
     try {
         Write-Debug "Attempting to open MMF: $mapName"
         $memoryMappedFile = [System.IO.MemoryMappedFiles.MemoryMappedFile]::OpenExisting($mapName)
-    } catch [System.IO.FileNotFoundException] {
+    } catch [System.IO.FileNotFoundException], [System.IO.DirectoryNotFoundException] {
         Write-Debug "Failed to open MMF: $mapName"
 
         try {
