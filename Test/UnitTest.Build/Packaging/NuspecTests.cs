@@ -6,7 +6,7 @@ namespace UnitTest.Build.Packaging {
     public class NuspecTests {
 
         [TestMethod]
-        public void Can_amend_version_to_replacement_token() {
+        public void Can_ammend_version_to_replacement_token() {
 
             var spec = new Nuspec();
             spec.Version.Value = "8.1.0-$version$";

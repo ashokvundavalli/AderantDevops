@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Microsoft.Build.Framework;
 using System.IO;
 using System.IO.Compression;
 using System.Web;
 using System.Xml.Linq;
 using System.Collections.Generic;
+using System.Net;
 using System.Text.RegularExpressions;
+using System.Xml.XPath;
 using Aderant.Build.SeedPackageValidation;
 
 namespace Aderant.Build.Tasks {
@@ -33,17 +36,13 @@ namespace Aderant.Build.Tasks {
     ///         <UsingTask TaskName="SeedPackagePacking"
     ///             AssemblyFile="$(BuildAssembly)"
     ///             Condition="'$(IsCustomBuild)' != 'true'" />
-    ///         <SeedPackagePacking
+    ///         <SeedPackagePacking 
     ///             BuildFrom="$(SolutionDirectoryPath)"
     ///             SeedPackageSrc = "$(SolutionDirectoryPath)Src\SeedPackages"
     ///             SeedPackageDrop = "$(SolutionDirectoryPath)Bin\Packages" />
     ///     ]]>
     /// </summary>
-    public class SeedPackagePacking : BuildOperationContextTask {
-        static SeedPackagePacking() {
-            DotNetQuriks.ZipFileUseForwardSlash();
-        }
-
+    public class SeedPackagePacking : Microsoft.Build.Utilities.Task {
         private Dictionary<string, XDocument> documentCache = new Dictionary<string, XDocument>();
         private List<Error> errors = new List<Error>();
 
@@ -68,10 +67,7 @@ namespace Aderant.Build.Tasks {
 
         public bool CheckForComponentInPackage { get; set; } = true;
 
-        public string StagingPackageDrop { get; set; }
-
-        public override bool ExecuteTask() {
-
+        public override bool Execute() {
             if (!Directory.Exists(SeedPackageSrc)) {
                 Log.LogMessage("No seed package found. Exiting.");
                 return true;
@@ -100,9 +96,11 @@ namespace Aderant.Build.Tasks {
             }
         }
 
+        
+
         private List<string> CoreValidate() {
             var fileNames = GetFilesInDirectory(SeedPackageSrc).ToList();
-
+            
             Validate(fileNames);
 
             if (errors.Any()) {
@@ -165,7 +163,7 @@ namespace Aderant.Build.Tasks {
                     var packageSrcDir = Path.Combine(SeedPackageSrc, packageName); // "...\Src\SeedPackages\AccountsPayable"
                     var destination = Path.Combine(SeedPackageDrop, packageName + ".zip"); // "...\Bin\Module\Packages\AccountsPayable.zip"
 
-                    Log.LogMessage($"Zipping seed package definitions from {packageSrcDir} to {destination}");
+                    Log.LogMessage($@"Zipping seed package definitions from {packageSrcDir} to {destination}");
                     try {
                         if (File.Exists(destination)) {
                             var fi = new FileInfo(destination);
@@ -176,40 +174,12 @@ namespace Aderant.Build.Tasks {
                             Directory.CreateDirectory(SeedPackageDrop);
                         }
                         ZipFile.CreateFromDirectory(packageSrcDir, destination);
-                        if (SeedContentHasChanges() && !String.IsNullOrEmpty(StagingPackageDrop)) {
-                            var stagingFileName = Path.Combine(StagingPackageDrop, "Packages", packageName + ".zip");
-                            var updatePackagesFile = stagingFileName.Replace("BinFiles\\", "");
-
-                            var updatePackagesFolder = Path.GetDirectoryName(updatePackagesFile);
-                            if (!Directory.Exists(updatePackagesFolder)) {
-                                Directory.CreateDirectory(updatePackagesFolder);
-                            }
-
-                            var binFilesPackagesFolder = Path.GetDirectoryName(stagingFileName);
-                            if (!Directory.Exists(binFilesPackagesFolder)) {
-                                Directory.CreateDirectory(binFilesPackagesFolder);
-                            }
-
-                            Log.LogMessage($"Seed package content changes detected, copying {packageName}.zip to {stagingFileName}");
-                            File.Copy(destination, stagingFileName);
-                            File.Copy(destination, updatePackagesFile);
-                        }
                         Log.LogMessage($"{dirs.Length} seed package(s) produced.");
                     } catch (Exception ex) {
                         throw new Exception($"Error zipping the seed package(s): {ex.Message}. Source directory: {packageSrcDir}. Destination: {destination}");
                     }
                 }
             }
-        }
-
-        private bool SeedContentHasChanges() {
-            var context = PipelineService.GetContext();
-            var changes = context.SourceTreeMetadata?.Changes?.ToList();
-            if (context.BuildMetadata.IsPullRequest && changes != null && changes.Any(c => c.Path.IndexOf("SeedPackage", StringComparison.OrdinalIgnoreCase) > 0)) {
-                return true;
-            }
-
-            return false;
         }
 
         // Package validations
@@ -239,11 +209,11 @@ namespace Aderant.Build.Tasks {
                     Log.LogError($"File {fileName} is not a valid XML document.");
                 }
             }
-
+            
             return document;
         }
 
-
+    
 
         public void CheckForUnusedPackagesOrEntries() {
             var whiteList = "SampleWorkflows";
@@ -358,7 +328,7 @@ namespace Aderant.Build.Tasks {
                         seedDocument = XDocument.Load(seed, LoadOptions.SetLineInfo | LoadOptions.SetBaseUri);
                     }
                     var seedName = seed.Split(new[] { "SeedPackages\\", "TestPackages\\" }, StringSplitOptions.None).ElementAtOrDefault(1);
-
+                    
                     if (seedName == null) {
                         continue;
                     }
@@ -501,9 +471,4 @@ namespace Aderant.Build.Tasks {
         }
     }
 
-    internal class DotNetQuriks {
-        public static void ZipFileUseForwardSlash() {
-            AppContext.SetSwitch("Switch.System.IO.Compression.ZipFile.UseBackslash", false);
-        }
-    }
 }

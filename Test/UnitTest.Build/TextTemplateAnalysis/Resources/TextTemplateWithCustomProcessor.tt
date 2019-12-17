@@ -1,1 +1,0 @@
-﻿<#@ DomainModelDsl processor="DomainModelDslDirectiveProcessor" requires="fileName='..\..\..\Dependencies\Collections.dmdsl'" provides="DomainPart=RootDomainPart" #>

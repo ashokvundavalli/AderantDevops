@@ -1,0 +1,85 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.23107.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VS2012", "VS2012\VS2012.csproj", "{0783FCCC-F222-46F1-893C-92DBC3B431CC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VS2013", "VS2013\VS2013.csproj", "{DFCAE8E4-DD36-46C8-A7E3-F5FEE28FAC9B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VS2015", "VS2015\VS2015.csproj", "{52DBF11E-AE30-4276-8FC9-50A756FBE00B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VS2012.VSIX", "VS2012.VSIX\VS2012.VSIX.csproj", "{02424CDC-CBB0-4E3D-B5D4-74EB7C06771B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VS2013.VSIX", "VS2013.VSIX\VS2013.VSIX.csproj", "{A9F527DA-F994-4069-B7E2-B5B8D65F69D0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VS2015.VSIX", "VS2015.VSIX\VS2015.VSIX.csproj", "{C1FEDCB4-8C6B-49AC-BBAA-AA39BC86A1C9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TFS2013.SSP", "TFS2013.SSP\TFS2013.SSP.csproj", "{43709368-39EF-4414-B5EE-E72E850DB6A3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0783FCCC-F222-46F1-893C-92DBC3B431CC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0783FCCC-F222-46F1-893C-92DBC3B431CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0783FCCC-F222-46F1-893C-92DBC3B431CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0783FCCC-F222-46F1-893C-92DBC3B431CC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DFCAE8E4-DD36-46C8-A7E3-F5FEE28FAC9B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DFCAE8E4-DD36-46C8-A7E3-F5FEE28FAC9B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DFCAE8E4-DD36-46C8-A7E3-F5FEE28FAC9B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DFCAE8E4-DD36-46C8-A7E3-F5FEE28FAC9B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{52DBF11E-AE30-4276-8FC9-50A756FBE00B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{52DBF11E-AE30-4276-8FC9-50A756FBE00B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{52DBF11E-AE30-4276-8FC9-50A756FBE00B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{52DBF11E-AE30-4276-8FC9-50A756FBE00B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{02424CDC-CBB0-4E3D-B5D4-74EB7C06771B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{02424CDC-CBB0-4E3D-B5D4-74EB7C06771B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{02424CDC-CBB0-4E3D-B5D4-74EB7C06771B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{02424CDC-CBB0-4E3D-B5D4-74EB7C06771B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A9F527DA-F994-4069-B7E2-B5B8D65F69D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A9F527DA-F994-4069-B7E2-B5B8D65F69D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A9F527DA-F994-4069-B7E2-B5B8D65F69D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A9F527DA-F994-4069-B7E2-B5B8D65F69D0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C1FEDCB4-8C6B-49AC-BBAA-AA39BC86A1C9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C1FEDCB4-8C6B-49AC-BBAA-AA39BC86A1C9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C1FEDCB4-8C6B-49AC-BBAA-AA39BC86A1C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C1FEDCB4-8C6B-49AC-BBAA-AA39BC86A1C9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{43709368-39EF-4414-B5EE-E72E850DB6A3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{43709368-39EF-4414-B5EE-E72E850DB6A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{43709368-39EF-4414-B5EE-E72E850DB6A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{43709368-39EF-4414-B5EE-E72E850DB6A3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 8
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://svtfs303:8080/tfs/aderant
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = VS2012\\VS2012.csproj
+		SccProjectName1 = VS2012
+		SccLocalPath1 = VS2012
+		SccProjectUniqueName2 = VS2013\\VS2013.csproj
+		SccProjectName2 = VS2013
+		SccLocalPath2 = VS2013
+		SccProjectUniqueName3 = VS2015\\VS2015.csproj
+		SccProjectName3 = VS2015
+		SccLocalPath3 = VS2015
+		SccProjectUniqueName4 = VS2012.VSIX\\VS2012.VSIX.csproj
+		SccProjectName4 = VS2012.VSIX
+		SccLocalPath4 = VS2012.VSIX
+		SccProjectUniqueName5 = VS2013.VSIX\\VS2013.VSIX.csproj
+		SccProjectName5 = VS2013.VSIX
+		SccLocalPath5 = VS2013.VSIX
+		SccProjectUniqueName6 = VS2015.VSIX\\VS2015.VSIX.csproj
+		SccProjectName6 = VS2015.VSIX
+		SccLocalPath6 = VS2015.VSIX
+		SccProjectUniqueName7 = TFS2013.SSP\\TFS2013.SSP.csproj
+		SccProjectName7 = TFS2013.SSP
+		SccLocalPath7 = TFS2013.SSP
+	EndGlobalSection
+EndGlobal

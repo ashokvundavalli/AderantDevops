@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
+
+
+  <Target Name="CopyToDropV2" Condition="'$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true' And '$(CopyToDropV2)' == 'true'">
+
+    <PropertyGroup>
+      <DropRoot Condition="'$(DropRoot)' == ''">\\dfs.aderant.com\packages\ExpertSuite</DropRoot>
+      <!-- TFVC or Git branch -->
+      <Origin Condition="'$(GitOrTfvcBranch)' != ''">$(GitOrTfvcBranch)</Origin>
+      <Origin Condition="'$(Origin)' == '' And '$(BranchName)' != ''">$(BranchName)</Origin>
+      
+      <BuildId Condition="'$(BuildId)' == '' And '$(BUILD_BUILDID)' != ''">$(BUILD_BUILDID)</BuildId>
+      <BuildId Condition="'$(BuildId)' == ''">$(BuildUri.Substring($([MSBuild]::Add($(BuildUri.LastIndexOf("/")), 1))))</BuildId>
+
+      <YieldDuringCopy Condition="'$(BuildAll)' != 'true'">false</YieldDuringCopy>
+      <YieldDuringCopy Condition="'$(BuildAll)' == 'true'">true</YieldDuringCopy>
+      
+      <GenerateFile Condition="'$(BUILD_BUILDID)' != ''">$true</GenerateFile>
+      <GenerateFile Condition="'$(GenerateFile)' == ''">$false</GenerateFile>
+    </PropertyGroup>
+
+    <Exec ContinueOnError="false"
+          IgnoreExitCode="false"
+          Command='"Powershell" -noprofile -ExecutionPolicy RemoteSigned "$(BuildScriptsDirectory)CopyToDropV2.ps1" -dropRoot &#39;$(DropRoot)&#39; -moduleName &#39;$(ModuleName)&#39; -moduleRootPath &#39;$(SolutionDirectoryPath)&#39; -origin &#39;$(Origin)&#39; -version &#39;$(BuildId)&#39; -generateFile $(GenerateFile)'
+          YieldDuringToolExecution="$(YieldDuringCopy)" />
+
+    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+
+  </Target>
+
+</Project>

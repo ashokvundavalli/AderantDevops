@@ -33,8 +33,6 @@
   <ItemGroup />
   <ItemGroup>
     <Compile Include="AderantProfile.tests.ps1" />
-    <Compile Include="Import-Profile.ps1.Tests.ps1" />
-    <Compile Include="Initialize-ProfileTest.ps1" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Target Name="Build" />

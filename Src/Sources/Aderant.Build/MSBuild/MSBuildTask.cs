@@ -1,5 +1,6 @@
-﻿namespace Aderant.Build.MSBuild {
-    public class MSBuildTask : MSBuildProjectElement {
+namespace Aderant.Build.MSBuild {
+    public class MSBuildTask : Element {
+
         /// <summary>
         /// Initializes a new instance of the <see cref="MSBuildTask"/> class.
         /// </summary>
@@ -14,7 +15,10 @@
         /// <value>
         ///   <c>true</c> if [build in parallel]; otherwise, <c>false</c>.
         /// </value>
-        public string BuildInParallel { get; set; }
+        public bool BuildInParallel {
+            get;
+            set;
+        }
 
         /// <summary>
         /// Gets or sets the projects property string. Ensure that this string is formatted with the correct metadata selector.
@@ -22,7 +26,10 @@
         /// <value>
         /// The projects.
         /// </value>
-        public string Projects { get; set; }
+        public string Projects {
+            get;
+            set;
+        }
 
         /// <summary>
         /// Gets or sets the global properties to pass to the projects.
@@ -30,13 +37,12 @@
         /// <value>
         /// The properties.
         /// </value>
-        public string Properties { get; set; }
+        public string Properties {
+            get;
+            set;
+        }
 
         public string Targets { get; set; }
-
-        public bool StopOnFirstFailure { get; set; }
-
-        public string ProjectToolsVersion { get; set; }
 
         public override void Accept(BuildElementVisitor visitor) {
             visitor.Visit(this);

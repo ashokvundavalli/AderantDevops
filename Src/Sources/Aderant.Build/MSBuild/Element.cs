@@ -1,4 +1,4 @@
-﻿namespace Aderant.Build.MSBuild {
+namespace Aderant.Build.MSBuild {
     /// <summary>
     /// Represents an MSBuild project element.
     /// </summary>

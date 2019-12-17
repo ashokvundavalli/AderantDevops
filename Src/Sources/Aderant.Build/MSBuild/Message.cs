@@ -1,8 +1,8 @@
-﻿namespace Aderant.Build.MSBuild {
+namespace Aderant.Build.MSBuild {
     /// <summary>
     /// Represents an MSBuild MessageTask element.
     /// </summary>
-    public class Message : MSBuildProjectElement {
+    public class Message : Element {
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Message"/> class.

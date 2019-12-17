@@ -1,4 +1,6 @@
-﻿namespace Aderant.Build.DependencyResolver {
+﻿using Aderant.Build.DependencyAnalyzer;
+
+namespace Aderant.Build.DependencyResolver {
     internal interface IDependencyRequirement {
         /// <summary>
         /// Gets the name of the requirement (module name or package name).
@@ -11,8 +13,8 @@
         /// </summary>
         /// <value>The group name.</value>
         string Group { get; }
-
-        VersionRequirement VersionRequirement { get; set; }
+        
+        VersionRequirement VersionRequirement { get; }
 
         /// <summary>
         /// Gets or sets a value indicating whether this instance can override (blat) any constraint expression in your dependency file.

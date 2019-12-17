@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Packaging;
@@ -85,21 +84,6 @@ namespace UnitTest.Build {
             Assert.AreEqual(2, destinations.Count);
             Assert.AreEqual("D:\\Foo", destinations[0]);
             Assert.AreEqual("D:\\Bar", destinations[1]);
-        }
-
-        [TestMethod]
-        public void Root_directory_is_substituted_for_replacement_tokens_appropriately() {
-            var module = new ExpertModule { Target = "$/a;b/c" };
-
-            var context = new ProductAssemblyContext {
-                ProductDirectory = "D:\\x"
-            };
-
-            List<string> destinations = context.ResolvePackageRelativeDestinationDirectories(module).ToList();
-
-            Assert.AreEqual(2, destinations.Count);
-            Assert.AreEqual("D:\\a", destinations[0]);
-            Assert.AreEqual("D:\\x\\b\\c", destinations[1]);
         }
     }
 }

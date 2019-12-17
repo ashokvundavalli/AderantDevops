@@ -260,12 +260,4 @@ ModelManifest.xml
 /Aderant.wpp.content*.proj
 
 /Src/Build.Tools/paket.exe
-/Src/Build/Tasks/MSBuild.Community.Tasks/*
 /.vscode
-/CommonBuild
-/Test/Test.Build/DependencyAnalysis/Resources/Source/ModuleB/Flob/TextTemplate1.cs
-/Src/Build/paket.exe
-/.paket
-/Src/Build/Functions/InProcessJobs.dll
-**/*/ps_modules/VstsTaskSdk/*
-/UnitTestProject1

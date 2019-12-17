@@ -19,7 +19,7 @@ namespace Aderant.Build.Packaging {
             this.logger = logger;
         }
 
-        public PackResult Pack(string version, bool replicate) {
+        public PackResult Pack(string version, bool replicate) {            
             var files = fs.GetFiles(fs.Root, "paket.dependencies", false);
 
             string dependenciesFilePath = null;
@@ -46,9 +46,9 @@ namespace Aderant.Build.Packaging {
             foreach (var file in GetTemplateFiles()) {
                 var dependenciesFile = DependenciesFile.ReadFromFile(spec.DependenciesFile);
 
-                var lockFile = LockFile.LoadFrom(dependenciesFile.FindLockFile().FullName);
+                var lockFile = LockFile.LoadFrom(dependenciesFile.FindLockfile().FullName);
 
-                var mainGroup = lockFile.GetGroupedResolution().Where(g => string.Equals(g.Key.Item1, Domain.GroupName(Constants.MainDependencyGroup)));
+                var mainGroup = lockFile.GetGroupedResolution().Where(g => Equals(g.Key.Item1, Domain.GroupName(BuildConstants.MainDependencyGroup)));
 
                 Dictionary<Domain.PackageName, SemVerInfo> dependencyMap = null;
                 if (replicate) {
@@ -77,8 +77,7 @@ namespace Aderant.Build.Packaging {
                         symbols: false,
                         includeReferencedProjects: true,
                         projectUrl: FSharpOption<string>.None,
-                        pinProjectReferences: true,
-                        interprojectReferencesConstraint:FSharpOption<InterprojectReferencesConstraint.InterprojectReferencesConstraint>.None);
+                        pinProjectReferences: true);
 
                     packedTemplates++;
                 } catch (Exception ex) {
@@ -120,7 +119,7 @@ namespace Aderant.Build.Packaging {
         /// Search for all .paket.template files under all subfolders.
         /// </summary>
         /// <returns>A list containing all templates files being found</returns>
-        internal IEnumerable<string> GetTemplateFiles() {
+        private IEnumerable<string> GetTemplateFiles() {
             var files = fs.GetFiles(fs.Root, "*paket.template", true);
 
             foreach (var file in files) {
@@ -128,7 +127,7 @@ namespace Aderant.Build.Packaging {
                     continue;
                 }
 
-                // Ignore files under the Build Infrastructure working directory, as it may contain test resources
+                // Ignore files under the Build Infrastructure working directory, as it may contain test resources 
                 // which would erroneously be picked up
                 if (file.IndexOf(BuildInfrastructureWorkingDirectory, StringComparison.OrdinalIgnoreCase) >= 0) {
                     continue;

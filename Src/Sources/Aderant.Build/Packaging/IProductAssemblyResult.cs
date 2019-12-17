@@ -2,6 +2,6 @@
 
 namespace Aderant.Build.Packaging {
     public interface IProductAssemblyResult {
-        IReadOnlyCollection<string> ThirdPartyLicenses { get; }
+        IEnumerable<string> ThirdPartyLicenses { get; }
     }
 }

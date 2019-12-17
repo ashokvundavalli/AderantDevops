@@ -85,19 +85,10 @@ namespace Aderant.Build.Analyzer {
                 return;
             }
 
-            var serverRules = new List<RuleBase>(new RuleBase[] {
-                // System Diagnostics
-                new CodeQualitySystemDiagnosticsRule(),
+            var diagnosticsRule = new CodeQualitySystemDiagnosticsRule();
 
-                // Approvals Diff Reporter
-                new CodeQualityApprovalsReporterRule()
-            });
-
-
-            foreach (var serverRule in serverRules) {
-                if (rules.All(ruleBase => ruleBase.GetType() != serverRule.GetType())) {
-                    rules.Add(serverRule);
-                }
+            if (rules.All(ruleBase => ruleBase.GetType() != diagnosticsRule.GetType())) {
+                rules.Add(diagnosticsRule);
             }
         }
 

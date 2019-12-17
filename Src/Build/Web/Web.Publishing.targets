@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-
-  <!-- Override the standard target so we don't collect any baggage -->
-  <Target Name="CollectFilesFrom_SourceItemsToCopyToOutputDirectoryTarget">
-    <Message Text="Suppressed" />
-  </Target>
-
-</Project>

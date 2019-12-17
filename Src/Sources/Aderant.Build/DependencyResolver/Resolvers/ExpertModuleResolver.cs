@@ -9,7 +9,7 @@ using Aderant.Build.Providers;
 
 namespace Aderant.Build.DependencyResolver.Resolvers {
     public class ExpertModuleResolver : IDependencyResolver {
-
+      
         private readonly IFileSystem2 fileSystem;
         private List<DependencySource> sources = new List<DependencySource>();
         public bool EnableVerboseLogging { get; set; }
@@ -50,11 +50,14 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
         /// Gets the drop location well known type.
         /// </summary>
         /// <value>The drop location.</value>
-        public static string DropLocation => "Drop";
+        public static string DropLocation {
+            get { return "Drop"; }
+        }
 
         IEnumerable<IDependencyRequirement> IDependencyResolver.GetDependencyRequirements(ResolverRequest resolverRequest, ExpertModule module) {
             string moduleDirectory = resolverRequest.GetModuleDirectory(module);
-            resolverRequest.Logger.Info(string.Concat("Probing for DependencyManifest under: ", moduleDirectory));
+
+            resolverRequest.Logger.Info("Probing for DependencyManifest under: " + moduleDirectory);
 
             Stream stream = ManifestFinder(moduleDirectory);
 
@@ -62,18 +65,17 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
                 DependencyManifest manifest;
                 using (stream) {
                     manifest = new DependencyManifest(module.Name, stream);
+
+                    bool? dependencyReplicationEnabled = manifest.DependencyReplicationEnabled;
+                    if (dependencyReplicationEnabled.HasValue) {
+                        ReplicationExplicitlyDisabled = !dependencyReplicationEnabled.Value;
+                    }
                 }
 
                 manifest.GlobalAttributesProvider = ModuleFactory as IGlobalAttributesProvider;
 
-                bool? dependencyReplicationEnabled = manifest.DependencyReplicationEnabled;
-                if (dependencyReplicationEnabled.HasValue) {
-                    ReplicationExplicitlyDisabled = !dependencyReplicationEnabled.Value;
-                }
-
-                foreach (ExpertModule reference in manifest.ReferencedModules) {
-                    var requirement = DependencyRequirement.Create(reference);
-                    yield return requirement;
+                foreach (var reference in manifest.ReferencedModules) {
+                    yield return DependencyRequirement.Create(reference);
                 }
             } else {
                 resolverRequest.Logger.Info("No DependencyManifest found");

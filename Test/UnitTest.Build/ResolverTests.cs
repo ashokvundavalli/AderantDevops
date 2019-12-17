@@ -1,12 +1,16 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Xml.Linq;
 using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Aderant.Build.DependencyResolver;
 using Aderant.Build.Logging;
+using Microsoft.TeamFoundation.Build.Common;
 using Moq;
 
 namespace UnitTest.Build {
@@ -23,9 +27,9 @@ namespace UnitTest.Build {
 
             var fs = Mock.Of<IFileSystem2>();
 
-            var resolver = new Resolver(new NullLogger(), new IDependencyResolver[] { resolverImpl });
+            var resolver = new Resolver(new FakeLogger(), new IDependencyResolver[] { resolverImpl });
 
-            var request = new ResolverRequest(NullLogger.Default, ExpertModule.Create(XElement.Parse("<Module Name=\'MyModule\' AssemblyVersion=\'5.3.1.0\' GetAction=\'NuGet\' />")));
+            var request = new ResolverRequest(new FakeLogger(), fs, ExpertModule.Create(XElement.Parse("<Module Name=\'MyModule\' AssemblyVersion=\'5.3.1.0\' GetAction=\'NuGet\' />")));
 
             resolver.ResolveDependencies(request);
 

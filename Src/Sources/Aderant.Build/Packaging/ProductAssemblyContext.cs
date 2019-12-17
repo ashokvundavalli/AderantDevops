@@ -8,7 +8,7 @@ namespace Aderant.Build.Packaging {
     public sealed class ProductAssemblyContext : IPackageContext {
         private string productDirectory;
         private string rootDirectory;
-        public IReadOnlyCollection<ExpertModule> Modules { get; internal set; }
+        public IEnumerable<ExpertModule> Modules { get; internal set; }
 
         public string ProductDirectory {
             get { return productDirectory; }
@@ -59,13 +59,9 @@ namespace Aderant.Build.Packaging {
                     var parts = module.Target.Split(';');
 
                     foreach (var part in parts) {
-                        if (part.IndexOf("$", StringComparison.Ordinal) >= 0) {
-                            string path = part.Replace("$", rootDirectory);
+                        string path = part.Replace("$", rootDirectory);
 
-                            yield return Path.GetFullPath(path);
-                        } else {
-                            yield return Path.GetFullPath(Path.Combine(ProductDirectory, part));
-                        }
+                        yield return Path.GetFullPath(path);
                     }
                 }
                 yield break;
@@ -74,7 +70,7 @@ namespace Aderant.Build.Packaging {
             if (!string.IsNullOrEmpty(module.Target)) {
                 var parts = module.Target.Split(';');
                 foreach (var part in parts) {
-                    yield return Path.GetFullPath(Path.Combine(ProductDirectory, part));
+                    yield return Path.Combine(ProductDirectory, part);
 
                 }
                 yield break;

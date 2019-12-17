@@ -1,4 +1,5 @@
-﻿using Aderant.Build.Providers;
+﻿using System;
+using Aderant.Build.Providers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTest.Build {

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using Aderant.Build.DependencyAnalyzer;
@@ -9,19 +10,31 @@ using Aderant.Build.Providers;
 namespace Aderant.Build.DependencyResolver {
     internal class ResolverRequest {
         internal List<DependencyState<IDependencyRequirement>> dependencies = new List<DependencyState<IDependencyRequirement>>();
-        private readonly List<ModuleState<ExpertModule>> modules = new List<ModuleState<ExpertModule>>();
+        private readonly ILogger logger;
+        private readonly string modulesRootPath;
+        private List<ModuleState<ExpertModule>> modules = new List<ModuleState<ExpertModule>>();
         private string dependenciesDirectory;
+        private IFileSystem2 physicalFileSystem;
         private bool requiresThirdPartyReplication;
-        private Dictionary<string, HashSet<string>> restrictions = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
-        public ILogger Logger { get; }
+
+        public ILogger Logger {
+            get { return logger; }
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ResolverRequest"/> class.
         /// </summary>
         /// <param name="logger">The logger.</param>
+        /// <param name="modulesRootPath"></param>
         /// <param name="modules">The modules.</param>
-        public ResolverRequest(ILogger logger, params ExpertModule[] modules) {
-            this.Logger = logger;
+        public ResolverRequest(ILogger logger, string modulesRootPath, params ExpertModule[] modules)
+            : this(logger, new PhysicalFileSystem(modulesRootPath), modules) {
+        }
+
+        internal ResolverRequest(ILogger logger, IFileSystem2 physicalFileSystem, params ExpertModule[] modules) {
+            this.logger = logger;
+            this.physicalFileSystem = physicalFileSystem;
+            this.modulesRootPath = physicalFileSystem.Root;
 
             if (modules != null) {
                 var sortedModules = new SortedSet<ExpertModule>(modules);
@@ -42,9 +55,19 @@ namespace Aderant.Build.DependencyResolver {
         /// Gets a value determining if third party packages should be replicated.
         /// </summary>
         public bool RequiresThirdPartyReplication {
-            get { return requiresThirdPartyReplication || modules.Any(s => s.RequiresThirdPartyReplication) || modules.Count > 1; }
+            get { return requiresThirdPartyReplication || modules.Any(s => s.RequiresThirdPartyReplication); }
             set { requiresThirdPartyReplication = value; }
         }
+
+        /// <summary>
+        /// Gets or sets the type of the request.
+        /// </summary>
+        /// <remarks>
+        /// We have XAML continuous integration builds, XAML build all, teambuild desktop build, desktop build VNext, server build VNext.
+        /// All of these use different root path flavors, some with the module name, some without. We need a hint from the build system to figure what the root path means to us
+        /// so we know how to probe for files
+        /// </remarks>
+        public string DirectoryContext { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether to blat everything and force a clean refresh of every package.
@@ -63,12 +86,10 @@ namespace Aderant.Build.DependencyResolver {
         public bool Update { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether replication explicitly disabled.
+        /// Gets or sets a value indicating whether replication explicitly disabled. 
         /// Modules can tell the build system to not replicate packages to the dependencies folder via DependencyReplication=false in the DependencyManifest.xml
         /// </summary>
         public bool ReplicationExplicitlyDisabled { get; set; }
-
-        public bool ValidatePackageConstraints { get; set; }
 
         /// <summary>
         /// Sets the dependencies directory to place dependencies into.
@@ -79,55 +100,64 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         public virtual string GetModuleDirectory(ExpertModule module) {
-            return module.FullPath ?? string.Empty;
+            bool append = true;
+
+            if (modules.Count == 1) {
+                if (string.Equals(DirectoryContext, "ContinuousIntegration", StringComparison.OrdinalIgnoreCase)) {
+                    append = false;
+                }
+            }
+
+            if (append) {
+                if (!modulesRootPath.TrimEnd(Path.DirectorySeparatorChar).EndsWith(module.Name, StringComparison.OrdinalIgnoreCase)) {
+                    return Path.Combine(Path.Combine(modulesRootPath, module.Name));
+                }
+            }
+
+            return modulesRootPath;
         }
 
-        public virtual string GetDependenciesDirectory(IDependencyRequirement requirement, bool replicationDisabled = false) {
-            if (!string.IsNullOrWhiteSpace(dependenciesDirectory)) {
+        public virtual string GetDependenciesDirectory(IDependencyRequirement requirement) {
+            if (!string.IsNullOrEmpty(dependenciesDirectory)) {
                 return dependenciesDirectory;
             }
 
             ExpertModule module = GetOrAdd(requirement).Module;
             if (module == null) {
-                throw new InvalidOperationException(string.Format("Resolver error. Unable to determine the directory to place requirement: {0} into.", requirement.Name));
-            }
-
-            if (replicationDisabled) {
-                return GetModuleDirectory(module);
+                throw new InvalidOperationException(string.Format("Resolver error. Unable to determine the directory to place requirement {0} into.", requirement.Name));
             }
 
             return Path.Combine(GetModuleDirectory(module), "Dependencies");
         }
 
-        public virtual void AddModule(string fullPath) {
-            Logger.Info($"Adding module {fullPath}", null);
+        public virtual void AddModule(string module, bool isPartOfBuildChain = false) {
+            Logger.Info($"Adding module {module}");
 
-            if (!Path.IsPathRooted(fullPath)) {
-                throw new InvalidOperationException("Path must be rooted");
+            if (Path.IsPathRooted(module)) {
+                module = Path.GetFileName(module);
             }
-
-            fullPath = PathUtility.TrimTrailingSlashes(fullPath);
-
-            foreach (var entry in modules) {
-                if (string.Equals(entry.Item.FullPath, fullPath, StringComparison.OrdinalIgnoreCase)) {
-                    return;
-                }
-            }
-
-            string name = PathUtility.GetFileName(fullPath);
 
             ExpertModule resolvedModule = null;
             if (ModuleFactory != null) {
-                resolvedModule = ModuleFactory.GetModule(name);
+                resolvedModule = ModuleFactory.GetModule(module);
             }
+
+            bool isGit = physicalFileSystem.DirectoryExists(".git") || physicalFileSystem.DirectoryExists(Path.Combine(physicalFileSystem.GetParent(physicalFileSystem.Root), ".git"));
 
             if (resolvedModule == null) {
-                resolvedModule = new ExpertModule(name);
+                if (!isGit) {
+                    throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, "Unable to resolve module {0}. Does the name exist in the Expert Manifest?", module));
+                }
+                resolvedModule = new ExpertModule { Name = module };
             }
 
-            resolvedModule.FullPath = fullPath;
+            bool requiresThirdPartyReplication = true;
 
-            modules.Add(new ModuleState<ExpertModule>(resolvedModule) { IsInBuildChain = true, RequiresThirdPartyReplication = true });
+            if (isGit) {
+                requiresThirdPartyReplication = physicalFileSystem.GetDirectories(physicalFileSystem.Root, true).Any(d => d.Contains("Web.") && !d.Contains("_BUILD_"));
+            }
+
+            modules.Add(new ModuleState<ExpertModule>(resolvedModule) { IsInBuildChain = true, RequiresThirdPartyReplication = requiresThirdPartyReplication });
         }
 
         public virtual void Unresolved(IDependencyRequirement requirement, object resolver) {
@@ -178,7 +208,37 @@ namespace Aderant.Build.DependencyResolver {
             }
         }
 
-        internal static ICollection<ExpertModule> GetDependenciesRequiredForBuild(IEnumerable<ModuleDependency> moduleDependencyGraph, List<ExpertModule> inBuild) {
+        /// <summary>
+        /// Returns the modules from the dependency tree that we are currently building. 
+        /// This is done as the dependencies don't need to come from a source but instead they will be produced by this build.
+        /// </summary>
+        /// <remarks>
+        /// This has no knowledge of packaged modules and so will not return NuGet dependencies. This means modules which are hybrids
+        /// and have both a packet.dependencies and a DependencyManifest.xml will fail to compile as the dependencies decalred in the paket file will not 
+        /// considered an external dependency (effectively paket items are invisible to the expert module system in most cases). 
+        /// </remarks>
+        public IEnumerable<ExpertModule> GetExternalDependencies() {
+            return GetReferencedModulesForBuild(Modules, modules.Where(m => m.IsInBuildChain).Select(s => s.Item).ToList());
+        }
+
+        private IEnumerable<ExpertModule> GetReferencedModulesForBuild(IEnumerable<ExpertModule> availableModules, List<ExpertModule> inBuild) {
+            var builder = new DependencyBuilder(ModuleFactory);
+
+            var moduleDependencyGraph = builder.GetModuleDependencies().ToList();
+
+            var modulesRequiredForBuild = GetDependenciesRequiredForBuild(availableModules, moduleDependencyGraph, inBuild);
+
+            if (modulesRequiredForBuild.Any()) {
+                // We don't require any external dependencies to build - however we need to move the third party modules to the dependency folder always
+                inBuild = inBuild.Where(m => m.ModuleType == ModuleType.ThirdParty).ToList();
+            } else {
+                inBuild = modulesRequiredForBuild.Concat(inBuild.Where(m => m.ModuleType == ModuleType.ThirdParty)).ToList();
+            }
+
+            return inBuild;
+        }
+
+        internal static ICollection<ExpertModule> GetDependenciesRequiredForBuild(IEnumerable<ExpertModule> modules, IEnumerable<ModuleDependency> moduleDependencyGraph, List<ExpertModule> inBuild) {
             // This unique set of modules we need to build the current build queue.
             var dependenciesRequiredForBuild = new HashSet<ExpertModule>();
 
@@ -200,22 +260,6 @@ namespace Aderant.Build.DependencyResolver {
             }
 
             return dependenciesRequiredForBuild;
-        }
-
-           /// <summary>
-        /// Captures any .NET framework restrictions and the group they are associated with.
-        /// </summary>
-        public void AddFrameworkRestriction(string group, string frameworkVersion) {
-            HashSet<string> set;
-            if (!restrictions.TryGetValue(group, out set)) {
-                restrictions.Add(group, set = new HashSet<string>(StringComparer.OrdinalIgnoreCase));
-            }
-
-            set.Add(frameworkVersion);
-        }
-
-        public Dictionary<string, IReadOnlyCollection<string>> GetFrameworkRestrictions() {
-            return restrictions.ToDictionary(s => s.Key, s => (IReadOnlyCollection<string>)s.Value.ToList());
         }
 
         public IEnumerable<ExpertModule> GetModulesInBuild() {

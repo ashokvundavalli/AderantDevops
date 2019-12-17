@@ -3,8 +3,7 @@ using System.Text;
 using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks {
-    
-    public sealed class WriteLinesToFile : Microsoft.Build.Tasks.WriteLinesToFile {
+    public class WriteLinesToFile : Microsoft.Build.Tasks.WriteLinesToFile {
         private readonly IFileSystem2 fileSystem;
 
         public WriteLinesToFile()
@@ -20,10 +19,7 @@ namespace Aderant.Build.Tasks {
         /// what the task would have written. If identical, the file is not written to disk and the
         /// timestamp will be preserved.
         /// </summary>
-// Required for VS2015 compat where this member does not exist so generates a compiler error
-#pragma warning disable 109
-        public new bool WriteOnlyWhenDifferent { get; set; }
-#pragma warning restore
+        public bool WriteOnlyWhenDifferent { get; set; }
 
         public override bool Execute() {
             if (WriteOnlyWhenDifferent) {

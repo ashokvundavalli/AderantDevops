@@ -4,16 +4,13 @@
   <PropertyGroup>
     <CodeSigningEnabled Condition="'$(CodeSigningEnabled)' == ''">true</CodeSigningEnabled>
     <CertificateHash>1c2a3e8f5e969fd0a526f917100f6231faacb460</CertificateHash>
-
+    <TimestampUrl>http://timestamp.digicert.com</TimestampUrl>
 
     <!-- Search 32-bit registry first on 32-bit Windows to ensure we get the 32-bit key if present -->
     <!-- Nothing like consistency eh? -->
     <!-- Sign Tool -->
     <WindowsKits_81 Condition="'$(WindowsKits_81)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows Kits\Installed Roots@KitsRoot81)</WindowsKits_81>
     <WindowsKits_81 Condition="'$(WindowsKits_81)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Kits\Installed Roots@KitsRoot81)</WindowsKits_81>
-    
-    <WindowsKits_10 Condition="'$(WindowsKits_10)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows Kits\Installed Roots@KitsRoot10)</WindowsKits_10>
-    <WindowsKits_10 Condition="'$(WindowsKits_10)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Kits\Installed Roots@KitsRoot10)</WindowsKits_10>
 
     <!-- Mage -->
     <WindowsSdkDir_71A Condition="'$(WindowsSdkDir_71A)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.1A@InstallationFolder)</WindowsSdkDir_71A>
@@ -26,20 +23,10 @@
     <WindowsSdkDir_81A Condition="'$(WindowsSdkDir_81A)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Microsoft SDKs\Windows\v8.1A@InstallationFolder)</WindowsSdkDir_81A>
   </PropertyGroup>
 
-  <ItemGroup>
-    <TimestampUrls Include="http://timestamp.digicert.com" />
-    <TimestampUrls Include="http://timestamp.comodoca.com" />
-  </ItemGroup>
-
   <Choose>
     <When Condition="'$(WindowsKits_81)' != ''">
       <PropertyGroup>
         <WindowsKitRoot>$(WindowsKits_81)</WindowsKitRoot>
-      </PropertyGroup>
-    </When>
-    <When Condition="'$(WindowsKitsRoot)' == '' And '$(WindowsKits_10)' != ''">
-      <PropertyGroup>
-        <WindowsKitRoot>$(WindowsKits_10)</WindowsKitRoot>
       </PropertyGroup>
     </When>
   </Choose>
@@ -81,7 +68,7 @@
   </Target>
 
 
-  <Target Name="CheckCodeSigningCertificate"
+  <Target Name="CheckCodeSigningCertitifcate"
           AfterTargets="PrepareBuildEnvironment"
           Condition="'$(CodeSigningEnabled)' == 'true' And '$(ValidSigningEnvironment)' == ''">
 
@@ -94,12 +81,8 @@
 
   <Target Name="SignApplications"
           AfterTargets="CoreCompile"
-          DependsOnTargets="ValidateSigningEnvironment;SignFile"
+          DependsOnTargets="ValidateSigningEnvironment"
           Condition="'$(CodeSigningEnabled)' == 'true' And '$(TargetFileName)' != '' And '$(IsDesktopBuild)' != 'true'">
-  </Target>
-
-
-  <Target Name="CollectAssembliesToSign">
     <!-- for performance we probably don't want to sign on the desktop as we need to make an HTTP call to the timestamp server -->
 
     <Message Text="Signing applications in $(IntermediateOutputPath) for $(MSBuildProjectFile)" />
@@ -108,50 +91,21 @@
       <Applications Include="$(IntermediateOutputPath)**\*.exe;
                              $(IntermediateOutputPath)**\*CO.exe;"
                     Exclude="$(IntermediateOutputPath)**\Aderant.Development*.exe;
-                             $(IntermediateOutputPath)**\Aderant.MatterCenterIntegration*;
-                             $(IntermediateOutputPath)**\*Update*;
+                             $(IntermediateOutputPath)**\Aderant.MatterCenterIntegration*;                             
+                             $(IntermediateOutputPath)**\*Update*; 
                              $(IntermediateOutputPath)**\*Performance*" />
     </ItemGroup>
 
     <GetAssembliesWithTraits
-      CompanyName="Aderant"
-      Files="@(Applications)">
-      <Output TaskParameter="Assemblies" ItemName="FilesToSign" />
+        CompanyName="Aderant"
+        Files="@(Applications)">
+      <Output TaskParameter="Assemblies"
+              ItemName="Assemblies" />
     </GetAssembliesWithTraits>
 
-    <PropertyGroup>
-      <AlreadySignedKey>$([System.Guid]::NewGuid())</AlreadySignedKey>
-      <AlreadySignedKey>$(AlreadySignedKey);@(FilesToSign)</AlreadySignedKey>
-    </PropertyGroup>
-  </Target>
+    <Exec Condition="'@(Assemblies)' != ''"
+          Command='"$(SignToolPath)" sign /t $(TimestampUrl) /fd sha256 /sha1 $(CertificateHash) /d "%(Assemblies.ProductName)" "%(Assemblies.FullPath)"' />
 
-
-  <!-- MSBuild does not allow updates to properties until a target is completed so we cannot conditionally
-       exit the batching loop if the signing succeeded. However we can cheat and use String.Intern as a place to stash data
-       and so not be beholden to the build engine rules -->
-  <Target Name="TrySignFile"
-          Outputs="%(TimestampUrls.Identity)">
-
-    <PropertyGroup>
-      <SignServer>%(TimestampUrls.Identity)</SignServer>
-    </PropertyGroup>
-
-    <Exec Condition="'@(FilesToSign)' != '' And '$([System.String]::IsInterned($(AlreadySignedKey)))' == ''"
-          ContinueOnError="true"
-          IgnoreStandardErrorWarningFormat="true"
-          YieldDuringToolExecution="true"
-          Command='"$(SignToolPath)" sign /t $(SignServer) /fd sha256 /sha1 $(CertificateHash) /d "%(FilesToSign.ProductName)" "%(FilesToSign.FullPath)"' />
-
-    <PropertyGroup>
-      <SignFileResult Condition="'$(SignFileResult)' == '' And '$(MSBuildLastTaskResult)' == 'true'">$([System.String]::Intern($(AlreadySignedKey)))</SignFileResult>
-    </PropertyGroup>
-
-    <Warning Condition="'$(SignFileResult)' == ''" Text="Failed to sign a file. Trying another timestamp server..." />
-  </Target>
-
-
-  <Target Name="SignFile" DependsOnTargets="CollectAssembliesToSign;TrySignFile">
-    <Error Condition="'$(SignFileResult)' == ''" Text="Failed to sign @(FilesToSign)" />
   </Target>
 
 
@@ -162,21 +116,18 @@
                            $(BinModuleDirectory)**\*wizard*.msi;" />
     </ItemGroup>
   </Target>
-
+  
 
   <Target Name="SignInstallers"
-          Condition="'$(CodeSigningEnabled)' == 'true' And '$(SignApplications)' == 'true' And '$(IsCustomBuild)' != 'true'"
+          Condition="'$(CodeSigningEnabled)' == 'true'"
           DependsOnTargets="FindInstallersToSign">
     <CallTarget Targets="SignInstallersCore" Condition="'@(Installers)' != ''" />
   </Target>
 
 
-  <Target Name="SignInstallersCore" DependsOnTargets="AssignInstallerVersionInfo;TrySignInstallers">
-    <Error Condition="'$(InstallerSignedResult)' == ''" Text="Failed to sign @(Installers)" />
-  </Target>
+  <Target Name="SignInstallersCore">
+    <Message Text="Signing installers in $(BinModuleDirectory)" />
 
-
-  <Target Name="AssignInstallerVersionInfo">
     <Message Text="Signing installer: %(Installers.Filename)%(Installers.Extension)" Condition="'@(Installers)' != ''" />
 
     <Aderant.Build.Tasks.GetFileVersionInfo
@@ -186,30 +137,12 @@
 
     <Error Condition="'%(InstallerFilesWithInfo.ProductName)' == ''" Text="An installer title must be provided for %(InstallerFilesWithInfo.Filename)%(InstallerFilesWithInfo.Extension)" />
 
-    <PropertyGroup>
-      <InstallerSignedKey>$([System.Guid]::NewGuid())</InstallerSignedKey>
-      <InstallerSignedKey>$(InstallerSignedKey);@(Installers)</InstallerSignedKey>
-    </PropertyGroup>
-  </Target>
-
-
-  <Target Name="TrySignInstallers" Outputs="%(TimestampUrls.Identity)">
-    <PropertyGroup>
-      <SignServer>%(TimestampUrls.Identity)</SignServer>
-    </PropertyGroup>
-
     <Exec
-      Condition="'@(Installers)' != '' And '$([System.String]::IsInterned($(InstallerSignedKey)))' == ''"
-      ContinueOnError="true"
-      IgnoreStandardErrorWarningFormat="true"
-      YieldDuringToolExecution="true"
-      Command='"$(SignToolPath)" sign /t $(SignServer) /fd SHA256 /sha1 $(CertificateHash) /s "My" /d "%(InstallerFilesWithInfo.ProductName)" "%(InstallerFilesWithInfo.FullPath)"'/>
-
-    <PropertyGroup>
-      <InstallerSignedResult Condition="'$(InstallerSignedResult)' == '' And '$(MSBuildLastTaskResult)' == 'true'">$([System.String]::Intern($(InstallerSignedKey)))</InstallerSignedResult>
-    </PropertyGroup>
-
-    <Warning Condition="'$(InstallerSignedResult)' == ''" Text="Failed to sign a file. Trying another timestamp server..." />
+      Condition="'@(Installers)' != '' And '$(SignToolPath)' != ''"
+      ContinueOnError="false"
+      IgnoreExitCode="false"
+      Command='"$(SignToolPath)" sign /t $(TimestampUrl) /fd SHA256 /sha1 $(CertificateHash) /s "My" /d "%(InstallerFilesWithInfo.ProductName)" "%(InstallerFilesWithInfo.FullPath)"'
+      YieldDuringToolExecution="true" />
   </Target>
 
 

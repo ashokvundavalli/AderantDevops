@@ -10,7 +10,7 @@ namespace Aderant.Build.DependencyResolver {
                 AssemblyVersion = reference.AssemblyVersion
             };
 
-            Source = reference.GetAction;
+            Source = reference.RepositoryType;
         }
 
         /// <summary>

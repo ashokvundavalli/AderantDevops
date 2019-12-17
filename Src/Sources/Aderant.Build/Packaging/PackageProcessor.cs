@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Management.Automation.Host;
-using Aderant.Build.AzurePipelines;
 using Aderant.Build.Logging;
+using Aderant.Build.TeamFoundation;
 
 namespace Aderant.Build.Packaging {
     public class PackageProcessor {
@@ -17,12 +17,12 @@ namespace Aderant.Build.Packaging {
         }
 
         public void UpdateBuildNumber(string buildNumber) {
-            VsoCommandBuilder commandBuilder = new VsoCommandBuilder(logger);
-            commandBuilder.UpdateBuildNumber(buildNumber);
+            TfBuildCommands commands = new TfBuildCommands(logger);
+            commands.UpdateBuildNumber(buildNumber);
         }
 
         public void AssociatePackagesToBuild(FileInfo[] packages) {
-            VsoCommandBuilder commandBuilder = new VsoCommandBuilder(logger);
+            TfBuildCommands commands = new TfBuildCommands(logger);
 
             foreach (var package in packages) {
                 using (ZipArchive archive = ZipFile.OpenRead(package.FullName)) {
@@ -31,7 +31,7 @@ namespace Aderant.Build.Packaging {
                     if (entry != null) {
                         using (Stream stream = entry.Open()) {
                             using (StreamReader reader = new StreamReader(stream)) {
-                                AssociatePackageToBuild(reader.ReadToEnd(), commandBuilder);
+                                AssociatePackageToBuild(reader.ReadToEnd(), commands);
                             }
                         }
                     }
@@ -39,8 +39,7 @@ namespace Aderant.Build.Packaging {
             }
         }
 
-        // TODO: Remove this once the we are not longer pushing to packages.ap.aderant.com and have garbage collection in place for Azure
-        internal void AssociatePackageToBuild(string nuspecText, VsoCommandBuilder vsoCommandsBuilder) {
+        internal void AssociatePackageToBuild(string nuspecText, TfBuildCommands commands) {
             var nuspec = new NuGet.Nuspec(nuspecText);
 
             string name = nuspec.Id.Value;
@@ -56,15 +55,17 @@ namespace Aderant.Build.Packaging {
 
             // Damn build systems. So you would think that TFS would take the path verbatim and just store that away.
             // But no, it takes the UNC path you give it and then when the garbage collection occurs it appends the artifact name as a folder
-            // to that original path as the final path to delete.
-            // This means the web UI for a build will always point to the root folder, which is useless for usability and we need to
+            // to that original path as the final path to delete. 
+            // This means the web UI for a build will always point to the root folder, which is useless for usability and we need to 
             // set the actual final folder as the name.
             // Aderant.Database.Backup
             if (name.Equals("Aderant.Database.Backup")) {
-                vsoCommandsBuilder.LinkArtifact($"{name}\\{nuspecVersion}", VsoBuildArtifactType.FilePath, Constants.DatabasePackageUri);
+                commands.LinkArtifact($"{name}\\{nuspecVersion}", TfBuildArtifactType.FilePath, BuildConstants.DatabasePackageUri);
             } else {
-                vsoCommandsBuilder.LinkArtifact($"{name}\\{nuspecVersion}", VsoBuildArtifactType.FilePath, Constants.PackageRepositoryUri);
+                commands.LinkArtifact($"{name}\\{nuspecVersion}", TfBuildArtifactType.FilePath, BuildConstants.PackageRepository);
             }
+
+            
         }
     }
 }

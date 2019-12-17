@@ -1,13 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Management.Automation;
 using System.Xml.Linq;
 using Aderant.Build.Providers;
-using Aderant.Build.Tasks;
-using Aderant.Build.Utilities;
 
 namespace Aderant.Build.DependencyAnalyzer {
     public interface IDependencyBuilder {
@@ -65,10 +61,9 @@ namespace Aderant.Build.DependencyAnalyzer {
                 throw new ArgumentException("modulePath must be a rooted path", nameof(branchRootOrModulePath));
             }
 
-            // TODO: HACK
-            //if (branchRootOrModulePath.IndexOf(@"\Modules", StringComparison.OrdinalIgnoreCase) == -1) {
-            //    branchRootOrModulePath = Path.Combine(branchRootOrModulePath, "Modules");
-            //}
+            if (branchRootOrModulePath.IndexOf(@"\Modules", StringComparison.OrdinalIgnoreCase) == -1) {
+                branchRootOrModulePath = Path.Combine(branchRootOrModulePath, "Modules");
+            }
 
             moduleProvider = new DependencyManifestProvider(branchRootOrModulePath);
         }
@@ -105,31 +100,25 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
 
                 if (!manifest.ReferencedModules.Any()) {
-                    ModuleDependency dependency = new ModuleDependency {
-                        Consumer = new ExpertModule(module.Name)
+                    var dependency = new ModuleDependency {
+                        Consumer = new ExpertModule {
+                            Name = module.Name
+                        }
                     };
                     dependency.Provider = dependency.Consumer;
                     dependencies.Add(dependency);
                 } else {
-                    var consumer = module;
+                    var consumer = new ExpertModule {Name = manifest.ModuleName};
 
-                    foreach (ExpertModule expertModule in manifest.ReferencedModules) {
-                        ExpertModule provider = expertModule;
-
+                    foreach (var expertModule in manifest.ReferencedModules) {
                         if (!includeThirdParty && expertModule.ModuleType == ModuleType.ThirdParty) {
                             continue;
                         }
 
-                        ExpertModule groupOwner;
-                        if (LookupGroupOrAlias(expertModule, out groupOwner)) {
-                            provider = groupOwner;
-                        }
-
-                        dependencies.Add(
-                            new ModuleDependency {
-                                Consumer = consumer,
-                                Provider = provider,
-                            });
+                        dependencies.Add(new ModuleDependency {
+                            Consumer = consumer,
+                            Provider = expertModule,
+                        });
                     }
                 }
 
@@ -140,8 +129,8 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
             }
 
-            // Now we need to add a dependency for each module that points to itself.
-            // If we have the case where all of a given module's dependencies are external to the branch,
+            // Now we need to add a dependency for each module that points to itself. 
+            // If we have the case where all of a given module's dependencies are external to the branch, 
             // the restriction filter will exclude not only the external dependencies but also the module itself
             var consumers = dependencies.Select(m => m.Consumer);
             foreach (var module in consumers) {
@@ -149,19 +138,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             return dependencies.OrderBy(x => x.Consumer.Name).ToList();
-        }
-
-        // Compatibility. Here we implement a simple grouping or alias mechanism where a single module can be known by
-        // many names. This gives us the ability to partition a module into smaller components
-        private bool LookupGroupOrAlias(ExpertModule expertModule, out ExpertModule container) {
-            IModuleGroupingSupport groupingSupport = moduleProvider as IModuleGroupingSupport;
-
-            if (groupingSupport != null && groupingSupport.TryGetContainer(expertModule.Name, out container)) {
-                return true;
-            }
-
-            container = null;
-            return false;
         }
 
         private static void AddSelfPointer(HashSet<ModuleDependency> dependencies, ExpertModule module) {
@@ -185,12 +161,11 @@ namespace Aderant.Build.DependencyAnalyzer {
             List<ExpertModule> allModules = new List<ExpertModule>(GetAllModules());
             List<ModuleDependency> allDependencies = new List<ModuleDependency>(GetModuleDependencies());
 
+
             XDocument document = new XDocument(
                 new object[] {
-                    new XElement(
-                        XName.Get("graphml", mgraphRootNamespace),
-                        new XElement(
-                            XName.Get("graph", mgraphRootNamespace),
+                    new XElement(XName.Get("graphml", mgraphRootNamespace),
+                        new XElement(XName.Get("graph", mgraphRootNamespace),
                             new object[] {
                                 new XAttribute(XName.Get("id"), "G"),
                                 new XAttribute(XName.Get("edgedefault"), "directed"),
@@ -199,13 +174,14 @@ namespace Aderant.Build.DependencyAnalyzer {
                                 new XAttribute(XName.Get("parse.order"), "nodesfirst"),
                                 new XAttribute(XName.Get("parse.nodeids"), "free"),
                                 new XAttribute(XName.Get("parse.edgeids"), "free"),
-                                allModules.Select(module => new XElement(XName.Get("node", mgraphRootNamespace), new object[] { new XAttribute(XName.Get("id"), module.Name), new XAttribute(XName.Get("desc"), allModules.IndexOf(module)) })),
-                                allDependencies.Select(dependency => new XElement(XName.Get("edge", mgraphRootNamespace), new object[] { new XAttribute(XName.Get("id"), allDependencies.IndexOf(dependency)), new XAttribute(XName.Get("source"), allModules.IndexOf(dependency.Consumer)), new XAttribute(XName.Get("target"), allModules.IndexOf(dependency.Provider)) }))
+                                allModules.Select(module => new XElement(XName.Get("node", mgraphRootNamespace), new object[] {new XAttribute(XName.Get("id"), module.Name), new XAttribute(XName.Get("desc"), allModules.IndexOf(module))})),
+                                allDependencies.Select(dependency => new XElement(XName.Get("edge", mgraphRootNamespace), new object[] {new XAttribute(XName.Get("id"), allDependencies.IndexOf(dependency)), new XAttribute(XName.Get("source"), allModules.IndexOf(dependency.Consumer)), new XAttribute(XName.Get("target"), allModules.IndexOf(dependency.Provider))}))
                             }
+                            )
                         )
-                    )
                 }
-            );
+                );
+
 
             return document;
         }
@@ -214,136 +190,104 @@ namespace Aderant.Build.DependencyAnalyzer {
             List<ExpertModule> allModules = new List<ExpertModule>(GetAllModules());
             List<ModuleDependency> allDependencies = new List<ModuleDependency>(GetModuleDependencies());
 
+
             XDocument document = new XDocument(
                 new object[] {
-                    new XElement(
-                        XName.Get("DirectedGraph", dgmlRootNamespace),
-                        new XElement(
-                            XName.Get("Nodes", dgmlRootNamespace),
+                    new XElement(XName.Get("DirectedGraph", dgmlRootNamespace),
+                        new XElement(XName.Get("Nodes", dgmlRootNamespace),
                             new object[] {
-                                allModules.Select(
-                                    module => new XElement(
-                                        XName.Get("Node", dgmlRootNamespace),
+                                allModules.Select(module => new XElement(XName.Get("Node", dgmlRootNamespace),
+                                    new object[] {
+                                        new XAttribute(XName.Get("Id"), allModules.IndexOf(module)),
+                                        new XAttribute(XName.Get("Label"), module.Name)
+                                    })),
+                                ((includeBuilds ? GetTree(restrictToModulesInBranch) : new Build[0]).Select((item, index) =>
+                                    new XElement(XName.Get("Node", dgmlRootNamespace),
                                         new object[] {
-                                            new XAttribute(XName.Get("Id"), allModules.IndexOf(module)),
-                                            new XAttribute(XName.Get("Label"), module.Name)
-                                        })),
-                                ((includeBuilds ? GetTree(restrictToModulesInBranch) : new Build[0]).Select(
-                                    (item, index) =>
-                                        new XElement(
-                                            XName.Get("Node", dgmlRootNamespace),
-                                            new object[] {
-                                                new XAttribute(XName.Get("Id"), string.Format("Build{0}", index)),
-                                                new XAttribute(XName.Get("Group"), "Expanded"),
-                                                new XAttribute(XName.Get("Label"), string.Format("Build Level {0}", index))
-                                            })))
+                                            new XAttribute(XName.Get("Id"), string.Format("Build{0}", index)),
+                                            new XAttribute(XName.Get("Group"), "Expanded"),
+                                            new XAttribute(XName.Get("Label"), string.Format("Build Level {0}", index))
+                                        })))
                             }
-                        ),
-                        new XElement(
-                            XName.Get("Links", dgmlRootNamespace),
+                            ),
+                        new XElement(XName.Get("Links", dgmlRootNamespace),
                             new object[] {
                                 CreateLinks(allDependencies, allModules),
-                                ((includeBuilds ? GetTree(restrictToModulesInBranch) : new Build[0]).Select(
-                                    (build, levelIndex) => build.Modules.Select(
-                                        item =>
-                                            new XElement(
-                                                XName.Get("Link", dgmlRootNamespace),
-                                                new object[] {
-                                                    new XAttribute(XName.Get("Source"), string.Format("Build{0}", levelIndex)),
-                                                    new XAttribute(XName.Get("Target"), allModules.IndexOf(item)),
-                                                    new XAttribute(XName.Get("Category"), "Contains")
-                                                }))
-                                ))
+                                ((includeBuilds ? GetTree(restrictToModulesInBranch) : new Build[0]).Select((build, levelIndex) => build.Modules.Select(item =>
+                                    new XElement(XName.Get("Link", dgmlRootNamespace), new object[] {
+                                        new XAttribute(XName.Get("Source"), string.Format("Build{0}", levelIndex)),
+                                        new XAttribute(XName.Get("Target"), allModules.IndexOf(item)),
+                                        new XAttribute(XName.Get("Category"), "Contains")
+                                    }))
+                                    ))
                             }
-                        ),
-                        new XElement(
-                            XName.Get("Categories", dgmlRootNamespace),
+                            ),
+                        new XElement(XName.Get("Categories", dgmlRootNamespace),
                             new object[] {
-                                new XElement(
-                                    XName.Get("Category", dgmlRootNamespace),
-                                    new object[] {
-                                        new XAttribute(XName.Get("Id"), "Contains"),
-                                        new XAttribute(XName.Get("Label"), "Contans"),
-                                        new XAttribute(XName.Get("CanBeDataDriven"), "False"),
-                                        new XAttribute(XName.Get("CanLinkedNodesBeDataDriven"), "True"),
-                                        new XAttribute(XName.Get("IncomingActionLabel"), "Contained By"),
-                                        new XAttribute(XName.Get("IsContainment"), "True"),
-                                        new XAttribute(XName.Get("OutgoingActionLabel"), "Contains"),
-                                    })
+                                new XElement(XName.Get("Category", dgmlRootNamespace), new object[] {
+                                    new XAttribute(XName.Get("Id"), "Contains"),
+                                    new XAttribute(XName.Get("Label"), "Contans"),
+                                    new XAttribute(XName.Get("CanBeDataDriven"), "False"),
+                                    new XAttribute(XName.Get("CanLinkedNodesBeDataDriven"), "True"),
+                                    new XAttribute(XName.Get("IncomingActionLabel"), "Contained By"),
+                                    new XAttribute(XName.Get("IsContainment"), "True"),
+                                    new XAttribute(XName.Get("OutgoingActionLabel"), "Contains"),
+                                })
                             }),
-                        new XElement(
-                            XName.Get("Properties", dgmlRootNamespace),
-                            new object[] {
-                                new XElement(
-                                    "Property",
-                                    dgmlRootNamespace,
-                                    new XAttribute("Id", "Label"),
-                                    new XAttribute("Label", "Label"),
-                                    new XAttribute("Description", "Displayable label of an Annotatable object"),
-                                    new XAttribute("DataType", "System.String")
+                        new XElement(XName.Get("Properties", dgmlRootNamespace), new object[] {
+                            new XElement("Property", dgmlRootNamespace,
+                                new XAttribute("Id", "Label"),
+                                new XAttribute("Label", "Label"),
+                                new XAttribute("Description", "Displayable label of an Annotatable object"),
+                                new XAttribute("DataType", "System.String")
                                 ),
-                                new XElement(
-                                    "Property",
-                                    dgmlRootNamespace,
-                                    new XAttribute("Id", "CanBeDataDriven"),
-                                    new XAttribute("Label", "CanBeDataDriven"),
-                                    new XAttribute("Description", "CanBeDataDriven"),
-                                    new XAttribute("DataType", "System.Boolean")
+                            new XElement("Property", dgmlRootNamespace,
+                                new XAttribute("Id", "CanBeDataDriven"),
+                                new XAttribute("Label", "CanBeDataDriven"),
+                                new XAttribute("Description", "CanBeDataDriven"),
+                                new XAttribute("DataType", "System.Boolean")
                                 ),
-                                new XElement(
-                                    "Property",
-                                    dgmlRootNamespace,
-                                    new XAttribute("Id", "CanLinkedNodesBeDataDriven"),
-                                    new XAttribute("Label", "CanLinkedNodesBeDataDriven"),
-                                    new XAttribute("Description", "CanLinkedNodesBeDataDriven"),
-                                    new XAttribute("DataType", "System.Boolean")
+                            new XElement("Property", dgmlRootNamespace,
+                                new XAttribute("Id", "CanLinkedNodesBeDataDriven"),
+                                new XAttribute("Label", "CanLinkedNodesBeDataDriven"),
+                                new XAttribute("Description", "CanLinkedNodesBeDataDriven"),
+                                new XAttribute("DataType", "System.Boolean")
                                 ),
-                                new XElement(
-                                    "Property",
-                                    dgmlRootNamespace,
-                                    new XAttribute("Id", "GraphDirection"),
-                                    new XAttribute("DataType", "Microsoft.VisualStudio.Progression.Layout.GraphDirection")
+                            new XElement("Property", dgmlRootNamespace,
+                                new XAttribute("Id", "GraphDirection"),
+                                new XAttribute("DataType", "Microsoft.VisualStudio.Progression.Layout.GraphDirection")
                                 ),
-                                new XElement(
-                                    "Property",
-                                    dgmlRootNamespace,
-                                    new XAttribute("Id", "Group"),
-                                    new XAttribute("Label", "Group"),
-                                    new XAttribute("Description", "Group"),
-                                    new XAttribute("DataType", "Microsoft.VisualStudio.Progression.GraphModel.GroupStyle")
+                            new XElement("Property", dgmlRootNamespace,
+                                new XAttribute("Id", "Group"),
+                                new XAttribute("Label", "Group"),
+                                new XAttribute("Description", "Group"),
+                                new XAttribute("DataType", "Microsoft.VisualStudio.Progression.GraphModel.GroupStyle")
                                 ),
-                                new XElement(
-                                    "Property",
-                                    dgmlRootNamespace,
-                                    new XAttribute("Id", "IncomingActionLabel"),
-                                    new XAttribute("Label", "IncomingActionLabel"),
-                                    new XAttribute("Description", "IncomingActionLabel"),
-                                    new XAttribute("DataType", "System.String")
+                            new XElement("Property", dgmlRootNamespace,
+                                new XAttribute("Id", "IncomingActionLabel"),
+                                new XAttribute("Label", "IncomingActionLabel"),
+                                new XAttribute("Description", "IncomingActionLabel"),
+                                new XAttribute("DataType", "System.String")
                                 ),
-                                new XElement(
-                                    "Property",
-                                    dgmlRootNamespace,
-                                    new XAttribute("Id", "IsContainment"),
-                                    new XAttribute("DataType", "System.Boolean")
+                            new XElement("Property", dgmlRootNamespace,
+                                new XAttribute("Id", "IsContainment"),
+                                new XAttribute("DataType", "System.Boolean")
                                 ),
-                                new XElement(
-                                    "Property",
-                                    dgmlRootNamespace,
-                                    new XAttribute("Id", "Layout"),
-                                    new XAttribute("DataType", "System.String")
+                            new XElement("Property", dgmlRootNamespace,
+                                new XAttribute("Id", "Layout"),
+                                new XAttribute("DataType", "System.String")
                                 ),
-                                new XElement(
-                                    "Property",
-                                    dgmlRootNamespace,
-                                    new XAttribute("Id", "OutgoingActionLabel"),
-                                    new XAttribute("Label", "OutgoingActionLabel"),
-                                    new XAttribute("Description", "OutgoingActionLabel"),
-                                    new XAttribute("DataType", "System.String")
+                            new XElement("Property", dgmlRootNamespace,
+                                new XAttribute("Id", "OutgoingActionLabel"),
+                                new XAttribute("Label", "OutgoingActionLabel"),
+                                new XAttribute("Description", "OutgoingActionLabel"),
+                                new XAttribute("DataType", "System.String")
                                 )
-                            })
-                    )
+                        })
+                        )
                 }
-            );
+                );
+
 
             return document;
         }
@@ -354,24 +298,9 @@ namespace Aderant.Build.DependencyAnalyzer {
                     continue;
                 }
 
-                yield return new XElement(
-                    XName.Get("Link", dgmlRootNamespace),
-                    new object[] {
+                yield return new XElement(XName.Get("Link", dgmlRootNamespace), new object[] {
                         new XAttribute(XName.Get("Source"), allModules.IndexOf(dependency.Consumer)), new XAttribute(XName.Get("Target"), allModules.IndexOf(dependency.Provider))
-                    });
-            }
-        }
-
-        public bool TryGetTree(bool restrictToModulesInBranch, out IEnumerable<Build> tree, out ICollection<string> conflicts) {
-            conflicts = null;
-            tree = null;
-
-            try {
-                tree = GetTree(restrictToModulesInBranch);
-                return true;
-            } catch (CircularDependencyException ex) {
-                conflicts = ex.Conflicts;
-                return false;
+                });
             }
         }
 
@@ -380,15 +309,49 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// </summary>
         /// <param name="restrictToModulesInBranch">if set to <c>true</c> restricts the analysis to modules in the current branch.</param>
         /// <returns></returns>
-        /// <exception cref="CircularDependencyException">When a circular dependency between following modules is detected</exception>
+        /// <exception cref="CircularDependencyException">Whe a a circular dependency between following modules is detected</exception>
         public IEnumerable<Build> GetTree(bool restrictToModulesInBranch) {
-            return null;
+            IEnumerable<ModuleDependency> dependencies = GetModuleDependencies();
+
+            if (restrictToModulesInBranch) {
+                dependencies = dependencies.Where(dep => dep.Branch == null || dep.Branch.Equals(moduleProvider.Branch, StringComparison.OrdinalIgnoreCase));
+            }
+
+            TopologicalSort<ExpertModule> sort = new TopologicalSort<ExpertModule>();
+            foreach (ModuleDependency module in dependencies) {
+                if (module.Provider.ModuleType == ModuleType.ThirdParty) {
+                    continue;
+                }
+
+                // Filter by targets in our branch - if we have the target locally it means we can build it
+                // so is therefore is allowed to be included in the dependency tree.
+                // If doesn't exist then it must be an external module, so it just gets given to us during the build process and we don't need an edge for 
+                // the module
+
+                if (moduleProvider.IsAvailable(module.Provider.Name)) {
+                    if (module.Provider.ModuleType != ModuleType.ThirdParty && !module.Provider.Equals(module.Consumer)) {
+                        sort.Edge(module.Consumer, module.Provider);
+                    } else {
+                        // No dependencies within this branch -- detached edge
+                        sort.Edge(module.Consumer);
+                    }
+                } else {
+                    sort.Edge(module.Consumer);
+                }
+            }
+
+            Queue<ExpertModule> sortedQueue;
+            if (!sort.Sort(out sortedQueue)) {
+                throw new CircularDependencyException("There is a circular dependency between the following modules: " + string.Join(", ", sortedQueue.Select(s => s.Name).ToArray()));
+            }
+
+            return GetBuildGroups(sortedQueue, dependencies);
         }
 
         private static IEnumerable<Build> GetBuildGroups(Queue<ExpertModule> sortedQueue, IEnumerable<ModuleDependency> dependencies) {
             // Now find critical path...
             // What we do here is iterate the sorted list looking for elements with no dependencies. These are the zero level modules.
-            // Then we iterate again and check if the module depends on any of the zero level modules but not on anything else. These are the
+            // Then we iterate again and check if the module dependends on any of the zero level modules but not on anything else. These are the
             // level 1 elements. Then we iterate again and check if the module depends on any of the 0 or 1 level modules etc.
             // This places modules into levels which allows for maximum parallelism based on dependency.
             IDictionary<int, HashSet<ExpertModule>> levels = new Dictionary<int, HashSet<ExpertModule>>();
@@ -418,11 +381,10 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
             }
 
-            return levels.Select(
-                level => new Build {
-                    Modules = level.Value,
-                    Order = level.Key
-                });
+            return levels.Select(level => new Build {
+                Modules = level.Value,
+                Order = level.Key
+            });
         }
 
         public ICollection<ExpertModule> GetDownstreamModules(ICollection<ExpertModule> modules) {
@@ -445,7 +407,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             for (int i = input.Count - 1; i >= 0; i--) {
                 ExpertModule module = input[i];
 
-                // Add the module itself - this ensures we capture modules which are vertices
+                // Add the module itself - this ensures we capture modules which are vertices 
                 collector.Add(module);
 
                 List<ExpertModule> dependents = GetDependents(module, moduleDependencies).ToList();
@@ -458,7 +420,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     collector.Add(dependent);
 
                     // Now get the children of the children (if any)
-                    GetDependents(new List<ExpertModule> { dependent }, moduleDependencies, collector);
+                    GetDependents(new List<ExpertModule> {dependent}, moduleDependencies, collector);
                 }
             }
         }

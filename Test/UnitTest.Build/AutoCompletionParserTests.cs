@@ -75,8 +75,8 @@ namespace UnitTest.Build {
         public void AutoCompletesSearchStringSeparatedByCase() {
             Mock<IDependencyBuilder> analyzerMock = new Mock<IDependencyBuilder>();
 
-            ExpertModule module1 = new ExpertModule("Module.TwoWords");
-            ExpertModule module2 = new ExpertModule("Module.ShouldntMatch");
+            ExpertModule module1 = new ExpertModule() { Name = "Module.TwoWords" };
+            ExpertModule module2 = new ExpertModule() { Name = "Module.ShouldntMatch" };
 
             List<ExpertModule> moduleList = new List<ExpertModule>();
             moduleList.Add(module1);
@@ -93,8 +93,8 @@ namespace UnitTest.Build {
         public void AutoCompletesSearchStringSeparatedByPeriods() {
             Mock<IDependencyBuilder> analyzerMock = new Mock<IDependencyBuilder>();
 
-            ExpertModule module1 = new ExpertModule("Module.TwoWords");
-            ExpertModule module2 = new ExpertModule("Module.ShouldntMatch");
+            ExpertModule module1 = new ExpertModule() { Name = "Module.TwoWords" };
+            ExpertModule module2 = new ExpertModule() { Name = "Module.ShouldntMatch" };
 
             List<ExpertModule> moduleList = new List<ExpertModule>();
             moduleList.Add(module1);
@@ -111,8 +111,8 @@ namespace UnitTest.Build {
         public void AggressivelySeparatesLowerCaseWhenNoMatchFound() {
             Mock<IDependencyBuilder> analyzerMock = new Mock<IDependencyBuilder>();
 
-            ExpertModule module1 = new ExpertModule("Module.TwoWords");
-            ExpertModule module2 = new ExpertModule("Module.ShouldntMatch");
+            ExpertModule module1 = new ExpertModule() { Name = "Module.TwoWords" };
+            ExpertModule module2 = new ExpertModule() { Name = "Module.ShouldntMatch" };
 
             List<ExpertModule> moduleList = new List<ExpertModule>();
             moduleList.Add(module1);
@@ -129,9 +129,9 @@ namespace UnitTest.Build {
         public void AggressivelySeparates_AFTER_TryingToMatchBeginningOfString_WhenSearchStringIsAllLowerCase() {
             Mock<IDependencyBuilder> analyzerMock = new Mock<IDependencyBuilder>();
 
-            ExpertModule module1 = new ExpertModule("Module.TwoWords");
-            ExpertModule module3 = new ExpertModule("mtw");
-            ExpertModule module2 = new ExpertModule("Module.ShouldntMatch");
+            ExpertModule module1 = new ExpertModule() { Name = "Module.TwoWords" };
+            ExpertModule module3 = new ExpertModule() { Name = "mtw" };
+            ExpertModule module2 = new ExpertModule() { Name = "Module.ShouldntMatch" };
 
             List<ExpertModule> moduleList = new List<ExpertModule>();
             moduleList.Add(module1);

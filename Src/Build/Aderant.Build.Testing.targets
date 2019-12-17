@@ -1,204 +1,139 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
 
-  <Import Project="Aderant.Build.Common.targets" Condition="'$(AderantCommonTargetsImported)' == ''" />
 
-  <PropertyGroup>
-    <RunTestsDependsOn>
-      CollectTestAssemblies;
-      SetupTestProperties;
-      CollectAssemblyPlatforms;
-      RunTestAssemblies;
-    </RunTestsDependsOn>
-  </PropertyGroup>
-
-
-  <Target Name="RunTests"
-          Condition="'$(RunTests)' != 'false' Or '$(_RunIntegrationTests)' != 'false'"
-          DependsOnTargets="$(RunTestsDependsOn)">
-
-  </Target>
-
-
-  <Target Name="CollectTestAssemblies">
-
-    <GetBuildOutputs>
-      <Output TaskParameter="TrackedProjects" ItemName="TrackedProjects" />
-      <Output TaskParameter="SolutionRoots" ItemName="SolutionRoots" />
-    </GetBuildOutputs>
-
-    <Message Text="Looking for test assemblies in these directories:" />
-    <Message Text="%(TrackedProjects.OutputPath)" />
-  </Target>
-
-
-  <Target Name="SetupTestProperties" Outputs="$(TestPattern)">
-    <!-- Collect all assemblies to use as test dependencies -->
-    <ItemGroup>
-      <AllStagedDlls Include="$(ArtifactStagingDirectory)**\*.dll"
-                     Exclude="$(ArtifactStagingDirectory)_artifacts\**" />
-      <AllDirectoriesWithDlls Include="@(AllStagedDlls->'%(RootDir)%(Directory)'->Distinct())"/>
-    </ItemGroup>
+    <Target Name="RunTests"
+            DependsOnTargets="$(RunTestsDependsOn)"
+            Condition="('$(RunTest)'!='false') And ('$(IsCustomBuild)'!='true')">
 
     <PropertyGroup>
-      <AssembliesUnderTest>@(TestAssemblies->'"%(FullPath)"', ',')</AssembliesUnderTest>
-      <VsTestWorkingDirectory>$(SolutionRoot)</VsTestWorkingDirectory>
-
-      <CodeCoverage Condition="'$(CodeCoverage)' == ''">false</CodeCoverage>
+      <UnitTestAssemblies>@(TestAssemblies->'%(FullPath)',' ')</UnitTestAssemblies>
+      <VsTestWorkingDirectory>$(SolutionDirectoryPath)</VsTestWorkingDirectory>
+      <CodeCoverage Condition="'$(CodeCoverage)' == ''">true</CodeCoverage>
 
       <!-- VSTest Setup -->
       <VsTestDirectory Condition="'$(VsTestDirectory)' == ''">$(VsCommonTools)..\IDE\CommonExtensions\Microsoft\TestWindow</VsTestDirectory>
       <PathToTestTool>$(VsTestDirectory)\vstest.console.exe</PathToTestTool>
-      <PathToTestTool>$([System.IO.Path]::GetFullPath('$(PathToTestTool)'))</PathToTestTool>
-
       <IsolationSwitch>/InIsolation</IsolationSwitch>
-      <RunTestsInParallel Condition="'$(TestPattern)' != '' And $(TestPattern.Equals('IntegrationTest', StringComparison.OrdinalIgnoreCase))">false</RunTestsInParallel>
-      <RunTestsInParallel Condition="'$(RunTestsInParallel)' == ''">$([MSBuild]::ValueOrDefault('$(RunTestsInParallel)', 'true'))</RunTestsInParallel>
-      <ParallelSwitch Condition="'$(RunTestsInParallel)' == 'true'">/Parallel</ParallelSwitch>
-
+      <RunUnitTestsInParallel>$([MSBuild]::ValueOrDefault(`$(RunUnitTestsInParallel)`, `true`))</RunUnitTestsInParallel>
+      <ParallelSwitch Condition="'$(RunUnitTestsInParallel)' == 'true'">/Parallel</ParallelSwitch>
+      <PlatformSwitch Condition="'$(Use32BitTestRunner)' != 'true'">/Platform:x64</PlatformSwitch>
       <TestAdapterSwitch Condition="'$(PSTests)' == 'true'">/TestAdapterPath:"$(BuildScriptsDirectory)..\Build.Tools"</TestAdapterSwitch>
       <ResultsFileSwitch Condition="'$(ResultsFileSwitch)' == ''">/Logger:trx</ResultsFileSwitch>
-      <RunSettingsFile Condition="'$(IsDesktopBuild)' != 'true' And '$(CustomRunSettings)' != ''">$(TestWorkingDirectory)$(CustomRunSettings)</RunSettingsFile>
-      <RunSettingsFile Condition="'$(RunSettingsFile)' == ''">$(TestWorkingDirectory)default.runsettings</RunSettingsFile>
-      <RunSettingsSwitch>/Settings:$(RunSettingsFile)</RunSettingsSwitch>
-
-      <TestPattern>$([MSBuild]::ValueOrDefault('$(TestPattern)', 'UnitTest'))</TestPattern>
-
-      <AllDirectoriesWithDlls>@(AllDirectoriesWithDlls->'"%(FullPath)"', ',')</AllDirectoriesWithDlls>
     </PropertyGroup>
 
-    <Message Text="TestPattern: $(TestPattern)" />
-  </Target>
+    <!-- dotCover Setup -->
+    <ItemGroup Condition="('$(CodeCoverage)' == 'true') And '@(CodeCoverageFilterList)' != ''">      
+      <CodeCoverageFilters Include="+:%(CodeCoverageFilterList.FileName)"></CodeCoverageFilters>
+    </ItemGroup>
 
+    <PropertyGroup Condition="('$(CodeCoverage)' == 'true') And '$(UnitTestAssemblies)' != ''">
+      <DotCoverExecutablePath>$(BuildToolsDirectory)dotCover\bin\dotCover.exe</DotCoverExecutablePath>
+      <DotCoverReportType Condition="'$(IsDesktopBuild)' == 'true'">HTML</DotCoverReportType>
+      <DotCoverReportType Condition="'$(IsDesktopBuild)' != 'true'">XML</DotCoverReportType>
+      <DotCoverReportFile>$(BinTestDirectory)CodeCoverage\dotCoverReport.$(DotCoverReportType)</DotCoverReportFile>
+      <CoberturaReportTarget>$(BinTestDirectory)CodeCoverage\CoberturaReport.xml</CoberturaReportTarget>
+    </PropertyGroup>
+    
+    <Message Condition="'$(Use32BitTestRunner)' == 'true'" Text="Must run tests in 32-bit mode as at least one build output assembly has a platform of x86." />
 
-  <Target Name="CollectAssemblyPlatforms"
-          Outputs="%(SolutionRoots.Identity)">
+    <MakeDir Directories="$(VsTestWorkingDirectory)" />
 
     <PropertyGroup>
-      <TestRunDirectory>%(SolutionRoots.Identity)</TestRunDirectory>
+      <TestTimeoutMilliseconds>-1</TestTimeoutMilliseconds>
+      <TestTimeoutMilliseconds Condition="'$(IsDesktopBuild)' == 'false'">900000</TestTimeoutMilliseconds>
+    </PropertyGroup>
+    
+    <!-- Chutzpah - JavaScript UnitTest related -->
+    <ItemGroup>
+      <JavascriptTests Include="$(VsTestWorkingDirectory)Src\**\chutzpah.json" Exclude="$(VsTestWorkingDirectory)Src\**\obj\**" />
+    </ItemGroup>
+    <PropertyGroup>
+      <ChutzpahTestAdapterPath Condition="'@(JavascriptTests)' != ''">/TestAdapterPath:"$(BuildScriptsDirectory)..\Build.Tools\Chutzpah\bin"</ChutzpahTestAdapterPath>
+    </PropertyGroup>
+    <Message Condition="'@(JavascriptTests)' != ''" Text="Chutzpah.json found. JavaScript tests will be included" />
+
+    <!-- Run With VSTest -->
+    <Exec Condition="('$(CodeCoverage)' != 'true') And '$(UnitTestAssemblies)' != ''"
+          ContinueOnError="false"
+          IgnoreExitCode="false"
+          WorkingDirectory="$(VsTestWorkingDirectory)"
+          Timeout="$(TestTimeoutMilliseconds)"
+          Command='SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(PathToTestTool)" $(UnitTestAssemblies) @(JavascriptTests, &#39; &#39;) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) $(ParallelSwitch) $(ChutzpahTestAdapterPath)' />
+
+    <!-- Run VSTest using dotCover -->
+    <Exec Condition="('$(CodeCoverage)' == 'true') And '$(UnitTestAssemblies)' != ''"
+          ContinueOnError="false"
+          IgnoreExitCode="false"
+          WorkingDirectory="$(VsTestWorkingDirectory)"
+          Timeout="$(TestTimeoutMilliseconds)"
+          Command='SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(DotCoverExecutablePath)" analyse /TargetExecutable="$(PathToTestTool)" /TargetArguments="$(UnitTestAssemblies) @(JavascriptTests, &#39; &#39;) \&#34;$(ResultsFileSwitch)\&#34; $(PlatformSwitch) $(IsolationSwitch) $(ParallelSwitch) $(ChutzpahTestAdapterPath)" /TargetWorkingDir=$(VsTestWorkingDirectory) /Output="$(DotCoverReportFile)" /ReportType="$(DotCoverReportType)" /Filters="@(CodeCoverageFilters)" /AttributeFilters="System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverageAttribute;System.Runtime.CompilerServices.CompilerGeneratedAttribute;System.CodeDom.Compiler.GeneratedCodeAttribute"' />
+
+    <ReadLinesFromFile Condition="('$(IsDesktopBuild)' == 'true' And '$(CodeCoverage)' == 'true') And '$(UnitTestAssemblies)' != ''" File="$(DotCoverReportFile)">
+      <Output TaskParameter="Lines" PropertyName="DotCoverResult" />
+    </ReadLinesFromFile>
+
+    <PropertyGroup Condition="'$(IsDesktopBuild)' == 'true' And '$(CodeCoverage)' == 'true' And '$(UnitTestAssemblies)' != ''">
+      <CodeCoverageValue>$([System.Text.RegularExpressions.Regex]::Match($(DotCoverResult), '(?&lt;="Total",)(.*?)(?=[,])'))</CodeCoverageValue>
+      <CodeCoverageValue Condition="'$(CodeCoverageValue)' == ''">0</CodeCoverageValue>
+      <LocalCodeCoverageFile>$(SolutionDirectoryPath)Build\CodeCoverageValues.csv</LocalCodeCoverageFile>
     </PropertyGroup>
 
-    <ItemGroup>
-      <ProjectsForThisRoot Include="@(TrackedProjects->WithMetadataValue('SolutionRoot', '$(TestRunDirectory)'))" />
-      <TestAssemblyDirectories Include="@(ProjectsForThisRoot->'%(OutputPath)'->Distinct())" />
-    </ItemGroup>
+    <WriteLinesToFile 
+      Condition="'$(IsDesktopBuild)' == 'true' And '$(CodeCoverage)' == 'true' And '$(UnitTestAssemblies)' != '' And !Exists($(LocalCodeCoverageFile))"
+      File="$(LocalCodeCoverageFile)" Lines="Date,Value,Branch"/>
+    <WriteLinesToFile 
+      Condition="'$(IsDesktopBuild)' == 'true' And '$(CodeCoverage)' == 'true' And '$(UnitTestAssemblies)' != ''"
+      File="$(LocalCodeCoverageFile)" 
+      Lines="$([System.DateTime]::Now),$(CodeCoverageValue),$(GitFriendlyBranchName)" />
 
-    <ItemGroup>
-      <CandidateTestAssemblies Include="%(TestAssemblyDirectories.FullPath)\**\*$(TestPattern)*.dll"
-                               Exclude="%(TestAssemblyDirectories.FullPath)\**\*Helpers*.dll;
-                                        %(TestAssemblyDirectories.FullPath)\**\Microsoft.*;
-                                        %(TestAssemblyDirectories.FullPath)\**\System.*;" />
+    <Message Condition="'$(IsDesktopBuild)' == 'true' And '$(CodeCoverage)' == 'true' And '$(UnitTestAssemblies)' != ''" Text="
 
-      <AssemblyDependencies Include="%(TestAssemblyDirectories.FullPath)\**\*.dll;
-                                     %(TestAssemblyDirectories.FullPath)\**\*.exe"
-                            Exclude="@(CandidateTestAssemblies)" />
-    </ItemGroup>
+=============================
+Code coverage percentage: $(CodeCoverageValue)
+=============================
 
-    <ItemGroup>
-      <ImpactedTestAssemblies Include="$(ImpactedTestAssemblies)"></ImpactedTestAssemblies>
-    </ItemGroup>
+" Importance="high" />
+    
+    <Message Condition="'$(IsDesktopBuild)' == 'true' And '$(CodeCoverage)' == 'true' And '$(UnitTestAssemblies)' != '' And '$(CodeCoverageValue)' &lt; '30'" Text="
+Code coverage is less than 30%! The hounds have been released.
 
-    <FindInList
-      Condition="'@(ImpactedTestAssemblies->Count())' != '0'"
-      MatchFileNameOnly="true"
-      CaseSensitive="false"
-      List="@(CandidateTestAssemblies)"
-      ItemSpecToFind="%(ImpactedTestAssemblies.Identity)">
-      <Output TaskParameter="ItemFound" ItemName="TestAssemblies" />
-    </FindInList>
+░░░░░░░░░░░█████████████
+░░░░░░░░░███░███░░░░░░██
+███░░░░░██░░░░██░██████████
+████████░░░░░░████░░░░░░░██
+████░░░░░░░░░░██░░██████████
+████░░░░░░░░░░░███░░░░░░░░░██
+████░░░░░░░░░░░██░░██████████
+████░░░░░░░░░░░░████░░░░░░░░█
+████░░░░░░░░░░░░░███░░████░░█
+█████████░░░░░░░░░░████░░░░░█
+███░░░░░██░░░░░░░░░░░░░█████
+░░░░░░░░░███░░░░░░░██████
+░░░░░░░░░░░██░░░░░░██
+░░░░░░░░░░░░███░░░░░██
+░░░░░░░░░░░░░░██░░░░██
+░░░░░░░░░░░░░░░███░░░██
+░░░░░░░░░░░░░░░░░██░░░█
+░░░░░░░░░░░░░░░░░░█░░░█
+░░░░░░░░░░░░░░░░░░██░██
+░░░░░░░░░░░░░░░░░░░███
+" />
 
-    <ItemGroup Condition="'@(ImpactedTestAssemblies->Count())' == '0' And '$(IsDesktopBuild)' == 'true'">
-      <TestAssemblies Include="@(CandidateTestAssemblies)" />
-    </ItemGroup>
+    <!-- Run Cobertura Report Converter -->
+    <CoberturaReportConverter Condition="'$(IsDesktopBuild)' != 'true' And '$(CodeCoverage)' == 'true' And '$(UnitTestAssemblies)' != ''"
+      ImportPath="$(DotCoverReportFile)"
+      TargetPath="$(CoberturaReportTarget)">
+    </CoberturaReportConverter>
 
-    <!-- Determine if we can run the tests using the 64-bit test runner -->
-    <GetAssemblyPlatform
-      Condition="'$(Use32BitTestRunner)' == ''"
-      Assemblies="@(TestAssemblies)"
-      AssemblyDependencies="@(AssemblyDependencies)">
-      <Output ItemName="AssembliesWithTargetPlatform" TaskParameter="Assemblies" />
-      <Output ItemName="AssembliesTargetingX86" TaskParameter="AssembliesTargetingX86" />
-      <Output ItemName="AssembliesTargetingX64" TaskParameter="AssembliesTargetingX64" />
-      <Output PropertyName="Use32BitTestRunner" TaskParameter="MustRun32Bit" />
-      <Output PropertyName="AssemblyPlatformDataKey" TaskParameter="AssemblyPlatformDataKey" />
-    </GetAssemblyPlatform>
-
-    <Message Text="Assembly: %(AssembliesWithTargetPlatform.FileName) -> Platform: %(AssembliesWithTargetPlatform.PEKind) (AnyCPU)" Condition="'@(AssembliesWithTargetPlatform)' != ''" />
-    <Message Text="Assembly: %(AssembliesTargetingX64.FileName) -> Platform: %(AssembliesTargetingX64.PEKind) (x64)" Condition="'@(AssembliesTargetingX64)' != ''" />
-    <Message Text="Assembly: %(AssembliesTargetingX86.FileName) -> Platform: %(AssembliesTargetingX86.PEKind) (x86)" Condition="'@(AssembliesTargetingX86)' != ''" />
-    <Message Condition="'@(AssembliesWithTargetPlatform)' != '' And $(TestPattern.Equals('IntegrationTest', StringComparison.OrdinalIgnoreCase))" Text="Assembly: %(AssembliesWithTargetPlatform.FileName) -> CIEnabled: %(AssembliesWithTargetPlatform.CIEnabled)" />
-
-    <ItemGroup>
-      <_Assemblies Condition="$(TestPattern.Equals('UnitTest', StringComparison.OrdinalIgnoreCase)) == 'true'" Include="@(AssembliesWithTargetPlatform)">
-        <SolutionRoot>$(SolutionRoot)</SolutionRoot>
-        <TestRunDirectory>$(TestRunDirectory)</TestRunDirectory>
-      </_Assemblies>
-      <_Assemblies Condition="'@(_Assemblies)' == '' And '$(DeployEnvironment)' != 'true'" Include="@(AssembliesWithTargetPlatform)">
-        <SolutionRoot>$(SolutionRoot)</SolutionRoot>
-        <TestRunDirectory>$(TestRunDirectory)</TestRunDirectory>
-      </_Assemblies>
-      <_Assemblies Condition="'@(_Assemblies)' == '' And %(AssembliesWithTargetPlatform.CIEnabled) == 'true'" Include="@(AssembliesWithTargetPlatform)">
-        <SolutionRoot>$(SolutionRoot)</SolutionRoot>
-        <TestRunDirectory>$(TestRunDirectory)</TestRunDirectory>
-      </_Assemblies>
-    </ItemGroup>
-
-  </Target>
-
-
-  <Target Name="RunTestAssemblies" Inputs="@(_Assemblies)" Outputs="%(_Assemblies.TestRunDirectory);%(_Assemblies.Platform)">
+    <Message Condition="'$(IsDesktopBuild)' != 'true' And '$(CodeCoverage)' == 'true' And '$(UnitTestAssemblies)' != ''" Text="##vso[codecoverage.publish codecoveragetool=Cobertura;summaryfile=$(CoberturaReportTarget);]"></Message>
 
     <PropertyGroup>
-      <PlatformSwitch>/Platform:%(_Assemblies.Platform)</PlatformSwitch>
-      <TestCaseFilter Condition="'%(_Assemblies.CICategory)' != ''">/TestCaseFilter:`&quot;%(_Assemblies.CICategory)`&quot;</TestCaseFilter>
-      <TestRunDirectory>%(_Assemblies.TestRunDirectory)</TestRunDirectory>
-      <AssembliesUnderTest>@(_Assemblies->'"%(FullPath)"', ',')</AssembliesUnderTest>
-      <AdditionalVariables Condition="'$(TestPattern)' != '' And $(TestPattern.Equals('IntegrationTest', StringComparison.OrdinalIgnoreCase))">
-$additionalEnvironmentVariables.Add('EXPERT_ENVIRONMENT_URL', '$(ExpertEnvironmentUrl)');
-$additionalEnvironmentVariables.Add('EXPERT_SOURCE_DIRECTORY', '$(ExpertSourceDirectory)');
-      </AdditionalVariables>
-      <TestAdapterPath>$([System.IO.Path]::GetTempPath())$([System.DateTime]::UtcNow.ToFileTimeUtc())\</TestAdapterPath>
+      <TestOutcome>Succeeded</TestOutcome>
     </PropertyGroup>
 
-    <!-- TaskObjectKey will be the task object from GetAssemblyPlatform -->
-    <PowerShellScript
-      Condition="'$(AssembliesUnderTest)' != ''"
-      ScriptBlock='
-$ErrorActionPreference = "Stop"
-$InformationPreference = "Continue"
-
-New-Item -ItemType Directory -Path &quot;$(TestAdapterPath)&quot; -Force
-
-$testTool = "$(PathToTestTool)"
-$testToolArgs = "$(ResultsFileSwitch) $(PlatformSwitch) $(TestCaseFilter) $(ParallelSwitch)"
-$testRunDirectory = "$(TestRunDirectory)"
-$testAdapterPath = "$(TestAdapterPath)"
-$workingDirectory = "$(SolutionRoot)"
-$isDesktopBuild = $$(IsDesktopBuild)
-$referencePaths = $(AllDirectoriesWithDlls)
-$testFiles = $(AssembliesUnderTest)
-$RunInParallel = $$(RunTestsInParallel)
-$additionalEnvironmentVariables = @{}
-$(AdditionalVariables)
-
-try {
-  . Testing\RunTests.ps1 -PathToTestTool $testTool -ToolArgs $testToolArgs -WorkingDirectory $workingDirectory -SolutionRoot $testRunDirectory -TestAdapterPath &quot;$(TestAdapterPath)&quot; -IsDesktopBuild:$isDesktopBuild -ReferencePaths $referencePaths -TestAssemblies $testFiles -AdditionalEnvironmentVariables $additionalEnvironmentVariables -RunInParallel $RunInParallel
-} catch {
-    $Error[0] | Format-List -Force
-    throw
-}'
-      OnErrorReason="Test failure"
-      TaskObjects="$(AssemblyPlatformDataKey)" />
-
-    <OnError ExecuteTargets="ShowTestFailureHelp" />
-
+    <OnError ExecuteTargets="OnTestFailure" />
   </Target>
 
-
-  <Target Name="ShowTestFailureHelp">
-    <Message Text="!!!" Importance="High" />
-    <Message Text="Run 'bm -Target RunTests' to issue another test run" Importance="High" />
-    <Message Text="!!!" Importance="High" />
-  </Target>
 
 </Project>

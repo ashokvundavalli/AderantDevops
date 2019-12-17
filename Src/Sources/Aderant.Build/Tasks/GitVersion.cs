@@ -1,9 +1,8 @@
-﻿using System;
+using System;
 using LibGit2Sharp;
 using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks {
-
     public sealed class GitVersion : Microsoft.Build.Utilities.Task { 
         private string canonicalBranchName;
         private string friendlyBranchName;
@@ -13,6 +12,8 @@ namespace Aderant.Build.Tasks {
         public string WorkingDirectory { get; set; }
 
         public bool Discover { get; set; }
+
+        public ITaskItem GitFolder { get; set; }
 
         public bool AllowTfsBuildVariableFallback { get; set; } = true;
 

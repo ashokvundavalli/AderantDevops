@@ -16,8 +16,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         private string name;
         private IList<XAttribute> customAttributes;
         private ModuleType? type;
-        private bool? replicateToDependencies = null;
-        private bool? replaceVersionConstraints = null;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ExpertModule"/> class.
@@ -55,16 +53,9 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// Initializes a new instance of the <see cref="ExpertModule"/> class from a Product Manifest element.
         /// </summary>
         /// <param name="element">The product manifest module element.</param>
-        internal ExpertModule(XElement element)
+        internal ExpertModule(XElement element) 
             : this() {
             ExpertModuleMapper.MapFrom(element, this, out customAttributes);
-        }
-
-        internal ExpertModule(string name) {
-            if (string.IsNullOrWhiteSpace(name)) {
-                throw new ArgumentException("Value cannot be null or whitespace.", nameof(name));
-            }
-            Name = name;
         }
 
         /// <summary>
@@ -101,7 +92,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 return false;
             }
 
-            return String.Equals(name, other.name, StringComparison.OrdinalIgnoreCase)
+            return String.Equals(name, other.name, StringComparison.OrdinalIgnoreCase) 
                    && VersionRequirement == other.VersionRequirement
                    && string.Equals(DependencyGroup, other.DependencyGroup, StringComparison.OrdinalIgnoreCase);
         }
@@ -117,8 +108,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             { "Tests", ModuleType.Test },
         };
 
-        public bool ExcludeFromPackaging { get; set; }
-
         public static ModuleType GetModuleType(string name) {
             string firstPart = name.Split('.')[0];
 
@@ -127,7 +116,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (typeMap.TryGetValue(firstPart, out type)) {
                 return type;
             }
-
+           
             if (Enum.TryParse(firstPart, true, out type)) {
                 return type;
             }
@@ -192,27 +181,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <summary>
         /// Gets or sets a value indicating whether to replicate this instance to the dependencies folder (otherwise it just stays in package)
         /// </summary>
-        public bool ReplicateToDependencies {
-            get {
-                return replicateToDependencies.GetValueOrDefault(true);
-            }
-            set {
-                replicateToDependencies = value;
-            }
-        }
-
-        public bool HasReplicateToDependenciesValue {
-            get { return replicateToDependencies != null; }
-        }
-
-        public bool ReplaceVersionConstraint {
-            get {
-                return replaceVersionConstraints ?? false;
-            }
-            set {
-                replaceVersionConstraints = value;
-            }
-        }
+        public bool ReplicateToDependencies { get; set; } = true;
 
         internal VersionRequirement VersionRequirement {
             get {
@@ -227,12 +196,10 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        public string FullPath { get; set; }
-
-        public string DependencyGroup { get; set; } = Constants.MainDependencyGroup;
+        public string DependencyGroup { get; set; } = BuildConstants.MainDependencyGroup;
 
         internal bool IsInDefaultDependencyGroup {
-            get { return string.IsNullOrWhiteSpace(DependencyGroup) || string.Equals(DependencyGroup, Constants.MainDependencyGroup); }
+            get { return string.IsNullOrWhiteSpace(DependencyGroup) || string.Equals(DependencyGroup, BuildConstants.MainDependencyGroup); }
         }
 
         /// <summary>
@@ -253,7 +220,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// Returns a hash code for this instance.
         /// </summary>
         /// <returns>
-        /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
+        /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table. 
         /// </returns>
         public override int GetHashCode() {
             if (name != null) {

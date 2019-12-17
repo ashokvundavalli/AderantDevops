@@ -1,5 +1,0 @@
-*.lic
-*.srcsrv
-*LexisNexis*
-iManage*.*
-CodeAnalysis\*

@@ -13,7 +13,6 @@ namespace IntegrationTest.Build {
         public TestContext TestContext { get; set; }
 
         [TestMethod]
-        [Ignore]
         public void ReplaceXml() {
             string lightUpManifest = Path.Combine(TestContext.DeploymentDirectory, "LightUpManifest.xml");
 

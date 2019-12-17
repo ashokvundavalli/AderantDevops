@@ -3,17 +3,33 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.Providers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTest.Build {
     [TestClass]
     public class DependencyBuilderTests {
-        public TestContext TestContext { get; set; }
+        private const string BranchPath = @"c:\tfs\ExpertSuite\Dev\Framework";
+
+        #region Test Context
+
+        private TestContext testContextInstance;
+
+        /// <summary>
+        ///Gets or sets the test context which provides
+        ///information about and functionality for the current test run.
+        ///</summary>
+        public TestContext TestContext {
+            get { return testContextInstance; }
+            set { testContextInstance = value; }
+        }
+
+        #endregion
 
         [TestMethod]
+        [Ignore]
         public void GetModulesReturnsDistinctModules() {
-            var provider = new FakeProvider();
-            DependencyBuilder builder = new DependencyBuilder(provider);
+            DependencyBuilder builder = new DependencyBuilder(BranchPath);
             IEnumerable<ExpertModule> modules = builder.GetAllModules();
             Assert.IsNotNull(modules);
             Assert.AreNotEqual(0, modules.Count());
@@ -24,8 +40,7 @@ namespace UnitTest.Build {
         [TestMethod]
         [Ignore]
         public void GetModuleDependenciesReturnsCorrectDependencies() {
-            var provider = new FakeProvider();
-            DependencyBuilder builder = new DependencyBuilder(provider);
+            DependencyBuilder builder = new DependencyBuilder(BranchPath);
             IEnumerable<ModuleDependency> modulesDependencies = builder.GetModuleDependencies();
             Assert.IsNotNull(modulesDependencies);
             Assert.AreNotEqual(0, modulesDependencies.Count());
@@ -38,28 +53,23 @@ namespace UnitTest.Build {
 
         [TestMethod]
         public void BuildMGraphDocumentReturnsCorrectDocument() {
-            var provider = new FakeProvider();
-            DependencyBuilder builder = new DependencyBuilder(provider);
+            DependencyBuilder builder = new DependencyBuilder(BranchPath);
             XDocument doc = builder.BuildMGraphDocument();
             Assert.IsNotNull(doc);
             TestContext.WriteLine(doc.ToString(SaveOptions.None));
         }
 
         [TestMethod]
-        [Ignore]
         public void BuildDGMLDocumentReturnsCorrectDocument() {
-            var provider = new FakeProvider();
-            DependencyBuilder builder = new DependencyBuilder(provider);
+            DependencyBuilder builder = new DependencyBuilder(BranchPath);
             XDocument doc = builder.BuildDgmlDocument(true, false);
             Assert.IsNotNull(doc);
             TestContext.WriteLine(doc.ToString(SaveOptions.None));
         }
 
         [TestMethod]
-        [Ignore]
         public void BuildDependencyTree() {
-            var provider = new FakeProvider();
-            DependencyBuilder builder = new DependencyBuilder(provider);
+            DependencyBuilder builder = new DependencyBuilder(BranchPath);
             IEnumerable<Aderant.Build.Build> tree = builder.GetTree(false);
 
 
@@ -80,7 +90,6 @@ namespace UnitTest.Build {
         }
 
         [TestMethod]
-        [Ignore]
         public void When_C_Depends_On_B_Depends_On_A() {
             var provider = new FakeProvider();
 
@@ -92,7 +101,6 @@ namespace UnitTest.Build {
         }
 
         [TestMethod]
-        [Ignore]
         public void When_Bottom_Of_Stack_Is_Equivalent_Can_Be_Built_In_Parallel() {
             var provider = new ParallelFakeProvider();
 
@@ -102,15 +110,15 @@ namespace UnitTest.Build {
             Assert.AreEqual(3, builds.Count);
             CollectionAssert.AllItemsAreUnique(builds);
 
-            var build = builds.Last();
+            Aderant.Build.Build build = builds.Last();
             Assert.AreEqual(2, build.Modules.Count());
             Assert.AreEqual("C", build.Modules.First().Name);
             Assert.AreEqual("D", build.Modules.Last().Name);
         }
 
         [TestMethod]
-        [ExpectedException(typeof(CircularDependencyException))]
         [Ignore]
+        [ExpectedException(typeof (CircularDependencyException))]
         public void WhenDependencyChainIsCircularAnExceptionIsThrown() {
             var provider = new CircularReferenceProvider();
 
@@ -120,6 +128,16 @@ namespace UnitTest.Build {
     }
 
     internal class FakeProvider : TestModuleProviderBase {
+        public XDocument ProductManifest {
+            get { return XDocument.Parse(@"<?xml version='1.0' encoding='utf-8'?>
+<ProductManifest Name='Expert' ExpertVersion='802'>
+    <Modules>
+        <Module Name='A' AssemblyVersion='1.8.0.0' />
+        <Module Name='B' AssemblyVersion='1.8.0.0' />
+        <Module Name='C' AssemblyVersion='1.8.0.0' />
+    </Modules>
+</ProductManifest>"); }
+        }
 
         public override string Branch {
             get { return @"Dev\Foo"; }
@@ -127,13 +145,16 @@ namespace UnitTest.Build {
 
         public override IEnumerable<ExpertModule> GetAll() {
             return new ExpertModule[] {
-                new ExpertModule("A") {
+                new ExpertModule() {
+                    Name = "A",
                     Branch = Branch
                 },
-                new ExpertModule("B") {
+                new ExpertModule() {
+                    Name = "B",
                     Branch = Branch
                 },
-                new ExpertModule("C") {
+                new ExpertModule() {
+                    Name = "C",
                     Branch = Branch
                 }
             };
@@ -143,7 +164,7 @@ namespace UnitTest.Build {
             if (moduleName == "A") {
                 manifest = DependencyManifest.Parse("A", @"<?xml version='1.0' encoding='utf-8'?>
 <DependencyManifest>
-    <ReferencedModules>
+    <ReferencedModules>        
     </ReferencedModules>
 </DependencyManifest>");
                 return true;
@@ -180,6 +201,17 @@ namespace UnitTest.Build {
     }
 
     internal class ParallelFakeProvider : TestModuleProviderBase {
+        public XDocument ProductManifest {
+            get { return XDocument.Parse(@"<?xml version='1.0' encoding='utf-8'?>
+<ProductManifest Name='Expert' ExpertVersion='802'>
+    <Modules>
+        <Module Name='A' AssemblyVersion='1.8.0.0' />
+        <Module Name='B' AssemblyVersion='1.8.0.0' />
+        <Module Name='C' AssemblyVersion='1.8.0.0' />
+        <Module Name='D' AssemblyVersion='1.8.0.0' />
+    </Modules>
+</ProductManifest>"); }
+        }
 
         public override string Branch {
             get { return @"Dev\Foo"; }
@@ -187,16 +219,20 @@ namespace UnitTest.Build {
 
         public override IEnumerable<ExpertModule> GetAll() {
             return new ExpertModule[] {
-                new ExpertModule("A") {
+                new ExpertModule() {
+                    Name = "A",
                     Branch = Branch
                 },
-                new ExpertModule("B") {
+                new ExpertModule() {
+                    Name = "B",
                     Branch = Branch
                 },
-                new ExpertModule("C") {
+                new ExpertModule() {
+                    Name = "C",
                     Branch = Branch
                 },
-                new ExpertModule("D") {
+                new ExpertModule() {
+                    Name = "D",
                     Branch = Branch
                 }
             };
@@ -206,7 +242,7 @@ namespace UnitTest.Build {
             if (moduleName == "A") {
                 manifest = DependencyManifest.Parse("A", @"<?xml version='1.0' encoding='utf-8'?>
 <DependencyManifest>
-    <ReferencedModules>
+    <ReferencedModules>        
     </ReferencedModules>
 </DependencyManifest>");
                 return true;
@@ -255,13 +291,24 @@ namespace UnitTest.Build {
     }
 
     internal class CircularReferenceProvider : TestModuleProviderBase {
+        public XDocument ProductManifest {
+            get { return XDocument.Parse(@"<?xml version='1.0' encoding='utf-8'?>
+<ProductManifest Name='Expert' ExpertVersion='802'>
+    <Modules>
+        <Module Name='A' AssemblyVersion='1.8.0.0' />
+        <Module Name='B' AssemblyVersion='1.8.0.0' />
+    </Modules>
+</ProductManifest>"); }
+        }
 
         public override IEnumerable<ExpertModule> GetAll() {
             return new ExpertModule[] {
-                new ExpertModule("A") {
+                new ExpertModule() {
+                    Name = "A",
                     Branch = Branch
                 },
-                new ExpertModule("B") {
+                new ExpertModule() {
+                    Name = "B",
                     Branch = Branch
                 },
             };
@@ -271,7 +318,7 @@ namespace UnitTest.Build {
             if (moduleName == "A") {
                 manifest = DependencyManifest.Parse("A", @"<?xml version='1.0' encoding='utf-8'?>
 <DependencyManifest>
-    <ReferencedModules>
+    <ReferencedModules>        
        <ReferencedModule Name='B' />
     </ReferencedModules>
 </DependencyManifest>");

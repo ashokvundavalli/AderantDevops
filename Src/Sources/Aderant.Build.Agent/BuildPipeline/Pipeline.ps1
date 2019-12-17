@@ -1,4 +1,4 @@
-﻿Set-StrictMode -Version 'Latest'
+﻿Set-StrictMode -Version 2
 [CmdletBinding()]
 
 $ErrorActionPreference = 'Stop'
@@ -6,10 +6,6 @@ $ErrorActionPreference = 'Stop'
 [string]$repository = Get-VstsInput -Name 'Repository'
 [string]$version = Get-VstsInput -Name 'Branch'
 [string]$CustomSource = Get-VstsInput -Name 'CustomSource'
-
-if ([string]::IsNullOrWhiteSpace($version)) {
-    $version = 'master'
-}
 
 Write-Host "Repository: $repository"
 Write-Host "Version: $version"
@@ -54,16 +50,16 @@ Write-Host "BUILD_STAGINGDIRECTORY: $ENV:BUILD_STAGINGDIRECTORY"
 Write-Host "SYSTEM_PULLREQUEST_TARGETBRANCH: $ENV:SYSTEM_PULLREQUEST_TARGETBRANCH"
 Write-Host "SYSTEM_PULLREQUEST_SOURCEBRANCH: $ENV:SYSTEM_PULLREQUEST_SOURCEBRANCH"
 Write-Host "SYSTEM_PULLREQUEST_PULLREQUESTID: $ENV:SYSTEM_PULLREQUEST_PULLREQUESTID"
-Get-Variable | ForEach-Object { Write-Host ("Name : {0}, Value: {1}" -f $_.Name,$_.Value ) }
+Get-Variable |%{ Write-Host ("Name : {0}, Value: {1}" -f $_.Name,$_.Value ) }
 
 $pathToGit = "C:\Program Files\Git\cmd\git.exe"
 
 # Clean up other cloned repositories in case we are recycling a working dir
-Get-ChildItem -Path $Env:BUILD_SOURCESDIRECTORY -Depth 1 -Filter "*_BUILD_*" -Directory | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+gci -Path $Env:BUILD_SOURCESDIRECTORY -Depth 1 -Filter "*_BUILD_*" -Directory | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
 
-$buildFolder = [System.IO.Path]::Combine($Env:BUILD_SOURCESDIRECTORY, "_BUILD_" + $ENV:BUILD_BUILDID)
+$buildFolder = [System.IO.Path]::Combine($Env:BUILD_SOURCESDIRECTORY, "_BUILD_" + (Get-Random))    
 
-function SetGitOptions() {
+function SetGitOptions() {  
     if (-not (Test-Path $pathToGit)) {
         throw "Git.exe not found at $pathToGit"
     }
@@ -71,43 +67,33 @@ function SetGitOptions() {
     $hosts = @("tfs", "tfs.ap.aderant.com")
     foreach ($entry in $hosts) { # Host is a reserved readonly PowerShell variable and so cannot be assigned to
         & $pathToGit config --global credential.$entry.interactive never
-        & $pathToGit config --global credential.$entry.integrated true
+        & $pathToGit config --global credential.$entry.integrated true                
     }
     & $pathToGit config --global http.emptyAuth true
     & $pathToGit config --global credential.authority ntlm
 }
 
-function CloneRepo {
-    param (
-        [Parameter(Mandatory=$true)][string]$repo,
-        [Parameter(Mandatory=$false)][string]$version = 'master',
-        [switch]$shallow
-    )
-
-    Write-Host "About to clone $repo ($version)"
-
-    [string]$options = '--single-branch'
-
-    if ($shallow.IsPresent) {
-        $options = '--depth 1 --shallow-submodules'
+function CloneRepo($repo, $version) {
+    if (-not $version) {
+        $version = "master"
     }
-
-    cmd.exe /c ""`"$pathToGit`"" clone $repo --branch $version $options $buildFolder 2>&1"
+    Write-Host "About to clone $repo ($version)"
+    cmd /c ""`"$pathToGit`"" clone $repo --branch $version --single-branch $buildFolder 2>&1"
 }
 
 if ($repository -eq "default" -or -not $CustomSource) {
     # By default use script from checked in code at Build.Infrastructure at TFS
-    CloneRepo -repo 'https://tfs.aderant.com/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure' -version $version -shallow
+    CloneRepo "http://tfs:8080/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure" $version
 } else {
-    # During debug of this script it is necessary to use a local copy
+    # During debug of this script it is necessary to use a local copy 
     if ($CustomSource -and -not [string]::IsNullOrEmpty($CustomSource)) {
-        if ($CustomSource.StartsWith("http")) {
-            CloneRepo -repo $CustomSource -version $version
+        if ($CustomSource.StartsWith("http")) {        
+            CloneRepo $CustomSource $version
         } else {
             # e.g \\wsakl001092\c$\Source\Build.Infrastructure
-            Write-Host "Copying from path $CustomSource"
+            Write-Host "Copying from path $CustomSource"        
             Copy-Item $CustomSource $buildFolder -Recurse
-        }
+        }   
     }
 }
 
@@ -115,7 +101,7 @@ if ($repository -eq "default" -or -not $CustomSource) {
 SetGitOptions
 
 $buildInfrastructurePath = [System.IO.Path]::Combine($buildFolder, "Src")
-
+    
 [System.Environment]::SetEnvironmentVariable("EXPERT_BUILD_DIRECTORY", $buildInfrastructurePath, [System.EnvironmentVariableTarget]::Process)
 
 Write-Host ("##vso[task.setvariable variable=EXPERT_BUILD_DIRECTORY;]$buildInfrastructurePath")

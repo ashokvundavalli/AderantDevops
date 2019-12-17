@@ -1,4 +1,6 @@
-﻿using System.Xml.Linq;
+using System;
+using System.IO.Compression;
+using System.Xml.Linq;
 
 namespace Aderant.Build.DependencyAnalyzer {
     public class WebModule : ExpertModule {

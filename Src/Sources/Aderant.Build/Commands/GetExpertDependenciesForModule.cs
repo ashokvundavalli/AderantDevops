@@ -3,11 +3,12 @@ using System.Management.Automation;
 using System.Threading;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyResolver;
+using Aderant.Build.DependencyResolver.Resolvers;
 
 namespace Aderant.Build.Commands {
     [Cmdlet(VerbsCommon.Get, "ExpertDependenciesForModule")]
     public class GetExpertDependenciesForModule : BuildCmdlet {
-        private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+        private CancellationTokenSource cancellationToken = new CancellationTokenSource();
 
         [Parameter(Mandatory = false, Position = 0)]
         public string ModuleName { get; set; }
@@ -25,19 +26,27 @@ namespace Aderant.Build.Commands {
         [Parameter(Mandatory = false, Position = 3)]
         public string DropPath { get; set; }
 
-        [Parameter(Mandatory = false, Position = 4)]
-        public SwitchParameter Update { get; set; }
+        [Parameter(Mandatory = true, Position = 4)]
+        public string BuildScriptsDirectory { get; set; }
 
         [Parameter(Mandatory = false, Position = 5)]
-        public SwitchParameter ShowOutdated { get; set; }
+        public SwitchParameter Update { get; set; }
 
         [Parameter(Mandatory = false, Position = 6)]
+        public SwitchParameter ShowOutdated { get; set; }
+
+        [Parameter(Mandatory = false, Position = 7)]
         public SwitchParameter Force { get; set; }
 
-        [Parameter(Mandatory = false, Position = 7, HelpMessage = "Specifies the path the product manifest.")]
+        // This should be removed when we are fully migrated over. This exists for backwards compatibility with other versions of the build tools.
+        [Parameter(Mandatory = false, Position = 8, DontShow = true)]
+        [Obsolete]
+        public SwitchParameter UseThirdPartyFromDrop { get; set; }
+
+        [Parameter(Mandatory = false, Position = 9, HelpMessage = "Specifies the path the product manifest.")]
         public string ProductManifestPath { get; set; }
 
-        [Parameter(Mandatory = false, Position = 8, DontShow = true)]
+        [Parameter(Mandatory = false, Position = 10,  DontShow = true)]
         public string ManifestFile { get; set; }
 
         protected override void Process() {
@@ -47,15 +56,13 @@ namespace Aderant.Build.Commands {
                 ModuleName = ParameterHelper.GetCurrentModuleName(null, this.SessionState);
             }
 
+            ExpertManifest productManifest = null;
             try {
                 if (string.IsNullOrEmpty(ProductManifestPath)) {
                     ProductManifestPath = ParameterHelper.GetExpertManifestPath(ProductManifestPath, this.SessionState);
                 }
-
-                if (!string.IsNullOrEmpty(ProductManifestPath)) {
-                    var productManifest = ExpertManifest.Load(ProductManifestPath);
-                    productManifest.ModulesDirectory = ModulesRootPath;
-                }
+                productManifest = ExpertManifest.Load(ProductManifestPath);
+                productManifest.ModulesDirectory = ModulesRootPath;
             } catch (ArgumentException) {
                 //git modules don't need ProductManifestPath
             }
@@ -64,24 +71,42 @@ namespace Aderant.Build.Commands {
                 DropPath = ParameterHelper.GetDropPath(null, SessionState);
             }
 
-            var workflow = new ResolverWorkflow(Logger);
+            ResolverRequest request = new ResolverRequest(Logger, ModulesRootPath) {
+                Force = Force,
+                Update = Update
+            };
 
-            workflow.ModulesRootPath = ModulesRootPath;
-            workflow.ManifestFile = ManifestFile;
-            workflow.DropPath = DropPath;
-            workflow.Force = Force.ToBool();
-            workflow.Update = Update.ToBool();
-
-            if (!string.IsNullOrEmpty(ModulesRootPath)) {
-                workflow.Request.AddModule(ModulesRootPath);
+            if (productManifest != null) {
+                request.ModuleFactory = productManifest;
             }
 
-            workflow.Run(cancellationTokenSource.Token, MyInvocation.BoundParameters.ContainsKey("Verbose"));
+            if (!string.IsNullOrEmpty(ModuleName)) {
+                request.AddModule(ModuleName);
+            }
+
+            if (!string.IsNullOrEmpty(DependenciesDirectory)) {
+                request.SetDependenciesDirectory(DependenciesDirectory);
+            }
+
+            ExpertModuleResolver moduleResolver;
+
+            if (!string.IsNullOrWhiteSpace(ManifestFile)) {
+                moduleResolver = new ExpertModuleResolver(new PhysicalFileSystem(ModulesRootPath, Logger), ManifestFile);
+                request.RequiresThirdPartyReplication = true;
+                request.Force = true;
+            } else {
+                moduleResolver = new ExpertModuleResolver(new PhysicalFileSystem(ModulesRootPath, Logger));
+            }
+            
+            moduleResolver.AddDependencySource(DropPath, ExpertModuleResolver.DropLocation);
+
+            Resolver resolver = new Resolver(Logger, moduleResolver, new NupkgResolver());
+            resolver.ResolveDependencies(request, cancellationToken.Token, MyInvocation.BoundParameters.ContainsKey("Verbose")); 
         }
 
         protected override void StopProcessing() {
             base.StopProcessing();
-            cancellationTokenSource.Cancel();
+            cancellationToken.Cancel();
         }
     }
 }

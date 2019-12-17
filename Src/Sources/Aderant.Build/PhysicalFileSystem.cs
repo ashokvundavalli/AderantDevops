@@ -1,78 +1,80 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
 using Aderant.Build.Logging;
-using Aderant.Build.Packaging;
-using Aderant.Build.Utilities;
 
 namespace Aderant.Build {
-
-    [Export]
-    [Export(typeof(IFileSystem2))]
-    [Export(typeof(IFileSystem))]
-    [Export("FileSystemService")]
     public class PhysicalFileSystem : IFileSystem2 {
-        private static CreateSymlinkLink createSymlinkLink = NativeMethods.CreateSymbolicLink;
-
-        private static CreateSymlinkLink createHardlink = (newFileName, target, flags) => NativeMethods.CreateHardLink(newFileName, target, IntPtr.Zero);
-
+        private readonly string root;
         private ILogger logger;
 
-        [ImportingConstructor]
-        public PhysicalFileSystem() {
-        }
 
-        /// <summary>
-        /// Creates a new instance rooted at the given directory.
-        /// </summary>
-        /// <param name="root">The root directory</param>
-        public PhysicalFileSystem(string root)
-            : this(root, null) {
+        public PhysicalFileSystem(string root) : this(root, null) {
         }
-
         public PhysicalFileSystem(string root, ILogger logger) {
-            this.Root = root;
+            if (String.IsNullOrEmpty(root)) {
+                throw new ArgumentException($"Argument cannot be null or empty", nameof(root));
+            }
+            this.root = root;
             this.logger = logger;
         }
 
-        /// <summary>
-        /// The root directory for this instance.
-        /// </summary>
-        public string Root { get; }
+        public string Root {
+            get {
+                return root;
+            }
+        }
 
         public virtual string GetFullPath(string path) {
-            ErrorUtilities.IsNotNull(path, nameof(path));
-            return Path.GetFullPath(path);
+            if (String.IsNullOrEmpty(path)) {
+                return Root;
+            }
+            return Path.Combine(Root, path);
         }
 
-        public string GetParent(string path) {
-            return Directory.GetParent(path.TrimEnd(PathUtility.DirectorySeparatorCharArray)).FullName;
-        }
-
-        public virtual string AddFile(string path, Stream stream) {
+        public virtual void AddFile(string path, Stream stream) {
             if (stream == null) {
                 throw new ArgumentNullException(nameof(stream));
             }
 
-            return AddFileCore(path, targetStream => stream.CopyTo(targetStream));
+            AddFileCore(path, targetStream => stream.CopyTo(targetStream));
         }
 
-        public virtual string AddFile(string path, Action<Stream> writeToStream) {
+        public virtual void AddFile(string path, Action<Stream> writeToStream) {
             if (writeToStream == null) {
                 throw new ArgumentNullException(nameof(writeToStream));
             }
 
-            return AddFileCore(path, writeToStream);
+            AddFileCore(path, writeToStream);
+        }
+
+        private void AddFileCore(string path, Action<Stream> writeToStream) {
+            EnsureDirectory(Path.GetDirectoryName(path));
+
+            string fullPath = GetFullPath(path);
+
+            using (Stream outputStream = File.Create(fullPath)) {
+                writeToStream(outputStream);
+            }
         }
 
         public virtual void DeleteFile(string path) {
-            DeleteFile(path, false);
+            if (!FileExists(path)) {
+                return;
+            }
+
+            try {
+                MakeFileWritable(path);
+                path = GetFullPath(path);
+                File.Delete(path);
+            } catch (FileNotFoundException) {
+
+            }
+        }
+
+        public virtual void DeleteDirectory(string path) {
+            DeleteDirectory(path, recursive: false);
         }
 
         public virtual void DeleteDirectory(string path, bool recursive) {
@@ -87,26 +89,27 @@ namespace Aderant.Build {
                 // The directory is not guaranteed to be gone since there could be
                 // other open handles. Wait, up to half a second, until the directory is gone.
                 for (int i = 0; Directory.Exists(path) && i < 5; ++i) {
-                    Thread.Sleep(100);
+                    System.Threading.Thread.Sleep(100);
                 }
             } catch (DirectoryNotFoundException) {
             }
         }
 
-        public virtual IEnumerable<string> GetFiles(string path, string inclusiveFilter, bool recursive) {
-            path = PathUtility.EnsureTrailingSlash(GetFullPath(path));
-            if (string.IsNullOrEmpty(inclusiveFilter)) {
-                inclusiveFilter = "*.*";
-            }
+        public virtual IEnumerable<string> GetFiles(string path, bool recursive) {
+            return GetFiles(path, null, recursive);
+        }
 
+        public virtual IEnumerable<string> GetFiles(string path, string filter, bool recursive, bool notRelative = false) {
+            path = PathUtility.EnsureTrailingSlash(GetFullPath(path));
+            if (String.IsNullOrEmpty(filter)) {
+                filter = "*.*";
+            }
             try {
                 if (!Directory.Exists(path)) {
                     return Enumerable.Empty<string>();
                 }
-
-                var files = Directory.EnumerateFiles(path, inclusiveFilter, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
-
-                return files;
+                var files = Directory.EnumerateFiles(path, filter, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+                return notRelative ? files : files.Select(MakeRelativePath);
             } catch (UnauthorizedAccessException) {
 
             } catch (DirectoryNotFoundException) {
@@ -116,15 +119,14 @@ namespace Aderant.Build {
             return Enumerable.Empty<string>();
         }
 
-        public virtual IEnumerable<string> GetDirectories(string path, bool recursive = false) {
+        public virtual IEnumerable<string> GetDirectories(string path, bool recursive = false, bool notRelative = false) {
             try {
                 path = PathUtility.EnsureTrailingSlash(GetFullPath(path));
                 if (!Directory.Exists(path)) {
                     return Enumerable.Empty<string>();
                 }
-
                 var files = Directory.EnumerateDirectories(path, "*", recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
-                return files;
+                return notRelative ? files : files.Select(MakeRelativePath);
             } catch (UnauthorizedAccessException) {
 
             } catch (DirectoryNotFoundException) {
@@ -139,7 +141,6 @@ namespace Aderant.Build {
             if (File.Exists(path)) {
                 return File.GetLastWriteTimeUtc(path);
             }
-
             return Directory.GetLastWriteTimeUtc(path);
         }
 
@@ -148,7 +149,6 @@ namespace Aderant.Build {
             if (File.Exists(path)) {
                 return File.GetCreationTimeUtc(path);
             }
-
             return Directory.GetCreationTimeUtc(path);
         }
 
@@ -157,7 +157,6 @@ namespace Aderant.Build {
             if (File.Exists(path)) {
                 return File.GetLastAccessTimeUtc(path);
             }
-
             return Directory.GetLastAccessTimeUtc(path);
         }
 
@@ -173,7 +172,7 @@ namespace Aderant.Build {
 
         public virtual Stream OpenFile(string path) {
             path = GetFullPath(path);
-            return new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.SequentialScan);
+            return File.OpenRead(path);
         }
 
         public virtual Stream OpenFileForWrite(string path) {
@@ -183,12 +182,26 @@ namespace Aderant.Build {
 
         public virtual Stream CreateFile(string path) {
             string fullPath = GetFullPath(path);
-            EnsureDirectory(Path.GetDirectoryName(fullPath));
+
+            // before creating the file, ensure the parent directory exists first.
+            string directory = Path.GetDirectoryName(fullPath);
+            if (!Directory.Exists(directory)) {
+                Directory.CreateDirectory(directory);
+            }
 
             return File.Create(fullPath);
         }
 
-        public virtual void MakeFileWritable(string path) {
+        protected string MakeRelativePath(string fullPath) {
+            return fullPath.Substring(Root.Length).TrimStart(Path.DirectorySeparatorChar);
+        }
+
+        protected virtual void EnsureDirectory(string path) {
+            path = GetFullPath(path);
+            Directory.CreateDirectory(path);
+        }
+
+        public void MakeFileWritable(string path) {
             path = GetFullPath(path);
             FileAttributes attributes = File.GetAttributes(path);
             if (attributes.HasFlag(FileAttributes.ReadOnly)) {
@@ -200,11 +213,9 @@ namespace Aderant.Build {
             if (source == null) {
                 throw new ArgumentNullException(nameof(source));
             }
-
             if (destination == null) {
                 throw new ArgumentNullException(nameof(destination));
             }
-
             string srcFull = GetFullPath(source);
             string destFull = GetFullPath(destination);
 
@@ -213,30 +224,20 @@ namespace Aderant.Build {
             }
 
             try {
-                EnsureDirectory(Path.GetDirectoryName(destFull));
+                string destinationDirectory = Path.GetDirectoryName(destFull);
+
+                EnsureDirectory(destinationDirectory);
 
                 File.Move(srcFull, destFull);
             } catch (IOException) {
-                DeleteFileCore(srcFull);
+                File.Delete(srcFull);
             }
-        }
-
-        public void CopyFile(string source, string destination) {
-            CopyFile(source, destination, false);
-        }
-
-        public void CopyFile(string source, string destination, bool overwrite) {
-            // before creating the file, ensure the parent directory exists first.
-            EnsureDirectory(Path.GetDirectoryName(destination));
-
-            CopyFileInternal(source, destination, overwrite);
         }
 
         public virtual void CopyDirectory(string source, string destination) {
             if (source == null) {
                 throw new ArgumentNullException(nameof(source));
             }
-
             if (destination == null) {
                 throw new ArgumentNullException(nameof(destination));
             }
@@ -254,142 +255,14 @@ namespace Aderant.Build {
             } else {
                 IEnumerable<string> files = GetFiles(source, true);
 
-                source = PathUtility.EnsureTrailingSlash(source);
-
                 foreach (string file in files) {
-                    MoveFile(file, Path.Combine(destination, file.Replace(source, "", StringComparison.OrdinalIgnoreCase)));
+                    MoveFile(file, Path.Combine(destination, file));
                 }
             }
         }
 
-        public ActionBlock<PathSpec> BulkCopy(IEnumerable<PathSpec> pathSpecs, bool overwrite, bool useSymlinks = false, bool useHardlinks = false) {
-            ExecutionDataflowBlockOptions actionBlockOptions = new ExecutionDataflowBlockOptions {
-                MaxDegreeOfParallelism = Environment.ProcessorCount,
-            };
-
-            HashSet<string> knownPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-            CreateSymlinkLink link = null;
-            if (useSymlinks) {
-                link = createSymlinkLink;
-            } else if (useHardlinks) {
-                link = createHardlink;
-            }
-
-            ActionBlock<PathSpec> bulkCopy = new ActionBlock<PathSpec>(
-                async file => {
-                    // Break from synchronous thread context of caller to get onto thread pool thread.
-                    await Task.Yield();
-
-                    string destination = Path.GetDirectoryName(file.Destination);
-
-                    lock (knownPaths) {
-                        if (!knownPaths.Contains(destination)) {
-                            EnsureDirectoryInternal(destination);
-                            knownPaths.Add(destination);
-                        }
-                    }
-
-                    switch (file.UseHardLink) {
-                        case true:
-                            CopyViaLink(file, PhysicalFileSystem.createHardlink);
-
-                            break;
-                        case false:
-                            CopyFileInternal(file.Location, file.Destination, overwrite);
-
-                            break;
-                        default:
-                            if (link != null) {
-                                CopyViaLink(file, link);
-                            } else {
-                                CopyFileInternal(file.Location, file.Destination, overwrite);
-                            }
-
-                            break;
-                    }
-                },
-                actionBlockOptions);
-
-            foreach (PathSpec pathSpec in pathSpecs) {
-                bulkCopy.Post(pathSpec);
-            }
-
-            bulkCopy.Complete();
-
-            return bulkCopy;
-        }
-
-        private void CopyViaLink(PathSpec file, CreateSymlinkLink link) {
-            try {
-                TryCopyViaLink(file.Location, file.Destination, link);
-            } catch (UnauthorizedAccessException) {
-                logger?.Warning("File " + file.Destination + " is in use or can not be accessed. Trying to rename.");
-
-                MoveFile(file.Destination, file.Destination + ".__LOCKED");
-                TryCopyViaLink(file.Location, file.Destination, link);
-            }
-        }
-
-        public void ExtractZipToDirectory(string sourceArchiveFileName, string destination, bool overwrite = false) {
-            ExtractToDirectory(sourceArchiveFileName, destination, overwrite);
-        }
-
-        public bool IsSymlink(string directory) {
-            DirectoryInfo directoryInfo = new DirectoryInfo(directory);
-            if (directoryInfo.Exists) {
-                return directoryInfo.Attributes.HasFlag(FileAttributes.ReparsePoint);
-            }
-
-            return false;
-        }
-
-        internal static void CopyFileInternal(string source, string destination, bool overwrite) {
-            FilesRelationship destinationState = CheckFileExistence(source, destination);
-
-            switch (destinationState) {
-                case FilesRelationship.Junction:
-                    return;
-                case FilesRelationship.DestinationExists:
-                    return;
-                case FilesRelationship.NonExistent:
-                    break;
-            }
-
-            File.Copy(source, destination, overwrite);
-        }
-
-        private string AddFileCore(string path, Action<Stream> writeToStream) {
-            EnsureDirectory(Path.GetDirectoryName(path));
-
-            string fullPath = GetFullPath(path);
-
-            using (Stream outputStream = File.Create(fullPath)) {
-                writeToStream(outputStream);
-            }
-
-            return fullPath;
-        }
-
-        public virtual void DeleteDirectory(string path) {
-            DeleteDirectory(path, recursive: false);
-        }
-
-        public virtual IEnumerable<string> GetFiles(string path, bool recursive) {
-            return GetFiles(path, null, recursive);
-        }
-
-        protected virtual void EnsureDirectory(string path) {
-            path = GetFullPath(path);
-
-            EnsureDirectoryInternal(path);
-        }
-
-        private void EnsureDirectoryInternal(string path) {
-            // If the destination directory doesn't exist, create it.
-            if (!DirectoryExists(path)) {
-                Directory.CreateDirectory(path);
-            }
+        public string GetParent(string path) {
+            return Directory.GetParent(path.TrimEnd(Path.DirectorySeparatorChar)).FullName;
         }
 
         private void CopyDirectoryInternal(string source, string destination, bool recursive) {
@@ -401,7 +274,10 @@ namespace Aderant.Build {
             }
 
             DirectoryInfo[] dirs = dir.GetDirectories();
-            EnsureDirectory(destination);
+            // If the destination directory doesn't exist, create it.
+            if (!DirectoryExists(destination)) {
+                EnsureDirectory(destination);
+            }
 
             // Get the files in the directory and copy them to the new location.
             FileInfo[] files = dir.GetFiles();
@@ -410,12 +286,10 @@ namespace Aderant.Build {
 
                 FileInfo destFile = new FileInfo(destinationPath);
                 if (destFile.Exists) {
-                    if (destFile.IsReadOnly) {
-                        // Clear read-only
+                    if (destFile.IsReadOnly) { // Clear read-only
                         logger?.Warning($"Overwriting read-only file: {file.Name}.");
                         destFile.IsReadOnly = false;
                     }
-
                     file.CopyTo(destFile.FullName, true); // Copy and overwrite
                 } else {
                     file.CopyTo(destinationPath, false);
@@ -430,119 +304,5 @@ namespace Aderant.Build {
                 }
             }
         }
-
-        private void ExtractToDirectory(string zipArchive, string destinationDirectoryName, bool overwrite) {
-            if (!overwrite) {
-                ZipFile.ExtractToDirectory(zipArchive, destinationDirectoryName);
-                return;
-            }
-
-            using (ZipArchive archive = new ZipArchive(File.OpenRead(zipArchive), ZipArchiveMode.Read)) {
-                Dictionary<string, byte> directoriesKnownToExist =
-                    new Dictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
-
-                foreach (ZipArchiveEntry file in archive.Entries) {
-                    string completeFileName = Path.Combine(destinationDirectoryName, file.FullName);
-
-                    var destinationFolder = Path.GetDirectoryName(completeFileName);
-
-                    if (!string.IsNullOrEmpty(destinationFolder) &&
-                        !directoriesKnownToExist.ContainsKey(destinationFolder)) {
-                        if (!DirectoryExists(destinationFolder)) {
-                            Directory.CreateDirectory(destinationFolder);
-                        }
-
-                        // It's very common for a lot of files to be copied to the same folder.
-                        // Eg., "c:\foo\a"->"c:\bar\a", "c:\foo\b"->"c:\bar\b" and so forth.
-                        // We don't want to check whether this folder exists for every single file we copy. So store which we've checked.
-                        directoriesKnownToExist.Add(destinationFolder, 0);
-                    }
-
-                    using (FileStream fileStream = File.Create(completeFileName)) {
-                        using (Stream stream = file.Open()) {
-                            stream.CopyTo(fileStream);
-                        }
-                    }
-                }
-            }
-        }
-
-        internal static FilesRelationship CheckFileExistence(string fileLocation, string fileDestination) {
-            if (fileLocation.Equals(fileDestination, StringComparison.OrdinalIgnoreCase)) {
-                return FilesRelationship.DestinationExists;
-            }
-
-            // This can be subject to race conditions - if we are invoked by multiple projects
-            // e.g as part of the CopyLocal process then another project may have already created the destination.
-            // Unfortunately we cannot get hold of the full copy local closure so we need to use careful error
-            // handling instead.
-            string[] links = NativeMethods.GetFileSiblingHardLinks(fileLocation);
-
-            if (links != null && links.Length > 1) {
-                // Test if source and destination are already the same file.
-                foreach (string link in links) {
-                    if (string.Equals(link, fileDestination, StringComparison.OrdinalIgnoreCase)) {
-                        return FilesRelationship.Junction;
-                    }
-                }
-            }
-
-            return FilesRelationship.NonExistent;
-        }
-
-        internal enum FilesRelationship {
-            NonExistent,
-            DestinationExists,
-            Junction
-        }
-
-        private void TryCopyViaLink(string fileLocation, string fileDestination, CreateSymlinkLink createLink) {
-            FilesRelationship destinationState = CheckFileExistence(fileLocation, fileDestination);
-
-            switch (destinationState) {
-                case FilesRelationship.Junction:
-                    return;
-                case FilesRelationship.DestinationExists:
-                    return;
-                case FilesRelationship.NonExistent:
-                    break;
-            }
-
-            // CreateHardLink and CreateSymbolicLink cannot overwrite an existing file or link
-            // so we need to delete the existing entry before we create the hard or symbolic link.
-            DeleteFile(fileDestination, true);
-
-            // Check again if the file exists, it does we must be racing with another thread.
-            var exists = FileExists(fileDestination);
-
-            if (!exists) {
-                if (!createLink(fileDestination, fileLocation, (uint)NativeMethods.SymbolicLink.SYMBOLIC_LINK_FLAG_FILE)) {
-                    throw new InvalidOperationException($"Failed to create link {fileDestination} ==> {fileLocation}");
-                }
-            }
-        }
-
-        internal void DeleteFile(string path, bool skipChecks) {
-            if (!FileExists(path)) {
-                return;
-            }
-
-            try {
-                if (!skipChecks) {
-                    MakeFileWritable(path);
-                }
-
-                path = GetFullPath(path);
-                DeleteFileCore(path);
-            } catch (FileNotFoundException) {
-
-            }
-        }
-
-        internal virtual void DeleteFileCore(string path) {
-            File.Delete(path);
-        }
-
-        delegate bool CreateSymlinkLink(string lpSymlinkFileName, string lpTargetFileName, uint dwFlags);
     }
 }
