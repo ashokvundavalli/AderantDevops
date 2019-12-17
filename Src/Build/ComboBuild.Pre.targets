@@ -1,0 +1,283 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
+         DefaultTargets="EndToEnd"
+         ToolsVersion="14.0"
+         TreatAsLocalProperty="SolutionDirectoryPath;T4TransformEnabled">
+
+  <Import Project="Aderant.Build.Common.targets" />
+  <Import Project="RM.TransformTemplates.Targets" />
+  <Import Project="Aderant.TextTransform.targets" />
+  <Import Project="Aderant.Build.CustomSolutionPackaging.targets" />
+  <Import Project="Aderant.Build.Clean.targets" />
+  <Import Project="Aderant.ArtifactRestore.targets" />
+
+  <!--
+       Pull the entry targets into our context.
+       This lets us call into it and lets people who want to customize the workflow change stuff in here
+  -->
+  <Import Project="$(SolutionDirectoryPath)Build\TFSBuild.proj" Condition="'$(RunUserTargets)' != 'false' And Exists('$(SolutionDirectoryPath)Build\TFSBuild.proj')" />
+
+  <!-- Entry target -->
+  <Target Name="EndToEnd" DependsOnTargets="$(RunBuildDependsOn)">
+  </Target>
+
+  <PropertyGroup>
+    <!--
+    These targets make up the steps needed to package artifacts shipped as part of the product.
+    These can be skipped if this file is scheduled to satisfy a build tree and wasn't scheduled explicity by the user -->
+    <TargetsForCustomizationFiles Condition="'$(RunUserTargets)' != 'false' Or '$(IsDesktopBuild)' == 'false'">
+      ZipCustomSource;
+      SeedPackagePacking;
+      ZipWorkflowTemplateSource
+    </TargetsForCustomizationFiles>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <RunBuildDependsOn>
+      _BeforeBuild;
+      ValidateRequiredProperties;
+      CleanBin;
+      DeployPerDirectoryFiles;
+      UpdateCommonAssemblyInfo;
+      UpdateContext;
+      $(TargetsForCustomizationFiles);
+      RepairDirectoryLinks;
+      GetDependencies;
+      RunRetrieveArtifacts;
+      rmTransformTemplates;
+    </RunBuildDependsOn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <ModuleBuildTempDirectory Condition="'$(ModuleBuildTempDirectory)' == ''">$(SolutionDirectoryPath)_tmp\</ModuleBuildTempDirectory>
+    <rmBCItemTransformTemplatesEnabled Condition="'$(T4TransformEnabled)' == 'true'">true</rmBCItemTransformTemplatesEnabled>
+
+    <!-- If we are skipping user targets then disable T4 - except for CI --><!--
+    TODO: Sort this out
+    <rmBCItemTransformTemplatesEnabled Condition="'$(RunUserTargets)' == 'false' And '$(IsDesktopBuild)' != 'false'">false</rmBCItemTransformTemplatesEnabled>-->
+  </PropertyGroup>
+
+  <!-- Clean -->
+  <PropertyGroup>
+    <CleanBin>$([MSBuild]::ValueOrDefault('$(switch-clean)', 'false'))</CleanBin>
+  </PropertyGroup>
+
+  <!--
+    Configures the environment to run text templates
+  -->
+  <Target Name="rmBeforeTransformTemplates">
+
+    <PropertyGroup>
+      <rmT4AssemblyReferencePaths>$(rmT4AssemblyReferencePaths);$(SolutionDirectoryPath)Dependencies\</rmT4AssemblyReferencePaths>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <!-- __*.tt is special convention which we ignore. Underscore underscore template are transformed by some other process
+           crafted by the developer -->
+      <rmT4TextTemplates Condition="('$(ModuleName)' != 'Libraries.SoftwareFactory')"
+        Include="$(ModuleSourceDirectory)**\*.tt;
+                 $(ModuleTestDirectory)**\*.tt;"
+        Exclude="$(ModuleSourceDirectory)**\__*.tt;
+                 $(ModuleSourceDirectory)**\PackageTmp\**\*.tt
+                 $(ModuleSourceDirectory)**\obj\**\*.tt;
+                 $(ModuleTestDirectory)**\__*.tt;
+                 $(ModuleTestDirectory)**\obj\**\*.tt">
+        <Generator>TextTemplatingFileGenerator</Generator>
+      </rmT4TextTemplates>
+    </ItemGroup>
+
+    <ItemGroup>
+      <TemplateExclude Include="$(ModuleSourceDirectory)**\Aderant.Framework.SmartForm.Dsl\**\*.tt" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <rmT4TextTemplates Remove="@(TemplateExclude)" />
+    </ItemGroup>
+
+    <Message Text="IsDesktopBuild: $(IsDesktopBuild)" />
+    <Message Text="SolutionDirectoryPath: $(SolutionDirectoryPath)" />
+    <Message Text="ModuleSourceDirectory: $(ModuleSourceDirectory)" />
+    <Message Text="ModuleTestDirectory: $(ModuleTestDirectory)" />
+
+    <Message Text="" />
+    <Message Text="DSLDirectiveLoadMethod: $(DSLDirectiveLoadMethod)" />
+    <Message Text="AderantBuildClientTasksV100Lib-1_0_0_0: $(AderantBuildClientTasksV100Lib-1_0_0_0)" />
+    <Message Text="rmT4AssemblyReferencePaths: $(rmT4AssemblyReferencePaths)" />
+    <Message Text="rmT4TextTemplates: @(rmT4TextTemplates)" />
+
+  </Target>
+
+
+  <Target Name="_BeforeBuild">
+    <PropertyGroup>
+      <ModuleName Condition="'$(ModuleName)' == ''">$([System.IO.Directory]::GetParent(GetSolutionRoot).Name)</ModuleName>
+    </PropertyGroup>
+
+    <PrintBanner Text="$(ModuleName)" />
+  </Target>
+
+
+  <Target Name="ValidateRequiredProperties">
+    <Error Condition="'$(SolutionDirectoryPath)' == ''" Text="Fatal error. SolutionDirectoryPath is undefined in element $(ProjectInstanceId)" />
+    <Error Condition="'$(SolutionRoot)' == ''" Text="SolutionRoot is undefined." />
+    <Error Condition="'$(CustomAfterMicrosoftCSharpTargets)' == '' And '$(IsCustomBuild)' != 'true'" Text="No custom CSharp targets file set." />
+    <Error Condition="'$(CustomAfterMicrosoftCommonTargets)' == '' And '$(IsCustomBuild)' != 'true'" Text="No custom Microsoft common targets file set." />
+  </Target>
+
+
+  <PropertyGroup>
+    <DependenciesDirectory>$(SolutionDirectoryPath)\Dependencies</DependenciesDirectory>
+  </PropertyGroup>
+
+
+  <Target Name="RepairDirectoryLinks" Condition="'$(UseSharedDependencyDirectory)' == 'true' And '$(SharedDependencyDirectory)' != ''">
+    <ItemGroup>
+      <Link Include="$(DependenciesDirectory)">
+        <LinkTarget>$(SharedDependencyDirectory)</LinkTarget>
+      </Link>
+      <Link Include="$(SolutionRoot)\packages">
+        <LinkTarget>$(SharedDependencyDirectory)packages</LinkTarget>
+      </Link>
+    </ItemGroup>
+
+    <MakeSymlink
+      Condition="!Exists('%(Link.FullPath)') And Exists('%(Link.LinkTarget)')"
+      Link="%(Link.FullPath)"
+      Target="%(Link.LinkTarget)"
+      Type="D" />
+  </Target>
+
+
+  <Target Name="CollectExtensibilityFiles">
+    <ItemGroup>
+      <ExtensibilityFiles Include="$(SolutionRoot)\**\dir.props"
+                          Exclude="$(SolutionRoot)\packages\**;
+                                   $(DependenciesDirectory)\**" />
+    </ItemGroup>
+  </Target>
+
+
+  <Target Name="RunRetrieveArtifacts" Condition="'$(RetrievePrebuilts)' != 'false'" DependsOnTargets="CollectExtensibilityFiles">
+    <Message Text="$(ModuleName): Restoring objects from build cache" />
+    <!--
+      By specifying DestinationDirectories we overwrite the common dependency
+      directory contents with objects from the cache so we do not reuse stale objects as inputs
+      to child dependencies in the build.
+    -->
+
+    <MSBuild Condition="'@(ExtensibilityFiles->Count())' != '0'"
+      Projects="$(MSBuildThisFileDirectory)Aderant.BuildExtensions.targets"
+      Targets="GetStagingDirectoryWhitelist"
+      Properties="ExtensibilityFile=%(ExtensibilityFiles.FullPath)"
+      UnloadProjectsOnCompletion="true"
+      ContinueOnError="true">
+      <Output TaskParameter="TargetOutputs" ItemName="StagingDirectoryWhitelist" />
+    </MSBuild>
+
+    <RetrieveArtifacts
+      ContextEndpoint="$(ContextEndpoint)"
+      SolutionRoot="$(SolutionRoot)"
+      WorkingDirectory="$(ModuleBuildTempDirectory)"
+      CommonOutputDirectory="$(BinModuleDirectory)"
+      CommonDependencyDirectory="$(SharedDependencyDirectory)"
+      StagingDirectoryWhitelist="@(StagingDirectoryWhitelist)">
+      <Output TaskParameter="ArtifactRestoreSkipped" PropertyName="ArtifactRestoreSkipped" />
+    </RetrieveArtifacts>
+
+    <MSBuild Condition="'@(ExtensibilityFiles->Count())' != '0' And '$(ArtifactRestoreSkipped)' != 'true'"
+      Projects="$(MSBuildThisFileFullPath)"
+      Properties="DirPropFile=%(ExtensibilityFiles.FullPath)"
+      Targets="ExtractBuildCachePackages" />
+
+  </Target>
+
+
+  <Target Name="GetDependencies" Condition="'$(UseSharedDependencyDirectory)' != 'true' And '$(GetDependencies)' != 'false'">
+
+    <GetDependencies
+      ProductManifest="$(ProductManifestPath)"
+      BranchConfigFile="$(BranchConfigFile)"
+      ModulesRootPath="$(SolutionRoot)"
+      ModuleName="$(SolutionRoot)"
+      DropPath="$(XamlBuildDropLocation)"
+      EnabledResolvers="@(EnabledResolvers)" />
+
+  </Target>
+
+
+  <Target Name="DeployPerDirectoryFiles" Condition="'$(SolutionRoot)' != ''">
+
+    <Message Text="SolutionDirectoryPath: $(SolutionDirectoryPath)" />
+    <Message Text="T4TransformEnabled:    $(rmBCItemTransformTemplatesEnabled)" />
+    <Message Text="ZipCustomSource:       $(ZipCustomSource)" />
+    <Message Text="VersionMajor:          $(VersionMajor)" />
+    <Message Text="VersionMinor:          $(VersionMinor)" />
+    <Message Text="VersionBuild:          $(VersionBuild)" />
+    <Message Text="VersionRevision:       $(VersionRevision)" />
+
+    <ItemGroup>
+      <BuildExtensionFiles Include="$(MSBuildThisFileDirectory)dir.proj">
+        <Destination></Destination>
+      </BuildExtensionFiles>
+      <BuildExtensionFiles Include="$(MSBuildThisFileDirectory)Aderant.wpp.content.v3.proj">
+        <Destination>Build\wpp</Destination>
+      </BuildExtensionFiles>
+      <BuildExtensionFiles Include="$(MSBuildThisFileDirectory)Aderant.wpp.common.targets">
+        <Destination>Build\wpp</Destination>
+      </BuildExtensionFiles>
+    </ItemGroup>
+
+    <Copy SourceFiles="@(BuildExtensionFiles)"
+          DestinationFiles="@(BuildExtensionFiles-> '$(SolutionRoot)\%(Destination)\%(Filename)%(Extension)')"
+          UseHardlinksIfPossible="true"
+          OverwriteReadOnlyFiles="true"
+          SkipUnchangedFiles="true" />
+
+  </Target>
+
+
+  <!--
+    ==========================================================================================
+        Versioning
+    ==========================================================================================
+  -->
+  <Target Name="UpdateCommonAssemblyInfo"
+          Condition="'$(IsDesktopBuild)' == 'false'"
+          DependsOnTargets="SetBuildNumbers">
+
+    <PropertyGroup>
+      <AssemblyInfoFile>$(ModuleBuildDirectory)CommonAssemblyInfo.cs</AssemblyInfoFile>
+      <AssemblyInfoFileExists Condition="Exists('$(AssemblyInfoFile)')">true</AssemblyInfoFileExists>
+      <LocalAssemblyInfoFile>$(AssemblyInfoFile).local</LocalAssemblyInfoFile>
+    </PropertyGroup>
+
+    <FileUpdate
+      Condition="'$(AssemblyInfoFileExists)' == 'true'"
+      Files="$(AssemblyInfoFile)"
+      IgnoreCase="true"
+      Multiline="true"
+      Singleline="false"
+      Regex="(?&lt;section1&gt;AssemblyFileVersion\(\&quot;)(?&lt;version&gt;[0-9]*.[0-9]*.[0-9]*.[0-9]*)(?&lt;section2&gt;\&quot;\))"
+      ReplacementText="${section1}$(FileVersion)${section2}" />
+
+    <PropertyGroup>
+      <AssemblyInfoFileUpdated>tue</AssemblyInfoFileUpdated>
+    </PropertyGroup>
+
+  </Target>
+
+
+  <Target Name="UpdateContext">
+    <PropertyGroup>
+      <FileVersion Condition="'$(FileVersion)' == ''">99.99.99.99</FileVersion>
+      <AssemblyVersion Condition="'$(AssemblyVersion)' == ''">1.8.0.0</AssemblyVersion>
+    </PropertyGroup>
+
+    <GetOrPutContextVariable
+      ContextEndpoint="$(ContextEndpoint)"
+      Scope="$(VariableScopeId)"
+      Properties="FileVersion=$(FileVersion);AssemblyVersion=$(AssemblyVersion);ModuleName=$(ModuleName)" />
+
+  </Target>
+
+</Project>

@@ -15,7 +15,7 @@ The OS image comes with most of the requirements needed to build Expert software
 
 From `TFS > Admin > Agent Queues click "Download Agent"`
 
-![](2016-12-21-10-37-51.png)
+![](Images\agent-queue.png)
 
 Copy the agent zip onto the build machine. Place the zip into `%userprofile%\Downloads`
 
@@ -37,4 +37,4 @@ The first time you run this script it will prompt for credentials to run the age
 
 After running the script a "credentials.xml" is created which contains the encrypted and cached credentials.
 
-![](2017-01-05-14-17-05.png)
+![](Images\provision-build-agent.png)

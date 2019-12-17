@@ -8,7 +8,7 @@ param (
 )
 
 begin {
-    Set-StrictMode -Version Latest
+    Set-StrictMode -Version 'Latest'
     $InformationPreference = 'Continue'
 }
 
@@ -213,6 +213,7 @@ namespace Willys.LsaSecurity
 
     $setupScriptBlock = {
         param (
+            [string]$scriptsDirectory,
             [PSCredential]$credentials,
             [bool]$skipDownload
         )
@@ -223,14 +224,10 @@ namespace Willys.LsaSecurity
         }
 
         process {
-            [string]$scriptsDirectory = "$Env:SystemDrive\Scripts"
-            # Return the machine specific script home.
-            Write-Output -InputObject $scriptsDirectory
-
             try {
                 # Make me fast
                 $powerPlan = Get-WmiObject -Namespace root\cimv2\power -Class Win32_PowerPlan -Filter "ElementName = 'High Performance'"
-                [void]$powerPlan.Activate()
+                $powerPlan.Activate()
             } catch {
                 # Don't panic on Windows 10
                 Write-Warning $Error[0]
@@ -238,50 +235,59 @@ namespace Willys.LsaSecurity
 
             # Make me admin
             Add-LocalGroupMember -Group Administrators -Member $credentials.UserName -ErrorAction SilentlyContinue
-            Add-LocalGroupMember -Group Administrators -Member ADERANT_NA\SG_GB_BuildServices -ErrorAction SilentlyContinue
-            Add-LocalGroupMember -Group Administrators -Member ADERANT_AP\SG_AP_Dev_Operations -ErrorAction SilentlyContinue
+            Add-LocalGroupMember -Group Administrators -Member 'ADERANT_NA\SG_GB_BuildServices' -ErrorAction SilentlyContinue
+            Add-LocalGroupMember -Group Administrators -Member 'ADERANT_AP\SG_AP_Dev_Operations' -ErrorAction SilentlyContinue
 
             [Microsoft.PowerShell.Commands.LocalPrincipal]$dockerUsersGroup = Get-LocalGroup -Name 'docker-users' -ErrorAction 'SilentlyContinue'
 
             if ($null -ne $dockerUsersGroup) {
                 Add-LocalGroupMember -Group docker-users -Member $credentials.UserName -ErrorAction SilentlyContinue
-                Add-LocalGroupMember -Group docker-users -Member ADERANT_NA\SG_GB_BuildServices -ErrorAction SilentlyContinue
-                Add-LocalGroupMember -Group docker-users -Member ADERANT_AP\SG_AP_Dev_Operations -ErrorAction SilentlyContinue
+                Add-LocalGroupMember -Group docker-users -Member 'ADERANT_NA\SG_GB_BuildServices' -ErrorAction SilentlyContinue
+                Add-LocalGroupMember -Group docker-users -Member 'ADERANT_AP\SG_AP_Dev_Operations' -ErrorAction SilentlyContinue
             }
 
-            [void](New-Item -Path $scriptsDirectory -ItemType Directory -Force)
-
-            Push-Location -Path $scriptsDirectory
-
             if (-not $skipDownload) {
-                Write-Information -MessageData 'Downloading build agent zip'
                 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-                $currentProgressPreference = $ProgressPreference
-                $ProgressPreference = 'SilentlyContinue'
-
-                try {
-                    $agentArchive = "$env:SystemDrive\Scripts\vsts-agent.zip"
-                    Invoke-WebRequest "https://vstsagentpackage.azureedge.net/agent/2.141.2/vsts-agent-win-x64-2.141.2.zip" -OutFile $agentArchive -UseBasicParsing
-                } finally {
-                    $ProgressPreference = $currentProgressPreference
-                }
+                [string]$agentArchive = "$scriptsDirectory\vsts-agent.zip"
+                Invoke-WebRequest "https://vstsagentpackage.azureedge.net/agent/2.141.2/vsts-agent-win-x64-2.141.2.zip" -OutFile $agentArchive -UseBasicParsing
             }
 
             Import-Module ServerManager
 
             try {
-                if (-not (Get-WindowsFeature | Where-Object {$_.Name -eq "Hyper-V"}).InstallState -eq "Installed") {
+                if (-not (Get-WindowsFeature | Where-Object { $_.Name -eq 'Hyper-V' }).InstallState -eq 'Installed') {
                     Enable-WindowsOptionalFeature -Online -FeatureName:Microsoft-Hyper-V -All
                 }
             } catch {
-                Write-Warning $Error[0]
+                Write-Warning $Error[0] | Format-List -Force
             }
 
-            C:\Windows\Microsoft.NET\Framework64\v4.0.30319\Aspnet_regiis.exe -ga ADERANT_AP\tfsbuildservice$
+            # Install docker and start the service
+            try {
+                if (-not (Get-WindowsFeature | Where-Object { $_.Name -eq 'Containers' }).InstallState -eq 'Installed') {
+                    Enable-WindowsOptionalFeature -Online -FeatureName 'Containers'
+                }
+
+                Install-PackageProvider -Name 'NuGet' -MinimumVersion '2.8.5.201' -Force
+                Install-Module -Name 'DockerMsftProvider' -Repository 'PSGallery' -Force
+                Install-Package -Name 'docker' -ProviderName 'DockerMsftProvider' -Force
+                Start-Service Docker
+            } catch {
+                Write-Warning $Error[0] | Format-List -Force
+            }
+
+            Start-Process -FilePath "$([System.Runtime.InteropServices.RuntimeEnvironment]::GetRuntimeDirectory())Aspnet_regiis.exe" -ArgumentList '-ga ADERANT_AP\tfsbuildservice$'
         }
     }
 
-    [string]$scriptsDirectory = (Invoke-Command -Session $session -ScriptBlock $setupScriptBlock -ArgumentList $credentials, $skipAgentDownload.IsPresent)
+    [string]$scriptsDirectory = (Invoke-Command -Session $session -ScriptBlock {
+        [string]$scriptsDirectory = "$Env:SystemDrive\Scripts"
+        [void](New-Item -ItemType 'Directory' -Path $scriptsDirectory -Force)
+        # Return the machine specific script home.
+        return $scriptsDirectory
+    })
+
+    Invoke-Command -Session $session -ScriptBlock $setupScriptBlock -ArgumentList $scriptsDirectory, $credentials, $skipAgentDownload.IsPresent
 
     Invoke-Command -Session $session -ScriptBlock {
         param (
@@ -466,7 +472,7 @@ namespace Willys.LsaSecurity
 
 
     Invoke-Command -Session $session -ScriptBlock {
-        Remove-Item "$scriptsDirectory\Build.Infrastructure" -Force -Recurse -ErrorAction SilentlyContinue
+        Remove-Item "$scriptsDirectory\Build.Infrastructure" -Force -Recurse -ErrorAction 'SilentlyContinue'
         & git clone "https://tfs.aderant.com/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure" "$scriptsDirectory\Build.Infrastructure" -q
     } -ArgumentList $scriptsDirectory, $credentials
 

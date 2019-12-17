@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -9,13 +9,11 @@ using Aderant.Build.DependencyResolver;
 
 namespace Aderant.Build.DependencyAnalyzer {
     internal class ExpertModuleMapper {
-        public static ExpertModule MapFrom(XElement element, ExpertModule expertModule, out IList<XAttribute> customAttributes) {
+        public static void MapFrom(XElement element, ExpertModule expertModule, out IList<XAttribute> customAttributes) {
             var mapper = new Mapper(element);
             mapper.Map(expertModule);
 
             customAttributes = mapper.CustomAttributes;
-
-            return expertModule;
         }
 
         internal XElement Save(IEnumerable<ExpertModule> modules, bool isProductManifest) {
@@ -46,7 +44,13 @@ namespace Aderant.Build.DependencyAnalyzer {
                     if (!string.IsNullOrEmpty(module.Branch)) {
                         moduleElement.Add(new XAttribute("Path", module.Branch));
                     }
+
+                    if (module.ReplaceVersionConstraint) {
+                        moduleElement.Add(new XAttribute(nameof(ExpertModule.ReplaceVersionConstraint), module.ReplaceVersionConstraint));
+                    }
                 }
+
+                moduleElement.Add(new XAttribute("ExcludeFromPackaging", module.ExcludeFromPackaging));
 
                 IEnumerable<XAttribute> customAttributes = module.CustomAttributes;
                 if (customAttributes != null) {
@@ -139,7 +143,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        public void Map(ExpertModule expertModule) {
+        internal void Map(ExpertModule expertModule) {
             SetPropertyValue("Name", value => expertModule.Name = value);
 
             SetPropertyValue("AssemblyVersion", value => expertModule.AssemblyVersion = value);
@@ -154,14 +158,29 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             SetPropertyValue("ReplicateToDependencies", value => expertModule.ReplicateToDependencies = ToBoolean(value));
 
+            SetPropertyValue("ReplaceVersionConstraint", value => expertModule.ReplaceVersionConstraint = ToBoolean(value));
+
             SetPropertyValue("DependencyGroup", value => expertModule.DependencyGroup = value);
+
+            SetPropertyValue("ExcludeFromPackaging", value => expertModule.ExcludeFromPackaging = ToBoolean(value));
+
+            SetPropertyValue("Branch", value => expertModule.Branch = value);
+
+            bool isBranch = !string.IsNullOrWhiteSpace(expertModule.Branch);
 
             SetPropertyValue("GetAction", value => {
                 if (!string.IsNullOrEmpty(value)) {
                     expertModule.GetAction = (GetAction)Enum.Parse(typeof(GetAction), value.Replace("_", "-"), true);
-                }
 
+                    if (expertModule.GetAction == GetAction.NuGet && isBranch) {
+                        throw new InvalidOperationException($"Module: '{expertModule.Name}' GetAction cannot be NuGet as it has a branch specified.");
+                    }
+                }
             });
+
+            if (expertModule.GetAction == GetAction.None && !string.IsNullOrWhiteSpace(expertModule.Branch)) {
+                expertModule.GetAction = GetAction.Branch;
+            }
 
             if (expertModule.ModuleType == ModuleType.ThirdParty) {
                 expertModule.RepositoryType = RepositoryType.NuGet;
@@ -199,5 +218,5 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
     }
-  
+
 }

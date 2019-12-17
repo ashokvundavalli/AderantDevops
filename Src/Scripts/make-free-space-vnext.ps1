@@ -1,38 +1,23 @@
-<# Slightly intelligent deletion of build directory output files using an algorithm to determine
-# how many hours back to search for folders to delete. Can be run repeatedly and will be more aggressive
-# about how far to go back, based on how much space is free
-#
-# Rick
-# v 1.0.2
-# Initial first release
-# v 1.0.3
-# Changed remove-item to use rmdir because remove-item doesn't deal with sym link directories well.
-# v 1.0.4 
-# Added support for deleting .nuget folder
-# v 1.0.5
-# Changed to work with the new vnext build directories
-# v 1.0.6
-# Fixed up nuget cleaning to remove from both nuget cache folders
-# v 1.0.7 
-# Updated the build agent cleaner to be less cody and use Get-child recursion with remove-item.
+<#
+.SYNOPSIS
+    Slightly intelligent deletion of build directory output files using an algorithm to determine
+    how many hours back to search for folders to delete. Can be run repeatedly and will be more aggressive
+    about how far to go back, based on how much space is free.
 #>
+[CmdletBinding()]
 param(
-    [Parameter(Mandatory=$false)][string]$drive,
-    [Parameter(Mandatory=$false)][ValidateSet("agent", "nuget")][string]$strategy,
-    [Parameter(Mandatory=$false)][Int]$olderThan = 7
+    [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$drive = 'C',
+    [Parameter(Mandatory=$false)][ValidateSet('agent', 'nuget')][string]$strategy = 'agent',
+    [Parameter(Mandatory=$false)][ValidateNotNull()][int]$olderThan = 3,
+    [switch]$testing
 )
 
 begin {
-	Set-StrictMode -Version 2.0
-	Start-Transcript -Path "$env:SystemDrive\Scripts\MakeFreeSpaceVnextLog.txt" -Force
+	Set-StrictMode -Version 'Latest'
+    $ErrorActionPreference = 'Continue'
+    $InformationPreference = 'Continue'
 
-	if ([string]::IsNullOrWhiteSpace($drive)) {
-		$drive = "C"
-	}
-
-	if ([string]::IsNullOrWhiteSpace($strategy)) {
-		$strategy = "agent"
-	}
+	Start-Transcript -Path "$Env:SystemDrive\Scripts\MakeFreeSpaceVnextLog.txt" -Force
 
 	# If disk space is less than $percentageAtWhichToPanic, no folders younger than this will be deleted.
 	[int]$failsafeHoursBack = -1
@@ -40,12 +25,8 @@ begin {
 	[int]$percentageAtWhichToPanic = 85
 	# The number of hours to go back to find things to delete when disk free reaches $percentageAtWhichToPanic
 	[int]$panicHoursBack = 0
-	# Test only, runs removes as -whatif scenarios
-	[bool]$testing = $false
-}
-
-process {
-	# Get the percentage space used for a drive
+    
+    # Get the percentage space used for a drive
 	Function Get-PercentUsed($drive) {
 		$s = "DeviceID='" + $drive + ":'"
 		$disk = Get-WmiObject Win32_LogicalDisk -Filter $s | Select-Object Size,FreeSpace
@@ -61,19 +42,31 @@ process {
 		$percentUsed = Get-PercentUsed $drive 
 		$percentUsed = [math]::Round($percentUsed)
 
-		if ($percentUsed -lt 51) {$hours = -2}
-		if (($percentUsed -lt 71) -and ($percentUsed -gt 50)) {$hours = -2}
-		if (($percentUsed -lt 81) -and ($percentUsed -gt 70)) {$hours = -2}
-		if (($percentUsed -lt 91) -and ($percentUsed -gt 80)) {$hours = -1}
-		if (($percentUsed -lt 95) -and ($percentUsed -gt 90)) {$hours = -1}
-		if (($percentUsed -lt 100) -and ($percentUsed -gt 94)) {$hours = $failsafeHoursBack}
+		if ($percentUsed -lt 51) { 
+            $hours = -2
+        }
+		if (($percentUsed -lt 71) -and ($percentUsed -gt 50)) {
+            $hours = -2
+        }
+		if (($percentUsed -lt 81) -and ($percentUsed -gt 70)) {
+            $hours = -2
+        }
+		if (($percentUsed -lt 91) -and ($percentUsed -gt 80)) {
+            $hours = -1
+        }
+		if (($percentUsed -lt 95) -and ($percentUsed -gt 90)) {
+            $hours = -1
+        }
+		if (($percentUsed -lt 100) -and ($percentUsed -gt 94)) {
+            $hours = $failsafeHoursBack
+        }
     
-		# failsafe to prevent us deleting everything
+		# failsafe to prevent us deleting everything.
 		if ($hours -gt $failsafeHoursBack) {
 			$hours = $failsafeHoursBack
 		}
 
-		# however, if its over a certain percentage, go crazy and delete oldest directory, irrespective of how old
+		# However, if its over a certain percentage, go crazy and delete oldest directory, irrespective of how old.
 		if ($percentUsed -gt $percentageAtWhichToPanic) {
 			$hours = $panicHoursBack
 		}
@@ -82,67 +75,90 @@ process {
 		return $hours
 	}
 	
-	######################
-	# Build Agent Cleanup
-	######################
-	Function Run-AgentStrategy($drive) {
-		$hours = Get-HoursAgoToDelete $drive
-		$limit = (Get-Date).AddHours($hours)
-		$folder = $drive + ":\b\"
-		if ($testing) {
-			Get-ChildItem $folder -Recurse -Depth 0 -ErrorAction SilentlyContinue | Where{$_.Name -Match "^\d{1,4}$"} | ? {$_.LastWriteTime -lt $limit } | Remove-Item -Recurse -WhatIf -Force
-		} else {
-			 $agentDirectories = Get-ChildItem -Path $folder -Directory | Where { $_.Name -Match "^\d{1,4}$" }
+	Function CleanBuildAgent {
+        <#
+        .SYNOPSIS
+            Build agent cleanup.
+        #>
+        [CmdletBinding(SupportsShouldProcess=$true)]
+        param (
+            [string]$drive
+        )
 
-            foreach ($directory in $agentDirectories) {
-                Get-ChildItem $directory.FullName -Directory | Where { $_.Name -Match "^\d{1,4}$" } | ? {$_.LastWriteTime -lt $limit } | % { cmd.exe /c rmdir /q /s $_.FullName }
+        begin {
+            $DebugPreference = 'Continue'
+        }
+
+        process {
+            $hours = Get-HoursAgoToDelete $drive
+            $limit = (Get-Date).AddHours($hours)
+            $folder = $drive + ":\b\"
+            if (-not $PSCmdlet.ShouldProcess("Result")) {
+                Get-ChildItem $folder -Recurse -Depth 0 -ErrorAction SilentlyContinue | Where-Object { $_.Name -Match "^\d{1,4}$"} | Where-Object {$_.LastWriteTime -lt $limit } | Remove-Item -Recurse -WhatIf -Force
+            } else {
+                $agentDirectories = Get-ChildItem -Path $folder -Directory | Where-Object { $_.Name -Match "^\d{1,4}$" }
+
+                foreach ($directory in $agentDirectories) {
+                    Get-ChildItem $directory.FullName -Directory | Where-Object { $_.Name -Match "^\d{1,4}$" } | Where-Object {$_.LastWriteTime -lt $limit } | ForEach-Object { cmd.exe /c rmdir /q /s $_.FullName }
+                }
             }
-		}
-        
-        # Clean up IIS after removing files
-        & $PSScriptRoot\iis-cleanup.ps1
+            
+            # Clean up IIS after removing files
+            & "$PSScriptRoot\iis-cleanup.ps1"
+        }
 	}
 
-	################
-	# NUGET Cleanup
-	################
-	Function Run-NugetStrategy() {
-		$limit = (Get-Date).AddDays($olderThan*-1)
+	function RemoveNuGetPackages {
+        <#
+        .SYNOPSIS
+            NuGet cleanup.
+        .DESCRIPTION
+            Removes NuGet packages based on the specified.
+        .PARAMETER days
+            Cleans up NuGet packages older than the specified number of days.
+        #>
+        [CmdletBinding(SupportsShouldProcess=$true)]
+        param (
+            [Parameter(Mandatory=$true)][ValidateNotNull()][int]$days
+        )
 
-		if ($testing) {
-			$root  = "~\.nuget\packages\"
-			Get-ChildItem $root | ? { $_.CreationTime -lt $limit } | Remove-Item -Recurse -Force -WhatIf
+		[DateTime]$limit = (Get-Date).AddDays($days* - 1)
 
-			$root  = "~\AppData\Local\NuGet\Cache"    
-			Get-ChildItem $root | ? { $_.CreationTime -lt $limit } | Remove-Item -Recurse -Force -WhatIf
-		} else {
-			$root  = "~\.nuget\packages\"
+        if (-not $PSCmdlet.ShouldProcess("Result")) {
+            [string]$root = "$Env:USERPROFILE\.nuget\packages\"
+            Get-ChildItem $root | Where-Object { $_.CreationTime -lt $limit } | Remove-Item -Recurse -Force -WhatIf
+
+			$root = "$Env:LOCALAPPDATA\NuGet\Cache"
+			Get-ChildItem $root | Where-Object { $_.CreationTime -lt $limit } | Remove-Item -Recurse -Force -WhatIf
+        } else {
+			[string]$root = "$Env:USERPROFILE\.nuget\packages\"
         
 			if (Test-Path $root) {
-				Get-ChildItem $root | ? { $_.CreationTime -lt $limit } | Remove-Item -Recurse -Force
+				Get-ChildItem $root | Where-Object { $_.CreationTime -lt $limit } | Remove-Item -Recurse -Force
 			}
 
-			$root  = "~\AppData\Local\NuGet\Cache"
+			$root = "$Env:LOCALAPPDATA\NuGet\Cache"
 
 			if (Test-Path $root) {
-				Get-ChildItem $root | ? { $_.CreationTime -lt $limit } | Remove-Item -Recurse -Force
+				Get-ChildItem $root | Where-Object { $_.CreationTime -lt $limit } | Remove-Item -Recurse -Force
 			}
 		}
 	}
+}
 
+process {
 	switch ($strategy) {
-		"agent" {
-			Write-Output "Choosing agent strategy, cleans up build agent scratch folders."
-			if ($drive -eq "") {
-				Write-Output "Must supply a drive letter to check."
-			} else {
-				$DebugPreference = "Continue"
-				Run-AgentStrategy $drive
-			}
+		'agent' {
+			Write-Information -MessageData 'Choosing agent strategy, cleans up build agent scratch folders.'
+			CleanBuildAgent -drive $drive -WhatIf:$testing.IsPresent
 		}
-		"nuget" {
-			Write-Output "Choosing nuget strategy, cleans up nuget cache folders."
-			Run-NugetStrategy
+		'nuget' {
+			Write-Information -MessageData 'Choosing NuGet strategy, cleans up nuget cache folders.'
+			RemoveNuGetPackages -days $olderThan -WhatIf:$testing.IsPresent
 		}
 	}
+}
+
+end {
+    Stop-Transcript
 }

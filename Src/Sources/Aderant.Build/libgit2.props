@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!--The supplied props file that comes with the package assumes you are using dotnet cli so the props file does not have the MSBuild
+  namespace declared so full .NET build engines freak out. Once again, we must roll our own solutions by implementing the bare minimum deployment steps-->
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <LibGit2SharpNativeBinaries>(MSBuildThisFileDirectory)\..\..\..\..\packages\devtools\LibGit2Sharp.NativeBinaries\</LibGit2SharpNativeBinaries>
+  </PropertyGroup>
+
+  <Import Project="$(LibGit2SharpNativeBinaries)Build\net46\LibGit2Sharp.NativeBinaries.props" />
+
+</Project>

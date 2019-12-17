@@ -1,4 +1,4 @@
-using Microsoft.FSharp.Collections;
+﻿using Microsoft.FSharp.Collections;
 using Microsoft.FSharp.Core;
 using Paket;
 
@@ -15,8 +15,8 @@ namespace Aderant.Build.DependencyResolver {
         public void Run() {
             FSharpList<string> groups = dependencies.GetGroups();
 
-            foreach (var group in groups) {
-                dependencies.Restore(force, new FSharpOption<string>(group), FSharpList<string>.Empty, false, false);
+            foreach (string group in groups) {
+                dependencies.Restore(force, new FSharpOption<string>(group), FSharpList<string>.Empty, false, false, false, FSharpOption<string>.None, FSharpOption<string>.None);
             }
         }
     }

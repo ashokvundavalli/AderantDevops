@@ -54,8 +54,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             return modulePath;
         }
-
-
+        
         public static string GetCurrentModuleName(string defaultValue, SessionState sessionState) {
             string moduleName = sessionState.PSVariable.GetValue("CurrentModuleName", defaultValue).ToString();
             if (string.IsNullOrEmpty(moduleName)) {

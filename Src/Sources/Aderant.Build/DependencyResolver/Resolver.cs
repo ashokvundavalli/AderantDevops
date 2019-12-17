@@ -28,21 +28,21 @@ namespace Aderant.Build.DependencyResolver {
         /// <param name="resolverRequest">The resolver request.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         public void ResolveDependencies(ResolverRequest resolverRequest, CancellationToken cancellationToken = default(CancellationToken), bool enableVerboseLogging = false) {
-            resolverRequest.Modules.ToList().ForEach(s => logger.Info($"Resolving dependencies for {s.Name}"));
-
             List<IDependencyRequirement> requirements = new List<IDependencyRequirement>();
 
             GatherRequirements(resolverRequest, requirements);
 
             AddAlwaysRequired(resolverRequest, requirements);
 
-            RemoveRequirementsBeingBuilt(resolverRequest, requirements);
-
             List<IDependencyRequirement> distinctRequirements = requirements.Distinct().ToList();
 
             logger.Info("Required inputs: {0}", string.Join(",", distinctRequirements.Select(s => s.Name)));
 
             foreach (IDependencyResolver resolver in resolvers) {
+                if (resolver.ReplicationExplicitlyDisabled != null) {
+                    resolverRequest.ReplicationExplicitlyDisabled = true;
+                }
+
                 resolver.EnableVerboseLogging = enableVerboseLogging;
                 resolver.Resolve(resolverRequest, distinctRequirements, cancellationToken);
 
@@ -62,11 +62,13 @@ namespace Aderant.Build.DependencyResolver {
 
             ExpertModule module = null;
 
+            const string buildAnalyzer = "Aderant.Build.Analyzer";
+
             if (resolverRequest.ModuleFactory != null) {
-                module = resolverRequest.ModuleFactory.GetModule("Aderant.Build.Analyzer");
+                module = resolverRequest.ModuleFactory.GetModule(buildAnalyzer);
             }
 
-            IDependencyRequirement analyzer = requirements.FirstOrDefault(r => string.Equals(r.Name, "Aderant.Build.Analyzer"));
+            IDependencyRequirement analyzer = requirements.FirstOrDefault(r => string.Equals(r.Name, buildAnalyzer));
 
             if (analyzer != null) {
                 requirements.Remove(analyzer);
@@ -76,7 +78,7 @@ namespace Aderant.Build.DependencyResolver {
             if (module != null) {
                 requirement = DependencyRequirement.Create(module);
             } else {
-                requirement = DependencyRequirement.Create("Aderant.Build.Analyzer", BuildConstants.MainDependencyGroup);
+                requirement = DependencyRequirement.Create(buildAnalyzer, Constants.MainDependencyGroup);
             }
 
             requirement.ReplaceVersionConstraint = true;
@@ -86,7 +88,7 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         private void GatherRequirements(ResolverRequest resolverRequest, List<IDependencyRequirement> requirements) {
-            foreach (var module in resolverRequest.Modules) {
+            foreach (ExpertModule module in resolverRequest.Modules) {
                 List<IDependencyRequirement> loopRequirements = new List<IDependencyRequirement>();
 
                 foreach (IDependencyResolver resolver in resolvers) {
@@ -97,20 +99,12 @@ namespace Aderant.Build.DependencyResolver {
                     IEnumerable<IDependencyRequirement> dependencyRequirements = resolver.GetDependencyRequirements(resolverRequest, module);
 
                     if (dependencyRequirements != null) {
-                        loopRequirements.AddRange(dependencyRequirements.ToList());
+                        loopRequirements.AddRange(dependencyRequirements);
                     }
                 }
 
                 resolverRequest.AssociateRequirements(module, loopRequirements);
-
                 requirements.AddRange(loopRequirements);
-            }
-        }
-
-        private static void RemoveRequirementsBeingBuilt(ResolverRequest resolverRequest, List<IDependencyRequirement> requirements) {
-            IEnumerable<ExpertModule> modules = resolverRequest.GetModulesInBuild();
-            foreach (var module in modules) {
-                requirements.RemoveAll(req => string.Equals(req.Name, module.Name, StringComparison.OrdinalIgnoreCase));
             }
         }
     }

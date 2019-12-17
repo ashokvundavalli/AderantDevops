@@ -3,7 +3,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using Aderant.Build.DependencyAnalyzer;
-using Microsoft.TeamFoundation.VersionControl.Common;
 
 namespace Aderant.Build.Providers {
     internal static class PathHelper {
@@ -103,17 +102,6 @@ namespace Aderant.Build.Providers {
         /// </value>
         public static string PathToBuildOrderProject {
             get { return @"Modules.proj"; }
-        }
-
-        /// <summary>
-        /// Gets the source control path to module directory.
-        /// </summary>
-        /// <param name="branch">The branch.</param>
-        /// <returns></returns>
-        public static string GetServerPathToModuleDirectory(string branch) {
-            string root = VersionControlPath.PrependRootIfNeeded("ExpertSuite");
-
-            return Path.Combine(root, branch, "Modules");
         }
 
         /// <summary>

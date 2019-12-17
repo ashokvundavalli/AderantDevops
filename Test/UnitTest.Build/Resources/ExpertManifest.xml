@@ -11,7 +11,6 @@
     <Module Name="Applications.ExpertTime" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
     <Module Name="Applications.FoundTimeOutlookAddIn" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
     <Module Name="Applications.Marketing" AssemblyVersion="8.0.0.0" GetAction="branch" Path="Main" />
-    <Module Name="Applications.MatterCenterIntegration" AssemblyVersion="7.7.0.0" GetAction="branch" Path="Main" />
     <Module Name="Applications.MatterPlanning" AssemblyVersion="1.8.0.0" />
     <Module Name="Applications.PrebillEditor" AssemblyVersion="1.8.0.0" />
     <Module Name="Applications.Rates" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />

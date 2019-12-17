@@ -1,263 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
+  <!-- External targets: GetServerImageDependencies, RunTests
+     External variables: ArtifactStagingDirectory, BuildToolsDirectory, ExpertSourceDirectory, SolutionRoot, ImageWorkingDirectory, ImageToolingDirectory, DeploymentEngine, SharedDependencyDirectory, ImpactedTestProjects, ParametersFile -->
+  <PropertyGroup>
+    <DeploymentTargets>$(SharedDependencyDirectory)\packages\Aderant.Deployment.Internal\lib\Targets\</DeploymentTargets>
+    <ServerImageTargetExists Condition="Exists('$(DeploymentTargets)Aderant.Build.ServerImage.targets')">true</ServerImageTargetExists>
+    <DeployTargetExists Condition="Exists('$(DeploymentTargets)Aderant.Build.DeployCI.targets')">true</DeployTargetExists>
+  </PropertyGroup>
 
+  <Import Project="$(ParametersFile)" Condition="Exists($(ParametersFile))" />
+  
+  <Import Project="Aderant.Build.Testing.targets" />
+  <Import Project="$(DeploymentTargets)Aderant.Build.ServerImage.targets" Condition="'$(ServerImageTargetExists)' == 'true'" />
+  <Import Project="$(DeploymentTargets)Aderant.Build.DeployCI.targets" Condition="'$(DeployTargetExists)' == 'true'" />
   <PropertyGroup>
     <!-- Allows environment variables to override RSP parameters -->
     <_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">$([System.Environment]::GetEnvironmentVariable('RunIntegrationTests'))</_RunIntegrationTests>
     <_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">$(RunIntegrationTests)</_RunIntegrationTests>
-    <_RunIntegrationTests Condition="'$(RunDesktopIntegrationTests)' != ''">$(RunDesktopIntegrationTests)</_RunIntegrationTests>
+    <_RunIntegrationTests Condition="'$(IsDesktopBuild)' == 'true' And '$(RunDesktopIntegrationTests)' != ''">$(RunDesktopIntegrationTests)</_RunIntegrationTests>
     <_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">false</_RunIntegrationTests>
 
-    <RunIntegrationTestsDependsOn>
-      GrovelForTestAssemblies;
-      GetServerImage;
-      ProvisionExpertDatabase;
-      UpdateServerImage;
-      ExecuteQueryViewsScript;
-      LightUpServerImage;
-      PackageImport;
+    <PowerShellExe Condition=" '$(PowerShellExe)' == ''">$(SystemRoot)\sysnative\WindowsPowerShell\v1.0\powershell.exe</PowerShellExe>
+
+    <RunIntegrationTestsDependsOn Condition="'$(DeployTargetExists)' == 'true'">
+      DeployCIEnvironment;
     </RunIntegrationTestsDependsOn>
 
-    <ImageWorkingDirectory>$(SolutionDirectoryPath)Dependencies</ImageWorkingDirectory>
-    <ExpertEnvironmentName>Local_$([System.DateTime]::Now.ToFileTimeUtc())</ExpertEnvironmentName>
-    <ExpertEnvironmentUrl>http://localhost/Expert_$(ExpertEnvironmentName)</ExpertEnvironmentUrl>
-    <DatabaseName>$([System.Guid]::NewGuid())</DatabaseName>
-
-    <ServiceAccount Condition="'$(ServiceAccount)' == ''">ADERANT_AP\tfsbuildservice$</ServiceAccount>
-    
-    <LightUpManifest>$(SolutionDirectoryPath)Build\LightUpManifest.xml</LightUpManifest>
-    <OriginBranch Condition="'$(OriginBranch)' == ''">master</OriginBranch>
-    <OriginTFVCBranch Condition="'$(OriginTFVCBranch)' == ''">dev\vnext</OriginTFVCBranch>
-    
-    <_DeployEnvironment Condition="'$(_DeployEnvironment)' == ''">$([System.Environment]::GetEnvironmentVariable('DeployEnvironment'))</_DeployEnvironment>
-    <_DeployEnvironment Condition="'$(_DeployEnvironment)' == ''">$(DeployEnvironment)</_DeployEnvironment>
-    <_DeployEnvironment Condition="'$(_DeployEnvironment)' == '' And '$(IsDesktopBuild)' != 'true' And '$(_RunIntegrationTests)' == 'true'">true</_DeployEnvironment>
-    <_DeployEnvironment Condition="'$(_DeployEnvironment)' == ''">false</_DeployEnvironment>
   </PropertyGroup>
 
-
-  <UsingTask TaskName="UpdateLightUpManifest" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
-    <ParameterGroup>
-      <PackageDependency ParameterType="System.String" Required="true" />
-      <LightUpManifest ParameterType="System.String" Required="true" />
-    </ParameterGroup>
-
-    <Task>
-      <Reference Include="System.Core" />
-      <Reference Include="System.Xml" />
-      <Reference Include="System.Xml.Linq" />
-      <Using Namespace="System.Collections.Generic" />
-      <Using Namespace="System.Linq" />
-      <Using Namespace="System.Xml.Linq" />
-      <Using Namespace="System.Xml.XPath" />
-      <Code Type="Fragment" Language="cs">
-        <![CDATA[
-            string[] dependencies = PackageDependency.Split(';');
-            foreach (var dependency in dependencies) {
-                string[] referencedModule = dependency.Split('|');
-                List<XAttribute> attributes = new List<XAttribute> { new XAttribute("Name", referencedModule[0]) };
-                foreach (string property in referencedModule.Skip(1)) {
-                    if (property.StartsWith("getaction:", StringComparison.OrdinalIgnoreCase) && property.ToLower() != "getaction:") {
-                        attributes.Add(new XAttribute("GetAction", property.Split(new char[] { ':' }, 2)[1]));
-                        continue;
-                    }
-                
-                    if (property.StartsWith("assemblyversion:", StringComparison.OrdinalIgnoreCase) && property.ToLower() != "assemblyversion:") {
-                        attributes.Add(new XAttribute("AssemblyVersion", property.Split(new char[] { ':' }, 2)[1]));
-                        continue;
-                    }
-                
-                    if (property.StartsWith("version:", StringComparison.OrdinalIgnoreCase) && property.ToLower() != "version:") {
-                        attributes.Add(new XAttribute("Version", property.Split(new char[] { ':' }, 2)[1].Trim()));
-                    }
-                }
-                
-                XElement manifest = XElement.Load(LightUpManifest);
-                manifest.XPathSelectElement("/ReferencedModules").Add(new XElement("ReferencedModule", attributes.ToArray()));
-                manifest.Save(LightUpManifest);
-            }
-          ]]>
-      </Code>
-    </Task>
-  </UsingTask>
-
-
-  <Target Name="GetServerImage"
-    Condition="'$(_DeployEnvironment)' == 'true'">
-
-    <Message Text="Acquiring Expert server image." />
-
-    <ItemGroup>
-      <PackageDependency Condition="'$(PackageDependency)' != ''" Include="$(PackageDependency.Split('#'))" />
-      <PackageFiles Include="$(SolutionDirectoryPath)Packages\**"></PackageFiles>
-    </ItemGroup>
-
-    <Exec ContinueOnError="false"
-      IgnoreExitCode="false"
-      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { Invoke-WebRequest -Uri 'http://tfs.ap.aderant.com:8080/tfs/ADERANT/44f228f7-b636-4bd3-99ee-eb2f1570d768/_api/_versioncontrol/itemContent?repositoryId=e6138670-7236-4e80-aa7c-6417eea253f5&amp;path=%2FBuild%2FLightUpManifest.xml&amp;version=GB$(OriginBranch)&amp;contentOnly=false&amp;__v=5' -OutFile $(LightUpManifest) -UseBasicParsing -UseDefaultCredentials }&quot;" />
-
-    <UpdateLightUpManifest Condition="'@(PackageDependency)' != ''"
-      PackageDependency="%(PackageDependency.Identity)"
-      LightUpManifest="$(LightUpManifest)" />
-
-    <!-- Backup original packages -->
-    <Move SourceFiles="@(PackageFiles)"
-      DestinationFiles="@(PackageFiles->'$(SolutionDirectoryPath)BackupPackages\%(RecursiveDir)%(Filename)%(Extension)')" />
-
-    <Exec ContinueOnError="false"
-      IgnoreExitCode="false"
-      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(BuildScriptsDirectory)LightUpDependencies.ps1&apos; -modulesRootPath &apos;$(SolutionDirectoryPath)&apos; -moduleName &apos;$(ModuleName)&apos; -dropPath &apos;\\dfs.aderant.com\expertsuite\$(OriginTFVCBranch)&apos; -manifestFile &apos;$(LightUpManifest)&apos; } &quot;" />
-
-    <ItemGroup>
-      <FilesToMove Include="$(ImageWorkingDirectory)\ApplicationServerCommon.psm1;$(ImageWorkingDirectory)\SecuritySetup.ps1;$(ImageWorkingDirectory)\TeardownServerImage.ps1;$(ImageWorkingDirectory)\ApplicationPools.psm1"/>
-    </ItemGroup>
-
-    <MakeDir Directories="$(ImageWorkingDirectory)\bin" />
-    <Move SourceFiles="@(FilesToMove)" DestinationFolder="$(ImageWorkingDirectory)\bin" />
-
+  <Target Name="RunIntegrationTestsCore" BeforeTargets="RunIntegrationTests">
   </Target>
-
-
-  <Target Name="ProvisionExpertDatabase"
-    Condition="'$(_DeployEnvironment)' == 'true'">
-
-    <Message Text="Provisioning Expert database: $(DatabaseName)" />
-
-    <Exec ContinueOnError="false"
-      IgnoreExitCode="false"
-      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\ProvisionDatabase.ps1&apos; -serverInstance &apos;LocalHost&apos; -DatabaseName &apos;$(DatabaseName)&apos; -backupPath &apos;$(ImageWorkingDirectory)\Expert.bak&apos; -assembly &apos;$(ImageWorkingDirectory)\API.Database.dll&apos; }&quot;" />
-
-  </Target>
-
-
-  <Target Name="UpdateServerImage"
-    Condition="'$(_DeployEnvironment)' == 'true'">
-
-    <Message Text="Updating Expert server image: $(ExpertEnvironmentName)." />
-
-    <PropertyGroup>
-      <ImagePath>$(ImageWorkingDirectory)\ExpertServerImage.zip</ImagePath>
-      <!-- RoleFiles in future should be in the module build. Right now they were managed by Libraries.Roles so we need to load from the server image with all role files. -->
-      <RoleFiles>$(BinModuleDirectory);$(BinTestDirectory);$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\Roles\</RoleFiles>
-      <ModuleFiles>$(ModuleBuild);$(BinModuleDirectory);$(BinTestDirectory);$(SolutionDirectoryPath)Packages</ModuleFiles>
-      <ModuleFiles Condition="'$(UpdateImageWithDependencies)' == 'true'">$(ModuleFiles);$(SolutionDirectoryPath)Dependencies</ModuleFiles>
-    </PropertyGroup>
-    
-    <!--Update Server Image -->
-    <Exec ContinueOnError="false"
-      IgnoreExitCode="false"
-      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\DeploymentEngine.exe&apos; UpdateServerImage /image:&apos;$(ImagePath)&apos; /name:&apos;$(ExpertEnvironmentName)&apos; /roles:&apos;$(RoleFiles)&apos; /modules:&apos;$(ModuleFiles)&apos; }&quot;" />
-
-  </Target>
-
-
-  <Target Name="ExecuteQueryViewsScript"
-    Condition="'$(_DeployEnvironment)' == 'true'">
-
-    <Message Text="Executing QueryViews Script: ExpertQuery.SqlViews.sql" />
-
-    <Exec ContinueOnError="false"
-      IgnoreExitCode="false"
-      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\ExecuteSQLFile.ps1&apos; -serverInstance &apos;LocalHost&apos; -DatabaseName &apos;$(DatabaseName)&apos; -sqlFilePath &apos;$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\ExpertQuery.SqlViews.sql&apos; -assembly &apos;$(ImageWorkingDirectory)\API.Database.dll&apos; }&quot;" />
-
-    <OnError ExecuteTargets="LightsOff" />
-
-  </Target>
-
-
-  <Target Name="LightUpServerImage"
-    Condition="'$(_DeployEnvironment)' == 'true'">
-
-    <Message Text="Lighting up Expert server image: Expert_$(ExpertEnvironmentName)." />
-
-    <!-- Light up server image -->
-    <Exec ContinueOnError="false"
-      IgnoreExitCode="false"
-      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\DeploymentEngine.exe&apos; LightUpServerImage /image:&apos;$(ImageWorkingDirectory)\$(ExpertEnvironmentName)&apos; /server:LocalHost /database:$(DatabaseName) /serviceaccount:$(ServiceAccount) /name:$(ExpertEnvironmentName) }&quot;" />
-
-    <OnError ExecuteTargets="LightsOff" />
-
-  </Target>
-
-
-  <Target Name="PackageImport"
-    Condition="'$(_DeployEnvironment)' == 'true' And '$(ImportPackages)' == 'true'">
-
-    <PropertyGroup>
-      <FactoryBin>$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\SharedBin\Factory.bin</FactoryBin>
-    </PropertyGroup>
-
-    <ItemGroup>
-      <PreparePackages Include="$(CommonPackageNames)" />
-      <CommonPackages Include="$(ImageWorkingDirectory)\Packages\%(PreparePackages.Identity)" Condition="'%(Extension)' == '.zip'"  />
-
-      <PackagesToImport Include="$(PackagesToImport)" />
-      <Packages Include="$(BinModuleDirectory)\Packages\%(PackagesToImport.Identity)" Condition="'%(Extension)' == '.zip' And Exists('$(BinModuleDirectory)\Packages\%(PackagesToImport.Identity)')" />
-      <Packages Include="$(BinModuleDirectory)\Packages\*.zip" Exclude="@(Packages)" />
-      <Packages Include="$(BinTestDirectory)\TestPackages\*" />
-      <ConfigFiles Include="$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\Services\extensions.config;$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\Services\bindings.config;$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\Services\clients.config;$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\Services\instance.config" />
-    </ItemGroup>
-
-    <Copy SourceFiles="@(ConfigFiles)" DestinationFolder="$(ImageWorkingDirectory)" />
-    <Copy SourceFiles="$(FactoryBin)" DestinationFolder="$(ImageWorkingDirectory)" />
-
-    <!-- Common Package Import -->
-    <Exec Condition="'@(CommonPackages)' != ''"
-      ContinueOnError="false"
-      IgnoreExitCode="false"
-      Command="$(ImageWorkingDirectory)\PackageManagerConsole.exe /Import /EnvironmentUrl:$(ExpertEnvironmentUrl) /File:%(CommonPackages.FullPath) /SourcePath:$(ImageWorkingDirectory)" />
-
-    <!-- Package Import -->
-    <Exec Condition="'@(Packages)' != ''"
-      ContinueOnError="false"
-      IgnoreExitCode="false"
-      Command="$(ImageWorkingDirectory)\PackageManagerConsole.exe /Import /EnvironmentUrl:$(ExpertEnvironmentUrl) /File:%(Packages.FullPath) /SourcePath:$(ImageWorkingDirectory) /AssemblySearchPaths:$(BinModuleDirectory) /AdditionalPluginDirectories:$(BinModuleDirectory)" />
-
-    <OnError ExecuteTargets="LightsOff" />
-
-  </Target>
-
-
-  <Target Name="GrovelForTestAssemblies" Returns="@(IntegrationTestAssemblies)">
-    <ItemGroup>
-      <IntegrationTestAssemblies Include="$(BinTestDirectory)*IntegrationTest*.dll" />
-    </ItemGroup>
-  </Target>
-  
-  <Target Name="RunIntegrationTestsCore" BeforeTargets="RunIntegrationTests">  
-  </Target>
-
-
-  <UsingTask TaskName="ParseRunSettings" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
-    <ParameterGroup>
-      <RunSettingsFile ParameterType="System.String" Required="true" />
-      <RunSettingsDatabase ParameterType="System.String" Output="true" />
-    </ParameterGroup>
-
-    <Task>
-      <Reference Include="System" />
-      <Reference Include="System.Core" />
-      <Reference Include="System.Xml" />
-      <Reference Include="System.Xml.Linq" />
-      <Using Namespace="System.Linq" />
-      <Using Namespace="System.Xml.Linq" />
-      <Code Type="Fragment" Language="cs">
-        <![CDATA[
-            XElement xml = XElement.Load(RunSettingsFile);
-
-            XElement testRunParameters = xml.Element("TestRunParameters");
-
-            if (testRunParameters != null) {
-                XAttribute element = testRunParameters.Elements("Parameter").Where(x => x.Attributes().Any(y => y.Value.Equals("Database", StringComparison.OrdinalIgnoreCase))).Attributes("value").FirstOrDefault();
-
-                if (element != null) {
-                    RunSettingsDatabase = element.Value;
-                }
-            }
-          ]]>
-      </Code>
-    </Task>
-  </UsingTask>
 
 
   <Target Name="RunIntegrationTests"
@@ -265,169 +37,19 @@
     Condition="'$(_RunIntegrationTests)' == 'true'">
 
     <PropertyGroup>
-      <IntegrationTestAssemblies>@(IntegrationTestAssemblies->'%(FullPath)',' ')</IntegrationTestAssemblies>
-      <VsTestWorkingDirectory>$(SolutionDirectoryPath)</VsTestWorkingDirectory>
-
-      <!-- VSTest Setup -->
-      <VsTestDirectory Condition="'$(VsTestDirectory)' == ''">$(VsCommonTools)..\IDE\CommonExtensions\Microsoft\TestWindow</VsTestDirectory>
-      <PathToTestTool>$(VsTestDirectory)\vstest.console.exe</PathToTestTool>
-      <IsolationSwitch>/InIsolation</IsolationSwitch>
-      <PlatformSwitch Condition="'$(Use32BitTestRunner)' != 'true'">/Platform:x64</PlatformSwitch>
-      <TestAdapterSwitch Condition="'$(PSTests)' == 'true'">/TestAdapterPath:"$(BuildScriptsDirectory)..\Build.Tools"</TestAdapterSwitch>
-      <ResultsFileSwitch Condition="'$(ResultsFileSwitch)' == ''">/Logger:trx</ResultsFileSwitch>
-      <TestCaseFilter>/TestCaseFilter:&quot;TestCategory!=Reporting$(CustomTestFilters)&quot;</TestCaseFilter>
-      <RunSettingsFile Condition="'$(IsDesktopBuild)' != 'true' And '$(CustomRunSettings)' != ''">$(BinTestDirectory)$(CustomRunSettings)</RunSettingsFile>
-      <RunSettingsSwitch Condition="Exists('$(RunSettingsFile)')">/Settings:$(RunSettingsFile)</RunSettingsSwitch>
+      <TestPattern>IntegrationTest</TestPattern>
     </PropertyGroup>
 
-    <Message Condition="'$(Use32BitTestRunner)' == 'true'" Text="Must run tests in 32-bit mode as at least one build output assembly has a platform of x86." />
+    <!-- Invoke the RunTests target from Aderant.Build.Testing.targets -->
+    <CallTarget Targets="RunTests" />
 
-    <MakeDir Directories="$(VsTestWorkingDirectory)" />
-    
-    <PropertyGroup>
-      <TestTimeoutMilliseconds>-1</TestTimeoutMilliseconds>
-      <TestTimeoutMilliseconds Condition="'$(IsDesktopBuild)' == 'false'">900000</TestTimeoutMilliseconds>
-    </PropertyGroup>
-
-    <ItemGroup>
-      <EnvironmentVariables Include='SET "EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory)"' />
-      <EnvironmentVariables Condition="'$(_DeployEnvironment)' == 'true'" Include='SET "EXPERT_ENVIRONMENT_URL=$(ExpertEnvironmentUrl)"' />
-    </ItemGroup>
-
-    <PropertyGroup>
-      <EnvironmentVariables>@(EnvironmentVariables->' %(Identity) ', '&amp;')</EnvironmentVariables>
-    </PropertyGroup>
-
-    <ParseRunSettings Condition="Exists('$(RunSettingsFile)')"
-      RunSettingsFile="$(RunSettingsFile)">
-      <Output TaskParameter="RunSettingsDatabase" PropertyName="RunSettingsDatabase" />
-    </ParseRunSettings>
-
-    <PropertyGroup>
-      <!-- If the runsettings file specifies a database name, override the existing DatabaseName. -->
-      <DatabaseName Condition="'$(RunSettingsDatabase)' != ''">$(RunSettingsDatabase)</DatabaseName>
-    </PropertyGroup>
-
-    <Exec Condition="'$(IntegrationTestAssemblies)' != ''"
-      ContinueOnError="false"
-      IgnoreExitCode="false"
-      WorkingDirectory="$(VsTestWorkingDirectory)"
-      Timeout="$(TestTimeoutMilliseconds)"
-      Command='$(EnvironmentVariables) &amp; "$(PathToTestTool)" $(IntegrationTestAssemblies) $(TestCaseFilter) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) $(RunSettingsSwitch)' />
-
-    <PropertyGroup>
-      <TestOutcome>Succeeded</TestOutcome>
-    </PropertyGroup>
-
-    <OnError ExecuteTargets="LightsOff;OnTestFailure" />
+    <OnError ExecuteTargets="LightsOff;ShowTestFailureHelp" Condition="'$(DeployTargetExists)' == 'true'"/>
 
   </Target>
 
 
- <PropertyGroup>
-    <!-- Allows environment variables to override RSP parameters -->
-    <_RunAutomationTests Condition="'$(_RunAutomationTests)' == ''">$([System.Environment]::GetEnvironmentVariable('RunAutomationTests'))</_RunAutomationTests>
-    <_RunAutomationTests Condition="'$(_RunAutomationTests)' == ''">$(RunAutomationTests)</_RunAutomationTests>
-    <_RunAutomationTests Condition="'$(_RunAutomationTests)' == ''">false</_RunAutomationTests>
-  </PropertyGroup>
-
-
-  <Target Name="RunAutomationTests"
-    Condition="('$(IsDesktopBuild)' != 'true' And '$(_RunAutomationTests)' == 'true' And '$(_DeployEnvironment)' == 'true' And '$(IsCustomBuild)' != 'true') Or ('$(IsDesktopBuild)' == 'true' And '$(RunDesktopAutomationTests)' == 'true')"
-    DependsOnTargets="$(RunTestsDependsOn);$(RunIntegrationTestsDependsOn);RunIntegrationTests">
-    <ItemGroup>
-      <PrepCategories Include="$(CustomAutomationTestFilters)" />
-      <AutomationTestAssemblies Condition="'$(_RunAutomationTests)' == 'true'"
-        Include="$(BinTestDirectory)UIAutomationTest*.dll" />
-      <AutomationTestCaseFilter
-         Include="/TestCaseFilter:&quot;TestCategory!=Reporting%(PrepCategories.Identity)&quot;" />
-    </ItemGroup>
-    <PropertyGroup>
-      <AutomationTestAssemblies>@(AutomationTestAssemblies->'%(FullPath)',' ')</AutomationTestAssemblies>
-      <TestAdapterPath>/TestAdapterPath:"$(BinTestDirectory)"</TestAdapterPath>
-      <!-- VSTest Setup shared from Integration test run -->
-      <ResultsFileSwitch Condition="'$(ResultsFileSwitch)' == ''">/Logger:trx</ResultsFileSwitch>
-      <VsTestDirectory Condition="'$(VsTestDirectory)' == ''">$(VsCommonTools)..\IDE\CommonExtensions\Microsoft\TestWindow</VsTestDirectory>
-      <PathToTestTool>$(VsTestDirectory)\vstest.console.exe</PathToTestTool>
-      <IsolationSwitch>/InIsolation</IsolationSwitch>
-      <PlatformSwitch Condition="'$(Use32BitTestRunner)' != 'true'">/Platform:x64</PlatformSwitch>
-      <TestAdapterSwitch Condition="'$(PSTests)' == 'true'">/TestAdapterPath:"$(BuildScriptsDirectory)..\Build.Tools"</TestAdapterSwitch>
-    </PropertyGroup>
-    
-    <PropertyGroup>
-      <TestTimeoutMilliseconds>-1</TestTimeoutMilliseconds>
-      <TestTimeoutMilliseconds Condition="'$(IsDesktopBuild)' == 'false'">900000</TestTimeoutMilliseconds>
-    </PropertyGroup>
-
-    <!-- Run With VSTest -->
-    <Exec Condition="'$(AutomationTestAssemblies)' != '' And '$(IsDesktopBuild)' != 'true'"
-          ContinueOnError="false"
-          IgnoreExitCode="false"
-          WorkingDirectory="$(VsTestWorkingDirectory)"
-          Timeout="$(TestTimeoutMilliseconds)"
-          Command='SET EXPERT_ENVIRONMENT_URL=$(ExpertEnvironmentUrl)&amp; SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(PathToTestTool)" $(AutomationTestAssemblies) %(AutomationTestCaseFilter.Identity) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) $(TestAdapterPath)' />
-
-   <!-- Run With VSTest - Desktop -->
-    <Exec Condition="'$(AutomationTestAssemblies)' != '' And '$(IsDesktopBuild)' == 'true'"
-          ContinueOnError="false"
-          IgnoreExitCode="false"
-          WorkingDirectory="$(VsTestWorkingDirectory)"
-          Timeout="$(TestTimeoutMilliseconds)"
-          Command='SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(PathToTestTool)" $(AutomationTestAssemblies) %(AutomationTestCaseFilter.Identity) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) $(TestAdapterPath)' />
-    <PropertyGroup>
-      <TestOutcome>Succeeded</TestOutcome>
-    </PropertyGroup>
-
-    <OnError ExecuteTargets="LightsOff;OnTestFailure" />
-
-  </Target>
-
-
-  <Target Name="LightsOffWrap" DependsOnTargets="RunIntegrationTests;RunAutomationTests" AfterTargets="RunIntegrationTests;RunAutomationTests">
-      <CallTarget Targets="LightsOff" />
-  </Target>
- 
-
-  <Target Name="LightsOff"
-    Condition="'$(_RunIntegrationTests)' == 'true' And '$(RunTest)' != 'false' And '$(IsCustomBuild)' != 'true'">
-
-    <CallTarget Targets="RemoveServerImage" Condition="'$(_DeployEnvironment)' == 'true'" />
-    <CallTarget Targets="DropDatabase" Condition="'$(_DeployEnvironment)' == 'true' Or '$(RunSettingsDatabase)' != ''" />
-
-  </Target>
-
-
-  <Target Name="RemoveServerImage" Condition="'$(_DeployEnvironment)' == 'true'">
-
-    <ItemGroup>
-      <BackupPackageFiles Include="$(SolutionDirectoryPath)BackupPackages\**"></BackupPackageFiles>
-    </ItemGroup>
-
-    <!-- Restore original packages -->
-    <Move SourceFiles="@(BackupPackageFiles)"
-      DestinationFiles="@(BackupPackageFiles->'$(SolutionDirectoryPath)Packages\%(RecursiveDir)%(Filename)%(Extension)')" />
-
-    <Message Text="Removing Expert server image: Expert_$(ExpertEnvironmentName)." />
-
-    <Exec ContinueOnError="true"
-      IgnoreExitCode="false"
-      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; &apos;$(ImageWorkingDirectory)\DeploymentEngine.exe&apos; TeardownServerImage /name:$(ExpertEnvironmentName)&quot;" />
-
-  </Target>
-
-
-  <Target Name="DropDatabase">
-
-  <PropertyGroup>
-    <ServerInstance Condition="'$(ServerInstance)' == ''">localhost</ServerInstance>
-  </PropertyGroup>
-
-    <Message Text="Dropping Expert database: $(DatabaseName)." />
-
-    <Exec ContinueOnError="true"
-      IgnoreExitCode="false"
-      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; &apos;$(ImageWorkingDirectory)\DropDatabase.ps1&apos; -serverInstance &apos;$(ServerInstance)&apos; -DatabaseName &apos;$(DatabaseName)&apos; -assembly &apos;$(ImageWorkingDirectory)\API.Database.dll&apos;&quot;" />
-
+  <Target Name="LightsOffWrap" DependsOnTargets="RunIntegrationTests" AfterTargets="RunIntegrationTests">
+    <CallTarget Targets="LightsOff" Condition="'$(DeployTargetExists)' == 'true'"/>
   </Target>
 
 </Project>

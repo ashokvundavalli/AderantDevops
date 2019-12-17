@@ -25,8 +25,8 @@ namespace Aderant.Build.Packaging.NuGet {
 
             logger.Info("Existing package directory: {0}. Current package directory: {1}", existingPackageDirectory, currentPackageDirectory);
 
-            IEnumerable<string> currentContents = fileSystem.GetFiles(currentPackageDirectory, "*", true, true).ToList();
-            IEnumerable<string> existingContents = fileSystem.GetFiles(existingPackageDirectory, "*", true, true).ToList();
+            IEnumerable<string> currentContents = fileSystem.GetFiles(currentPackageDirectory, "*", true).ToList();
+            IEnumerable<string> existingContents = fileSystem.GetFiles(existingPackageDirectory, "*", true).ToList();
 
             Dictionary<string, string> currentHashes = HashContents(currentContents);
             Dictionary<string, string> existingHashes = HashContents(existingContents);

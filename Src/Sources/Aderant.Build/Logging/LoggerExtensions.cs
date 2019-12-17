@@ -1,16 +1,9 @@
-using System;
+﻿using System;
 using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Aderant.Build.Logging {
     internal static class LoggerExtensions {
-        public static void LogErrorFromException(this ILogger logger, Exception exception) {
-            LogErrorFromException(logger, exception, false);
-        }
-
-        public static void LogErrorFromException(this ILogger logger, Exception exception, bool showStackTrace) {
-            LogErrorFromException(logger, exception, showStackTrace, false);
-        }
 
         public static void LogErrorFromException(this ILogger logger, Exception exception, bool showStackTrace, bool showDetail, [CallerFilePath] string file = null) {
             string message = FormatErrorMessageFromException(exception, showStackTrace, showDetail, file);

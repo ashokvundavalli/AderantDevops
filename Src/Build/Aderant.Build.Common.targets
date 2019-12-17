@@ -5,15 +5,6 @@
   DefaultTargets="PrepareBuildEnvironment"
   TreatAsLocalProperty="BuildScriptsDirectory;BuildToolsDirectory;BuildNumber">
 
-  <PropertyGroup Label="TeamBuild">
-    <SkipWorkItemCreation>true</SkipWorkItemCreation>
-    <!-- We need a custom task for this as this will associate all work items to a build even if the build doesn't relate to the work item -->
-    <UpdateAssociatedWorkItems>false</UpdateAssociatedWorkItems>
-    <StopOnFirstFailure>true</StopOnFirstFailure>
-    <StopOnTestFailure>true</StopOnTestFailure>
-    <TreatTestFailureAsBuildFailure>true</TreatTestFailureAsBuildFailure>
-  </PropertyGroup>
-
   <PropertyGroup>
     <IsDesktopBuild Condition="'$(IsDesktopBuild)' == ''">true</IsDesktopBuild>
 
@@ -23,10 +14,13 @@
     <BuildScriptsDirectory Condition="'$(BuildScriptsDirectory)' != '' and !HasTrailingSlash('$(BuildScriptsDirectory)')">$(BuildScriptsDirectory)\</BuildScriptsDirectory>
 
     <!-- Inject per CSharp project overrides. This target is imported once for each CSharp project and allows us access to project level variables -->
-    <CustomAfterMicrosoftCSharpTargets>$(BuildScriptsDirectory)Aderant.CSharp.targets</CustomAfterMicrosoftCSharpTargets>
+    <CustomBeforeMicrosoftCommonTargets Condition="'$(IsCustomBuild)' != 'true'">$(BuildScriptsDirectory)Aderant.CustomBeforeMicrosoftCommon.targets</CustomBeforeMicrosoftCommonTargets>
     <CustomAfterMicrosoftCommonTargets Condition="'$(IsCustomBuild)' != 'true'">$(BuildScriptsDirectory)Aderant.CustomAfterMicrosoftCommon.targets</CustomAfterMicrosoftCommonTargets>
+    <CustomAfterMicrosoftCSharpTargets>$(BuildScriptsDirectory)Aderant.CSharp.targets</CustomAfterMicrosoftCSharpTargets>
+    <CustomAfterWixTargets Condition="'$(IsCustomBuild)' != 'true'">$(BuildScriptsDirectory)Aderant.Wix.Extensions.targets</CustomAfterWixTargets>
 
     <BuildToolsDirectory Condition="'$(BuildToolsDirectory)' == ''">$(BuildScriptsDirectory)..\Build.Tools\</BuildToolsDirectory>
+    <BuildToolsDirectory Condition="'$(IsCustomBuild)' == 'true'">$(BuildScriptsDirectory)\Build.Tools\</BuildToolsDirectory>
     <BuildSourcesDirectory Condition="'$(BuildSourcesDirectory)' == ''">$(BuildScriptsDirectory)..\Sources\</BuildSourcesDirectory>
 
     <BuildToolsDirectory>$([System.IO.Path]::GetFullPath('$(BuildToolsDirectory)'))</BuildToolsDirectory>
@@ -34,64 +28,14 @@
 
     <BuildToolsDirectory Condition="'$(BuildToolsDirectory)' != '' and !HasTrailingSlash('$(BuildToolsDirectory)')">$(BuildToolsDirectory)\</BuildToolsDirectory>
 
-    <BuildAssembly>$(BuildToolsDirectory)Aderant.Build.dll</BuildAssembly>
-    <BuildAssembly>$([MSBuild]::Unescape('$(BuildAssembly)'))</BuildAssembly>
-  
+    <BuildAssembly Condition="'$(BuildAssembly)' == ''">$(BuildToolsDirectory)Aderant.Build.dll</BuildAssembly>
+    <BuildAssembly>$([MSBuild]::Unescape($(BuildAssembly)))</BuildAssembly>
+
+    <IsVisualStudio2019OrHigher Condition="'$([Microsoft.Build.Utilities.ToolLocationHelper]::CurrentToolsVersion)' == 'Current'">true</IsVisualStudio2019OrHigher>
+
     <PrepareBuildEnvironmentTargetImported>true</PrepareBuildEnvironmentTargetImported>
     <AderantCommonTargetsImported>true</AderantCommonTargetsImported>
-
-    <!-- After each build succeeds, copy all output to the staging place. After all builds succeed, they will be copied to ExpertSource by CustomizationBuilder. The value should be normally passed in from /p:AlternativeOutputDirectory. -->
-    <AlternativeOutputDirectory Condition="'$(AlternativeOutputDirectory)' == ''">$(SolutionDir)..\ArtifactStaging</AlternativeOutputDirectory>
   </PropertyGroup>
-
-
-  <!-- NOTE: Using the fully qualified class name in a <UsingTask> tag is faster than using a partially qualified name. -->
-
-  <!-- Gets the platform of an assembly (e.g. x86, x64 or AnyCPU) -->
-  <UsingTask TaskName="Aderant.Build.Tasks.GetAssemblyPlatform"                                 AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-
-  <!-- Gets the dependencies for a given module -->
-  <UsingTask TaskName="Aderant.Build.Tasks.GetDependencies"                                     AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-  <UsingTask TaskName="Aderant.Build.Tasks.MakeSymlink"                                         AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-  <UsingTask TaskName="Aderant.Build.Tasks.DependencyChecker"                                   AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-  <UsingTask TaskName="Aderant.Build.Tasks.BuildConfigurationCheck"                             AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-  <UsingTask TaskName="Aderant.Build.Tasks.FilterModules"                                       AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-  <UsingTask TaskName="Aderant.Build.Tasks.ExtractWebModule"                                    AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-  <UsingTask TaskName="Aderant.Build.Tasks.ReplaceProjectReferences"                            AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-  <UsingTask TaskName="Aderant.Build.Tasks.CompileLess"                                         AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-  <UsingTask TaskName="Aderant.Build.Tasks.GetCopyLocalItemsToRemove"                           AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-  <UsingTask TaskName="Aderant.Build.Tasks.ParallelBuildProjectFactory"                         AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-
-  <!-- Adds SCC information into the pdb files for the symbol server -->
-  <UsingTask TaskName="Aderant.Build.Tasks.SourceIndex"                                         AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.Tasks.dll" Condition="'$(IsCustomBuild)' != 'true'" />
-
-  <!-- Publishes pdb files to the symbol server -->
-  <UsingTask TaskName="Aderant.Build.Tasks.PublishSymbols"                                      AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.Tasks.dll" Condition="'$(IsCustomBuild)' != 'true'" />
-
-  <!-- Creates "fakes" builds in TFS -->
-  <UsingTask TaskName="Aderant.Build.Tasks.PublishBuild"                                        AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-
-  <!-- Closes and finalizes a build -->
-  <UsingTask TaskName="Aderant.Build.Tasks.FinalizeBuild"                                       AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-
-  <!-- Converts dotCover XML report to Cobertura XML format -->
-  <UsingTask TaskName="Aderant.Build.Tasks.CoberturaReportConverter"                            AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-
-  <!-- Adds solution build details into TFS so the build can track warnings etc -->
-  <UsingTask TaskName="Aderant.Build.Tasks.AddBuildProjectNode"                                 AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-  <UsingTask TaskName="Aderant.Build.Tasks.CheckCertificate"                                    AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-  <UsingTask TaskName="Aderant.Build.Tasks.ThirdPartyPackager"                                  AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-
-  <!-- For zip seed packages. -->
-  <UsingTask TaskName="Aderant.Build.Tasks.SeedPackagePacking"                                  AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-  <UsingTask TaskName="Aderant.Build.Tasks.GetAssembliesWithTraits"                             AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-  <UsingTask TaskName="Aderant.Build.Tasks.GetFileVersionInfo"                                  AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-  <UsingTask TaskName="Aderant.Build.Tasks.CheckFreeSpace"                                      AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-  <UsingTask TaskName="Aderant.Build.Tasks.FilterItemGroup"                                     AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-  <UsingTask TaskName="Aderant.Build.Tasks.GitVersion"                                          AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-  <UsingTask TaskName="Aderant.Build.Tasks.Hash"                                                AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-  <UsingTask TaskName="Aderant.Build.Tasks.WriteLinesToFile"                                    AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-  <UsingTask TaskName="Aderant.Build.Tasks.ReadAssemblyInfo"                                    AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
 
   <PropertyGroup>
     <!-- Visual Studio Environment-->
@@ -100,15 +44,22 @@
     <VsCommonTools Condition="'$(VS120COMNTOOLS)' != ''">$(VS120COMNTOOLS)</VsCommonTools>
     <VsCommonTools Condition="'$(VS140COMNTOOLS)' != ''">$(VS140COMNTOOLS)</VsCommonTools>
 
-    <CodeTaskFactoryAssembly Condition="'$(VisualStudioVersion)' == '12.0'">$(MSBuildToolsPath)\Microsoft.Build.Tasks.v$(MSBuildToolsVersion).dll</CodeTaskFactoryAssembly>
-    <CodeTaskFactoryAssembly Condition="'$(VisualStudioVersion)' == '14.0'">$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll</CodeTaskFactoryAssembly>
+    <!-- Depends on VsVars being run! -->
+    <VsCommonTools Condition="'$(VS150COMNTOOLS)' != ''">$(VS150COMNTOOLS)</VsCommonTools>
+    <VsCommonTools Condition="'$(VS160COMNTOOLS)' != ''">$(VS160COMNTOOLS)</VsCommonTools>
 
-    <MSBuildCommunityTasksPath Condition="'$(MSBuildCommunityTasksPath)' == ''">$(MSBuildThisFileDirectory)\Tasks\MSBuild.Community.Tasks\</MSBuildCommunityTasksPath>
+    <CodeTaskFactoryAssembly Condition="'$(VisualStudioVersion)' == '12.0'">$(MSBuildToolsPath)\Microsoft.Build.Tasks.v$(MSBuildToolsVersion).dll</CodeTaskFactoryAssembly>
+    <CodeTaskFactoryAssembly Condition="'$(VisualStudioVersion)' &gt; 12.0">$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll</CodeTaskFactoryAssembly>
+
+    <MSBuildCommunityTasksPath Condition="'$(MSBuildCommunityTasksPath)' == ''">$(MSBuildThisFileDirectory)Tasks\MSBuild.Community.Tasks\</MSBuildCommunityTasksPath>
+    <MSBuildCommunityTasksPath Condition="'$(MSBuildCommunityTasksPath)' != '' and !HasTrailingSlash('$(MSBuildCommunityTasksPath)')">$(MSBuildCommunityTasksPath)\</MSBuildCommunityTasksPath>
+
+    <CompileBuildSystem Condition="'$(SKIP_BUILD_SYSTEM_COMPILE)' != ''">false</CompileBuildSystem>
   </PropertyGroup>
 
-  <Import Project="$(MSBuildCommunityTasksPath)\MSBuild.Community.Tasks.Targets" Condition="'$(NoMSBuildCommunityTasks)' != 'true'" />
+  <Import Project="Aderant.Build.tasks"/>
+  <Import Project="$(MSBuildCommunityTasksPath)MSBuild.Community.Tasks.Targets" Condition="'$(NoMSBuildCommunityTasks)' != 'true'" />
   <Import Project="Aderant.Build.Versioning.targets" />
-  <Import Project="Aderant.Build.CopyToDropV2.targets" />
 
   <!--
     ==========================================================================================
@@ -120,92 +71,75 @@
     <!-- This is just a stub -->
   </Target>
 
-  <Target Name="PrepareBuildEnvironment" Condition="'$(IsCustomBuild)' != 'true'">
+  <Target Name="PrepareBuildEnvironment" Condition="'$(IsCustomBuild)' != 'true' And '$(CompileBuildSystem)' != 'false'">
     <Error Condition="'$(BuildScriptsDirectory)' == ''" Text="No value specified for BuildScriptsDirectory" />
 
     <Message Text="Setting up build environment from: $(BuildScriptsDirectory) in project $(MSBuildThisFileFullPath)" />
 
     <Exec Condition="'$(IsDesktopBuild)' == 'false'"
-      Command="$(BuildScriptsDirectory)\paket.exe restore" WorkingDirectory="$(BuildScriptsDirectory)..\..\" />
+          Command="$(BuildScriptsDirectory)\paket.exe restore"
+          WorkingDirectory="$(BuildScriptsDirectory)..\..\" />
 
     <ItemGroup>
       <!-- Desktop/Common projects -->
-      <Projects Include="$(BuildSourcesDirectory)FxCopCmd\FxCopCmd.csproj" />
       <Projects Include="$(BuildSourcesDirectory)Aderant.Build\Aderant.Build.csproj" />
+      <Projects Include="$(BuildSourcesDirectory)FxCopCmd\FxCopCmd.csproj"  />
+      <Projects Include="$(BuildSourcesDirectory)TrxerConsole\TrxerConsole.csproj" Condition="'$(IsDesktopBuild)' == 'true'" />
 
       <!-- Server/CI projects -->
-      <Projects Include="$(BuildSourcesDirectory)Aderant.Build.Tasks\Aderant.Build.Tasks.csproj"
-        Condition="'$(IsDesktopBuild)' == 'false'" />
-      <Projects Include="$(BuildSourcesDirectory)WarningRatchet\WarningRatchet.csproj"
-        Condition="'$(IsDesktopBuild)' == 'false'" />
+      <Projects Include="$(BuildSourcesDirectory)Aderant.Build.Tasks\Aderant.Build.Tasks.csproj" Condition="'$(IsDesktopBuild)' == 'false'" />
+      <Projects Include="$(BuildSourcesDirectory)WarningRatchet\WarningRatchet.csproj" Condition="'$(IsDesktopBuild)' == 'false'" />
     </ItemGroup>
 
     <PropertyGroup>
       <PrepareBuildEnvironmentProperties>ResolveAssemblyReferencesSilent=true;DoNotCopyLocalIfInGac=true</PrepareBuildEnvironmentProperties>
     </PropertyGroup>
 
-    <MSBuild
-      Projects="@(Projects)"
-      BuildInParallel="true"
-      UnloadProjectsOnCompletion="true"
-      Properties="$(PrepareBuildEnvironmentProperties)"
-      Condition="'$(Rebuild)' != 'true'" />
-
-    <MSBuild
-      Projects="@(Projects)"
-      BuildInParallel="true"
-      UnloadProjectsOnCompletion="true"
-      Properties="$(PrepareBuildEnvironmentProperties)"
-      Targets="Rebuild"
-      Condition="'$(Rebuild)' == 'true'" />
-
-    <Aderant.Build.Tasks.CheckFreeSpace Condition="'$(IsDesktopBuild)' != 'true'"
-      FreeSpace="10"
-      Units="GB" />
-
-    <PropertyGroup>
-      <!-- Setup environment for JavaScript tests -->
-      <!-- To avoid runtime problems, we delete this so MSBuild will always try to bind to our version of WCF and not one found on the computer somewhere -->
-      <RegCommand>
-        <![CDATA[
-reg import $(BuildScriptsDirectory)Registry\FEATURE_LOCALMACHINE_LOCKDOWN.reg
-reg delete "HKLM\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319\AssemblyFoldersEx\WCF Data Services Standalone Assemblies" /va /f > nul 2>&1
-]]>
-      </RegCommand>
+    <PropertyGroup Condition="'$(BUILD_BUILDID)' != ''">
+      <PrepareBuildEnvironmentProperties>$(PrepareBuildEnvironmentProperties);Configuration=Debug</PrepareBuildEnvironmentProperties>
     </PropertyGroup>
 
-    <Exec Command="$(RegCommand)"
-      IgnoreExitCode="true"
-      YieldDuringToolExecution="true" />
+    <MSBuild
+      Projects="@(Projects)"
+      BuildInParallel="true"
+      UnloadProjectsOnCompletion="true"
+      Properties="$(PrepareBuildEnvironmentProperties)" />
 
-    <Exec Condition="'$(IsDesktopBuild)' != 'true'" Command='cd "$(MSBuildThisFileDirectory)..\..\" &amp; git submodule update --init --recursive' YieldDuringToolExecution="true" />
-
+    <CheckFreeSpace Condition="'$(IsDesktopBuild)' != 'true'"
+      FreeSpace="10"
+      Units="GB" />
   </Target>
 
-  <UsingTask
-    TaskName="GetBranchRootFromServerPath"
-    TaskFactory="CodeTaskFactory"
-    AssemblyFile="$(CodeTaskFactoryAssembly)">
-    <ParameterGroup>
-      <BuildProjectFolderPath ParameterType="System.String" Required="true" />
-      <BranchRoot ParameterType="System.String" Output="true" />
-    </ParameterGroup>
-    <Task>
-      <Using Namespace="System.Reflection" />
-      <Using Namespace="System.IO" />
-      <Using Namespace="System.Diagnostics" />
-      <Code Type="Fragment" Language="cs">
-        int pos = BuildProjectFolderPath.IndexOf("Modules/", StringComparison.OrdinalIgnoreCase);
-        BranchRoot = BuildProjectFolderPath.Substring(0, pos);
-      </Code>
-    </Task>
-  </UsingTask>
 
-  <!-- 
-    Import the users project into our project space if they supplied a project to call back into 
-    This makes all of the properties and tasks loaded here available to ProjectToBuild natively
-  -->
-  <Import Project="$(ProjectToBuild)" Condition="'$(ProjectToBuild)' != ''" />
+  <Target Name="EnsureWixToolsetInstalled" Condition="'$(IsCustomBuild)' != 'true' And '$(UseGlobalWixInstall)' != 'false'">
+    <!-- With Build 15.0 MSBuildExtensionsPath32 now looks in the VS directory like this: Program Files (x86)\Microsoft Visual Studio\2017\Professional\MSBuild\
+         Lots of software does not place objects here - eg WiX.
+         Traditionally WiX has been a global install and so lives in the legacy MSBuildExtensionsPath32 location 'Program Files (x86)\MSBuild'
+         To prevent build breaks we detect if we can shim WixTargetsPath to use the global install for Build 15.0 if we cannot find a local install.
+    -->
+    <PropertyGroup>
+      <LocalWixInstallLocation Condition=" '$(WixTargetsPath)' == '' AND Exists('$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\wix.targets') ">true</LocalWixInstallLocation>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <GlobalWixInstallLocation Condition=" '$(WixTargetsPath)' == '' " Include="$(MSBuildProgramFiles32)\MSBuild\Microsoft\WiX\v3.x\wix.targets" />
+    </ItemGroup>
+
+    <PropertyGroup>
+      <UseWixShim Condition="'$(LocalWixInstallLocation)' != 'true' And @(GlobalWixInstallLocation->Count()) != 0">true</UseWixShim>
+      <WixTargetsPath Condition="'$(UseWixShim)' == 'true'">@(GlobalWixInstallLocation)</WixTargetsPath>
+      <ToDownload>To download the WiX Toolset, see http://wixtoolset.org/releases/</ToDownload>
+    </PropertyGroup>
+
+    <Error Condition="'$(LocalWixInstallLocation)' != 'true' And @(GlobalWixInstallLocation->Count()) == 0"
+           Text="The WiX Toolset v3.11 (or newer) build tools must be installed to build. $(ToDownload)" />
+
+    <Warning Condition="'$(UseWixShim)' == 'true'"
+             Text="!!! We had to shim the The WiX Toolset to use the global install as WiX was not found under $(MSBuildExtensionsPath32). Please install the WiX extension for Visual Studio to resolve this. $(ToDownload)" />
+
+    <MSBuild.Community.Tasks.Prompt
+      Condition=" '$(NoMSBuildCommunityTasks)' != 'true' And '$(IsDesktopBuild)' == 'true' And '$(UseWixShim)' == 'true' And '$(project-set)' != 'minimal'" />
+  </Target>
 
 
   <Target Name="FindProductManifest"
@@ -234,7 +168,7 @@ reg delete "HKLM\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319\Assembl
     ==========================================================================================
   -->
   <Target Name="SetBuildNumbers"
-    Condition="('$(IsDesktopBuild)' != 'true' Or '$(IsCustomBuild)' == 'true') And (('$(FileVersion)' == '' And '$(AssemblyVersion)' == '') Or '$(ForceVersion)' == 'true')">
+          Condition="('$(IsDesktopBuild)' != 'true' Or '$(IsCustomBuild)' == 'true')">
 
     <PropertyGroup>
       <VersionMajor Condition="'$(VersionMajor)' == ''">1</VersionMajor>
@@ -243,18 +177,15 @@ reg delete "HKLM\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319\Assembl
       <VersionRevision Condition="'$(VersionRevision)' == ''">0</VersionRevision>
     </PropertyGroup>
 
-    <Version BuildType="Automatic"
+    <Version
+      BuildType="Automatic"
       RevisionType="Automatic"
       Major="$(VersionMajor)"
       Minor="$(VersionMinor)" >
-      <Output TaskParameter="Major"
-        PropertyName="Major" />
-      <Output TaskParameter="Minor"
-        PropertyName="Minor" />
-      <Output TaskParameter="Build"
-        PropertyName="Build" />
-      <Output TaskParameter="Revision"
-        PropertyName="Revision" />
+      <Output TaskParameter="Major" PropertyName="Major" />
+      <Output TaskParameter="Minor" PropertyName="Minor" />
+      <Output TaskParameter="Build" PropertyName="Build" />
+      <Output TaskParameter="Revision" PropertyName="Revision" />
     </Version>
 
     <PropertyGroup>
@@ -266,9 +197,9 @@ reg delete "HKLM\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319\Assembl
     <Message Text="FileVersion = $(FileVersion)" />
   </Target>
 
-  <!-- 
+  <!--
     ===========================================================
-    Source Indexing properites 
+    Source Indexing properties
     ===========================================================
   -->
   <PropertyGroup>
@@ -293,7 +224,7 @@ reg delete "HKLM\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319\Assembl
     <Error Condition="'@(CompiledAssemblies)' == ''" Text="There are no outputs from the build" />
 
     <ItemGroup>
-      <!-- Tranform all compiled outputs into a matching pdb -->
+      <!-- Transform all compiled outputs into a matching pdb -->
       <Symbols Include="@(ModuleBuildOutput->'%(RootDir)%(Directory)%(Filename).pdb')"
         Condition="'%(ModuleBuildOutput.OutputType)' == 'Module'" />
 
@@ -353,5 +284,17 @@ reg delete "HKLM\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319\Assembl
       YieldDuringToolExecution="true" />
   </Target>
 
+  <!--
+    ==========================================================================================
+        MarkBuildStepAsFailed
+    ==========================================================================================
+  -->
+  <Target Name="MarkBuildStepAsFailed"
+    Condition="'$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'">
+    <Message Text="Marking build as failed" />
+
+    <CallTarget Targets="FinalizeBuild" />
+
+  </Target>
 
 </Project>

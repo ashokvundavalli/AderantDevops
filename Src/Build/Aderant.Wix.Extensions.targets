@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <Import Project="Aderant.Build.Common.targets" Condition="'$(PrepareBuildEnvironmentTargetImported)' == ''" />
+
+  <!--Runs after MSI materialization -->
+  <Target Name="AfterCompileAndLink" AfterTargets="CompileAndLink">
+
+    <Copy
+      SourceFiles="@(IntermediateAssembly->'$(OutputPath)%(Filename)%(Extension)')"
+      Condition="Exists('@(IntermediateAssembly->'$(OutputPath)%(Filename)%(Extension)')')"
+      DestinationFolder="$(UpdateStagingDirectory)\BinFiles\"
+      UseHardlinksIfPossible="false"
+      OverwriteReadOnlyFiles="$(OverwriteReadOnlyFiles)"
+      Retries="$(CopyRetryCount)"
+      RetryDelayMilliseconds="$(CopyRetryDelayMilliseconds)"
+      ContinueOnError="true">
+      <Output TaskParameter="DestinationFiles" ItemName="FileWrites"/>
+    </Copy>
+
+    <Copy
+      SourceFiles="@(IntermediateAssembly->'$(OutputPath)%(Filename)%(Extension)')"
+      Condition="'$(UseSharedDependencyDirectory)' == 'true' And Exists('@(IntermediateAssembly->'$(OutputPath)%(Filename)%(Extension)')') And !Exists('@(IntermediateAssembly->'$(SharedDependencyDirectory)%(Filename)%(Extension)')')"
+      DestinationFolder="$(SharedDependencyDirectory)"
+      UseHardlinksIfPossible="true"
+      OverwriteReadOnlyFiles="$(OverwriteReadOnlyFiles)"
+      Retries="$(CopyRetryCount)"
+      RetryDelayMilliseconds="$(CopyRetryDelayMilliseconds)"
+      ContinueOnError="true">
+      <Output TaskParameter="DestinationFiles" ItemName="FileWrites"/>
+    </Copy>
+
+    <RecordProjectOutputs
+        ContextEndpoint="$(ContextEndpoint)"
+        SolutionRoot="$(SolutionRoot)"
+        ProjectGuid="$(ProjectGuid)"
+        ProjectFile="$(MSBuildProjectFullPath)"
+        IntermediateDirectories="$(IntermediateOutputPath)"
+        OutputPath="$(TargetDir)"
+        FileWrites="@(FileWrites)" />
+
+  </Target>
+
+</Project>

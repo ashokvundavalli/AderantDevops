@@ -15,9 +15,9 @@ namespace UnitTest.Build.Packaging {
             fileVersionAnalyzer.Setup(s => s.GetVersion(It.IsAny<string>())).Returns(new FileVersionDescriptor("0.0", "0.0"));
 
             var fs = new Mock<IFileSystem2>();
-            fs.Setup(s => s.GetFiles(It.IsAny<string>(), It.IsAny<string>(), true,false)).Returns(new[] { "Foo" });
+            fs.Setup(s => s.GetFiles(It.IsAny<string>(), It.IsAny<string>(), true)).Returns(new[] { "Foo" });
 
-            var analyzer = new VersionAnalyzer(new FakeLogger(), fs.Object);
+            var analyzer = new VersionAnalyzer(new NullLogger(), fs.Object);
             analyzer.Analyzer = fileVersionAnalyzer.Object;
 
             var version = analyzer.Execute("MyDir");
@@ -30,7 +30,7 @@ namespace UnitTest.Build.Packaging {
             var fileVersionAnalyzer = new Mock<FileVersionAnalyzer>();
             var fs = new Mock<IFileSystem2>();
           
-            var analyzer = new VersionAnalyzer(new FakeLogger(), fs.Object);
+            var analyzer = new VersionAnalyzer(new NullLogger(), fs.Object);
             analyzer.Analyzer = fileVersionAnalyzer.Object;
 
             var version = analyzer.Execute("MyDir");

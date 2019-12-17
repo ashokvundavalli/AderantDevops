@@ -1,14 +1,45 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 using Aderant.Build.Providers;
+using Paket;
 
 namespace Aderant.Build.DependencyAnalyzer {
 
-    internal class ExpertManifest : IModuleProvider, IGlobalAttributesProvider {
+    [DebuggerDisplay("PaketView: {wrappedManifest.ModuleName}")]
+    internal class PaketView : DependencyManifest {
+        private readonly string paketFile;
+        private readonly DependencyManifest wrappedManifest;
+
+        public PaketView(string paketFile, DependencyManifest wrappedManifest) {
+            this.paketFile = paketFile;
+            this.wrappedManifest = wrappedManifest;
+
+            this.IsEnabled = true;
+        }
+
+        public override string ModuleName {
+            get { return wrappedManifest.ModuleName; }
+        }
+
+        public override IList<ExpertModule> ReferencedModules {
+            get {
+                var dependenciesFile = DependenciesFile.ReadFromFile(paketFile);
+                var dependencies = dependenciesFile.GetDependenciesInGroup(Domain.GroupName(Constants.MainDependencyGroup));
+
+                return wrappedManifest.ReferencedModules.Union(
+                    dependencies.Select(s => s.Key.Name).Select(
+                        s => new ExpertModule(s) {
+                            GetAction = GetAction.NuGet,
+                        })).ToList();
+            }
+        }
+    }
+
+    public class ExpertManifest : IModuleProvider, IGlobalAttributesProvider {
         private readonly IFileSystem2 fileSystem;
         private readonly XDocument manifest;
 
@@ -55,10 +86,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             protected set { dependencyManifests = value; }
         }
 
-        public bool HasDependencyManifests {
-            get { return dependencyManifests != null; }
-        }
-
         public string ModulesDirectory {
             get { return moduleDirectory; }
             set {
@@ -68,8 +95,6 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
             }
         }
-
-        public IFileSystem2 FileSystem => fileSystem;
 
 
         /// <summary>
@@ -81,7 +106,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         /// <summary>
-        /// Tries to get the Dependency Manifest document from the given module.  
+        /// Tries to get the Dependency Manifest document from the given module.
         /// </summary>
         /// <param name="moduleName">Name of the module.</param>
         /// <param name="manifest">The manifest.</param>
@@ -108,28 +133,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             manifest = null;
-            return false;
-        }
-
-        /// <summary>
-        /// Tries to the get the path to the dependency manifest for a given module.
-        /// </summary>
-        /// <param name="moduleName">Name of the module.</param>
-        /// <param name="manifestPath">The manifest path.</param>
-        /// <returns></returns>
-        public bool TryGetDependencyManifestPath(string moduleName, out string manifestPath) {
-            if (moduleDirectory == null) {
-                throw new ArgumentNullException(nameof(moduleDirectory), "Module directory is not specified");
-            }
-
-            string dependencyManifest = fileSystem.GetFiles(Path.Combine(fileSystem.Root, moduleName), DependencyManifest.DependencyManifestFileName, true).FirstOrDefault();
-
-            if (dependencyManifest != null) {
-                manifestPath = fileSystem.GetFullPath(dependencyManifest);
-                return true;
-            }
-
-            manifestPath = null;
             return false;
         }
 
@@ -166,10 +169,19 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <param name="group">The name of the group for which the module belongs</param>
         /// <returns></returns>
         public ExpertModule GetModule(string moduleName, string group = null) {
+            if (string.IsNullOrWhiteSpace(group)) {
+                group = Constants.MainDependencyGroup;
+            }
+
             foreach (ExpertModule module in modules) {
                 if (string.Equals(module.Name, moduleName, StringComparison.OrdinalIgnoreCase)) {
+
                     if (group != null) {
                         if (string.Equals(module.DependencyGroup, group, StringComparison.OrdinalIgnoreCase)) {
+                            return module;
+                        }
+
+                        if (string.Equals(group, Constants.MainDependencyGroup, StringComparison.OrdinalIgnoreCase) && module.IsInDefaultDependencyGroup) {
                             return module;
                         }
                         continue;
@@ -180,20 +192,20 @@ namespace Aderant.Build.DependencyAnalyzer {
             return null;
         }
 
-		/// <summary>
-		/// Gets all modules with the specified name
-		/// </summary>
-		/// <param name="moduleName">Name of the modules</param>
-		/// <returns></returns>
-	    public IEnumerable<ExpertModule> GetModules(string moduleName) {
-			List<ExpertModule> expertModules = modules.Where(m => string.Equals(m.Name, moduleName, StringComparison.OrdinalIgnoreCase)).ToList();
-		    if (expertModules.Any()) {
-			    return expertModules;
-		    }
-		    return null;
-	    }
+        /// <summary>
+        /// Gets all modules with the specified name
+        /// </summary>
+        /// <param name="moduleName">Name of the modules</param>
+        /// <returns></returns>
+        public IEnumerable<ExpertModule> GetModules(string moduleName) {
+            List<ExpertModule> expertModules = modules.Where(m => string.Equals(m.Name, moduleName, StringComparison.OrdinalIgnoreCase)).ToList();
+            if (expertModules.Any()) {
+                return expertModules;
+            }
+            return null;
+        }
 
-	    public void Add(ExpertModule module) {
+        public void Add(ExpertModule module) {
             ExpertModule existingModule = GetModule(module.Name);
 
             if (existingModule != null) {
@@ -249,9 +261,16 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// Loads the specified manifest.
         /// </summary>
         /// <param name="manifest">The manifest.</param>
-        /// <returns></returns>
         public static ExpertManifest Load(string manifest) {
             return Load(manifest, null);
+        }
+
+        /// <summary>
+        /// Creates an manifest from an XML fragment
+        /// </summary>
+        /// <param name="productManifestXml">The product manifest XML.</param>
+        public static ExpertManifest Parse(string productManifestXml) {
+            return new ExpertManifest(XDocument.Parse(productManifestXml));
         }
 
         private IEnumerable<ExpertModule> LoadAllModules() {
@@ -322,5 +341,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             return mergedAttributes;
         }
+
+
     }
 }

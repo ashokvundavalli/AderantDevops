@@ -1,146 +1,157 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project
-  xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-  ToolsVersion="14.0">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-  <Import Project="$(MSBuildThisFileDirectory)\Tasks\MSBuild.Community.Tasks\MSBuild.Community.Tasks.Targets" Condition="'$(MSBuildCommunityTasksLib)' == '' And '$(BuildingInsideVisualStudio)' != 'true'" />
-
-  <UsingTask
-    TaskName="ResolveUniqueDependencies"
-    TaskFactory="CodeTaskFactory"
-    AssemblyFile="$(CodeTaskFactoryAssembly)">
-    <ParameterGroup>
-      <FilesToProcess ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
-      <DependencyDirectories ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
-      <Result ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true" />
-    </ParameterGroup>
-    <Task>
-      <Reference Include="System.Core"/>
-      <Using Namespace="System"/>
-      <Using Namespace="System.IO"/>
-      <Code>
-        <![CDATA[
-var dependencies = new List<string>(FilesToProcess.Length);
-
-foreach (ITaskItem directory in DependencyDirectories) {
-    dependencies.AddRange(Directory.GetFiles(directory.ItemSpec));
-}
-
-var uniqueFiles = new List<ITaskItem>();
-            
-foreach (ITaskItem taskItem in FilesToProcess) {
-    ITaskItem item1 = taskItem;
-    if (!dependencies.Any(item => String.Equals(Path.GetFileName(item), Path.GetFileName(item1.ItemSpec), StringComparison.OrdinalIgnoreCase))) {
-        
-        var fileName = taskItem.GetMetadata("FileName");
-        if (fileName.IndexOf("VisualStudio") >= 0)
-          continue;
-        if (fileName.IndexOf("UnitTest") >= 0)
-          continue;        
-    
-        Log.LogMessage("File {0} is a unique dependency", taskItem.ItemSpec);
-        uniqueFiles.Add(taskItem);
-    }
-}
-
-Result = uniqueFiles.ToArray();
-]]>
-      </Code>
-    </Task>
-  </UsingTask>
+  <Import Project="$(MSBuildThisFileDirectory)Aderant.wpp.common.targets" Condition="'$(WppCommonTargetsImported)' != 'true'" />
+  <Import Project="$(MSBuildThisFileDirectory)Tasks\MSBuild.Community.Tasks\MSBuild.Community.Tasks.Targets" Condition="'$(MSBuildCommunityTasksLib)' == '' And '$(BuildingInsideVisualStudio)' != 'true'" />
 
   <PropertyGroup>
+    <WppTargetsImported>true</WppTargetsImported>
+
+    <!-- This is the target file to customize how we deploy the files, here we customize the standard MSDeploy packaging -->
+    <DeployTargetFile>$(MSBuildThisFileDirectory)Aderant.wpp.deploy.targets</DeployTargetFile>
+
     <!-- EnableExcludeFilesByExtension prevents Microsoft.Web.Publishing.targets from excluding .tt files-->
-    <EnableExcludeFilesByExtension>false</EnableExcludeFilesByExtension>
+    <EnableExcludeFilesByExtension Condition="'$(EnableExcludeFilesByExtension)' == ''">true</EnableExcludeFilesByExtension>
     <FilesToIncludeForPublish>OnlyFilesToRunTheApp</FilesToIncludeForPublish>
     <GenerateSampleDeployScript>false</GenerateSampleDeployScript>
     <PublishParametersFile>false</PublishParametersFile>
     <PackageParametersFile>false</PackageParametersFile>
     <DeployOnBuild>true</DeployOnBuild>
-
     <DefaultPackageOutputDir>$(BinModuleDirectory)</DefaultPackageOutputDir>
     <DesktopBuildPackageLocation>$(BinModuleDirectory)</DesktopBuildPackageLocation>
+
+    <AutoParameterizationWebConfigConnectionStrings>false</AutoParameterizationWebConfigConnectionStrings>
+    <InsertAdditionalWebCofigConnectionStrings>false</InsertAdditionalWebCofigConnectionStrings>
   </PropertyGroup>
 
-  <Target Name="CollectFilesFromReferenceOverride" AfterTargets="CollectFilesFromReference">
-    <!-- Take a copy of the dependencies -->
+
+  <PropertyGroup>
+    <ExcludeFilesByExtensionDependsOn>
+      $(ExcludeFilesByExtensionDependsOn);
+      GenerateWebPublishExtnsionsToExcludeItem
+    </ExcludeFilesByExtensionDependsOn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <ExcludeFilesFromPackageDependsOn>
+      $(ExcludeFilesFromPackageDependsOn);
+      GenerateExcludeFromPackageFiles;
+      ExcludeFilesByName;
+      ExcludeTestFiles;
+    </ExcludeFilesFromPackageDependsOn>
+  </PropertyGroup>
+
+
+  <Target Name="GenerateExcludeFromPackageFiles">
     <ItemGroup>
-      <Dependencies Include="@(ReferenceCopyLocalPaths)"
-                    Condition="'%(ReferenceCopyLocalPaths.Extension)' == '.dll' And $([System.String]::new('%(ReferenceCopyLocalPaths.Filename)').StartsWith('Aderant')) != 'true' " />
+      <ExcludeFromPackageFiles Condition="'$(EnableDefaultPackagingExclusions)' == 'true'"
+                               Include="$(MSBuildProjectDirectory)\Scripts\ThirdParty.*\**\*;
+                                        $(MSBuildProjectDirectory)\Scripts\Web.Foundation\**\*;
+                                        $(MSBuildProjectDirectory)\Scripts\Web.Presentation\**\" />
     </ItemGroup>
 
-    <!-- Exclude all references and copy local assemblies from packaging -->
     <ItemGroup>
-      <FilesForPackagingFromProject Remove="@(ReferenceCopyLocalPaths)" />
+      <ExcludeFromPackageFiles Include="$(MSBuildProjectDirectory)\**\ThirdParty.*\**\*.dll;
+                                        $(MSBuildProjectDirectory)\**\ThirdParty.*\**\*.exe;
+                                        $(MSBuildProjectDirectory)\**\ThirdParty.*\**\*.pdb;
+                                        $(MSBuildProjectDirectory)\**\ThirdParty.*\**\*license.txt;
+                                        $(MSBuildProjectDirectory)\**\ThirdParty.*\**\*licenses.txt;
+                                        $(MSBuildProjectDirectory)\**\ThirdParty.*\**\acknowledgements.txt;
+                                        $(MSBuildProjectDirectory)\**\ThirdParty.*\**\EULA.*" />
+    </ItemGroup>
+  </Target>
+
+
+  <Target Name="GenerateWebPublishExtnsionsToExcludeItem">
+    <ItemGroup>
+      <!--The standard item group contains .tt which we want to preserve -->
+      <WebPublishExtnsionsToExcludeItem Remove="@(WebPublishExtensionsToExclude)" />
     </ItemGroup>
 
+    <ItemGroup>
+      <!-- Yes this group is actually misspelt in the Microsoft targets file -->
+      <WebPublishExtnsionsToExcludeItem Include=".exe" />
+      <WebPublishExtnsionsToExcludeItem Include=".gitignore" />
+      <WebPublishExtnsionsToExcludeItem Include=".less" />
+      <WebPublishExtnsionsToExcludeItem Include=".d.ts" />
+      <WebPublishExtnsionsToExcludeItem Include=".map" />
+    </ItemGroup>
+  </Target>
+
+
+  <Target Name="IsWorkflowProject" BeforeTargets="AfterCollectFilesFromReference">
     <PropertyGroup>
-      <DependenciesZipLocation>$([System.IO.Path]::GetDirectoryName($(DesktopBuildPackageLocation)))</DependenciesZipLocation>
-      <DependenciesDirectory>$([System.IO.Path]::GetFullPath($(DependenciesZipLocation)..\..\..\Dependencies))</DependenciesDirectory>
-      <DependenciesPackagingDir>$(PackageTempRootDir)\DependenciesPackageTmp</DependenciesPackagingDir>
+      <_IsWorkflowProject>false</_IsWorkflowProject>
+      <_IsWorkflowProject Condition="$(AssemblyName.Contains('Workflow'))">true</_IsWorkflowProject>
+      <OnAfterCollectFilesFromReference Condition="'$(_IsWorkflowProject)' != 'true'">$(OnAfterCollectFilesFromReference);CustomAfterCollectFilesFromReference</OnAfterCollectFilesFromReference>
     </PropertyGroup>
 
-    <Error Condition="!Exists($(DependenciesDirectory))"
-           Text="Could not determine dependency directory" />
-
-    <!-- Flatten the references we don't want folders within our zip file -->
-    <Copy SourceFiles="@(Dependencies)"
-          DestinationFolder="$(DependenciesPackagingDir)\%(RecursiveDir)" />
-
-    <ItemGroup>
-      <DependenciesForPackaging Include="$(DependenciesPackagingDir)\**\*.dll" />
-    </ItemGroup>
-
-    <!-- 
-      From the references and dependencies of the web project find any assembly that is not in the Dependency directory. These could be dependencies from
-      NuGet which aren't part of the standard dependency system and so we need to bundle these along side the zip.
-    -->
-    <ResolveUniqueDependencies
-        FilesToProcess="@(DependenciesForPackaging)"
-        DependencyDirectories="$(DependenciesDirectory)">
-        <Output TaskParameter="Result"
-                ItemName="ResolvedDependenciesForPackaging" />
-    </ResolveUniqueDependencies>
-
-    <!-- Add all web dependencies into a separate zip -->
-    <MSBuild.Community.Tasks.Zip
-      Condition="'@(ResolvedDependenciesForPackaging)' != ''"
-      ParallelCompression="false"
-      Files="@(ResolvedDependenciesForPackaging)"
-      ZipFileName="$(DependenciesZipLocation)\$(WebPublishPipelineProjectName).dependencies.zip"
-      WorkingDirectory="$(DependenciesPackagingDir)" />
-
-    <RemoveDir Directories="$(DependenciesPackagingDir)" />
+    <Message Condition="'$(_IsWorkflowProject)' != 'true'" Importance="high" Text="Skipping web pipeline customizations as this is a workflow project" />
   </Target>
-  
-  
-  <!-- CollectFilesFrom_binDeployableAssemblies is the last step in PublishPipelineCollectFilesCore from Microsoft.Web.Publishing.OnlyFilesToRunTheApp.targets-->
-  <Target Name="CollectFilesFromContentCleanUp" AfterTargets="CollectFilesFrom_binDeployableAssemblies">
-    <!-- Exclude all environment specific files from packaging -->
+
+
+  <Target Name="RemoveReferenceBaggageFromWebPackage" AfterTargets="PipelineCollectFilesPhase">
     <ItemGroup>
-      <ExcludeSpec Include="instance.config" />
-      <ExcludeSpec Include="bindings.config" />
-      <ExcludeSpec Include="clients.config" />
-      <ExcludeSpec Include="extensions.config" />
-      <ExcludeSpec Include="packages.config" />
-      <ExcludeSpec Include="BuildInfo.config" />
-      <ExcludeSpec Include="FrameworkKey.snk" />
+      <FilesForPackagingFromProject Remove="@(FilesForPackagingFromProject)" Condition="%(FilesForPackagingFromProject.FromTarget) == 'CollectFilesFromReference'" />
     </ItemGroup>
+  </Target>
 
-    <Aderant.Build.Tasks.FilterItemGroup
-      ItemGroup="@(FilesForPackagingFromProject)"
-      ExcludeFilterSpec="@(ExcludeSpec)"
-      FilterType="FileName">
-      <Output ItemName="FilteredFilesForPackagingFromProject" TaskParameter="Result" />
-    </Aderant.Build.Tasks.FilterItemGroup>
+  <!-- Exclude all environment specific files from packaging -->
+  <ItemGroup>
+    <WebPublishFilesToExcludeItem Include="instance.config" />
+    <WebPublishFilesToExcludeItem Include="bindings.config" />
+    <WebPublishFilesToExcludeItem Include="clients.config" />
+    <WebPublishFilesToExcludeItem Include="extensions.config" />
+    <WebPublishFilesToExcludeItem Include="packages.config" />
+    <WebPublishFilesToExcludeItem Include="BuildInfo.config" />
+    <WebPublishFilesToExcludeItem Include="FrameworkKey.snk" />
+    <WebPublishFilesToExcludeItem Include="tsconfig.json" />
+    <WebPublishFilesToExcludeItem Include="tslint.json" />
+    <WebPublishFilesToExcludeItem Include="bundle.custom.tsconfig.json" />
+  </ItemGroup>
+
+
+  <Target Name="ExcludeFilesByName"
+          Outputs="%(WebPublishFilesToExcludeItem.Identity)">
+
+    <!-- this target will execute once per value in @(WebPublishFilesToExcludeItem) -->
+    <PropertyGroup>
+      <_FileToExclude>%(WebPublishFilesToExcludeItem.Identity)</_FileToExclude>
+    </PropertyGroup>
+
+    <FindInList CaseSensitive="false"
+                ItemSpecToFind="$(_FileToExclude)"
+                MatchFileNameOnly="true"
+                List="@(FilesForPackagingFromProject)">
+      <Output TaskParameter="ItemFound" ItemName="_PackageFileToExcludeItem" />
+    </FindInList>
 
     <ItemGroup>
-     <FilesForPackagingFromProject Remove="@(FilesForPackagingFromProject)" />
-     <FilesForPackagingFromProject Include="@(FilteredFilesForPackagingFromProject)" />
+      <FilesForPackagingFromProject Remove="@(_PackageFileToExcludeItem)" />
     </ItemGroup>
 
   </Target>
 
+
+  <Target Name="ExcludeTestFiles">
+
+    <FindUnderPath Files="@(FilesForPackagingFromProject)"
+                   Path="$(MSBuildProjectDirectory)\Tests">
+      <Output TaskParameter="InPath" ItemName="FilesFoundInPath" />
+    </FindUnderPath>
+
+    <ItemGroup>
+      <!--Keep JS files as these are usually generated -->
+      <_Filtered Include="@(FilesFoundInPath)" Condition="'%(Extension)' != '.js'" />
+    </ItemGroup>
+
+    <Message Text="Excluding test files from web package $(MSBuildProjectDirectory) -> @(FilesFoundInPath)" />
+
+    <ItemGroup>
+      <FilesForPackagingFromProject Remove="@(_Filtered)" />
+    </ItemGroup>
+
+  </Target>
 
 
   <!-- This target replaces the full path to source that MSDeploy typically uses -->
@@ -154,7 +165,9 @@ Result = uniqueFiles.ToArray();
     </PackageDependsOn>
   </PropertyGroup>
 
+
   <Target Name="AddReplaceRuleForAppPath" Condition="'$(EnableAddReplaceToUpdatePackagePath)'=='true'">
+
     <PropertyGroup>
       <_PkgPathFull>$([System.IO.Path]::GetFullPath($(WPPAllFilesInSingleFolder)))</_PkgPathFull>
     </PropertyGroup>
@@ -171,7 +184,9 @@ Result = uniqueFiles.ToArray();
         <Replace>$(PackagePath)</Replace>
       </MsDeployReplaceRules>
     </ItemGroup>
+
   </Target>
+
 
   <Target Name="DeleteManifest" AfterTargets="PackageUsingManifest">
     <!-- Remove Web.xyz.SourceManifest.xml from the output directory as we don't need it -->
@@ -180,16 +195,17 @@ Result = uniqueFiles.ToArray();
             ContinueOnError="true" />
   </Target>
 
-  
-  <Target Name="ReplicateWebModuleAssemblies" 
-          AfterTargets="CopyFilesToOutputDirectory">
-    
+
+  <Target Name="ReplicateWebModuleAssemblies"
+          AfterTargets="CopyFilesToOutputDirectory"
+          Condition="'$(SharedDependencyDirectory)' != ''">
+
     <Message Text="Replicating web assemblies to shared directories" />
-    
-    <Copy Condition="'$(SharedDependencyDirectory)' != ''"
-          SourceFiles="@(IntermediateAssembly)"
-          DestinationFolder="$(SharedDependencyDirectory)" />
-    
+
+    <Copy SourceFiles="@(IntermediateAssembly)"
+          DestinationFolder="$(SharedDependencyDirectory)"
+          SkipUnchangedFiles="true" />
+
   </Target>
 
 </Project>

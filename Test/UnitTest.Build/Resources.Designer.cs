@@ -19,7 +19,7 @@ namespace UnitTest.Build {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -61,53 +61,11 @@ namespace UnitTest.Build {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
-        ///&lt;!--
-        ///This is the integration tests app config file that has the config burnt in for integration tests to run.  This file
-        ///must contain settings that match the integration test environment.  The integration environment file location is listed
-        ///in the rsp at ../Modules/Build.Infrastructure/Src/Projects/PackageAndDeployRemote/TFSBuild.rsp.
-        ///
-        ///To run the integration tests locally you need to edit the following attributes
-        /// - aderant/instanceMetadataConfigurationSection@environ [rest of string was truncated]&quot;;.
+        ///   Looks up a localized string similar to {&quot;serializedVersion&quot;:2,&quot;Artifacts&quot;:{&quot;ModuleA&quot;:[{&quot;Id&quot;:&quot;ModuleA&quot;,&quot;Files&quot;:[{&quot;File&quot;:&quot;Bar.dll&quot;},{&quot;File&quot;:&quot;Baz.dll&quot;},{&quot;File&quot;:&quot;Foo.dll&quot;}]}]},&quot;BucketId&quot;:{&quot;id&quot;:&quot;496d79f90104b02eb2c082d834fd4f40a68d939a&quot;,&quot;tag&quot;:&quot;ModuleA&quot;},&quot;BuildId&quot;:&quot;0&quot;,&quot;Id&quot;:&quot;ff4c861b-1955-492a-ae42-694317375071&quot;,&quot;Outputs&quot;:{&quot;_set&quot;:[{&quot;key&quot;:&quot;ModuleA\\Bar\\Bar.csproj&quot;,&quot;value&quot;:{&quot;Directory&quot;:&quot;ModuleA&quot;,&quot;FilesWritten&quot;:[&quot;bin\\Debug\\Bar.dll&quot;,&quot;bin\\Debug\\Bar.pdb&quot;],&quot;Origin&quot;:&quot;ThisBuild&quot;,&quot;OutputPath&quot;:&quot;bin\\Debug\\&quot;}},{&quot;key&quot;:&quot;ModuleA\\Baz\\Baz.csproj&quot;,&quot;value&quot;:{&quot;Dire [rest of string was truncated]&quot;;.
         /// </summary>
-        internal static string AppConfig {
+        internal static string buildstate {
             get {
-                return ResourceManager.GetString("AppConfig", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
-        ///&lt;bindings&gt;
-        ///    &lt;customBinding&gt;
-        ///        &lt;binding name=&quot;expertCustomHttpBinding&quot;
-        ///                 sendTimeout=&quot;00:10:00&quot;&gt;
-        ///            &lt;gzipMessageEncoding innerMessageEncoding=&quot;textMessageEncoding&quot;/&gt;
-        ///            &lt;httpTransport authenticationScheme=&quot;Negotiate&quot;
-        ///                           maxReceivedMessageSize=&quot;2147483647&quot;
-        ///                           proxyAuthenticationScheme=&quot;Negotiate&quot;&gt;
-        ///                &lt;extendedProtectionPolicy policyEnforcement=&quot;Never&quot; /&gt;
-        ///     [rest of string was truncated]&quot;;.
-        /// </summary>
-        internal static string bindings {
-            get {
-                return ResourceManager.GetString("bindings", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
-        ///&lt;client&gt;
-        ///  &lt;endpoint name=&quot;Budgeting&quot; address=&quot;http://WSAKL001092.ap.aderant.com/Expert_Local/ApplicationServices/Budgeting/BudgetingService.svc/Basic&quot; binding=&quot;basicHttpBinding&quot; behaviorConfiguration=&quot;LargeQuotaBehavior&quot; bindingConfiguration=&quot;expertBasicHttpBinding&quot; contract=&quot;Aderant.Budgeting.Interfaces.Service.IBudgetingContractAsync&quot;&gt;
-        ///    &lt;identity&gt;
-        ///      &lt;servicePrincipalName value=&quot;HTTP/WSAKL001092.ap.aderant.com&quot; /&gt;
-        ///    &lt;/identity&gt;
-        ///  &lt;/endpoint&gt;
-        ///  &lt;endpoi [rest of string was truncated]&quot;;.
-        /// </summary>
-        internal static string clients {
-            get {
-                return ResourceManager.GetString("clients", resourceCulture);
+                return ResourceManager.GetString("buildstate", resourceCulture);
             }
         }
         
@@ -115,15 +73,14 @@ namespace UnitTest.Build {
         ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
         ///&lt;Project ToolsVersion=&quot;12.0&quot; DefaultTargets=&quot;Build&quot; xmlns=&quot;http://schemas.microsoft.com/developer/msbuild/2003&quot;&gt;
         ///  &lt;Import Project=&quot;$(MSBuildToolsPath)\Microsoft.CSharp.targets&quot; /&gt;
-        ///  &lt;Choose&gt;
-        ///    &lt;When Condition=&quot;$(TargetFrameworkIdentifier) == &apos;.NETFramework&apos; And ($(TargetFrameworkVersion) == &apos;v4.5&apos; Or $(TargetFrameworkVersion) == &apos;v4.5.1&apos; Or $(TargetFrameworkVersion) == &apos;v4.5.2&apos; Or $(TargetFrameworkVersion) == &apos;v4.5.3&apos; Or $(TargetFrameworkVersion) == &apos;v4.6&apos; Or $( [rest of string was truncated]&quot;;.
+        ///&lt;/Project&gt;.
         /// </summary>
         internal static string CSharpProject {
             get {
                 return ResourceManager.GetString("CSharpProject", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
         ///&lt;Project ToolsVersion=&quot;12.0&quot; DefaultTargets=&quot;Build&quot; xmlns=&quot;http://schemas.microsoft.com/developer/msbuild/2003&quot;&gt;
@@ -144,16 +101,6 @@ namespace UnitTest.Build {
         
         /// <summary>
         ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
-        ///&lt;environment name=&quot;Local&quot; networkSharePath=&quot;C:\ExpertShare&quot; sourcePath=&quot;C:\tfs\expertsuite\releases\803x\Binaries\ExpertSource&quot; networkDeploymentType=&quot;NetworkCustom&quot; createClickOnceDeployments=&quot;true&quot; owner=&quot;cmsdbo&quot; expertServiceUser=&quot;ADERANT_AP\service.expert.ap&quot; expertServicePassword=&quot;bBh4t9wdtZN+hR2LMh6wVw==&quot; networkLoadBalancer=&quot;&quot; removeOnError=&quot;true&quot; skipPackageImport=&quot;false&quot; isDevEnvironment=&quot;true&quot; failOnSDKDependencyFailure=&quot;false&quot; reportServerUser=&quot;cmsdbo&quot; repo [rest of string was truncated]&quot;;.
-        /// </summary>
-        internal static string environment {
-            get {
-                return ResourceManager.GetString("environment", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
         ///&lt;ProductManifest Name=&quot;Expert&quot; ExpertVersion=&quot;802&quot;&gt;
         ///  &lt;Modules&gt;
         ///    &lt;Module Name=&quot;Applications.Administration&quot; AssemblyVersion=&quot;1.8.0.0&quot; /&gt;
@@ -166,21 +113,6 @@ namespace UnitTest.Build {
         internal static string ExpertManifest {
             get {
                 return ResourceManager.GetString("ExpertManifest", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
-        ///&lt;instanceMetadataConfigurationSection environment=&quot;Local&quot;&gt;
-        ///  &lt;repository name=&quot;_803x&quot; server=&quot;WSAKL001092&quot; /&gt;
-        ///  &lt;expertShare uri=&quot;C:\ExpertShare&quot; /&gt;
-        ///  &lt;queryService uri=&quot;http://WSAKL001092.ap.aderant.com/Expert_Local/FrameworkServices/Query/QueryService.svc&quot; /&gt;
-        ///  &lt;notificationService uri=&quot;http://WSAKL001092.ap.aderant.com/Expert_Local/FrameworkServices/Notification/Notifications&quot; /&gt;
-        ///&lt;/instanceMetadataConfigurationSection&gt;.
-        /// </summary>
-        internal static string instance {
-            get {
-                return ResourceManager.GetString("instance", resourceCulture);
             }
         }
         
@@ -216,6 +148,20 @@ namespace UnitTest.Build {
         internal static string ProjectFileText1 {
             get {
                 return ResourceManager.GetString("ProjectFileText1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;ProductManifest Name=&quot;Expert&quot; ExpertVersion=&quot;8.2.0&quot;&gt;
+        ///  &lt;Modules&gt;
+        ///    &lt;Module ExcludeFromPackaging=&quot;false&quot; Name=&quot;Aderant.Deployment.Core&quot; GetAction=&quot;NuGet&quot; Version=&quot;&amp;gt;= 12.0.0 build&quot; /&gt;
+        ///    &lt;Module ExcludeFromPackaging=&quot;false&quot; Name=&quot;Aderant.Libraries.Models&quot; GetAction=&quot;NuGet&quot; Version=&quot;13.0.0-build4978&quot; /&gt;
+        ///  &lt;/Modules&gt;
+        ///&lt;/ProductManifest&gt;.
+        /// </summary>
+        internal static string ReferenceExpertManifest {
+            get {
+                return ResourceManager.GetString("ReferenceExpertManifest", resourceCulture);
             }
         }
         

@@ -101,10 +101,6 @@
   <Target Name="EndToEndIteration"
     DependsOnTargets="$(EndToEndIterationDependsOn)" />
 
-  <UsingTask
-    AssemblyFile="$(MSBuildExtensionsPath)\NDepend\NDepend.Build.MSBuild.dll"
-    TaskName="NDependTask" />
-
   <!-- The Zip Custom Source inline task -->
   <UsingTask
     TaskName="SourceTransformationTask"
@@ -269,11 +265,9 @@ doc.Save(File);
     <CallTarget Targets="PrepareZipCustomSource" />
     <CallTarget Targets="ZipCustomSource" />
     <CallTarget Targets="SetBuildNumbers" />
-    <!--<CallTarget Targets="CheckForWrongReferences" />-->
     <CallTarget Targets="UpdateModuleFileVersion"/>
     <CallTarget Targets="Build" />
     <CallTarget Targets="ZipTemplateModule" />
-    <!--<CallTarget Targets="NDepend" Condition="('$(BuildAll)'!='true')" />-->
     <CallTarget Targets="RunTests" />
     <CallTarget Targets="RunIntegrationTests" />
     <CallTarget Targets="PublishModule" />
@@ -283,7 +277,6 @@ doc.Save(File);
     <CallTarget Targets="OnAfterBuild;PostBuild" />
     <CallTarget Targets="ReplicateOutputToSharedDependenciesDirectory" />
     <CallTarget Targets="CopyToDrop" />
-    <CallTarget Targets="CopyToDropV2" />
     <CallTarget Targets="FinalizeBuild" />
 
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
@@ -426,20 +419,6 @@ doc.Save(File);
   <Target Name="CreateBuildDirectories" BeforeTargets="rmBeforeTransformTemplates;Build">
     <MakeDir Directories="$(ModuleBuildTempDirectory)"
       Condition="'$(ModuleBuildTempDirectory)' != ''" />
-  </Target>
-
-
-  <!--
-    ==========================================================================================
-        Check For Wrong References
-    ==========================================================================================
-  -->
-  <Target Name="CheckForWrongReferences" Condition="'$(IsCustomBuild)' != 'true' And '$(BuildAll)' != 'true'">
-
-    <Exec ContinueOnError="false"
-      IgnoreExitCode="false"
-      Command='"Powershell" -noprofile -ExecutionPolicy RemoteSigned "$(BuildScriptsDirectory)Check-ForWrongReferences.ps1" -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath)' />
-
   </Target>
 
 
@@ -1518,69 +1497,6 @@ doc.Save(File);
 
   </Target>
 
-
-  <!--
-    ==========================================================================================
-        NDepend post build analysis
-    ==========================================================================================
-  -->
-  <PropertyGroup>
-    <NDependPath>c:\Program Files (x86)\NDepend</NDependPath>
-    <NDependOutputDir>$(SolutionDirectoryPath)\bin\NDependOut</NDependOutputDir>
-    <NDependWarn>0</NDependWarn>
-  </PropertyGroup>
-
-  <Target Name="NDepend"
-    Condition="('$(IsDesktopBuild)'!='true')" >
-
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      Message="$(BuildStepModuleName) NDepend"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildURI)">
-      <Output
-        TaskParameter="id"
-        PropertyName="BuildStepId" />
-    </BuildStep>
-
-    <Message Text="*** NDepend " />
-    <Message Text="NDependConsoleExePath : $(NDependPath)" />
-    <Message Text="ProjectFilePath       : $(BuildScriptsDirectory)NDependFramework.xml" />
-
-    <!-- Lets first remove the ld NDependOut directory -->
-    <RemoveDir Directories="$(SolutionDirectoryPath)\NDependOut" />
-
-    <NDependTask
-      Condition="('$(IsCustomBuild)'!='true')"
-      NDependConsoleExePath="$(NDependPath)"
-      ProjectFilePath="$(BuildScriptsDirectory)NDependFramework.xml"
-      OutDir="$(NDependOutputDir)" />
-
-    <!-- Scan the NDepend Report Files to see if a braking change has been identified -->
-
-    <XmlRead ContinueOnError="True"
-      XmlFileName="$(SolutionDirectoryPath)\NDependout\CQLResult.xml"
-      XPath="string(count(//Group[@Status='Warn']))">
-      <Output TaskParameter="Value"
-        PropertyName="NDependWarn" />
-    </XmlRead>
-
-
-    <!-- If braking change identified then need to mark build step as Failed -->
-
-    <Error Text="NDepend Breaking Change"
-      Condition="$(NDependWarn) &gt; 0"/>
-
-    <BuildStep
-      Condition="('$(IsCustomBuild)'!='true')"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildUri)"
-      Id="$(BuildStepId)"
-      Status="Succeeded" />
-
-    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
-
-  </Target>
 
   <!--
     ==========================================================================================

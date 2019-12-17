@@ -1,20 +1,29 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks.Dataflow;
+using Aderant.Build.Packaging;
 
 namespace Aderant.Build {
-    public interface IFileSystem2 { 
+
+    public interface IFileSystem2 : IFileSystem {
         string Root { get; }
+    }
+
+    public interface IFileSystem {
 
         void DeleteDirectory(string path, bool recursive);
 
-        IEnumerable<string> GetFiles(string path, string filter, bool recursive, bool notRelative = false);
+        /// <summary>
+        /// Returns the full path of files present in a directory that match the <see cref="inclusiveFilter"/>.
+        /// </summary>
+        IEnumerable<string> GetFiles(string path, string inclusiveFilter, bool recursive);
 
-        IEnumerable<string> GetDirectories(string path, bool recursive = false, bool notRelative = false);
+        IEnumerable<string> GetDirectories(string path, bool recursive = false);
 
         string GetFullPath(string path);
 
-        string GetParent(string root);
+        string GetParent(string path);
 
         void DeleteFile(string path);
 
@@ -22,13 +31,17 @@ namespace Aderant.Build {
 
         bool DirectoryExists(string path);
 
-        void AddFile(string path, Stream stream);
+        string AddFile(string path, Stream stream);
 
-        void AddFile(string path, Action<Stream> writeToStream);
+        string AddFile(string path, Action<Stream> writeToStream);
 
         void MakeFileWritable(string path);
 
         void MoveFile(string source, string destination);
+
+        void CopyFile(string source, string destination);
+
+        void CopyFile(string source, string destination, bool overwrite);
 
         Stream CreateFile(string path);
 
@@ -45,5 +58,14 @@ namespace Aderant.Build {
         void CopyDirectory(string source, string destination);
 
         void MoveDirectory(string source, string destination);
+
+        /// <summary>
+        /// Performs a bulk file copy operation on the specified path specifications.
+        /// </summary>
+        ActionBlock<PathSpec> BulkCopy(IEnumerable<PathSpec> pathSpecs, bool overwrite, bool useSymlinks = false, bool useHardlinks = false);
+
+        void ExtractZipToDirectory(string sourceArchiveFileName, string destination, bool overwrite = false);
+
+        bool IsSymlink(string directory);
     }
 }

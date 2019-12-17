@@ -1,28 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" 
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
          ToolsVersion="14.0">
 
   <PropertyGroup>
     <DefaultLanguageSourceExtension Condition="'$(DefaultLanguageSourceExtension)' == ''">.cs</DefaultLanguageSourceExtension>
     <Language Condition="'$(Language)' == ''">CS</Language>
   </PropertyGroup>
-  
 
   <PropertyGroup>
-    <OnBeforeCompileDependsOn Condition="'$(IsCustomBuild)' != 'true' And '$(ProjectGuid)' != ''">
-      $(OnBeforeCompileDependsOn);
+    <SetVersionAttributesDependsOn Condition="'$(IsCustomBuild)' != 'true' And '$(ProjectGuid)' != ''">
+      $(SetVersionAttributesDependsOn);
+      ReadVersionInfo;
       GenerateAssemblyInfo;
-      AsemblyInfoUpdateCopyright;
-      ReadVersionInfo
-    </OnBeforeCompileDependsOn>
+      AssemblyInfoUpdateCopyright;
+    </SetVersionAttributesDependsOn>
   </PropertyGroup>
-  
+
+  <PropertyGroup>
+    <SetVersionAttributesBeforeTargets Condition="'$(Language)' == 'C#'">
+      BeforeCompile
+    </SetVersionAttributesBeforeTargets>
+  </PropertyGroup>
 
   <!-- Stub that lets us hook BeforeCompile without breaking others that also override BeforeCompile -->
-  <Target Name="OnBeforeCompile" BeforeTargets="$(PrepareResourcesDependsOn);BeforeCompile" DependsOnTargets="$(OnBeforeCompileDependsOn)" />
+  <Target Name="SetVersionAttributes" BeforeTargets="$(PrepareResourcesDependsOn);$(SetVersionAttributesBeforeTargets)" DependsOnTargets="$(SetVersionAttributesDependsOn)" />
 
 
-  <Target Name="GetAssemblyAttributes">
+  <PropertyGroup>
+    <CreateGeneratedAssemblyInfoInputsCacheFileDependsOn>
+      GatherAssemblyAttributes;
+      FindRoleFiles
+    </CreateGeneratedAssemblyInfoInputsCacheFileDependsOn>
+  </PropertyGroup>
+
+
+  <Target Name="GatherAssemblyAttributes">
 
     <PropertyGroup>
       <!-- Path.Combine to try handle trailing/non-trailing slashes -->
@@ -34,78 +46,103 @@
       <!-- Slurp in the paket.lock data as well -->
       <_PaketLockFile>$([System.IO.Path]::Combine($(SolutionDirectoryPath), 'paket.lock'))</_PaketLockFile>
       <_PaketLockText Condition="Exists($(_PaketLockFile))">$([System.IO.File]::ReadAllText($(_PaketLockFile)))</_PaketLockText>
-    </PropertyGroup>
 
-    <Message Text="Git directory: $(_GitDir)" Importance="high" Condition="'$(_HasGitDir)' == 'true'" />
+      <IsIntegrationTest>$(MSBuildProjectName.StartsWith('IntegrationTest.'))</IsIntegrationTest>
+
+      <CIEnabled Condition="'$(IsIntegrationTest)' == 'true' And '$(CIEnabled)' == ''">false</CIEnabled>
+    </PropertyGroup>
 
     <GitVersion
       Condition="'$(_HasGitDir)' == 'true'"
-      WorkingDirectory="$(SolutionDirectoryPath)">
+      WorkingDirectory="$(_GitDir)">
       <Output PropertyName="GitCanonicalBranchName" TaskParameter="CanonicalBranchName" />
       <Output PropertyName="GitSha" TaskParameter="Sha" />
     </GitVersion>
 
     <ItemGroup>
-      <AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(_HasGitDir)' == 'true'">
+      <_AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(_HasGitDir)' == 'true'">
         <_Parameter1>Git.BranchName</_Parameter1>
         <_Parameter2>$(GitCanonicalBranchName)</_Parameter2>
-      </AssemblyAttributes>
+      </_AssemblyAttributes>
 
-      <AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(_HasGitDir)' == 'true'">
+      <_AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(_HasGitDir)' == 'true'">
         <_Parameter1>Git.Sha</_Parameter1>
         <_Parameter2>$(GitSha)</_Parameter2>
-      </AssemblyAttributes>
+      </_AssemblyAttributes>
 
-      <AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(BUILD_BUILDID)' != ''">
+      <_AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(BUILD_BUILDID)' != ''">
         <_Parameter1>Build.Id</_Parameter1>
         <_Parameter2>$(BUILD_BUILDID)</_Parameter2>
-      </AssemblyAttributes>
+      </_AssemblyAttributes>
 
-      <AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(BUILD_SOURCEVERSION)' != ''">
+      <_AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(BUILD_SOURCEVERSION)' != ''">
         <_Parameter1>Build.SourceVersion</_Parameter1>
         <_Parameter2>$(BUILD_SOURCEVERSION)</_Parameter2>
-      </AssemblyAttributes>
+      </_AssemblyAttributes>
 
-      <AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(BUILD_REPOSITORY_URI)' != ''">
+      <_AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(BUILD_REPOSITORY_URI)' != ''">
         <_Parameter1>Build.RepositoiryUri</_Parameter1>
         <_Parameter2>$(BUILD_REPOSITORY_URI)</_Parameter2>
-      </AssemblyAttributes>
+      </_AssemblyAttributes>
 
-      <AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(_PaketLockText)' != ''">
+      <_AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(_PaketLockText)' != ''">
         <_Parameter1>Build.PaketLock</_Parameter1>
         <_Parameter2>$(_PaketLockText)</_Parameter2>
-      </AssemblyAttributes>
+      </_AssemblyAttributes>
 
-      <AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(BuildFlavor)' != ''">
+      <_AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(BuildFlavor)' != ''">
         <_Parameter1>Build.Flavor</_Parameter1>
         <_Parameter2>$(BuildFlavor)</_Parameter2>
-      </AssemblyAttributes>
-    </ItemGroup>
+      </_AssemblyAttributes>
 
+      <_AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(IsIntegrationTest)' == 'true'">
+        <_Parameter1>CIEnabled</_Parameter1>
+        <_Parameter2>$(CIEnabled)</_Parameter2>
+      </_AssemblyAttributes>
+
+      <_AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(IsIntegrationTest)' == 'true' And '$(CICategory)' != ''">
+        <_Parameter1>CICategory</_Parameter1>
+        <_Parameter2>$(CICategory)</_Parameter2>
+      </_AssemblyAttributes>
+    </ItemGroup>
   </Target>
 
 
-  <!-- 
+  <Target Name="FindRoleFiles">
+    <RoleManifestPackageIdentifier Condition="'$(IsIntegrationTest)' == 'true'"
+      ManifestSearchDirectories="@(ManifestSearchDirectories)"
+      DependentRoles="@(DependentRoles)"
+      PackageBlacklist="@(PackageBlacklist)" >
+      <Output TaskParameter="DependentPackages" ItemName="DependentPackages" />
+    </RoleManifestPackageIdentifier>
+
+    <ItemGroup>
+      <_AssemblyAttributes Condition="'$(IsIntegrationTest)' == 'true'" Include="@(DependentPackages)" />
+    </ItemGroup>
+  </Target>
+
+
+  <!--
     To allow version changes to be respected on incremental builds (e.g. through CLI parameters),
     create a hash of all assembly attributes so that the cache file will change with the calculated
     assembly attribute values and MS Build will then execute CoreGenerateAssembly to generate a new file.
   -->
   <Target Name="CreateGeneratedAssemblyInfoInputsCacheFile"
-          DependsOnTargets="GetAssemblyAttributes">
+          DependsOnTargets="$(CreateGeneratedAssemblyInfoInputsCacheFileDependsOn)">
 
     <PropertyGroup>
       <GeneratedAssemblyInfoInputsCacheFile>$(IntermediateOutputPath)Versioning.AssemblyInfoInputs.cache</GeneratedAssemblyInfoInputsCacheFile>
-      <GeneratedAssemblyInfoFile Condition="'$(GeneratedAssemblyInfoFile)' == ''">$(IntermediateOutputPath)AssemblyInfo.g$(DefaultLanguageSourceExtension)</GeneratedAssemblyInfoFile>
+      <GeneratedAssemblyInfoFile Condition="'$(GeneratedAssemblyInfoFile)' == ''">$(IntermediateOutputPath)AssemblyInfo.g.cs</GeneratedAssemblyInfoFile>
     </PropertyGroup>
 
-    <Hash ItemsToHash="@(AssemblyAttributes->'%(Identity)%(_Parameter2)')">
-      <Output TaskParameter="HashResult" PropertyName="_AssemblyAttributesHash" />
-    </Hash>
+    <Aderant.Build.Tasks.HashItems ItemsToHash="@(_AssemblyAttributes->'%(Identity)%(_Parameter2)')">
+      <Output TaskParameter="HashResult" PropertyName="__AssemblyAttributesHash" />
+    </Aderant.Build.Tasks.HashItems>
 
-    <Aderant.Build.Tasks.WriteLinesToFile 
-      Lines="$(_AssemblyAttributesHash)" 
-      File="$(GeneratedAssemblyInfoInputsCacheFile)" 
-      Overwrite="true" 
+    <Aderant.Build.Tasks.WriteLinesToFile
+      Lines="$(__AssemblyAttributesHash)"
+      File="$(GeneratedAssemblyInfoInputsCacheFile)"
+      Overwrite="true"
       WriteOnlyWhenDifferent="true" />
 
     <ItemGroup>
@@ -113,7 +150,7 @@
     </ItemGroup>
 
   </Target>
-  
+
 
   <PropertyGroup>
     <GenerateAssemblyInfoDependsOn>
@@ -131,12 +168,12 @@
           DependsOnTargets="CreateGeneratedAssemblyInfoInputsCacheFile"
           Inputs="$(GeneratedAssemblyInfoInputsCacheFile)"
           Outputs="$(GeneratedAssemblyInfoFile)">
-          
-    <Error Condition="'@(AssemblyAttributes)' == ''"        Text="No assembly attributes specified" />
-    <Error Condition="'$(GeneratedAssemblyInfoFile)' == ''" Text="GeneratedAssemblyInfoFile is undefined" />
 
-    <WriteCodeFragment AssemblyAttributes="@(AssemblyAttributes)" 
-                       Language="$(Language)" 
+    <Error Condition="'@(_AssemblyAttributes)' == ''"        Text="No assembly attributes specified" />
+    <Error Condition="'$(GeneratedAssemblyInfoFile)' == ''"  Text="GeneratedAssemblyInfoFile is undefined" />
+
+    <WriteCodeFragment AssemblyAttributes="@(_AssemblyAttributes)"
+                       Language="CS"
                        OutputFile="$(GeneratedAssemblyInfoFile)">
     </WriteCodeFragment>
 
@@ -165,10 +202,10 @@
 
 
   <!--
-      Creates modified version of CommonAssemblyInfo.cs without touching the original file so we don't upset 
+      Creates modified version of CommonAssemblyInfo.cs without touching the original file so we don't upset
       incremental builds
   -->
-  <Target Name="AsemblyInfoUpdateCopyright"
+  <Target Name="AssemblyInfoUpdateCopyright"
           DependsOnTargets="FindCommonAssemblyInfo"
           Inputs="@(CommonAssemblyInfoFile)"
           Outputs="$(NewCommonAssemblyInfoFile)">
@@ -196,19 +233,14 @@
   </Target>
 
 
-  <Target Name="ReadVersionInfo">
-    
-    <ItemGroup>
-      <AssemblyInfoFiles Include="$(NewCommonAssemblyInfoFile)" />
-      <AssemblyInfoFiles Include="@(Compile)" Condition="%(Filename) == 'AssemblyInfo' And %(Extension) == '.cs'" />
-    </ItemGroup>
-    
-    <ReadAssemblyInfo AssemblyInfoFiles="@(AssemblyInfoFiles)">
+  <Target Name="ReadVersionInfo" DependsOnTargets="FindCommonAssemblyInfo">
+
+    <ReadAssemblyInfo AssemblyInfoFiles="@(CommonAssemblyInfoFile)">
       <Output ItemName="CommonAssemblyInformationalVersion" TaskParameter="AssemblyInformationalVersion" />
       <Output ItemName="CommonAssemblyVersion"              TaskParameter="AssemblyVersion" />
       <Output ItemName="CommonAssemblyFileVersion"          TaskParameter="AssemblyFileVersion" />
     </ReadAssemblyInfo>
-    
+
   </Target>
 
 </Project>

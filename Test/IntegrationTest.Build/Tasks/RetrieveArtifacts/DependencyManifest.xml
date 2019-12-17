@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<DependencyManifest DefaultSource="\\dfs.aderant.com\expertsuite\dev\vnext">
+    <ReferencedModules>
+        <ReferencedModule Name="Build.T4Task" AssemblyVersion="1.8.0.0" />
+        <ReferencedModule Name="Libraries.Query" AssemblyVersion="1.8.0.0" />
+        <ReferencedModule Name="Libraries.SoftwareFactory" AssemblyVersion="1.8.0.0" />
+    </ReferencedModules>
+</DependencyManifest>

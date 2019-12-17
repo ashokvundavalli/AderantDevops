@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!-- Override the standard target so we don't collect any baggage -->
+  <Target Name="CollectFilesFromReference">
+    <Message Text="Suppressed" />
+  </Target>
+
+  <!-- MSBuild does not support dynamic target names. To workaround this we conditionally import this target to suppress built in targets -->
+  <Import Project="Web\Web.Publishing.targets" Condition="'$(CollectFilesFrom_SourceItemsToCopyToOutputDirectoryEnabled)' != 'true'" />
+
+</Project>

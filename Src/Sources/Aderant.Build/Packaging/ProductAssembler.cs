@@ -1,18 +1,20 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using Aderant.Build.DependencyAnalyzer;
+﻿using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyResolver;
 using Aderant.Build.Logging;
 using Aderant.Build.Packaging.NuGet;
 using Newtonsoft.Json;
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 
 namespace Aderant.Build.Packaging {
     internal class ProductAssembler {
         private readonly ILogger logger;
-        private ExpertManifest manifest;
         private VersionTracker versionTracker;
         private string tfvcSourceGetVersion;
         private string teamProject;
@@ -21,15 +23,16 @@ namespace Aderant.Build.Packaging {
         private string tfsBuildNumber;
         private bool isLocalBuild;
         private SourceCodeInfo sourceCodeInfo;
+        private ExpertManifest manifest;
         public bool EnableVerboseLogging { get; set; }
 
-        public ProductAssembler(string productManifestPath, ILogger logger) {
+        public ProductAssembler(string productManifestXml, ILogger logger) {
             this.logger = logger;
-            this.manifest = ExpertManifest.Load(productManifestPath);
+            this.manifest = ExpertManifest.Parse(productManifestXml);
         }
 
         public IProductAssemblyResult AssembleProduct(
-            IEnumerable<ExpertModule> modules,
+            IReadOnlyCollection<ExpertModule> modules,
             IEnumerable<string> buildOutputs,
             string productDirectory,
             string tfvcSourceGetVersion,
@@ -37,8 +40,6 @@ namespace Aderant.Build.Packaging {
             string tfvcBranch,
             string tfsBuildId,
             string tfsBuildNumber) {
-
-            IEnumerable<ExpertModule> resolvedModules = modules.Select(m => manifest.GetModule(m.Name, m.DependencyGroup));
 
             // the additional TFS info will only be passed in a CI build
             if (string.IsNullOrEmpty(tfvcBranch) && string.IsNullOrEmpty(tfvcSourceGetVersion) && string.IsNullOrEmpty(teamProject) && string.IsNullOrEmpty(tfsBuildId) && string.IsNullOrEmpty(tfsBuildNumber)) {
@@ -52,7 +53,7 @@ namespace Aderant.Build.Packaging {
             }
 
             var operation = AssembleProduct(new ProductAssemblyContext {
-                Modules = resolvedModules,
+                Modules = modules.Select(m => manifest.GetModule(m.Name, m.DependencyGroup)).ToList(),
                 BuildOutputs = buildOutputs,
                 ProductDirectory = productDirectory
             });
@@ -68,12 +69,12 @@ namespace Aderant.Build.Packaging {
             IEnumerable<string> licenseText = RetrievePackages(context);
 
             return new ProductAssemblyResult {
-                ThirdPartyLicenses = licenseText
+                ThirdPartyLicenses = licenseText.ToList()
             };
         }
 
         private void RetrieveBuildOutputs(ProductAssemblyContext context) {
-            var fs = new PhysicalFileSystem(context.ProductDirectory);
+            var fs = new PhysicalFileSystem();
 
             foreach (var folder in context.BuildOutputs) {
                 logger.Info("Copying {0} ==> {1}", folder, context.ProductDirectory);
@@ -83,18 +84,20 @@ namespace Aderant.Build.Packaging {
         }
 
         private IEnumerable<string> RetrievePackages(ProductAssemblyContext context) {
-            var fs = new RetryingPhysicalFileSystem(Path.Combine(context.ProductDirectory, "package." + Path.GetRandomFileName()));
+            var workingDirectory = Path.Combine(context.ProductDirectory, "package." + Path.GetRandomFileName());
 
-            using (var manager = new PackageManager(fs, logger, EnableVerboseLogging)) {
+            var fs = new RetryingPhysicalFileSystem();
+
+            using (var manager = new PaketPackageManager(workingDirectory, fs, WellKnownPackageSources.Default, logger, EnableVerboseLogging)) {
                 manager.Add(context.Modules.Select(DependencyRequirement.Create));
                 manager.Restore();
             }
 
             var groups = context.Modules
-                .Where(s => s.DependencyGroup != BuildConstants.MainDependencyGroup)
+                .Where(s => s.DependencyGroup != Constants.MainDependencyGroup)
                 .Select(s => s.DependencyGroup)
                 .ToArray();
-         
+
 
             // assemble information about source code for CI build
             if (!isLocalBuild) {
@@ -111,13 +114,19 @@ namespace Aderant.Build.Packaging {
                 };
             }
 
-            var packages = fs.GetDirectories("packages").ToArray();
+            var packages = fs.GetDirectories(Path.Combine(workingDirectory, "packages")).ToArray();
             packages = packages.Where(p => p.IndexOf("Aderant.Build.Analyzer", StringComparison.OrdinalIgnoreCase) == -1).ToArray();
 
             var licenseText = CopyPackageContentToProductDirectory(context, fs, packages, null);
 
             foreach (var group in groups) {
-                packages = fs.GetDirectories(Path.Combine("packages", group)).ToArray();
+                var path = Path.Combine(workingDirectory, "packages", group);
+                packages = fs.GetDirectories(path).ToArray();
+
+                if (!packages.Any()) {
+                    throw new InvalidOperationException("There are no packages under path: " + path);
+                }
+
                 CopyPackageContentToProductDirectory(context, fs, packages, group);
             }
 
@@ -130,7 +139,7 @@ namespace Aderant.Build.Packaging {
                 fs.WriteAllText(Path.Combine(context.ProductDirectory, "..", "..", "undo-buildpersistence.bat"), Resources.UndoBatch);
             }
 
-            fs.DeleteDirectory(fs.Root, true);
+            fs.DeleteDirectory(workingDirectory, true);
 
             return licenseText;
         }
@@ -186,32 +195,30 @@ namespace Aderant.Build.Packaging {
             }
         }
 
-        private IEnumerable<string> CopyPackageContentToProductDirectory(ProductAssemblyContext context, IFileSystem2 fs, string[] packages, string group) {
+        private IEnumerable<string> CopyPackageContentToProductDirectory(ProductAssemblyContext context, IFileSystem fs, string[] packages, string group) {
             ConcurrentBag<string> licenseText = new ConcurrentBag<string>();
 
             string[] nupkgEntries = new[] { "lib", "content" };
 
-            foreach (var packageDirectory in packages) {
+            foreach (string packageDirectory in packages) {
                 ExpertModule module = context.GetModuleByPackage(packageDirectory, group);
 
-                foreach (var packageDir in nupkgEntries) {
+                foreach (string packageDir in nupkgEntries) {
                     string nupkgDir = Path.Combine(packageDirectory, packageDir);
 
-                    PhysicalFileSystem packageRelativeFs = new PhysicalFileSystem(fs.GetFullPath(nupkgDir));
-
                     if (fs.DirectoryExists(nupkgDir)) {
-                        var packageName = Path.GetFileName(packageDirectory);
+                        string packageName = Path.GetFileName(packageDirectory);
 
                         if (module != null) {
                             if (context.RequiresContentProcessing(module)) {
-                                RootItemHandler processor = new RootItemHandler(packageRelativeFs) {
+                                RootItemHandler processor = new RootItemHandler(fs) {
                                     Module = module,
                                 };
 
-                                processor.MoveContent(context, fs.GetFullPath(nupkgDir));
+                                processor.MoveContent(context, nupkgDir);
 
                                 versionTracker.FileSystem = fs;
-                                versionTracker.RecordVersion(module, fs.GetFullPath(packageDirectory));
+                                versionTracker.RecordVersion(module, packageDirectory);
                                 continue;
                             }
                         }
@@ -263,8 +270,9 @@ namespace Aderant.Build.Packaging {
                             relativeDirectory = Path.Combine(context.ProductDirectory, group ?? string.Empty);
                         }
 
-                        logger.Info("Copying {0} ==> {1}", nupkgDir, relativeDirectory);
-                        packageRelativeFs.MoveDirectory(fs.GetFullPath(nupkgDir), relativeDirectory);
+                        if (module == null || module.ExcludeFromPackaging != true) {
+                            ProcessDirectoryCopy(fs, nupkgDir, relativeDirectory, packageName.StartsWith("ThirdParty", StringComparison.OrdinalIgnoreCase));
+                        }
                     }
                 }
             }
@@ -272,14 +280,102 @@ namespace Aderant.Build.Packaging {
             return licenseText;
         }
 
-        private static void ReadLicenseText(IFileSystem2 fs, string lib, string packageName, ConcurrentBag<string> licenseText) {
+        private static readonly string[] IllegalExtensions = new string[] {
+            "._"
+        };
+
+        private void ProcessDirectoryCopy(IFileSystem fileSystem, string nupkgDir, string relativeDirectory, bool process) {
+            Regex regex = new Regex(@"(net)\d+\\");
+
+            string[] files = fileSystem.GetFiles(nupkgDir, "*", true).ToArray();
+
+            List<PathSpec> pathSpecs = new List<PathSpec>(files.Length);
+
+            logger.Info("Copying directory: '{0}' ==> '{1}'", nupkgDir, relativeDirectory);
+
+            foreach (string file in files) {
+                string extension = Path.GetExtension(file);
+                if (extension != null && IllegalExtensions.Contains(extension)) {
+                    logger.Info($"Skipping file: '{file}' due to extension.");
+                    continue;
+                }
+
+                string relativeFilePath = file.Replace(nupkgDir, string.Empty);
+                if (process && regex.IsMatch(relativeFilePath)) {
+                    relativeFilePath = Path.Combine(regex.Replace(relativeFilePath, string.Empty, 1));
+                }
+
+                PathSpec pathSpec = new PathSpec(file, Path.Combine(relativeDirectory, relativeFilePath.TrimStart(Path.DirectorySeparatorChar)), false);
+
+                logger.Info($"Source file: '{pathSpec.Location}' ==> Destination: '{pathSpec.Destination}'");
+
+                pathSpecs.Add(pathSpec);
+            }
+
+            ActionBlock<PathSpec> fileCopy = BulkCopyModule(pathSpecs);
+            fileCopy.Completion
+                .ConfigureAwait(false)
+                .GetAwaiter()
+                .GetResult();
+        }
+
+        public ActionBlock<PathSpec> BulkCopyModule(IEnumerable<PathSpec> pathSpecs) {
+            ExecutionDataflowBlockOptions actionBlockOptions = new ExecutionDataflowBlockOptions {
+                MaxDegreeOfParallelism = Environment.ProcessorCount,
+            };
+
+            const int hResult = -2147024816; // File already exists.
+            HashSet<string> knownPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            
+            ActionBlock<PathSpec> bulkCopy = new ActionBlock<PathSpec>(
+                async file => {
+                    // Break from synchronous thread context of caller to get onto thread pool thread.
+                    await Task.Yield();
+
+                    string destination = Path.GetDirectoryName(file.Destination);
+
+                    lock (knownPaths) {
+                        if (!knownPaths.Contains(destination)) {
+                            if (!Directory.Exists(destination)) {
+                                Directory.CreateDirectory(destination);
+                            }
+
+                            knownPaths.Add(destination);
+                        }
+                    }
+
+                    try {
+                        File.Copy(file.Location, file.Destination, false);
+                    } catch (IOException exception) {
+                        if (exception.HResult == hResult) {
+                            // Log a warning if the file already exists.
+                            logger.Warning(exception.Message);
+                        } else {
+                            throw;
+                        }
+                    }
+                },
+                actionBlockOptions);
+
+            foreach (PathSpec pathSpec in pathSpecs) {
+                bulkCopy.Post(pathSpec);
+            }
+
+            bulkCopy.Complete();
+
+            return bulkCopy;
+        }
+
+        private static void ReadLicenseText(IFileSystem fs, string lib, string packageName, ConcurrentBag<string> licenseText) {
             IEnumerable<string> licenses = fs.GetFiles(lib, "*license*txt", true);
-            foreach (var licenseFile in licenses) {
+            string separator = new string('=', 80);
+
+            foreach (string licenseFile in licenses) {
                 using (Stream stream = fs.OpenFile(licenseFile)) {
-                    using (var reader = new StreamReader(stream)) {
-                        licenseText.Add(new string('=', 80));
+                    using (StreamReader reader = new StreamReader(stream)) {
+                        licenseText.Add(separator);
                         licenseText.Add(packageName);
-                        licenseText.Add(new string('=', 80));
+                        licenseText.Add(separator);
                         licenseText.Add(reader.ReadToEnd());
                     }
                 }

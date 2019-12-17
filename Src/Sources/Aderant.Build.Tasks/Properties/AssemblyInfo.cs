@@ -2,13 +2,12 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-// General Information about an assembly is controlled through the following 
+// General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("Aderant.Build.Tasks")]
 [assembly: AssemblyCompany("Aderant")]
 [assembly: AssemblyProduct("Aderant.Build.Tasks")]
-[assembly: AssemblyCopyright("Copyright © Aderant 2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: ComVisible(false)]

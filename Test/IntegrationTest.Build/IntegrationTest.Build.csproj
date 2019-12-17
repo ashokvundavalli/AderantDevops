@@ -8,21 +8,20 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>IntegrationTest.Build</RootNamespace>
     <AssemblyName>IntegrationTest.Build</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
-    <ReferencePath>$(ProgramFiles)\Common Files\microsoft shared\VSTT\$(VisualStudioVersion)\UITestExtensionPackages</ReferencePath>
-    <IsCodedUITest>False</IsCodedUITest>
     <TestProjectType>UnitTest</TestProjectType>
     <TargetFrameworkProfile />
   </PropertyGroup>
+  <Import Project="..\..\Src\Sources\References.props" />
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\Bin\Test\</OutputPath>
+    <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -30,84 +29,39 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\..\Bin\Test\</OutputPath>
+    <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <PropertyGroup>
-    <IncludePattern>
-      <!-- 
-        As we want just the folder name in our item group link, we add a wild card to the end of the folders so we can use RecursiveDir to get the folder name 
-        If we don't do this RecursiveDir would return foo\bar\ rather than just bar\
-      -->
-            $(MSBuildProjectDirectory)\..\..\src\Build.Tools\lib\win32\**\*;
-            $(MSBuildProjectDirectory)\..\..\src\Build\**\*;
-        </IncludePattern>
-    <ExcludePattern>
-    </ExcludePattern>
-  </PropertyGroup>
   <ItemGroup>
-    <Content Include="$(IncludePattern)" Exclude="$(ExcludePattern)">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>SystemUnderTest\%(RecursiveDir)%(FileName)%(Extension)</Link>
-    </Content>
-    <Content Include="Resources\Framework\Bin\Module\fake.role.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Resources\LightUpManifest.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Resources\RunAnalyzerTest.csproj">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Resources\Framework\Bin\Fluff\Fluff.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Resources\Framework\Bin\Module\Dependencies.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Resources\Framework\Bin\Module\Packages.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Resources\Framework\Bin\Module\Product.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Resources\Framework\Bin\Test\Dependencies.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Resources\Framework\Bin\Test\Packages.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Resources\Framework\Bin\Test\Test.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Resources\Framework\Build\DependencyManifest.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Resources\Framework\Build\LightUpManifest.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Resources\Framework\Dependencies\Dependencies.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Resources\Framework\packages\Packages.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="LibGit2Sharp, Version=0.23.0.0, Culture=neutral, PublicKeyToken=7cbde695407f0333, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Src\Build\LibGit2Sharp.dll</HintPath>
+    <Reference Include="Castle.Core">
+      <HintPath>..\..\packages\Castle.Core\lib\net45\Castle.Core.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Build, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
-    <Reference Include="Microsoft.Build.Engine, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
-    <Reference Include="Microsoft.Build.Framework, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
-    <Reference Include="Microsoft.Build.Utilities.Core, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
-    <Reference Include="Microsoft.TeamFoundation.Build2.WebApi">
-      <HintPath>..\..\packages\Microsoft.TeamFoundationServer.Client\lib\net45\Microsoft.TeamFoundation.Build2.WebApi.dll</HintPath>
+    <Reference Include="LibGit2Sharp, Version=0.26.0.0, Culture=neutral, PublicKeyToken=7cbde695407f0333, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\devtools\LibGit2Sharp\lib\net46\LibGit2Sharp.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Microsoft.VisualStudio.Services.WebApi, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\packages\Microsoft.VisualStudio.Services.Client\lib\net45\Microsoft.VisualStudio.Services.WebApi.dll</HintPath>
+    </Reference>
+    <Reference Include="Moq, Version=4.10.0.0, Culture=neutral, PublicKeyToken=69f491c39445e920, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\packages\Moq\lib\net45\Moq.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
+    <Reference Include="System.Threading.Tasks.Dataflow, Version=4.6.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\devtools\System.Threading.Tasks.Dataflow\lib\portable-net45+win8+wpa81\System.Threading.Tasks.Dataflow.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Threading.Tasks.Extensions">
+      <HintPath>..\..\packages\System.Threading.Tasks.Extensions\lib\portable-net45+win8+wp8+wpa81\System.Threading.Tasks.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Xml" />
     <Reference Include="System.Net.Http.Formatting, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\packages\Microsoft.AspNet.WebApi.Client\lib\net45\System.Net.Http.Formatting.dll</HintPath>
@@ -138,52 +92,169 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="BuildAssociationTests.cs" />
-    <Content Include="Resources\AssemblyInfo.cs">
+    <Content Include="ConfiguredProjectTests\Web.Core.csproj">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Compile Include="RunAnalyzerTests.cs" />
-    <Content Include="Resources\TestClass.cs">
+    <Content Include="ConfiguredProjectTests\Web.PrebillEditor.csproj">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Compile Include="Tasks\BuildTaskTestBase.cs" />
-    <Compile Include="Tasks\CheckCertificateTests.cs" />
-    <Compile Include="Tasks\GetAssembliesWithTraitsTests.cs" />
+    <Content Include="EndToEnd\test.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Packaging\Web\Web.Site1\Scripts\Web.Site1\my.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Packaging\Web\Web.Site1\Scripts\Web.Site2\other.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\BinFiles\Aderant.Query.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\BinFiles\Aderant.Query.Resources.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\BinFiles\Customization\NestedFolder\TestFile.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\BinFiles\ExpertQuery.SqlViews.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Tasks\ReadAssemblyInfo\Resources\AssemblyInfo.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Compile Include="AssemblyInitializer.cs" />
+    <Compile Include="EndToEnd\EndToEndTests.cs" />
+    <Compile Include="Helpers\PowerShellHelper.cs" />
+    <Compile Include="EndToEnd\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="EndToEnd\TestBuildServiceHost.cs" />
+    <Compile Include="Packaging\ArtifactServiceTests.cs" />
+    <Compile Include="Packaging\Web\WebPackagingTests.cs" />
+    <Compile Include="ProjectTreeTests.cs" />
+    <Compile Include="Tasks\CheckForDoubleWrites\CheckForDoubleWritesTests.cs" />
+    <Compile Include="Tasks\CopyFiles\CopyFilesTests.cs" />
+    <Compile Include="Tasks\PowerShellScript\PowerShellScriptTests.cs" />
+    <Compile Include="Tasks\MakeSymlink\MakeSymlinkTests.cs" />
+    <Compile Include="Tasks\RetrieveArtifacts\RetrieveArtifactsTests.cs" />
+    <Compile Include="Tasks\GenerateArchivesTest.cs" />
+    <Compile Include="Tasks\CopyRelatedFilesTests.cs" />
+    <Compile Include="VersionControl\GitVersionControlTestBase.cs" />
+    <Compile Include="VersionControl\GitVersionControlTests.cs" />
+    <Compile Include="ConfiguredProjectTests\ConfiguredProjectTests.cs" />
+    <Compile Include="ConfiguredProjectTests\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="VersionControl\MergeScenarios.cs" />
+    <Compile Include="VersionControl\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="MSBuildIntegrationTestBase.cs" />
+    <Compile Include="Tasks\CheckCertificate\CheckCertificateTests.cs" />
+    <Compile Include="Tasks\ContextTaskBaseTests.cs" />
+    <Compile Include="Tasks\GetAssembliesWithTraits\GetAssembliesWithTraitsTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Tasks\GetFileVersionInfoTests.cs" />
-    <Compile Include="Tasks\GitVersionTests.cs" />
-    <Compile Include="Tasks\CopyToDropV2Tests.cs" />
-    <Compile Include="Tasks\ReadAssemblyInfo.cs" />
-    <Compile Include="Tasks\IntegrationTestingTests.cs" />
+    <Compile Include="Tasks\GetFileVersionInfo\GetFileVersionInfoTests.cs" />
+    <Compile Include="Tasks\GitVersion\GitVersionTests.cs" />
+    <Compile Include="Tasks\ReadAssemblyInfo\ReadAssemblyInfo.cs" />
+    <Compile Include="Tasks\BuildTimeTests\IntegrationTestingTests.cs" />
     <Compile Include="LightUpManifestTests.cs" />
+    <None Include="EndToEnd\Resources.proj">
+      <SubType>Designer</SubType>
+    </None>
+    <Content Include="Tasks\PowerShellScript\test.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Tasks\CheckForDoubleWrites\test.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Tasks\MakeSymlink\test.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Packaging\Web\test.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <SubType>Designer</SubType>
+    </Content>
+    <Content Include="Packaging\Web\Web.Site1\ManualLogOn\Web.Site1\Web.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Packaging\Web\Web.Site1\Views\_Layout.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\BinFiles\Customization\Services.Query.Custom.zip">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Include="VersionControl\Resources\CommitGraphWalking.ps1" />
+    <Compile Include="VersionControl\ShaTests.cs" />
     <Compile Include="WarningRatchetTests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Src\Sources\Aderant.Build.Analyzer\Aderant.Build.Analyzer.csproj">
-      <Project>{46204ee0-8a49-4f2f-b776-e5e1f1e79e10}</Project>
-      <Name>Aderant.Build.Analyzer</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Src\Sources\Aderant.Build.Tasks\Aderant.Build.Tasks.csproj">
-      <Project>{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}</Project>
-      <Name>Aderant.Build.Tasks</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Src\Sources\Aderant.Build\Aderant.Build.csproj">
-      <Project>{66E50D39-8E73-4D16-944B-43F18C308FE0}</Project>
-      <Name>Aderant.Build</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="..\..\Src\Build\Aderant.Build.Common.targets">
-      <Link>Aderant.Build.Common.targets</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <None Include="App.config" />
     <Content Include="IntegrationTest.targets">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <None Include="Resources\Framework\Bin\Module\Packages\Security.zip">
+    <Content Include="Tasks\BuildTimeTests\test.targets">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    </Content>
+    <Content Include="Tasks\CheckCertificate\test.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Tasks\GetAssembliesWithTraits\test.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Tasks\GetFileVersionInfo\test.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Tasks\GitVersion\test.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Tasks\ReadAssemblyInfo\test.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Tasks\RetrieveArtifacts\DependencyManifest.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Tasks\RetrieveArtifacts\test.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Include="VersionControl\Resources\Merge.ps1" />
+    <None Include="VersionControl\Resources\CreateRepo.ps1" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ConfiguredProjectTests\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="EndToEnd\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="VersionControl\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Packaging\Web\Web.Site1\Views\Shared\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Src\Sources\Aderant.Build.Tasks\Aderant.Build.Tasks.csproj">
+      <Project>{256cb4bf-2ad9-497f-9174-9c4fdd9f6ce3}</Project>
+      <Name>Aderant.Build.Tasks</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Src\Sources\Aderant.Build\Aderant.Build.csproj">
+      <Project>{66e50d39-8e73-4d16-944b-43f18c308fe0}</Project>
+      <Name>Aderant.Build</Name>
+    </ProjectReference>
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
@@ -205,7 +276,9 @@
   </Choose>
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+  <Import Project="..\TestDeployment.proj" />
+  <Import Project="EndToEnd\Resources.proj" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
   </Target>

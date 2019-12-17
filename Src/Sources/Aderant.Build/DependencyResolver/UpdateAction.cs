@@ -14,7 +14,7 @@ namespace Aderant.Build.DependencyResolver {
         public void Run() {
             FSharpList<string> groups = dependencies.GetGroups();
             foreach (var group in groups) {
-                dependencies.UpdateGroup(group, force, false, false, false, false, SemVerUpdateMode.NoRestriction, false);
+                dependencies.UpdateGroup(group, force, false, false, false, true, SemVerUpdateMode.NoRestriction, false);
             }
         }
     }

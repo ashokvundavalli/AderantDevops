@@ -123,7 +123,8 @@ namespace Aderant.DeveloperTools.XamlAdorner {
                         }
                     }
                 }
-            } catch (Exception ex) {
+            } catch {
+                // Ignore.
             }
         }
 

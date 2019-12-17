@@ -55,7 +55,7 @@ namespace UnitTest.Build.Packaging {
 
             MemoryStream stream = null;
 
-            var dependencies = new Packager(null, new FakeLogger()).ReplicateDependenciesToTemplate(dict, () => {
+            var dependencies = new Packager(null, new NullLogger()).ReplicateDependenciesToTemplate(dict, () => {
                 if (stream != null) {
                     return stream = new MemoryStream();
                 }
@@ -79,7 +79,7 @@ namespace UnitTest.Build.Packaging {
 
             MemoryStream stream = null;
 
-            var dependencies = new Packager(null, new FakeLogger()).ReplicateDependenciesToTemplate(dict, () => {
+            var dependencies = new Packager(null, new NullLogger()).ReplicateDependenciesToTemplate(dict, () => {
                 if (stream != null) {
                     return stream = new MemoryStream();
                 }
@@ -103,7 +103,7 @@ namespace UnitTest.Build.Packaging {
 
             MemoryStream stream = null;
 
-            var packager = new Packager(null, new FakeLogger());
+            var packager = new Packager(null, new NullLogger());
             var dependencies = packager.ReplicateDependenciesToTemplate(dict, () => {
                 if (stream != null) {
                     return stream = new MemoryStream();
@@ -148,7 +148,7 @@ dependencies
 
             MemoryStream stream = null;
 
-            var dependencies = new Packager(null, new FakeLogger()).ReplicateDependenciesToTemplate(dict, () => {
+            var dependencies = new Packager(null, new NullLogger()).ReplicateDependenciesToTemplate(dict, () => {
                 if (stream != null) {
                     return stream = new MemoryStream();
                 }

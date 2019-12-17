@@ -1,0 +1,176 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
+         DefaultTargets="EndToEnd"
+         ToolsVersion="14.0">
+
+  <Import Project="Aderant.Build.Common.targets" />
+  <Import Project="Aderant.Build.Publish.targets" />
+  <Import Project="Aderant.CodeSigning.targets" />
+  <Import Project="Mobile.targets" />
+  <Import Project="$(SolutionRoot)\..\Build\Parameters.props" Condition="Exists('$(SolutionRoot)\..\Build\Parameters.props')" />
+
+  <PropertyGroup>
+    <RunTestsDependsOn>
+      $(RunTestsDependsOn);
+      CollectTestAssemblies;
+    </RunTestsDependsOn>
+
+    <EndToEndDependsOn>
+      ValidateRequiredProperties;
+      RefreshVersionVariables;
+      <!--RunTests;
+      RunIntegrationTests;
+      --><!--RunAutomationTests;--><!--
+      PublishModule;
+      IndexSourcesAndPublishSymbols;
+      MobileBuild;-->
+      PostBuild;
+      RunBuildExtensions;
+      SignInstallers;
+      CopyRelatedFiles;
+      PackageArtifactsCore;
+      PaketPack;
+    </EndToEndDependsOn>
+
+    <PackageArtifactsDependsOn>
+      $(PackageArtifactsDependsOn);
+      CreateDefaultArtifacts;
+      CreateWebArtifacts;
+      PackageArtifacts
+    </PackageArtifactsDependsOn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <SignApplications Condition="'$(SignApplications)' == ''">true</SignApplications>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InvokePaket Include="$(SolutionRoot)\*paket.template" />
+  </ItemGroup>
+
+  <!--Stub-->
+  <Target Name="PackageArtifacts" />
+
+
+  <Target Name="RefreshVersionVariables">
+
+    <ItemGroup>
+      <_Variables Include="FileVersion" />
+      <_Variables Include="AssemblyVersion" />
+      <_Variables Include="ModuleName" />
+    </ItemGroup>
+
+    <GetOrPutContextVariable
+      Scope="$(VariableScopeId)"
+      ContextEndpoint="$(ContextEndpoint)"
+      VariableName="%(_Variables.Identity)">
+      <Output TaskParameter="Value" PropertyName="%(_Variables.Identity)" />
+    </GetOrPutContextVariable>
+
+    <Error Text="$(VariableScopeId): FileVersion is undefined" Condition="'$(FileVersion)' == '' And '$(IsDesktopBuild)' != 'true'" />
+
+  </Target>
+
+
+  <Target Name="CreateDefaultArtifacts">
+    
+    <ItemGroup>
+
+      <_PackageArtifact Include="$(BinTestDirectory)\**\*;">
+        <ArtifactId>$(ModuleName).default.tests</ArtifactId>
+        <Generated>true</Generated>
+        <ArtifactType>Prebuilt</ArtifactType>
+      </_PackageArtifact>
+
+      <_PackageArtifact Include="$(BinModuleDirectory)\**\*;">
+        <ArtifactId>$(ModuleName).default</ArtifactId>
+        <Generated>true</Generated>
+        <ArtifactType>Prebuilt</ArtifactType>
+      </_PackageArtifact>
+
+    </ItemGroup>
+    
+  </Target>
+
+
+  <Target Name="CreateWebArtifacts">
+
+    <ItemGroup>
+
+      <_PackageArtifact Include="$(SolutionRoot)\Src\Web*\bin\Web*.dll;" Exclude="$(SolutionRoot)\Src\Web*\bin\Web.SMB.dll;"> 
+        <ArtifactId>$(ModuleName).default.web</ArtifactId>
+        <Generated>true</Generated>
+        <ArtifactType>Prebuilt</ArtifactType>
+        <IsTestPackage>true</IsTestPackage>
+      </_PackageArtifact>
+
+    </ItemGroup>
+
+  </Target>
+
+  
+  <Target Name="CopyRelatedFiles">
+    
+    <CopyRelatedFiles
+      SourceLocation ="$(BinModuleDirectory)"
+      Destination="$(UpdateStagingDirectory)BinFiles" />
+    
+  </Target>
+
+  
+  <Target Name="PackageArtifactsCore" Condition="'$(ArtifactStagingDirectory)' != ''" DependsOnTargets="$(PackageArtifactsDependsOn)">
+
+    <CreateArtifacts
+      ContextEndpoint="$(ContextEndpoint)"
+      SolutionRoot="$(SolutionRoot)"
+      RelativeFrom="$(BinModuleDirectory);$(BinTestDirectory)"
+      ArtifactDefinitions="@(PackageArtifact);@(_PackageArtifact)"
+      AssemblyVersion="$(AssemblyVersion)"
+      FileVersion="$(FileVersion)" />
+
+  </Target>
+
+  <!-- Stub for customizers to override -->
+  <Target Name="PostBuild" />
+
+
+  <Target Name="EndToEnd" DependsOnTargets="$(EndToEndDependsOn)">
+  </Target>
+
+
+  <Target Name="ValidateRequiredProperties">
+    <Error Condition="'$(SolutionDirectoryPath)' == ''" Text="Fatal error. SolutionDirectoryPath is undefined in element $(ProjectInstanceId)" />
+  </Target>
+
+
+  <!-- TODO: Legacy extension name... replace this -->
+  <Target Name="OnAfterBuild" />
+  <Target Name="PostBuild" />
+
+  <Target Name="RunBuildExtensions">
+    <Message Text="Executing custom targets: $(RunUserTargets)" />
+    <CallTarget Targets="PostBuild;OnAfterBuild" />
+  </Target>
+
+  <!-- Pull the entry targets into our context. This lets us call into PostBuild for people who want to customize the workflow -->
+  <Import Project="$(SolutionDirectoryPath)Build\TFSBuild.proj" Condition="'$(RunUserTargets)' != 'false' And Exists('$(SolutionDirectoryPath)Build\TFSBuild.proj')" />
+  <Import Project="$(SolutionDirectoryPath)packaging.targets" Condition="'$(RunUserTargets)' != 'false' And Exists('$(SolutionDirectoryPath)packaging.targets')" />
+
+  
+  <Target Name="PaketPack" Condition="'@(InvokePaket)' != '' And '$(PackageVersion)' != ''">
+    
+    <PropertyGroup>
+      <paketLockFile>$(SolutionRoot)\paket.lock</paketLockFile>
+    </PropertyGroup>
+    
+    <WriteLinesToFile
+     File="$(paketLockFile)"
+     Lines=""
+     Overwrite="false"
+     Condition="!Exists('$(paketLockFile)')"/>
+    
+    <Exec Command="$(BuildToolsDirectory)paket.exe pack $(ArtifactStagingDirectory)packages --version $(PackageVersion) --verbose" WorkingDirectory="$(SolutionRoot)" />
+  
+  </Target>
+
+</Project>
