@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.Serialization;
 
 namespace Aderant.Build.DependencyAnalyzer {
@@ -7,7 +9,9 @@ namespace Aderant.Build.DependencyAnalyzer {
     /// Occurs when circular references are detected
     /// </summary>
     [Serializable]
-    public class CircularDependencyException : Exception {
+    public class CircularDependencyException : ArgumentException {
+        private string[] conflicts;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="CircularDependencyException"/> class.
         /// </summary>
@@ -17,12 +21,22 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <summary>
         /// Initializes a new instance of the <see cref="CircularDependencyException"/> class.
         /// </summary>
-        /// <param name="dependencies">The dependencies.</param>
-        public CircularDependencyException(string dependencies) : base(dependencies) {
+        /// <param name="message">The dependencies.</param>
+        public CircularDependencyException(string message)
+            : base(message) {
         }
 
         protected CircularDependencyException(SerializationInfo info, StreamingContext context)
             : base(info, context) {
+        }
+
+        public CircularDependencyException(IEnumerable<string> conflicts)
+            : this("There is a circular dependency between the following: " + string.Join(", ", conflicts.ToArray())) {
+            this.conflicts = conflicts.ToArray();
+        }
+
+        public ICollection<string> Conflicts {
+            get { return conflicts; }
         }
     }
 }

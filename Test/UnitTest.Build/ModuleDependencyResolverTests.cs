@@ -2,7 +2,6 @@
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Xml.Linq;
 using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
@@ -29,7 +28,7 @@ namespace UnitTest.Build {
     </ReferencedModules>
 </DependencyManifest>"));
 
-            var requirements = ((IDependencyResolver)resolver).GetDependencyRequirements(null, new ExpertModule { Name = "Foo" });
+            var requirements = ((IDependencyResolver)resolver).GetDependencyRequirements(null, new ExpertModule("Foo"));
 
             var requirement = requirements.First();
 
@@ -39,8 +38,8 @@ namespace UnitTest.Build {
         [TestMethod]
         public void GetDependenciesRequiredForBuild_all_dependencies_being_built() {
             List<ExpertModule> modules = new List<ExpertModule>();
-            modules.Add(new ExpertModule { Name = "Foo" });
-            modules.Add(new ExpertModule { Name = "Bar" });
+            modules.Add(new ExpertModule("Foo"));
+            modules.Add(new ExpertModule("Bar"));
 
             List<ModuleDependency> dependencies = new List<ModuleDependency>();
             dependencies.Add(new ModuleDependency {
@@ -58,7 +57,7 @@ namespace UnitTest.Build {
                 Provider = modules[1]
             });
 
-            ICollection<ExpertModule> build = ResolverRequest.GetDependenciesRequiredForBuild(modules, dependencies, modules);
+            ICollection<ExpertModule> build = ResolverRequest.GetDependenciesRequiredForBuild(dependencies, modules);
 
             Assert.AreEqual(0, build.Count, "Did not expect any modules as all modules and their dependencies are being built");
         }
@@ -66,8 +65,8 @@ namespace UnitTest.Build {
         [TestMethod]
         public void GetDependenciesRequiredForBuild() {
             List<ExpertModule> modules = new List<ExpertModule>();
-            modules.Add(new ExpertModule { Name = "Foo" });
-            modules.Add(new ExpertModule { Name = "Bar" });
+            modules.Add(new ExpertModule("Foo"));
+            modules.Add(new ExpertModule("Bar"));
 
             List<ModuleDependency> dependencies = new List<ModuleDependency>();
             dependencies.Add(new ModuleDependency {
@@ -85,7 +84,7 @@ namespace UnitTest.Build {
                 Provider = modules[1]
             });
 
-            ICollection<ExpertModule> build = ResolverRequest.GetDependenciesRequiredForBuild(modules, dependencies, new List<ExpertModule>() { modules[0] });
+            ICollection<ExpertModule> build = ResolverRequest.GetDependenciesRequiredForBuild(dependencies, new List<ExpertModule>() { modules[0] });
 
             Assert.AreEqual(1, build.Count);
         }
@@ -96,14 +95,14 @@ namespace UnitTest.Build {
             var dependencyManifest1 = new DependencyManifest("Module1", XDocument.Parse(@"<?xml version='1.0' encoding='utf-8'?>
 <DependencyManifest>
     <ReferencedModules>
-        <ReferencedModule Name='Module0' AssemblyVersion='1.8.0.0' />    
+        <ReferencedModule Name='Module0' AssemblyVersion='1.8.0.0' />
     </ReferencedModules>
 </DependencyManifest>"));
 
             var dependencyManifest2 = new DependencyManifest("Module2", XDocument.Parse(@"<?xml version='1.0' encoding='utf-8'?>
 <DependencyManifest>
     <ReferencedModules>
-        <ReferencedModule Name='Module1' AssemblyVersion='1.8.0.0' />    
+        <ReferencedModule Name='Module1' AssemblyVersion='1.8.0.0' />
     </ReferencedModules>
 </DependencyManifest>"));
 
@@ -127,7 +126,7 @@ namespace UnitTest.Build {
             resolver.FolderDependencySystem = buildFolders.Object;
             resolver.AddDependencySource("Foo", ExpertModuleResolver.DropLocation);
 
-            ResolverRequest request = new ResolverRequest(new FakeLogger(), (IFileSystem2)null, expertManifest.GetAll().ToArray());
+            ResolverRequest request = new ResolverRequest(new NullLogger(), expertManifest.GetAll().ToArray());
 
             ((IDependencyResolver)resolver).Resolve(request, requirements);
 
@@ -137,27 +136,6 @@ namespace UnitTest.Build {
             Assert.AreEqual("Module0", items[0].Name);
             Assert.AreEqual("Module1", items[1].Name);
             Assert.AreEqual("Module2", items[2].Name);
-        }
-
-        [TestMethod]
-        public void Build_path_with_refspec() {
-            var path = FolderDependencySystem.BuildDropPath("Foo", "stable", "refs/heads/master", "0001", null);
-
-            Assert.AreEqual(@"Foo\stable\master\0001\default", path);
-        }
-
-        [TestMethod]
-        public void Build_path_with_refspec_leading_slash() {
-            var path = FolderDependencySystem.BuildDropPath("Foo", "stable", "/refs/heads/master", "0001", null);
-
-            Assert.AreEqual(@"Foo\stable\master\0001\default", path);
-        }
-
-        [TestMethod]
-        public void Build_path_with_tfvc_refspec() {
-            var path = FolderDependencySystem.BuildDropPath("Foo", "stable", "$/ExpertSuite/dev/vnext", "0001", null);
-
-            Assert.AreEqual(@"Foo\stable\dev.vnext\0001\default", path);
         }
     }
 

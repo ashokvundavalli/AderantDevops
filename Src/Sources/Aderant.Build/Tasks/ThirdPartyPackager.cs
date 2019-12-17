@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Aderant.Build.DependencyResolver;
+using Aderant.Build.DependencyResolver.Resolvers;
 using Aderant.Build.Logging;
 using Aderant.Build.Packaging;
 using Aderant.Build.Packaging.NuGet;
@@ -12,7 +12,7 @@ using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
-    public sealed class ThirdPartyPackager : Microsoft.Build.Utilities.Task {
+    public sealed class ThirdPartyPackager : Task {
         private IFileSystem2 fileSystem;
         private BuildTaskLogger logger;
 
@@ -29,7 +29,7 @@ namespace Aderant.Build.Tasks {
         public bool EnableVerboseLogging { get; set; }
 
         public override bool Execute() {
-            fileSystem = new PhysicalFileSystem(Folder);
+            fileSystem = new PhysicalFileSystem();
 
             if (!fileSystem.DirectoryExists(Folder)) {
                 return !Log.HasLoggedErrors;
@@ -78,14 +78,14 @@ namespace Aderant.Build.Tasks {
         private bool DownloadPackage(string packageName) {
             // Download the existing package
             try {
-                using (PackageManager packageManager = new PackageManager(fileSystem, logger, EnableVerboseLogging)) {
+                using (PaketPackageManager packageManager = new PaketPackageManager(Folder, fileSystem, WellKnownPackageSources.Default, logger, EnableVerboseLogging)) {
                     var requirement = DependencyRequirement.Create(
                         packageName,
-                        BuildConstants.MainDependencyGroup,
+                        Constants.MainDependencyGroup,
                         new VersionRequirement {
                             ConstraintExpression = ">= 0.0.0 ci"
                         });
-                    packageManager.Add(new[] { DependencyRequirement.Create(packageName, BuildConstants.MainDependencyGroup) });
+
 
                     packageManager.Add(new[] { requirement });
                     packageManager.Update(true);

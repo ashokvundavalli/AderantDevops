@@ -9,82 +9,6 @@ namespace Aderant.Build.DependencyResolver {
     public class FolderDependencySystem {
         private readonly IFileSystem2 fileSystem;
 
-        private const string RefsPrefix = "refs\\heads\\";
-
-        public static string BuildDropPath(string moduleName, string quality, string origin, string version, string component) {
-            if (quality == null) {
-                throw new ArgumentNullException(nameof(quality));
-            }
-
-            if (origin == null) {
-                throw new ArgumentNullException(nameof(origin));
-            }
-            origin = origin.Replace('/', '\\');
-
-            // <module>\<quality>\<origin>\<build>\<component>
-
-            List<string> parts = new List<string>();
-            parts.Add(moduleName.Trim().TrimEnd('\"'));
-
-            parts.Add(quality.Trim());
-
-            origin = origin.Trim('\\');
-            origin = RemovePrefix(origin, RefsPrefix);
-            origin = CheckPullRequest(origin);
-
-            if (origin[0] == '$') {
-                // TFVC path
-                origin = PathHelper.GetBranch(origin, false).ToLowerInvariant();
-            }
-
-            origin = origin.Replace('\\', '.');
-
-            parts.Add(origin.Trim());
-
-            if (!string.IsNullOrWhiteSpace(version)) {
-                parts.Add(version.Trim());
-            }
-
-            if (!string.IsNullOrWhiteSpace(component)) {
-                parts.Add(component.Trim());
-            } else {
-                parts.Add("default");
-            }
-
-            return Path.Combine(parts.ToArray());
-        }
-
-        private static string CheckPullRequest(string origin) {
-            string result = origin;
-            if (origin.StartsWith(@"pull\", StringComparison.OrdinalIgnoreCase)) {
-                result = origin.Split('\\')[1];
-            }
-            return result;
-        }
-
-        public static string GetQualityMoniker(string origin) {
-
-            origin = origin.Replace('/', '\\').Trim('\\');
-
-            origin = RemovePrefix(origin, RefsPrefix);
-            
-            return origin.StartsWith(@"pull\", StringComparison.OrdinalIgnoreCase) ? "pull" : "unstable";
-        }
-
-        internal static string RemovePrefix(string origin, string prefix) {
-            string originString = origin;
-            var items = prefix.Trim('\\').Split('\\');
-            int index;
-            foreach (string item in items) {
-                index = originString.IndexOf(item, StringComparison.Ordinal);
-                if (index >= 0) {
-                    originString = originString.Remove(index, item.Length);
-                }
-            }
-            originString = originString.Trim('\\');
-            return originString;
-        }
-
         /// <summary>
         /// Initializes a new instance of the <see cref="FolderDependencySystem"/> class.
         /// </summary>
@@ -112,11 +36,11 @@ namespace Aderant.Build.DependencyResolver {
             }
 
             if (requirement.VersionRequirement != null && !String.IsNullOrEmpty(requirement.VersionRequirement.AssemblyVersion)) {
-                string[] entries = fileSystem.GetDirectories(requirementPath, notRelative: notRelative).ToArray();
+                string[] entries = fileSystem.GetDirectories(requirementPath).ToArray();
                 string[] orderedBuilds = OrderBuildsByBuildNumber(entries);
 
                 foreach (string build in orderedBuilds) {
-                    var files = fileSystem.GetFiles(build, null, false, notRelative);
+                    var files = fileSystem.GetFiles(build, null, false);
 
                     foreach (string file in files) {
                         if (file.IndexOf("build.failed", StringComparison.OrdinalIgnoreCase) >= 0) {
@@ -169,7 +93,7 @@ namespace Aderant.Build.DependencyResolver {
                     binariesFolder = binaries;
                     return true;
                 }
-                if (fileSystem.GetDirectories(binaries, false, false).Any()) {
+                if (fileSystem.GetDirectories(binaries, false).Any()) {
                     binariesFolder = binaries;
                     return true;
                 }

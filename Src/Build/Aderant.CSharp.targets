@@ -1,85 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-         ToolsVersion="14.0">
+         ToolsVersion="14.0"
+         TreatAsLocalProperty="UseCommonOutputDirectory">
 
   <Import Project="Aderant.Build.Common.targets" Condition="'$(PrepareBuildEnvironmentTargetImported)' == ''" />
 
-  <UsingTask TaskName="Aderant.Build.Tasks.UpdateSplashScreenImage"
-             AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
-             Condition="'$(IsCustomBuild)' != 'true'" />
-
-  <UsingTask TaskName="Aderant.Build.Tasks.ProjectConformityCheck"
-             AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
-             Condition="'$(IsCustomBuild)' != 'true'" />
-
-  <UsingTask TaskName="Aderant.Build.Tasks.OrmMappingValidator"
-             AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
-             Condition="'$(IsCustomBuild)' != 'true'" />
-
   <PropertyGroup>
     <WebContentProject Condition="'$(WebContentProject)' == ''">$(BuildScriptsDirectory)Aderant.wpp.Content.proj</WebContentProject>
+
+    <!--This property is defined in Microsoft.Web.Publishing.targets-->
+    <OnAfterPackageUsingManifest>$(OnAfterPackageUsingManifest);ReplicateOutputs</OnAfterPackageUsingManifest>
+
     <SignApplications Condition="'$(SignApplications)' == '' And Exists('$(MSBuildThisFileDirectory)\Aderant.CodeSigning.targets')">true</SignApplications>
+
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+
+    <!--No doc file, then suppress the no documentation warning-->
+    <NoWarn Condition="'$(DocumentationFile)' == ''">$(NoWarn);1591;1570;1572;1573;1574</NoWarn>
+    <WarningsNotAsErrors Condition="'$(DocumentationFile)' == ''">$(WarningsNotAsErrors);1591;1570;1572;1573;1574</WarningsNotAsErrors>
   </PropertyGroup>
 
   <Import Project="Aderant.CodeSigning.targets" Condition="'$(SignApplications)' == 'true'" />
-
-  <UsingTask TaskName="GetProductName" 
-             TaskFactory="CodeTaskFactory" 
-             AssemblyFile="$(CodeTaskFactoryAssembly)">
-    <ParameterGroup>
-      <AssemblyInfo ParameterType="Microsoft.Build.Framework.ITaskItem" Required="true" />
-      <ProductName Output="true"/>
-    </ParameterGroup>
-    <Task>
-      <Reference Include="System.Core" />
-      <Using Namespace="System" />
-      <Using Namespace="System.IO" />
-      <Using Namespace="System.Text.RegularExpressions" />
-      <Using Namespace="Microsoft.Build.Framework" />
-      <Using Namespace="Microsoft.Build.Utilities" />
-      <Code Type="Fragment" Language="cs">
-        <![CDATA[
-            var fullPath = AssemblyInfo.GetMetadata("FullPath");
-            string text = System.IO.File.ReadAllText(fullPath);
-
-            var assemblyTitleExpression = new Regex(@"(AssemblyProduct|AssemblyTitle)\((.*?)\)"); 
-            GroupCollection match = assemblyTitleExpression.Match(text).Groups;
-            string value = match[match.Count - 1].Value;
-
-            if (!string.IsNullOrEmpty(value)) {
-                // Product names for the splash screen don't have Expert in the name, unless you want to run Expert ExpertTime :)
-                ProductName = value.Replace("\"", string.Empty);
-                return true;              
-            }          
-        ]]>
-      </Code>
-    </Task>
-  </UsingTask>
-
 
   <!--
     Updates the product splash screen without touching the original file
   -->
   <Target Name="CommonBuildUpdateSplashscreen"
-          Condition="'$(IsCustomBuild)' != 'true' And '$(OutputType)' == 'WinExe'"
-          AfterTargets="OnBeforeCompile">
+          Condition="'$(IsCustomBuild)' != 'true' And '$(OutputType)' == 'WinExe' And $(PackageId.EndsWith('.Api', StringComparison.OrdinalIgnoreCase)) != 'true'"
+          AfterTargets="SetVersionAttributes">
     <!--
-      This needs to run before BeforeResolveReferences target otherwise changes Resources item group 
-      is not reflected through out the in memory projecct
+      This needs to run before BeforeResolveReferences target otherwise changes Resources item group
+      is not reflected through out the in memory project
     -->
 
     <Error Text="Cannot find path to build tools" Condition="'$(BuildToolsDirectory)' == ''" />
 
     <!-- Find Expert_SplashScreen_ in the "Resource" Items. Remove it from "Resource" Items because we will use a modified version instead. -->
     <ItemGroup>
-      <OriginalSplashScreen Include="@(Resource)" Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(Filename)', 'Expert_SplashScreen', RegexOptions.IgnoreCase)) And %(Extension) == '.png'">
+      <OriginalSplashScreen Include="@(Resource)" Condition="%(Extension) == '.png' And $([System.String]::Copy(%(Filename)).StartsWith('Expert_SplashScreen', StringComparison.OrdinalIgnoreCase))">
         <IsResource>true</IsResource>
       </OriginalSplashScreen>
 
-      <OriginalSplashScreen Include="@(SplashScreen)" Condition="@(OriginalSplashScreen) == '' And $([System.Text.RegularExpressions.Regex]::IsMatch('%(Filename)', 'Expert_SplashScreen', RegexOptions.IgnoreCase)) And %(Extension) == '.png'" >
+      <OriginalSplashScreen Include="@(SplashScreen)" Condition="@(OriginalSplashScreen) == '' And %(Extension) == '.png' And $([System.String]::Copy(%(Filename)).StartsWith('Expert_SplashScreen', StringComparison.OrdinalIgnoreCase))">
         <IsSplashScreen>true</IsSplashScreen>
       </OriginalSplashScreen>
-      
+
       <AssemblyInfo Include="@(Compile)" Condition="%(Filename) == 'AssemblyInfo' And %(Extension) == '.cs'" />
 
       <!-- Remove the original splash screen resource node -->
@@ -88,7 +53,7 @@
     </ItemGroup>
 
     <GetProductName AssemblyInfo="@(AssemblyInfo)">
-      <Output PropertyName="ExpertProductName" 
+      <Output PropertyName="ExpertProductName"
               TaskParameter="ProductName" />
     </GetProductName>
 
@@ -96,8 +61,8 @@
       <OutputSplashScreen>@(OriginalSplashScreen->'$(IntermediateOutputPath)%(RelativeDir)%(Filename)%(Extension)')</OutputSplashScreen>
     </PropertyGroup>
 
-    <!-- 
-      This task can return a previously generated file to keep incremental builds working.      
+    <!--
+      This task can return a previously generated file to keep incremental builds working.
     -->
 
     <PropertyGroup>
@@ -112,13 +77,13 @@
 
     <Aderant.Build.Tasks.UpdateSplashScreenImage
      Condition="'@(OriginalSplashScreen)' != '' And '$(ExpertProductName)' != ''"
-     
+
      TrackerLogDirectory="$(IntermediateOutputPath)"
      Sources="@(OriginalSplashScreen)"
      OutputFile="$(OutputSplashScreen)"
      TrackFileAccess="true"
      MinimalRebuildFromTracking="true"
-     
+
      Text="$(SplashScreenText)"
      Version="$(SplashScreenVersion)"
      Style="$(SplashScreenStyle)">
@@ -133,23 +98,96 @@
       <Resource Include="$(OutputSplashScreen)" Condition="'%(OriginalSplashScreen.IsResource)' == 'true'" />
       <SplashScreen Include="$(OutputSplashScreen)" Condition="'%(OriginalSplashScreen.IsSplashScreen)' == 'true'" />
     </ItemGroup>
-  </Target>  
+  </Target>
 
-  
+
   <PropertyGroup>
-  	<GetReferenceAssemblyPathsDependsOn>$(GetReferenceAssemblyPathsDependsOn);SetupAssemblySearchPaths</GetReferenceAssemblyPathsDependsOn>
+    <GetReferenceAssemblyPathsDependsOn>
+      $(GetReferenceAssemblyPathsDependsOn);
+      SetAssemblySearchPaths
+    </GetReferenceAssemblyPathsDependsOn>
   </PropertyGroup>
-  
+
   <!-- Code to handle project references in Customization build. Aderant.Build.dll is packed into BuildScripts.zip in Framework build. -->
   <UsingTask TaskName="SmartReference" Condition="'$(IsCustomBuild)' == 'true'"
              AssemblyFile="$(BuildScriptsDirectory)\Build.Tools\Aderant.Build.dll" />
 
-  
-  <Target Name="SetupAssemblySearchPaths" BeforeTargets="GetReferenceAssemblyPaths;BeforeResolveReferences">
+
+  <Target Name="CollectNugetPackagePaths"
+	        Condition="'$(IsCustomBuild)' != 'true'">
+    <Error Condition="'$(RootFolder)' == ''" Text="RootFolder is undefined" />
+
+    <PropertyGroup>
+      <NugetPackageCacheKey>NugetPackagePaths</NugetPackageCacheKey>
+    </PropertyGroup>
+
+    <!-- Perf optimization: Cache the paths so we don't constantly go back to disk to re-discover the same information -->
+    <StringCache Key="$(NugetPackageCacheKey)">
+      <Output TaskParameter="Value" PropertyName="_PackageDirectoriesAsSingleItem" />
+      <Output TaskParameter="HasValueForKey" PropertyName="_PackageDirectoriesHasValue" />
+    </StringCache>
+
+    <ItemGroup Condition="'$(_PackageDirectoriesHasValue)' != 'true'">
+      <_AllFiles Include="$(RootFolder)\packages\**\lib\**\*.dll"/>
+      <_PackageDirectories Include="@(_AllFiles->'%(RootDir)%(Directory)'->Distinct())"/>
+    </ItemGroup>
+
+    <StringCache Condition="'$(_PackageDirectoriesHasValue)' != 'true'"
+                 Key="$(NugetPackageCacheKey)"
+                 Value="@(_PackageDirectories)">
+      <!--Always output the value to avoid cache miss the first time-->
+      <Output TaskParameter="Value" PropertyName="_PackageDirectoriesAsSingleItem" />
+    </StringCache>
+
+  </Target>
+
+
+  <Target Name="AssignPropertiesForCustomSearchPaths">
+    <PropertyGroup>
+      <!-- Walk up and find the solution root -->
+      <RootFolder>$(SolutionPath)</RootFolder>
+      <RootFolder Condition="'$(RootFolder)' == ''">$(SolutionRoot)</RootFolder>
+      <RootFolder Condition="'$(RootFolder)' == ''">$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', 'dir.proj'))</RootFolder>
+      <RootFolder Condition="'$(RootFolder)' == ''">$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', 'Paket.Dependencies'))</RootFolder>
+
+      <CopyLocalDependenciesWhenParentReferenceInGac>false</CopyLocalDependenciesWhenParentReferenceInGac>
+      <DoNotCopyLocalIfInGac>true</DoNotCopyLocalIfInGac>
+
+      <ResolveAssemblyReferencesSilent>false</ResolveAssemblyReferencesSilent>
+
+      <!-- This defaults to true within RAR and causes RAR to go off and find dependencies of dependencies which I feel is unnessessary. -->
+      <!-- <_FindDependencies>false</_FindDependencies>  -->
+    </PropertyGroup>
+  </Target>
+
+
+  <PropertyGroup>
+    <!--PERF: Avoid looking for winmd files.
+          Put the most likely extensions first for reference resolution speed.
+      -->
+    <AllowedReferenceAssemblyFileExtensions>
+      .dll;
+      .exe
+    </AllowedReferenceAssemblyFileExtensions>
+
+
+    <!--
+        These are the extensions that reference resolution will consider when looking for files related
+        to resolved references. Here we ignore pdb and xml for test projets to avoid pulling in that baggage.
+        A dummy name is provided to fool the ResolveAssemblyReference task.
+      -->
+    <AllowedReferenceRelatedFileExtensions Condition=" $(ProjectTypeGuids.Contains('3AC096D0-A1C2-E12C-1390-A8335801FDAB')) == 'true' ">
+      _
+    </AllowedReferenceRelatedFileExtensions>
+  </PropertyGroup>
+
+  <Target Name="SetAssemblySearchPaths"
+          BeforeTargets="GetReferenceAssemblyPaths;BeforeResolveReferences"
+          DependsOnTargets="AssignPropertiesForCustomSearchPaths;CollectNugetPackagePaths">
 
     <!--
         This changes the search path of the ResolveReferences task to look in the dependencies/packages folder. The normal probe sequence is
-      
+
         (1) Files from current project - indicated by {CandidateAssemblyFiles}
         (2) $(ReferencePath) - the reference path property, which comes from the .USER file.
         (3) The hintpath from the referenced item itself, indicated by {HintPathFromItem}.
@@ -159,35 +197,47 @@
         (6) Legacy registered assembly folders, indicated by {AssemblyFolders}
         (7) Resolve to the GAC.
         (8) Treat the reference's Include as if it were a real file name.
-        (9) Look in the application's output folder (like bin\debug)            
-    -->    
-       
-    <PropertyGroup>
-      <RootFolder>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', 'Paket.Dependencies'))</RootFolder>      
-      <CopyLocalDependenciesWhenParentReferenceInGac>false</CopyLocalDependenciesWhenParentReferenceInGac>
-      <DoNotCopyLocalIfInGac>true</DoNotCopyLocalIfInGac>
+        (9) Look in the application's output folder (like bin\debug)
+    -->
 
-      <!-- This defaults to true within RAR and causes RAR to go off and find dependencies of dependencies which I feel is unnessessary. -->
-      <!-- <_FindDependencies>false</_FindDependencies>  -->
+    <ItemGroup Condition="'$(UsePackagesDirectorySearchPath)' != 'false'">
+      <AssemblySearchDirectories Include="$([MSBuild]::Unescape($(_PackageDirectoriesAsSingleItem)))" />
+    </ItemGroup>
+
+    <PropertyGroup>
+      <ProgramFiles32>$(MSBuildProgramFiles32)</ProgramFiles32>
+      <_VSSDKSuffix>VSSDK\VisualStudioIntegration\Common\Assemblies\v4.0</_VSSDKSuffix>
+      <_PublicAssembliesSuffix>Common7\IDE\PublicAssemblies</_PublicAssembliesSuffix>
+      <_VS2017InstallDirectory>$(ProgramFiles32)\Microsoft Visual Studio\2017\</_VS2017InstallDirectory>
+      <_WIXLib>$(ProgramFiles32)\WiX Toolset v3.11\bin</_WIXLib>
+      <_Pia2010>$(ProgramFiles32)\Microsoft Visual Studio 14.0\Visual Studio Tools for Office\PIA\Office14\</_Pia2010>
     </PropertyGroup>
-    
-    <ItemGroup>
-      <AllFiles Include="$(RootFolder)\packages\**\lib\*.dll"/>
-      <PackageDirectories Include="@(AllFiles->'%(RootDir)%(Directory)'->Distinct())"/>
-    </ItemGroup>    
 
     <PropertyGroup>
-      <!--This path order places out search paths first-->
-      <AssemblySearchPaths>        
+      <!-- Create the assembly search paths property. This defines where\how references are resolved.
+           This path order places our search paths first.
+           ReferencePath may not have been set when AssemblySearchPaths was defined. So we set it in the candidate list again just in case. -->
+      <AssemblySearchPaths>
+        $(AlternativeOutputDirectory);
+        $(AlternativeOutputDirectory)StoredProcedures;
         $(AssemblySearchPaths);
+        $(ReferencePath);
         $(RootFolder)\Dependencies\;
-        @(PackageDirectories);
+        @(AssemblySearchDirectories);
+        $(_WIXLib);
+        $(_Pia2010);
+        $(_VS2017InstallDirectory)Enterprise\$(_VSSDKSuffix);
+        $(_VS2017InstallDirectory)Enterprise\$(_PublicAssembliesSuffix);
+        $(_VS2017InstallDirectory)Professional\$(_VSSDKSuffix);
+        $(_VS2017InstallDirectory)Professional\$(_PublicAssembliesSuffix);
       </AssemblySearchPaths>
+
     </PropertyGroup>
+
 
     <!--Adding additional dependencies searching locations. -->
     <PropertyGroup>
-      <AssemblySearchPaths Condition="'$(ExpertSourceDirectory)' != ''">$(AlternativeOutputDirectory);$(ExpertSourceDirectory);$(ExpertSourceDirectory)StoredProcedures;$(AssemblySearchPaths);</AssemblySearchPaths>
+      <AssemblySearchPaths Condition="'$(ExpertSourceDirectory)' != ''">$(ExpertSourceDirectory);$(ExpertSourceDirectory)StoredProcedures;$(AssemblySearchPaths);</AssemblySearchPaths>
     </PropertyGroup>
 
     <!-- Check if any project references need to be fixed. -->
@@ -213,18 +263,9 @@
     </ItemGroup>
 
   </Target>
-  
-  
-  <Target Name="FailOnAmbiguousAssemblyResolve" AfterTargets="ResolveAssemblyReferences">
-      <ItemGroup>
-        <DataServiceRedirect Include="@(SuggestedBindingRedirects)" Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(SuggestedBindingRedirects.Identity)', '(Microsoft[.]Data)'))" />
-      </ItemGroup>
-  
-      <Warning Text="The compiler could not resolve a concrete reference to @(DataServiceRedirect) and so selected a version arbitrarily. This will probably result in runtime problems. Please fix any references to Microsoft.Data.* assemblies to ensure the version you want to use is selected by the compiler." Condition="'@(DataServiceRedirect)' != ''" />
-  </Target>
 
-  
-  <Target Name="CheckOrmMappingFile" BeforeTargets="CoreBuild" 
+
+  <Target Name="CheckOrmMappingFile" BeforeTargets="CoreBuild"
           Condition="'$(IsCustomBuild)' != 'true' And '$(AssemblyName)' != 'Aderant.Framework.SoftwareFactory.Domain'">
 
     <Aderant.Build.Tasks.OrmMappingValidator
@@ -233,26 +274,18 @@
       None="@(None)"
       EmbeddedResource="@(EmbeddedResource)"
       ProjectTypeGuids="$(ProjectTypeGuids)" />
-  
+
   </Target>
 
-  
-  <Target Name="ApplyCodeAnalzyer"
-          Condition="'$(IsCustomBuild)' != 'true'"
-          BeforeTargets="CoreCompile;ResolveAssemblyReferences">
-
-    <Aderant.Build.Tasks.ProjectConformityCheck Project="$(MSBuildProjectFullPath)" IsDesktopBuild="$(IsDesktopBuild)" />
-  </Target>
-  
 
   <!-- Disable copy local for all projects which build to Bin\Module excluding Office integration projects (addins).
        VSTO projects run a target called VisualStudioForApplicationsBuild which executes FindRibbons. The FindRibbons task is stupid and has no
        mechanism for supply a dependency directory - it depends on the dependencies of your project being available by virtue of copy local -->
   <Target Name="CommonBuildDisableCopyLocal"
           BeforeTargets="BeforeResolveReferences"
-          AfterTargets="SetupAssemblySearchPaths"
+          AfterTargets="SetAssemblySearchPaths"
           Condition="('$(VSTO_ProjectType)' == '' And '$(WixCATargetsPath)' == '') And '$(DisableCopyLocal)' != 'false'">
-    
+
     <!-- Contains is used to cover Bin\Module and Bin\Module\ -->
     <PropertyGroup>
       <DisableCopyLocal Condition="$(OutputPath.ToLower().Contains('bin\module')) == 'true'">true</DisableCopyLocal>
@@ -261,17 +294,17 @@
       <DisableCopyLocal Condition="'%(Whitelist.Identity)' == '$(AssemblyName)'">false</DisableCopyLocal>
 
       <!-- This changes the copy local behaviour for _CopyFilesMarkedCopyLocal -->
-      <UseCommonOutputDirectory Condition="'$(DisableCopyLocal)' == 'true'">true</UseCommonOutputDirectory>      
+      <UseCommonOutputDirectory Condition="'$(DisableCopyLocal)' == 'true'">true</UseCommonOutputDirectory>
     </PropertyGroup>
-    
-    <Message Text="Copy local disabled: $(DisableCopyLocal)" />
+
+    <Message Text="Copy local disabled: $(DisableCopyLocal)" Importance="Low" />
 
     <ItemGroup>
       <ReferenceNew Include="@(Reference)" Condition="'$(DisableCopyLocal)' == 'true'">
         <Private>False</Private>
         <CopyLocal>False</CopyLocal>
       </ReferenceNew>
-      
+
       <Reference Remove="@(Reference)" Condition="'$(DisableCopyLocal)' == 'true'" />
 
       <!-- Replace the Reference item group with the modified version -->
@@ -280,33 +313,41 @@
   </Target>
 
 
+  <Target Name="SetUseCommonOutputDirectoryForVsto"
+          BeforeTargets="BeforeResolveReferences"
+          Condition="'$(VSTO_ProjectType)' != ''">
+
+    <PropertyGroup>
+      <UseCommonOutputDirectory>false</UseCommonOutputDirectory>
+    </PropertyGroup>
+  </Target>
+
+
   <Target Name="AddAssemblyInfo"
           BeforeTargets="CoreCompile"
           DependsOnTargets="PrepareForBuild;"
-          Condition="'$(GeneratedAssemblyInfoFile)' != ''">
+          Condition="'$(GeneratedAssemblyInfoFile)' != '' And $(GenerateAssemblyInfo) != false">
 
     <ItemGroup>
       <Compile Include="$(GeneratedAssemblyInfoFile)" />
     </ItemGroup>
 
   </Target>
-  
- 
-  <!-- 
+
+
+  <!--
     This target only runs after the publishing step of a VSTO addin project
-    It is used to clean up the reference items that are moved into the bin folder during the build. 
-    We cannot suppress the copy local items as they could be dependencies needed for the FindRibbons task to run successfully. 
-    In summary for VSTO projects we will copy local the dependencies, run the VSTO pipeline and then clean up the bin folder afterwards. 
+    It is used to clean up the reference items that are moved into the bin folder during the build.
+    We cannot suppress the copy local items as they could be dependencies needed for the FindRibbons task to run successfully.
+    In summary for VSTO projects we will copy local the dependencies, run the VSTO pipeline and then clean up the bin folder afterwards.
   -->
-  <Target Name="AfterVstoPublish" 
-          AfterTargets="AfterPublish" 
+  <Target Name="AfterVstoPublish"
+          AfterTargets="AfterPublish"
           Condition="'$(VSTO_ProjectType)' != ''">
 
     <ItemGroup>
       <Dependencies Include="..\..\Dependencies\*.dll" />
     </ItemGroup>
-    
-    
 
     <!--FileWritesShareable comes from the Microsoft CopyLocal target -->
     <GetCopyLocalItemsToRemove
@@ -314,7 +355,7 @@
        Dependencies="@(Dependencies)">
       <Output TaskParameter="CopyLocalFiles" ItemName="CopyLocalFilesToRemove" />
     </GetCopyLocalItemsToRemove>
-    
+
     <Delete Files="@(CopyLocalFilesToRemove)" />
 
     <!-- Remove empty directories -->
@@ -324,17 +365,79 @@
         <Files>$([System.IO.Directory]::GetFiles("%(Directories.Identity)", "*", System.IO.SearchOption.AllDirectories).get_Length())</Files>
       </Directories>
     </ItemGroup>
-    
+
     <RemoveDir Directories="@(Directories)" Condition="'%(Files)' == '0'" />
-   
+
   </Target>
-  
-  <Target Name="CopyOutputs" AfterTargets="Build" Condition="'$(IsCustomBuild)' == 'true'">
+
+  <Target Name="ReplicateOutputs" AfterTargets="AfterBuild" Condition="'$(AlternativeOutputDirectory)' != ''">
+
+    <Delete Files="@(IntermediateAssembly->'$(AlternativeOutputDirectory)%(Filename)%(Extension)')"
+            ContinueOnError="true" />
+
     <ItemGroup>
-      <SourceFiles Include="$(OutDir)\*" />
+      <DestinationFolders Include="$(AlternativeOutputDirectory)" />
     </ItemGroup>
-    
-    <Copy SourceFiles="@(SourceFiles)" DestinationFolder="$(AlternativeOutputDirectory)" />
+
+    <Copy
+      SourceFiles="@(IntermediateAssembly->'$(OutputPath)%(Filename)%(Extension)')"
+      Condition="Exists('@(IntermediateAssembly->'$(OutputPath)%(Filename)%(Extension)')')"
+      DestinationFolder="%(DestinationFolders.FullPath)"
+      UseHardlinksIfPossible="true"
+      OverwriteReadOnlyFiles="$(OverwriteReadOnlyFiles)"
+      Retries="$(CopyRetryCount)"
+      RetryDelayMilliseconds="$(CopyRetryDelayMilliseconds)"
+      ContinueOnError="true">
+      <Output TaskParameter="DestinationFiles" ItemName="FileWrites"/>
+    </Copy>
+
+    <!--Send all outputs of the project to the update staging area for later collection-->
+    <Message  Condition="'$(IncludeOutputInUpdatePackage)' == 'true'" Importance="High" Text="Including outputs from $(MSBuildProjectFullPath) in update package" />
+    <MSBuild Condition="'$(IncludeOutputInUpdatePackage)' == 'true'"
+             Projects="$(MSBuildProjectFullPath)"
+             Targets="CopyFilesToOutputDirectory"
+             Properties="OutDir=$(UpdateStagingDirectory)\BinFiles;
+                         CreateHardLinksForCopyAdditionalFilesIfPossible=true;
+                         CopyOutputSymbolsToOutputDirectory=false;
+                         _DocumentationFileProduced=false" />
+
+    <Copy
+      Condition="'$(IncludeOutputInUpdatePackage)' == 'true' And '$(PackageFileName)' != ''"
+      SourceFiles="$(PackageFileName)"
+      DestinationFolder="$(UpdateStagingDirectory)"
+      OverwriteReadOnlyFiles="$(OverwriteReadOnlyFiles)"
+      Retries="$(CopyRetryCount)"
+      RetryDelayMilliseconds="$(CopyRetryDelayMilliseconds)"/>
+
+    <PropertyGroup>
+      <RelativeArtifactStagingDirectory>$([MSBuild]::MakeRelative($(MSBuildProjectDirectory), $(AlternativeOutputDirectory)))</RelativeArtifactStagingDirectory>
+      <RelativeArtifactStagingDirectory Condition="!Exists('$(RelativeArtifactStagingDirectory)')"></RelativeArtifactStagingDirectory>
+
+      <!--Ignore file writes from web projects -->
+      <RelativePackagesDirectory>$([MSBuild]::MakeRelative($(MSBuildProjectDirectory), '..\..\packages'))</RelativePackagesDirectory>
+      <RelativePackagesDirectory Condition="!Exists('$(RelativePackagesDirectory)')"></RelativePackagesDirectory>
+    </PropertyGroup>
+
+
+    <RecordProjectOutputs
+	    Condition="'$(IsCustomBuild)' != 'true'"
+      ContextEndpoint="$(ContextEndpoint)"
+      SolutionRoot="$(SolutionRoot)"
+      ProjectGuid="$(ProjectGuid)"
+      ProjectTypeGuids="$(ProjectTypeGuids)"
+      TestProjectType="$(TestProjectType)"
+      References="@(Reference)"
+      ProjectFile="$(MSBuildProjectFullPath)"
+      IntermediateDirectories="$(IntermediateOutputPath);$(RelativeArtifactStagingDirectory);$(RelativePackagesDirectory)"
+      OutputPath="$(OutDir)"
+      FileWrites="@(FileWrites);$(PackageFileName)" />
+
   </Target>
-  
+
+  <PropertyGroup Condition="'$(IsDesktopBuild)' == 'false' And '$(CreateHardLinksForCopyLocal)' != ''">
+    <CreateHardLinksForCopyLocalIfPossible>$(CreateHardLinksForCopyLocal)</CreateHardLinksForCopyLocalIfPossible>
+  </PropertyGroup>
+
+  <Import Project="Aderant.CSharp.overrides.targets" Condition="'$(CreateHardLinksForCopyLocalIfPossible)' == 'true'" />
+
 </Project>

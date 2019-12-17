@@ -1,10 +1,10 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Aderant.Build.MSBuild {
     /// <summary>
     /// Represents an MSBuild PropertyGroup element.
     /// </summary>
-    public class PropertyGroup : Element {
+    public class PropertyGroup : MSBuildProjectElement {
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PropertyGroup"/> class.

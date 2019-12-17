@@ -1,0 +1,193 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
+         DefaultTargets="DispatchToInnerBuild"
+         ToolsVersion="14.0">
+
+  <Import Project="$(BuildPlanFile)" />
+  <Import Project="Aderant.Build.Common.targets" Condition="'$(AderantCommonTargetsImported)' != 'true'" />
+
+  <PropertyGroup>
+    <HappyCat>😸</HappyCat>
+    <Icecream>🍦</Icecream>
+
+    <DispatchToInnerBuildDependsOn>
+      $(DispatchToInnerBuildDependsOn);
+      GetContextVariables;
+      AssignProjectProperties
+    </DispatchToInnerBuildDependsOn>
+
+    <TemporaryDirectoryKey>$(BuildPlanId)</TemporaryDirectoryKey>
+    <TemporaryDirectoryKey Condition="'$(TemporaryDirectoryKey)' == ''" >$([System.Guid]::NewGuid())</TemporaryDirectoryKey>
+  </PropertyGroup>
+
+  <!--
+  This project file exists to provide an appropriate seam for adding new properties to the group without having to
+  modify the project generator itself.
+  -->
+  <Target Name="DispatchToInnerBuild" DependsOnTargets="$(DispatchToInnerBuildDependsOn)">
+
+    <HappyCat
+      Condition="'$(IsDesktopBuild)' == 'true'"
+      BuildGroupId="$(BuildGroupId)"
+      TotalNumberOfBuildGroups="$(TotalNumberOfBuildGroups)">
+      <Output TaskParameter="PadLeft" PropertyName="PadLeft" />
+      <Output TaskParameter="PadRight" PropertyName="PadRight" />
+    </HappyCat>
+
+    <PropertyGroup>
+      <LogId>$([System.Guid]::NewGuid())</LogId>
+    </PropertyGroup>
+
+    <PrintBanner Text="Group $(BuildGroupId) / $(TotalNumberOfBuildGroups)" />
+
+    <SetProgress
+      Condition="'$(IsDesktopBuild)' == 'true'"
+      CurrentOperation="Building Group"
+      Activity="$(LogId)"
+      StatusDescription="$(BuildGroupId) / $(TotalNumberOfBuildGroups) [$(PadLeft) $(HappyCat) $(PadRight) $(Icecream)]" />
+
+    <ItemGroup>
+      <_ProjectsInGroup Include="@(ProjectsInGroup)" Condition="'$(switch-skip-compile)' == 'true' And '%(ProjectsInGroup.IsProjectFile)' != 'true'" />
+      <_ProjectsInGroup Include="@(ProjectsInGroup)" Condition="'$(switch-skip-compile)' != 'true'" />
+    </ItemGroup>
+
+    <Warning Text="Skipping compile!" Condition="'$(switch-skip-compile)' == 'true'" />
+
+    <Message Text="##vso[task.logdetail id=$(LogId);name=Group $(BuildGroupId) of $(TotalNumberOfBuildGroups);type=build;state=InProgress;progress=0]Build group $(BuildGroupId) started"
+             Condition="'$(IsDesktopBuild)' != 'true'" />
+
+    <MSBuild Projects="@(_ProjectsInGroup)"
+             StopOnFirstFailure="true"
+             Targets="%(_ProjectsInGroup.Targets)"
+             UnloadProjectsOnCompletion="true"
+             BuildInParallel="$(BuildInParallel)">
+    </MSBuild>
+
+    <SetProgress
+      Condition="'$(BuildGroupId)' == '$(TotalNumberOfBuildGroups)'"
+      CurrentOperation="Building Group"
+      Activity="$(LogId)"
+      StatusDescription="$(BuildGroupId) / $(TotalNumberOfBuildGroups) $(PadLeft) $(HappyCat)" />
+
+    <Message Text="##vso[task.logdetail id=$(LogId);progress=100;state=Completed;Result=Succeeded]Build group $(BuildGroupId) finished"
+             Condition="'$(IsDesktopBuild)' != 'true'" />
+
+    <OnError ExecuteTargets="SetResumePoint" />
+  </Target>
+
+
+  <Target Name="GetContextVariables">
+    <GetOrPutContextVariable
+      AllowInProcLookup="true"
+      VariableName="_GitDir">
+      <Output TaskParameter="Value" PropertyName="_GitDir" />
+    </GetOrPutContextVariable>
+
+    <GetOrPutContextVariable
+      AllowInProcLookup="true"
+      VariableName="IsBuildCacheEnabled">
+      <Output TaskParameter="Value" PropertyName="IsBuildCacheEnabled" />
+    </GetOrPutContextVariable>
+  </Target>
+
+
+  <Target Name="CreateProjectGroup" Returns="@(ProjectsInGroup)">
+    <ItemGroup>
+      <ProjectsInGroup Include="@(ProjectsToBuild->WithMetadataValue('BuildGroupId', '$(BuildGroupId)'))" />
+    </ItemGroup>
+
+    <!-- Properties available to both projects files and orchestration participants -->
+    <PropertyGroup>
+      <!--
+        ShouldUnsetParentConfigurationAndPlatform
+        Simulates building a solution and controls whether the Configuration and Platform metadata will be unset, allowing the
+        child project to build in its default configuration / platform if the one specified from the solution file doesn't actually exist in the project.
+        This is a janky hack and should be removed but removing will trigger trigger a missing configuration/platform error for many projects in the tree
+        -->
+      <PropertiesCommonToAllProjects>
+        ShouldUnsetParentConfigurationAndPlatform=true;
+        BuildProjectReferences=false;
+
+        BuildToolsDirectory=$(BuildToolsDirectory);
+        BuildScriptsDirectory=$(BuildScriptsDirectory);
+
+        CustomAfterMicrosoftCSharpTargets=$(CustomAfterMicrosoftCSharpTargets);
+        CustomAfterMicrosoftCommonTargets=$(CustomAfterMicrosoftCommonTargets);
+        CustomAfterWixTargets=$(CustomAfterWixTargets);
+
+        AlternativeOutputDirectory=$(SharedDependencyDirectory);
+        ArtifactStagingDirectory=$(ArtifactStagingDirectory);
+        RunCodeAnalysisOnThisProject=false;
+        _GitDir=$(_GitDir);
+        IsBuildCacheEnabled=$(IsBuildCacheEnabled);
+        TemporaryDirectoryKey=$(TemporaryDirectoryKey)
+      </PropertiesCommonToAllProjects>
+    </PropertyGroup>
+
+  </Target>
+
+
+  <Target Name="AssignProjectProperties" Inputs="%(ProjectsInGroup.Properties)" Outputs="%(Identity)._" DependsOnTargets="CreateProjectGroup">
+
+    <!--Parse the scalar property list into an item group-->
+    <CreateItem Include="_ParsedPropertyList" AdditionalMetadata="%(ProjectsInGroup.Properties)">
+      <Output TaskParameter="Include" ItemName="_ProjectProperties" />
+    </CreateItem>
+
+    <!-- Extract the solution root value -->
+    <PropertyGroup>
+      <_SolutionRoot>@(_ProjectProperties->Metadata('SolutionRoot'))</_SolutionRoot>
+    </PropertyGroup>
+
+    <PropertyGroup>
+      <WixProperties Condition="'$(UseWixShim)' == 'true'">
+        WixTargetsPath=$(WixTargetsPath);
+        WixCATargetsPath=$([System.IO.Path]::ChangeExtension($(WixTargetsPath), '.ca.targets'))
+      </WixProperties>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectsInGroup>
+        <Properties>
+          $(PropertiesCommonToAllProjects);    <!-- Include global (non-project specific) properties -->
+          %(ProjectsInGroup.Properties);       <!-- Include the original properties list -->
+          SolutionRoot=$(_SolutionRoot);       <!-- Merge in build system properties that hang off SolutionRoot -->
+          BinModuleDirectory=$(_SolutionRoot)\Bin\Module\;
+          BinTestDirectory=$(_SolutionRoot)\Bin\Test\;
+          ModuleSourceDirectory=$(_SolutionRoot)\Src\;
+          ModuleTestDirectory=$(_SolutionRoot)\Test\;
+          ModuleBuildDirectory=$(_SolutionRoot)\Build\;
+          VariableScopeId=$(_SolutionRoot)
+        </Properties>
+
+        <!-- If it's a build system project default to the EndToEnd target -->
+        <Targets Condition="'%(IsProjectFile)' != 'true'">EndToEnd</Targets>
+      </ProjectsInGroup>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectsInGroup Condition="'%(IsProjectFile)' == 'true'">
+        <Properties>
+          %(Properties);$(WixProperties)
+        </Properties>
+      </ProjectsInGroup>
+    </ItemGroup>
+
+  </Target>
+
+
+  <Target Name="SetResumePoint">
+
+    <Message Text="Setting resume point to group $(BuildGroupId)" />
+
+    <Message Text="##vso[task.logdetail id=$(LogId);progress=100;state=Completed;Result=Failed]Build group $(BuildGroupId) failed. @(_ProjectsInGroup)"
+             Condition="'$(IsDesktopBuild)' != 'true'" />
+
+    <XmlPoke XmlInputPath="$(BuildPlanFile)"
+             Namespaces="&lt;Namespace Prefix='n' Uri='http://schemas.microsoft.com/developer/msbuild/2003' Name='_' /&gt;"
+             Query="/n:Project/n:PropertyGroup/n:ResumeGroupId"
+             Value="$(BuildGroupId)"/>
+
+  </Target>
+
+</Project>

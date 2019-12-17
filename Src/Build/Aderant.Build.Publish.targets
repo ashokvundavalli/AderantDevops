@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
+
+
+  <!--
+    ==========================================================================================
+        Create the modules package to be Published
+    ==========================================================================================
+  -->
+  <Target Name="PublishModule"
+    DependsOnTargets="RunTests"
+    Condition="('$(PublishModule)' == 'true')">
+
+    <Message Condition="('$(IsDesktopBuild)'=='true')"
+      Text="Create package to publish" />
+    <Message Text="## Publish as version $(FileVersion)" />
+
+    <MSBuild Projects="$(SolutionFileName)"
+      Properties="ApplicationVersion=$(FileVersion);$(BuildProperties)"
+      Targets="Publish" />
+
+    <Message Condition="('$(IsDesktopBuild)'=='true')"
+      Text="Zip package" />
+
+    <PropertyGroup>
+      <ClickOnceZipFileDirectory>$(BinModuleDirectory)$(ModuleName).ClickOnce\</ClickOnceZipFileDirectory>
+      <ClickOnceZipFile>$(ClickOnceZipFileDirectory)ClickOnce.zip</ClickOnceZipFile>
+      <PublishDirectory>$(BinModuleDirectory)app.publish\</PublishDirectory>
+    </PropertyGroup>
+
+    <!-- Create ItemGroup used in Zip task.-->
+    <ItemGroup>
+      <ZipSourceFiles
+        Include="$(PublishDirectory)**; "/>
+    </ItemGroup>
+
+    <MakeDir
+      Directories="$(ClickOnceZipFileDirectory)"/>
+
+    <MSBuild.Community.Tasks.Zip
+      Files="@(ZipSourceFiles)"
+      ZipFileName="$(ClickOnceZipFile)"
+      WorkingDirectory="$(PublishDirectory)"
+      ParallelCompression="false" />
+
+    <RemoveDir Directories="$(PublishDirectory)"/>
+
+    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+
+  </Target>
+
+  <!--
+    ==========================================================================================
+        Index Sources and Publish Symbols        
+    ==========================================================================================
+  -->
+  <Target Name="IndexSourcesAndPublishSymbols"
+    Condition="'$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'">
+
+    <CallTarget Targets="IndexSourcesAndPublishSymbolsCore" Condition="'@(CompiledAssemblies)' != ''" />
+
+  </Target>
+
+</Project>

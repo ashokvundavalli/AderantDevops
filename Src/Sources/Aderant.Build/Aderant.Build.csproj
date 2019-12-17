@@ -5,22 +5,19 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{66E50D39-8E73-4D16-944B-43F18C308FE0}</ProjectGuid>
+    <ProjectTypeGuids>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Aderant.Build</RootNamespace>
     <AssemblyName>Aderant.Build</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <SccProjectName>SAK</SccProjectName>
-    <SccLocalPath>SAK</SccLocalPath>
-    <SccAuxPath>SAK</SccAuxPath>
-    <SccProvider>SAK</SccProvider>
     <TargetFrameworkProfile />
+    <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
+    <DebugType>embedded</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>..\..\Build.Tools\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
@@ -29,11 +26,9 @@
     <Prefer32Bit>false</Prefer32Bit>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
-    <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
+    <DebugType>embedded</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>..\..\Build.Tools\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
@@ -42,23 +37,13 @@
     <Prefer32Bit>false</Prefer32Bit>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
-  <PropertyGroup>
-    <StartAction>Program</StartAction>
-    <StartProgram>C:\Windows\System32\windowspowerShell\v1.0\powershell.exe</StartProgram>
-    <StartArguments>-command &amp;{ cm Services.Query%3b gd }</StartArguments>
-  </PropertyGroup>
-  <PropertyGroup>
-    <PathToMSBuild Condition="'$(PathToMSBuild)' == ''">$(MSBuildToolsPath)</PathToMSBuild>
-    <PathToMSBuild Condition="'$(PathToMSBuild)' == ''">C:\Program Files (x86)\MSBuild\12.0\Bin</PathToMSBuild>
-  </PropertyGroup>
-  <Import Project="..\References.v14.props" Condition="'$(MSBuildToolsVersion)' == '14.0'" />
-  <Import Project="..\References.v12.props" Condition="'$(MSBuildToolsVersion)' == '12.0'" />
+  <Import Project="..\References.props" />
   <ItemGroup>
-    <Reference Include="LibGit2Sharp">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Build\LibGit2Sharp.dll</HintPath>
+    <Reference Include="LibGit2Sharp, Version=0.26.0.0, Culture=neutral, PublicKeyToken=7cbde695407f0333, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\devtools\LibGit2Sharp\lib\net46\LibGit2Sharp.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="netstandard, Version=2.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51" />
     <Reference Include="paket">
       <HintPath>..\..\Build\paket.exe</HintPath>
       <Private>True</Private>
@@ -67,6 +52,11 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="PresentationFramework">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="protobuf-net, Version=2.3.0.0, Culture=neutral, PublicKeyToken=257b51d87d2e4d67, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Build.Tools\protobuf-net.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System">
@@ -81,8 +71,14 @@
     <Reference Include="System.IO.Compression" />
     <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\..\..\ThirdParty\Thirdparty.Microsoft\bin\System.Management.Automation.dll</HintPath>
       <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Threading.Tasks.Dataflow, Version=4.6.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\devtools\System.Threading.Tasks.Dataflow\lib\portable-net45+win8+wpa81\System.Threading.Tasks.Dataflow.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System.Web" />
     <Reference Include="System.Xaml">
@@ -99,18 +95,182 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ArtifactStagingPathBuilder.cs" />
     <Compile Include="AutoCompletionParser.cs" />
     <Compile Include="Build.cs" />
-    <Compile Include="BuildConstants.cs" />
-    <Compile Include="BuildDetailPublisher.cs" />
+    <Compile Include="Annotations\ReSharperAttributes.cs" />
+    <Compile Include="Commands\GetSourceTreeMetadataCommand.cs" />
+    <Compile Include="Commands\GetBuildStateMetadataCommand.cs" />
+    <Compile Include="DependencyAnalyzer\DirectoryNodeFactory.cs" />
+    <Compile Include="ProjectSystem\BuildReasonExtensions.cs" />
+    <Compile Include="ProjectSystem\ConfiguredProjectExtensions.cs" />
+    <Compile Include="ProjectSystem\ResponseFileParer.cs" />
+    <Compile Include="DependencyResolver\PaketHttpMessageHandlerFactory.cs" />
+    <Compile Include="DependencyResolver\WellKnownSources.cs" />
+    <Compile Include="ProjectSystem\References\Wix\UnresolvedWixReference.cs" />
+    <Compile Include="ProjectSystem\References\Wix\WixReferenceService.cs" />
+    <Compile Include="ProjectSystem\StateTracking\StateFileManager.cs" />
+    <Compile Include="DependencyResolver\IDependencyGroup.cs" />
+    <Compile Include="DependencyResolver\ResolverWorkflow.cs" />
+    <Compile Include="DependencyAnalyzer\ProjectDependencyGraph.cs" />
+    <Compile Include="DependencyAnalyzer\ProjectSequencer.cs" />
+    <Compile Include="DependencyResolver\DependenciesFileWriter.cs" />
+    <Compile Include="DependencyResolver\DependencyException.cs" />
+    <Compile Include="ProjectSystem\RelatedFilesManifest.cs" />
+    <Compile Include="ProjectSystem\StateTracking\BuildCachePackageChecker.cs" />
+    <Compile Include="DependencyAnalyzer\TextTemplates\Location.cs" />
+    <Compile Include="DependencyAnalyzer\TextTemplates\ParserException.cs" />
+    <Compile Include="DependencyAnalyzer\TextTemplates\Tokenizer.cs" />
+    <Compile Include="BuildDirectoryContribution.cs" />
+    <Compile Include="IO\JunctionNativeMethods.cs" />
+    <Compile Include="IO\Traverse.cs" />
+    <EmbeddedResource Include="Tasks\PowerShell\Resources\SetBuildTags.ps1" />
+    <Compile Include="ProjectSystem\StateTracking\BuildCacheOptions.cs" />
+    <Compile Include="Tasks\CopyCustomSolution.cs" />
+    <Compile Include="Tasks\CopyRelatedFiles.cs" />
+    <Compile Include="Tasks\GeneratePaketDependencies.cs" />
+    <Compile Include="Tasks\HappyCat.cs" />
+    <Compile Include="Tasks\SourceTransformationTask.cs" />
+    <Compile Include="Tasks\TextTemplatingPathResolver.cs" />
+    <Compile Include="Utilities\EnumerableExtensions.cs" />
+    <Compile Include="Utilities\Graph.cs" />
+    <Compile Include="Utilities\Multigraph.cs" />
+    <Compile Include="Utilities\InspectionDomainInitializer.cs" />
+    <Compile Include="Tasks\RoleManifestPackageIdentifier.cs" />
+    <Compile Include="Utilities\LoadContextAssemblyResolver.cs" />
+    <Compile Include="Packaging\FileRestore.cs" />
+    <Compile Include="ProjectSystem\StateTracking\TrackedInputFile.cs" />
+    <Compile Include="ProjectSystem\StateTracking\TrackedInputFilesController.cs" />
+    <Compile Include="Tasks\StringCache.cs" />
+    <Compile Include="Tasks\GatherProjectsToBuild.cs" />
+    <Compile Include="ProjectSystem\DirectoryGroveler.cs" />
+    <Compile Include="Tasks\ZipBuildScripts.cs" />
+    <Compile Include="Utilities\MultigraphExtensions.cs" />
+    <Compile Include="Utilities\RoslynLocator.cs" />
+    <Compile Include="Utilities\ParallelismHelper.cs" />
+    <Compile Include="Utilities\StringExtensions.cs" />
+    <Compile Include="ProjectSystem\BuildPlan.cs" />
+    <Compile Include="ProjectSystem\DuplicateGuidException.cs" />
+    <Compile Include="ProjectSystem\SolutionConfigurationContentsGenerator.cs" />
+    <Compile Include="ProjectSystem\OnDiskProjectInfo.cs" />
+    <Compile Include="ProjectSystem\ExistingPlanLoader.cs" />
+    <Compile Include="Utilities\TreePrinter.cs" />
+    <Compile Include="DependencyAnalyzer\AmbiguousNameException.cs" />
+    <Compile Include="Packaging\ArtifactDropPathBuilder.cs" />
+    <Compile Include="Packaging\IArtifactProcessContributor.cs" />
+    <Compile Include="Packaging\LinkCommands.cs" />
+    <Compile Include="PerformanceTimer.cs" />
+    <Compile Include="PipelineService\BuildPipelineServiceClient.cs" />
+    <Compile Include="PipelineService\BuildPipelineServiceImpl.cs" />
+    <Compile Include="PipelineService\BuildPipelineServiceProxy.cs" />
+    <Compile Include="PipelineService\BuildPipelineServiceHost.cs" />
+    <Compile Include="PipelineService\IBuildPipelineService.cs" />
+    <Compile Include="MSBuild\ImportElement.cs" />
+    <Compile Include="DependencyAnalyzer\Model\AbstractArtifact.cs" />
+    <Compile Include="MSBuild\Comment.cs" />
+    <Compile Include="Model\ResolvedDependency.cs" />
+    <Compile Include="Model\IArtifact.cs" />
+    <Compile Include="Model\IDependable.cs" />
+    <Compile Include="DependencyAnalyzer\TextTemplates\MacroExpander.cs" />
+    <Compile Include="MSBuild\BuildElementVisitor.cs" />
+    <Compile Include="NativeMethods.cs" />
+    <Compile Include="ProjectSystem\BuildStateMetadata.cs" />
+    <Compile Include="Packaging\AutoPackager.cs" />
+    <Compile Include="ProjectSystem\AnalysisContext.cs" />
+    <Compile Include="Tasks\CopyFiles.cs" />
+    <Compile Include="ProjectSystem\ExtensibilityController.cs" />
+    <Compile Include="ProjectSystem\ExtensibilityImposition.cs" />
+    <Compile Include="Tasks\GenerateArchives.cs" />
+    <Compile Include="Utilities\Memoizer.cs" />
+    <Compile Include="ProjectSystem\StateTracking\ProjectOutputSnapshotFactory.cs" />
+    <Compile Include="ProjectSystem\BuildDependenciesCollector.cs" />
+    <Compile Include="ErrorUtilities.cs" />
+    <Compile Include="ProjectSystem\IProjectTree.cs" />
+    <Compile Include="ProjectSystem\IProjectTreeInternal.cs" />
+    <Compile Include="ProjectSystem\ISolutionManager.cs" />
+    <Compile Include="ProjectSystem\References\AssemblyReferencesService.cs" />
+    <Compile Include="ProjectSystem\References\BuildDependencyProjectReferencesService.cs" />
+    <Compile Include="ProjectSystem\References\IBuildDependencyProjectReference.cs" />
+    <Compile Include="ProjectSystem\References\IBuildDependencyProjectReferencesService.cs" />
+    <Compile Include="ProjectSystem\References\UnresolvedAssemblyReferenceMoniker.cs" />
+    <Compile Include="ProjectSystem\References\UnresolvedBuildDependencyProjectReference.cs" />
+    <Compile Include="ProjectSystem\References\UnresolvedP2PReferenceMoniker.cs" />
+    <Compile Include="ProjectSystem\SolutionSearchResult.cs" />
+    <Compile Include="ProjectSystem\ProjectTree.cs" />
+    <Compile Include="ProjectSystem\UnconfiguredProject.cs" />
+    <Compile Include="ProjectSystem\IConfiguredProjectServices.cs" />
+    <Compile Include="ProjectSystem\ConfiguredProject.cs" />
+    <Compile Include="ProjectSystem\References\ITextTemplateReferencesServices.cs" />
+    <Compile Include="ProjectSystem\References\TextTemplateReferencesServices.cs" />
+    <Compile Include="ProjectSystem\ConfiguredProjectServices.cs" />
+    <Compile Include="ProjectSystem\IProjectTreeServices.cs" />
+    <Compile Include="ProjectSystem\References\AssemblyReferencesServiceBase.cs" />
+    <Compile Include="ProjectSystem\References\IUnresolvedBuildDependencyProjectReference.cs" />
+    <Compile Include="ProjectSystem\References\IAssemblyReference.cs" />
+    <Compile Include="ProjectSystem\References\IAssemblyReferencesService.cs" />
+    <Compile Include="Model\IReference.cs" />
+    <Compile Include="ProjectSystem\References\IResolvableReferencesService.cs" />
+    <Compile Include="ProjectSystem\References\IUnresolvedAssemblyReference.cs" />
+    <Compile Include="ProjectSystem\References\IUnresolvedReference.cs" />
+    <Compile Include="ProjectSystem\References\ResolvableReferencesProviderBase.cs" />
+    <Compile Include="ProjectSystem\References\UnresolvedAssemblyReference.cs" />
+    <Compile Include="ProjectSystem\References\UnresolvedReferenceBase.cs" />
+    <Compile Include="ProjectSystem\ConfigurationToBuild.cs" />
+    <Compile Include="Packaging\ArtifactPackageDefinition.cs" />
+    <Compile Include="Packaging\ArtifactService.cs" />
+    <Compile Include="Packaging\BuildArtifact.cs" />
+    <Compile Include="Packaging\BucketService.cs" />
+    <Compile Include="ProjectSystem\StateTracking\BuildStateFile.cs" />
+    <Compile Include="ProjectSystem\StateTracking\BuildStateWriter.cs" />
+    <Compile Include="Packaging\ArtifactTargetPathAssigner.cs" />
+    <Compile Include="Packaging\ArtifactPackageHelper.cs" />
+    <Compile Include="Tasks\CheckForDoubleWrites.cs" />
+    <Compile Include="DoubleWriteCheck.cs" />
+    <Compile Include="Tasks\ArtifactHandling\CreateArtifacts.cs" />
+    <Compile Include="Tasks\ArtifactHandling\GetArtifactPaths.cs" />
+    <Compile Include="PowerShellPipelineExecutor.cs" />
+    <Compile Include="Tasks\GetBuildOutputs.cs" />
+    <Compile Include="Tasks\PowerShell\PowerShellScript.cs" />
+    <Compile Include="Tasks\InspectItemGroup.cs" />
+    <Compile Include="Tasks\ArtifactHandling\CollectArtifactsForPublishing.cs" />
+    <Compile Include="Packaging\PathSpec.cs" />
+    <Compile Include="Tasks\PrintBanner.cs" />
+    <Compile Include="Packaging\Handlers\PullRequestHandler.cs" />
+    <Compile Include="Tasks\ArtifactHandling\RetrieveArtifacts.cs" />
+    <Compile Include="Tasks\GetOrPutContextVariable.cs" />
+    <Compile Include="ProjectSystem\StateTracking\StateFileBase.cs" />
+    <Compile Include="Tasks\RecordProjectOutputs.cs" />
+    <Compile Include="Tasks\WaitForDebugger.cs" />
+    <Compile Include="Tasks\WriteBuildStateFile.cs" />
+    <Compile Include="Packaging\Handlers\XamlDropHandler.cs" />
+    <Compile Include="DependencyAnalyzer\DependencyGraph.cs" />
+    <Compile Include="VersionControl\GitVersionControlService.cs" />
+    <Compile Include="VersionControl\IVersionControlService.cs" />
+    <Compile Include="VersionControl\Model\BranchName.cs" />
+    <Compile Include="VersionControl\Model\FileStatus.cs" />
+    <Compile Include="VersionControl\GitVersionControl.cs" />
+    <Compile Include="DependencyAnalyzer\Model\ProjectBuildConfiguration.cs" />
+    <Compile Include="MSBuild\PropertyList.cs" />
+    <Compile Include="ProjectSystem\SolutionParser\ISolutionFileParser.cs" />
+    <Compile Include="DependencyAnalyzer\Model\DirectoryNode.cs" />
+    <Compile Include="ProjectSystem\SolutionParser\ParseResult.cs" />
+    <Compile Include="ProjectSystem\SolutionParser\SolutionFileParser.cs" />
+    <Compile Include="Services\IContextualServiceProvider.cs" />
+    <Compile Include="Services\CompositionProperties.cs" />
+    <Compile Include="Constants.cs" />
     <Compile Include="BuildInfrastructureHelper.cs" />
     <Compile Include="BuildSummary.cs" />
+    <Compile Include="BuildMetadata.cs" />
+    <Compile Include="BuildOperationContext.cs" />
+    <Compile Include="Services\ServiceContainer.cs" />
+    <Compile Include="ProjectSystem\DependencyRelationshipProcessing.cs" />
+    <Compile Include="ProjectSystem\OrchestrationFiles.cs" />
+    <Compile Include="ProjectSystem\ChangesToConsider.cs" />
+    <Compile Include="Tasks\BuildOperationContextTask.cs" />
+    <Compile Include="Tasks\GenerateBuildPlan.cs" />
     <Compile Include="Commands\BuildCmdlet.cs" />
     <Compile Include="Commands\GetExpertDependenciesForModule.cs" />
-    <Compile Include="Commands\PushPaketTemplates.cs" />
-    <Compile Include="Commands\ExpertModulesToExcludeFromPackagingCommand.cs" />
     <Compile Include="BuildNotFoundException.cs" />
-    <Compile Include="Commands\UiTestImportPackagesCommand.cs" />
     <Compile Include="DependencyAnalyzer\ExpertModuleExtensions.cs" />
     <Compile Include="DependencyResolver\FolderBasedRequirement.cs" />
     <Compile Include="DependencyResolver\FolderDependencySystem.cs" />
@@ -126,6 +286,8 @@
     <Compile Include="DependencyResolver\WebContentDestinationRule.cs" />
     <Compile Include="FileSystemExtensions.cs" />
     <Compile Include="Logging\LoggerExtensions.cs" />
+    <Compile Include="MSBuild\ItemGroupItem.cs" />
+    <Compile Include="MSBuild\MSBuildProjectElement.cs" />
     <Compile Include="Packaging\Package.cs" />
     <Compile Include="Packaging\PackageProcessor.cs" />
     <Compile Include="Packaging\Parsing\ListSection.cs" />
@@ -139,23 +301,25 @@
     <Compile Include="Packaging\RootItemHandler.cs" />
     <Compile Include="Packaging\Parsing\Section.cs" />
     <Compile Include="Packaging\SectionWriter.cs" />
-    <Compile Include="Commands\StartIntegrationTests.cs" />
+    <Compile Include="ProjectSystem\WellKnownProjectTypeGuids.cs" />
+    <Compile Include="DependencyAnalyzer\BuildPlanGenerator.cs" />
+    <Compile Include="DependencyAnalyzer\ParallelBuildVisitor.cs" />
+    <Compile Include="DependencyAnalyzer\TextTemplates\TextTemplateAnalyzer.cs" />
     <Compile Include="Tasks\CheckFreeSpace.cs" />
     <Compile Include="Tasks\CoberturaReportConverter.cs" />
-    <Compile Include="FileUtilities.cs" />
     <Compile Include="SeedPackageValidation\Error.cs" />
-    <Compile Include="Tasks\FilterItemGroup.cs" />
+    <Compile Include="Tasks\GetPropertiesFromContext.cs" />
     <Compile Include="SeedPackageValidation\FirmRuleVersionError.cs" />
     <Compile Include="Tasks\ReadAssemblyInfo.cs" />
     <Compile Include="Tasks\GitVersion.cs" />
-    <Compile Include="Tasks\Hash.cs" />
+    <Compile Include="Tasks\HashItems.cs" />
     <Compile Include="SeedPackageValidation\SmartFormDeltaError.cs" />
     <Compile Include="SeedPackageValidation\SmartFormModelError.cs" />
     <Compile Include="Tasks\SmartReference.cs" />
     <Compile Include="Tasks\GetAssembliesWithTraits.cs" />
     <Compile Include="Tasks\GetFileVersionInfo.cs" />
     <Compile Include="Tasks\WriteLinesToFile.cs" />
-    <Compile Include="TeamFoundation\TfBuildArtifactType.cs" />
+    <Compile Include="AzurePipelines\VsoBuildArtifactType.cs" />
     <Compile Include="Packaging\VersionTracker.cs" />
     <Compile Include="Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -165,14 +329,11 @@
     <Compile Include="RetryingPhysicalFileSystem.cs" />
     <Compile Include="Providers\DependencyManifestProvider.cs" />
     <Compile Include="DependencyAnalyzer\IGlobalAttributesProvider.cs" />
-    <Compile Include="DependencyResolver\PackageManager.cs" />
+    <Compile Include="DependencyResolver\PaketPackageManager.cs" />
     <Compile Include="DependencyResolver\DependencySource.cs" />
-    <Compile Include="ExpertBuildConfiguration.cs" />
-    <Compile Include="ExpertBuildDetail.cs" />
     <Compile Include="IFileSystem2.cs" />
-    <Compile Include="Logging\FakeLogger.cs" />
+    <Compile Include="Logging\NullLogger.cs" />
     <Compile Include="AssemblyVersionInspector.cs" />
-    <Compile Include="Logging\ObservableLogReceiver.cs" />
     <Compile Include="Packaging\VersionAnalyzer.cs" />
     <Compile Include="Packaging\FileVersionDescriptor.cs" />
     <Compile Include="Packaging\IPackageContext.cs" />
@@ -183,7 +344,6 @@
     <Compile Include="Packaging\PackResult.cs" />
     <Compile Include="Packaging\PackSpecification.cs" />
     <Compile Include="Packaging\ProductAssembler.cs" />
-    <Compile Include="Packaging\PushPaketTemplatesAction.cs" />
     <Compile Include="Packaging\VersionParser.cs" />
     <Compile Include="PathUtility.cs" />
     <Compile Include="PhysicalFileSystem.cs" />
@@ -194,81 +354,54 @@
     <Compile Include="Tasks\CompileLess.cs" />
     <Compile Include="Tasks\SeedPackagePacking.cs" />
     <Compile Include="Tasks\OrmMappingValidator.cs" />
-    <Compile Include="Tasks\ProjectConformityCheck.cs" />
     <Compile Include="Tasks\ProjectConformityController.cs" />
-    <Compile Include="Tasks\PushPaketTemplatesTask.cs" />
     <Compile Include="Packaging\NuGet\StringNuspecValue.cs" />
     <Compile Include="Tasks\ThirdPartyPackager.cs" />
     <Compile Include="DependencyResolver\UpdateAction.cs" />
     <Compile Include="Packaging\NuGet\WellKnownTokens.cs" />
-    <Compile Include="TeamFoundation\TfBuildCommands.cs" />
-    <Compile Include="TeamFoundation\TfBuildMessageData.cs" />
+    <Compile Include="AzurePipelines\VsoBuildCommands.cs" />
+    <Compile Include="AzurePipelines\VsoBuildMessageData.cs" />
+    <Compile Include="VersionControl\Model\ISourceChange.cs" />
+    <Compile Include="VersionControl\Model\SourceChange.cs" />
     <Compile Include="Versioning\DotNetAnalyzer.cs" />
     <Compile Include="Versioning\FileVersionAnalyzer.cs" />
     <Compile Include="Versioning\IVersionAnalyzer.cs" />
     <Compile Include="Versioning\IVersionAnalyzer`.cs" />
     <Compile Include="Versioning\JavaScriptAnalyzer.cs" />
     <Compile Include="Versioning\SemanticVersion.cs" />
-    <Compile Include="Providers\ITeamFoundationWorkspace.cs" />
-    <Compile Include="ServiceLocator.cs" />
-    <Compile Include="Tasks\AddBuildProjectNode.cs" />
     <Compile Include="Tasks\CheckCertificate.cs" />
-    <Compile Include="Tasks\FinalizeBuild.cs" />
-    <Compile Include="IBuildProcessTemplate.cs" />
+    <Compile Include="WellKnownProperties.cs" />
     <Compile Include="XElementExtensions.cs" />
     <Compile Include="Logging\BuildTaskLogger.cs" />
-    <Compile Include="NativeUtilities.cs" />
-    <Compile Include="ConsolePackageImporterExecutor.cs" />
-    <Compile Include="Tasks\PublishBuild.cs" />
-    <Compile Include="Tasks\ConsolePackageImporter.cs" />
-    <Compile Include="Tasks\ParallelBuildProject.cs" />
-    <Compile Include="Process\ParallelBuildProjectController.cs" />
     <Compile Include="DependencyResolver\DependencyResolvedEventArgs.cs" />
     <Compile Include="DependencyAnalyzer\ExpertModuleMapper.cs" />
-    <Compile Include="DependencyAnalyzer\SourceControlModuleInspector.cs" />
-    <Compile Include="Providers\TeamFoundationWorkspace.cs" />
     <Compile Include="DependencyAnalyzer\WebModule.cs" />
     <Compile Include="FileSystem.cs" />
     <Compile Include="DependencyAnalyzer\ExpertManifest.cs" />
     <Compile Include="DependencyAnalyzer\DependencyManifest.cs" />
     <Compile Include="DuplicateModuleInManifestException.cs" />
     <Compile Include="DependencyAnalyzer\ThirdPartyModule.cs" />
-    <Compile Include="Process\DynamicProject.cs" />
-    <Compile Include="Process\ParallelBuildVisitor.cs" />
-    <Compile Include="Commands\BranchModule.cs" />
-    <Compile Include="Commands\CopyBinToEnvironment.cs" />
-    <Compile Include="Process\DefinitionParametersConfigurator.cs" />
-    <Compile Include="Commands\ExpertManifestForBranchCommand.cs" />
-    <Compile Include="Commands\GetExpertBranches.cs" />
-    <Compile Include="Commands\GetDependencies.cs" />
-    <Compile Include="Commands\GetDependenciesFrom.cs" />
+    <Compile Include="Commands\Legacy\CopyBinToEnvironment.cs" />
+    <Compile Include="Commands\Legacy\GetExpertBranches.cs" />
+    <Compile Include="Commands\Legacy\GetDependencies.cs" />
     <Compile Include="Commands\GetDependencyGraph.cs" />
-    <Compile Include="Commands\GetDependencyTree.cs" />
-    <Compile Include="Commands\GetDependsOn.cs" />
-    <Compile Include="Commands\GetDownstreamExpertModules.cs" />
-    <Compile Include="Commands\GetExpertModule.cs" />
-    <Compile Include="Commands\GetExpertModules.cs" />
-    <Compile Include="Commands\GetSymbolicLinkTarget.cs" />
-    <Compile Include="Commands\ModuleHelpInitializerCommand.cs" />
-    <Compile Include="Commands\NewExpertBuildDefinition.cs" />
-    <Compile Include="Commands\NewParallelBuildProject.cs" />
-    <Compile Include="Commands\SortModulesByBuildOrder.cs" />
-    <Compile Include="Commands\UpdateBuildAllProject.cs" />
-    <Compile Include="DependencyAnalyzer\BuildProjectSequencer.cs" />
+    <Compile Include="Commands\GetBuildDependencyTreeCommand.cs" />
+    <Compile Include="Commands\Legacy\GetDependsOn.cs" />
+    <Compile Include="Commands\Legacy\GetDownstreamExpertModules.cs" />
+    <Compile Include="Commands\Legacy\GetExpertModule.cs" />
+    <Compile Include="Commands\Legacy\GetExpertModules.cs" />
+    <Compile Include="Commands\Legacy\SortModulesByBuildOrder.cs" />
     <Compile Include="DependencyAnalyzer\CircularDependencyException.cs" />
     <Compile Include="DependencyAnalyzer\DependencyBuilder.cs" />
     <Compile Include="DependencyAnalyzer\ExpertModule.cs" />
     <Compile Include="DependencyAnalyzer\ModuleDependency.cs" />
     <Compile Include="DependencyAnalyzer\ModuleType.cs" />
-    <Compile Include="DependencyAnalyzer\NamingExtensions.cs" />
     <Compile Include="DependencyAnalyzer\ParameterHelper.cs" />
-    <Compile Include="DependencyAnalyzer\ProductManifestUpdater.cs" />
     <Compile Include="DependencyAnalyzer\ShellInvocationHelper.cs" />
-    <Compile Include="DependencyAnalyzer\TopologicalSort.cs" />
     <Compile Include="FontInstaller.cs" />
     <Compile Include="Logging\ILogger.cs" />
     <Compile Include="Logging\PowerShellLogger.cs" />
-    <Compile Include="MSBuild\BuildElementVisitor.cs" />
+    <Compile Include="MSBuild\TargetXmlEmitter.cs" />
     <Compile Include="MSBuild\BuildStep.cs" />
     <Compile Include="MSBuild\Element.cs" />
     <Compile Include="MSBuild\ItemGroup.cs" />
@@ -279,30 +412,23 @@
     <Compile Include="MSBuild\Target.cs" />
     <Compile Include="Providers\IModuleProvider.cs" />
     <Compile Include="Providers\PathProvider.cs" />
-    <Compile Include="Providers\ModuleWorkspace.cs" />
     <Compile Include="SplashScreenText.cs" />
     <Compile Include="Tasks\BuildConfigurationCheck.cs" />
     <Compile Include="Tasks\GetCopyLocalItemsToRemove.cs" />
-    <Compile Include="Tasks\DependencyChecker.cs" />
+    <Compile Include="Tasks\Legacy\DependencyChecker.cs" />
     <Compile Include="Tasks\ExtractWebModule.cs" />
-    <Compile Include="Tasks\FilterModules.cs" />
+    <Compile Include="Tasks\Legacy\FilterModules.cs" />
     <Compile Include="Tasks\GetDependencies.cs" />
     <Compile Include="Tasks\MakeSymlink.cs" />
     <Compile Include="Tasks\TrackedSourcesBuildTask.cs" />
     <Compile Include="Tasks\UpdateSplashScreenImage.cs" />
     <Compile Include="Tasks\GetAssemblyPlatform.cs" />
-    <Compile Include="Commands\ProjectFileFolderSync.cs" />
+    <Compile Include="Commands\Legacy\ProjectFileFolderSync.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Commands\WebPackageExtract.cs" />
+    <Compile Include="Commands\Legacy\WebPackageExtract.cs" />
     <Compile Include="DependencyResolver\VersionRequirement.cs" />
     <Compile Include="VisualStudioEnvironmentContext.cs" />
-    <Compile Include="ThirdParty\Lapointe\Attributes\CmdletDescriptionAttribute.cs" />
-    <Compile Include="ThirdParty\Lapointe\Attributes\CmdletGroupAttribute.cs" />
-    <Compile Include="ThirdParty\Lapointe\Attributes\ExampleAttribute.cs" />
-    <Compile Include="ThirdParty\Lapointe\Attributes\RelatedCmdletsAttribute.cs" />
-    <Compile Include="ThirdParty\Lapointe\CmdletHelpGenerator.cs" />
-    <Compile Include="UpgradeTemplateBuildProcess.cs" />
-    <Compile Include="WebArchiveFileSystem.cs" />
+    <Compile Include="Legacy\WebArchiveFileSystem.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Assets\OpenTypeStd\FuturaStd-Bold.otf" />
@@ -320,32 +446,24 @@
     <EmbeddedResource Include="Commands\Assets\OpenTypeStd\FuturaStd-Medium.otf" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="DependencyAnalyzer\ExpertBuilds.cd" />
+    <None Include="debug.ps1" />
     <None Include="Resources\Nuspec.template" />
-    <None Include="Scripts\undo-buildpersistence.bat" />
     <None Include="Scripts\persist-build.bat" />
     <None Include="Scripts\persist-build.ps1" />
+    <None Include="Scripts\undo-buildpersistence.bat" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Scripts\_readme.txt" />
+    <Folder Include="Resources\Scripts\" />
+    <Folder Include="Tasks\PowerShell.Resources\" />
   </ItemGroup>
-  <!--<ItemGroup>
-    <Analyzer Include="$(OutputPath)\Aderant.Build.Analyzer.dll" />
-  </ItemGroup>-->
+  <ItemGroup>
+    <None Include="libgit2.props">
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Scripts\_readme.txt" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PreBuildEvent>
-    </PreBuildEvent>
-  </PropertyGroup>
-  <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
-  </PropertyGroup>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+  <Import Project="libgit2.props" />
 </Project>

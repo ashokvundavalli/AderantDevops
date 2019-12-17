@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Aderant.Build.AzurePipelines;
 using Aderant.Build.Logging;
 using Aderant.Build.Packaging;
-using Aderant.Build.TeamFoundation;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTest.Build {
@@ -55,7 +55,7 @@ namespace UnitTest.Build {
         public void Nuspec_gets_package_name() {
             var processor = new PackageProcessor(null);
 
-            processor.AssociatePackageToBuild(nuspec, new TfBuildCommands(new FakeLogger()));
+            processor.AssociatePackageToBuild(nuspec, new VsoCommandBuilder(new NullLogger()));
         }
     }
 }

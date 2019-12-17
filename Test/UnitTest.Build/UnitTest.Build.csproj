@@ -11,13 +11,9 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>UnitTest.Build</RootNamespace>
     <AssemblyName>UnitTest.Build</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
-    <SccProjectName>SAK</SccProjectName>
-    <SccLocalPath>SAK</SccLocalPath>
-    <SccAuxPath>SAK</SccAuxPath>
-    <SccProvider>SAK</SccProvider>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -40,39 +36,45 @@
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
-  <Import Project="..\..\Src\Sources\References.v14.props" Condition="'$(MSBuildToolsVersion)' == '14.0'" />
-  <Import Project="..\..\Src\Sources\References.v12.props" Condition="'$(MSBuildToolsVersion)' == '12.0'" />
+  <Import Project="..\..\Src\Sources\References.props" />
   <ItemGroup>
-    <Reference Include="Microsoft.Build.Utilities.v3.5, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <Private>False</Private>
-      <Aliases>Buildv35</Aliases>
+    <Reference Include="Castle.Core">
+      <HintPath>..\..\packages\Castle.Core\lib\net45\Castle.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Build.Utilities.v4.0, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <Aliases>Utilities_v4_0</Aliases>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <Private>False</Private>
     </Reference>
-    <Reference Include="Microsoft.TeamFoundation.SourceControl.WebApi, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+    <Reference Include="Moq, Version=4.8.0.0, Culture=neutral, PublicKeyToken=69f491c39445e920, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\packages\Microsoft.TeamFoundationServer.Client\lib\net45\Microsoft.TeamFoundation.SourceControl.WebApi.dll</HintPath>
+      <HintPath>..\..\packages\Moq\lib\net45\Moq.dll</HintPath>
     </Reference>
-    <Reference Include="MSBuild.Community.Tasks">
-      <HintPath>..\..\Src\Build\Tasks\MSBuild.Community.Tasks\MSBuild.Community.Tasks.dll</HintPath>
+    <Reference Include="MSBuild.Community.Tasks, Version=1.5.0.0, Culture=neutral, PublicKeyToken=e8bf2261941c3948, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\devtools\MSBuildTasks\tools\MSBuild.Community.Tasks.dll</HintPath>
     </Reference>
     <Reference Include="paket, Version=3.9.6.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\Src\Build\paket.exe</HintPath>
     </Reference>
-    <Reference Include="System">
-      <Private>True</Private>
+    <Reference Include="protobuf-net, Version=2.3.0.0, Culture=neutral, PublicKeyToken=257b51d87d2e4d67, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Src\Build.Tools\protobuf-net.dll</HintPath>
     </Reference>
-    <Reference Include="System.Core">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="System.Drawing" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
     <Reference Include="System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Windows\Microsoft.NET\assembly\GAC_MSIL\System.Management.Automation\v4.0_3.0.0.0__31bf3856ad364e35\System.Management.Automation.dll</HintPath>
       <Private>False</Private>
+    </Reference>
+    <Reference Include="Microsoft.PowerShell.Commands.Utility, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Threading.Tasks.Dataflow, Version=4.6.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\devtools\System.Threading.Tasks.Dataflow\lib\portable-net45+win8+wpa81\System.Threading.Tasks.Dataflow.dll</HintPath>
     </Reference>
     <Reference Include="System.Threading.Tasks.Extensions">
       <HintPath>..\..\packages\System.Threading.Tasks.Extensions\lib\portable-net45+win8+wp8+wpa81\System.Threading.Tasks.Extensions.dll</HintPath>
@@ -103,25 +105,91 @@
     </CodeAnalysisDependentAssemblyPaths>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BuildControllerTests.cs" />
+    <Compile Include="BucketTests.cs" />
     <Compile Include="BuildLogProcessorTests.cs" />
+    <Compile Include="BuildMetadataTests.cs" />
     <Compile Include="BuildProjectCheckTests.cs" />
+    <Compile Include="DependencyAnalyzer\BuildPlanGeneratorTests.cs" />
+    <Compile Include="DependencyAnalyzer\DirectoryNodeFactoryTests.cs" />
+    <Compile Include="DependencyAnalyzer\ProjectDependencyGraphTests.cs" />
+    <Compile Include="DependencyAnalyzer\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="DependencyResolver\ResolverWorkflowTests.cs" />
+    <Compile Include="PipelineService\BuildPipelineServiceTests.cs" />
+    <Compile Include="ProjectSystem\UnresolvedBuildDependencyProjectReferenceTests.cs" />
+    <Compile Include="ProjectSystem\WixReferenceServiceTests.cs" />
+    <Compile Include="Tasks\GenerateBuildPlanTests.cs" />
+    <Compile Include="Tasks\GetDependenciesTaskTests.cs" />
+    <Compile Include="DirectoryMetadataServiceTests.cs" />
+    <Compile Include="Packaging\FileRestoreTests.cs" />
+    <Compile Include="ProjectSystem\ConfiguredProjectTests.cs" />
+    <Compile Include="ProjectSystem\DirectoryGrovelerTests.cs" />
+    <Compile Include="FileSystemTests.cs" />
+    <Compile Include="BuildPipelineServiceImplTests.cs" />
+    <Compile Include="ProjectSystem\ProjectBuildConfigurationTests.cs" />
+    <Compile Include="ProjectSystem\ProjectSystemResources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>ProjectSystemResources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="ProjectSystem\StateTracking\BuildCachePackageCheckerTests.cs" />
+    <Compile Include="ProjectSystem\TextTemplateReferencesServicesTests.cs" />
+    <Compile Include="Helpers\TextContextLogger.cs" />
+    <Compile Include="StateTracking\TrackedInputFilesControllerTests.cs" />
+    <Compile Include="StateTracking\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="ServerImage\DependencyGenerationTests.cs" />
+    <Compile Include="Tasks\CopyFilesTests.cs" />
+    <Compile Include="Tasks\PowerShellScript\PowerShellScriptTests.cs" />
+    <Compile Include="Tasks\RoleManifestPackageIdentifierTests.cs" />
+    <Compile Include="Tasks\GetAssemblyPlatformTests.cs" />
+    <Compile Include="Tasks\GeneratePaketDependenciesFileTests.cs" />
+    <Compile Include="Tasks\ZipBuildScriptsTests.cs" />
+    <Compile Include="FilterDirectoryTests.cs" />
+    <Compile Include="Utilities\MemoizerTests.cs" />
+    <Compile Include="DependencyAnalyzer\ProjectSequencerTests.cs" />
+    <Compile Include="DependencyAnalyzer\FakeVisualStudioProject.cs" />
     <Compile Include="DependencyRequirementTests.cs" />
-    <Compile Include="FileUtilitiesTests.cs" />
-    <Compile Include="DependencyManifestTests.cs" />
-    <Compile Include="ExpertBuildConfigurationTests.cs" />
+    <Compile Include="MSBuild\PropertyListTests.cs" />
+    <Compile Include="MSBuild\SolutionConfigurationContentsGeneratorTests\SolutionConfigurationContentsGeneratorTests.cs" />
+    <Compile Include="ObjectModelTests.cs" />
+    <Compile Include="Packaging\ArtifactDropPathBuilderTests.cs" />
+    <Compile Include="Packaging\ArtifactPackageHelperTests.cs" />
+    <Compile Include="Packaging\ArtifactServiceTest.cs" />
+    <Compile Include="PowerShellPipelineExecutorTests.cs" />
+    <Compile Include="ErrorUtilitiesTests.cs" />
+    <Compile Include="DependencyAnalyzer\DirectoryNodeTests.cs" />
+    <Compile Include="DependencyResolver\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="DependencyResolver\DependencyManifestTests.cs" />
     <Compile Include="ExpertManifestTests.cs" />
     <Compile Include="ModuleDependencyResolverTests.cs" />
-    <Compile Include="ModuleWorkspaceTests.cs" />
     <Compile Include="IndendedFileParserTests.cs" />
     <Compile Include="DependencyResolver\PackageManagerTests.cs" />
     <Compile Include="PackageProcessorTests.cs" />
+    <Compile Include="Packaging\ArtifactPackageTests.cs" />
+    <Compile Include="ObjectModelSerializationTests.cs" />
+    <Compile Include="Packaging\PathSpecTests.cs" />
+    <Compile Include="Packaging\AutoPackagerTests.cs" />
+    <Compile Include="ProjectSystem\ProjectOutputTrackerTests.cs" />
     <Compile Include="Packaging\NuspecTests.cs" />
     <Compile Include="Packaging\NuspecTokenProcessorTests.cs" />
     <Compile Include="Packaging\PackagerTests.cs" />
     <Compile Include="Packaging\VersionAnalyzerTests.cs" />
     <Compile Include="PathHelperTest.cs" />
+    <Compile Include="PathUtilityTests.cs" />
     <Compile Include="ProductAssemblyContextTests.cs" />
+    <Compile Include="ProjectSystem\OnDiskProjectInfoTests.cs" />
+    <Compile Include="ProjectSystem\ProjectTreeTests.cs" />
     <Compile Include="ResolverRequestTests.cs" />
     <Compile Include="ResolverTests.cs" />
     <Compile Include="Resources.Designer.cs">
@@ -136,58 +204,93 @@
     </Compile>
     <Compile Include="SourceIndexStreamTests.cs" />
     <Compile Include="SourceIndexTests.cs" />
+    <Compile Include="Tasks\BuildStateFileTests.cs" />
+    <Compile Include="Tasks\ReadAssemblyInfo\ReadAssemblyInfo.cs" />
+    <Compile Include="Tasks\DoubleWriteTests.cs" />
+    <Compile Include="Tasks\GetBuildOutputsTests.cs" />
+    <Compile Include="Tasks\ReadAssemblyInfo\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="Tasks\SeedPackagePackingTest.cs" />
     <Compile Include="Tasks\CoberturaReportConverterTests.cs" />
-    <Compile Include="Tasks\FolderDependencySystemTests.cs" />
     <Compile Include="Tasks\OrmMappingValidatorTests.cs" />
     <Compile Include="Tasks\ProjectConformityCheckTests.cs" />
     <Compile Include="Tasks\ReplaceProjectReferencesTests.cs" />
     <Compile Include="TestModuleProviderBase.cs" />
-    <Compile Include="TfsBuildInformationTest.cs" />
-    <Compile Include="UpdateSplashScreenImageTests.cs" />
-    <Compile Include="MSBuild\BuildElementVisitorTests.cs" />
+    <Compile Include="Tasks\UpdateSplashScreenImage\UpdateSplashScreenImageTests.cs" />
+    <Compile Include="MSBuild\TargetXmlEmitterTests.cs" />
     <Compile Include="AutoCompletionParserTests.cs" />
     <Compile Include="ExpertModuleTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="DependencyBuilderTests.cs" />
-    <Compile Include="VersionRequirementEqualityTest.cs" />
+    <Compile Include="ContextTests.cs" />
+    <Compile Include="TextTemplateAnalysis\Resources.Designer.cs">
+      <DependentUpon>Resources.resx</DependentUpon>
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <Compile Include="TextTemplateAnalysis\TextTemplateAnalyzerTests.cs" />
+    <Compile Include="TopologicalSortTests.cs" />
+    <Compile Include="ArtifactStagingPathBuilderTests.cs" />
+    <Compile Include="Utilities\ParallelismHelperTests.cs" />
+    <Compile Include="VersionRequirementTests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\App.config" />
-    <None Include="Resources\bindings.config" />
-    <None Include="Resources\clients.config" />
+    <None Include="StateTracking\ExampleTrackedInputFiles.proj">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Resources\test-paket-template-without-dependencies" />
-    <None Include="Resources\instance.config" />
     <None Include="Resources\test-paket-template-with-dependencies" />
     <None Include="Resources\test-paket-template-without-dependencies-UNIX" />
     <None Include="Resources\Test.nuspec" />
     <None Include="Resources\test-paket-template-with-mixed-whitespace" />
-    <None Include="test.dgml">
-      <SubType>Designer</SubType>
-    </None>
+    <None Include="Resources\buildstate.json" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="DependencyAnalyzer\Resources\BuildTree.txt" />
+    <Content Include="DependencyAnalyzer\Resources\DependencyManifest.xml" />
+    <Content Include="MSBuild\SolutionConfigurationContentsGeneratorTests\Sample.sln">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="ProjectSystem\Resources\MyWindowsInstallerApp.wixproj" />
+    <Content Include="ProjectSystem\Resources\Conflicting_platformtarget.csproj" />
+    <Content Include="ProjectSystem\Resources\Project_with_single_output_path.csproj" />
     <Content Include="Resources\BadBuildLog.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="DependencyResolver\DependencyManifest.xml">
+      <SubType>Designer</SubType>
     </Content>
     <Content Include="Resources\DifferentOutputPathsProject.csproj" />
     <Content Include="Resources\MatchingOutputPathsProject.csproj" />
     <Content Include="Resources\ReplaceReferencesProject.csproj" />
-    <Content Include="Resources\SplashScreens\Expert_2014_style.png">
+    <None Include="Tasks\Roles\configuration.role.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Tasks\Roles\security.role.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <Content Include="Tasks\UpdateSplashScreenImage\Expert_2014_style.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Resources\test-paket-template-with-exclude-section.txt" />
+    <Content Include="TextTemplateAnalysis\Resources\CustomOutputExtension.tt" />
+    <Content Include="TextTemplateAnalysis\Resources\TextTemplateWithCustomProcessor.tt" />
+    <Content Include="TextTemplateAnalysis\Resources\TextTemplateWithInclude.tt" />
+    <Content Include="TextTemplateAnalysis\Resources\SimpleTextTemplate.tt" />
     <None Include="Resources\BuildLogs\buildlog-1.json" />
     <None Include="Resources\BuildLogs\buildlog-2.json" />
     <Content Include="Resources\BuildLogs\plain-text-build-log.txt" />
-    <Content Include="Resources\environment.xml" />
     <Content Include="Resources\ExpertManifest.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Resources\Expert_SplashScreen_Domain Customization Wizard.png">
+    <Content Include="Tasks\UpdateSplashScreenImage\Expert_SplashScreen_Domain Customization Wizard.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Resources\Expert_SplashScreen_Reskin.png">
+    <Content Include="Tasks\UpdateSplashScreenImage\Expert_SplashScreen_Reskin.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Resources\GoodBuildLog.txt">
@@ -196,34 +299,55 @@
     <Content Include="Resources\CSharpProject.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Src\Sources\Aderant.Build.Tasks\Aderant.Build.Tasks.csproj">
-      <Project>{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}</Project>
-      <Name>Aderant.Build.Tasks</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Src\Sources\Aderant.Build\Aderant.Build.csproj">
-      <Project>{66e50d39-8e73-4d16-944b-43f18c308fe0}</Project>
-      <Name>Aderant.Build</Name>
-      <Private>True</Private>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Resources.resx">
+    <EmbeddedResource Include="DependencyAnalyzer\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="DependencyResolver\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ProjectSystem\ProjectSystemResources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>ProjectSystemResources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="StateTracking\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
       <SubType>Designer</SubType>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\BuildLogs\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <CustomToolNamespace>UnitTest.Build.BuildLogProcessor</CustomToolNamespace>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <EmbeddedResource Include="Tasks\ReadAssemblyInfo\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="TextTemplateAnalysis\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Src\Sources\Aderant.Build.Tasks\Aderant.Build.Tasks.csproj">
+      <Project>{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}</Project>
+      <Name>Aderant.Build.Tasks</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Src\Sources\Aderant.Build\Aderant.Build.csproj">
+      <Project>{66E50D39-8E73-4D16-944B-43F18C308FE0}</Project>
+      <Name>Aderant.Build</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+  <Import Project="..\TestDeployment.proj" />
 </Project>

@@ -6,7 +6,10 @@ using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
+
     public sealed class GetFileVersionInfo : Task {
+        static Type installerType;
+
         [Required]
         public ITaskItem[] Files { get; set; }
 
@@ -40,8 +43,11 @@ namespace Aderant.Build.Tasks {
         private string GetProductName(string fullPath) {
             dynamic view = null;
             dynamic database = null;
+
             try {
-                Type installerType = Type.GetTypeFromProgID("WindowsInstaller.Installer");
+                if (installerType == null) {
+                    installerType = Type.GetTypeFromProgID("WindowsInstaller.Installer");
+                }
 
                 dynamic installer = Activator.CreateInstance(installerType);
 

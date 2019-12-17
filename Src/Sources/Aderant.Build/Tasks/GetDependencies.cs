@@ -1,25 +1,23 @@
-﻿using System.Diagnostics;
-using System.IO;
+﻿using System.IO;
+using System.Linq;
 using System.Threading;
+using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyResolver;
-using Aderant.Build.DependencyResolver.Resolvers;
 using Aderant.Build.Logging;
 using Microsoft.Build.Framework;
+using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
-    public class GetDependencies : Microsoft.Build.Utilities.Task, ICancelableTask {
-        private CancellationTokenSource cancellationToken = new CancellationTokenSource();
+    public class GetDependencies : Task, ICancelableTask {
+        private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
         public bool EnableVerboseLogging { get; set; }
 
-        [Required]
         public string ModulesRootPath { get; set; }
 
-        [Required]
         public string DropPath { get; set; }
 
-        [Required]
         public string ProductManifest { get; set; }
 
         /// <summary>
@@ -45,71 +43,135 @@ namespace Aderant.Build.Tasks {
         public ITaskItem[] ModulesInBuild { get; set; }
 
         /// <summary>
-        /// Gets or sets the type of the build. For example Build All, Continuous Integration or other.
+        /// Gets or sets the path to the branch configuration file.
         /// </summary>
-        /// <value>The type of the build.</value>
-        public string BuildType { get; set; }
+        /// <value>
+        /// The branch configuration file.
+        /// </value>
+        public string BranchConfigFile { get; set; }
 
-        public override bool Execute() {
-            ModulesRootPath = Path.GetFullPath(ModulesRootPath);
+        /// <summary>
+        /// Determines if Paket update should be run.
+        /// </summary>
+        /// <value>
+        /// Whether or not to run the update command.
+        /// </value>
+        public bool Update { get; set; }
 
-            if (ProductManifest != null) {
-                ProductManifest = Path.GetFullPath(ProductManifest);
+        public bool DisableSharedDependencyDirectory { get; set; }
+
+        internal XDocument ConfigurationXml { get; set; }
+
+        public string[] EnabledResolvers {
+            get {
+                return new string[0];
             }
+            set {
+                if (ConfigurationXml == null) {
+                    if (value != null && value.Length > 0) {
+                        var resolvers = new XElement("DependencyResolvers");
+                        foreach (string name in value) {
+                            resolvers.Add(new XElement(name));
+                        }
 
-            LogParameters();
+                        var doc = new XDocument();
+                        doc.Add(new XElement("BranchConfig", resolvers));
 
-            Stopwatch sw = Stopwatch.StartNew();
-
-            try {
-                var logger = new BuildTaskLogger(this);
-
-                ResolverRequest request = new ResolverRequest(logger, ModulesRootPath);
-              
-                ExpertManifest productManifest = ExpertManifest.Load(ProductManifest);
-                productManifest.ModulesDirectory = ModulesRootPath;
-                request.ModuleFactory = productManifest;
-
-                request.SetDependenciesDirectory(DependenciesDirectory);
-                request.DirectoryContext = BuildType;
-
-                if (!string.IsNullOrEmpty(ModuleName)) {
-                    request.AddModule(ModuleName);
-                }
-
-                if (ModulesInBuild != null) {
-                    foreach (ITaskItem module in ModulesInBuild) {
-                        request.AddModule(module.ItemSpec, true);
+                        ConfigurationXml = doc;
                     }
                 }
-
-                ExpertModuleResolver moduleResolver = new ExpertModuleResolver(new PhysicalFileSystem(ModulesRootPath));
-                moduleResolver.AddDependencySource(DropPath, ExpertModuleResolver.DropLocation);
-
-                Resolver resolver = new Resolver(logger, moduleResolver, new NupkgResolver());
-                resolver.ResolveDependencies(request, cancellationToken.Token, EnableVerboseLogging);
-
-                return !Log.HasLoggedErrors;
-            } finally {
-                sw.Stop();
-                Log.LogMessage("Get dependencies completed in " + sw.Elapsed.ToString("mm\\:ss\\.ff"), null);
             }
         }
 
-        private void LogParameters() {
-            Log.LogMessage(MessageImportance.Normal, "ModulesRootPath: " + ModulesRootPath, null);
-            Log.LogMessage(MessageImportance.Normal, "DropPath: " + DropPath, null);
-            Log.LogMessage(MessageImportance.Normal, "ProductManifest: " + ProductManifest, null);
+        public override bool Execute() {
+            BuildTaskLogger logger = new BuildTaskLogger(this);            
+
+            ExecuteInternal(logger);
+
+            return !Log.HasLoggedErrors;
+        }
+
+        public void ExecuteInternal(Logging.ILogger logger) {
+            ModulesRootPath = Path.GetFullPath(ModulesRootPath);
+
+            ExpertManifest productManifest = null;
+            if (!string.IsNullOrWhiteSpace(ProductManifest)) {
+                ProductManifest = Path.GetFullPath(ProductManifest);
+
+                if (File.Exists(ProductManifest)) {
+                    productManifest = ExpertManifest.Load(ProductManifest);
+                    productManifest.ModulesDirectory = ModulesRootPath;
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(BranchConfigFile)) {
+                ConfigurationXml = XDocument.Load(BranchConfigFile);
+            }
+
+            LogParameters(logger);
+
+            // Enable NupkgResolver by default if no resolvers are specified.
+            if (EnabledResolvers == null || EnabledResolvers.Length == 0) {
+                EnabledResolvers = new string[] {
+                    "NupkgResolver"
+                };
+            }
+
+            var workflow = new ResolverWorkflow(logger) {
+                ConfigurationXml = ConfigurationXml,
+                ModulesRootPath = ModulesRootPath,
+                DropPath = DropPath
+            };
+
+            if (DisableSharedDependencyDirectory) {
+                workflow.Request.ReplicationExplicitlyDisabled = true;
+            } else {
+                if (string.IsNullOrWhiteSpace(DependenciesDirectory)) {
+                    string dependenciesSubDirectory = ConfigurationXml.Descendants("DependenciesDirectory").FirstOrDefault()?.Value;
+
+                    if (!string.IsNullOrWhiteSpace(dependenciesSubDirectory)) {
+                        DependenciesDirectory = Path.Combine(ModulesRootPath, dependenciesSubDirectory);
+                    } else {
+                        workflow.Request.ReplicationExplicitlyDisabled = true;
+                    }
+                }
+            }
+
+            workflow.DependenciesDirectory = DependenciesDirectory;
+            workflow.Request.ModuleFactory = productManifest;
+
+            if (!string.IsNullOrEmpty(ModuleName)) {
+                workflow.Request.AddModule(ModuleName);
+            }
+
+            if (ModulesInBuild != null) {
+                foreach (ITaskItem module in ModulesInBuild) {
+                    workflow.Request.AddModule(module.ItemSpec);
+                }
+            }
+
+            if (Update) {
+                workflow.Request.Update = Update;
+            }
+
+            workflow.Run(cancellationTokenSource.Token, EnableVerboseLogging);
         }
 
         /// <summary>
         /// Attempts to cancel this instance.
         /// </summary>
         public void Cancel() {
-            if (cancellationToken != null) {
+            if (cancellationTokenSource != null) {
                 // Signal the cancellation token that we want to abort the async task
-                cancellationToken.Cancel();
+                cancellationTokenSource.Cancel();
             }
+        }
+        
+        private void LogParameters(Logging.ILogger logger) {
+            logger.Info($"ModulesRootPath: {ModulesRootPath}");
+            logger.Info($"DropPath: {DropPath}");
+            logger.Info($"ProductManifest: {ProductManifest}");
+            logger.Info($"Branch configuration file: {BranchConfigFile}");
         }
     }
 }

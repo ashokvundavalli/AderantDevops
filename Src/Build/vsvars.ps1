@@ -1,53 +1,111 @@
+<#
+.SYNOPSIS
+    Allows PowerShell to work like the Visual Studio developer console by placing interesting
+    executables onto the current PATH and setting key environment varibles.
+.PARAMETER IsBuildAgent
+    Specifies that this script is running in the context of the build agent.
+#>
+param(
+    [switch]$IsBuildAgent
+)
+
 ##
-## Sets environment variables used with a Visual Studio build 
+## Sets environment variables used to interop with the Visual Studio Developer Command Prompt
 ##
-function LoadEnvVariables([string]$environmentVariableName, [string]$vsYear) {
-    $vsPath = [Environment]::GetEnvironmentVariable($environmentVariableName)
-    
+function LoadEnvVariables([string]$environmentVariableName, [string]$vsYear, [string]$vsPath) {
+    if ([string]::IsNullOrEmpty($vsPath) -and ![string]::IsNullOrEmpty($environmentVariableName)) {
+        $vsPath = [Environment]::GetEnvironmentVariable($environmentVariableName)
+    } else {
+        $vsPath = FindVisualStudioPath $vsYear
+    }
+
     if (-not [string]::IsNullOrEmpty($vsPath)) {
-        $vars = GetCacheItem "VsDevCmd.bat"
-        if (-not $vars) {       
-            $globalEnvironmentVariables = [Environment]::GetEnvironmentVariables()
-            $vars = @{}
+        $globalEnvironmentVariables = [Environment]::GetEnvironmentVariables()
+        $vars = @{}
 
-            $variablesFromScript = cmd /c "`"$vsPath\VsDevCmd.bat`"&set"
-            $variablesFromScript.ForEach({
-                $v = $_.Split("=")
+        # Disable telemetry when running VsDevCmd.bat
+        [System.Environment]::SetEnvironmentVariable('VSCMD_SKIP_SENDTELEMETRY', '1', [System.EnvironmentVariableTarget]::Process)
+
+        $variablesFromScript = cmd /c "`"$vsPath\VsDevCmd.bat`"&set"
+
+        $variablesFromScript.ForEach({
+            $v = $_.Split("=")
+            if ($v.Count -gt 1) {
                 $vars.Add($v[0], $v[1])
-            })
-            
-            $globalEnvironmentVariables.GetEnumerator().ForEach({ 
-              if ($vars.ContainsKey($_.Key) -and ($_.Key -ne "Path")) { 
+            }
+        })
+
+        $globalEnvironmentVariables.GetEnumerator().ForEach({
+            if ($vars.ContainsKey($_.Key) -and ($_.Key -ne "Path")) {
                 $vars.Remove($_.Key)
-              } 
-            })
+            }
+        })
 
-            PutCacheItem "VsDevCmd.bat" $vars "$vsPath\VsDevCmd.bat", $PSCommandPath
+        # If this is an agent then we need to set the variables here
+        if ($isBuildAgent) {
+            foreach ($item in $vars.GetEnumerator()) {
+                [System.Environment]::SetEnvironmentVariable($item.Key, $item.Value, [System.EnvironmentVariableTarget]::Process)
+            }
         }
 
-        foreach ($item in $vars.GetEnumerator()) {
-            Set-Item -Force -Path "ENV:\$($item.Key)" -Value $item.Value
-        }
-
-        Write-Host "`nVisual Studio $vsYear Command Prompt variables set." -ForegroundColor Yellow
+        # When executing in a job return the values so the caller can apply them to that context
+        $script:vars = $vars
         return $true
     }
     return $false
 }
 
-# VS 2015
-Measure-Command {
-    if (LoadEnvVariables "VS140COMNTOOLS" "2015") {
-        return
-    }
+function FindVisualStudioPath {
+    [CmdletBinding()]
+    [OutputType([String])]
+    param(
+        [string]$Version
+    )
+    $pathsToTry = @($Version)
 
-    # VS 2013
-    if (LoadEnvVariables "VS120COMNTOOLS" "2013") {
-        return
-    }
+    $programFiles = ${env:ProgramFiles(x86)}
 
-    #VS2012
-    if (LoadEnvVariables "VS110COMNTOOLS" "2012") {
-        return
+    $items = @(
+        foreach ($folder in $pathsToTry) {
+            Get-Item -ErrorAction SilentlyContinue @(
+                "$programFiles\Microsoft Visual Studio\$folder\*\Common7\Tools\VsDevCmd.bat"
+            )
+        }
+    )
+
+    if ($items.Count -ge 1) {
+        $byVersion = {[System.Version]$_.VersionInfo.FileVersionRaw}
+        $byProduct = {
+            switch -Wildcard ($_.FullName) {
+                *\Enterprise\* {4}
+                *\Professional\* {3}
+                *\Community\* {2}
+                *\BuildTools\* {1}
+                default {0}
+            }
+        }
+        $items = $items | Sort-Object $byVersion, $byProduct
+
+        return [System.IO.Path]::GetDirectoryName($items[-1].FullName)
     }
-} "LoadEnvVariables"
+}
+
+if (LoadEnvVariables $null "2019") {
+    return $script:vars
+}
+
+if (LoadEnvVariables $null "2017") {
+    return $script:vars
+}
+
+if (LoadEnvVariables "VS140COMNTOOLS" "2015") {
+    return $script:vars
+}
+
+if (LoadEnvVariables "VS120COMNTOOLS" "2013") {
+    return $script:vars
+}
+
+if (LoadEnvVariables "VS110COMNTOOLS" "2012") {
+    return $script:vars
+}

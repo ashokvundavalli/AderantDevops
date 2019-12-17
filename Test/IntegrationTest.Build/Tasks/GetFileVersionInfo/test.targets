@@ -1,0 +1,14 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" 
+         ToolsVersion="14.0">
+
+  <Target Name="GetFileVersionInfo">
+
+    <ItemGroup>
+      <MSI Include="C:\Windows\Installer\**\*a8*.msi" />
+    </ItemGroup>
+
+    <GetFileVersionInfo Files="@(MSI)" />
+
+  </Target>
+
+</Project>

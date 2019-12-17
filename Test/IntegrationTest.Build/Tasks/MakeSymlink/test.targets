@@ -1,0 +1,20 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
+         ToolsVersion="14.0">
+
+  <Target Name="MakeSymlink">
+
+    <PropertyGroup>
+      <Link>$(MSBuildThisFileDirectory)\Foo</Link>
+    </PropertyGroup>
+
+    <MakeSymlink
+      Link="$(Link)"
+      Target="$(MSBuildThisFileDirectory)"
+      CreateLinkParent="true"
+      Type="J" />
+
+    <RemoveDir Directories="$(Link)" />
+
+  </Target>
+
+</Project>

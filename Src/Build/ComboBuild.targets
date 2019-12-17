@@ -1,0 +1,833 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
+         ToolsVersion="14.0"
+         DefaultTargets="BuildAndPackage"
+         InitialTargets="SetPropertiesFromContext;"
+         TreatAsLocalProperty="SolutionRoot;BuildFlavor">
+
+  <PropertyGroup>
+    <UseCIProperties Condition="'$(BUILD_REPOSITORY_NAME)' != '' And '$(BUILD_REPOSITORY_NAME)' != 'Build.Infrastructure'">true</UseCIProperties>
+    <UseCIProperties Condition="'$(UseCIProperties)' == ''">false</UseCIProperties>
+  </PropertyGroup>
+
+  <!-- Server build property setup -->
+  <PropertyGroup Condition="'$(BUILD_BUILDURI)' != '' And '$(UseCIProperties)' == 'true'">
+    <SolutionRoot Condition="'$(SolutionRoot)' == '' And '$(BUILD_SOURCESDIRECTORY)' != ''">$(BUILD_SOURCESDIRECTORY)</SolutionRoot>
+  </PropertyGroup>
+
+  <!-- Desktop build property setup -->
+  <PropertyGroup Condition="'$(BUILD_BUILDURI)' == ''">
+    <SolutionRoot Condition="'$(SolutionRoot)' == ''">$(BUILD_ROOT)</SolutionRoot>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!--Ensure root path is consistent-->
+    <SolutionRoot Condition="'$(SolutionRoot)' != '' and !HasTrailingSlash('$(SolutionRoot)')">$(SolutionRoot)\</SolutionRoot>
+
+    <ParametersFile>$(SolutionRoot)Build\Parameters.props</ParametersFile>
+  </PropertyGroup>
+
+  <Import Project="$(ParametersFile)" Condition="Exists($(ParametersFile))" />
+
+  <PropertyGroup>
+    <BuildInParallel Condition="'$(BuildInParallel)' != 'false' And '$(MSBuildNodeCount)' &gt; '1'">true</BuildInParallel>
+
+    <!--Test configuration-->
+    <RunTests Condition="'$(RunTests)' == ''">$([MSBuild]::ValueOrDefault('$(RunTests)', 'true'))</RunTests>
+
+    <!-- TODO: Move to each project -->
+    <RunCodeAnalysis>$(RunCodeAnalysisSetting)</RunCodeAnalysis>
+    <RunCodeAnalysis Condition="'$(IsCustomBuild)' == 'true'">false</RunCodeAnalysis>
+
+    <!-- Location to drop artifacts (packaged outputputs) -->
+    <ArtifactStagingDirectory Condition="'$(ArtifactStagingDirectory)' == ''">$(SolutionRoot)_as\</ArtifactStagingDirectory>
+    <LocalExpertBinariesDirectory>$(ArtifactStagingDirectory)product\</LocalExpertBinariesDirectory>
+    <ExpertSourceDirectory>$(LocalExpertBinariesDirectory)ExpertSource\</ExpertSourceDirectory>
+
+    <!-- Location to drop outputs to share within the build -->
+    <UseSharedDependencyDirectory Condition="'$(UseSharedDependencyDirectory)' == ''">false</UseSharedDependencyDirectory>
+    <SharedDependencyDirectory Condition="'$(SharedDependencyDirectory)' == ''">$(ArtifactStagingDirectory)out\</SharedDependencyDirectory>
+
+    <!-- Specifies the drop location for patch/update content -->
+    <UpdateStagingDirectory Condition="'$(UpdateStagingDirectory)' == ''">$(ArtifactStagingDirectory)update\</UpdateStagingDirectory>
+
+    <BuildInfrastructureDirectory Condition="'$(BuildInfrastructureDirectory)' == ''">$(MSBuildThisFileDirectory)..\..\</BuildInfrastructureDirectory>
+    <BuildInfrastructureDirectory>$([System.IO.Path]::GetFullPath(`$(BuildInfrastructureDirectory)`))</BuildInfrastructureDirectory>
+    <BuildInfrastructureDirectory Condition="'$(BuildInfrastructureDirectory)' != '' and !HasTrailingSlash('$(BuildInfrastructureDirectory)')">$(BuildInfrastructureDirectory)\</BuildInfrastructureDirectory>
+
+    <PackageScriptsDirectory>$(BuildInfrastructureDirectory)Src\Package\</PackageScriptsDirectory>
+    <BuildScriptsDirectory>$(BuildInfrastructureDirectory)Src\Build\</BuildScriptsDirectory>
+    <BuildToolsDirectory>$(BuildInfrastructureDirectory)Src\Build.Tools\</BuildToolsDirectory>
+
+    <!-- Defines the dynamic project file which contains all projects within this build -->
+    <BuildPlan Condition="'$(BuildPlan)' == ''">$(SolutionRoot)BuildPlan.proj</BuildPlan>
+
+    <CopyToDropEnabled Condition="'$(CopyToDropEnabled)' == '' And '$(IsDesktopBuild)' != 'true'">true</CopyToDropEnabled>
+    <PackageProduct Condition="'$(BUILD_REPOSITORY_NAME)' == 'ExpertSuite' And '$(CopyToDropEnabled)' == 'true'">true</PackageProduct>
+
+    <BranchConfigFile>$(SolutionRoot)Build\BranchConfig.xml</BranchConfigFile>
+
+    <AlwaysBuildWebProjects Condition="'$(AlwaysBuildWebProjects)' == ''">true</AlwaysBuildWebProjects>
+    <RequireSynchronizedOutputPaths Condition="'$(RequireSynchronizedOutputPaths)' == ''">false</RequireSynchronizedOutputPaths>
+    <CreateHardLinksForCopyLocal Condition="'$(CreateHardLinksForCopyLocal)' == ''">false</CreateHardLinksForCopyLocal>
+    <BuildCacheOptions Condition="'$(BuildCacheOptions)' == ''">DisableCacheWhenProjectChanged</BuildCacheOptions>
+  </PropertyGroup>
+
+  <Import Project="Aderant.Build.Common.targets" />
+  <Import Project="Aderant.CodeSigning.targets" />
+  <Import Project="Aderant.Build.Testing.targets" />
+
+  <PropertyGroup>
+    <BuildAndPackageDependsOn>
+      PrepareBuildEnvironment;
+      EnsureWixToolsetInstalled;
+      CleanStagingDirectory;
+      MakeStagingDirectory;
+      GatherProjectsToBuild;
+      GetAllDependencies;
+      CreatePlan;
+      ExecutePlan;
+      MSBuildRunTests;
+      WriteStateFiles;
+      PackageProduct;
+      ProduceUpdatePackage;
+      MSBuildRunIntegrationTests;
+      CopyToDrop;
+    </BuildAndPackageDependsOn>
+  </PropertyGroup>
+
+
+  <Target Name="MSBuildRunTests" DependsOnTargets="CreatePlan" Condition="'$(RunTests)' != 'false'">
+
+    <PropertyGroup>
+      <ImpactedTestAssemblies>@(ImpactedTestAssemblies)</ImpactedTestAssemblies>
+    </PropertyGroup>
+
+    <MSBuild Projects="$(MSBuildProjectFile)" Targets="RunTests" Properties="TestPattern=UnitTest;ImpactedTestAssemblies=$(ImpactedTestAssemblies);" />
+
+  </Target>
+
+
+  <Target Name="MSBuildRunIntegrationTests" DependsOnTargets="CreatePlan">
+
+    <PropertyGroup>
+      <ImpactedTestAssemblies>@(ImpactedTestAssemblies)</ImpactedTestAssemblies>
+    </PropertyGroup>
+
+    <MSBuild Projects="Aderant.Build.IntegrationTesting.targets"
+             Targets="RunIntegrationTests"
+             Properties="ParametersFile=$(ParametersFile);
+                         SolutionRoot=$(SolutionRoot);
+                         ArtifactStagingDirectory=$(ArtifactStagingDirectory);
+                         SharedDependencyDirectory=$(SharedDependencyDirectory);
+                         TestPattern=IntegrationTest;ImpactedTestAssemblies=$(ImpactedTestAssemblies);
+                         ExpertSourceDirectory=$(ExpertSourceDirectory);" />
+  </Target>
+
+
+  <Target Name="RemoveLockedFilesFromLastBuild">
+    <ItemGroup>
+      <LockedFiles Include="$(ArtifactStagingDirectory)**\*.__LOCKED" />
+    </ItemGroup>
+    <Delete Files="@(LockedFiles)" />
+  </Target>
+
+
+  <Target Name="CleanStagingDirectory" DependsOnTargets="RemoveLockedFilesFromLastBuild">
+
+    <RemoveDir Condition="'$(IsDesktopBuild)' == 'false'"
+               Directories="$(ArtifactStagingDirectory)" />
+
+    <MakeDir Condition="!Exists('$(SharedDependencyDirectory)')"
+             Directories="$(SharedDependencyDirectory)" />
+
+    <MakeDir Directories="$(UpdateStagingDirectory)" />
+  </Target>
+
+  <Target Name="MakeStagingDirectory">
+    <MakeDir Condition="!Exists('$(UpdateStagingDirectory)')"
+      Directories="$(UpdateStagingDirectory)" />
+  </Target>
+
+  <Target Name="GatherProjectsToBuild">
+    <Message Text="IsDesktopBuild: $(IsDesktopBuild)" />
+
+    <PropertyGroup>
+      <_CurrentUserName>$([System.Environment]::UserName)</_CurrentUserName>
+      <!-- Are we a gMSA account? -->
+      <_UserNameEndsWithDollar>$(_CurrentUserName.EndsWith('$'))</_UserNameEndsWithDollar>
+    </PropertyGroup>
+
+    <Message Text="UserName:$(_CurrentUserName). gMSA:$(_UserNameEndsWithDollar)" />
+
+    <ItemGroup>
+      <ExcludePaths Include="\.git" />
+      <ExcludePaths Include="\.vs" />
+      <ExcludePaths Include="\_" />
+      <ExcludePaths Include="\Bin" />
+      <!-- TestResults directory is required for Build.Infrastructure tests to function. -->
+      <ExcludePaths Include="\TestResults" Condition="'$(BUILD_REPOSITORY_NAME)' != 'Build.Infrastructure'" />
+      <ExcludePaths Include="\obj" />
+      <ExcludePaths Include="$([MSBuild]::Escape('*tmp.csproj'))" />
+      <ExcludePaths Include="TempTemplateTransform\" />
+      <ExcludePaths Include="Applications.MatterCenterIntegration\" />
+      <ExcludePaths Include="Applications.DocuDraftAddIn\" />
+      <ExcludePaths Include="Tests.UIAutomation\" />
+      <ExcludePaths Include="TempTransform\" />
+      <ExcludePaths Include="Tests.Load\" />
+      <ExcludePaths Include="Tests.Query\" />
+      <ExcludePaths Include="MomentumFileOpening\" />
+      <ExcludePaths Include="Performance.ExpertSuite\" />
+      <ExcludePaths Include="Aderant.ExpertIntegration.iManage\" />
+      <!-- Has stuff we can't build - missing third party libs-->
+      <ExcludePaths Include="Workflow.Integration.Samples\" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(ExcludeArtifactStagingDirectory)' != 'false'">
+      <ExcludePaths Include="$(ArtifactStagingDirectory)" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(_UserNameEndsWithDollar)' == 'false'">
+      <ExcludePaths Include="$" />
+    </ItemGroup>
+
+    <GatherProjectsToBuild
+      ExcludedPaths="@(ExcludePaths)">
+      <Output TaskParameter="DirectoriesInBuild" ItemName="DirectoriesInBuild" />
+      <Output TaskParameter="ExtensibilityFiles" ItemName="ExtensibilityFiles" />
+      <Output TaskParameter="DirectoryMakeFiles" ItemName="DirectoryMakeFiles" />
+      <Output TaskParameter="ProjectFiles" ItemName="ProjectFiles" />
+    </GatherProjectsToBuild>
+
+    <Message Text="Using directories:" />
+    <Message Text="%(DirectoriesInBuild.FullPath)" />
+
+  </Target>
+
+
+  <Target Name="CreatePlan" DependsOnTargets="GatherProjectsToBuild">
+    <!--
+    ==========================================================================================
+        Build Configurations
+    ==========================================================================================
+    -->
+    <ItemGroup>
+      <ConfigurationToBuild Condition="'$(BuildFlavor)' == 'Release'"
+        Include="Release|Any CPU">
+        <FlavorToBuild>Release</FlavorToBuild>
+        <PlatformToBuild>Any CPU</PlatformToBuild>
+      </ConfigurationToBuild>
+      <ConfigurationToBuild Condition="'$(BuildFlavor)' == 'Debug' Or @(ConfigurationToBuild) == ''"
+        Include="Debug|Any CPU">
+        <FlavorToBuild>Debug</FlavorToBuild>
+        <PlatformToBuild>Any CPU</PlatformToBuild>
+      </ConfigurationToBuild>
+    </ItemGroup>
+
+    <!-- Builds the dynamic project file to control the build sequence -->
+    <GenerateBuildPlan
+      ContextEndpoint="$(ContextEndpoint)"
+      BuildPlan="$(BuildPlan)"
+      ExtensibilityFiles="@(ExtensibilityFiles)"
+      MakeFiles="@(DirectoryMakeFiles)"
+      ProjectFiles="@(ProjectFiles)"
+      WixTargetsPath="$(WixTargetsPath)"
+      AlwaysBuildWebProjects="$(AlwaysBuildWebProjects)"
+      RequireSynchronizedOutputPaths="$(RequireSynchronizedOutputPaths)"
+      CreateHardLinksForCopyLocal="$(CreateHardLinksForCopyLocal)"
+      BuildCacheOptions="$(BuildCacheOptions)"
+      GroupExecutionFile="$(MSBuildThisFileDirectory)ComboBuild.Core.targets"
+      BeforeProjectFile="$(MSBuildThisFileDirectory)ComboBuild.Pre.targets"
+      AfterProjectFile="$(MSBuildThisFileDirectory)ComboBuild.Post.targets"
+      ConfigurationToBuild="@(ConfigurationToBuild)">
+      <Output TaskParameter="ImpactedTestAssemblies" ItemName="ImpactedTestAssemblies"/>
+    </GenerateBuildPlan>
+
+    <Message Text="Impacted Tests: %(ImpactedTestAssemblies.Identity)" />
+
+    <Error Condition="!Exists('$(BuildPlan)')" Text="$(BuildPlan) does not exist." />
+
+    <Message Condition="'$(IsDesktopBuild)' == 'false'" Text="##vso[task.uploadfile]$(BuildPlan)" />
+    <Message Condition="'$(IsDesktopBuild)' == 'false'" Text="##vso[task.uploadfile]$(SolutionRoot)BuildTree.txt" />
+  </Target>
+
+
+  <Target Name="WriteStateFiles">
+    <WriteBuildStateFile>
+      <Output TaskParameter="WrittenStateFiles" ItemName="StateFiles" />
+    </WriteBuildStateFile>
+  </Target>
+
+
+  <Target Name="SetPropertiesFromContext">
+
+    <WaitForDebugger Wait="$(WaitForDebugger)" />
+
+    <GetPropertiesFromContext
+      ContextEndpoint="$(ContextEndpoint)"
+      ArtifactStagingDirectory="$(ArtifactStagingDirectory)">
+      <Output TaskParameter="IsDesktopBuild" PropertyName="IsDesktopBuild" />
+      <Output TaskParameter="BuildSystemDirectory" PropertyName="BuildSystemDirectory" />
+      <Output TaskParameter="BuildFlavor" PropertyName="BuildFlavor" />
+    </GetPropertiesFromContext>
+
+  </Target>
+
+
+  <Target Name="BuildAndPackage" DependsOnTargets="$(BuildAndPackageDependsOn)">
+  </Target>
+
+
+  <Target Name="GetAllDependencies"
+          Condition="'$(UseSharedDependencyDirectory)' == 'true' And '$(GetDependencies)' != 'false'">
+    <!--
+      We have an issue here.
+      The construction of a plan requires external files to be available before the plan generation takes place.
+      However the fetching of external files require that we know what build tree items are out of date.
+      To determine what build tree items are out of date we need the external files.
+
+      To work around this we assume all build tree items are going to contribute to the build always. This means
+      we always end up fetching more than is needed which is sub optimal.
+    -->
+    <Message Text="Getting dependencies for build." />
+
+    <Delete Files="$(SharedDependencyDirectory)paket.dependencies;$(SharedDependencyDirectory)paket.lock" />
+    
+    <ItemGroup>
+      <SharedPaketFiles Include="$(SolutionRoot)Build\shared.paket.dependencies;$(SolutionRoot)Build\paket.lock;" />
+    </ItemGroup>
+    
+    <Copy Condition="Exists('%(SharedPaketFiles.Identity)')"
+      SourceFiles="@(SharedPaketFiles)"
+      DestinationFolder="$(SharedDependencyDirectory)" />
+
+    <MakeDir
+      Condition="!Exists('$(SharedDependencyDirectory)packages)')"
+      Directories="$(SharedDependencyDirectory)packages" />
+
+    <GetDependencies
+      ProductManifest="$(ProductManifestPath)"
+      BranchConfigFile="$(BranchConfigFile)"
+      ModulesRootPath="$(SolutionRoot)"
+      DependenciesDirectory="$(SharedDependencyDirectory)"
+      DropPath="$(XamlBuildDropLocation)"
+      ModulesInBuild="@(DirectoriesInBuild)"
+      EnabledResolvers="@(EnabledResolvers)"
+      EnableVerboseLogging="$(PaketVerboseLogging)" />
+
+    <PropertyGroup>
+      <SolutionRootNoSlash>$(SolutionRoot.TrimEnd('\'))</SolutionRootNoSlash>
+    </PropertyGroup>
+
+    <MakeSymlink
+      Condition="'%(DirectoriesInBuild.FullPath)' != '$(SolutionRootNoSlash)'"
+      Link="%(DirectoriesInBuild.FullPath)\Dependencies"
+      Target="$(SharedDependencyDirectory)"
+      Type="D">
+        <Output TaskParameter="Link" ItemName="CreatedLinks" />
+    </MakeSymlink>
+
+    <MakeSymlink
+      Condition="'%(DirectoriesInBuild.FullPath)' != '$(SolutionRootNoSlash)'"
+      Link="%(DirectoriesInBuild.FullPath)\packages"
+      Target="$(SharedDependencyDirectory)packages"
+      FailIfLinkIsDirectoryWithContent="true"
+      Type="D">
+        <Output TaskParameter="Link" ItemName="CreatedLinks" />
+    </MakeSymlink>
+
+    <WriteLinesToFile File="$(SolutionRoot)CreatedLinks.txt" Lines="@(CreatedLinks)" />
+
+    <!--
+        TFS: 122744
+        We delete the cmsmsg files here. I don't think this is "correct" as it makes the build system
+        aware of what it's building but there is a frustrating interplay here. By deleting the msg file from
+        dependency directory it prevents the TextTranslator loading a message file while unit tests are running and then having those tests fail
+        as the tests are generally written to assume no message file is available and so don't expect to find translated strings.
+     -->
+    <ItemGroup>
+      <MessageFiles Include="$(SharedDependencyDirectory)\cmsmsg*.msg;" />
+    </ItemGroup>
+
+    <Delete Files="@(MessageFiles)" />
+  </Target>
+
+
+  <!--
+    ==========================================================================================
+    This target will build the projects in the plan
+    ==========================================================================================
+  -->
+  <Target Name="ExecutePlan">
+    <PowerShellScript Condition="'$(BUILD_REASON)' != 'PullRequest'"
+                      LogScript="false"
+                      ScriptFromResource="SetBuildTags" />
+
+    <PropertyGroup>
+      <WixProperties Condition="'$(UseWixShim)' == 'true' And '$(WixTargetsPath)' != ''">
+          UseWixShim=$(UseWixShim);
+          WixTargetsPath=$(WixTargetsPath)
+      </WixProperties>
+
+      <CommonBuildProperties>
+        BuildInParallel=true;
+        BuildNumber=$(BuildNumber);
+        BuildScriptsDirectory=$(BuildScriptsDirectory);
+        ProductManifestPath=$(ProductManifestPath);
+        BuildToolsDirectory=$(BuildToolsDirectory);
+        UseSharedDependencyDirectory=$(UseSharedDependencyDirectory);
+        SharedDependencyDirectory=$(SharedDependencyDirectory);
+        UpdateStagingDirectory=$(UpdateStagingDirectory);
+        BuildFlavor=$(BuildFlavor);
+        ArtifactStagingDirectory=$(ArtifactStagingDirectory);
+        CustomAfterMicrosoftCSharpTargets=$(CustomAfterMicrosoftCSharpTargets);
+        CustomBeforeMicrosoftCommonTargets=$(CustomBeforeMicrosoftCommonTargets);
+        CustomAfterMicrosoftCommonTargets=$(CustomAfterMicrosoftCommonTargets);
+        CompileBuildSystem=false;
+        $(WixProperties)
+      </CommonBuildProperties>
+    </PropertyGroup>
+
+    <Message Text="$(CommonBuildProperties)" />
+
+    <Error Condition="!Exists('$(BuildPlan)')" Text="Did not find $(BuildPlan) "/>
+
+    <MSBuild Projects="$(BuildPlan)"
+             Properties="$(CommonBuildProperties);BuildEnabled=true"
+             BuildInParallel="$(BuildInParallel)" />
+
+  </Target>
+
+
+  <PropertyGroup>
+    <PackageProductDependsOn>
+      GetFilesForPackage;
+      GetProduct;
+      AddCurrentBuildInfo;
+      GenerateFactory;
+      ArchiveArtifacts;
+      CleanBinariesBeforePackaging;
+      RunDeploymentCheck;
+    </PackageProductDependsOn>
+  </PropertyGroup>
+
+
+
+  <Target Name="GetFilesForPackage">
+    <PropertyGroup>
+      <ProductArchiveFileName Condition="'$(ProductArchiveFileName)' == ''">Binaries.zip</ProductArchiveFileName>
+      <ProductArchiveFile>$(ArtifactStagingDirectory)package\$(ProductArchiveFileName)</ProductArchiveFile>
+    </PropertyGroup>
+
+    <MakeDir Directories="$(LocalExpertBinariesDirectory)"
+             Condition="!Exists('$(LocalExpertBinariesDirectory)')" />
+
+    <GetArtifactPaths
+      IncludeGeneratedArtifacts="true">
+      <Output TaskParameter="ArtifactPaths" ItemName="LocalPackagePaths" />
+    </GetArtifactPaths>
+
+    <Message Text="Collected paths for package..." />
+    <Message Text="%(LocalPackagePaths.FullPath) -> %(DestinationSubDirectory)" />
+
+    <!--
+      Item lists cannot be concatenated with other strings so we need to fall back to CreateItem
+      to force msbuild to expand all the wildcard characters so to get real file paths
+    -->
+    <CreateItem Include="@(LocalPackagePaths->'%(FullPath)\**\**')" PreserveExistingMetadata="true">
+      <Output ItemName="LocalPackageFiles" TaskParameter="Include" />
+    </CreateItem>
+  </Target>
+
+
+  <Target Name="GetProduct" Condition="'$(GetProduct)' != 'false'">
+
+    <ItemGroup>
+      <FilesNotWanted Include="@(StateFiles)" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <!-- Subtract list of files not wanted -->
+      <LocalPackageFiles Remove="@(FilesNotWanted)" />
+    </ItemGroup>
+
+    <Exec ContinueOnError="false"
+          IgnoreExitCode="false"
+          Command="Powershell -NonInteractive -NoProfile &quot;&amp; { try { $(PackageScriptsDirectory)AssembleProduct.ps1 -productManifestPath $(ProductManifestPath) -binariesDirectory $(LocalExpertBinariesDirectory) } catch [Exception] { $Error[0] | Format-List -Force;throw } }&quot;"
+          WorkingDirectory="$(LocalExpertBinariesDirectory)" />
+
+    <Message Text="Updating product with outputs from this build..." />
+
+    <!--TODO: Should we teach GetProduct how to do this? What if we have crazy assembly rules we want to fire-->
+    <Copy SourceFiles="@(LocalPackageFiles)"
+          DestinationFiles="@(LocalPackageFiles->'$(ExpertSourceDirectory)%(DestinationSubDirectory)%(RecursiveDir)%(Filename)%(Extension)')"
+          UseHardlinksIfPossible="true">
+      <Output TaskParameter="DestinationFiles" ItemName="FileWrites" />
+    </Copy>
+
+    <CheckForDoubleWrites
+      FileList="@(FileWrites)"
+      CheckFileSize="true" />
+
+    <OnError ExecuteTargets="HandleGetProductError" />
+  </Target>
+
+
+  <Target Name="AddCurrentBuildInfo">
+
+    <PowerShellScript
+      Condition="'$(BUILD_BUILDID)' != ''"
+      ScriptBlock='
+$buildNumber = $Env:BUILD_BUILDID
+$shell = New-Object -ComObject "WScript.Shell"
+$shortcut = $Shell.CreateShortcut((Join-Path -Path "$(LocalExpertBinariesDirectory)" -ChildPath "Expert_Build_$buildNumber.url"))
+$shortcut.TargetPath = "$Env:SYSTEM_TEAMFOUNDATIONSERVERURI/$Env:SYSTEM_TEAMPROJECT/_build/index?buildId=$buildNumber&amp;_a=summary"
+$shortcut.Save()' />
+
+  </Target>
+
+
+  <Target Name="HandleGetProductError">
+    <Message Text="LocalPackageFiles:" />
+    <Message Text="%(LocalPackageFiles.FullPath)" />
+  </Target>
+
+
+  <Target Name="GenerateFactory" Condition="'$(GenerateFactory)' != 'false'">
+
+    <PropertyGroup>
+      <FactoryResourceGenerator>$(ExpertSourceDirectory)FactoryResourceGenerator.exe</FactoryResourceGenerator>
+    </PropertyGroup>
+
+    <Error Condition="!Exists('$(FactoryResourceGenerator)')" Text="The file $(FactoryResourceGenerator) does not exist" />
+
+    <Exec
+      Command="&quot;$(FactoryResourceGenerator)&quot; /v:+ /SuppressHeader /f:$(ExpertSourceDirectory) /of:$(ExpertSourceDirectory)Factory.bin"
+      WorkingDirectory="$(ExpertSourceDirectory)"
+      YieldDuringToolExecution="true"
+      IgnoreExitCode="false" />
+
+  </Target>
+
+
+  <Target Name="ArchiveArtifacts" Condition="'$(PackageProduct)' == 'true'">
+
+    <GenerateArchives
+      DirectoriesToArchive="@(LocalPackagePaths)"
+      OutputArchives="@(LocalPackagePaths -> '%(FullPath)\%(Filename)%(Extension).zip')"
+      ExcludeFilter="~"
+      CompressionLevel="$(CompressionLevel)">
+      <Output TaskParameter="ArchivedFiles" ItemName="ArtifactArchives" />
+    </GenerateArchives>
+
+    <Message Text="Build artifact: %(ArtifactArchives.FullPath)" />
+
+  </Target>
+
+
+  <Target Name="CleanBinariesBeforePackaging">
+  </Target>
+
+
+  <Target Name="RunDeploymentCheck" Condition="'$(IsDesktopBuild)' != 'true'">
+
+    <PropertyGroup>
+      <DeploymentCheck Condition="'$(DeploymentCheck)' == ''">$(ExpertSourceDirectory)Test\DeploymentCheck\DeploymentCheck.exe</DeploymentCheck>
+      <ErrorMessage>The product has failed validation against the role manifests. Refer to the RunDeploymentCheck section of the build log.</ErrorMessage>
+    </PropertyGroup>
+
+    <Exec Condition="Exists('$(DeploymentCheck)')"
+      Command="&quot;$(DeploymentCheck)&quot; ValidateRoleManifests $(ExpertSourceDirectory)"
+      ConsoleToMSBuild="true"
+      IgnoreExitCode="false">
+      <Output TaskParameter="ConsoleOutput" ItemName="DeploymentCheckResult" />
+    </Exec>
+
+    <OnError ExecuteTargets="PrintErrorMessage" />
+  </Target>
+
+
+  <Target Name="PrintErrorMessage">
+    <Error Text="##vso[task.logissue type=error]$(ErrorMessage) $(DeploymentCheckResult)" />
+  </Target>
+
+  <PropertyGroup>
+    <CompressionLevel Condition="'$(CompressionLevel)' == ''">Fastest</CompressionLevel>
+  </PropertyGroup>
+
+
+  <Target Name="PackageProduct" Condition="'$(PackageProduct)' == 'true'" DependsOnTargets="$(PackageProductDependsOn)">
+
+    <PropertyGroup>
+      <ExclusionFile>$(PackageScriptsDirectory)PackageExclusionListFile.txt</ExclusionFile>
+      <ExclusionFileSwitch Condition="Exists('$(ExclusionFile)')">-xr@$(ExclusionFile)</ExclusionFileSwitch>
+    </PropertyGroup>
+
+    <Exec Command='"$(BuildToolsDirectory)7z.exe" -bb1 a "$(ProductArchiveFile)" "$(LocalExpertBinariesDirectory)*" $(ExclusionFileSwitch)' />
+
+    <PropertyGroup>
+      <CreateArchiveHashScript>
+$hash = Get-FileHash -LiteralPath "$(ProductArchiveFile)" -Algorithm SHA1 -Verbose | Select-Object -ExpandProperty Hash
+$hash = $hash.ToLower()
+$fn = [System.IO.Path]::GetFileName("$(ProductArchiveFile)")
+Set-Content -LiteralPath "$(ProductArchiveFile).sha1" -Value "$hash  $fn"
+
+Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$hash" -Stream "sha1"
+Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -Stream "build-number"
+      </CreateArchiveHashScript>
+    </PropertyGroup>
+
+    <PowerShellScript ScriptBlock="$(CreateArchiveHashScript)" />
+
+  </Target>
+
+  <!--Package all files for an update/patch-->
+  <Target Name="ProduceUpdatePackage">
+
+    <PropertyGroup>
+      <UpdateArchiveFile>$(UpdateStagingDirectory)Update.zip</UpdateArchiveFile>
+    </PropertyGroup>
+
+    <Delete Files="$(UpdateArchiveFile)" />
+
+    <GenerateArchives
+      DirectoriesToArchive="$(UpdateStagingDirectory)"
+      OutputArchives="$(UpdateArchiveFile)"
+      CompressionLevel="$(CompressionLevel)"
+      CreateManifest="true">
+      <Output TaskParameter="ArchivedFiles" ItemName="ArtifactArchives" />
+    </GenerateArchives>
+
+    <ItemGroup>
+      <AdditionalArtifacts Include="$(UpdateArchiveFile)">
+        <ArtifactId>update</ArtifactId>
+        <ArtifactType>Branch</ArtifactType>
+      </AdditionalArtifacts>
+    </ItemGroup>
+
+  </Target>
+
+
+  <Target Name="CollectFilesForPublishing" DependsOnTargets="ProduceUpdatePackage">
+
+    <ItemGroup>
+      <AdditionalArtifacts Include="$(ProductArchiveFile)">
+        <ArtifactId>product</ArtifactId>
+        <ArtifactType>Branch</ArtifactType>
+      </AdditionalArtifacts>
+      <AdditionalArtifacts Include="$(ArtifactStagingDirectory)packages\*"
+        Condition="Exists('$(ArtifactStagingDirectory)packages')">
+        <ArtifactId>packages</ArtifactId>
+        <ArtifactType>Branch</ArtifactType>
+      </AdditionalArtifacts>
+    </ItemGroup>
+
+    <!-- ToDo: Update this to exclude directories for archived artifacts. -->
+    <CollectArtifactsForPublishing
+      ArtifactStagingDirectory="$(ArtifactStagingDirectory)"
+      Artifacts="@(AdditionalArtifacts)"
+      AllowNullScmBranch="$(AllowNullScmBranch)">
+      <Output TaskParameter="ArtifactPaths" ItemName="ArtifactPaths" />
+      <Output TaskParameter="LinkCommands" ItemName="LinkCommands" />
+    </CollectArtifactsForPublishing>
+
+    <!--Tell TFS about the new artifacts so it can manage them -->
+    <Message Text="Artifact association data..." />
+    <Message Text="%(LinkCommands.Identity)" />
+    <Message Text="Copy command: %(ArtifactPaths.FullPath) -> %(TargetPath)" />
+
+  </Target>
+
+
+  <Target Name="CopyToDrop" DependsOnTargets="CollectFilesForPublishing;CopyFilesToDrop" Condition="'$(CopyToDropEnabled)' == 'true' And '$(PrimaryDropLocation)' != ''">
+  </Target>
+
+
+  <Target Name="CopyFilesToDrop" Outputs="%(ArtifactPaths.TargetPath)">
+    <Error Condition="!Exists('%(ArtifactPaths.FullPath)')" Text="The path %(ArtifactPaths.FullPath) does not exist. This indicates a failure in artifact tracking." />
+
+    <PropertyGroup>
+      <ShowCopyToDropTarget>ShowCopyToDropLog</ShowCopyToDropTarget>
+
+      <CopyToDropCommand>
+        robocopy.exe "%(ArtifactPaths.FullPath)" "%(TargetPath)" %(ArtifactPaths.FileName)%(ArtifactPaths.Extension).zip Binaries.zip ExpertServerImage.zip *.nupkg *.metadata *.sha1 /MT /S /NDL /R:10 /NP /LOG:"$(ArtifactStagingDirectory)CopyToDrop.log" /TEE
+        IF %ERRORLEVEL% LEQ 4 EXIT /B 0
+      </CopyToDropCommand>
+    </PropertyGroup>
+
+    <Exec Command="$(CopyToDropCommand)"
+          WorkingDirectory="$(ArtifactStagingDirectory)" />
+
+    <CallTarget Targets="$(ShowCopyToDropTarget)" />
+    <OnError ExecuteTargets="$(ShowCopyToDropTarget)" />
+
+  </Target>
+
+
+  <Target Name="ShowCopyToDropLog">
+    <PowerShellScript ScriptBlock='Get-Content -LiteralPath "$(ArtifactStagingDirectory)CopyToDrop.log" | Write-Output' />
+  </Target>
+
+
+  <!--
+    ==========================================================================================c
+    Zip output
+    ==========================================================================================
+  -->
+  <Target Name="ZipProduct" BeforeTargets="Package" Condition="'$(NoMSBuildCommunityTasks)' != 'true'">
+
+    <PropertyGroup>
+      <LocalExpertBinariesDirectory>$(ArtifactStagingDirectory)</LocalExpertBinariesDirectory>
+      <ZipFileDirectory Condition="'$(ZipFileDirectory)' == ''">$(ArtifactStagingDirectory)</ZipFileDirectory>
+      <ZipFile>$(ZipFileDirectory)\ExpertBinaries.zip</ZipFile>
+      <EliteEnterpriseZipFile>$(ZipFileDirectory)\ExpertEEIntegrationBinaries.zip</EliteEnterpriseZipFile>
+      <LicenseZipFile>$(ZipFileDirectory)\LicenseGenerator.zip</LicenseZipFile>
+      <RegistrationZipFile>$(ZipFileDirectory)\RegistrationService.zip</RegistrationZipFile>
+      <EliteEnterpriseBinOverrideDirectory>$(LocalExpertBinariesDirectory)\ExpertSource\EEBin</EliteEnterpriseBinOverrideDirectory>
+    </PropertyGroup>
+
+    <Message Text="Zipping product files"/>
+
+    <!-- Create ItemGroup used in Zip task.-->
+    <ItemGroup>
+      <SharedExclusions
+        Include="$(LocalExpertBinariesDirectory)\ExpertSource\Internal\**\*.*;
+                 $(LocalExpertBinariesDirectory)\**\_PublishedWebsites\**\*;
+                 $(LocalExpertBinariesDirectory)\**\LexisNexis*.*;
+                 $(LocalExpertBinariesDirectory)\**\iManage*.*;
+                 $(LocalExpertBinariesDirectory)\**\System.dll*;
+                 $(LocalExpertBinariesDirectory)\**\System.Data.dll;
+                 $(LocalExpertBinariesDirectory)\**\System.Drawing*.dll;
+                 $(LocalExpertBinariesDirectory)\**\System.Windows.Forms*.dll;
+                 $(LocalExpertBinariesDirectory)\**\System.Xml*dll*;
+                 $(LocalExpertBinariesDirectory)\**\Microsoft.TeamFoundation.*dll*;
+                 $(LocalExpertBinariesDirectory)\**\*UnitTest*;
+                 $(LocalExpertBinariesDirectory)\**\TestLicenseRegistration*;
+                 $(LocalExpertBinariesDirectory)\**\*CodeAnalysis*;
+                 $(LocalExpertBinariesDirectory)\**\*.deploy.cmd;
+                 $(LocalExpertBinariesDirectory)\**\*.deploy-readme.txt;
+                 $(LocalExpertBinariesDirectory)\**\*.SetParameters.*;
+                 $(LocalExpertBinariesDirectory)\**\*.BuildInfo.config;
+                 $(LocalExpertBinariesDirectory)\**\DropFolderBuildNumbers.txt;" />
+
+      <!-- Group of the roles shared between expert and elite -->
+      <SharedRoles
+        Include="$(LocalExpertBinariesDirectory)\**\commonapplications.role.xml;
+                 $(LocalExpertBinariesDirectory)\**\configuration.role.xml;
+                 $(LocalExpertBinariesDirectory)\**\customworkflows.role.xml;
+                 $(LocalExpertBinariesDirectory)\**\firmcontrol.role.xml;
+                 $(LocalExpertBinariesDirectory)\**\messaging.role.xml;
+                 $(LocalExpertBinariesDirectory)\**\notes.role.xml;
+                 $(LocalExpertBinariesDirectory)\**\queryservice.role.xml;
+                 $(LocalExpertBinariesDirectory)\**\security.role.xml;
+                 $(LocalExpertBinariesDirectory)\**\webcore.role.xml;
+                 $(LocalExpertBinariesDirectory)\**\workflow.role.xml;
+                 $(LocalExpertBinariesDirectory)\**\workflowauthoring.role.xml" />
+
+      <!-- Group of the roles that should be elite only -->
+      <EliteRoles
+        Include="$(LocalExpertBinariesDirectory)\**\eliteintegration.role.xml;
+                 $(LocalExpertBinariesDirectory)\**\matterplanningelite.role.xml" />
+
+      <!-- Create a group of roles to exclude from elite (all roles minus the elite roles and shared roles) -->
+      <EliteRoleExclusions
+        Include="$(LocalExpertBinariesDirectory)\**\*.role.xml"
+        Exclude="@(SharedRoles);@(EliteRoles)"/>
+
+      <EliteOverrideFiles Include="$(EliteEnterpriseBinOverrideDirectory)\**\*.*" />
+
+      <EliteDocuments Include="$(LocalExpertBinariesDirectory)\Elite Documentation\**\*.*"/>
+      <Documents Include="$(LocalExpertBinariesDirectory)\Documentation\**\*.*"/>
+
+      <ZipSourceFiles
+        Include="$(LocalExpertBinariesDirectory)\**\*.*"
+        Exclude="@(SharedExclusions);@(EliteRoles);@(EliteOverrideFiles);@(EliteDocuments)" />
+      <ZipLicenseGeneratorFiles
+        Include="$(LocalExpertBinariesDirectory)\ExpertSource\Internal\LicenseGenerator\*.*" />
+      <ZipRegistrationServiceFiles
+        Include="$(LocalExpertBinariesDirectory)\ExpertSource\Internal\RegistrationService\*.*" />
+    </ItemGroup>
+
+    <MakeDir
+      Directories="$(ZipFileDirectory)"/>
+
+    <!-- Create ZIP for ExpertSource -->
+    <MSBuild.Community.Tasks.Zip
+      Files="@(ZipSourceFiles)"
+      ZipFileName="$(ZipFile)"
+      WorkingDirectory="$(LocalExpertBinariesDirectory)"
+      ParallelCompression="false" />
+
+    <!-- Replace files in ExpertSource with the Elite bin folder overrides, used for things like message files and help. -->
+    <!--
+    <Copy
+      SourceFiles="@(EliteOverrideFiles)"
+      DestinationFiles="@(EliteOverrideFiles->'$(LocalExpertBinariesDirectory)\ExpertSource\%(RecursiveDir)%(Filename)%(Extension)')" />
+
+    -->
+    <!-- Essentially rename Elite.Help to Expert.Help -->
+    <!--
+    <Copy
+      SourceFiles="$(LocalExpertBinariesDirectory)\ExpertSource\Help\Elite.Help.sfx"
+      DestinationFiles="$(LocalExpertBinariesDirectory)\ExpertSource\Help\Expert.Help.sfx" />
+
+    <Delete
+      Files="$(LocalExpertBinariesDirectory)\ExpertSource\Help\Elite.Help.sfx" />
+
+    -->
+    <!-- Move the Elite specific docs into the Documents folder-->
+    <!--
+    <Delete
+      Files="@(Documents)" />
+
+    <Copy
+      SourceFiles="@(EliteDocuments)"
+      DestinationFiles="@(EliteDocuments->'$(LocalExpertBinariesDirectory)\Documentation\%(RecursiveDir)%(Filename)%(Extension)')" />
+
+    -->
+    <!-- This item group must go after the copy so that any moved files are included -->
+    <!--
+    <ItemGroup>
+      <ZipEliteEnterpriseSourceFiles
+        Include="$(LocalExpertBinariesDirectory)\**\*.*"
+        Exclude="@(SharedExclusions);@(EliteRoleExclusions);@(EliteDocuments)" />
+    </ItemGroup>
+
+    -->
+    <!-- Create ZIP for Elite Enterprise ExpertSource -->
+    <!--
+    <MSBuild.Community.Tasks.Zip
+      Files="@(ZipEliteEnterpriseSourceFiles)"
+      ZipFileName="$(EliteEnterpriseZipFile)"
+      WorkingDirectory="$(LocalExpertBinariesDirectory)"
+      ParallelCompression="false" />
+
+    -->
+    <!-- Create ZIP for LicenseGenerator -->
+    <!--
+    <MSBuild.Community.Tasks.Zip
+      Files="@(ZipLicenseGeneratorFiles)"
+      ZipFileName="$(LicenseZipFile)"
+      WorkingDirectory="$(LocalExpertBinariesDirectory)\ExpertSource\Internal\LicenseGenerator"
+      ParallelCompression="false" />
+
+    -->
+    <!-- Create ZIP for RegistrationService -->
+    <!--
+    <MSBuild.Community.Tasks.Zip
+      Files="@(ZipRegistrationServiceFiles)"
+      ZipFileName="$(RegistrationZipFile)"
+      WorkingDirectory="$(LocalExpertBinariesDirectory)\ExpertSource\Internal\RegistrationService"
+      ParallelCompression="false" />
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true')"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildUri)"
+      Id="$(BuildStepId)"
+      Status="Succeeded" />
+
+    <OnError ExecuteTargets="MarkBuildStepAsFailed" />-->
+  </Target>
+
+</Project>

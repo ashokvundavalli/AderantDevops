@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<DependencyManifest>
+  <ReferencedModules>
+    <ReferencedModule Name="Build.T4Task" TreatAsDependency="true" />
+  </ReferencedModules>
+</DependencyManifest>

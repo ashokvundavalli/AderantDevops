@@ -1,173 +1,158 @@
 ﻿param (
-    [Parameter(Mandatory=$true)][string]$moduleName,
+    [Parameter(Mandatory=$false, Position=0)][string]$moduleName,
     [Parameter(Mandatory=$false)][string]$tfsDirectory = "C:\TFS\ExpertSuite",
     [Parameter(Mandatory=$false)][string]$branchName = "Dev/vnext",
     [Parameter(Mandatory=$false)][string]$stagingDirectory = "C:\Temp\Staging",
     [Parameter(Mandatory=$false)][int]$changeSet,
-    [switch]$gitIgnore,
-    [switch]$restoreBrances
+    [switch]$restoreBranches,
+    [switch]$listBranches,
+    [switch]$skipBranchManipulation
 )
 
 begin {
     Set-StrictMode -Version Latest
+    $ErrorActionPreference = 'Stop'
 
-    function Restore-Branches {
+    [string]$tfsUrl = "http://tfs.$($Env:USERDNSDOMAIN.ToLowerInvariant()):8080/tfs/"
+
+    function Restore-Folders {
         param (
-            [Parameter(Mandatory=$true)][string[]]$branches,
-            [Parameter(Mandatory=$true)][string]$moduleName
+            [Parameter(Mandatory=$true)][string[]]$branches
         )
 
         foreach ($branch in $branches) {
             try {
-                Write-Output y|tfpt branches /convertToFolder "$/ExpertSuite/$branch/Modules/$moduleName"
+                Write-Output 'Y' | TFPT.exe branches /convertToFolder "$/ExpertSuite/$branch/Modules" /collection:$tfsUrl
+                Start-Sleep -Milliseconds 300 # TFPT does not support prompt suppression.
             } catch {
             }
         }
-    
+    }
+
+    function Restore-Branches {
+        param (
+            [Parameter(Mandatory=$true)][System.Collections.ArrayList]$branches,
+            [Parameter(Mandatory=$false)][string]$moduleName
+        )
+
+        if (-not [string]::IsNullOrWhiteSpace($moduleName)) {
+            foreach ($branch in $branches) {
+                try {
+                    Write-Output 'Y' | TFPT.EXE branches /convertToFolder "$/ExpertSuite/$branch/Modules/$moduleName" /collection:$tfsUrl
+                    Start-Sleep -Milliseconds 300 # TFPT does not support prompt suppression.
+                } catch {
+                }
+            }
+        }
+
         foreach ($branch in $branches) {
             try {
-                Write-Output y|tfpt branches /convertToBranch "$/ExpertSuite/$branch/Modules" /recursive
+                Write-Output 'Y' | TFPT.EXE branches /convertToBranch "$/ExpertSuite/$branch/Modules" /recursive /collection:$tfsUrl
+                Start-Sleep -Milliseconds 300 # TFPT does not support prompt suppression.
             } catch {
+            }
+        }
+    }
+}
+
+process {
+    if ($listBranches.IsPresent) {
+        [System.Collections.ArrayList]$rootBranches = [System.Collections.ArrayList]::new()
+
+        [string[]]$results = TFPT.EXE Branches /listBranches:roots
+
+        for ([int]$i = 1; $i -lt $results.Count; $i++) {
+            if ($results[$i].IndexOf('$/ExpertSuite') -ne -1) {
+                $rootBranches.Add($results[$i].TrimStart()) | Out-Null
+            }
+        }
+
+        if ($rootBranches.Count -eq 0) {
+            Write-Output "No TFVC root branches for ExpertSuite found."
+            exit 0
+        }
+
+        Write-Output "TFVC root branches:"
+        foreach ($branch in $rootBranches) {
+            Write-Output "`t$branch"
+        }
+
+        exit 0
+    }
+
+    [System.Collections.ArrayList]$branches = [System.Collections.ArrayList]::new()
+    $branches.Add('Main') | Out-Null
+    [System.Collections.ArrayList]$deletedBranches = [System.Collections.ArrayList]::new()
+
+    [string[]]$searchPaths = @('Dev', 'Releases')
+
+    foreach ($searchPath in $searchPaths) {
+        [string[]]$results = TF.exe vc dir "$/ExpertSuite/$searchPath" /deleted
+
+        for ([int]$i = 1; $i -lt $results.Length - 2; $i++) {
+            if ($results[$i].IndexOf(';') -ne -1) {
+                $deletedBranches.Add("$searchPath/$($results[$i].TrimStart().Replace('$', '').Split(';')[0])") | Out-Null
+            } else {
+                $branches.Add("$searchPath/$($results[$i].TrimStart().Replace('$', ''))") | Out-Null
             }
         }
     }
 
     Push-Location -Path $tfsDirectory
 
-    [string[]]$branches = @(
-        "Main",
-        "Dev/801Time",
-        "Dev/802Grad",
-        "Dev/81Expert+",
-        "Dev/83GA",
-        "Dev/Automation",
-        "Dev/BillingBase",
-        "Dev/CaseV1",
-        "Dev/CaseV1ATL",
-        "Dev/ComputedColumns",
-        "Dev/CRTVNext",
-        "Dev/EmployeeIntake",
-        "Dev/Eureka",
-        "Dev/FrameworkNext",
-        "Dev/MP2",
-        "Dev/OTG",
-        "Dev/Packaging",
-        "Dev/PerformanceTest",
-        "Dev/PM",
-        "Dev/QueryService",
-        "Dev/ServiceSimplification",
-        "Dev/Simplification",
-        "Dev/Stability",
-        "Dev/Startup",
-        "Dev/TaskActions",
-        "Dev/TestAutomation",
-        "Dev/Time81",
-        "Dev/TitanSmartForm",
-        "Dev/TitanTime",
-        "Dev/UnicodeComply",
-        "Dev/Upgrade461",
-        "Dev/UXToolkit",
-        "Dev/vnext",
-        "Dev/VS2010",
-        "Dev/Workflow",
-        "Dev/WorkflowData",
-        "Releases/8003",
-        "Releases/8003Patch",
-        "Releases/8004Patch",
-        "Releases/800Hotfix",
-        "Releases/800Patch",
-        "Releases/8011NRF",
-        "Releases/8011Patch",
-        "Releases/801Patch",
-        "Releases/801x",
-        "Releases/8021Atkinsons",
-        "Releases/8021Patch",
-        "Releases/8021SM",
-        "Releases/802Patch",
-        "Releases/802x",
-        "Releases/802xEE",
-        "Releases/8030TaylorWessing",
-        "Releases/8031Patch",
-        "Releases/8032Allens",
-        "Releases/8032Deloitte",
-        "Releases/8032GibsonDunn",
-        "Releases/8032HSF",
-        "Releases/8033Patch",
-        "Releases/8034Patch",
-        "Releases/803x",
-        "Releases/80ServicePack",
-        "Releases/8101Patch",
-        "Releases/8102Patch",
-        "Releases/8110Cleary",
-        "Releases/8110Patch",
-        "Releases/8110Patch2834b",
-        "Releases/811x",
-        "Releases/81x",
-        "Releases/81xHotfix",
-        "Releases/8200Update",
-        "Releases/82x",
-        "Releases/Appstore",
-        "Releases/BurgesSalmon8021",
-        "Releases/CC801Patch",
-        "Releases/GGSP1RTM",
-        "Releases/GGSP2HF01GENU2185",
-        "Releases/GGSP4",
-        "Releases/GGSP4HF01GENU2176",
-        "Releases/GGSP4HF02GENU",
-        "Releases/GGSP4HF03GENU",
-        "Releases/GGSP4HF04GENU",
-        "Releases/GGSP4HF05GENU",
-        "Releases/GGSP4HF1Genu",
-        "Releases/GGSP4Hotfix",
-        "Releases/MatterPlanning"
-    )
-}
-
-process {
-    if ($restoreBrances.IsPresent) {
+    if ($restoreBranches.IsPresent) {
         Restore-Branches -branches $branches -moduleName $moduleName
-        return
+        Restore-Branches -branches $deletedBranches -moduleName $moduleName
+        exit 0
     }
 
-    foreach ($existingBranch In TFPT.EXE Branches /listBranches:roots) {
-        $existingBranch = $existingBranch.TrimStart()
+    if (-not $skipBranchManipulation.IsPresent) {
+        Restore-Folders -branches $branches
+        Restore-Folders -branches $deletedBranches
 
-        If ($existingBranch.StartsWith("$/ExpertSuite")) {
-            Write-Output y|tfpt branches /convertToFolder $($existingBranch)
+        foreach ($existingBranch In TFPT.EXE Branches /listBranches:roots) {
+            $existingBranch = $existingBranch.TrimStart()
+
+            If ($existingBranch.StartsWith("$/ExpertSuite")) {
+                Write-Output 'Y' | TFPT.EXE branches /convertToFolder $existingBranch
+                Start-Sleep -Milliseconds 300 # TFPT does not support prompt suppression.
+            }
+        }
+
+        foreach ($branch in $branches) {
+            try {
+                Write-Output 'Y' | TFPT.EXE branches /convertToBranch "$/ExpertSuite/$branch/Modules/$moduleName" /recursive /collection:$tfsUrl
+                Start-Sleep -Milliseconds 300 # TFPT does not support prompt suppression.
+            } catch {
+            }
         }
     }
 
-    foreach ($branch in $branches) {
-        try {
-            Write-Output y|tfpt branches /convertToBranch "$/ExpertSuite/$branch/Modules/$($moduleName)" /recursive
-        } catch {
-        }
-    }
-
-    Write-Host "Using staging directory: $stagingDirectory"
+    Write-Output "Using staging directory: $stagingDirectory"
     Set-Location -Path $stagingDirectory
 
     [System.Collections.ArrayList]$parameters = @(
         "--resumable",
         "http://tfs:8080/tfs/Aderant",
-        "$/ExpertSuite/$($branchName)/Modules/$($moduleName)",
+        "$/ExpertSuite/$($branchName)/Modules/$moduleName",
         "$($stagingDirectory)\$($moduleName)",
-        "--batch-size=50"        
+        "--batch-size=50"
     )
 
     if ($changeSet -ne 0) {
         [Void]$parameters.Add("--changeset=$changeSet")
     }
 
-    if ($gitIgnore.IsPresent) {
+    if (Test-Path -Path "$stagingDirectory\.gitignore") {
         [Void]$parameters.Add("--gitignore=`"$stagingDirectory\.gitignore`"")
     }
 
-    git-tfs.exe clone @parameters
+    try {
+        git-tfs.exe clone @parameters
+    } finally {
+        Restore-Branches -branches $branches -moduleName $moduleName
+        Restore-Branches -branches $deletedBranches -moduleName $moduleName
 
-    Restore-Branches -branches $branches -moduleName $moduleName
-}
-
-end {
-    Pop-Location
+        Pop-Location
+    }
 }
