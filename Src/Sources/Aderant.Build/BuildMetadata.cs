@@ -1,4 +1,5 @@
 ﻿using System.Runtime.Serialization;
+using Aderant.Build.Annotations;
 using ProtoBuf;
 
 namespace Aderant.Build {
@@ -55,6 +56,7 @@ namespace Aderant.Build {
         [DataMember]
         public string BuildSourcesDirectory { get; set; }
 
+        [UsedImplicitly]
         public void SetPullRequestInfo(string id, string sourceBranch, string targetBranch) {
             if (id == null) {
                 return;

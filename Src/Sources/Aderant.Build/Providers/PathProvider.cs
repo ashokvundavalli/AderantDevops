@@ -1,41 +1,9 @@
 using System;
 using System.Globalization;
 using System.IO;
-using System.Linq;
-using Aderant.Build.DependencyAnalyzer;
 
 namespace Aderant.Build.Providers {
     internal static class PathHelper {
-        /// <summary>
-        /// Gets the module dependencies directory.
-        /// </summary>
-        /// <param name="branchPath">The branch path.</param>
-        /// <param name="expertModule">The expert module.</param>
-        /// <returns></returns>
-        public static string GetModuleDependenciesDirectory(string branchPath, ExpertModule expertModule) {
-            if (!branchPath.EndsWith("Modules", StringComparison.OrdinalIgnoreCase)) {
-                branchPath = Path.Combine(branchPath, "Modules");
-            }
-
-            return Path.Combine(branchPath, expertModule.Name, "Dependencies");
-        }
-
-        /// <summary>
-        /// Gets the module output directory.
-        /// </summary>
-        /// <param name="branchPath">The branch path.</param>
-        /// <param name="expertModule">The expert module.</param>
-        /// <returns></returns>
-        public static string GetModuleOutputDirectory(string branchPath, ExpertModule expertModule) {
-            if (!branchPath.EndsWith("Modules", StringComparison.OrdinalIgnoreCase)) {
-                branchPath = Path.Combine(branchPath, "Modules");
-            }
-
-            if (expertModule.ModuleType == ModuleType.ThirdParty || expertModule.ModuleType == ModuleType.Help) {
-                return Path.Combine(branchPath, expertModule.Name, "Bin");
-            }
-            return Path.Combine(branchPath, expertModule.Name, "Bin", "Module");
-        }
 
         public static string GetBranch(string path, bool throwOnNotFound) {
             return GetBranchInternal(path, false);
@@ -92,34 +60,6 @@ namespace Aderant.Build.Providers {
             }
 
             return Path.Combine(part1, part2 ?? string.Empty);
-        }
-
-        /// <summary>
-        /// Gets the path to the module build order project file from the module root.
-        /// </summary>
-        /// <value>
-        /// The path to module build.
-        /// </value>
-        public static string PathToBuildOrderProject {
-            get { return @"Modules.proj"; }
-        }
-
-        /// <summary>
-        /// Gets the name of the module from a given server path. 
-        /// </summary>
-        /// <param name="serverItem">The server item.</param>
-        /// <returns></returns>
-        /// <exception cref="System.ArgumentOutOfRangeException">serverItem;Must start with $</exception>
-        public static string GetModuleName(string serverItem) {
-            if (serverItem.TrimStart('/').StartsWith("$")) {
-                string substring = serverItem.Substring(serverItem.IndexOf("modules", StringComparison.OrdinalIgnoreCase));
-
-                if (substring.Contains('/')) {
-                    return substring.Split('/').Last();
-                }
-                return null;
-            }
-            throw new ArgumentOutOfRangeException("serverItem", "Must start with $");
         }
 
         public static string ChangeBranch(string dropLocationDirectory, string otherBranch) {

@@ -1,7 +1,5 @@
 using System;
 using System.Diagnostics;
-using System.Linq;
-using Aderant.Build.Versioning;
 
 namespace Aderant.Build.Packaging {
     public class FileVersionDescriptor {
@@ -30,36 +28,5 @@ namespace Aderant.Build.Packaging {
 
         public Version AssemblyVersion { get; private set; }
 
-        public SemanticVersion GetSemanticVersion() {
-            string fileVersion = null;
-            if (!string.IsNullOrEmpty(FileVersion)) {
-                fileVersion = CanonicalizeFileVersion();
-            }
-
-            if (AssemblyVersion != null) {
-                Version parsedVersion;
-                if (Version.TryParse(fileVersion, out parsedVersion)) {
-                    Version highestVersion = new Version[] {parsedVersion, AssemblyVersion}.Max();
-
-                    return new SemanticVersion(highestVersion);
-                } else {
-                    return new SemanticVersion(AssemblyVersion);
-                }
-            }
-
-            if (!string.IsNullOrEmpty(fileVersion)) {
-                Version parsedVersion;
-                if (Version.TryParse(fileVersion, out parsedVersion)) {
-                    return new SemanticVersion(parsedVersion);
-                }
-            }
-
-            return null;
-        }
-
-        private string CanonicalizeFileVersion() {
-            var canonicalizer = new VersionParser();
-            return canonicalizer.ParseVersion(FileVersion);
-        }
     }
 }

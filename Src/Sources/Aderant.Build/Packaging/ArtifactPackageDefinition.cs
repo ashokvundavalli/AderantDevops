@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using Aderant.Build.Model;
-using Aderant.Build.ProjectSystem.References;
 
 namespace Aderant.Build.Packaging {
     internal class ArtifactPackageDefinition : IArtifact {
@@ -27,14 +25,7 @@ namespace Aderant.Build.Packaging {
 
         public string Id { get; }
 
-        // Match "test" or "tests" at the start or end of the phrase
-        public static Regex MatchRegex = new Regex("test[s]?\\.|\\.test[s]?", RegexOptions.IgnoreCase);
-
         public IReadOnlyCollection<IDependable> GetDependencies() {
-            return null;
-        }
-
-        public IResolvedDependency AddResolvedDependency(IUnresolvedDependency unresolvedDependency, IDependable dependable) {
             return null;
         }
 
@@ -53,7 +44,7 @@ namespace Aderant.Build.Packaging {
                 foreach (var path in trimPaths) {
                     if (fullPath.StartsWith(path, StringComparison.OrdinalIgnoreCase)) {
                         outputRelativePath = fullPath.Remove(0, path.Length);
-                        useHardLinks = null; 
+                        useHardLinks = null;
                         break;
                     }
                 }

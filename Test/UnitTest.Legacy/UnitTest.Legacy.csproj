@@ -57,11 +57,5 @@
     <Compile Include="Legacy\ExpertBuildConfigurationTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\Sources\Aderant.Build.TeamFoundation\Aderant.Build.TeamFoundation.csproj">
-      <Project>{bd56b34b-db85-4154-a560-0bc1fe6386da}</Project>
-      <Name>Aderant.Build.TeamFoundation</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

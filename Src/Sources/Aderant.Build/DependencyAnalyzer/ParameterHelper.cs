@@ -1,8 +1,6 @@
 using System;
-using System.Globalization;
 using System.IO;
 using System.Management.Automation;
-using System.Xml.Linq;
 using Aderant.Build.Providers;
 
 namespace Aderant.Build.DependencyAnalyzer {
@@ -84,31 +82,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         /// <summary>
-        /// Gets the value of the $BranchName variable
-        /// </summary>
-        /// <param name="state">The state.</param>
-        /// <returns></returns>
-        /// <exception cref="System.ArgumentException">There must be a variable $BranchName in the current host session.</exception>
-        public static string GetBranchName(SessionState state) {
-            var branchName = state.PSVariable.GetValue("BranchName", string.Empty).ToString();
-
-            if (string.IsNullOrEmpty(branchName)) {
-                throw new ArgumentException("There must be a variable $BranchName in the current host session.");
-            }
-
-            string[] parts = branchName.Split('\\');
-
-            if (parts.Length == 1) {
-                return parts[0];
-            }
-
-            string location = parts[0];
-            string upper = char.ToUpper(location[0]).ToString(CultureInfo.InvariantCulture);
-
-            return string.Concat(upper + location.Substring(1, location.Length - 1), @"\", parts[1]);
-        }
-
-        /// <summary>
         /// Gets the value of the $BranchModulesDirectory variable
         /// </summary>
         /// <param name="branchModulePath"></param>
@@ -141,16 +114,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             return Path.Combine(currentDrop.Replace(currentBranch, string.Empty), targetBranch);
-        }
-
-        public static XDocument GetEnvironmentManifest(string branchBinariesPath) {
-            string environmentManifestPath = Path.Combine(branchBinariesPath, "environment.xml");
-            if (!File.Exists(environmentManifestPath)) {
-                throw new FileNotFoundException("Could not find the environment file for the current branch", environmentManifestPath);
-            }
-
-            XDocument environment = XDocument.Load(environmentManifestPath);
-            return environment;
         }
 
         public static string GetExpertManifestPath(string productManifestPath, SessionState sessionState) {

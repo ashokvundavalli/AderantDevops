@@ -83,14 +83,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        public string Save(DependencyManifest dependencyManifest, XDocument manifest) {
-            XElement modules = Save(dependencyManifest.ReferencedModules, false);
-
-            ReplaceElement(manifest, modules, "ReferencedModules");
-
-            return SaveDocument(manifest);
-        }
-
         private string SaveDocument(XDocument document) {
             XmlWriterSettings settings = new XmlWriterSettings();
             settings.Indent = true;
@@ -189,14 +181,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (expertModule.GetAction == GetAction.NuGet) {
                 expertModule.RepositoryType = RepositoryType.NuGet;
             }
-        }
-
-        private static TEnum ParseEnum<TEnum>(string value) where TEnum : struct {
-            TEnum result;
-            if (Enum.TryParse(value, out result)) {
-                return result;
-            }
-            return result;
         }
 
         private static bool ToBoolean(string value) {

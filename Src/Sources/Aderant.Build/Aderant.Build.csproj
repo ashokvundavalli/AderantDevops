@@ -258,8 +258,6 @@
     <Compile Include="Services\IContextualServiceProvider.cs" />
     <Compile Include="Services\CompositionProperties.cs" />
     <Compile Include="Constants.cs" />
-    <Compile Include="BuildInfrastructureHelper.cs" />
-    <Compile Include="BuildSummary.cs" />
     <Compile Include="BuildMetadata.cs" />
     <Compile Include="BuildOperationContext.cs" />
     <Compile Include="Services\ServiceContainer.cs" />

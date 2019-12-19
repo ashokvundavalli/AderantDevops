@@ -34,10 +34,6 @@ namespace Aderant.Build.Providers {
             return false;
         }
 
-        public bool TryGetDependencyManifestPath(string moduleName, out string manifestPath) {
-            throw new NotImplementedException();
-        }
-
         public bool IsAvailable(string moduleName) {
             throw new NotImplementedException();
         }

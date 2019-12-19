@@ -29,15 +29,6 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         XDocument BuildDgmlDocument(bool includeBuilds, bool restrictToModulesInBranch);
 
-        /// <summary>
-        /// Gets the dependency tree.
-        /// </summary>
-        /// <param name="restrictToModulesInBranch">if set to <c>true</c> restricts the analysis to modules in the current branch.</param>
-        /// <returns></returns>
-        /// <exception cref="CircularDependencyException">Whe a a circular dependency between following modules is detected</exception>
-        IEnumerable<Build> GetTree(bool restrictToModulesInBranch);
-
-        ICollection<ExpertModule> GetDownstreamModules(ICollection<ExpertModule> modules);
     }
 
     public class DependencyBuilder : IDependencyBuilder {
@@ -362,19 +353,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        public bool TryGetTree(bool restrictToModulesInBranch, out IEnumerable<Build> tree, out ICollection<string> conflicts) {
-            conflicts = null;
-            tree = null;
-
-            try {
-                tree = GetTree(restrictToModulesInBranch);
-                return true;
-            } catch (CircularDependencyException ex) {
-                conflicts = ex.Conflicts;
-                return false;
-            }
-        }
-
         /// <summary>
         /// Gets the dependency tree.
         /// </summary>
@@ -383,46 +361,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <exception cref="CircularDependencyException">When a circular dependency between following modules is detected</exception>
         public IEnumerable<Build> GetTree(bool restrictToModulesInBranch) {
             return null;
-        }
-
-        private static IEnumerable<Build> GetBuildGroups(Queue<ExpertModule> sortedQueue, IEnumerable<ModuleDependency> dependencies) {
-            // Now find critical path...
-            // What we do here is iterate the sorted list looking for elements with no dependencies. These are the zero level modules.
-            // Then we iterate again and check if the module depends on any of the zero level modules but not on anything else. These are the
-            // level 1 elements. Then we iterate again and check if the module depends on any of the 0 or 1 level modules etc.
-            // This places modules into levels which allows for maximum parallelism based on dependency.
-            IDictionary<int, HashSet<ExpertModule>> levels = new Dictionary<int, HashSet<ExpertModule>>();
-
-            int i = 0;
-            while (sortedQueue.Count > 0) {
-                ExpertModule expertModule = sortedQueue.Peek();
-
-                IEnumerable<ModuleDependency> moduleDependencies = dependencies.Where(m => m.Consumer.Equals(expertModule));
-
-                if (!levels.ContainsKey(i)) {
-                    levels[i] = new HashSet<ExpertModule>();
-                }
-
-                bool add = true;
-                foreach (ModuleDependency dependency in moduleDependencies) {
-                    if (levels[i].Any(module => dependency.Provider.Equals(module))) {
-                        add = false;
-                    }
-                }
-
-                if (add) {
-                    levels[i].Add(expertModule);
-                    sortedQueue.Dequeue();
-                } else {
-                    i++;
-                }
-            }
-
-            return levels.Select(
-                level => new Build {
-                    Modules = level.Value,
-                    Order = level.Key
-                });
         }
 
         public ICollection<ExpertModule> GetDownstreamModules(ICollection<ExpertModule> modules) {
