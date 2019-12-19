@@ -178,7 +178,6 @@
       <ExcludePaths Include="Tests.Query\" />
       <ExcludePaths Include="MomentumFileOpening\" />
       <ExcludePaths Include="Performance.ExpertSuite\" />
-      <ExcludePaths Include="Tests.Customization\" />
       <ExcludePaths Include="Aderant.ExpertIntegration.iManage\" />
       <!-- Has stuff we can't build - missing third party libs-->
       <ExcludePaths Include="Workflow.Integration.Samples\" />
