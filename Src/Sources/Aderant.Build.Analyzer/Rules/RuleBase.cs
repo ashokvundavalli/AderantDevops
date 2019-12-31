@@ -237,6 +237,26 @@ namespace Aderant.Build.Analyzer.Rules {
             return false;
         }
 
+        /// <summary>
+        /// Unwraps the parenthesized expression.
+        /// </summary>
+        /// <param name="node">The node.</param>
+        protected static SyntaxNode UnwrapParenthesizedExpression(SyntaxNode node) {
+            if (!(node is ParenthesizedExpressionSyntax)) {
+                return node;
+            }
+
+            var currentNode = (ParenthesizedExpressionSyntax)node;
+
+            while (true) {
+                if (currentNode.Expression is ParenthesizedExpressionSyntax) {
+                    currentNode = (ParenthesizedExpressionSyntax)currentNode.Expression;
+                } else {
+                    return currentNode.Expression;
+                }
+            }
+        }
+
         #endregion Methods
 
         #region Methods: Auto Suppression

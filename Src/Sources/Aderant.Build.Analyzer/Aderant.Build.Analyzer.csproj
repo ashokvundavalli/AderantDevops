@@ -75,7 +75,7 @@
   <ItemGroup>
     <Compile Include="AnalyzerCategory.cs" />
     <Compile Include="ClassExtensions.cs" />
-    <Compile Include="CodeFixes\AderantQueryServiceMigrationCodeFix.cs" />
+    <Content Include="CodeFixes\AderantQueryServiceMigrationCodeFix.cs" />
     <Compile Include="CodeFixes\SessionTransactionFix.cs" />
     <Compile Include="CodeFixes\SetPropertyValueNoStringFix.cs" />
     <Compile Include="CodeFixes\PropertyChangedNoStringFix.cs" />
@@ -95,14 +95,12 @@
     <Compile Include="Rules\IDisposable\IDisposableRuleTypes.cs" />
     <Compile Include="Rules\NHibernateRetrieveTypeNotInterfaceRule.cs" />
     <Compile Include="Rules\QueryServiceQueryAllRule.cs" />
-    <Compile Include="Rules\SqlInjectionRuleBase.cs" />
     <Compile Include="Rules\SqlInjectionErrorRule.cs" />
     <Compile Include="Lists\SQLInjection\SQLInjectionBlacklists.cs" />
     <Compile Include="Lists\SQLInjection\SQLInjectionWhitelists.cs" />
-    <Compile Include="CodeFixes\LowerCaseTypesCodeFix.cs" />
     <Compile Include="Refactorings\MakeConverterRefactoring.cs" />
     <Compile Include="Refactorings\ReverseTypeNameRefactoring.cs" />
-    <Compile Include="Rules\AderantQueryServiceMigrationRule.cs" />
+    <Content Include="Rules\AderantQueryServiceMigrationRule.cs" />
     <Compile Include="Rules\IDisposable\IDisposableClassRule.cs" />
     <Compile Include="Rules\IDisposable\IDisposableFieldPropertyRule.cs" />
     <Compile Include="Rules\IDisposable\IDisposableLocalVariableRule.cs" />
@@ -116,7 +114,6 @@
     <Compile Include="Rules\SetPropertyValueNoStringRule.cs" />
     <Compile Include="Rules\PropertyChangedNoStringRule.cs" />
     <Compile Include="Rules\InvalidRegexRule.cs" />
-    <Compile Include="Rules\LowerCaseTypesRule.cs" />
     <Compile Include="AderantAnalyzer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Rules\RuleBase.cs" />

@@ -12,7 +12,10 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Aderant.Build.Analyzer.CodeFixes {
-
+    // NOTE:
+    // This class exists as an example of how to implement and utilize a basic 'code-fix',
+    // and may be utilized in future for 'repository-style' access to Queryservice.
+    // To use this code, modify the file's solution properties to re-enable compilation.
     [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(AderantQueryServiceMigrationCodeFix)), Shared]
     public class AderantQueryServiceMigrationCodeFix : CodeFixProvider {
         private const string Title = "Make new style query service call";

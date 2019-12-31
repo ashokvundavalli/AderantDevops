@@ -331,14 +331,14 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                     continue;
                 }
 
-                // Get the identifier of the object being 'added' to.
-                // Example: items.Add(foo.GetBar());
-                // Result: items
-                var identifier = memberAccessExpression.Expression as IdentifierNameSyntax;
-
-                // Invoke the semantic model to get the underlying type of the identifier object,
+                // Invoke the semantic model to get the underlying type of the collection object,
                 // then retrieve all of the interfaces implemented by that type.
-                var interfaces = semanticModel.GetTypeInfo(identifier).Type?.AllInterfaces;
+                // Example:    someObject.items.Add(foo.GetBar());
+                // Collection: items
+                var interfaces = semanticModel
+                    .GetTypeInfo(memberAccessExpression.Expression)
+                    .Type?
+                    .AllInterfaces;
 
                 // If the type implements 'IEnumerable' then it is a collection and the
                 // invocation's returned object is assigned into a collection and is valid.

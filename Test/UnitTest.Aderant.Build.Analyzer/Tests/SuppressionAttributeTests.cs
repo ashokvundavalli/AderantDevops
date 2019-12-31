@@ -54,6 +54,25 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests {
 
         #endregion Types
 
+        #region Constructors
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SuppressionAttributeTests" /> class.
+        /// </summary>
+        public SuppressionAttributeTests()
+            : base(null) {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SuppressionAttributeTests" /> class.
+        /// </summary>
+        /// <param name="injectedRules">The injected rules.</param>
+        public SuppressionAttributeTests(RuleBase[] injectedRules)
+            : base(injectedRules) {
+        }
+
+        #endregion Constructors
+
         #region Fields
 
         protected override RuleBase Rule => testRule;

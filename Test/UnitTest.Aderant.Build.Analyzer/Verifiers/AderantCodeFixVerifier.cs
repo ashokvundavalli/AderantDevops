@@ -14,6 +14,26 @@ using TestHelper;
 
 namespace UnitTest.Aderant.Build.Analyzer.Verifiers {
     public abstract class AderantCodeFixVerifier : CodeFixVerifier {
+        #region Fields
+
+        private readonly RuleBase[] injectedRules;
+
+        #endregion Fields
+
+        #region Constructors
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AderantCodeFixVerifier"/> class.
+        /// </summary>
+        /// <param name="injectedRules">The injected rules.</param>
+        protected AderantCodeFixVerifier(RuleBase[] injectedRules) {
+            this.injectedRules = injectedRules;
+        }
+
+        #endregion Constructors
+
+        #region Properties
+
         protected virtual string PreCode => @"
     using System;
     using System.Collections.Generic;
@@ -33,30 +53,30 @@ namespace UnitTest.Aderant.Build.Analyzer.Verifiers {
         }
     }";
 
-        protected int MyCodeStartsAtLine { get; private set; }
+        protected int MyCodeStartsAtLine => PreCode.Split('\n').Length;
+
+        #endregion Properties
+
+        #region Methods
+
+        [TestMethod]
+        public void EmptyCodeWithNoViolationsPasses() {
+            VerifyCSharpDiagnostic(string.Empty);
+        }
 
         /// <summary>
         /// Get the CSharp analyzer being tested - to be implemented in non-abstract class.
         /// </summary>
         protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer() {
-            return new AderantAnalyzer(Rule);
+            return injectedRules != null
+                ? new AderantAnalyzer(injectedRules)
+                : new AderantAnalyzer(Rule);
         }
 
         /// <summary>
         /// Gets the rule to be verified.
         /// </summary>
-        protected abstract RuleBase Rule { get; }
-
-        [TestInitialize]
-        public void InitializeTests() {
-            MyCodeStartsAtLine = PreCode.Split('\n').Length;
-        }
-
-        // No diagnostics expected to show up.
-        [TestMethod]
-        public void EmptyCodeWithNoViolationsPasses() {
-            VerifyCSharpDiagnostic(string.Empty);
-        }
+        protected virtual RuleBase Rule { get; } = null;
 
         /// <summary>
         /// Inserts the code between the pre and post code.
@@ -131,5 +151,7 @@ namespace UnitTest.Aderant.Build.Analyzer.Verifiers {
                 isSupportedDiagnosticAction,
                 CancellationToken.None);
         }
+
+        #endregion Methods
     }
 }
