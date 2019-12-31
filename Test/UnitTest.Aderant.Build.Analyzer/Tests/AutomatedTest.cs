@@ -236,11 +236,11 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests {
             var testClassAttribute = typeof(TestClassAttribute);
 
             // Load, retrieve, and filter all types found within the test assembly.
-            Type[] types;
+            List<Type> types;
             try {
-                types = Assembly.Load(testAssemblyString).GetTypes();
+                types = Assembly.Load(testAssemblyString).GetTypes().ToList();
             } catch (ReflectionTypeLoadException exception) {
-                types = exception.Types;
+                types = exception.Types.Where(type => type != null).ToList();
             }
 
             var testClasses = types
@@ -286,16 +286,16 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests {
             // Retrieve all types from the Analyzer assembly.
             const string rulesAssemblyString = "Aderant.Build.Analyzer";
 
-            Type[] types;
+            List<Type> types;
             try {
-                types = Assembly.Load(rulesAssemblyString).GetTypes();
+                types = Assembly.Load(rulesAssemblyString).GetTypes().ToList();
             } catch (ReflectionTypeLoadException exception) {
-                types = exception.Types;
+                types = exception.Types.Where(type => type != null).ToList();
             }
 
             var ruleBaseType = typeof(RuleBase);
 
-            var ruleTypes = new List<Type>(types.Length);
+            var ruleTypes = new List<Type>(types.Count);
 
             // Filter types and ignore types that are not classes, or are not concrete.
             var filteredTypes = types.Where(type => type.IsClass && !type.IsAbstract);
