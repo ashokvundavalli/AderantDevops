@@ -46,9 +46,9 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
             // Iterate through each of the class declaration's child nodes that are field or property declarations.
             var childNodes = node
                 .ChildNodes()
-                .Where(syntaxNode =>
-                    syntaxNode is FieldDeclarationSyntax ||
-                    syntaxNode is PropertyDeclarationSyntax);
+                .Where(
+                    syntaxNode => syntaxNode is FieldDeclarationSyntax ||
+                                  syntaxNode is PropertyDeclarationSyntax);
 
             foreach (var childNode in childNodes) {
                 // Ignore any nodes that are not disposable.
@@ -57,8 +57,6 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 }
 
                 // Get the name of all fields/properties being declared.
-                // It is possible to declare multiple variables in a single statement.
-                // Example: string a, b, c;
                 List<string> memberNames = null;
 
                 var field = childNode as FieldDeclarationSyntax;
@@ -79,7 +77,7 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                     continue;
                 }
 
-                // Otherwise raise a diagnostic.
+                // Otherwise raise a single diagnostic and return.
                 ReportDiagnostic(
                     context,
                     Descriptor,
@@ -87,9 +85,6 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                     node,
                     node.Identifier.Text);
 
-                // Returning here prevents further evaluation of additional fields and properties,
-                // as only one diagnostic per class is necessary,
-                // rather than one diagnostic per field or property on a class.
                 return;
             }
         }

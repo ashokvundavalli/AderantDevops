@@ -1,43 +1,12 @@
-﻿using Aderant.Build.Analyzer.Rules;
+﻿using Aderant.Build.Analyzer.Lists.IDisposable;
+using Aderant.Build.Analyzer.Rules;
 using Aderant.Build.Analyzer.Rules.IDisposable;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTest.Aderant.Build.Analyzer.Tests.IDisposable {
     [TestClass]
     public class IDisposableFactoryRegistrationRuleTests : IDisposableRuleBaseTests {
-        #region Fields
-
         public static bool VerifiedMockedClasses;
-
-        #endregion Fields
-
-        #region Constructors
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="IDisposableFactoryRegistrationRuleTests" /> class.
-        /// </summary>
-        public IDisposableFactoryRegistrationRuleTests()
-            : base(null) {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="IDisposableFactoryRegistrationRuleTests" /> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        public IDisposableFactoryRegistrationRuleTests(RuleBase[] injectedRules)
-            : base(injectedRules) {
-        }
-
-        #endregion Constructors
-
-        #region Properties
-
-        protected override RuleBase Rule => new IDisposableFactoryRegistrationRule();
-        protected override string PreCode => FactoryRegistrationClass;
-
-        #endregion Properties
-
-        #region Test Administration
 
         [TestInitialize]
         public void TestInit() {
@@ -47,7 +16,12 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests.IDisposable {
             }
         }
 
-        #endregion Test Administration
+        #region Properties
+
+        protected override RuleBase Rule => new IDisposableFactoryRegistrationRule();
+        protected override string PreCode => FactoryRegistrationClass;
+
+        #endregion Properties
 
         #region FactoryRegistration Attribute
 

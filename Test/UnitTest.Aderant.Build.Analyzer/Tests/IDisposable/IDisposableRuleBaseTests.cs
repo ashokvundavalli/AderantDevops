@@ -1,21 +1,8 @@
-﻿using Aderant.Build.Analyzer.Rules;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UnitTest.Aderant.Build.Analyzer.Verifiers;
 
 namespace UnitTest.Aderant.Build.Analyzer.Tests.IDisposable {
     public abstract class IDisposableRuleBaseTests : AderantCodeFixVerifier {
-        #region Constructors
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="IDisposableRuleBaseTests" /> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        protected IDisposableRuleBaseTests(RuleBase[] injectedRules)
-            : base(injectedRules) {
-        }
-
-        #endregion Constructors
-
         #region Tests
 
         [TestMethod]

@@ -63,12 +63,6 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
             // Retrieve all non-static action declarations from the current class declaration.
             List<SyntaxNode> actions = GetClassActionDeclarations(classNode);
 
-            // If the field is only modified within a constructor,
-            // exit early. This use-case will be handled by the IDisposableConstructorRule.
-            if (actions.All(node => node is ConstructorDeclarationSyntax)) {
-                return;
-            }
-
             var diagnosticResults = EvaluateDeclarations(
                 declarations,
                 actions,

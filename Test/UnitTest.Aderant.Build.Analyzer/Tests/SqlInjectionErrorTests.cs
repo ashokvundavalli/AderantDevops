@@ -5,25 +5,6 @@ using UnitTest.Aderant.Build.Analyzer.Verifiers;
 namespace UnitTest.Aderant.Build.Analyzer.Tests {
     [TestClass]
     public class SqlInjectionErrorTests : AderantCodeFixVerifier {
-        #region Constructors
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SqlInjectionErrorTests" /> class.
-        /// </summary>
-        public SqlInjectionErrorTests()
-            : base(null) {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SqlInjectionErrorTests" /> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        public SqlInjectionErrorTests(RuleBase[] injectedRules)
-            : base(injectedRules) {
-        }
-
-        #endregion Constructors
-
         #region Properties
 
         protected override RuleBase Rule => new SqlInjectionErrorRule();
@@ -833,10 +814,10 @@ namespace Test {
 
         #endregion Tests: Conditional Expression
 
-        #region Tests: Properties
+        #region Tests: Property Resources
 
         [TestMethod]
-        public void SqlInjectionError_Property_NoDiagnostic() {
+        public void SqlInjectionError_PropertyResources() {
             const string test = @"
 using System;
 using TestApp.Properties;
@@ -880,18 +861,13 @@ namespace System.Data.Common {
         }
     }
 }
-
-namespace TestApp.Properties {
-    public static class Resources {
-        public static string TestString { get; }
-    }
-}";
+";
 
             VerifyCSharpDiagnostic(test);
         }
 
         [TestMethod]
-        public void SqlInjectionError_Property_LongForm_NoDiagnostic() {
+        public void SqlInjectionError_PropertyResources_LongForm() {
             const string test = @"
 using System;
 
@@ -934,130 +910,12 @@ namespace System.Data.Common {
         }
     }
 }
-
-namespace TestApp.Properties {
-    public static class Resources {
-        public static string TestString { get; }
-    }
-}";
+";
 
             VerifyCSharpDiagnostic(test);
         }
 
-        [TestMethod]
-        public void SqlInjectionError_Field_NoDiagnostic() {
-            const string test = @"
-using System;
-using TestApp.Properties;
-
-namespace Test {
-    public class Program {
-        public static void Main() {
-            using (var connection = Aderant.Framework.Persistence.FrameworkDb.CreateConnection()) {
-                using (var command = connection.CreateCommand()) {
-                    command.CommandText = Resources.TestString;
-                }
-            }
-        }
-    }
-}
-
-namespace Aderant.Framework.Persistence {
-    public class FrameworkDb {
-        public static Connection CreateConnection() {
-            return new Connection();
-        }
-    }
-
-    public class Connection : IDisposable {
-        public System.Data.Common.DbCommand CreateCommand() {
-            return new System.Data.Common.DbCommand();
-        }
-
-        public void Dispose() {
-            // Empty.
-        }
-    }
-}
-
-namespace System.Data.Common {
-    public class DbCommand : IDisposable {
-        public string CommandText { get; set; }
-
-        public void Dispose() {
-            // Empty.
-        }
-    }
-}
-
-namespace TestApp.Properties {
-    public static class Resources {
-        public const string TestString;
-    }
-}";
-
-            VerifyCSharpDiagnostic(test);
-        }
-
-        [TestMethod]
-        public void SqlInjectionError_Field_LongForm_NoDiagnostic() {
-            const string test = @"
-using System;
-
-namespace Test {
-    public class Program {
-        public static void Main() {
-            using (var connection = Aderant.Framework.Persistence.FrameworkDb.CreateConnection()) {
-                using (var command = connection.CreateCommand()) {
-                    command.CommandText = TestApp.Properties.Resources.TestString;
-                }
-            }
-        }
-    }
-}
-
-namespace Aderant.Framework.Persistence {
-    public class FrameworkDb {
-        public static Connection CreateConnection() {
-            return new Connection();
-        }
-    }
-
-    public class Connection : IDisposable {
-        public System.Data.Common.DbCommand CreateCommand() {
-            return new System.Data.Common.DbCommand();
-        }
-
-        public void Dispose() {
-            // Empty.
-        }
-    }
-}
-
-namespace System.Data.Common {
-    public class DbCommand : IDisposable {
-        public string CommandText { get; set; }
-
-        public void Dispose() {
-            // Empty.
-        }
-    }
-}
-
-namespace TestApp.Properties {
-    public static class Resources {
-        public static readonly string TestString;
-
-        static Resources() {
-            TestString = ""Foo"";
-        }
-    }
-}";
-
-            VerifyCSharpDiagnostic(test);
-        }
-
-        #endregion Tests: Properties
+        #endregion Tests: Property Resources
 
         #region Tests: Non-Constant Assignment
 

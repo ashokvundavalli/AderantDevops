@@ -7,20 +7,6 @@ using UnitTest.Aderant.Build.Analyzer.Verifiers;
 namespace UnitTest.Aderant.Build.Analyzer.Tests {
     [TestClass]
     public class PropertyChangedNoStringTests : AderantCodeFixVerifier {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PropertyChangedNoStringTests" /> class.
-        /// </summary>
-        public PropertyChangedNoStringTests()
-            : base(null) {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PropertyChangedNoStringTests" /> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        public PropertyChangedNoStringTests(RuleBase[] injectedRules)
-            : base(injectedRules) {
-        }
 
         /// <summary>
         /// Returns the codefix being tested (C#) - to be implemented in non-abstract class

@@ -5,20 +5,6 @@ using UnitTest.Aderant.Build.Analyzer.Verifiers;
 namespace UnitTest.Aderant.Build.Analyzer.Tests {
     [TestClass]
     public class InvalidQueryServiceProxyExtensionTests : AderantCodeFixVerifier {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="InvalidQueryServiceProxyExtensionTests"/> class.
-        /// </summary>
-        public InvalidQueryServiceProxyExtensionTests()
-            : base(null) {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="InvalidQueryServiceProxyExtensionTests"/> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        public InvalidQueryServiceProxyExtensionTests(RuleBase[] injectedRules)
-            : base(injectedRules) {
-        }
 
         /// <summary>
         /// Gets the rule to be verified.

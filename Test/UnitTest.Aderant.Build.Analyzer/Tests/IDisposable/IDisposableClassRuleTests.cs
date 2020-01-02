@@ -5,25 +5,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace UnitTest.Aderant.Build.Analyzer.Tests.IDisposable {
     [TestClass]
     public class IDisposableClassRuleTests : IDisposableRuleBaseTests {
-        #region Constructors
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="IDisposableClassRuleTests"/> class.
-        /// </summary>
-        public IDisposableClassRuleTests() :
-            base(null) {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="IDisposableClassRuleTests" /> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        public IDisposableClassRuleTests(RuleBase[] injectedRules)
-            : base(injectedRules) {
-        }
-
-        #endregion Constructors
-
         #region Properties
 
         protected override RuleBase Rule => new IDisposableClassRule();
@@ -31,26 +12,6 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests.IDisposable {
         #endregion Properties
 
         #region Tests
-
-        [TestMethod]
-        public void IDisposableClassRule_Field_NestedClass_AssignedFromConstructor_NoDiagnostic() {
-            const string code = @"
-using System;
-
-namespace Test {
-    public class Parent {
-        public class Child {
-            private readonly IDisposable item;
-
-            public Child(IDisposable item) {
-                this.item = item;
-            }
-        }
-    }
-}";
-
-            VerifyCSharpDiagnostic(code);
-        }
 
         [TestMethod]
         public void IDisposableClassRule_Disposable_Field() {

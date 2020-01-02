@@ -6,19 +6,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UnitTest.Aderant.Build.Analyzer.Verifiers;
 
 namespace UnitTest.Aderant.Build.Analyzer.Tests {
-    // NOTE:
-    // This class exists as an example of how to implement and utilize a basic 'code-fix',
-    // and may be utilized in future for 'repository-style' access to Queryservice.
-    // To use this code, modify the file's solution properties to re-enable compilation.
     [TestClass]
     public class AderantQueryServiceMigrationTests : AderantCodeFixVerifier {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="AderantQueryServiceMigrationTests"/> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        public AderantQueryServiceMigrationTests(RuleBase[] injectedRules)
-            : base(injectedRules) {
-        }
 
         /// <summary>
         /// Returns the codefix being tested (C#) - to be implemented in non-abstract class
@@ -109,7 +98,6 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests {
                         }");
             VerifyCSharpFix(test, fixtest);
         }
-
         [TestMethod]
         public void OldQsCallGetsChangedToNewStyleAndClientGetsNamespace() {
             var test = InsertCode(@"
@@ -128,7 +116,6 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests {
                         }");
             VerifyCSharpFix(test, fixtest);
         }
-
         [TestMethod]
         public void MethodReturningQsProxyGetsFixed() {
             var test = InsertCode(@"
@@ -145,7 +132,6 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests {
                         }");
             VerifyCSharpFix(test, fixtest);
         }
-
         [TestMethod]
         public void MethodReturningQsProxyGetsFixedAndTriviaLeftIntact() {
             var test = InsertCode(@"
@@ -166,7 +152,6 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests {
                         }");
             VerifyCSharpFix(test, fixtest);
         }
-
         [TestMethod]
         public void MethodReturningQsProxyGetsFixedWithNamespace() {
             var test = InsertCode(@"
@@ -199,7 +184,6 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests {
                         }");
             VerifyCSharpFix(test, fixtest);
         }
-
         [TestMethod]
         public void OldQsCallGetsChangedToNewStyleOnGenericInterface() {
             var test = InsertCode(@"
@@ -298,6 +282,7 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests {
         }
 
         //******** Stuff with no errors below, i.e. good code that does not need fixing is left alone  **************
+
 
         [TestMethod]
         public void MethodReturningQsProxyleftAloneIfNoErrors() {

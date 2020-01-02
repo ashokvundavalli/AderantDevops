@@ -5,25 +5,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace UnitTest.Aderant.Build.Analyzer.Tests.IDisposable {
     [TestClass]
     public class IDisposableConstructorRuleTests : IDisposableRuleBaseTests {
-        #region Constructors
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="IDisposableConstructorRuleTests" /> class.
-        /// </summary>
-        public IDisposableConstructorRuleTests()
-            : base(null) {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="IDisposableConstructorRuleTests" /> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        public IDisposableConstructorRuleTests(RuleBase[] injectedRules)
-            : base(injectedRules) {
-        }
-
-        #endregion Constructors
-
         #region Properties
 
         protected override RuleBase Rule => new IDisposableConstructorRule();

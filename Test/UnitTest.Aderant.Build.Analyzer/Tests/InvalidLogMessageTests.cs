@@ -5,32 +5,12 @@ using UnitTest.Aderant.Build.Analyzer.Verifiers;
 namespace UnitTest.Aderant.Build.Analyzer.Tests {
     [TestClass]
     public class InvalidLogMessageTests : AderantCodeFixVerifier {
-        #region Constructors
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="InvalidLogMessageTests" /> class.
-        /// </summary>
-        public InvalidLogMessageTests()
-            : base(null) {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="InvalidLogMessageTests" /> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        public InvalidLogMessageTests(RuleBase[] injectedRules)
-            : base(injectedRules) {
-        }
-
-        #endregion Constructors
-
-        #region Properties
 
         /// <summary>
         /// Gets the rule to be verified.
         /// </summary>
         protected override RuleBase Rule => new InvalidLogMessageRule();
-
+        
         protected override string PreCode => @"
     using System;
     using System.Collections.Generic;
@@ -72,10 +52,6 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests {
         }
     }
 ";
-
-        #endregion Properties
-
-        #region Tests
 
         [TestMethod]
         public void LogMessage_NoTemplateParts_NoParameters() {
@@ -223,7 +199,5 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests {
 
             VerifyCSharpDiagnostic(test);
         }
-
-        #endregion Tests
     }
 }

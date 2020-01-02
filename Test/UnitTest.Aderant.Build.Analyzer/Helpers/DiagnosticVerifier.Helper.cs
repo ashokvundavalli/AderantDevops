@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Text.RegularExpressions;
+using Microsoft.CodeAnalysis.Host.Mef;
 
 namespace TestHelper {
     /// <summary>
@@ -36,7 +38,7 @@ namespace TestHelper {
         /// <param name="language">The language the source classes are in</param>
         /// <param name="analyzer">The analyzer to be run on the sources</param>
         /// <returns>An IEnumerable of Diagnostics that surfaced in the source code, sorted by Location</returns>
-        private List<Diagnostic> GetSortedDiagnostics(string[] sources, string language, DiagnosticAnalyzer analyzer) {
+        private Diagnostic[] GetSortedDiagnostics(string[] sources, string language, DiagnosticAnalyzer analyzer) {
             return GetSortedDiagnosticsFromDocuments(analyzer, GetDocuments(sources, language));
         }
 
@@ -47,7 +49,7 @@ namespace TestHelper {
         /// <param name="analyzer">The analyzer to run on the documents</param>
         /// <param name="documents">The Documents that the analyzer will be run on</param>
         /// <returns>An IEnumerable of Diagnostics that surfaced in the source code, sorted by Location</returns>
-        protected List<Diagnostic> GetSortedDiagnosticsFromDocuments(DiagnosticAnalyzer analyzer, Document[] documents) {
+        protected Diagnostic[] GetSortedDiagnosticsFromDocuments(DiagnosticAnalyzer analyzer, Document[] documents) {
             var projects = new HashSet<Project>();
             foreach (var document in documents) {
                 projects.Add(document.Project);
@@ -78,18 +80,17 @@ namespace TestHelper {
         }
 
         /// <summary>
-        /// Sort diagnostics by location in source document.
+        /// Sort diagnostics by location in source document
         /// </summary>
         /// <param name="diagnostics">The list of Diagnostics to be sorted</param>
         /// <returns>An IEnumerable containing the Diagnostics in order of Location</returns>
-        private static List<Diagnostic> SortDiagnostics(IEnumerable<Diagnostic> diagnostics) {
-            return diagnostics.OrderBy(d => d.Location.SourceSpan.Start).ToList();
+        private Diagnostic[] SortDiagnostics(IEnumerable<Diagnostic> diagnostics) {
+            return diagnostics.OrderBy(d => d.Location.SourceSpan.Start).ToArray();
         }
 
         #endregion
 
         #region Set up compilation and documents
-
         /// <summary>
         /// Given an array of strings as sources and a language, turn them into a project and return the documents and spans of it.
         /// </summary>
@@ -131,7 +132,7 @@ namespace TestHelper {
             string fileNamePrefix = DefaultFilePathPrefix;
             string fileExt = language == LanguageNames.CSharp ? CSharpDefaultFileExt : VisualBasicDefaultExt;
 
-            var projectId = ProjectId.CreateNewId(TestProjectName);
+            var projectId = ProjectId.CreateNewId(debugName: TestProjectName);
 
             var solution = new AdhocWorkspace()
                 .CurrentSolution
@@ -150,14 +151,13 @@ namespace TestHelper {
             int count = 0;
             foreach (var source in sources) {
                 var newFileName = fileNamePrefix + count + "." + fileExt;
-                var documentId = DocumentId.CreateNewId(projectId, newFileName);
+                var documentId = DocumentId.CreateNewId(projectId, debugName: newFileName);
                 solution = solution.AddDocument(documentId, newFileName, SourceText.From(source));
-                ++count;
+                count++;
             }
-
             return solution.GetProject(projectId);
         }
-
         #endregion
     }
 }
+

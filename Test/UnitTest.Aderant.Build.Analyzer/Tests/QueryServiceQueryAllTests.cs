@@ -5,21 +5,6 @@ using UnitTest.Aderant.Build.Analyzer.Verifiers;
 namespace UnitTest.Aderant.Build.Analyzer.Tests {
     [TestClass]
     public class QueryServiceQueryAllTests : AderantCodeFixVerifier {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="QueryServiceQueryAllTests"/> class.
-        /// </summary>
-        public QueryServiceQueryAllTests()
-            : base(null) {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="QueryServiceQueryAllTests"/> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        public QueryServiceQueryAllTests(RuleBase[] injectedRules)
-            : base(injectedRules) {
-        }
-
         protected override RuleBase Rule => new QueryServiceQueryAllRule();
 
         protected override string PreCode => @"

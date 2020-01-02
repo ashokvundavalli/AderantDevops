@@ -22,7 +22,25 @@ namespace Aderant.Build.Analyzer {
         /// <summary>
         /// Initializes a new instance of the <see cref="AderantAnalyzer"/> class.
         /// </summary>
-        public AderantAnalyzer() {
+        public AderantAnalyzer()
+            : this(GetBuildId()) {
+            // Empty.
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AderantAnalyzer"/> class.
+        /// </summary>
+        internal AderantAnalyzer(params RuleBase[] injectedRules)
+            : this(GetBuildId(), injectedRules) {
+            // Empty.
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AderantAnalyzer" /> class.
+        /// </summary>
+        /// <param name="buildId">The build identifier.</param>
+        /// <param name="injectedRules">The rules to inject (for unit testing of possibly disabled rules).</param>
+        internal AderantAnalyzer(string buildId, params RuleBase[] injectedRules) {
             rules = new List<RuleBase>(
                 new RuleBase[] {
                     // Regex
@@ -45,7 +63,7 @@ namespace Aderant.Build.Analyzer {
                     new CodeQualitySessionTransactionRule(),
                     new CodeQualitySqlQueryRule(),
                     new CodeQualityNewExceptionRule(),
-                    new CodeQualityMathRoundRule(),
+                    new CodeQualityMathRoundRule(), 
 
                     // IDisposable
                     new IDisposableClassRule(),
@@ -57,57 +75,46 @@ namespace Aderant.Build.Analyzer {
                     new IDisposableConstructorRule()
                 });
 
-            if (!string.IsNullOrWhiteSpace(GetBuildId())) {
-                var serverRules = new List<RuleBase>(new RuleBase[] {
-                    // System Diagnostics
-                    new CodeQualitySystemDiagnosticsRule(),
-
-                    // Approvals Diff Reporter
-                    new CodeQualityApprovalsReporterRule()
-                });
-
-                foreach (var serverRule in serverRules) {
-                    if (rules.All(ruleBase => ruleBase.GetType() != serverRule.GetType())) {
-                        rules.Add(serverRule);
-                    }
+            foreach (var injectedRule in injectedRules) {
+                if (rules.All(ruleBase => ruleBase.GetType() != injectedRule.GetType())) {
+                    rules.Add(injectedRule);
                 }
             }
 
-            SupportedDiagnostics = ImmutableArray.CreateRange(rules.Select(rule => rule.Descriptor));
-        }
+            if (string.IsNullOrWhiteSpace(buildId)) {
+                return;
+            }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="AderantAnalyzer"/> class.
-        /// </summary>
-        internal AderantAnalyzer(params RuleBase[] injectedRules) {
-            rules = new List<RuleBase>(injectedRules);
+            var serverRules = new List<RuleBase>(new RuleBase[] {
+                // System Diagnostics
+                new CodeQualitySystemDiagnosticsRule(),
 
-            SupportedDiagnostics = ImmutableArray.CreateRange(rules.Select(rule => rule.Descriptor));
+                // Approvals Diff Reporter
+                new CodeQualityApprovalsReporterRule()
+            });
+
+
+            foreach (var serverRule in serverRules) {
+                if (rules.All(ruleBase => ruleBase.GetType() != serverRule.GetType())) {
+                    rules.Add(serverRule);
+                }
+            }
         }
 
         #endregion Constructors
 
         #region Methods
 
-        /// <summary>
-        /// Returns a set of descriptors for the diagnostics that this analyzer is capable of producing.
-        /// </summary>
-        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; }
+        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics {
+            get { return ImmutableArray.CreateRange(rules.Select(d => d.Descriptor)); }
+        }
 
-        /// <summary>
-        /// Called once at session start to register actions in the analysis context.
-        /// </summary>
-        /// <param name="context"></param>
         public override void Initialize(AnalysisContext context) {
             foreach (var descriptor in rules) {
                 descriptor.Initialize(context);
             }
         }
 
-        /// <summary>
-        /// Gets the build identifier.
-        /// Note: This value will only be present during builds on the build server.
-        /// </summary>
         private static string GetBuildId() {
             string buildId = Environment.GetEnvironmentVariable("BUILD_BUILDID");
 

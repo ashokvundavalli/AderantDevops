@@ -109,7 +109,7 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 // If the node is an invocation expression,
                 //      get the symbol for the invocation expression's return type.
                 symbol = (semanticModel.GetSymbolInfo(node).Symbol as IMethodSymbol)?.ReturnType;
-            } else if (node is FieldDeclarationSyntax) {
+            }  else if (node is FieldDeclarationSyntax) {
                 // If the node is a field declaration expression,
                 //      get the relevant symbol from the field declaration, includes handling for generic collections.
                 symbol = GetFieldDeclarationSymbol((BaseFieldDeclarationSyntax)node, semanticModel);
@@ -827,16 +827,11 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 }
 
                 // Examine the 'right' side of the expression as the values.
-                SyntaxNode value = UnwrapParenthesizedExpression(childNodes[1]);
+                SyntaxNode value = childNodes[1];
 
-                if (value is IdentifierNameSyntax) {
-                    identifiers = new List<IdentifierNameSyntax> {
-                        (IdentifierNameSyntax)value
-                    };
-                } else {
-                    identifiers = new List<IdentifierNameSyntax>();
-                    GetExpressionsFromChildNodes(ref identifiers, value);
-                }
+                identifiers = new List<IdentifierNameSyntax>();
+
+                GetExpressionsFromChildNodes(ref identifiers, value);
 
                 // Ignore any assignments that have no identifier names as assignment values.
                 if (identifiers.Count < 1) {

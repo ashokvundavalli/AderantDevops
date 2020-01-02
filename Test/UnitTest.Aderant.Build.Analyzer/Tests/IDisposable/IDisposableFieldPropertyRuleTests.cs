@@ -5,25 +5,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace UnitTest.Aderant.Build.Analyzer.Tests.IDisposable {
     [TestClass]
     public class IDisposableFieldPropertyRuleTests : IDisposableRuleBaseTests {
-        #region Constructors
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="IDisposableFieldPropertyRuleTests" /> class.
-        /// </summary>
-        public IDisposableFieldPropertyRuleTests()
-            : base(null) {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="IDisposableFieldPropertyRuleTests" /> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        public IDisposableFieldPropertyRuleTests(RuleBase[] injectedRules)
-            : base(injectedRules) {
-        }
-
-        #endregion Constructors
-
         #region Properties
 
         protected override RuleBase Rule => new IDisposableFieldPropertyRule();
@@ -33,27 +14,7 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests.IDisposable {
         #region Tests: Field
 
         [TestMethod]
-        public void IDisposableFieldPropertyRule_Field_NestedClass_AssignedFromConstructor_NoDiagnostic() {
-            const string code = @"
-using System;
-
-namespace Test {
-    public class Parent {
-        public class Child {
-            private readonly IDisposable item;
-
-            public Child(IDisposable item) {
-                this.item = item;
-            }
-        }
-    }
-}";
-
-            VerifyCSharpDiagnostic(code);
-        }
-
-        [TestMethod]
-        public void IDisposableFieldPropertyRule_Field_ThisKeywordDispose_NoConditional_NoDiagnostic() {
+        public void IDisposableFieldPropertyRule_Field_ThisKeywordDispose_NoConditional_Diagnostic() {
             const string code = @"
 namespace Test {
     public class Test : System.IDisposable {

@@ -1,30 +1,18 @@
-﻿using Aderant.Build.Analyzer.Rules;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Aderant.Build.Analyzer.Rules;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using TestHelper;
 using UnitTest.Aderant.Build.Analyzer.Verifiers;
 
 namespace UnitTest.Aderant.Build.Analyzer.Tests {
     [TestClass]
     public class NHibernateRetrieveTypeNotInterfaceRuleTest : AderantCodeFixVerifier {
-        #region Constructors
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="NHibernateRetrieveTypeNotInterfaceRuleTest" /> class.
-        /// </summary>
-        public NHibernateRetrieveTypeNotInterfaceRuleTest()
-            : base(null) {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="NHibernateRetrieveTypeNotInterfaceRuleTest" /> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        public NHibernateRetrieveTypeNotInterfaceRuleTest(RuleBase[] injectedRules)
-            : base(injectedRules) {
-        }
-
-        #endregion Constructors
-
-        #region Properties
+        private RuleBase rule;
+        private string postCode;
 
         protected override RuleBase Rule => new NHibernateRetrieveTypeNotInterfaceRule();
 
@@ -117,43 +105,33 @@ namespace ConsoleApplication1 {
         class PROGRAM {
             static void Main(string[] args) {
                 ";
-
-        #endregion Properties
-
-        #region Tests
-
         [TestMethod]
         public void RepoInterfaceGetIntoInterfaceWithInterface() {
             const string test = "IRepository provider = new ObjectRepository(); \n" + "ITime timeEntry = provider.Get<ITime>(new Identifier()); ";
             var expected = GetDiagnostic(MyCodeStartsAtLine + 1, 32);
             VerifyCSharpDiagnostic(InsertCode(test), expected);
         }
-
         [TestMethod]
         public void RepoInterfaceGetIntoInterfaceWithConcrete() {
             const string test = "IRepository provider = new ObjectRepository(); \n" + "ITime timeEntry = provider.Get<Time>(new Identifier()); ";
             VerifyCSharpDiagnostic(InsertCode(test));
         }
-
         [TestMethod]
         public void RepoInterfaceGetIntoConcreteWithConcrete() {
             const string test = "IRepository provider = new ObjectRepository(); \n" + "Time timeEntry = provider.Get<Time>(new Identifier()); ";
             VerifyCSharpDiagnostic(InsertCode(test));
         }
-
         [TestMethod]
         public void RepoConcreteGetIntoInterfaceWithInterface() {
             const string test = "ObjectRepository provider = new ObjectRepository(); \n" + "ITime timeEntry = provider.Get<ITime>(new Identifier()); ";
             var expected = GetDiagnostic(MyCodeStartsAtLine + 1, 32);
             VerifyCSharpDiagnostic(InsertCode(test), expected);
         }
-
         [TestMethod]
         public void RepoConcreteGetIntoInterfaceWithConcrete() {
             const string test = "ObjectRepository provider = new ObjectRepository(); \n" + "ITime timeEntry = provider.Get<Time>(new Identifier()); ";
             VerifyCSharpDiagnostic(InsertCode(test));
         }
-
         [TestMethod]
         public void RepoConcreteGetIntoConcreteWithConcrete() {
             const string test = "ObjectRepository provider = new ObjectRepository(); \n" + "Time timeEntry = provider.Get<Time>(new Identifier()); ";
@@ -163,35 +141,30 @@ namespace ConsoleApplication1 {
         [TestMethod]
         public void RepoInterfaceLinqIntoInterfaceWithInterface() {
             const string test = "IRepository provider = new ObjectRepository(); \n" + "ITime timeEntry = provider.Linq<ITime>(new Identifier()); ";
-            var expected = GetDiagnostic(MyCodeStartsAtLine + 1, 33);
+            DiagnosticResult expected = GetDiagnostic(MyCodeStartsAtLine + 1, 33);
             VerifyCSharpDiagnostic(InsertCode(test), expected);
         }
-
         [TestMethod]
         public void RepoInterfaceLinqIntoInterfaceWithConcrete() {
             const string test = "IRepository provider = new ObjectRepository(); \n" + "ITime timeEntry = provider.Linq<Time>(new Identifier()); ";
             VerifyCSharpDiagnostic(InsertCode(test));
         }
-
         [TestMethod]
         public void RepoInterfaceLinqIntoConcreteWithConcrete() {
             const string test = "IRepository provider = new ObjectRepository(); \n" + "Time timeEntry = provider.Linq<Time>(new Identifier()); ";
             VerifyCSharpDiagnostic(InsertCode(test));
         }
-
         [TestMethod]
         public void RepoConcreteLinqIntoInterfaceWithInterface() {
             const string test = "ObjectRepository provider = new ObjectRepository(); \n" + "ITime timeEntry = provider.Linq<ITime>(new Identifier()); ";
-            var expected = GetDiagnostic(MyCodeStartsAtLine + 1, 33);
+            DiagnosticResult expected = GetDiagnostic(MyCodeStartsAtLine + 1, 33);
             VerifyCSharpDiagnostic(InsertCode(test), expected);
         }
-
         [TestMethod]
         public void RepoConcreteLinqIntoInterfaceWithConcrete() {
             const string test = "ObjectRepository provider = new ObjectRepository(); \n" + "ITime timeEntry = provider.Linq<Time>(new Identifier()); ";
             VerifyCSharpDiagnostic(InsertCode(test));
         }
-
         [TestMethod]
         public void RepoConcreteLinqIntoConcreteWithConcrete() {
             const string test = "ObjectRepository provider = new ObjectRepository(); \n" + "Time timeEntry = provider.Linq<Time>(new Identifier()); ";
@@ -201,35 +174,30 @@ namespace ConsoleApplication1 {
         [TestMethod]
         public void SessionInterfaceGetIntoInterfaceWithInterface() {
             const string test = "IFrameworkSession provider = new Session(); \n" + "ITime timeEntry = provider.Get<ITime>(new Identifier()); ";
-            var expected = GetDiagnostic(MyCodeStartsAtLine + 1, 32);
+            DiagnosticResult expected = GetDiagnostic(MyCodeStartsAtLine + 1, 32);
             VerifyCSharpDiagnostic(InsertCode(test), expected);
         }
-
         [TestMethod]
         public void SessionInterfaceGetIntoInterfaceWithConcrete() {
             const string test = "IFrameworkSession provider = new Session(); \n" + "ITime timeEntry = provider.Get<Time>(new Identifier()); ";
             VerifyCSharpDiagnostic(InsertCode(test));
         }
-
         [TestMethod]
         public void SessionInterfaceGetIntoConcreteWithConcrete() {
             const string test = "IFrameworkSession provider = new Session(); \n" + "Time timeEntry = provider.Get<Time>(new Identifier()); ";
             VerifyCSharpDiagnostic(InsertCode(test));
         }
-
         [TestMethod]
         public void SessionConcreteGetIntoInterfaceWithInterface() {
             const string test = "Session provider = new Session(); \n" + "ITime timeEntry = provider.Get<ITime>(new Identifier()); ";
-            var expected = GetDiagnostic(MyCodeStartsAtLine + 1, 32);
+            DiagnosticResult expected = GetDiagnostic(MyCodeStartsAtLine + 1, 32);
             VerifyCSharpDiagnostic(InsertCode(test), expected);
         }
-
         [TestMethod]
         public void SessionConcreteGetIntoInterfaceWithConcrete() {
             const string test = "Session provider = new Session(); \n" + "ITime timeEntry = provider.Get<Time>(new Identifier()); ";
             VerifyCSharpDiagnostic(InsertCode(test));
         }
-
         [TestMethod]
         public void SessionConcreteGetIntoConcreteWithConcrete() {
             const string test = "Session provider = new Session(); \n" + "Time timeEntry = provider.Get<Time>(new Identifier()); ";
@@ -239,35 +207,30 @@ namespace ConsoleApplication1 {
         [TestMethod]
         public void SessionInterfaceLinqIntoInterfaceWithInterface() {
             const string test = "IFrameworkSession provider = new Session(); \n" + "ITime timeEntry = provider.Linq<ITime>(new Identifier()); ";
-            var expected = GetDiagnostic(MyCodeStartsAtLine + 1, 33);
+            DiagnosticResult expected = GetDiagnostic(MyCodeStartsAtLine + 1, 33);
             VerifyCSharpDiagnostic(InsertCode(test), expected);
         }
-
         [TestMethod]
         public void SessionInterfaceLinqIntoInterfaceWithConcrete() {
             const string test = "IFrameworkSession provider = new Session(); \n" + "ITime timeEntry = provider.Linq<Time>(new Identifier()); ";
             VerifyCSharpDiagnostic(InsertCode(test));
         }
-
         [TestMethod]
         public void SessionInterfaceLinqIntoConcreteWithConcrete() {
             const string test = "IFrameworkSession provider = new Session(); \n" + "Time timeEntry = provider.Linq<Time>(new Identifier()); ";
             VerifyCSharpDiagnostic(InsertCode(test));
         }
-
         [TestMethod]
         public void SessionConcreteLinqIntoInterfaceWithInterface() {
             const string test = "Session provider = new Session(); \n" + "ITime timeEntry = provider.Linq<ITime>(new Identifier()); ";
-            var expected = GetDiagnostic(MyCodeStartsAtLine + 1, 33);
+            DiagnosticResult expected = GetDiagnostic(MyCodeStartsAtLine + 1, 33);
             VerifyCSharpDiagnostic(InsertCode(test), expected);
         }
-
         [TestMethod]
         public void SessionConcreteLinqIntoInterfaceWithConcrete() {
             const string test = "Session provider = new Session(); \n" + "ITime timeEntry = provider.Linq<Time>(new Identifier()); ";
             VerifyCSharpDiagnostic(InsertCode(test));
         }
-
         [TestMethod]
         public void SessionConcreteLinqIntoConcreteWithConcrete() {
             const string test = "Session provider = new Session(); \n" + "Time timeEntry = provider.Linq<Time>(new Identifier()); ";
@@ -279,31 +242,26 @@ namespace ConsoleApplication1 {
             const string test = "IDecoy provider = new Decoy(); \n" + "ITime timeEntry = provider.Get<ITime>(new Identifier()); ";
             VerifyCSharpDiagnostic(InsertCode(test));
         }
-
         [TestMethod]
         public void DecoyInterfaceGetIntoInterfaceWithConcrete() {
             const string test = "IDecoy provider = new Decoy(); \n" + "ITime timeEntry = provider.Get<Time>(new Identifier()); ";
             VerifyCSharpDiagnostic(InsertCode(test));
         }
-
         [TestMethod]
         public void DecoyInterfaceGetIntoConcreteWithConcrete() {
             const string test = "IDecoy provider = new Decoy(); \n" + "Time timeEntry = provider.Get<Time>(new Identifier()); ";
             VerifyCSharpDiagnostic(InsertCode(test));
         }
-
         [TestMethod]
         public void DecoyConcreteGetIntoInterfaceWithInterface() {
             const string test = "Decoy provider = new Decoy(); \n" + "ITime timeEntry = provider.Get<ITime>(new Identifier()); ";
             VerifyCSharpDiagnostic(InsertCode(test));
         }
-
         [TestMethod]
         public void DecoyConcreteGetIntoInterfaceWithConcrete() {
             const string test = "Decoy provider = new Decoy(); \n" + "ITime timeEntry = provider.Get<Time>(new Identifier()); ";
             VerifyCSharpDiagnostic(InsertCode(test));
         }
-
         [TestMethod]
         public void DecoyConcreteGetIntoConcreteWithConcrete() {
             const string test = "Decoy provider = new Decoy(); \n" + "Time timeEntry = provider.Get<Time>(new Identifier()); ";
@@ -315,37 +273,30 @@ namespace ConsoleApplication1 {
             const string test = "IDecoy provider = new Decoy(); \n" + "ITime timeEntry = provider.Linq<ITime>(new Identifier()); ";
             VerifyCSharpDiagnostic(InsertCode(test));
         }
-
         [TestMethod]
         public void DecoyInterfaceLinqIntoInterfaceWithConcrete() {
             const string test = "IDecoy provider = new Decoy(); \n" + "ITime timeEntry = provider.Linq<Time>(new Identifier()); ";
             VerifyCSharpDiagnostic(InsertCode(test));
         }
-
         [TestMethod]
         public void DecoyInterfaceLinqIntoConcreteWithConcrete() {
             const string test = "IDecoy provider = new Decoy(); \n" + "Time timeEntry = provider.Linq<Time>(new Identifier()); ";
             VerifyCSharpDiagnostic(InsertCode(test));
         }
-
         [TestMethod]
         public void DecoyConcreteLinqIntoInterfaceWithInterface() {
             const string test = "Decoy provider = new Decoy(); \n" + "ITime timeEntry = provider.Linq<ITime>(new Identifier()); ";
             VerifyCSharpDiagnostic(InsertCode(test));
         }
-
         [TestMethod]
         public void DecoyConcreteLinqIntoInterfaceWithConcrete() {
             const string test = "Decoy provider = new Decoy(); \n" + "ITime timeEntry = provider.Linq<Time>(new Identifier()); ";
             VerifyCSharpDiagnostic(InsertCode(test));
         }
-
         [TestMethod]
         public void DecoyConcreteLinqIntoConcreteWithConcrete() {
             const string test = "Decoy provider = new Decoy(); \n" + "Time timeEntry = provider.Linq<Time>(new Identifier()); ";
             VerifyCSharpDiagnostic(InsertCode(test));
         }
-
-        #endregion Tests
     }
 }
