@@ -22,6 +22,7 @@ namespace Aderant.Build.Packaging {
             foreach (var group in artifactMap) {
                 List<PathSpec> pathSpecs = new List<PathSpec>();
 
+                bool isDeliveringToRoot = false;
                 bool isAutomaticallyGenerated = false;
                 bool isInternalDevelopmentPackage = false;
                 bool isAutomationPackage = false;
@@ -30,6 +31,7 @@ namespace Aderant.Build.Packaging {
 
                 foreach (var file in group.Value) {
                     ParseMetadata(file, "Generated", ref isAutomaticallyGenerated);
+                    ParseMetadata(file, "DeliverToRoot", ref isDeliveringToRoot);
                     ParseMetadata(file, "IsInternalDevelopmentPackage", ref isInternalDevelopmentPackage);
                     ParseMetadata(file, "IsAutomationPackage", ref isAutomationPackage);
                     ParseMetadata(file, "IsTestPackage", ref isTestPackage);
@@ -81,6 +83,10 @@ namespace Aderant.Build.Packaging {
 
                 if (isAutomationPackage) {
                     packageType.Add(ArtifactPackageType.AutomationPackage);
+                }
+
+                if (isDeliveringToRoot) {
+                    packageType.Add(ArtifactPackageType.DeliverToRoot);
                 }
 
                 var artifact = new ArtifactPackageDefinition(group.Key, pathSpecs) {

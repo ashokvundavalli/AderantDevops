@@ -99,6 +99,8 @@ namespace Aderant.Build.Packaging {
         [EnumMember]
         Default,
         [EnumMember]
+        DeliverToRoot,
+        [EnumMember]
         TestPackage,
         [EnumMember]
         DevelopmentPackage,

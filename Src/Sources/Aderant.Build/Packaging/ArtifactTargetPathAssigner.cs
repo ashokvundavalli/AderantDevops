@@ -37,7 +37,10 @@ namespace Aderant.Build.Packaging {
                 }
 
                 if (!deliverToRoot) {
-                    continue;
+                    if (!artifact.PackageType.Contains(ArtifactPackageType.AutomationPackage)) {
+                        continue;
+                    }
+                    deliverToRoot = true;
                 }
 
                 if (includeGeneratedArtifacts) {
