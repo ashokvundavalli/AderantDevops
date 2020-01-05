@@ -379,6 +379,8 @@
       <DestinationFolders Include="$(AlternativeOutputDirectory)" />
     </ItemGroup>
 
+    <Message Text="Assemblies to copy: @(IntermediateAssembly->'$(OutputPath)%(Filename)%(Extension)')"></Message>
+
     <Copy
       SourceFiles="@(IntermediateAssembly->'$(OutputPath)%(Filename)%(Extension)')"
       Condition="Exists('@(IntermediateAssembly->'$(OutputPath)%(Filename)%(Extension)')')"
@@ -401,8 +403,11 @@
                          CopyOutputSymbolsToOutputDirectory=false;
                          _DocumentationFileProduced=false" />
 
+    <Message Text="Package File Name: $(PackageFileName)"></Message>
+    <Message Text="Update Staging Directory: $(UpdateStagingDirectory)"></Message>
+      
     <Copy
-      Condition="'$(IncludeOutputInUpdatePackage)' == 'true' And '$(PackageFileName)' != ''"
+      Condition="'$(IncludeOutputInUpdatePackage)' == 'true' And '$(PackageFileName)' != '' And Exists('$(PackageFileName)')"
       SourceFiles="$(PackageFileName)"
       DestinationFolder="$(UpdateStagingDirectory)"
       OverwriteReadOnlyFiles="$(OverwriteReadOnlyFiles)"
