@@ -199,6 +199,13 @@ function Get-Dependencies {
         if (-not $NoSymlinks.IsPresent -and -not [string]::IsNullOrWhiteSpace($dependenciesDirectory)) {
             CreateSymlinks -dependenciesDirectory $dependenciesDirectory -directories $modulesInBuild
         }
+
+        [string]$editorConfig = [System.IO.Path]::GetFullPath("$PSScriptRoot\..\..\.editorconfig")
+
+        foreach ($module in $modulesInBuild) {
+            Write-Debug "Updating .editorconfig file in module: '$module'."
+            Copy-Item -Path $editorConfig -Destination "$module\.editorconfig" -Force
+        }
     }
 }
 
