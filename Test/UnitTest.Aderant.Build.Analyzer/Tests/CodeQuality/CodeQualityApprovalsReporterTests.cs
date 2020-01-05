@@ -6,6 +6,24 @@ using UnitTest.Aderant.Build.Analyzer.Verifiers;
 namespace UnitTest.Aderant.Build.Analyzer.Tests.CodeQuality {
     [TestClass]
     public class CodeQualityApprovalsReporterTests : AderantCodeFixVerifier {
+        #region Constructors
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CodeQualityApprovalsReporterTests"/> class.
+        /// </summary>
+        public CodeQualityApprovalsReporterTests()
+            : base(null) {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CodeQualityApprovalsReporterTests"/> class.
+        /// </summary>
+        /// <param name="injectedRules">The injected rules.</param>
+        public CodeQualityApprovalsReporterTests(RuleBase[] injectedRules)
+            : base(injectedRules) {
+        }
+
+        #endregion Constructors
 
         #region Properties
 

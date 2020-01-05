@@ -5,6 +5,25 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace UnitTest.Aderant.Build.Analyzer.Tests.IDisposable {
     [TestClass]
     public class IDisposableObjectCreationRuleTests : IDisposableRuleBaseTests {
+        #region Constructors
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="IDisposableObjectCreationRuleTests" /> class.
+        /// </summary>
+        public IDisposableObjectCreationRuleTests()
+            : base(null) {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="IDisposableObjectCreationRuleTests" /> class.
+        /// </summary>
+        /// <param name="injectedRules">The injected rules.</param>
+        public IDisposableObjectCreationRuleTests(RuleBase[] injectedRules)
+            : base(injectedRules) {
+        }
+
+        #endregion Constructors
+
         #region Properties
 
         protected override RuleBase Rule => new IDisposableObjectCreationRule();
@@ -634,9 +653,9 @@ namespace Test {
 
         #endregion Conditional And Coalesce Expression Tests
 
-            #endregion Tests
+        #endregion Tests
 
-            #region Tests: Base Class
+        #region Tests: Base Class
 
         [TestMethod]
         public void IDisposableMethodInvocationRule_BaseClass_Field() {

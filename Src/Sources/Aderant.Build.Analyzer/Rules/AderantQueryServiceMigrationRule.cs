@@ -5,7 +5,10 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Aderant.Build.Analyzer.Rules {
-
+    // NOTE:
+    // This class exists as an example of how to implement and utilize a basic 'code-fix',
+    // and may be utilized in future for 'repository-style' access to Queryservice.
+    // To use this code, modify the file's solution properties to re-enable compilation.
     public class AderantQueryServiceMigrationRule : RuleBase {
         internal const string DiagnosticId = "Aderant_NewQueryServiceCallStyle";
 
