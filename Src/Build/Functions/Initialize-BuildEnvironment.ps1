@@ -13,6 +13,11 @@ if ($PSVersionTable.PSVersion.Major -lt 5 -or ($PSVersionTable.PSVersion.Major -
     exit 1
 }
 
+$NETVersion = Get-ItemProperty "HKLM:SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full"
+if ($NETVersion.Release -ne '528049') {
+    Write-Warning "Please install .NET 4.8 from https://dotnet.microsoft.com/download/dotnet-framework/net48"
+}
+
 [string]$script:repositoryRoot = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($BuildScriptsDirectory, "..\..\"))
 
 function GetAlternativeStreamValue {
