@@ -599,19 +599,22 @@ function Open-ModuleSolution {
                 $prevModule = Get-CurrentModule
             }
 
-            Set-CurrentModule $moduleName
+            Set-CurrentModule $ModuleName
         }
 
-        [string]$rootPath = ""
+        [string]$expertSuiteRootPath = [string]::Empty
+        [string]$nonExpertSuiteRootPath = [string]::Empty
 
         if (-not [string]::IsNullOrWhiteSpace($ModuleName)) {
-            $rootPath = Join-Path $script:BranchLocalDirectory "Modules\$ModuleName"
+            $expertSuiteRootPath = Join-Path $script:BranchLocalDirectory "ExpertSuite\$ModuleName"
+            $nonExpertSuiteRootPath = Join-Path $script:BranchLocalDirectory "$ModuleName"
         } else {
             $ModuleName = $ShellContext.CurrentModuleName
-            $rootPath = $ShellContext.CurrentModulePath
+            $expertSuiteRootPath = $ShellContext.CurrentModulePath
+            $nonExpertSuiteRootPath = $ShellContext.CurrentModulePath
         }
 
-        if ([string]::IsNullOrWhiteSpace($moduleName)) {
+        if ([string]::IsNullOrWhiteSpace($ModuleName)) {
             Write-Warning "No module specified."
             return
         }
@@ -627,34 +630,47 @@ function Open-ModuleSolution {
         }
 
         Write-Host "Opening solution for module: $ModuleName"
-        $moduleSolutionPath = Join-Path $rootPath "$ModuleName.sln"
+        $expertSuiteModuleSolutionPath = Join-Path $expertSuiteRootPath "$ModuleName.sln"       
+        $devenvPath = ""
+        $codePath = ""
 
-        if (Test-Path $moduleSolutionPath) {
+        if (Test-Path $expertSuiteModuleSolutionPath) {
+            $devenvPath = $expertSuiteModuleSolutionPath
+            $codePath = $expertSuiteRootPath
+        } else {
+            $nonExpertSuiteModuleSolutionPath = Join-Path $nonExpertSuiteRootPath "$ModuleName.sln"
+            if (Test-Path $nonExpertSuiteModuleSolutionPath) {
+                $devenvPath = $nonExpertSuiteModuleSolutionPath
+                $codePath = $nonExpertSuiteRootPath
+            }
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($devenvPath)) {
             if ($code) {
                 if (Get-Command code -errorAction SilentlyContinue) {
-                    Invoke-Expression "code $rootPath"
+                    Invoke-Expression "code $codePath"
                 } else {
                     Write-Host "VS Code could not be found (code)"
                 }
             } else {
-                Invoke-Expression "& '$devenv' $moduleSolutionPath"
+                Invoke-Expression "& '$devenv' $devenvPath"
             }
         } else {
             [System.IO.FileSystemInfo[]]$candidates = (Get-ChildItem -Filter *.sln -file  | Where-Object {$_.Name -NotMatch ".custom.sln"})
-            if ($candidates.Count -gt 0) {
-                $moduleSolutionPath = Join-Path $rootPath $candidates[0]
-
+            if ($null -ne $candidates -and $candidates.Count -gt 0) {
+                $expertSuiteModuleSolutionPath = Join-Path $expertSuiteRootPath $candidates[0]
+                $codePath = $candidates[0].DirectoryName
                 if ($code) {
                     if (Get-Command code -errorAction SilentlyContinue) {
-                        Invoke-Expression "code $rootPath"
+                        Invoke-Expression "code $codePath"
                     } else {
                         Write-Host "VS Code could not be found (code)"
                     }
                 } else {
-                    Invoke-Expression "& '$devenv' $moduleSolutionPath"
+                    Invoke-Expression "& '$devenv' $expertSuiteModuleSolutionPath"
                 }
             } else {
-                "There is no solution file at $moduleSolutionPath"
+                "There is no solution file at $expertSuiteModuleSolutionPath"
             }
         }
 
