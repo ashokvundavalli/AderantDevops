@@ -14,8 +14,9 @@ if ($PSVersionTable.PSVersion.Major -lt 5 -or ($PSVersionTable.PSVersion.Major -
 }
 
 $NETVersion = Get-ItemProperty "HKLM:SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full"
-if (-Not $NETVersion.Version.StartsWith('4.8')) {
-    Write-Warning "Please install Microsoft .NET Framework 4.8 SDK from https://dotnet.microsoft.com/download/dotnet-framework/net48"
+if (-Not $NETVersion.Version.StartsWith('4.8')) { 
+    Write-Warning "Please install Microsoft .NET Framework 4.8 SDK from https://dotnet.microsoft.com/download/dotnet-framework/net48." 
+    Write-Warning "The installed .NET Framework Version is $($NETVersion.Version)"
 }
 
 [string]$script:repositoryRoot = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($BuildScriptsDirectory, "..\..\"))
@@ -137,7 +138,8 @@ function BuildProjects([string]$mainAssembly, [bool]$forceCompile, [string]$comm
             HandleResult $result
         } finally {
             if ($LASTEXITCODE -ne 0) {
-                throw "FATAL: Compile failed"
+                Write-Warning "Please try executing on PowerShell: MSBuild.exe $($projectPath) /t:$($target) /p:project-set=minimal /p:BuildScriptsDirectory=$($BuildScriptsDirectory) /nr:false"
+                throw "FATAL: Compile failed."
             }
             SetAlternativeStreamValue $info.FullName $buildCommitStreamName $commit
         }
