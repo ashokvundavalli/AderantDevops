@@ -38,8 +38,7 @@ function AddGitCommandIntercept() {
             # tell PowerShell what to do instead of
             # running the original command
             $eventArgs.CommandScriptBlock = {
-
-            $(
+         
                 $newArgs = $args
 
                 $dirsToKeep  = @("SharedBin", ".vscode", ".vs")
@@ -55,9 +54,9 @@ function AddGitCommandIntercept() {
                       }
                     }
                   }
-                  & $command $newArgs
+                  & $command $newArgs				  
                   }
-                )
+                
             }.GetNewClosure()
         }
     }
