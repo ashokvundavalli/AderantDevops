@@ -37,15 +37,22 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests {
         /// A data object contianing information relevant to a failed test.
         /// </summary>
         private class ErrorData {
-            public ErrorData(Exception exception, string message, string testClass, string testName) {
+            public ErrorData(
+                Exception exception,
+                string message,
+                string stackTrace,
+                string testClass,
+                string testName) {
                 Exception = exception;
                 Message = message;
+                StackTrace = stackTrace;
                 TestClass = testClass;
                 TestName = testName;
             }
 
             public Exception Exception { get; }
             public string Message { get; }
+            public string StackTrace { get; }
             public string TestClass { get; }
             public string TestName { get; }
         }
@@ -73,7 +80,7 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests {
 
             var output = FormatRawOutput(errorData);
 
-            if (!string.IsNullOrWhiteSpace(output)) {
+            if (output != null) {
                 throw new InternalTestFailureException(output);
             }
         }
@@ -114,11 +121,23 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests {
 
                 // Test Cleanup
                 testData.Cleanup?.Invoke(testData.Instance, Array.Empty<object>());
-            } catch (Exception exception) {
+            } catch (Exception ex) {
+                // Unroll exception stack.
+                var exception = ex;
+
+                while (true) {
+                    if (exception.InnerException == null) {
+                        break;
+                    }
+
+                    exception = exception.InnerException;
+                }
+
                 // Amalgamate error data.
                 return new ErrorData(
-                    exception.InnerException ?? exception,
-                    exception.InnerException?.Message ?? exception.Message,
+                    exception,
+                    exception.Message,
+                    exception.StackTrace,
                     testData.ClassName,
                     test.Name);
             }
@@ -137,10 +156,16 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests {
                 messages.AddRange(
                     testClassOutput.Select(
                         output =>
-                            $"Class: {output.TestClass}\nTest: {output.TestName}\nException: {output.Exception.GetType().Name}\nError:\n{output.Message}"));
+                            $"Class: {output.TestClass}\n" +
+                            $"Test: {output.TestName}\n" +
+                            $"Exception: {output.Exception.GetType().Name}\n" +
+                            $"Error: {output.Message}\n" +
+                            $"Stack Trace:\n{output.StackTrace}\n"));
             }
 
-            return string.Join("\n", messages);
+            return messages.Count > 0
+                ? "Failed Tests: " + messages.Count + "\n\n" + string.Join("\n", messages)
+                : null;
         }
 
         /// <summary>

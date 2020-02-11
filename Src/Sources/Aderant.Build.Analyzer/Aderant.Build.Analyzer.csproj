@@ -83,6 +83,7 @@
     <Compile Include="Lists\IDisposable\IDisposableWhitelist.cs" />
     <Compile Include="Lists\QueryAll\QueryAllWhitelists.cs" />
     <Compile Include="Rules\CodeQuality\CodeQualityApprovalsReporterRule.cs" />
+    <Compile Include="Rules\CodeQuality\CodeQualityDataProviderIllegalPublicPropertiesRule.cs" />
     <Compile Include="Rules\CodeQuality\CodeQualityDbConnectionStringRule.cs" />
     <Compile Include="Rules\CodeQuality\CodeQualityDefaultTransactionScopeRule.cs" />
     <Compile Include="Rules\CodeQuality\CodeQualityMathRoundRule.cs" />
@@ -93,6 +94,11 @@
     <Compile Include="Rules\IDisposable\IDisposableConstructorRule.cs" />
     <Compile Include="Rules\IDisposable\IDisposableFactoryRegistrationRule.cs" />
     <Compile Include="Rules\IDisposable\IDisposableRuleTypes.cs" />
+    <Compile Include="Rules\Logging\LoggingBanExceptionWithoutMessageRule.cs" />
+    <Compile Include="Rules\Logging\LoggingArgumentCountRule.cs" />
+    <Compile Include="Rules\Logging\LoggingInterpolationRule.cs" />
+    <Compile Include="Rules\Logging\LoggingInvalidTemplateRule.cs" />
+    <Compile Include="Rules\Logging\LoggingRuleBase.cs" />
     <Compile Include="Rules\NHibernateRetrieveTypeNotInterfaceRule.cs" />
     <Compile Include="Rules\QueryServiceQueryAllRule.cs" />
     <Compile Include="Rules\SqlInjectionErrorRule.cs" />
@@ -100,7 +106,7 @@
     <Compile Include="Lists\SQLInjection\SQLInjectionWhitelists.cs" />
     <Compile Include="Refactorings\MakeConverterRefactoring.cs" />
     <Compile Include="Refactorings\ReverseTypeNameRefactoring.cs" />
-    <Content Include="Rules\AderantQueryServiceMigrationRule.cs" />
+    <Content Include="Rules\Unused\AderantQueryServiceMigrationRule.cs" />
     <Compile Include="Rules\IDisposable\IDisposableClassRule.cs" />
     <Compile Include="Rules\IDisposable\IDisposableFieldPropertyRule.cs" />
     <Compile Include="Rules\IDisposable\IDisposableLocalVariableRule.cs" />
@@ -108,7 +114,6 @@
     <Compile Include="Rules\IDisposable\IDisposableObjectCreationRule.cs" />
     <Compile Include="Rules\IDisposable\IDisposableRuleBase.cs" />
     <Compile Include="Rules\InvalidQueryServiceProxyExtensionRule.cs" />
-    <Compile Include="Rules\InvalidLogMessageRule.cs" />
     <Compile Include="Rules\PropertyChangedNoStringNonFixableRule.cs" />
     <Compile Include="Rules\SetPropertyValueNoStringNonFixableRule.cs" />
     <Compile Include="Rules\SetPropertyValueNoStringRule.cs" />

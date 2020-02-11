@@ -61,7 +61,33 @@ namespace Aderant.Build.Analyzer.Rules {
 
         #region Methods
 
+        /// <summary>
+        /// Initializes the specified context.
+        /// </summary>
+        /// <param name="context">The context.</param>
         public abstract void Initialize(AnalysisContext context);
+
+        /// <summary>
+        /// Gets all of the <see cref="AttributeSyntax"/> nodes for the specified <see cref="ClassDeclarationSyntax"/> node.
+        /// </summary>
+        /// <param name="node">The node.</param>
+        protected static IEnumerable<AttributeSyntax> GetAttributesFromDeclaration(ClassDeclarationSyntax node) {
+            return GetAttributesFromDeclarationInternal(node);
+        }
+
+        /// <summary>
+        /// Gets all of the <see cref="AttributeSyntax"/> nodes for the specified <see cref="SyntaxNode"/> node.
+        /// </summary>
+        /// <param name="node">The node.</param>
+        private static IEnumerable<AttributeSyntax> GetAttributesFromDeclarationInternal(SyntaxNode node) {
+            return node
+                .ChildNodes()
+                .OfType<AttributeListSyntax>()
+                .Select(list => list
+                    .ChildNodes()
+                    .OfType<AttributeSyntax>())
+                .SelectMany(attributes => attributes);
+        }
 
         /// <summary>
         /// Recursively iterates through all child nodes,
@@ -238,10 +264,30 @@ namespace Aderant.Build.Analyzer.Rules {
         }
 
         /// <summary>
-        /// Unwraps the parenthesized expression.
+        /// Unwraps the parenthesized expression by ascending up the syntax tree.
         /// </summary>
         /// <param name="node">The node.</param>
-        protected static SyntaxNode UnwrapParenthesizedExpression(SyntaxNode node) {
+        protected static SyntaxNode UnwrapParenthesizedExpressionAscending(SyntaxNode node) {
+            if (!(node is ParenthesizedExpressionSyntax)) {
+                return node;
+            }
+
+            var currentNode = (ParenthesizedExpressionSyntax)node;
+
+            while (true) {
+                if (currentNode.Parent is ParenthesizedExpressionSyntax) {
+                    currentNode = (ParenthesizedExpressionSyntax)currentNode.Parent;
+                } else {
+                    return currentNode.Parent;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Unwraps the parenthesized expression by descending down the syntax tree.
+        /// </summary>
+        /// <param name="node">The node.</param>
+        protected static SyntaxNode UnwrapParenthesizedExpressionDescending(SyntaxNode node) {
             if (!(node is ParenthesizedExpressionSyntax)) {
                 return node;
             }

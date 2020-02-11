@@ -1,0 +1,243 @@
+﻿using Aderant.Build.Analyzer.Rules;
+using Aderant.Build.Analyzer.Rules.Logging;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using UnitTest.Aderant.Build.Analyzer.Verifiers;
+
+namespace UnitTest.Aderant.Build.Analyzer.Tests.Logging {
+    [TestClass]
+    public class LoggingInvalidTemplateTests : AderantCodeFixVerifier {
+        #region Constructors
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LoggingInvalidTemplateTests"/> class.
+        /// </summary>
+        public LoggingInvalidTemplateTests()
+            : base(null) {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LoggingInvalidTemplateTests"/> class.
+        /// </summary>
+        /// <param name="injectedRules">The injected rules.</param>
+        public LoggingInvalidTemplateTests(RuleBase[] injectedRules)
+            : base(injectedRules) {
+        }
+
+        #endregion Constructors
+
+        #region Properties
+
+        protected override RuleBase Rule => new LoggingInvalidTemplateRule();
+
+        #endregion Properties
+
+        #region Tests
+
+        [TestMethod]
+        public void LoggingInvalidTemplate_Invalid() {
+            const string code = @"
+using System;
+using Aderant.Framework.Logging;
+
+namespace Test {
+    public class TestClass {
+        public void TestMethod(ILogWriter logWriter) {
+            logWriter.Log(
+                LogLevel.Error,
+                ""{0}, {2}"",
+                new object(),
+                new object());
+        }
+    }
+}
+
+namespace Aderant.Framework.Logging {
+    public enum LogLevel {
+        Trace,
+        Debug,
+        Info,
+        Warning,
+        Error,
+        Fatal
+    }
+
+    public interface ILogWriter {
+        bool IsEnabled(LogLevel level);
+        object Log(LogLevel level, string message);
+        object Log(LogLevel level, string messageTemplate, params object[] detail);
+        object Log(LogLevel level, Exception exception);
+        object Log(LogLevel level, string summaryMessage, Exception exception);
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code, GetDiagnostic(10, 17));
+        }
+
+        [TestMethod]
+        public void LoggingInvalidTemplate_Invalid_Formatted() {
+            const string code = @"
+using System;
+using Aderant.Framework.Logging;
+
+namespace Test {
+    public class TestClass {
+        public void TestMethod(ILogWriter logWriter) {
+            logWriter.Log(
+                LogLevel.Error,
+                ""{0}, {2:0.000}"",
+                new object(),
+                new object());
+        }
+    }
+}
+
+namespace Aderant.Framework.Logging {
+    public enum LogLevel {
+        Trace,
+        Debug,
+        Info,
+        Warning,
+        Error,
+        Fatal
+    }
+
+    public interface ILogWriter {
+        bool IsEnabled(LogLevel level);
+        object Log(LogLevel level, string message);
+        object Log(LogLevel level, string messageTemplate, params object[] detail);
+        object Log(LogLevel level, Exception exception);
+        object Log(LogLevel level, string summaryMessage, Exception exception);
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code, GetDiagnostic(10, 17));
+        }
+
+        [TestMethod]
+        public void LoggingInvalidTemplate_Invalid_NonZeroStart() {
+            const string code = @"
+using System;
+using Aderant.Framework.Logging;
+
+namespace Test {
+    public class TestClass {
+        public void TestMethod(ILogWriter logWriter) {
+            logWriter.Log(
+                LogLevel.Error,
+                ""{1}, {2}"",
+                new object(),
+                new object());
+        }
+    }
+}
+
+namespace Aderant.Framework.Logging {
+    public enum LogLevel {
+        Trace,
+        Debug,
+        Info,
+        Warning,
+        Error,
+        Fatal
+    }
+
+    public interface ILogWriter {
+        bool IsEnabled(LogLevel level);
+        object Log(LogLevel level, string message);
+        object Log(LogLevel level, string messageTemplate, params object[] detail);
+        object Log(LogLevel level, Exception exception);
+        object Log(LogLevel level, string summaryMessage, Exception exception);
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code, GetDiagnostic(10, 17));
+        }
+
+        [TestMethod]
+        public void LoggingInvalidTemplate_Valid() {
+            const string code = @"
+using System;
+using Aderant.Framework.Logging;
+
+namespace Test {
+    public class TestClass {
+        public void TestMethod(ILogWriter logWriter) {
+            logWriter.Log(
+                LogLevel.Error,
+                ""{0}, {1}"",
+                new object(),
+                new object());
+        }
+    }
+}
+
+namespace Aderant.Framework.Logging {
+    public enum LogLevel {
+        Trace,
+        Debug,
+        Info,
+        Warning,
+        Error,
+        Fatal
+    }
+
+    public interface ILogWriter {
+        bool IsEnabled(LogLevel level);
+        object Log(LogLevel level, string message);
+        object Log(LogLevel level, string messageTemplate, params object[] detail);
+        object Log(LogLevel level, Exception exception);
+        object Log(LogLevel level, string summaryMessage, Exception exception);
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void LoggingInvalidTemplate_Valid_Formatted() {
+            const string code = @"
+using System;
+using Aderant.Framework.Logging;
+
+namespace Test {
+    public class TestClass {
+        public void TestMethod(ILogWriter logWriter) {
+            logWriter.Log(
+                LogLevel.Error,
+                ""{0}, {1}"",
+                new object(),
+                new object());
+        }
+    }
+}
+
+namespace Aderant.Framework.Logging {
+    public enum LogLevel {
+        Trace,
+        Debug,
+        Info,
+        Warning,
+        Error,
+        Fatal
+    }
+
+    public interface ILogWriter {
+        bool IsEnabled(LogLevel level);
+        object Log(LogLevel level, string message);
+        object Log(LogLevel level, string messageTemplate, params object[] detail);
+        object Log(LogLevel level, Exception exception);
+        object Log(LogLevel level, string summaryMessage, Exception exception);
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        #endregion Tests
+    }
+}

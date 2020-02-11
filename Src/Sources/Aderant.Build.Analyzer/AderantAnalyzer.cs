@@ -1,10 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using Aderant.Build.Analyzer.Rules;
 using Aderant.Build.Analyzer.Rules.CodeQuality;
 using Aderant.Build.Analyzer.Rules.IDisposable;
+using Aderant.Build.Analyzer.Rules.Logging;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
@@ -27,7 +28,12 @@ namespace Aderant.Build.Analyzer {
                 new RuleBase[] {
                     // Regex
                     new InvalidRegexRule(),
-                    new InvalidLogMessageRule(),
+
+                    // Logging
+                    new LoggingArgumentCountRule(),
+                    new LoggingBanExceptionWithoutMessageRule(),
+                    new LoggingInterpolationRule(),
+                    new LoggingInvalidTemplateRule(),
 
                     // Properties
                     new PropertyChangedNoStringRule(),
@@ -46,6 +52,7 @@ namespace Aderant.Build.Analyzer {
                     new CodeQualitySqlQueryRule(),
                     new CodeQualityNewExceptionRule(),
                     new CodeQualityMathRoundRule(),
+                    new CodeQualityDataProviderIllegalPublicPropertiesRule(),
 
                     // IDisposable
                     new IDisposableClassRule(),

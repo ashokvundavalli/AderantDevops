@@ -93,9 +93,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Tests\AderantQueryServiceMigrationTests.cs" />
+    <Content Include="Tests\Unused\AderantQueryServiceMigrationTests.cs" />
     <Compile Include="Tests\AutomatedTest.cs" />
     <Compile Include="Tests\CodeQuality\CodeQualityApprovalsReporterTests.cs" />
+    <Compile Include="Tests\CodeQuality\CodeQualityDataProviderIllegalPublicPropertiesTests.cs" />
     <Compile Include="Tests\CodeQuality\CodeQualityDbConnectionStringTests.cs" />
     <Compile Include="Tests\CodeQuality\CodeQualityDefaultTransactionScopeTests.cs" />
     <Compile Include="Tests\CodeQuality\CodeQualityNewExceptionTests.cs" />
@@ -111,7 +112,10 @@
     <Compile Include="Tests\IDisposable\IDisposableLocalVariableRuleTests.cs" />
     <Compile Include="Tests\IDisposable\IDisposableMethodInvocationTests.cs" />
     <Compile Include="Tests\InvalidQueryServiceProxyExtensionTests.cs" />
-    <Compile Include="Tests\InvalidLogMessageTests.cs" />
+    <Compile Include="Tests\Logging\LoggingBanExceptionWithoutMessageTests.cs" />
+    <Compile Include="Tests\Logging\LoggingArgumentCountTests.cs" />
+    <Compile Include="Tests\Logging\LoggingInterpolationTests.cs" />
+    <Compile Include="Tests\Logging\LoggingInvalidTemplateTests.cs" />
     <Compile Include="Tests\NHibernateRetrieveTypeNotInterfaceRuleTest.cs" />
     <Compile Include="Tests\PropertyChangedNoStringNonFixableTests.cs" />
     <Compile Include="Tests\QueryServiceQueryAllTests.cs" />

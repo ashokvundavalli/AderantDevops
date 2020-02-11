@@ -300,7 +300,7 @@ namespace Aderant.Build.Analyzer.Rules {
             //      foo = "foo";           <--- AssignmentExpressionSyntax
             //
             //      These two 'assignments' are viewed differently by the Roslyn engine,
-            //      and as such must be handled seperately.
+            //      and as such must be handled separately.
             EqualsValueClauseSyntax latestEqualsValueExpression;
             AssignmentExpressionSyntax latestAssignmentExpression;
 

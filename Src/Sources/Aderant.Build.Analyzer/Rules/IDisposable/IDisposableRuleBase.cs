@@ -827,7 +827,7 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 }
 
                 // Examine the 'right' side of the expression as the values.
-                SyntaxNode value = UnwrapParenthesizedExpression(childNodes[1]);
+                SyntaxNode value = UnwrapParenthesizedExpressionDescending(childNodes[1]);
 
                 if (value is IdentifierNameSyntax) {
                     identifiers = new List<IdentifierNameSyntax> {
