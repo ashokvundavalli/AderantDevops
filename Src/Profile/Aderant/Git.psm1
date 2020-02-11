@@ -6,15 +6,14 @@ function global:Enable-GitPrompt {
     Function global:Prompt {
         $realLASTEXITCODE = $LASTEXITCODE
 
-        $location = Get-Location
-
-        Write-Host("")
-        Write-Host ("Module [") -NoNewline
+        [string]$location = Get-Location
+        
+        Write-Host ([string]::Empty)
+        Write-Host 'Module [' -NoNewline
         Write-Host ($global:ShellContext.CurrentModuleName) -NoNewline -ForegroundColor DarkCyan
-        Write-Host ("] at [") -NoNewline
+        Write-Host '] at [' -NoNewline
         Write-Host ($global:ShellContext.CurrentModulePath) -NoNewline -ForegroundColor DarkCyan
-        Write-Host ("]")
-
+        Write-Host ']'
         Write-Host "PS ${location}" -NoNewline
 
         if ($global:ShellContext.PoshGitAvailable) {
@@ -34,12 +33,12 @@ function global:Enable-GitPrompt {
 
         # Default console looks like this
         # PS C:\WINDOWS\system32>
-        return " "
+        return ' '
     }
 }
 
 Install-PoshGit
 Initialize-Git
 
-Export-ModuleMember -Function Invoke-Build2
-Set-Alias -Name bm -Value Invoke-Build2 -Scope Global
+Export-ModuleMember -Function 'Invoke-Build2'
+Set-Alias -Name 'bm' -Value 'Invoke-Build2' -Scope 'Global'

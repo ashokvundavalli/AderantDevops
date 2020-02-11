@@ -281,7 +281,6 @@ function Set-CurrentModule {
                 Enable-GitPrompt
             } else {
                 $ShellContext.IsGitRepository = $false
-                Enable-ExpertPrompt
             }
 
         } else {
@@ -293,7 +292,6 @@ function Set-CurrentModule {
             Set-Location $ShellContext.CurrentModulePath
 
             $ShellContext.IsGitRepository = $false
-            Enable-ExpertPrompt
         }
 
         if ((Test-Path $ShellContext.CurrentModulePath) -eq $false) {
@@ -424,8 +422,6 @@ function Install-LatestVisualStudioExtensionImpl($installDetails, [switch]$local
     Write-Host "Uninstalling $($installDetails.ProductManifestName)..."
     $vsix = "VSIXInstaller.exe"
     Start-Process -FilePath $vsix -ArgumentList "/q /uninstall:$($info.ExtensionName)" -Wait -PassThru | Out-Null
-    Start-Process -FilePath $vsix -ArgumentList "/q /uninstall:$($info.ExtensionName)" -Wait -PassThru | Out-Null
-    Start-Process -FilePath $vsix -ArgumentList "/q /uninstall:$($info.ExtensionName)" -Wait -PassThru | Out-Null
 
     # Take VSIX out of local source directory
     if ($local) {
@@ -501,14 +497,9 @@ function Set-Environment {
     )
 
     process {
-        if ($ShellContext.IsTfvcModuleEnabled) {
-            Import-Module "$PSScriptRoot\AderantTfs.psm1" -Global
-        }
-
         if ($Initialize.IsPresent) {
             Set-DefaultPaths
-            AddGitCommandIntercept
-            CreateDummyGitDirectory 'C:\AderantExpert\Local\SharedBin\'
+            Add-GitCommandIntercept
         }
 
         $ShellContext.PackageScriptsDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($ShellContext.BuildScriptsDirectory, '..\Package'))
@@ -795,31 +786,6 @@ Add-ModuleExpansionParameter -CommandName "Copy-BinToEnvironment" -ParameterName
 Add-ModuleExpansionParameter -CommandName "CleanupIISCache" -ParameterName "moduleNames"
 Add-ModuleExpansionParameter –CommandName "Get-WebDependencies" –ParameterName "ModuleName"
 
-function Enable-ExpertPrompt {
-    <#
-    .Synopsis
-        Enables the Expert prompt with branch and module information
-    .Description
-        Enable-ExpertPrompt
-    #>
-    Function global:Prompt {
-        # set the window title to the branch name
-        $Host.UI.RawUI.WindowTitle = "PS - [" + $ShellContext.CurrentModuleName + "] on branch [" + $ShellContext.BranchName + "]"
-
-        Write-Host("")
-        Write-Host ("Module [") -nonewline
-        Write-Host ($ShellContext.CurrentModuleName) -nonewline -foregroundcolor DarkCyan
-        Write-Host ("] at [") -nonewline
-        Write-Host ($ShellContext.CurrentModulePath) -nonewline -foregroundcolor DarkCyan
-        Write-Host ("] on branch [") -nonewline
-        Write-Host ($ShellContext.BranchName) -nonewline -foregroundcolor Green
-        Write-Host ("]")
-
-        Write-Host ("PS " + $(get-location) + ">") -nonewline
-        return " "
-    }
-}
-
 <#
 .Synopsis
     Disables the Expert prompt with branch and module information
@@ -846,7 +812,6 @@ $functionsToExport = @(
     [PSCustomObject]@{ function = 'Clear-ExpertCache'; alias = 'ccache'; },
     [PSCustomObject]@{ function = 'Copy-BinariesFromCurrentModule'; alias = 'cb'; },
     [PSCustomObject]@{ function = 'Disable-ExpertPrompt'; advanced = $true; alias = $null; },
-    [PSCustomObject]@{ function = 'Enable-ExpertPrompt'; advanced = $true; alias = $null; },
     [PSCustomObject]@{ function = 'Generate-SystemMap'; alias = $null; },
     [PSCustomObject]@{ function = 'Get-CurrentModule'; alias = $null; },
     [PSCustomObject]@{ function = 'Get-Dependencies'; alias = 'gd'; },
@@ -855,7 +820,6 @@ $functionsToExport = @(
     [PSCustomObject]@{ function = 'Get-DatabaseServer'; alias = $null; },
     [PSCustomObject]@{ function = 'Get-Product'; alias = $null; },
     [PSCustomObject]@{ function = 'Get-ProductBuild'; alias = 'gpb'; },
-    [PSCustomObject]@{ function = 'Git-Merge'; alias = $null; },
 #    [PSCustomObject]@{ function = 'Install-LatestSoftwareFactory'; alias = 'usf'; },
 #    [PSCustomObject]@{ function = 'Install-LatestVisualStudioExtension'; alias = $null; },
     [PSCustomObject]@{ function = 'Open-ModuleSolution'; alias = 'vs'; },
@@ -893,10 +857,6 @@ Export-ModuleMember -variable BranchBinariesDirectory
 Export-ModuleMember -variable BranchName
 Export-ModuleMember -variable BranchModulesDirectory
 Export-ModuleMember -variable ProductManifestPath
-
-#Measure-Command {
-#    Enable-ExpertPrompt
-#} "Enable-ExpertPrompt"
 
 #Check-Vsix "NUnit3.TestAdapter" "0da0f6bd-9bb6-4ae3-87a8-537788622f2d" "NUnit.NUnit3TestAdapter"
 #Check-Vsix "Aderant.DeveloperTools" "b36002e4-cf03-4ed9-9f5c-bf15991e15e4"
