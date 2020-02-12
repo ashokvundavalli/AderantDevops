@@ -71,6 +71,8 @@ function ConfigureGit([Aderant.Build.BuildOperationContext]$context) {
         # Probably don't have git so we are going to fail hard very soon.
     }
 
+    # See https://git-scm.com/docs/git-config for official documentation on Git configuration.
+
     & git config --global difftool.prompt false
     & git config --global credential.tfs.integrated true
     & git config --global credential.tfs.ap.aderant.com.integrated true
@@ -81,8 +83,11 @@ function ConfigureGit([Aderant.Build.BuildOperationContext]$context) {
 
     if ($context.IsDesktopBuild) {
         Write-Debug 'Applying desktop .gitconfig'
-        # Global Aliases - Insert nifty git commands here
 
+        # Enable git push -u to push the current branch to update a branch with the same name on origin.
+        & git config --global push.default current
+
+        # Global Aliases - Insert nifty git commands here
         # Prints a list of branches you've committed to sorted by date
         & git config --global alias.branchdates "for-each-ref --sort=committerdate refs/heads/ --format='%(committerdate:short) %(refname:short)'"
 

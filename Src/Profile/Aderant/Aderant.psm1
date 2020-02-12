@@ -260,7 +260,10 @@ function Set-CurrentModule {
             Write-Debug "CurrentModuleName set to: $($script:ShellContext.CurrentModuleName)"
 
             Write-Debug "Setting repository: $name"
-            Import-Module $PSScriptRoot\Git.psm1 -Global
+
+            if (-not (Get-Module -Name 'Git')) {
+                Import-Module "$PSScriptRoot\Git.psm1" -Global
+            }
 
             Set-Location $ShellContext.CurrentModulePath
 
