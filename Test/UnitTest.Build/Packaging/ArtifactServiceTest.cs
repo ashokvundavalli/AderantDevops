@@ -9,7 +9,6 @@ using Aderant.Build.Packaging;
 using Aderant.Build.Packaging.Handlers;
 using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem.StateTracking;
-using Aderant.Build.VersionControl;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
@@ -211,6 +210,67 @@ namespace UnitTest.Build.Packaging {
 
             Assert.AreEqual(1, result.Count);
             Assert.AreEqual("file://foo/files.zip", result[0].Item2);
+        }
+
+        [TestMethod]
+        public void IsFileTrustworthy_Yes() {
+            var buildStateFile = new BuildStateFile {
+                ScmBranch = "refs/heads/master",
+                Outputs = new Dictionary<string, ProjectOutputSnapshot>(1) {
+                    { "a", null }
+                },
+                Artifacts = new ArtifactCollection {
+                    { "a", null }
+                }
+            };
+
+            Assert.IsTrue(ArtifactService.IsFileTrustworthy("refs/heads/master", buildStateFile, out string reason));
+            Assert.IsTrue(reason.IndexOf("Acceptable match", StringComparison.OrdinalIgnoreCase) != -1);
+        }
+
+        [TestMethod]
+        public void IsFileTrustworthy_Invalid_Outputs() {
+            var buildStateFile = new BuildStateFile {
+                ScmBranch = "refs/heads/master",
+                Artifacts = new ArtifactCollection {
+                    { "a", null }
+                }
+            };
+
+            Assert.IsFalse(ArtifactService.IsFileTrustworthy("refs/heads/master", buildStateFile, out string reason));
+            Assert.IsNotNull(reason);
+            Assert.IsTrue(reason.IndexOf("outputs", StringComparison.OrdinalIgnoreCase) != -1);
+        }
+
+        [TestMethod]
+        public void IsFileTrustworthy_Invalid_ArtifactCollection() {
+            var buildStateFile = new BuildStateFile {
+                ScmBranch = "refs/heads/master",
+                Outputs = new Dictionary<string, ProjectOutputSnapshot>(1) {
+                    { "a", null }
+                }
+            };
+
+            Assert.IsFalse(ArtifactService.IsFileTrustworthy("refs/heads/master", buildStateFile, out string reason));
+            Assert.IsNotNull(reason);
+            Assert.IsTrue(reason.IndexOf("Artifacts", StringComparison.OrdinalIgnoreCase) != -1);
+        }
+
+        [TestMethod]
+        public void IsFileTrustworthy_Invalid_ScmBranch() {
+            var buildStateFile = new BuildStateFile {
+                ScmBranch = "refs/heads/update/82SP2",
+                Outputs = new Dictionary<string, ProjectOutputSnapshot>(1) {
+                    { "a", null }
+                },
+                Artifacts = new ArtifactCollection {
+                    { "a", null }
+                }
+            };
+
+            Assert.IsTrue(ArtifactService.IsFileTrustworthy("refs/heads/master", buildStateFile, out string reason));
+            Assert.IsNotNull(reason);
+            Assert.IsTrue(reason.IndexOf("ScmBranch", StringComparison.OrdinalIgnoreCase) != -1);
         }
     }
 }

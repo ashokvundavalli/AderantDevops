@@ -130,7 +130,8 @@ namespace IntegrationTest.Build.EndToEnd {
                 .GetBuildStateMetadata(
                     context.SourceTreeMetadata.GetBuckets().Select(s => s.Id).ToArray(),
                     null,
-                    context.DropLocationInfo.BuildCacheLocation);
+                    context.DropLocationInfo.BuildCacheLocation,
+                    context.BuildMetadata.ScmBranch);
 
             Assert.AreNotEqual(0, buildStateMetadata.BuildStateFiles.Count);
 

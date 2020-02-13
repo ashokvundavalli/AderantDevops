@@ -276,7 +276,13 @@ function GetBuildStateMetadata($context) {
         return
     }
 
-    $buildState = Get-BuildStateMetadata -BucketIds $ids -Tags $tags -DropLocation $context.DropLocationInfo.BuildCacheLocation
+    if ($context.IsDesktopBuild -and [string]::IsNullOrWhiteSpace($context.BuildMetadata.ScmBranch)) {
+        $sourceTreeMetadata = Get-SourceTreeMetadata
+        $scmBranch = $sourceTreeMetadata.CommonAncestor -replace ".*/origin", "refs/heads"
+        $context.BuildMetadata.ScmBranch = $scmBranch
+    }
+
+    $buildState = Get-BuildStateMetadata -BucketIds $ids -Tags $tags -DropLocation $context.DropLocationInfo.BuildCacheLocation -ScmBranch $context.BuildMetadata.ScmBranch
 
     $context.BuildStateMetadata = $buildState
 
@@ -401,7 +407,7 @@ function AssignSwitches {
     $switches.Downstream = $Downstream.IsPresent
 
     if (-not $context.IsDesktopBuild) {
-		$switches.Downstream = $true
+        $switches.Downstream = $true
     }
 
     $switches.Transitive = $Transitive.IsPresent

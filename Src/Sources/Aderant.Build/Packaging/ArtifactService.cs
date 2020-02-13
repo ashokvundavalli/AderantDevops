@@ -445,12 +445,16 @@ namespace Aderant.Build.Packaging {
         /// </summary>
         public bool ArtifactRestoreSkipped { get; set; }
 
-        public BuildStateMetadata GetBuildStateMetadata(string[] bucketIds, string dropLocation, CancellationToken token = default(CancellationToken)) {
-            return GetBuildStateMetadata(bucketIds, null, dropLocation, token);
+        public BuildStateMetadata GetBuildStateMetadata(string[] bucketIds, string dropLocation, string scmBranch, CancellationToken token = default(CancellationToken)) {
+            return GetBuildStateMetadata(bucketIds, null, dropLocation, scmBranch, token);
         }
 
-        public BuildStateMetadata GetBuildStateMetadata(string[] bucketIds, string[] tags, string dropLocation, CancellationToken token = default(CancellationToken)) {
-            if (bucketIds != null && tags != null && bucketIds.Length > 0 && tags.Length != 0) {
+        public BuildStateMetadata GetBuildStateMetadata(string[] bucketIds, string[] tags, string dropLocation, string scmBranch, CancellationToken token = default(CancellationToken)) {
+            if (bucketIds == null) {
+                throw new ArgumentNullException(nameof(bucketIds));
+            }
+
+            if (tags != null && bucketIds.Length > 0 && tags.Length != 0) {
                 if (bucketIds.Length != tags.Length) {
                     // The two vectors must have the same length
                     throw new InvalidOperationException(string.Format("{2} refers to {0} item(s), and {3} refers to {1} item(s). They must have the same number of items.",
@@ -504,7 +508,7 @@ namespace Aderant.Build.Packaging {
                                 file.Location = folder;
 
                                 string reason;
-                                if (IsFileTrustworthy(file, out reason)) {
+                                if (IsFileTrustworthy(scmBranch, file, out reason)) {
                                     logger.Info($"Candidate-> {stateFile}:{reason}");
                                     files.Add(file);
                                 } else {
@@ -522,24 +526,29 @@ namespace Aderant.Build.Packaging {
             }
         }
 
-        private static bool IsFileTrustworthy(BuildStateFile file, out string reason) {
+        internal static bool IsFileTrustworthy(string scmBranch, BuildStateFile file, out string reason) {
             if (CheckForRootedPaths(file)) {
-                reason = "Corrupt";
+                reason = "Corrupt.";
                 return false;
             }
 
             // Reject files that provide no value
             if (file.Outputs == null || file.Outputs.Count == 0) {
-                reason = "No outputs";
+                reason = "No outputs.";
                 return false;
             }
 
             if (file.Artifacts == null || file.Artifacts.Count == 0) {
-                reason = "No Artifacts";
+                reason = "No Artifacts.";
                 return false;
             }
 
-            reason = null;
+            if (!string.IsNullOrWhiteSpace(scmBranch) && !scmBranch.Equals(file.ScmBranch)) {
+                reason = $"Different ScmBranch (source: {scmBranch}, artifact: {file.ScmBranch}).";
+            } else {
+                reason = "Acceptable match.";
+            }
+
             return true;
         }
 
@@ -547,7 +556,7 @@ namespace Aderant.Build.Packaging {
             if (file.Outputs != null) {
                 foreach (var key in file.Outputs.Keys) {
                     if (Path.IsPathRooted(key)) {
-                        // File is corrupt and should not be used
+                        // File is corrupt and should not be used.
                         return true;
                     }
                 }
