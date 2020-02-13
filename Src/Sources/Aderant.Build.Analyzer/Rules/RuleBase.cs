@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -393,7 +393,7 @@ namespace Aderant.Build.Analyzer.Rules {
             // If the suppressions file does not exist...
             if (tryResult == null) {
                 // ...create it and suppress this node.
-                SetFileContents(data.SuppressionFilePath, new[] { message }, Encoding.Unicode);
+                SetFileContents(data.SuppressionFilePath, new[] { message }, Encoding.UTF8);
 
                 // Add the suppressions file to the project file.
                 AddSuppressionsFileToProject(data);
@@ -420,7 +420,7 @@ namespace Aderant.Build.Analyzer.Rules {
             newContents[contents.Length] = message;
 
             // Write the new contents to the GlobalSuppressions.cs file.
-            SetFileContents(data.SuppressionFilePath, newContents, Encoding.Unicode);
+            SetFileContents(data.SuppressionFilePath, newContents, Encoding.UTF8);
 
             // Do not raise a diagnostic.
             return false;
@@ -541,13 +541,32 @@ namespace Aderant.Build.Analyzer.Rules {
         }
 
         /// <summary>
-        /// Generates the expression suppression message.
+        /// Generates the expression suppression message for <see cref="ExpressionSyntax"/>.
         /// </summary>
         /// <param name="node">The node.</param>
         /// <param name="diagnosticId">The diagnostic identifier.</param>
         private static string GenerateSuppressionMessageExpression(
             SyntaxNode node,
             string diagnosticId) {
+            string methodName = string.Empty, className = string.Empty;
+
+            // Class & Method
+            var currentNode = node;
+            while (currentNode != null) {
+                var methodSyntax = currentNode as MethodDeclarationSyntax;
+                if (methodSyntax != null) {
+                    methodName = methodSyntax.Identifier.Text;
+                } else {
+                    var classSyntax = currentNode as ClassDeclarationSyntax;
+                    if (classSyntax != null) {
+                        className = classSyntax.Identifier.Text;
+                        break;
+                    }
+                }
+
+                currentNode = currentNode.Parent;
+            }
+
             // Name.
             string name = null;
 
@@ -563,7 +582,7 @@ namespace Aderant.Build.Analyzer.Rules {
 
             return name == null
                 ? null
-                : BuildSuppressionMessage(node, diagnosticId, name);
+                : BuildSuppressionMessage(node, diagnosticId, $"{className}:{methodName}:{name}");
         }
 
         /// <summary>
@@ -696,9 +715,9 @@ namespace Aderant.Build.Analyzer.Rules {
         /// <param name="path">The path.</param>
         /// <param name="contents">The contents.</param>
         /// <param name="encoding">The encoding.</param>
-        private static void SetFileContents(string path, string[] contents, Encoding encoding) {
+        private static void SetFileContents(string path, IEnumerable<string> contents, Encoding encoding) {
             try {
-                File.WriteAllLines(path, contents, encoding);
+                File.WriteAllLines(path, contents.Where(line => !string.IsNullOrWhiteSpace(line)), encoding);
             } catch (Exception) {
                 // Do nothing.
             }
