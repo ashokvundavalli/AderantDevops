@@ -252,14 +252,17 @@ function UpdateSubmodules {
 
         [string]$root = git.exe -C $PSScriptRoot rev-parse --show-toplevel
         [string[]]$submodules = git.exe -C $root submodule status
+        if ($LASTEXITCODE -ne 0) {
+            throw $submodules
+        }
 
-        [bool]$interactive = ($null -ne [System.Environment]::UserInteractive -or [System.Environment]::UserInteractive)
+        Write-Information "Submodules to be updated: $submodules"
 
         foreach ($submodule in $submodules) {
             [string]$submodulePath = $submodule.Split(' ', [System.StringSplitOptions]::RemoveEmptyEntries)[1]
             [string]$submoduleName = $submodulePath.Substring($submodulePath.LastIndexOf('/') + 1)
 
-            if ($submoduleName -eq 'DevTools' -and -not $interactive) {
+            if ($submoduleName -eq 'DevTools' -and -not $script:isUsingProfile) {
                 continue
             }
 
@@ -296,7 +299,7 @@ function UpdateSubmodules {
         }
     }
 
-    $markerFile = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), "Submodule_" + $commit)
+    $markerFile = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), "Submodule_" + $commit) 
     DoActionIfNeeded $action $markerFile
 }
 
@@ -306,7 +309,14 @@ function RefreshSource {
        [string]$Branch
     )
 
+    [System.Enum]$originalDebugPreference = $DebugPreference
+
+    if (-not $script:isUsingProfile) {
+        $DebugPreference = 'Continue' 
+    }
+
     $initialVersion = [string](& git -C $PSScriptRoot rev-parse HEAD)
+    Write-Debug "Initial Version: $($initialVersion)"
 
     $action = {
        if ($Pull) {
@@ -315,13 +325,18 @@ function RefreshSource {
     }
 
     $lockName = $Branch + "_BUILD_UPDATE_LOCK"
+    Write-Debug "Lock Name: $($lockName)"
+
     $updated = RunActionExclusive $action $lockName
 
     $updatedVersion = [string](& git -C $PSScriptRoot rev-parse HEAD)
+    Write-Debug "Update Version: $($updatedVersion)"
 
     if ($updated -and $initialVersion -eq $updatedVersion) {
         $updated = $false
     }
+
+    $DebugPreference = $originalDebugPreference
 
     return [PsCustomObject]@{ Updated = $updated; Version = $updatedVersion }
 }
