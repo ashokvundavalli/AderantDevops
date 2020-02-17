@@ -58,8 +58,8 @@
 
       <TestAdapterSwitch Condition="'$(PSTests)' == 'true'">/TestAdapterPath:"$(BuildScriptsDirectory)..\Build.Tools"</TestAdapterSwitch>
       <ResultsFileSwitch Condition="'$(ResultsFileSwitch)' == ''">/Logger:trx</ResultsFileSwitch>
-      <RunSettingsFile Condition="'$(IsDesktopBuild)' != 'true' And '$(CustomRunSettings)' != ''">$(TestWorkingDirectory)$(CustomRunSettings)</RunSettingsFile>
-      <RunSettingsFile Condition="'$(RunSettingsFile)' == ''">$(TestWorkingDirectory)default.runsettings</RunSettingsFile>
+      <RunSettingsFile Condition="'$(IsDesktopBuild)' != 'true' And Exists('$(TestWorkingDirectory)$(CustomRunSettings)') And '$(RunSettingsFile)' == ''">$(TestWorkingDirectory)$(CustomRunSettings)</RunSettingsFile>
+      <RunSettingsFile Condition="'$(RunSettingsFile)' == '' And Exists('$(TestWorkingDirectory)default.runsettings')">$(TestWorkingDirectory)default.runsettings</RunSettingsFile>
       <RunSettingsSwitch>/Settings:$(RunSettingsFile)</RunSettingsSwitch>
 
       <TestPattern>$([MSBuild]::ValueOrDefault('$(TestPattern)', 'UnitTest'))</TestPattern>
@@ -68,6 +68,7 @@
     </PropertyGroup>
 
     <Message Text="TestPattern: $(TestPattern)" />
+    <Message Text="RunSettingsFile: $(RunSettingsFile)" />
   </Target>
 
 
@@ -178,11 +179,12 @@ $isDesktopBuild = $$(IsDesktopBuild)
 $referencePaths = $(AllDirectoriesWithDlls)
 $testFiles = $(AssembliesUnderTest)
 $RunInParallel = $$(RunTestsInParallel)
+$RunSettingsFile = "$(RunSettingsFile)"
 $additionalEnvironmentVariables = @{}
 $(AdditionalVariables)
 
 try {
-  . Testing\RunTests.ps1 -PathToTestTool $testTool -ToolArgs $testToolArgs -WorkingDirectory $workingDirectory -SolutionRoot $testRunDirectory -TestAdapterPath &quot;$(TestAdapterPath)&quot; -IsDesktopBuild:$isDesktopBuild -ReferencePaths $referencePaths -TestAssemblies $testFiles -AdditionalEnvironmentVariables $additionalEnvironmentVariables -RunInParallel $RunInParallel
+  . Testing\RunTests.ps1 -PathToTestTool $testTool -ToolArgs $testToolArgs -WorkingDirectory $workingDirectory -SolutionRoot $testRunDirectory -TestAdapterPath &quot;$(TestAdapterPath)&quot; -IsDesktopBuild:$isDesktopBuild -ReferencePaths $referencePaths -TestAssemblies $testFiles -AdditionalEnvironmentVariables $additionalEnvironmentVariables -RunInParallel $RunInParallel -CustomRunSettingsFile $RunSettingsFile
 } catch {
     $Error[0] | Format-List -Force
     throw

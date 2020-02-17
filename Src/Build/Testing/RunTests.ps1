@@ -14,32 +14,28 @@ param(
   [bool]$IsDesktopBuild,
 
   [Parameter(Mandatory=$false)]
-  [string]
-  $SolutionRoot,
+  [string]$SolutionRoot,
+
+  [Parameter(Mandatory=$false)]
+  [string]$CustomRunSettingsFile,
 
   [Parameter(Mandatory=$false, HelpMessage="The paths to provide to the test tool assembly resolver")]
-  [string[]]
-  $ReferencePaths,
+  [string[]]$ReferencePaths,
 
   [Parameter(Mandatory=$false)]
-  [Hashtable]
-  $AdditionalEnvironmentVariables,
+  [Hashtable]$AdditionalEnvironmentVariables,
 
   [Parameter(Mandatory=$false)]
-  [bool]
-  $RunInParallel,
+  [bool]$RunInParallel,
 
   [Parameter(Mandatory=$false, ValueFromRemainingArguments=$true)]
-  [string[]]
-  $TestAssemblies,
+  [string[]]$TestAssemblies,
 
   [Parameter(Mandatory=$false)]
-  [string]
-  $TestAdapterPath,
+  [string]$TestAdapterPath,
 
   [Parameter(Mandatory=$false)]
-  [int]
-  $TestSessionTimeout = 1200000
+  [int]$TestSessionTimeout = 1200000
 )
 
 Set-StrictMode -Version "Latest"
@@ -186,16 +182,22 @@ if ($null -ne $AdditionalEnvironmentVariables -and $AdditionalEnvironmentVariabl
 }
 
 $global:LASTEXITCODE = 0
-$runSettingsFile = ""
+[string]$runSettingsFile = [string]::Empty
 
 try {
-    Write-Information "Creating run settings"
-    $xml = CreateRunSettingsXml
-    Write-Information ([System.Environment]::NewLine + "$xml")
+	if ([string]::IsNullOrWhiteSpace($CustomRunSettingsFile)) {
+		Write-Information "Creating run settings file..."
+		$xml = CreateRunSettingsXml
+		Write-Information ([System.Environment]::NewLine + "$xml")
 
-    $runSettingsFile = [System.IO.Path]::GetTempFileName()
-    Add-Content -LiteralPath $runSettingsFile -Value $xml -Encoding UTF8
-    $startInfo.Arguments += " /Settings:$runSettingsFile"
+		$runSettingsFile = [System.IO.Path]::GetTempFileName()
+		Add-Content -LiteralPath $runSettingsFile -Value $xml -Encoding UTF8
+
+		$startInfo.Arguments += " /Settings:$runSettingsFile"
+	} else {
+		Write-Information "Using custom run settings file: '$CustomRunSettingsFile'."
+		$startInfo.Arguments += " /Settings:$CustomRunSettingsFile"
+	}
 
     if (-not [string]::IsNullOrWhiteSpace($TestAdapterPath)) {
         $startInfo.Arguments += " /TestAdapterPath:$TestAdapterPath"
@@ -209,7 +211,7 @@ try {
 
     if ($lastExitCode -eq 0) {
         try {
-            if ($runSettingsFile) {
+            if ($runSettingsFile -and -not [string]::IsNullOrWhiteSpace($TestAdapterPath)) {
                 [System.IO.File]::Delete($runSettingsFile)
             }
         } catch {
