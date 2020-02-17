@@ -119,6 +119,8 @@
     <Compile Include="Tests\NHibernateRetrieveTypeNotInterfaceRuleTest.cs" />
     <Compile Include="Tests\PropertyChangedNoStringNonFixableTests.cs" />
     <Compile Include="Tests\QueryServiceQueryAllTests.cs" />
+    <Compile Include="Tests\Security\SecurityBanModifyingDtdProcessingTests.cs" />
+    <Compile Include="Tests\Security\SecurityBanNewXmlReaderTests.cs" />
     <Compile Include="Tests\SetPropertyValueNoStringNonFixableTests.cs" />
     <Compile Include="Tests\SetPropertyValueNoStringTests.cs" />
     <Compile Include="Tests\PropertyChangedNoStringTests.cs" />

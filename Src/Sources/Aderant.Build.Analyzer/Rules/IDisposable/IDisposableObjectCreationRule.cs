@@ -117,25 +117,25 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 var interfaces = context
                     .SemanticModel
                     .GetSymbolInfo(invocationExpressionSyntax)
-                    .Symbol
+                    .Symbol?
                     .ContainingType
                     .AllInterfaces;
 
                 if (string.Equals(methodName, "Add", StringComparison.Ordinal) &&
-                    interfaces.Any(
+                    interfaces?.Any(
                         interfaceSymbol => string.Equals(
                             "System.Collections.Generic.IEnumerable<T>",
                             interfaceSymbol.OriginalDefinition.ToDisplayString(),
-                            StringComparison.Ordinal))) {
+                            StringComparison.Ordinal)) == true) {
                     return;
                 }
 
                 if (string.Equals(methodName, "Enqueue", StringComparison.Ordinal) &&
-                    interfaces.Any(
+                    interfaces?.Any(
                         interfaceSymbol => string.Equals(
                             "System.Collections.Generic.IEnumerable<T>",
                             interfaceSymbol.OriginalDefinition.ToDisplayString(),
-                            StringComparison.Ordinal))) {
+                            StringComparison.Ordinal)) == true) {
                     return;
                 }
             }

@@ -6,6 +6,7 @@ using Aderant.Build.Analyzer.Rules;
 using Aderant.Build.Analyzer.Rules.CodeQuality;
 using Aderant.Build.Analyzer.Rules.IDisposable;
 using Aderant.Build.Analyzer.Rules.Logging;
+using Aderant.Build.Analyzer.Rules.Security;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
@@ -40,6 +41,10 @@ namespace Aderant.Build.Analyzer {
                     new PropertyChangedNoStringNonFixableRule(),
                     new SetPropertyValueNoStringRule(),
                     new SetPropertyValueNoStringNonFixableRule(),
+
+                    // Security
+                    new SecurityBanModifyingDtdProcessingRule(),
+                    new SecurityBanNewXmlReaderRule(),
 
                     // SQL
                     new SqlInjectionErrorRule(),

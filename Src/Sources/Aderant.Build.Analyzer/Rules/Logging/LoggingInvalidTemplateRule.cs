@@ -68,8 +68,12 @@ namespace Aderant.Build.Analyzer.Rules.Logging {
             // Argument [0] is the LogLevel, thus argument [1] is the string template.
             var templateArguments = GetInterpolationTemplateArguments(node.ArgumentList.Arguments[1]);
 
+            if (templateArguments == null) {
+                return;
+            }
+
             int min = int.MaxValue, max = int.MinValue, count = 0;
-            foreach (var templateArgument in templateArguments) {
+            foreach (string templateArgument in templateArguments) {
                 ++count;
 
                 int result;

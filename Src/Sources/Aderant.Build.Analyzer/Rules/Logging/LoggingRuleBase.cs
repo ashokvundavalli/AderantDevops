@@ -66,8 +66,10 @@ namespace Aderant.Build.Analyzer.Rules.Logging {
         /// </summary>
         /// <param name="argument">The argument.</param>
         protected static IEnumerable<string> GetInterpolationTemplateArguments(ArgumentSyntax argument) {
-            var template = GetInterpolationTemplate(argument);
-            return GetInterpolationTemplateArguments(template);
+            string template = GetInterpolationTemplate(argument);
+            return template == null
+                ? null
+                : GetInterpolationTemplateArguments(template);
         }
 
         /// <summary>
@@ -136,8 +138,14 @@ namespace Aderant.Build.Analyzer.Rules.Logging {
         /// </summary>
         /// <param name="argument">The argument.</param>
         private static string GetInterpolationTemplate(ArgumentSyntax argument) {
-            var LiteralExpressions = new List<LiteralExpressionSyntax>();
-            GetExpressionsFromChildNodes(ref LiteralExpressions, argument);
+            var nodes = new List<SyntaxNode>();
+            GetExpressionsFromChildNodes(ref nodes, argument);
+
+            if (nodes.OfType<MemberAccessExpressionSyntax>().Any(GetIsTextTranslation)) {
+                return null;
+            }
+
+            var LiteralExpressions = new List<LiteralExpressionSyntax>(nodes.OfType<LiteralExpressionSyntax>());
 
             if (LiteralExpressions.Count < 1) {
                 return null;
@@ -149,6 +157,20 @@ namespace Aderant.Build.Analyzer.Rules.Logging {
             }
 
             return builder.ToString();
+        }
+
+        /// <summary>
+        /// Determines if the specified <see cref="MemberAccessExpressionSyntax"/> is a call to 'TextTranslator.Current'.
+        /// </summary>
+        /// <param name="memberAccessExpression">The member access expression.</param>
+        private static bool GetIsTextTranslation(MemberAccessExpressionSyntax memberAccessExpression) {
+            return (memberAccessExpression.Expression as IdentifierNameSyntax)?
+                   .Identifier
+                   .Text == "TextTranslator" &&
+                   memberAccessExpression
+                       .Name
+                       .Identifier
+                       .Text == "Current";
         }
     }
 }

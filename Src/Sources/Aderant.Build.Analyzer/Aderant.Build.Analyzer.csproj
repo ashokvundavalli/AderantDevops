@@ -82,6 +82,7 @@
     <Compile Include="Extensions\RoslynExtensions.cs" />
     <Compile Include="Lists\IDisposable\IDisposableWhitelist.cs" />
     <Compile Include="Lists\QueryAll\QueryAllWhitelists.cs" />
+    <Compile Include="Lists\Security\SecurityWhitelist.cs" />
     <Compile Include="Rules\CodeQuality\CodeQualityApprovalsReporterRule.cs" />
     <Compile Include="Rules\CodeQuality\CodeQualityDataProviderIllegalPublicPropertiesRule.cs" />
     <Compile Include="Rules\CodeQuality\CodeQualityDbConnectionStringRule.cs" />
@@ -101,6 +102,8 @@
     <Compile Include="Rules\Logging\LoggingRuleBase.cs" />
     <Compile Include="Rules\NHibernateRetrieveTypeNotInterfaceRule.cs" />
     <Compile Include="Rules\QueryServiceQueryAllRule.cs" />
+    <Compile Include="Rules\Security\SecurityBanModifyingDtdProcessingRule.cs" />
+    <Compile Include="Rules\Security\SecurityBanNewXmlReaderRule.cs" />
     <Compile Include="Rules\SqlInjectionErrorRule.cs" />
     <Compile Include="Lists\SQLInjection\SQLInjectionBlacklists.cs" />
     <Compile Include="Lists\SQLInjection\SQLInjectionWhitelists.cs" />

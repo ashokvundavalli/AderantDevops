@@ -540,6 +540,223 @@ namespace Aderant.Framework.Logging {
             VerifyCSharpDiagnostic(code);
         }
 
+        [TestMethod]
+        public void LoggingArgumentCount_TextTranslation() {
+            const string code = @"
+using System;
+using Aderant.Framework.Logging;
+
+namespace Test {
+    public class TestClass {
+        public void TestMethod(ILogWriter logWriter) {
+            logWriter.Log(
+                LogLevel.Error,
+                TextTranslator.Current.Translate(""Test{2}""),
+                new object(),
+                new object());
+        }
+    }
+
+    public class TextTranslator {
+        public static TextTranslator Current { get; }
+
+        public string Translate(string test) {
+            return test;
+        }
+    }
+}
+
+namespace Aderant.Framework.Logging {
+    public enum LogLevel {
+        Trace,
+        Debug,
+        Info,
+        Warning,
+        Error,
+        Fatal
+    }
+
+    public interface ILogWriter {
+        bool IsEnabled(LogLevel level);
+        object Log(LogLevel level, string message);
+        object Log(LogLevel level, string messageTemplate, params object[] detail);
+        object Log(LogLevel level, Exception exception);
+        object Log(LogLevel level, string summaryMessage, Exception exception);
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void LoggingArgumentCount_Variable_Local() {
+            const string code = @"
+using System;
+using Aderant.Framework.Logging;
+
+namespace Test {
+    public class TestClass {
+        public void TestMethod(ILogWriter logWriter) {
+            string test = """";
+
+            logWriter.Log(
+                LogLevel.Error,
+                test,
+                new object(),
+                new AccessViolationException());
+        }
+    }
+}
+
+namespace Aderant.Framework.Logging {
+    public enum LogLevel {
+        Trace,
+        Debug,
+        Info,
+        Warning,
+        Error,
+        Fatal
+    }
+
+    public interface ILogWriter {
+        bool IsEnabled(LogLevel level);
+        object Log(LogLevel level, string message);
+        object Log(LogLevel level, string messageTemplate, params object[] detail);
+        object Log(LogLevel level, Exception exception);
+        object Log(LogLevel level, string summaryMessage, Exception exception);
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void LoggingArgumentCount_Variable_Local_Exception() {
+            const string code = @"
+using System;
+using Aderant.Framework.Logging;
+
+namespace Test {
+    public class TestClass {
+        public void TestMethod(ILogWriter logWriter) {
+            string test = """";
+
+            logWriter.Log(
+                LogLevel.Error,
+                test,
+                new object(),
+                new AccessViolationException());
+        }
+    }
+}
+
+namespace Aderant.Framework.Logging {
+    public enum LogLevel {
+        Trace,
+        Debug,
+        Info,
+        Warning,
+        Error,
+        Fatal
+    }
+
+    public interface ILogWriter {
+        bool IsEnabled(LogLevel level);
+        object Log(LogLevel level, string message);
+        object Log(LogLevel level, string messageTemplate, params object[] detail);
+        object Log(LogLevel level, Exception exception);
+        object Log(LogLevel level, string summaryMessage, Exception exception);
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void LoggingArgumentCount_Variable_Parameter() {
+            const string code = @"
+using System;
+using Aderant.Framework.Logging;
+
+namespace Test {
+    public class TestClass {
+        public void TestMethod(ILogWriter logWriter, string test) {
+            logWriter.Log(
+                LogLevel.Error,
+                test,
+                new object(),
+                new AccessViolationException());
+        }
+    }
+}
+
+namespace Aderant.Framework.Logging {
+    public enum LogLevel {
+        Trace,
+        Debug,
+        Info,
+        Warning,
+        Error,
+        Fatal
+    }
+
+    public interface ILogWriter {
+        bool IsEnabled(LogLevel level);
+        object Log(LogLevel level, string message);
+        object Log(LogLevel level, string messageTemplate, params object[] detail);
+        object Log(LogLevel level, Exception exception);
+        object Log(LogLevel level, string summaryMessage, Exception exception);
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void LoggingArgumentCount_Variable_Parameter_Exception() {
+            const string code = @"
+using System;
+using Aderant.Framework.Logging;
+
+namespace Test {
+    public class TestClass {
+        public void TestMethod(ILogWriter logWriter, string test) {
+            logWriter.Log(
+                LogLevel.Error,
+                test,
+                new object(),
+                new AccessViolationException());
+        }
+    }
+}
+
+namespace Aderant.Framework.Logging {
+    public enum LogLevel {
+        Trace,
+        Debug,
+        Info,
+        Warning,
+        Error,
+        Fatal
+    }
+
+    public interface ILogWriter {
+        bool IsEnabled(LogLevel level);
+        object Log(LogLevel level, string message);
+        object Log(LogLevel level, string messageTemplate, params object[] detail);
+        object Log(LogLevel level, Exception exception);
+        object Log(LogLevel level, string summaryMessage, Exception exception);
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
         #endregion Tests
     }
 }
