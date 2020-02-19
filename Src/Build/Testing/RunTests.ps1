@@ -185,7 +185,10 @@ $global:LASTEXITCODE = 0
 [string]$runSettingsFile = [string]::Empty
 
 try {
-	if ([string]::IsNullOrWhiteSpace($CustomRunSettingsFile)) {
+	if (-Not [string]::IsNullOrWhiteSpace($CustomRunSettingsFile) -And (Test-Path $CustomRunSettingsFile)) {
+		Write-Information "Using custom run settings file: '$CustomRunSettingsFile'."
+		$startInfo.Arguments += " /Settings:$CustomRunSettingsFile"
+	} else {
 		Write-Information "Creating run settings file..."
 		$xml = CreateRunSettingsXml
 		Write-Information ([System.Environment]::NewLine + "$xml")
@@ -194,9 +197,6 @@ try {
 		Add-Content -LiteralPath $runSettingsFile -Value $xml -Encoding UTF8
 
 		$startInfo.Arguments += " /Settings:$runSettingsFile"
-	} else {
-		Write-Information "Using custom run settings file: '$CustomRunSettingsFile'."
-		$startInfo.Arguments += " /Settings:$CustomRunSettingsFile"
 	}
 
     if (-not [string]::IsNullOrWhiteSpace($TestAdapterPath)) {
