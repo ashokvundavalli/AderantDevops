@@ -33,23 +33,32 @@ namespace Aderant.Build.Analyzer.Rules.Security {
 
         internal override string MessageFormat => Description;
 
-        internal override string Description => "Illegal modification of 'DtdProcessing' property. Do not modify the value of this property.";
+        internal override string Description => "Illegal modification of 'DtdProcessing' property. " +
+                                                "Valid assignment values are 'DtdProcessing.Prohibit' and 'DtdProcessing.Ignore'.";
 
         #endregion Properties
 
         #region Methods
 
+        /// <summary>
+        /// Initializes the specified context.
+        /// </summary>
+        /// <param name="context">The context.</param>
         public override void Initialize(AnalysisContext context) {
             context.RegisterSyntaxNodeAction(AnalyzeAssignmentNode, SyntaxKind.SimpleAssignmentExpression);
         }
 
+        /// <summary>
+        /// Analyzes the assignment node.
+        /// </summary>
+        /// <param name="context">The context.</param>
         private void AnalyzeAssignmentNode(SyntaxNodeAnalysisContext context) {
             var node = context.Node as AssignmentExpressionSyntax;
 
             // Basic sanity check.
             // This rule is intentionally unsuppressable.
             if (node == null ||
-                !GetIsDtdProcessingProperty(context.SemanticModel, node)) {
+                ValidateAssignment(context.SemanticModel, node)) {
                 return;
             }
 
@@ -60,14 +69,55 @@ namespace Aderant.Build.Analyzer.Rules.Security {
                 node);
         }
 
-        private static bool GetIsDtdProcessingProperty(SemanticModel model, AssignmentExpressionSyntax node) {
+        /// <summary>
+        /// Validates the <see cref="AssignmentExpressionSyntax"/>.
+        /// If the assignment is not to a DtdProcessing property,
+        /// or the property value is valid, return true, else false.
+        /// </summary>
+        /// <param name="model">The model.</param>
+        /// <param name="node">The node.</param>
+        private static bool ValidateAssignment(
+            SemanticModel model,
+            AssignmentExpressionSyntax node) {
             var left = UnwrapParenthesizedExpressionDescending(node.Left);
 
+            if (!GetIsDtdProcessingProperty(model, left)) {
+                // Assignment is not a DTDProcessing property, and is therefore valid.
+                return true;
+            }
+
+            var right = UnwrapParenthesizedExpressionDescending(node.Right) as MemberAccessExpressionSyntax;
+            if (right == null) {
+                // Assignment is a DTDProcessing property, but a non-enum value is assigned to it.
+                // This is invalid.
+                return false;
+            }
+
+            var expression = right.Expression as IdentifierNameSyntax;
+            if (expression?.Identifier.Text != "DtdProcessing") {
+                // Assignment value is not a 'DtdProcessing' enum.
+                // This should not compile, but this sanity check exists for safety.
+                return false;
+            }
+
+            // The only valid assignment values are 'DtdProcessing.Prohibit' and 'DtdProcessing.Ignore'.
+            return right.Name.Identifier.Text == "Prohibit" ||
+                   right.Name.Identifier.Text == "Ignore";
+        }
+
+        /// <summary>
+        /// Determines if the provided <see cref="SyntaxNode"/> is a DTDProcessing property.
+        /// </summary>
+        /// <param name="model">The model.</param>
+        /// <param name="node">The node.</param>
+        private static bool GetIsDtdProcessingProperty(
+            SemanticModel model,
+            SyntaxNode node) {
             // Example:
             // item = new XmlReaderSettings {
             //     DtdProcessing = DtdProcessing.TestValue
             // };
-            var leftIdentifier = left as IdentifierNameSyntax;
+            var leftIdentifier = node as IdentifierNameSyntax;
             if (leftIdentifier != null) {
                 if (leftIdentifier.Identifier.Text != propertyName) {
                     return false;
@@ -80,7 +130,7 @@ namespace Aderant.Build.Analyzer.Rules.Security {
 
             // Example:
             // item.DtdProcessing = DtdProcessing.TestValue;
-            var leftProperty = left as MemberAccessExpressionSyntax;
+            var leftProperty = node as MemberAccessExpressionSyntax;
             if (leftProperty == null ||
                 leftProperty.Name.Identifier.Text != propertyName) {
                 return false;
