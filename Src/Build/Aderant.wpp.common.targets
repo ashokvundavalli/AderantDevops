@@ -320,8 +320,9 @@
 
   </Target>
 
+  <!-- Legacy build target that expects a machine install of TypeScript. Required up to Expert 8.2 SP2. Newer Expert versions use Microsoft.TypeScript.MSBuild from nuget. -->
   <Target Name="custom-tsconfig-->tsc"
-          Condition="'$(BuildingInsideVisualStudio)' != 'true'"
+          Condition="'$(BuildingInsideVisualStudio)' != 'true' And !Exists('$(MSBuildProjectDirectory)\..\..\packages\development\Microsoft.TypeScript.MSBuild\')"
           AfterTargets="CompileTypeScriptWithTSConfig">
 
     <ItemGroup>
