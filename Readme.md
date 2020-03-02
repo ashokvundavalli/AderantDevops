@@ -1,19 +1,22 @@
 # Expert Build Infrastructure
 
-Welcome to the Expert build system. This repository contains the source code and documentation for the tools and workflows which compile, build, lint and test the Expert Suite code base.
+Welcome to the Expert Build System. This repository contains the source code and documentation for the tools and workflows which compile, build, lint and test the Expert Suite code base.
 
-## Getting Started aka Before You Do Anything
+## Getting Started 
 
 The tools provide a set of PowerShell extensions which enable you to retrieve dependencies for products, compile the projects and run the tests.
 Assuming you already have Git and [PowerShell 5.0](https://www.microsoft.com/en-us/download/details.aspx?id=50395) installed.
-If you installed Git yourself then you'll need to [re-install](#if-you-dont-have-git-or-installed-it-yourself) using the silent install script.
+
+If you installed Git yourself then you'll need to re-install using the silent install script.
+
+Run the silent install from [here](file://ap.aderant.com/akl/Software/Development/Git). This is a special install as it configures Git the way we like it.
 
 ![Setup How To](Doc/Images/setup-how-to.gif)
 
 * Start PowerShell as Administrator
 * Clone the repository
 
-```git clone http://tfs:8080/tfs/Aderant/ExpertSuite/_git/Build.Infrastructure C:\Source\Build.Infrastructure```
+```git clone https://tfs.aderant.com/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure C:\Source\Build.Infrastructure```
 
 * Change directory
 
@@ -28,21 +31,12 @@ If you installed Git yourself then you'll need to [re-install](#if-you-dont-have
 This will install and configure the developer tools. 
 If you have never had the developer tools installed the next time you start PowerShell you will be asked a series of questions which will configure the tools for you.
 
-### If you don't have Git or installed it yourself
-
-Run the silent install from here. This is a special install as it configures Git the way we like it.
-
-[Auckland](file://ap.aderant.com/akl/Software/Development/Git)
-[Tallahassee](file://svfp205/Install/Git)
-
-### User Guide
-* [First Time Setup](./Doc/First-Time-Setup.md)
-
 ### What's new
 
 #### Productization
 
-The Build Infrastructure module has now been extracted from TF VC and elevated to a common set of build automation services and libraries. 
+The Build Infrastructure module has now been extracted from TFVC and elevated to a common set of build automation services and libraries. 
+
 To support this there are a number of changes to the current development cycle.
 
 In the previous model each branch has a copy of Build.Infrastructure. The tooling would use the scripts and data from the currently selected branch.
@@ -55,19 +49,13 @@ The change of the manifest location means a change to the development workflow.
 Previously dev and QA would need to "get latest" on the Build.Infrastructure module. 
 You now need the latest manifest for your branch which is located ```$/ExpertSuite/<folder>/<branch>/Modules/ExpertManifest.xml```
 
-***Get-Product will always get the latest version of this file before hand.***
-
-![Expert Manifest Location](Doc/Images/expert-manifest-location.png)
-
 ## Features
 
 * [Code Analysis](./Doc/Code-Analysis.md)
-* [Warning Ratchet](./Doc/Warning-Ratchet.md)
-* [Common Build Project](./Doc/Common-Build-Project.md)
 
 ### Getting Started with Git Integration
 
-Assuming you have cloned a repository you can manage it using most of the existing build commands such as ```gd```.
+Assuming you have cloned a repository you can manage it using most of the existing build commands such as Get-Dependencies command: [gd](./Doc/DEpendencies.md).
 
 For example, to work with the Deployment repository set the build context using ```.```
 

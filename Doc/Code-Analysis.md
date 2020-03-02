@@ -16,4 +16,5 @@ Example import in a .csproj file:
  ![Build Warnings](./Images/analyzers.png)
 
  Developers are encouraged to add rules this analyzer to catch common coding mistakes.
- Documentation on writing a rule and incorporating it into to the Analyzer package is in the works. 
+ 
+ Documentation on writing a rule and incorporating it into to the Analyzer package is available [here](https://aderant.sharepoint.com/:w:/r/RD/Platform/_layouts/15/doc2.aspx?sourcedoc=%7B4659A37A-FB41-43C6-B9A6-ABAC47800C1A%7D&file=Roslyn%20Rule%20Development%20%26%20Deployment.docx&action=default&mobileredirect=true&cid=8ede2fb2-b0ed-4825-b63d-ee661ab7bc9b). 
