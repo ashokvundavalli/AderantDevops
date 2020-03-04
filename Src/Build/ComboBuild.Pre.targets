@@ -11,6 +11,13 @@
   <Import Project="Aderant.Build.Clean.targets" />
   <Import Project="Aderant.ArtifactRestore.targets" />
 
+  <Target Name="PreBuild" />
+
+  <Target Name="RunBuildExtensions">
+    <Message Text="Executing custom targets: $(RunUserTargets)" />
+    <CallTarget Targets="PreBuild" />
+  </Target>
+
   <!--
        Pull the entry targets into our context.
        This lets us call into it and lets people who want to customize the workflow change stuff in here
@@ -35,6 +42,7 @@
   <PropertyGroup>
     <RunBuildDependsOn>
       _BeforeBuild;
+      RunBuildExtensions;
       ValidateRequiredProperties;
       CleanBin;
       DeployPerDirectoryFiles;

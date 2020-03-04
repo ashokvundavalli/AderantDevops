@@ -41,8 +41,14 @@ namespace Aderant.Build.PipelineService {
             set { dataService.Publish(value); }
         }
 
+        private static readonly object Pipe = new object();
+
         public static string PipeId {
-            get { return pipeId ?? (pipeId = Environment.GetEnvironmentVariable(WellKnownProperties.ContextEndpoint)); }
+            get {
+                lock (Pipe) {
+                    return pipeId ?? (pipeId = Environment.GetEnvironmentVariable(WellKnownProperties.ContextEndpoint));
+                }
+            }
             private set { pipeId = value; }
         }
 
