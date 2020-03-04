@@ -35,6 +35,7 @@ function Get-AmbientBuildMetadata {
             $buildInfo.ScmUri = Get-EnvironmentVariable 'BUILD_REPOSITORY_URI'
             $buildInfo.ScmCommitId = Get-EnvironmentVariable 'BUILD_SOURCEVERSION'
             $buildInfo.ScmBranch = Get-EnvironmentVariable 'BUILD_SOURCEBRANCH'
+            $buildInfo.SourceCommit = Get-EnvironmentVariable 'SourceCommit'
             $buildInfo.BuildSourcesDirectory = Get-EnvironmentVariable 'BUILD_SOURCESDIRECTORY'
 
             if ((Get-EnvironmentVariable 'SYSTEM_DEBUG') -eq 'true') {

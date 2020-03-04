@@ -319,7 +319,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         private static void AddProjectOutputToUpdatePackage(PropertyList propertyList, ConfiguredProject visualStudioProject) {
             bool? hasDirtyFiles = visualStudioProject.DirtyFiles?.Any();
-            if (hasDirtyFiles.GetValueOrDefault()) {
+            if (hasDirtyFiles.GetValueOrDefault() || visualStudioProject.BuildReason.Flags.HasFlag(BuildReasonTypes.ProjectChanged)) {
                 propertyList["IncludeOutputInUpdatePackage"] = bool.TrueString;
             }
         }

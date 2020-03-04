@@ -236,6 +236,51 @@ namespace UnitTest.Build.ProjectSystem {
         }
 
         [TestMethod]
+        public void CheckCleanProject() {
+            var tree = new Mock<IProjectTree>();
+
+            var project = new ConfiguredProject(tree.Object);
+            project.RequireSynchronizedOutputPaths = true;
+
+            project.Initialize(
+                new Lazy<ProjectRootElement>(
+                    () => {
+                        var element = ProjectRootElement.Create();
+                        element.AddItem("Page", "CoolFile.cs");
+                        return element;
+                    }),
+                string.Empty);
+
+            project.CalculateDirtyStateFromChanges(new List<ISourceChange> { new SourceChange(string.Empty, "SomeoneElsesFile.cs", FileStatus.Modified) });
+
+            Assert.IsFalse(project.IsDirty);
+        }
+
+        [TestMethod]
+        public void CheckMultipleChangeViolation() {
+            var tree = new Mock<IProjectTree>();
+
+            var project = new ConfiguredProject(tree.Object);
+            project.RequireSynchronizedOutputPaths = true;
+
+            project.Initialize(
+                new Lazy<ProjectRootElement>(
+                    () => {
+                        var element = ProjectRootElement.Create();
+                        element.AddItem("Page", "CoolFile.cs");
+                        return element;
+                    }),
+                string.Empty);
+
+            project.CalculateDirtyStateFromChanges(new List<ISourceChange> {
+                new SourceChange(string.Empty, "SomeoneElsesFile.cs", FileStatus.Modified),
+                new SourceChange(string.Empty, "CoolFile.cs", FileStatus.Modified)
+            });
+
+            Assert.IsTrue(project.IsDirty);
+        }
+
+        [TestMethod]
         public void WixLib_projects_have_ouput_type_of_wixlib() {
             var tree = new Mock<IProjectTree>();
 

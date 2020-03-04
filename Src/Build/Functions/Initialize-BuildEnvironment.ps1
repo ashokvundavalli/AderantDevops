@@ -506,7 +506,7 @@ try {
 
             Write-Host "`r`nBuild.Infrastructure branch [" -NoNewline
 
-            if ($branch -eq "master" -or $branch -eq "187604-Sequencer") {
+            if ($branch -eq 'master') {
                 Write-Host $branch -ForegroundColor Green -NoNewline
                 Write-Host "]`r`n"
                 $pull = $true

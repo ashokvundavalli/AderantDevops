@@ -557,7 +557,11 @@ namespace Aderant.Build.ProjectSystem {
 
             MarkThisFileDirty(changes);
 
-            // check if this proj contains needed files
+            if (changes.Count == 0) {
+                return;
+            }
+
+            // check if this proj contains needed files.
             List<ProjectItem> items = new List<ProjectItem>();
 
             items.AddRange(project.Value.GetItems("Compile"));
@@ -566,21 +570,10 @@ namespace Aderant.Build.ProjectSystem {
             items.AddRange(project.Value.GetItems("XamlAppdef"));
             items.AddRange(project.Value.GetItems("Page"));
 
-            int abort = -1;
+            for (var changeNum = changes.Count - 1; changeNum >= 0; changeNum--) {
+                var file = changes[changeNum];
 
-            foreach (var item in items) {
-                if (abort > 0) {
-                    break;
-                }
-
-                if (abort < 0 && changes.Count > 100) {
-                    abort = 1;
-                } else {
-                    abort = 0;
-                }
-
-                for (var changeNum = changes.Count - 1; changeNum >= 0; changeNum--) {
-                    var file = changes[changeNum];
+                foreach (var item in items) {
                     string value = item.GetMetadataValue("FullPath");
 
                     if (string.Equals(value, file.FullPath, StringComparison.OrdinalIgnoreCase)) {
@@ -593,13 +586,6 @@ namespace Aderant.Build.ProjectSystem {
                         dirtyFiles.Add(file.Path);
 
                         changes.RemoveAt(changeNum);
-
-                        // If we have more than a few changes then abort early so we don't
-                        // burn too much CPU when collecting this data. As long as we collect
-                        // at least one match it's good enough.
-                        if (abort > 0) {
-                            break;
-                        }
                     }
                 }
 

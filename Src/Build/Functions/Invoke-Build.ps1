@@ -5,33 +5,6 @@ $environmentConfigured = $false
 [string]$indent1 = "  "
 [string]$indent2 = "        "
 
-function Get-Branch {
-    [OutputType([String])]
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$root
-    )
-
-    begin {
-        [string]$rspFile = [System.IO.Path]::Combine($root, "Build\TFSBuild.rsp")
-        [string]$branch = 'master'
-    }
-
-    process {
-        if (Test-Path -Path $rspFile) {
-            [string[]]$content = Get-Content -Path $rspFile
-
-            [string[]]$variable = $content | Where-Object { $_ -match '/p:OriginBranch=' }
-
-            if ($null -ne $variable -and $variable.Length -gt 0) {
-                return $branch = $variable[0].Split('=')[1]
-            }
-        }
-
-        return $branch
-    }
-}
-
 function Get-BuildDirectory {
     if (Test-Path -Path 'variable:global:BranchConfigPath') {
         if (-not [string]::IsNullOrWhiteSpace($global:BranchConfigPath)) {
@@ -211,13 +184,20 @@ function CreateToolArgumentString($context, $remainingArgs) {
     return [string]::Join(" ", $set)
 }
 
-function GetSourceTreeMetadata($context, $repositoryPath) {
-    [string]$sourceBranch = ""
-    [string]$targetBranch = ""
+function GetSourceTreeMetadata {
+    param (
+        $context,
+        [string]$repositoryPath,
+        [string]$sourceCommit
+    )
 
-    if (-not $context.IsDesktopBuild) {
+    [string]$sourceBranch = [string]::Empty
+    [string]$targetBranch = [string]::Empty
+
+    if (-not $context.IsDesktopBuild) {      
         $metadata = $context.BuildMetadata
         $sourceBranch = $metadata.ScmBranch;
+        $sourceCommit = $context.BuildMetadata.SourceCommit
 
         if ($metadata.IsPullRequest) {
             $targetBranch = $metadata.PullRequest.TargetBranch
@@ -226,7 +206,11 @@ function GetSourceTreeMetadata($context, $repositoryPath) {
         }
     }
 
-    $context.SourceTreeMetadata = Get-SourceTreeMetadata -SourceDirectory $repositoryPath -SourceBranch $sourceBranch -TargetBranch $targetBranch -IncludeLocalChanges:$context.IsDesktopBuild
+    if (-not [string]::IsNullOrWhiteSpace($sourceCommit)) {
+        $context.SourceTreeMetadata = Get-SourceTreeMetadata -SourceDirectory $repositoryPath -SourceCommit $sourceCommit
+    } else {
+        $context.SourceTreeMetadata = Get-SourceTreeMetadata -SourceDirectory $repositoryPath -SourceBranch $sourceBranch -TargetBranch $targetBranch -IncludeLocalChanges:$context.IsDesktopBuild
+    }
 
     Write-Information "$indent1 Build caching info:"
     Write-Information "$indent1 New commit: $($context.SourceTreeMetadata.NewCommitDescription)"
@@ -559,6 +543,12 @@ function global:Invoke-Build2 {
         [switch]$GetDependencies,
 
         <#
+        The commit to build a patch from.
+        #>
+        [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()]
+        [string]$SourceCommit,
+
+        <#
         Instructs the build to not expand the build tree.
         The build will attempt to automatically resolve dependencies between modules by examining
         the projects and manifests which specify dependencies along the provided input paths.
@@ -618,7 +608,7 @@ function global:Invoke-Build2 {
 
     $context.BuildRoot = $root
 
-    GetSourceTreeMetadata -context $context -repositoryPath $root
+    GetSourceTreeMetadata -context $context -repositoryPath $root -sourceCommit $SourceCommit
 
     ApplyBranchConfig -context $context -root $root
     FindProductManifest -context $context -root $root

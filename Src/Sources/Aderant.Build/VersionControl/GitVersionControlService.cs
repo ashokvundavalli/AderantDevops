@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Threading;
+using Aderant.Build.Model;
 using Aderant.Build.VersionControl.Model;
 using LibGit2Sharp;
 using FileStatus = Aderant.Build.VersionControl.Model.FileStatus;
@@ -12,7 +13,7 @@ namespace Aderant.Build.VersionControl {
     [PartCreationPolicy(CreationPolicy.NonShared)]
     internal class GitVersionControlService : IVersionControlService {
 
-        private static string[] globs = new[] {
+        private static readonly string[] Globs = new[] {
             // Common release vehicle naming
             "update/*",
             "patch/*",
@@ -25,7 +26,69 @@ namespace Aderant.Build.VersionControl {
             "master"
         };
 
-        public GitVersionControlService() {
+        internal Commit GetCurrentCommit(Repository repository, string branch) {
+            if (string.IsNullOrWhiteSpace(branch)) {
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(branch));
+            }
+
+            return repository.Branches[branch].Tip;
+        }
+
+        internal static Commit AcquireCommit(Repository repository, string sha) {
+            Commit commit = repository.Commits.FirstOrDefault(x => x.Sha.Equals(sha, StringComparison.OrdinalIgnoreCase));
+
+            if (commit == null) {
+                throw new ArgumentException("Invalid commit.", nameof(commit));
+            }
+
+            return commit;
+        }
+
+        private void PopulateBuckets(HashSet<BucketId> bucketKeys, SourceTreeMetadata info, Repository repository, Commit sourceCommit, Commit destinationCommit, bool includeLocalChanges) {
+            bucketKeys.Add(new BucketId(destinationCommit.Tree.Sha, BucketId.Current));
+
+            foreach (var e in destinationCommit.Tree) {
+                if (e.Mode == Mode.Directory) {
+                    var targetSha = e.Target.Sha;
+                    bucketKeys.Add(new BucketId(targetSha, e.Name));
+                }
+            }
+
+            if (sourceCommit != null) {
+                info.CommonCommit = sourceCommit.Id.Sha;
+                info.OldCommitDescription = $"{sourceCommit.Id.Sha}: {sourceCommit.MessageShort}";
+                info.NewCommitDescription = $"{destinationCommit.Id.Sha}: {destinationCommit.MessageShort}";
+
+                // Collect all changed files between the two commits.
+                GetChanges(includeLocalChanges, repository, sourceCommit, destinationCommit, repository.Info.WorkingDirectory, info);
+
+                if (!string.Equals(destinationCommit.Tree.Sha, sourceCommit.Tree.Sha)) {
+                    bucketKeys.Add(new BucketId(sourceCommit.Tree.Sha, BucketId.Previous));
+                }
+            }
+
+            info.BucketIds = bucketKeys;
+        }
+
+        public SourceTreeMetadata GetPatchMetadata(string repositoryPath, CommitConfiguration commitConfiguration, CancellationToken cancellationToken = default(CancellationToken)) {
+            var info = new SourceTreeMetadata();
+
+            using (var repository = OpenRepository(repositoryPath)) {
+                Commit sourceCommit = AcquireCommit(repository, commitConfiguration.SourceCommit);
+                
+                FindMostLikelyReusableBucket(repository, sourceCommit, out string branch, cancellationToken);
+                info.CommonAncestor = branch;
+
+                Commit destinationCommit = AcquireCommit(repository, repository.Head.Tip.Sha);
+
+                HashSet<BucketId> bucketKeys = new HashSet<BucketId>();
+
+                // Get the parent to ensure the changes from the source commit are included.
+                Commit origin = sourceCommit.Parents.FirstOrDefault() ?? sourceCommit;
+                PopulateBuckets(bucketKeys, info, repository, origin, destinationCommit, false);
+            }
+
+            return info;
         }
 
         /// <summary>
@@ -42,8 +105,6 @@ namespace Aderant.Build.VersionControl {
             }
 
             using (var repository = OpenRepository(repositoryPath)) {
-                var workingDirectory = repository.Info.WorkingDirectory;
-
                 // The current tree - what you have
                 // It could be behind some branch you are diffing or it could be the
                 // result of a pull request merge making it the new tree to be committed
@@ -74,30 +135,7 @@ namespace Aderant.Build.VersionControl {
                 }
 
                 if (newCommit != null) {
-                    bucketKeys.Add(new BucketId(newCommit.Tree.Sha, BucketId.Current));
-
-                    foreach (var e in newCommit.Tree) {
-                        if (e.Mode == Mode.Directory) {
-                            var targetSha = e.Target.Sha;
-                            bucketKeys.Add(new BucketId(targetSha, e.Name));
-                        }
-                    }
-
-                    if (oldCommit != null) {
-                        info.CommonCommit = oldCommit.Id.Sha;
-
-                        // Collect all changed files between the two commits.
-                        GetChanges(includeLocalChanges, repository, oldCommit, newCommit, workingDirectory, info);
-
-                        if (!string.Equals(newCommit.Tree.Sha, oldCommit.Tree.Sha)) {
-                            bucketKeys.Add(new BucketId(oldCommit.Tree.Sha, BucketId.Previous));
-                        }
-
-                        info.NewCommitDescription = $"{newCommit.Id.Sha}: {newCommit.MessageShort}";
-                        info.OldCommitDescription = $"{oldCommit.Id.Sha}: {oldCommit.MessageShort}";
-                    }
-
-                    info.BucketIds = bucketKeys;
+                    PopulateBuckets(bucketKeys, info, repository, oldCommit, newCommit, includeLocalChanges);
                 }
             }
 
@@ -179,7 +217,7 @@ namespace Aderant.Build.VersionControl {
         private static List<Reference> GetRefsToSearchForCommit(Repository repository) {
             var patterns = new List<string>();
 
-            patterns.AddRange(globs);
+            patterns.AddRange(Globs);
 
             if (repository.Head.TrackedBranch != null) {
                 string name = repository.Head.TrackedBranch.UpstreamBranchCanonicalName;

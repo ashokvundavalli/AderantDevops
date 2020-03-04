@@ -34,6 +34,9 @@ namespace Aderant.Build {
         public string ScmUri { get; set; }
 
         [DataMember]
+        public string SourceCommit { get; set; }
+
+        [DataMember]
         public PullRequestInfo PullRequest { get; set; }
 
         /// <summary>

@@ -176,6 +176,7 @@ namespace Aderant.Build.Tasks {
                             Directory.CreateDirectory(SeedPackageDrop);
                         }
                         ZipFile.CreateFromDirectory(packageSrcDir, destination);
+
                         if (SeedContentHasChanges() && !String.IsNullOrEmpty(StagingPackageDrop)) {
                             var stagingFileName = Path.Combine(StagingPackageDrop, "Packages", packageName + ".zip");
                             var updatePackagesFile = stagingFileName.Replace("BinFiles\\", "");
@@ -205,7 +206,7 @@ namespace Aderant.Build.Tasks {
         private bool SeedContentHasChanges() {
             var context = PipelineService.GetContext();
             var changes = context.SourceTreeMetadata?.Changes?.ToList();
-            if (context.BuildMetadata.IsPullRequest && changes != null && changes.Any(c => c.Path.IndexOf("SeedPackage", StringComparison.OrdinalIgnoreCase) > 0)) {
+            if (changes != null && changes.Any(c => c.Path.IndexOf("SeedPackage", StringComparison.OrdinalIgnoreCase) > 0)) {
                 return true;
             }
 
@@ -242,9 +243,7 @@ namespace Aderant.Build.Tasks {
 
             return document;
         }
-
-
-
+        
         public void CheckForUnusedPackagesOrEntries() {
             var whiteList = "SampleWorkflows";
 

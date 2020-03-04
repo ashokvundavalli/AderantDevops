@@ -235,7 +235,7 @@
         BuildFrom="$(SolutionDirectoryPath)"
         SeedPackageSrc="$(SolutionDirectoryPath)Src\SeedPackages"
         SeedPackageDrop="$(SolutionDirectoryPath)Bin\Module\Packages"
-        StagingPackageDrop="$(UpdateStagingDirectory)\BinFiles"/>
+        StagingPackageDrop="$(UpdateStagingDirectory)\BinFiles" />
 
     <SeedPackagePacking
         SkipPackageValidation="$(SkipPackageValidation)"

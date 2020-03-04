@@ -102,6 +102,7 @@
     <Compile Include="Commands\GetSourceTreeMetadataCommand.cs" />
     <Compile Include="Commands\GetBuildStateMetadataCommand.cs" />
     <Compile Include="DependencyAnalyzer\DirectoryNodeFactory.cs" />
+    <Compile Include="Model\CommitConfiguration.cs" />
     <Compile Include="ProjectSystem\BuildReasonExtensions.cs" />
     <Compile Include="ProjectSystem\ConfiguredProjectExtensions.cs" />
     <Compile Include="ProjectSystem\ResponseFileParer.cs" />
@@ -437,11 +438,6 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
     </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Commands\Assets\OpenTypeStd\FuturaStd-Bold.otf" />
-    <EmbeddedResource Include="Commands\Assets\OpenTypeStd\FuturaStd-Light.otf" />
-    <EmbeddedResource Include="Commands\Assets\OpenTypeStd\FuturaStd-Medium.otf" />
   </ItemGroup>
   <ItemGroup>
     <None Include="debug.ps1" />

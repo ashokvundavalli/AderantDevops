@@ -393,9 +393,14 @@
       <Output TaskParameter="DestinationFiles" ItemName="FileWrites"/>
     </Copy>
 
-    <!--Send all outputs of the project to the update staging area for later collection-->
-    <Message  Condition="'$(IncludeOutputInUpdatePackage)' == 'true'" Importance="High" Text="Including outputs from $(MSBuildProjectFullPath) in update package" />
-    <MSBuild Condition="'$(IncludeOutputInUpdatePackage)' == 'true'"
+    <PropertyGroup>
+      <IsTestProject>$([System.IO.Path]::GetFileName('$(MSBuildProjectFullPath)').Contains('Test'))</IsTestProject>
+    </PropertyGroup>
+
+    <!-- Send all outputs of the project to the update staging area for later collection. -->
+    <Message Condition="'$(IncludeOutputInUpdatePackage)' == 'true' And '$(IsTestProject)' == 'False'" Importance="High" Text="Including outputs from $(MSBuildProjectFullPath) in update package" />
+    <Message Condition="'$(IsTestProject)' == 'True'" Text="Excluding outputs from: '$(MSBuildProjectFullPath)' in update package as it is considered a test project." />
+    <MSBuild Condition="'$(IncludeOutputInUpdatePackage)' == 'true' And '$(IsTestProject)' == 'False'"
              Projects="$(MSBuildProjectFullPath)"
              Targets="CopyFilesToOutputDirectory"
              Properties="OutDir=$(UpdateStagingDirectory)\BinFiles;
@@ -403,11 +408,11 @@
                          CopyOutputSymbolsToOutputDirectory=false;
                          _DocumentationFileProduced=false" />
 
-    <Message Text="Package File Name: $(PackageFileName)"></Message>
-    <Message Text="Update Staging Directory: $(UpdateStagingDirectory)"></Message>
-      
+    <Message Condition="'$(IncludeOutputInUpdatePackage)' == 'true' And '$(PackageFileName)' != ''" Text="Package File Name: '$(PackageFileName)'." />
+    <Message Condition="'$(IncludeOutputInUpdatePackage)' == 'true'" Text="Update Staging Directory: '$(UpdateStagingDirectory)'." />
+
     <Copy
-      Condition="'$(IncludeOutputInUpdatePackage)' == 'true' And '$(PackageFileName)' != '' And Exists('$(PackageFileName)')"
+      Condition="'$(IncludeOutputInUpdatePackage)' == 'true' And '$(IsTestProject)' == 'False' And '$(PackageFileName)' != '' And Exists('$(PackageFileName)')"
       SourceFiles="$(PackageFileName)"
       DestinationFolder="$(UpdateStagingDirectory)"
       OverwriteReadOnlyFiles="$(OverwriteReadOnlyFiles)"

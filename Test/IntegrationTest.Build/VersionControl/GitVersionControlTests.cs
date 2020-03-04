@@ -1,4 +1,7 @@
-﻿using Aderant.Build.VersionControl;
+﻿using System.Linq;
+using Aderant.Build.Model;
+using Aderant.Build.VersionControl;
+using LibGit2Sharp;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build.VersionControl {
@@ -40,6 +43,23 @@ namespace IntegrationTest.Build.VersionControl {
             Assert.AreEqual(1, result.Changes.Count);
             Assert.AreEqual(2, result.BucketIds.Count);
             Assert.AreEqual("refs/heads/master", result.CommonAncestor);
+        }
+
+        [TestMethod]
+        public void GetPatchDetails() {
+            var vc = new GitVersionControlService();
+            RunPowerShellInDirectory(TestContext, Resources.GenerateCommits, RepositoryPath);
+
+            using (Repository repository = new Repository(RepositoryPath)) {
+                var commit = vc.GetCurrentCommit(repository, "conundrum");
+
+                var sourceCommit = commit.Parents.FirstOrDefault().Sha;                
+                var range = vc.GetPatchMetadata(RepositoryPath, new CommitConfiguration(sourceCommit));
+
+                Assert.AreEqual(2, range.Changes.Count);
+                Assert.IsTrue(range.Changes.Any(x => x.Path.Equals("file1.txt")));
+                Assert.IsTrue(range.Changes.Any(x => x.Path.Equals("file2.txt")));
+            }
         }
     }
 }

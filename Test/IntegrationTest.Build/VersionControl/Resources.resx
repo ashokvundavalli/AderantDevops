@@ -124,6 +124,20 @@
   <data name="CreateRepo" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>resources\createrepo.ps1;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
+  <data name="GenerateCommits" xml:space="preserve">
+    <value>Set-StrictMode -Version 'Latest'
+
+[string]$cwd = Get-Location
+$file = ([Management.Automation.WildcardPattern]::Unescape($cwd + '.\file'))
+
+&amp; git checkout -b 'conundrum' -q
+
+for ([int]$i = 0; $i -lt 3; $i++) {
+    Add-Content -LiteralPath "$file$i.txt" -Value 'Some text' -Force
+    &amp; git add "file$i.txt"
+    &amp; git commit -m $i
+}</value>
+  </data>
   <data name="Merge" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>resources\merge.ps1;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>

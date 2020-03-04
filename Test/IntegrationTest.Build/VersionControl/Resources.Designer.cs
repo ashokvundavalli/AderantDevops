@@ -110,6 +110,26 @@ namespace IntegrationTest.Build.VersionControl {
         /// <summary>
         ///   Looks up a localized string similar to Set-StrictMode -Version &apos;Latest&apos;
         ///
+        ///[string]$cwd = Get-Location
+        ///$file = ([Management.Automation.WildcardPattern]::Unescape($cwd + &apos;.\file&apos;))
+        ///
+        ///&amp; git checkout -b &apos;conundrum&apos; -q
+        ///
+        ///for ([int]$i = 0; $i -lt 3; $i++) {
+        ///    Add-Content -LiteralPath &quot;$file$i.txt&quot; -Value &apos;Some text&apos; -Force
+        ///    &amp; git add &quot;file$i.txt&quot;
+        ///    &amp; git commit -m $i
+        ///}.
+        /// </summary>
+        internal static string GenerateCommits {
+            get {
+                return ResourceManager.GetString("GenerateCommits", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Set-StrictMode -Version &apos;Latest&apos;
+        ///
         ///# PowerShell has many quirks with square brackets in paths
         ///[string]$cwd = Get-Location
         ///$branch1 = ([Management.Automation.WildcardPattern]::Unescape($cwd + &apos;.\branch1.txt&apos;))
