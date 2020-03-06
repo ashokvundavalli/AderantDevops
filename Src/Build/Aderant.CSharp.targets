@@ -395,12 +395,13 @@
 
     <PropertyGroup>
       <IsTestProject>$([System.IO.Path]::GetFileName('$(MSBuildProjectFullPath)').Contains('Test'))</IsTestProject>
+			<IsDatabaseProject>$(MSBuildProjectName.StartsWith('Database'))</IsDatabaseProject>
     </PropertyGroup>
 
     <!-- Send all outputs of the project to the update staging area for later collection. -->
     <Message Condition="'$(IncludeOutputInUpdatePackage)' == 'true' And '$(IsTestProject)' == 'False'" Importance="High" Text="Including outputs from $(MSBuildProjectFullPath) in update package" />
     <Message Condition="'$(IsTestProject)' == 'True'" Text="Excluding outputs from: '$(MSBuildProjectFullPath)' in update package as it is considered a test project." />
-    <MSBuild Condition="'$(IncludeOutputInUpdatePackage)' == 'true' And '$(IsTestProject)' == 'False'"
+    <MSBuild Condition="'$(IncludeOutputInUpdatePackage)' == 'true' And '$(IsTestProject)' == 'False' And '$(IsDatabaseProject)' == 'False' " 
              Projects="$(MSBuildProjectFullPath)"
              Targets="CopyFilesToOutputDirectory"
              Properties="OutDir=$(UpdateStagingDirectory)\BinFiles;
