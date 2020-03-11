@@ -1,6 +1,6 @@
 ﻿id Aderant.Build.Analyzer
 type project
-Version 2.2.1
+Version 3.0.0
 Authors Aderant
 Description "Provides code fixes and refactorings for C# projects."
 

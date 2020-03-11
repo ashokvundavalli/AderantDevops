@@ -71,11 +71,29 @@
     <RequireSynchronizedOutputPaths Condition="'$(RequireSynchronizedOutputPaths)' == ''">false</RequireSynchronizedOutputPaths>
     <CreateHardLinksForCopyLocal Condition="'$(CreateHardLinksForCopyLocal)' == ''">false</CreateHardLinksForCopyLocal>
     <BuildCacheOptions Condition="'$(BuildCacheOptions)' == ''">DisableCacheWhenProjectChanged</BuildCacheOptions>
+
+    <!-- Suppress Diagnostics -->
+    <PackagesDirectory Condition="'$(UseSharedDependencyDirectory)' == 'true'">$(SharedDependencyDirectory)packages\</PackagesDirectory>
+    <PackagesDirectory Condition="'$(PackagesDirectory)' == ''">$(SolutionRoot)packages\</PackagesDirectory>
+    <BuildAnalyzerDirectory>$(PackagesDirectory)Aderant.Build.Analyzer</BuildAnalyzerDirectory>
+    <BuildAnalyzerAssembly>$(BuildAnalyzerDirectory)\analyzers\dotnet\cs\Aderant.Build.Analyzer.dll</BuildAnalyzerAssembly>
   </PropertyGroup>
 
   <Import Project="Aderant.Build.Common.targets" />
   <Import Project="Aderant.CodeSigning.targets" />
   <Import Project="Aderant.Build.Testing.targets" />
+
+  <Target Name="CleanSuppressionFiles" Condition="'$(SuppressDiagnostics)' == 'true'">
+    <Exec ContinueOnError="false"
+          IgnoreExitCode="false"
+          Command="Powershell -NonInteractive -NoProfile &quot;&amp; { try { . &apos;$(BuildScriptsDirectory)Functions\GlobalSuppressions.ps1&apos;; CleanSuppressionFiles -buildAnalyzerAssembly &apos;$(BuildAnalyzerAssembly)&apos; -path &apos;$(SolutionRoot)&apos; } catch { $Error[0] | Format-List -Force } }&quot;" />
+  </Target>
+
+  <Target Name="OrganizeSuppressionFiles" Condition="'$(SuppressDiagnostics)' == 'true'">
+    <Exec ContinueOnError="false"
+          IgnoreExitCode="false"
+          Command="Powershell -NonInteractive -NoProfile &quot;&amp; { try { . &apos;$(BuildScriptsDirectory)Functions\GlobalSuppressions.ps1&apos;; OrganizeSuppressionFiles -buildAnalyzerAssembly &apos;$(BuildAnalyzerAssembly)&apos; -path &apos;$(SolutionRoot)&apos; } catch { $Error[0] | Format-List -Force } }&quot;" />
+  </Target>
 
   <PropertyGroup>
     <BuildAndPackageDependsOn>
@@ -85,8 +103,10 @@
       MakeStagingDirectory;
       GatherProjectsToBuild;
       GetAllDependencies;
+      CleanSuppressionFiles;
       CreatePlan;
       ExecutePlan;
+      OrganizeSuppressionFiles;
       MSBuildRunTests;
       WriteStateFiles;
       PackageProduct;
@@ -95,7 +115,6 @@
       CopyToDrop;
     </BuildAndPackageDependsOn>
   </PropertyGroup>
-
 
   <Target Name="MSBuildRunTests" DependsOnTargets="CreatePlan" Condition="'$(RunTests)' != 'false'">
 

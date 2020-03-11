@@ -572,5 +572,8 @@ namespace Aderant.Build {
 
         [DataMember]
         public bool ExcludeTestProjects { get; set; }
+
+        [DataMember]
+        public bool SuppressDiagnostics { get; set; }
     }
 }

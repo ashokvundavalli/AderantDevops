@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Aderant.Build.Analyzer.Extensions;
+using Aderant.Build.Analyzer.GlobalSuppressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -213,8 +214,8 @@ namespace Aderant.Build.Analyzer.Rules {
             // ...and concatenated...
             // [Attribute(), Attribute()]
             // The below double loop handles both cases, including mix & match.
-            foreach (AttributeListSyntax attributeList in attributeLists) {
-                foreach (AttributeSyntax attribute in attributeList.Attributes) {
+            foreach (var attributeList in attributeLists) {
+                foreach (var attribute in attributeList.Attributes) {
                     string name = attribute.Name.ToString();
 
                     // If the name is somehow invalid, continue.
@@ -367,22 +368,24 @@ namespace Aderant.Build.Analyzer.Rules {
                 return true;
             }
 
-#if !AUTOSUPPRESS
-            // Suppressions file does not exist.
-            if (tryResult == null) {
-                // Raise diagnostic.
-                return true;
+            string message;
+            if (!GlobalSuppressionsController.IsAutomaticSuppressionEnabled) {
+                // Suppressions file does not exist.
+                if (tryResult == null) {
+                    // Raise diagnostic.
+                    return true;
+                }
+
+                // Generate suppression message.
+                message = GenerateSuppressionMessage(data.Node, diagnosticId, semanticModel);
+
+                // Raise a diagnostic if the contents of the suppressions file
+                // does not include the generated suppression message.
+                return !contents.Contains(message);
             }
 
             // Generate suppression message.
-            string message = GenerateSuppressionMessage(data.Node, diagnosticId, semanticModel);
-
-            // Raise a diagnostic if the contents of the suppressions file
-            // does not include the generated suppression message.
-            return !contents.Contains(message);
-#else // AUTOSUPPRESS
-            // Generate suppression message.
-            string message = GenerateSuppressionMessage(data.Node, diagnosticId, semanticModel);
+            message = GenerateSuppressionMessage(data.Node, diagnosticId, semanticModel);
 
             // If there is no node data...
             if (data.Node == null) {
@@ -424,7 +427,6 @@ namespace Aderant.Build.Analyzer.Rules {
 
             // Do not raise a diagnostic.
             return false;
-#endif
         }
 
         /// <summary>
@@ -442,11 +444,11 @@ namespace Aderant.Build.Analyzer.Rules {
             out string[] contents) {
             contents = null;
             if (!File.Exists(data.SuppressionFilePath)) {
-#if !AUTOSUPPRESS
+                if (GlobalSuppressionsController.IsAutomaticSuppressionEnabled) {
+                    return null;
+                }
+
                 return false;
-#else // AUTOSUPPRESS
-                return null;
-#endif
             }
 
             try {
@@ -708,7 +710,6 @@ namespace Aderant.Build.Analyzer.Rules {
             return namespaceDeclaration?.Name.ToString();
         }
 
-#if AUTOSUPPRESS
         /// <summary>
         /// Sets the suppressions file's contents.
         /// </summary>
@@ -796,7 +797,6 @@ namespace Aderant.Build.Analyzer.Rules {
                 // Do nothing.
             }
         }
-#endif
 
         #endregion Methods: Auto Suppression
     }

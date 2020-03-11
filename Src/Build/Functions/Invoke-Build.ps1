@@ -151,6 +151,10 @@ function CreateToolArgumentString($context, $remainingArgs) {
             $set.Add("/p:switch-clean=true")
         }
 
+        if ($context.Switches.SuppressDiagnostics) {
+            $set.Add("/p:SuppressDiagnostics=true")
+        }
+
         if ($GetDependencies.IsPresent) {
             $set.Add("/p:GetDependencies=true")
         } else {
@@ -399,6 +403,7 @@ function AssignSwitches {
     $switches.Release = $Release.IsPresent
     $switches.Resume = $Resume.IsPresent
     $switches.SkipCompile = $SkipCompile.IsPresent
+    $switches.SuppressDiagnostics = $SuppressDiagnostics.IsPresent
     $switches.ChangedFilesOnly = $ChangedFilesOnly.IsPresent
     $switches.RestrictToProvidedPaths = $RestrictToProvidedPaths.IsPresent -and -not $standalone
     $switches.ExcludeTestProjects = $ExcludeTestProjects.IsPresent
@@ -489,6 +494,12 @@ function global:Invoke-Build2 {
         [Parameter()]
         [switch]$NoBuildCache,
 
+        <#
+        Toggles automatic suppression of Roslyn Rule diagnostics.
+        #>
+        [Parameter()]
+        [switch]$SuppressDiagnostics,
+
         [Parameter(HelpMessage = "Enables integration tests.")]
         [switch]$RunIntegrationTests,
 
@@ -578,6 +589,13 @@ function global:Invoke-Build2 {
     Set-StrictMode -Version 'Latest'
     $ErrorActionPreference = 'Stop'
 
+    if ($SuppressDiagnostics.IsPresent) {
+        if (-not $Release.IsPresent) {
+            throw '-Release must be specified when suppressing diagnostics.'
+        }
+
+        [System.Environment]::SetEnvironmentVariable('AderantRoslynRuleAutomaticSuppression', 'true', [System.EnvironmentVariableTarget]::Process)
+    }
 
     if ($Clean.IsPresent) {
         Write-Host "You have specified 'Clean'." -ForegroundColor Yellow
@@ -617,7 +635,7 @@ function global:Invoke-Build2 {
 
     AssignSwitches
 
-    if (-not $NoBuildCache.IsPresent -and -not $standalone) {
+    if (-not $NoBuildCache.IsPresent -and -not $standalone -and -not $SuppressDiagnostics.IsPresent) {
         GetBuildStateMetadata $context
     }
 
