@@ -570,10 +570,14 @@ namespace Aderant.Build.ProjectSystem {
             items.AddRange(project.Value.GetItems("XamlAppdef"));
             items.AddRange(project.Value.GetItems("Page"));
 
-            for (var changeNum = changes.Count - 1; changeNum >= 0; changeNum--) {
-                var file = changes[changeNum];
+            foreach (var item in items) {
+                if (changes.Count == 0) {
+                    break;
+                }
 
-                foreach (var item in items) {
+                for (int changeNum = changes.Count - 1; changeNum >= 0; changeNum--) {
+                    var file = changes[changeNum];
+
                     string value = item.GetMetadataValue("FullPath");
 
                     if (string.Equals(value, file.FullPath, StringComparison.OrdinalIgnoreCase)) {
