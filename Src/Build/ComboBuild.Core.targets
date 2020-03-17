@@ -120,7 +120,14 @@
         RunCodeAnalysisOnThisProject=false;
         _GitDir=$(_GitDir);
         IsBuildCacheEnabled=$(IsBuildCacheEnabled);
-        TemporaryDirectoryKey=$(TemporaryDirectoryKey)
+        TemporaryDirectoryKey=$(TemporaryDirectoryKey);
+        Deterministic=true;
+      </PropertiesCommonToAllProjects>
+    </PropertyGroup>
+
+    <PropertyGroup>
+      <PropertiesCommonToAllProjects Condition="'$(AGENT_BUILDDIRECTORY)' != ''">
+        $(PropertiesCommonToAllProjects);PathMap=$(AGENT_BUILDDIRECTORY)=D:\
       </PropertiesCommonToAllProjects>
     </PropertyGroup>
 
