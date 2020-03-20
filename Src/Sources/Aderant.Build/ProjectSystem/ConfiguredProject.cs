@@ -293,7 +293,7 @@ namespace Aderant.Build.ProjectSystem {
                     Project projectInstance = configuredProject.project.Value;
                     string projectOutputType = projectInstance.GetPropertyValue("OutputType");
                     ProjectProperty targetExtension = projectInstance.GetProperty("TargetExt");
-                    
+
                     // Purity violation - this class knows to interrogate a WIX project, C# project and test projects. If we add any more cross type concerns
                     // then moving the logic out to separate classes would be an improvement.
                     if (targetExtension != null) {
@@ -303,8 +303,8 @@ namespace Aderant.Build.ProjectSystem {
                             string.Equals(projectOutputType, AssemblyReferencesService.WindowsExecutable,
                                 StringComparison.OrdinalIgnoreCase)) {
                             return projectOutputType;
-                        } 
-                        
+                        }
+
                         if (!string.Equals(value, WixReferenceService.WindowsInstaller)) {
                             return value;
                         }
@@ -370,12 +370,17 @@ namespace Aderant.Build.ProjectSystem {
             }
 
             return new Lazy<Project>(
-                () => new Project(
-                    projectElement.Value,
-                    properties,
-                    null,
-                    CreateProjectCollection(),
-                    ProjectLoadSettings.IgnoreMissingImports));
+                () => {
+                    return new Project(
+                        projectElement.Value,
+                        properties,
+                        null,
+                        CreateProjectCollection(),
+                        ProjectLoadSettings.IgnoreMissingImports |
+                        ProjectLoadSettings.IgnoreInvalidImports |
+                        ProjectLoadSettings.IgnoreEmptyImports
+                        );
+                });
         }
 
         private ProjectCollection CreateProjectCollection() {

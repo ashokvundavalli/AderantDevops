@@ -321,6 +321,28 @@ namespace UnitTest.Build.ProjectSystem {
 
             Assert.AreEqual("WinExe", project.OutputType);
         }
+
+        [TestMethod]
+        public void Can_import_with_bad_imports() {
+            var tree = new Mock<IProjectTree>();
+
+            var project = new ConfiguredProject(tree.Object);
+
+            project.Initialize(
+                new Lazy<ProjectRootElement>(
+                    () => {
+                        string xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<Project ToolsVersion=""4.0"" DefaultTargets=""Build"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
+  <Import Project=""$(MSBuildThisFileDirectory)\does\not\exist.props"" />
+  </Project>";
+
+                        var element = ProjectRootElement.Create(XmlReader.Create(new StringReader(xml)));
+                        return element;
+                    }),
+                "");
+
+            var projectIsTestProject = project.IsTestProject; // Force some kind of evaluation
+        }
     }
 
 }
