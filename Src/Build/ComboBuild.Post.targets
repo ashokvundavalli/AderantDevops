@@ -73,7 +73,7 @@
 
 
   <Target Name="CreateDefaultArtifacts">
-    
+
     <ItemGroup>
 
       <_PackageArtifact Include="$(BinTestDirectory)\**\*;">
@@ -89,7 +89,7 @@
       </_PackageArtifact>
 
     </ItemGroup>
-    
+
   </Target>
 
 
@@ -97,7 +97,7 @@
 
     <ItemGroup>
 
-      <_PackageArtifact Include="$(SolutionRoot)\Src\Web*\bin\*Web*.dll;" Exclude="$(SolutionRoot)\Src\Web*\bin\Web.SMB.dll;"> 
+      <_PackageArtifact Include="$(SolutionRoot)\Src\Web*\bin\*Web*.dll;" Exclude="$(SolutionRoot)\Src\Web*\bin\Web.SMB.dll;">
         <ArtifactId>$(ModuleName).default.web</ArtifactId>
         <Generated>true</Generated>
         <ArtifactType>Prebuilt</ArtifactType>
@@ -108,16 +108,16 @@
 
   </Target>
 
-  
+
   <Target Name="CopyRelatedFiles">
-    
+
     <CopyRelatedFiles
       SourceLocation ="$(BinModuleDirectory)"
       Destination="$(UpdateStagingDirectory)BinFiles" />
-    
+
   </Target>
 
-  
+
   <Target Name="PackageArtifactsCore" Condition="'$(ArtifactStagingDirectory)' != ''" DependsOnTargets="$(PackageArtifactsDependsOn)">
 
     <CreateArtifacts
@@ -156,21 +156,28 @@
   <Import Project="$(SolutionDirectoryPath)Build\TFSBuild.proj" Condition="'$(RunUserTargets)' != 'false' And Exists('$(SolutionDirectoryPath)Build\TFSBuild.proj')" />
   <Import Project="$(SolutionDirectoryPath)packaging.targets" Condition="'$(RunUserTargets)' != 'false' And Exists('$(SolutionDirectoryPath)packaging.targets')" />
 
-  
+
   <Target Name="PaketPack" Condition="'@(InvokePaket)' != '' And '$(PackageVersion)' != ''">
-    
+
     <PropertyGroup>
-      <paketLockFile>$(SolutionRoot)\paket.lock</paketLockFile>
+      <PaketLockFile>$(SolutionRoot)\paket.lock</PaketLockFile>
     </PropertyGroup>
-    
+
     <WriteLinesToFile
      File="$(paketLockFile)"
      Lines=""
      Overwrite="false"
-     Condition="!Exists('$(paketLockFile)')"/>
-    
-    <Exec Command="$(BuildToolsDirectory)paket.exe pack $(ArtifactStagingDirectory)packages --version $(PackageVersion) --verbose" WorkingDirectory="$(SolutionRoot)" />
-  
+     Condition="!Exists('$(PaketLockFile)')"/>
+
+    <ItemGroup>
+      <TemplateFiles Include="$(SolutionRoot)\*.paket.template" />
+    </ItemGroup>
+
+    <Exec
+      Condition="'@(TemplateFiles)' != ''"
+      Command="$(BuildToolsDirectory)paket.exe pack $(ArtifactStagingDirectory)packages --template %(TemplateFiles.FullPath) --version $(PackageVersion) --verbose"
+      WorkingDirectory="$(SolutionRoot)" />
+
   </Target>
 
 </Project>
