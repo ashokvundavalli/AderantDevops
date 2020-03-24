@@ -145,7 +145,7 @@ namespace Aderant.Build.Tasks {
             }
 
             if (ModulesInBuild != null) {
-                foreach (ITaskItem module in ModulesInBuild) {
+                foreach (ITaskItem module in ModulesInBuild.Distinct()) {
                     workflow.Request.AddModule(module.ItemSpec);
                 }
             }

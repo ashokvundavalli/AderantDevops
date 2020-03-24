@@ -314,6 +314,8 @@
     
     <ItemGroup>
       <SharedPaketFiles Include="$(SolutionRoot)Build\shared.paket.dependencies;$(SolutionRoot)Build\paket.lock;" />
+      <DependencyDirectories Condition="Exists('$(SolutionRoot)Build')" Include="$(SolutionRoot)Build" />
+      <DependencyDirectories Include="@(DirectoriesInBuild)" />
     </ItemGroup>
     
     <Copy Condition="Exists('%(SharedPaketFiles.Identity)')"
@@ -330,7 +332,7 @@
       ModulesRootPath="$(SolutionRoot)"
       DependenciesDirectory="$(SharedDependencyDirectory)"
       DropPath="$(XamlBuildDropLocation)"
-      ModulesInBuild="@(DirectoriesInBuild)"
+      ModulesInBuild="@(DependencyDirectories)"
       EnabledResolvers="@(EnabledResolvers)"
       EnableVerboseLogging="$(PaketVerboseLogging)" />
 
