@@ -66,14 +66,14 @@ namespace Aderant.Build.Packaging {
             }
 
             try {
-                ProductAssembler assembler = new ProductAssembler(ProductManifestXml, new PowerShellLogger(Host));
+                ProductAssembler assembler = new ProductAssembler(ProductManifestXml, new PowerShellLogger(this));
                 assembler.EnableVerboseLogging = MyInvocation.BoundParameters.ContainsKey("Verbose");
                 IProductAssemblyResult result = assembler.AssembleProduct(itemMap, Folders, ProductDirectory, TfvcSourceGetVersion, TeamProject, TfvcBranch, TfsBuildId, TfsBuildNumber);
 
                 WriteObject(result);
             } catch (AggregateException aggregateException) {
                 AggregateException exception = aggregateException.Flatten();
-                
+
                 WriteWarning(exception.Message);
                 WriteWarning(exception.StackTrace);
 

@@ -28,7 +28,7 @@ namespace Aderant.Build.Commands {
 
         protected override void ProcessRecord() {
             cancellationTokenSource = new CancellationTokenSource();
-            var service = new ArtifactService(new PowerShellLogger(Host));
+            var service = new ArtifactService(new PowerShellLogger(this));
             var metadata = service.GetBuildStateMetadata(BucketIds, Tags, DropLocation, ScmBranch, cancellationTokenSource.Token);
 
             if (metadata.BuildStateFiles != null) {

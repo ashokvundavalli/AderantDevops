@@ -17,7 +17,7 @@ param(
   [string]$SolutionRoot,
 
   [Parameter(Mandatory=$false)]
-  [string]$CustomRunSettingsFile,
+  [string]$RunSettingsFile,
 
   [Parameter(Mandatory=$false, HelpMessage="The paths to provide to the test tool assembly resolver")]
   [string[]]$ReferencePaths,
@@ -42,8 +42,6 @@ Set-StrictMode -Version "Latest"
 $InformationPreference = "Continue"
 $ErrorActionPreference = "Stop"
 
-$referencePathList = [System.Collections.Generic.List[string]]::new()
-
 function AddSearchDirectory($element, [string]$path, [bool]$includeSubDirectories, [bool]$prepend) {
     $directoryElement = $script:settingsDocument.CreateElement("Directory")
     $directoryElement.SetAttribute("path", $path.TrimEnd('\'))
@@ -57,7 +55,7 @@ function AddSearchDirectory($element, [string]$path, [bool]$includeSubDirectorie
 }
 
 function CreateRunSettingsXml() {
-    [xml]$script:settingsDocument = Get-Content -Path "$PSScriptRoot\default.runsettings"
+    [xml]$script:settingsDocument = Get-Content -Path $RunSettingsFile
     $assemblyResolution = $settingsDocument.RunSettings.MSTest.AssemblyResolution
 
     if ($script:ReferencePaths) {
@@ -67,15 +65,16 @@ function CreateRunSettingsXml() {
     }
 
     if ($SolutionRoot) {
-        #AddSearchDirectory $assemblyResolution ([System.IO.Path]::Combine($SolutionRoot, "packages")) $false $false
-
         # We want the test runner resolver to bind content produced by the solution build
         # for the most reliable test run as there could be matching by older assemblies in the other directories
         AddSearchDirectory $assemblyResolution ([System.IO.Path]::Combine($SolutionRoot, "Bin", "Module")) -includeSubDirectories:$true -prepend:$true
     }
 
     # VS SDK
-    AddSearchDirectory $assemblyResolution ("$Env:VSSDK140Install" + "VisualStudioIntegration\Common\Assemblies\v4.0") -includeSubDirectories:$false -prepend:$false
+    $vsSdk = $Env:VSSDK140Install
+    if (![string]::IsNullOrWhiteSpace($vsSdk)) {
+        AddSearchDirectory $assemblyResolution ([System.IO.Path]::Combine($vsSdk, "VisualStudioIntegration\Common\Assemblies\v4.0")) -includeSubDirectories:$false -prepend:$false
+    }
 
     if ($script:RunInParallel -eq $false) {
         $settingsDocument.RunSettings.RunConfiguration.MaxCpuCount = '1'
@@ -92,48 +91,6 @@ function CreateRunSettingsXml() {
     $sw.Dispose()
 
     return $sw.ToString()
-}
-
-# Finds assemblies references by the test container in our search space then drops them into the conntainer directory.
-# This is a fall back for DLLs which are needed for JIT and the VSTest resolver may not be able to locate the assemblies
-function FindAndDeployReferences([string[]] $testAssemblies) {
-    if ($ReferencesToFind -and $referencePathList) {
-        Write-Information "Finding references... $ReferencesToFind"
-
-        [void][System.Reflection.Assembly]::Load("System.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")
-        # Create the paths to drop references into
-        $destinationPaths = [System.Collections.Generic.HashSet[System.String]]::new()
-        foreach ($testAssemblyFile in $testAssemblies) {
-            $file = [System.IO.FileInfo]::new($testAssemblyFile)
-            [void]$destinationPaths.Add($file.Directory.FullName)
-        }
-
-        $files = @()
-        foreach ($path in $referencePathList) {
-            if ([System.IO.Directory]::Exists($path)) {
-                $files += Get-ChildItem -LiteralPath $path -Filter "*.dll" -Recurse
-            }
-        }
-
-        foreach ($reference in $ReferencesToFind) {
-            # To be correct we should also support .exe and .winmd...
-            # Avoid ChangeExtension(...) as assemblies often have dots in the name which confuses it
-            $dllName = $reference + ".dll"
-
-            $foundReferenceFile = $files | Where-Object -Property Name -EQ $dllName | Select-Object -First 1
-
-            if ($foundReferenceFile) {
-                foreach ($path in $destinationPaths) {
-                    $destinationFile = [System.IO.Path]::Combine($path, $dllName)
-
-                    if (-not [System.IO.File]::Exists($destinationFile)) {
-                        Write-Information "Found required file $($foundReferenceFile.FullName)"
-                        New-Item -Path $destinationFile -ItemType HardLink -Value $foundReferenceFile.FullName | Out-Null
-                    }
-                }
-            }
-        }
-    }
 }
 
 function GetTestResultFiles() {
@@ -181,23 +138,16 @@ if ($null -ne $AdditionalEnvironmentVariables -and $AdditionalEnvironmentVariabl
     }
 }
 
-$global:LASTEXITCODE = 0
-[string]$runSettingsFile = [string]::Empty
+$exitcode = 0
 
 try {
-	if (-Not [string]::IsNullOrWhiteSpace($CustomRunSettingsFile) -And (Test-Path $CustomRunSettingsFile)) {
-		Write-Information "Using custom run settings file: '$CustomRunSettingsFile'."
-		$startInfo.Arguments += " /Settings:$CustomRunSettingsFile"
-	} else {
-		Write-Information "Creating run settings file..."
-		$xml = CreateRunSettingsXml
-		Write-Information ([System.Environment]::NewLine + "$xml")
+	Write-Information "Creating run settings file..."
+	$xml = CreateRunSettingsXml
+	Set-Content  -LiteralPath $runSettingsFile -Value $xml -Encoding UTF8
 
-		$runSettingsFile = [System.IO.Path]::GetTempFileName()
-		Add-Content -LiteralPath $runSettingsFile -Value $xml -Encoding UTF8
+    Write-Information $xml
 
-		$startInfo.Arguments += " /Settings:$runSettingsFile"
-	}
+	$startInfo.Arguments += " /Settings:$RunSettingsFile"
 
     if (-not [string]::IsNullOrWhiteSpace($TestAdapterPath)) {
         $startInfo.Arguments += " /TestAdapterPath:$TestAdapterPath"
@@ -205,19 +155,9 @@ try {
 
     Write-Information "Starting runner: $($startInfo.FileName) $($startInfo.Arguments)"
 
-    $global:LASTEXITCODE = $exec.Invoke($startInfo)
+    $exitcode = $exec.Invoke($startInfo)
 } finally {
-    $lastExitCode = $global:LASTEXITCODE
-
-    if ($lastExitCode -eq 0) {
-        try {
-            if ($runSettingsFile -and -not [string]::IsNullOrWhiteSpace($TestAdapterPath)) {
-                [System.IO.File]::Delete($runSettingsFile)
-            }
-        } catch {
-            Write-Debug "Failed to delete temporary run settings file $runSettingsFile"
-        }
-
+    if ($exitcode -eq 0) {
         try {
             if ([System.IO.Directory]::Exists($TestAdapterPath)) {
                 Remove-Item -Path $TestAdapterPath -Force
@@ -227,12 +167,12 @@ try {
         }
     }
 
-    if ($lastExitCode -ne 0) {
+    if ($exitcode -ne 0) {
         if ($IsDesktopBuild) {
             ShowTestRunReport
         }
 
-        Write-Error "Test runner exit code: $lastExitCode"
+        Write-Error "Test runner exit code: $exitcode"
     } else {
         if ($Error) {
             throw $Error[0]

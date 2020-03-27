@@ -51,7 +51,11 @@ namespace Aderant.Build {
         }
 
         public static string Quote(this string text) {
-            return SurroundWith(text, "\"");
+            const string quote = "\"";
+            if (text.StartsWith(quote)) {
+                return text;
+            }
+            return SurroundWith(text, quote);
         }
 
         public static string SurroundWith(this string text, string ends) {

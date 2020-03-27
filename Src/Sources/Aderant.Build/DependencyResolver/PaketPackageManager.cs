@@ -2,15 +2,12 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Net.Http;
-using System.Reflection;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text.RegularExpressions;
 using Aderant.Build.DependencyResolver.Models;
-using Aderant.Build.DependencyResolver.Resolvers;
 using Aderant.Build.Logging;
 using Microsoft.FSharp.Collections;
 using Microsoft.FSharp.Control;
-using Microsoft.FSharp.Core;
 using Paket;
 
 namespace Aderant.Build.DependencyResolver {
@@ -19,15 +16,18 @@ namespace Aderant.Build.DependencyResolver {
         private static readonly Regex invalidVersionPattern = new Regex("^0[.]0[.]0-\\w*");
 
         private static readonly InstallOptions defaultInstallOptions = InstallOptions.Default;
+
+        private static List<WeakReference<ILogger>> registeredLoggers;
+        private static object syncLock = new object();
         private readonly ILogger logger;
 
-        private readonly FSharpHandler<Paket.Logging.Trace> logMessageDelegate;
         private readonly string root;
         private readonly IWellKnownSources wellKnownSources;
         private bool createdNew;
 
         private Dependencies dependencies;
         private DependenciesFile dependenciesFile;
+
 
         static PaketPackageManager() {
             PaketHttpMessageHandlerFactory.Configure();
@@ -38,11 +38,40 @@ namespace Aderant.Build.DependencyResolver {
             this.wellKnownSources = wellKnownSources;
             this.logger = logger;
             this.FileSystem = fileSystem;
-            dependencies = Initialize(root);
-            Paket.Logging.verbose = enableVerboseLogging;
-            this.logMessageDelegate = OnTraceEvent;
 
-            Paket.Logging.@event.Publish.AddHandler(logMessageDelegate);
+            if (null != root) {
+                dependencies = Initialize(root);
+            }
+
+            Paket.Logging.verbose = enableVerboseLogging;
+
+            bool attachLogger = true;
+
+            // Prevent duplicate subscriptions from the same logger to the global paket event.
+            lock (syncLock) {
+                if (registeredLoggers == null) {
+                    registeredLoggers = new List<WeakReference<ILogger>>();
+                    Paket.Logging.@event.Publish.AddHandler(OnTraceEvent);
+                }
+
+                var loggers = GetLoggerReferences();
+
+                foreach (var weakReference in loggers) {
+                    ILogger reference;
+
+                    if (weakReference.TryGetTarget(out reference)) {
+                        if (ReferenceEquals(reference, logger)) {
+                            continue;
+                        }
+                    } else {
+                        registeredLoggers.Remove(weakReference);
+                    }
+                }
+
+                if (attachLogger) {
+                    registeredLoggers.Add(new WeakReference<ILogger>(logger));
+                }
+            }
         }
 
         public IFileSystem FileSystem { get; }
@@ -50,21 +79,66 @@ namespace Aderant.Build.DependencyResolver {
 
         public string[] Lines { get; private set; }
 
+
         public void Dispose() {
-            Paket.Logging.@event.Publish.RemoveHandler(logMessageDelegate);
+            void RemoveReference(WeakReference<ILogger> loggerReference) {
+                lock (syncLock) {
+                    registeredLoggers.Remove(loggerReference);
+                }
+            }
+
+            var references = GetLoggerReferences();
+
+            foreach (var loggerReference in references) {
+                if (loggerReference.TryGetTarget(out var target)) {
+                    if (ReferenceEquals(target, logger)) {
+                        RemoveReference(loggerReference);
+                    }
+                } else {
+                    RemoveReference(loggerReference);
+                }
+
+
+
+
+            }
         }
 
-        private void OnTraceEvent(object sender, Paket.Logging.Trace args) {
+        internal static List<WeakReference<ILogger>> GetLoggerReferences() {
+            List<WeakReference<ILogger>> references;
+            lock (syncLock) {
+                references = registeredLoggers.ToList();
+            }
+
+            return references;
+        }
+
+        private static void OnTraceEvent(object sender, Paket.Logging.Trace args) {
+            var references = GetLoggerReferences();
+
+            foreach (var loggerReference in references) {
+                loggerReference.TryGetTarget(out var target);
+
+                if (target != null) {
+                    Log(target, args);
+                }
+            }
+        }
+
+        private static void Log(ILogger logger, Paket.Logging.Trace args) {
             if (args.Level == TraceLevel.Verbose) {
                 logger.Info(args.Text, null);
+                return;
             }
 
             if (args.Level == TraceLevel.Info) {
                 logger.Info(args.Text, null);
+                return;
             }
 
             if (args.Level == TraceLevel.Warning) {
                 logger.Warning(args.Text, null);
+                return;
             }
 
             if (args.Level == TraceLevel.Error) {
@@ -167,7 +241,7 @@ namespace Aderant.Build.DependencyResolver {
             }
 
             if (isMainGroup && !isUsingMultipleInputFiles) {
-                if (group.Sources.Any(s => object.Equals(s.NuGetType, PackageSources.KnownNuGetSources.OfficialNuGetGallery))) {
+                if (group.Sources.Any(s => Equals(s.NuGetType, PackageSources.KnownNuGetSources.OfficialNuGetGallery))) {
                     sources = AddSource(Constants.OfficialNuGetUrlV3, sources);
                 }
             }
@@ -177,7 +251,7 @@ namespace Aderant.Build.DependencyResolver {
             }
 
             // Upgrade any V2 to V3 sources
-            if (sources.Any(s => object.Equals(s.NuGetType, PackageSources.KnownNuGetSources.OfficialNuGetGallery) && s.IsNuGetV2)) {
+            if (sources.Any(s => Equals(s.NuGetType, PackageSources.KnownNuGetSources.OfficialNuGetGallery) && s.IsNuGetV2)) {
                 sources = RemoveSource(sources, Constants.OfficialNuGetUrl);
                 sources = AddSource(Constants.OfficialNuGetUrlV3, sources);
             }
@@ -298,16 +372,30 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         public void Restore(bool force = false) {
-            if (!HasLockFile()) {
-                new UpdateAction(dependencies, force).Run();
-                return;
-            }
+            DoOperationAndHandleCredentialFailure(
+                () => {
+                    if (!HasLockFile()) {
+                        new UpdateAction(dependencies, force).Run();
+                        return;
+                    }
 
-            new RestoreAction(dependencies, force).Run();
+                    new RestoreAction(dependencies, force).Run();
+                });
+        }
+
+        private void DoOperationAndHandleCredentialFailure(Action action) {
+            try {
+                action();
+            } catch (CredentialProviderUnknownStatusException ex) {
+                logger.Error("A failure relating to credentials occurred.");
+                logger.LogErrorFromException(ex, false, false);
+                throw;
+            }
         }
 
         public void Update(bool force) {
-            new UpdateAction(dependencies, force).Run();
+            DoOperationAndHandleCredentialFailure(
+                () => { new UpdateAction(dependencies, force).Run(); });
         }
 
         public DependencyGroup GetDependencies() {
@@ -319,8 +407,6 @@ namespace Aderant.Build.DependencyResolver {
         /// Key: PackageName
         /// Value: Version constraint information
         /// </summary>
-        /// <param name="groupName"></param>
-        /// <returns></returns>
         public DependencyGroup GetDependencies(string groupName) {
             var file = dependenciesFile;
 

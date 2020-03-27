@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="Current">
 
   <Import Project="Aderant.Build.Common.targets" Condition="'$(AderantCommonTargetsImported)' == ''" />
 
@@ -9,11 +9,12 @@
       SetupTestProperties;
       CollectAssemblyPlatforms;
       RunTestAssemblies;
+      RemoveFiles
     </RunTestsDependsOn>
   </PropertyGroup>
 
 
-  <Target Name="RunTests"
+  <Target Name="RunTestsCore"
           Condition="'$(RunTests)' != 'false' Or '$(_RunIntegrationTests)' != 'false'"
           DependsOnTargets="$(RunTestsDependsOn)">
 
@@ -36,7 +37,9 @@
     <!-- Collect all assemblies to use as test dependencies -->
     <ItemGroup>
       <AllStagedDlls Include="$(ArtifactStagingDirectory)**\*.dll"
-                     Exclude="$(ArtifactStagingDirectory)_artifacts\**" />
+                     Exclude="$(ArtifactStagingDirectory)_artifacts\**\*;
+                              $(ArtifactStagingDirectory)product\**\*;
+                              $(ArtifactStagingDirectory)BinFiles\**\*;" />
       <AllDirectoriesWithDlls Include="@(AllStagedDlls->'%(RootDir)%(Directory)'->Distinct())"/>
     </ItemGroup>
 
@@ -52,19 +55,14 @@
       <PathToTestTool>$([System.IO.Path]::GetFullPath('$(PathToTestTool)'))</PathToTestTool>
 
       <IsolationSwitch>/InIsolation</IsolationSwitch>
-      <RunTestsInParallel Condition="'$(TestPattern)' != '' And $(TestPattern.Equals('IntegrationTest', StringComparison.OrdinalIgnoreCase))">false</RunTestsInParallel>
+      <RunTestsInParallel Condition="'$(TestPattern)' != '' And '$(TestPattern)' == 'IntegrationTest'">false</RunTestsInParallel>
       <RunTestsInParallel>$([MSBuild]::ValueOrDefault('$(RunTestsInParallel)', 'true'))</RunTestsInParallel>
       <ParallelSwitch Condition="'$(RunTestsInParallel)' == 'true'">/Parallel</ParallelSwitch>
 
       <TestAdapterSwitch Condition="'$(PSTests)' == 'true'">/TestAdapterPath:"$(BuildScriptsDirectory)..\Build.Tools"</TestAdapterSwitch>
       <ResultsFileSwitch Condition="'$(ResultsFileSwitch)' == ''">/Logger:trx</ResultsFileSwitch>
-      <RunSettingsFile Condition="'$(IsDesktopBuild)' != 'true' And Exists('$(TestWorkingDirectory)$(CustomRunSettings)') And '$(RunSettingsFile)' == ''">$(TestWorkingDirectory)$(CustomRunSettings)</RunSettingsFile>
-      <RunSettingsFile Condition="'$(RunSettingsFile)' == '' And Exists('$(TestWorkingDirectory)default.runsettings')">$(TestWorkingDirectory)default.runsettings</RunSettingsFile>
-      <RunSettingsSwitch>/Settings:$(RunSettingsFile)</RunSettingsSwitch>
 
       <TestPattern>$([MSBuild]::ValueOrDefault('$(TestPattern)', 'UnitTest'))</TestPattern>
-
-      <AllDirectoriesWithDlls>@(AllDirectoriesWithDlls->'"%(FullPath)"', ',')</AllDirectoriesWithDlls>
     </PropertyGroup>
 
     <Message Text="TestPattern: $(TestPattern)" />
@@ -78,6 +76,35 @@
     <PropertyGroup>
       <TestRunDirectory>%(SolutionRoots.Identity)</TestRunDirectory>
     </PropertyGroup>
+
+    <PropertyGroup>
+      <_CustomRunSettingsFile>$(TestRunDirectory)$(CustomRunSettings)</_CustomRunSettingsFile>
+      <RunSettingsFile>$(MSBuildThisFileDirectory)Testing\default.runsettings</RunSettingsFile>
+      <RunSettingsFile Condition="'$(IsDesktopBuild)' != 'true' And '$(CustomRunSettings)' != '' And Exists('$(_CustomRunSettingsFile)')">$(_CustomRunSettingsFile)</RunSettingsFile>
+    </PropertyGroup>
+
+    <!-- Copy the run settings template file and apply and custom transforms -->
+    <Copy SourceFiles="$(RunSettingsFile)"
+          DestinationFiles="$([System.IO.Path]::GetTempFileName())">
+      <Output TaskParameter="DestinationFiles" PropertyName="RunSettingsFile" />
+    </Copy>
+
+    <PropertyGroup>
+      <RunSettingsPropFile>$(TestRunDirectory)\Build\TFSBuild.proj</RunSettingsPropFile>
+    </PropertyGroup>
+
+    <MSBuild Projects="$(MSBuildThisFileFullPath)"
+             Condition="Exists('$(RunSettingsPropFile)')"
+             Targets="GetCustomTestSettings"
+             Properties="RunSettingsPropFile=$(RunSettingsPropFile)"
+             ContinueOnError="true">
+      <Output TaskParameter="TargetOutputs" ItemName="RunSettings"/>
+    </MSBuild>
+
+    <XmlPoke Condition="'@(RunSettings)' != ''"
+             XmlInputPath="$(RunSettingsFile)"
+             Query="%(RunSettings.Identity)"
+             Value="%(RunSettings.Value)"/>
 
     <ItemGroup>
       <ProjectsForThisRoot Include="@(TrackedProjects->WithMetadataValue('SolutionRoot', '$(TestRunDirectory)'))" />
@@ -96,7 +123,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ImpactedTestAssemblies Include="$(ImpactedTestAssemblies)"></ImpactedTestAssemblies>
+      <ImpactedTestAssemblies Include="$(ImpactedTestAssemblies)" />
     </ItemGroup>
 
     <FindInList
@@ -121,26 +148,28 @@
       <Output ItemName="AssembliesTargetingX86" TaskParameter="AssembliesTargetingX86" />
       <Output ItemName="AssembliesTargetingX64" TaskParameter="AssembliesTargetingX64" />
       <Output PropertyName="Use32BitTestRunner" TaskParameter="MustRun32Bit" />
-      <Output PropertyName="AssemblyPlatformDataKey" TaskParameter="AssemblyPlatformDataKey" />
     </GetAssemblyPlatform>
 
     <Message Text="Assembly: %(AssembliesWithTargetPlatform.FileName) -> Platform: %(AssembliesWithTargetPlatform.PEKind) (AnyCPU)" Condition="'@(AssembliesWithTargetPlatform)' != ''" />
     <Message Text="Assembly: %(AssembliesTargetingX64.FileName) -> Platform: %(AssembliesTargetingX64.PEKind) (x64)" Condition="'@(AssembliesTargetingX64)' != ''" />
     <Message Text="Assembly: %(AssembliesTargetingX86.FileName) -> Platform: %(AssembliesTargetingX86.PEKind) (x86)" Condition="'@(AssembliesTargetingX86)' != ''" />
-    <Message Condition="'@(AssembliesWithTargetPlatform)' != '' And $(TestPattern.Equals('IntegrationTest', StringComparison.OrdinalIgnoreCase))" Text="Assembly: %(AssembliesWithTargetPlatform.FileName) -> CIEnabled: %(AssembliesWithTargetPlatform.CIEnabled)" />
+    <Message Condition="'@(AssembliesWithTargetPlatform)' != '' And '$(TestPattern)' == 'IntegrationTest'" Text="Assembly: %(AssembliesWithTargetPlatform.FileName) -> CIEnabled: %(AssembliesWithTargetPlatform.CIEnabled)" />
 
     <ItemGroup>
-      <_Assemblies Condition="$(TestPattern.Equals('UnitTest', StringComparison.OrdinalIgnoreCase)) == 'true'" Include="@(AssembliesWithTargetPlatform)">
+      <_Assemblies Condition="'$(TestPattern)' == 'UnitTest'" Include="@(AssembliesWithTargetPlatform)">
         <SolutionRoot>$(SolutionRoot)</SolutionRoot>
         <TestRunDirectory>$(TestRunDirectory)</TestRunDirectory>
+        <RunSettingsFile>$(RunSettingsFile)</RunSettingsFile>
       </_Assemblies>
       <_Assemblies Condition="'@(_Assemblies)' == '' And '$(DeployEnvironment)' != 'true'" Include="@(AssembliesWithTargetPlatform)">
         <SolutionRoot>$(SolutionRoot)</SolutionRoot>
         <TestRunDirectory>$(TestRunDirectory)</TestRunDirectory>
+        <RunSettingsFile>$(RunSettingsFile)</RunSettingsFile>
       </_Assemblies>
       <_Assemblies Condition="'@(_Assemblies)' == '' And %(AssembliesWithTargetPlatform.CIEnabled) == 'true'" Include="@(AssembliesWithTargetPlatform)">
         <SolutionRoot>$(SolutionRoot)</SolutionRoot>
         <TestRunDirectory>$(TestRunDirectory)</TestRunDirectory>
+        <RunSettingsFile>$(RunSettingsFile)</RunSettingsFile>
       </_Assemblies>
     </ItemGroup>
 
@@ -153,54 +182,67 @@
       <PlatformSwitch>/Platform:%(_Assemblies.Platform)</PlatformSwitch>
       <TestCaseFilter Condition="'%(_Assemblies.CICategory)' != ''">/TestCaseFilter:`&quot;%(_Assemblies.CICategory)`&quot;</TestCaseFilter>
       <TestRunDirectory>%(_Assemblies.TestRunDirectory)</TestRunDirectory>
-      <AssembliesUnderTest>@(_Assemblies->'"%(FullPath)"', ',')</AssembliesUnderTest>
-      <AdditionalVariables Condition="'$(TestPattern)' != '' And $(TestPattern.Equals('IntegrationTest', StringComparison.OrdinalIgnoreCase))">
+      <AssembliesUnderTest>@(_Assemblies->'"%(FullPath)"', ' ')</AssembliesUnderTest>
+      <TestAdapterPath>$([System.IO.Path]::GetTempPath())$([System.DateTime]::UtcNow.ToFileTimeUtc())\</TestAdapterPath>
+
+      <AdditionalVariables Condition="'$(TestPattern)' != '' And '$(TestPattern)' == 'IntegrationTest'">
 $additionalEnvironmentVariables.Add('EXPERT_ENVIRONMENT_URL', '$(ExpertEnvironmentUrl)');
 $additionalEnvironmentVariables.Add('EXPERT_SOURCE_DIRECTORY', '$(ExpertSourceDirectory)');
       </AdditionalVariables>
-      <TestAdapterPath>$([System.IO.Path]::GetTempPath())$([System.DateTime]::UtcNow.ToFileTimeUtc())\</TestAdapterPath>
     </PropertyGroup>
 
-    <!-- TaskObjectKey will be the task object from GetAssemblyPlatform -->
+    <ItemGroup>
+      <ScriptArguments Include="_">
+        <PathToTestTool>$(PathToTestTool)</PathToTestTool>
+        <ToolArgs>$(ResultsFileSwitch) $(PlatformSwitch) $(TestCaseFilter) $(ParallelSwitch)</ToolArgs>
+        <WorkingDirectory>$(SolutionRoot)</WorkingDirectory>
+        <SolutionRoot>$(TestRunDirectory)</SolutionRoot>
+        <TestAdapterPath>$(TestAdapterPath)</TestAdapterPath>
+        <IsDesktopBuild>$$(IsDesktopBuild)</IsDesktopBuild>
+        <ReferencePaths>@(AllDirectoriesWithDlls)</ReferencePaths>
+        <TestAssemblies>$(AssembliesUnderTest)</TestAssemblies>
+        <RunInParallel>$$(RunTestsInParallel)</RunInParallel>
+        <RunSettingsFile>%(_Assemblies.RunSettingsFile)</RunSettingsFile>
+      </ScriptArguments>
+    </ItemGroup>
+
     <PowerShellScript
       Condition="'$(AssembliesUnderTest)' != ''"
-      ScriptBlock='
-$ErrorActionPreference = "Stop"
-$InformationPreference = "Continue"
-
-New-Item -ItemType Directory -Path &quot;$(TestAdapterPath)&quot; -Force
-
-$testTool = "$(PathToTestTool)"
-$testToolArgs = "$(ResultsFileSwitch) $(PlatformSwitch) $(TestCaseFilter) $(ParallelSwitch)"
-$testRunDirectory = "$(TestRunDirectory)"
-$testAdapterPath = "$(TestAdapterPath)"
-$workingDirectory = "$(SolutionRoot)"
-$isDesktopBuild = $$(IsDesktopBuild)
-$referencePaths = $(AllDirectoriesWithDlls)
-$testFiles = $(AssembliesUnderTest)
-$RunInParallel = $$(RunTestsInParallel)
-$RunSettingsFile = "$(RunSettingsFile)"
+      ScriptArguments="@(ScriptArguments)"
+      ScriptBlock="
+$ErrorActionPreference = 'Stop'
+$InformationPreference = 'Continue'
+New-Item -ItemType Directory -Path '$(TestAdapterPath)' -Force
 $additionalEnvironmentVariables = @{}
 $(AdditionalVariables)
+. '$(MSBuildThisFileDirectory)Testing\RunTests.ps1' @args -AdditionalEnvironmentVariables $additionalEnvironmentVariables"
+      OnErrorReason="Test failure" />
 
-try {
-  . Testing\RunTests.ps1 -PathToTestTool $testTool -ToolArgs $testToolArgs -WorkingDirectory $workingDirectory -SolutionRoot $testRunDirectory -TestAdapterPath &quot;$(TestAdapterPath)&quot; -IsDesktopBuild:$isDesktopBuild -ReferencePaths $referencePaths -TestAssemblies $testFiles -AdditionalEnvironmentVariables $additionalEnvironmentVariables -RunInParallel $RunInParallel -CustomRunSettingsFile $RunSettingsFile
-} catch {
-    $Error[0] | Format-List -Force
-    throw
-}'
-      OnErrorReason="Test failure"
-      TaskObjects="$(AssemblyPlatformDataKey)" />
+    <ItemGroup>
+      <FileWrites Include="%(_Assemblies.RunSettingsFile)" />
+    </ItemGroup>
 
-    <OnError ExecuteTargets="ShowTestFailureHelp" />
+    <OnError ExecuteTargets="RemoveFiles;ShowTestFailureHelp" />
 
   </Target>
 
+  <Target Name="RemoveFiles">
+    <Delete Files="@(FileWrites)" TreatErrorsAsWarnings="true"/>
+  </Target>
 
-  <Target Name="ShowTestFailureHelp">
+
+  <Target Name="ShowTestFailureHelp" Condition="'$(IsDesktopBuild)' == 'true'">
     <Message Text="!!!" Importance="High" />
     <Message Text="Run 'bm -Target RunTests' to issue another test run" Importance="High" />
     <Message Text="!!!" Importance="High" />
+  </Target>
+
+
+  <!-- Imports the props file when GetCustomTestSettings is invoked -->
+  <Import Project="$(RunSettingsPropFile)" Condition="Exists('$(RunSettingsPropFile)')" />
+
+  <Target Name="GetCustomTestSettings" Returns="@(RunSettings)">
+    <!-- Target that returns any custom run settings from a downstream project -->
   </Target>
 
 </Project>

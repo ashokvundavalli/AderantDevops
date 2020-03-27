@@ -75,6 +75,8 @@ function Exec-CommandCore([string]$command, [string]$commandArgs, [switch]$useCo
         throw "Tool not found $command"
     }
 
+    [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+
     $startInfo = New-Object System.Diagnostics.ProcessStartInfo
     $startInfo.FileName = $command
     $startInfo.Arguments = $commandArgs
@@ -162,7 +164,7 @@ function Run-MSBuild([string]$projectFilePath, [string]$buildArgs = "", [string]
         $type = [Type]::GetType("System.Management.Automation.PsUtils, System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35")
         $method = $type.GetMethod("GetParentProcess", [System.Reflection.BindingFlags]::NonPublic -bor [System.Reflection.BindingFlags]::Static)
         $process = $method.Invoke($null, ([System.Diagnostics.Process]::GetCurrentProcess()))
-        
+
         $debugMode = $false
         if ($null -ne $process) {
             if ($process.ProcessName -eq "devenv") {

@@ -61,19 +61,24 @@ namespace IntegrationTest.Build {
                 collection.RegisterLogger(Logger = logger);
 
                 using (var manager = new BuildManager()) {
+                    BuildRequestData data = new BuildRequestData(
+                        Path.Combine(TestContext.DeploymentDirectory, "IntegrationTest.targets"),
+                        globalProperties,
+                        null,
+                        new[] {
+                            targetName
+                        },
+                        null,
+                        BuildRequestDataFlags.ProvideProjectStateAfterBuild);
+
                     var result = manager.Build(
                         new BuildParameters(collection) {
                             Loggers = collection.Loggers,
                             DetailedSummary = DetailedSummary,
                             EnableNodeReuse = false,
-                            DisableInProcNode = DisableInProcNode
-                        },
-                        new BuildRequestData(
-                            Path.Combine(TestContext.DeploymentDirectory, "IntegrationTest.targets"),
-                            globalProperties,
-                            null,
-                            new[] { targetName },
-                            null));
+                            DisableInProcNode = DisableInProcNode,
+                        }, data);
+
 
                     if (result.OverallResult == BuildResultCode.Failure) {
                         LogFile = Path.Combine(TestContext.DeploymentDirectory, $"{TestContext.TestName}.log");
@@ -83,10 +88,6 @@ namespace IntegrationTest.Build {
                     Result = result;
 
                     if (BuildMustSucceed) {
-                        if (BuildResultCode.Failure == result.OverallResult && Environment.UserInteractive) {
-                            Process.Start("notepad++", LogFile);
-                        }
-
                         Assert.AreNotEqual(BuildResultCode.Failure, result.OverallResult);
                     }
 
