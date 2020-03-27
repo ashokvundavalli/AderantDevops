@@ -16,5 +16,22 @@ namespace UnitTest.Build.Tasks.PowerShellScript {
 
             script.Execute();
         }
+
+        [TestMethod]
+        public void ScriptResource_sets_script_block() {
+            var script = new TestPowerShellScript();
+            script.BuildEngine = new Mock<IBuildEngine>().As<IBuildEngine3>().As<IBuildEngine4>().Object;
+            script.ScriptFromResource = "SetBuildTags";
+
+            script.Execute();
+
+            Assert.IsNotNull(script.ScriptBlock);
+        }
+    }
+
+    public class TestPowerShellScript : Aderant.Build.Tasks.PowerShell.PowerShellScript {
+        internal override IBuildPipelineService GetProxy() {
+            return null;
+        }
     }
 }

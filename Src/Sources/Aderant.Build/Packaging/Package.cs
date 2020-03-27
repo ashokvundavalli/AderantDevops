@@ -32,7 +32,7 @@ namespace Aderant.Build.Packaging {
             base.ProcessRecord();
 
             // Create Packager object and pass the root directory of the project and a logger reference to the PowerShell output
-            var packager = new Packager(new PhysicalFileSystem(Repository), new PowerShellLogger(this));
+            var packager = new Packager(new PhysicalFileSystem(Repository), new PowerShellLogger(this.Host));
             // Writes to the output pipeline, false means to reserve the returned object for later PowerShell scripts to use.
             WriteObject(packager.Pack(Version, Replicate), false);
         }

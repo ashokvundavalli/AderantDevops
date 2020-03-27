@@ -10,6 +10,7 @@ namespace Aderant.Build.Tasks {
 
     public class GetBuildOutputs : BuildOperationContextTask {
         private IEnumerable<OnDiskProjectInfo> projects;
+        private bool solutionRootFilter;
 
         public string SolutionRoot { get; set; }
 
@@ -23,6 +24,8 @@ namespace Aderant.Build.Tasks {
 
         public override bool ExecuteTask() {
             projects = PipelineService.GetTrackedProjects();
+
+            solutionRootFilter = !string.IsNullOrWhiteSpace(SolutionRoot);
 
             SolutionRoots = projects
                 .Select(s => s.SolutionRoot)
@@ -48,6 +51,14 @@ namespace Aderant.Build.Tasks {
             }
 
             return projectTaskItems.ToArray();
+        }
+
+        private bool SolutionRootFilter(string solutionRootFromProject) {
+            if (!solutionRootFilter) {
+                return true;
+            }
+
+            return string.Equals(SolutionRoot, solutionRootFromProject, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

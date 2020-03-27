@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 namespace Aderant.Build.DependencyResolver {
     internal class PaketHttpMessageHandlerFactory : FSharpFunc<Tuple<string, FSharpOption<NetUtils.Auth>>, HttpMessageHandler> {
         private readonly FSharpFunc<Tuple<string, FSharpOption<NetUtils.Auth>>, HttpMessageHandler> defaultHandler;
-        private static bool IsConfigured;
 
         public PaketHttpMessageHandlerFactory(FSharpFunc<Tuple<string, FSharpOption<NetUtils.Auth>>, HttpMessageHandler> defaultHandler) {
             this.defaultHandler = defaultHandler;
@@ -21,15 +20,10 @@ namespace Aderant.Build.DependencyResolver {
         /// Paket gives us no customization points to remove the header so we are forced to inject ourselves into their pipeline via monkey patching
         /// </summary>
         public static void Configure() {
-            if (IsConfigured) {
-                return;
-            }
             // Monkey patch the built in HttpClient so we can control the headers. I need a shower.
             var member = typeof(NetUtils).Assembly.GetType("<StartupCode$Paket-Core>.$Paket.NetUtils").GetField("createHttpHandler@409", BindingFlags.Static | BindingFlags.NonPublic);
             var defaultHandler = (FSharpFunc<Tuple<string, FSharpOption<NetUtils.Auth>>, HttpMessageHandler>)member.GetValue(null);
             member.SetValue(null, new PaketHttpMessageHandlerFactory(defaultHandler));
-
-            IsConfigured = true;
         }
 
         public override HttpMessageHandler Invoke(Tuple<string, FSharpOption<NetUtils.Auth>> args) {
@@ -50,7 +44,5 @@ namespace Aderant.Build.DependencyResolver {
             // If we get x-ms-error-code: BlobNotFound we should probably do something smart on the next request
             return base.SendAsync(request, cancellationToken);
         }
-
-        public static HttpMessageHandler Default { get; } = new NoAuthorizationHeaderHandler();
     }
 }

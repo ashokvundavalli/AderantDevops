@@ -72,6 +72,8 @@ namespace Aderant.Build.Tasks {
         [Output]
         public bool MustRun32Bit { get; set; }
 
+        [Output]
+        public string AssemblyPlatformDataKey { get; private set; } = "GetAssemblyPlatformData";
 
         public override bool Execute() {
             if (assemblies == null) {
@@ -175,6 +177,17 @@ namespace Aderant.Build.Tasks {
                         inspectionDomain = null;
                     });
             }
+
+            BuildEngine4.UnregisterTaskObject(AssemblyPlatformDataKey, RegisteredTaskObjectLifetime.Build);
+
+            // Stash the object for downstream tasks
+            BuildEngine4.RegisterTaskObject(
+                AssemblyPlatformDataKey,
+                new AssemblyPlatformData {
+                    Assemblies = Assemblies,
+                },
+                RegisteredTaskObjectLifetime.Build,
+                false);
 
             if (failedItems.Count > 0) {
                 foreach (ITaskItem item in failedItems) {

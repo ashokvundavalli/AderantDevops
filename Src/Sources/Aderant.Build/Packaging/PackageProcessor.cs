@@ -8,13 +8,11 @@ using Aderant.Build.Logging;
 
 namespace Aderant.Build.Packaging {
     public class PackageProcessor {
-        private ILogger logger;
+        private PowerShellLogger logger;
 
-        public PackageProcessor(PSHost host) {
-            if (host == null) {
-                logger = NullLogger.Default;
-            } else {
-                logger = PowerShellLogger.Create(host.UI);
+        public PackageProcessor(object host) {
+            if (host is PSHostUserInterface) {
+                this.logger = new PowerShellLogger(host as PSHostUserInterface);
             }
         }
 

@@ -14,8 +14,8 @@ if ($PSVersionTable.PSVersion.Major -lt 5 -or ($PSVersionTable.PSVersion.Major -
 }
 
 $NETVersion = Get-ItemProperty "HKLM:SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full"
-if (-Not $NETVersion.Version.StartsWith('4.8')) {
-    Write-Warning "Please install Microsoft .NET Framework 4.8 SDK from https://dotnet.microsoft.com/download/dotnet-framework/net48."
+if (-Not $NETVersion.Version.StartsWith('4.8')) { 
+    Write-Warning "Please install Microsoft .NET Framework 4.8 SDK from https://dotnet.microsoft.com/download/dotnet-framework/net48." 
     Write-Warning "The installed .NET Framework Version is $($NETVersion.Version)"
 }
 
@@ -161,8 +161,7 @@ function LoadAssembly {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$assemblyPath,
-        [bool]$loadAsModule,
-        [string]$moduleName
+        [bool]$loadAsModule
     )
 
     if ([System.IO.File]::Exists($assemblyPath)) {
@@ -189,7 +188,7 @@ function LoadAssembly {
             }
 
             # Create a new dynamic module that simply loads another module into it.
-            $module = New-Module -Name $moduleName -ScriptBlock $scriptBlock -ArgumentList $assembly
+            $module = New-Module -Name "Aderant.ContinuousDelivery.PowerShell" -ScriptBlock $scriptBlock -ArgumentList $assembly
             Import-Module $module -Global -DisableNameChecking -ErrorAction Stop
         }
     } else {
@@ -218,7 +217,7 @@ function RunActionExclusive {
                 Write-Debug "Aquired mutex $MutexName->$runTool"
             } catch [System.Threading.AbandonedMutexException] {
                 # Since we cannot clean up the mutex reliably we have to cater for the mutex being abandoned.
-                # This can occur every time PowerShell is closed as the console host does not give us a chance to clean up our process.
+                # This can occur everytime PowerShell is closed as the console host does not give us a chance to clean up our process.
                 # We could handle console_ctrl_handler but that seems like a lot of work.
                 $runTool = $mutex.WaitOne(0)
             }
@@ -300,7 +299,7 @@ function UpdateSubmodules {
         }
     }
 
-    $markerFile = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), "Submodule_" + $commit)
+    $markerFile = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), "Submodule_" + $commit) 
     DoActionIfNeeded $action $markerFile
 }
 
@@ -313,7 +312,7 @@ function RefreshSource {
     [System.Enum]$originalDebugPreference = $DebugPreference
 
     if (-not $script:isUsingProfile) {
-        $DebugPreference = 'Continue'
+        $DebugPreference = 'Continue' 
     }
 
     $initialVersion = [string](& git -C $PSScriptRoot rev-parse HEAD)
@@ -475,51 +474,23 @@ function SetTimeouts {
     $Env:PAKET_STREAMREADWRITE_TIMEOUT = $timeoutMillseconds
 }
 
-[string]$assemblyPathRoot = [System.IO.Path]::GetFullPath("$BuildScriptsDirectory..\Build.Tools")
-[string]$mainAssembly = "$assemblyPathRoot\Aderant.Build.dll"
-
-function EnsureModuleLoaded() {
-    $moduleName = "Aderant.ContinuousDelivery.PowerShell"
-    if ($null -eq (Get-Module $moduleName)) {
-        LoadAssembly -assemblyPath $mainAssembly $true $moduleName
-    }
-}
-
-
 try {
     [void][Aderant.Build.BuildOperationContext]
-    # The minimum set needed to not fail.
-    EnsureModuleLoaded
-    SetNuGetProviderPath
     return
 } catch {
     # Type not found - we need to bootstrap
-    Write-Debug $_.Exception
 }
-
 
 $originalErrorActionPreference = $ErrorActionPreference
 try {
     # Without this git will look on H:\ for .gitconfig
     $Env:HOME = $Env:USERPROFILE
 
-    $stack = Get-PSCallStack
-
-    # Where we loaded from the default profile script?
-    $isUsingProfile = ($null -ne ($stack | Where-Object { $_.Command.EndsWith("_profile.ps1") }))
-
-    # Or is a PowerShell task from MSBuild calling us?
-    $isTaskFromBuildEngine = ($null -ne ($stack | Where-Object { $_.Command.EndsWith("Build.psm1") }))
-
-    if ($isTaskFromBuildEngine) {
-        return
-    }
-
-    # Without this git will look on H:\ for .gitconfig
-    $Env:HOME = $Env:USERPROFILE
-
     # Redirect ERROR to OUTPUT
     [System.Environment]::SetEnvironmentVariable("GIT_REDIRECT_STDERR", "2>&1", [System.EnvironmentVariableTarget]::Process)
+
+    # Where we loaded from the default profile script?
+    $isUsingProfile = ($null -ne (Get-PSCallStack | Where-Object { $_.Command.EndsWith("_profile.ps1") }))
 
     $InformationPreference = 'Continue'
     $ErrorActionPreference = 'Stop'
@@ -557,13 +528,16 @@ try {
 
     UpdateSubmodules ($updateInfo.Updated) $commit
 
+    [string]$assemblyPathRoot = [System.IO.Path]::GetFullPath("$BuildScriptsDirectory..\Build.Tools")
+    [string]$mainAssembly = "$assemblyPathRoot\Aderant.Build.dll"
+
     SetTimeouts
     DownloadPaket $commit
     UpdateMsBuildTasks
     BuildProjects $mainAssembly $isUsingProfile $commit
     LoadAssembly -assemblyPath "$assemblyPathRoot\System.Threading.Tasks.Dataflow.dll"
     LoadAssembly -assemblyPath "$assemblyPathRoot\protobuf-net.dll"
-    EnsureModuleLoaded
+    LoadAssembly -assemblyPath $mainAssembly $true
     LoadLibGit2Sharp $assemblyPathRoot
     LoadVstsTaskLibrary
     SetNuGetProviderPath $assemblyPathRoot

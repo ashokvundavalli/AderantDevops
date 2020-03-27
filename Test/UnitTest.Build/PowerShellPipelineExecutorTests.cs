@@ -1,5 +1,4 @@
 ﻿using System.Linq;
-using System.Management.Automation;
 using Aderant.Build;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -11,7 +10,7 @@ namespace UnitTest.Build {
         public void Can_get_result_from_script() {
             var executor = new PowerShellPipelineExecutor();
 
-            executor.RunScript(new PSCommand().AddScript("Get-FileHash -LiteralPath C:\\Windows\\System32\\notepad.exe -Algorithm SHA1 -Verbose | Select-Object -ExpandProperty Hash"), null);
+            executor.RunScript(new[] { "Get-FileHash -LiteralPath C:\\Windows\\System32\\notepad.exe -Algorithm SHA1 -Verbose | Select-Object -ExpandProperty Hash" }, null);
 
             var executorResult = executor.Result;
 
@@ -23,7 +22,7 @@ namespace UnitTest.Build {
         public void Fail_result_from_script() {
             var executor = new PowerShellPipelineExecutor();
 
-            executor.RunScript(new PSCommand().AddScript("Write-Error 'Oh no'"), null);
+            executor.RunScript(new[] { "Write-Error 'Oh no'" }, null);
         }
 
         [TestMethod]
@@ -43,7 +42,7 @@ namespace UnitTest.Build {
             executor.DataReady += (sender, collection) => { calls[4] += 1; };
 
             executor.RunScript(
-                new PSCommand().AddScript(
+                new[] {
                     @"
 $VerbosePreference = 'Continue'
 Write-Verbose 'Verbose'
@@ -57,7 +56,9 @@ Write-Warning 'Warning'
 Write-Host 'Host'
 
 $DebugPreference = 'Continue'
-Write-Debug 'Verbose'"), null);
+Write-Debug 'Verbose'"
+                },
+                null);
 
             Assert.AreEqual(6, calls.Sum());
         }
@@ -71,11 +72,12 @@ Write-Debug 'Verbose'"), null);
             executor.ErrorReady += (sender, collection) => { errors = collection; };
 
             executor.RunScript(
-                new PSCommand().AddScript(
+                new[] {
                     @"
 Write-Error 'Error'
 "
-                ), null);
+                },
+                null);
         }
     }
 }

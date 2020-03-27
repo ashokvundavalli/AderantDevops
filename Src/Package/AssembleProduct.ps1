@@ -23,9 +23,6 @@ begin {
     $ErrorActionPreference = 'Stop'
     $InformationPreference = 'Continue'
 
-    Write-Information -MessageData "Running '$($MyInvocation.MyCommand.Name.Replace(`".ps1`", `"`"))' with the following parameters:"
-    Write-Information ($PSBoundParameters | Format-Table | Out-String)
-
     [bool]$global:skipEndpointCheck = $true
     . "$PSScriptRoot\..\Build\Functions\Initialize-BuildEnvironment.ps1"
 
@@ -72,10 +69,10 @@ begin {
                 param (
                     [Parameter(Mandatory=$true)][string]$buildLog
                 )
-
+        
                 if (Test-Path $buildLog) {
                     $noErrors = Get-Content $buildLog | Select-Object -last 10 | Where-Object {$_.Contains("0 Error(s)")}
-
+        
                     if ($noErrors) {
                        return $true
                     } else {
@@ -322,7 +319,11 @@ begin {
         }
     }
 
+    Write-Information -MessageData "Running '$($MyInvocation.MyCommand.Name.Replace(`".ps1`", `"`"))' with the following parameters:"
 
+    foreach ($parameter in $MyInvocation.MyCommand.Parameters) {
+       Write-Information -MessageData (Get-Variable -Name $Parameter.Values.Name -ErrorAction SilentlyContinue | Out-String)
+    }
 }
 
 process {
@@ -348,7 +349,7 @@ process {
             }
         }
         if (IsThirdParty -module $module) {
-            Write-Information -MessageData "Ignored module: $($module.Name)"
+            Write-Information -MessageData "Ignored module: $($module.Name)" 
             continue
         }
 

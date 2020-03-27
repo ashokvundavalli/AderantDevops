@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="Current">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
   <!-- External targets: GetServerImageDependencies, RunTests
      External variables: ArtifactStagingDirectory, BuildToolsDirectory, ExpertSourceDirectory, SolutionRoot, ImageWorkingDirectory, ImageToolingDirectory, DeploymentEngine, SharedDependencyDirectory, ImpactedTestProjects, ParametersFile -->
   <PropertyGroup>
@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <Import Project="$(ParametersFile)" Condition="Exists($(ParametersFile))" />
-
+  
   <Import Project="Aderant.Build.Testing.targets" />
   <Import Project="$(DeploymentTargets)Aderant.Build.ServerImage.targets" Condition="'$(ServerImageTargetExists)' == 'true'" />
   <Import Project="$(DeploymentTargets)Aderant.Build.DeployCI.targets" Condition="'$(DeployTargetExists)' == 'true'" />
@@ -41,7 +41,7 @@
     </PropertyGroup>
 
     <!-- Invoke the RunTests target from Aderant.Build.Testing.targets -->
-    <CallTarget Targets="RunTestsCore" />
+    <CallTarget Targets="RunTests" />
 
     <OnError ExecuteTargets="LightsOff;ShowTestFailureHelp" Condition="'$(DeployTargetExists)' == 'true'"/>
 

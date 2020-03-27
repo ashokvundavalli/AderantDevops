@@ -27,7 +27,7 @@ namespace Aderant.Build.Commands {
         public ILogger Logger {
             get {
                 if (logger == null) {
-                    logger = new PowerShellLogger(this);
+                    logger = new PowerShellLogger(Host);
                 }
                 return logger;
             }

@@ -125,6 +125,7 @@
     <Compile Include="BuildDirectoryContribution.cs" />
     <Compile Include="IO\JunctionNativeMethods.cs" />
     <Compile Include="IO\Traverse.cs" />
+    <EmbeddedResource Include="Tasks\PowerShell\Resources\SetBuildTags.ps1" />
     <Compile Include="ProjectSystem\StateTracking\BuildCacheOptions.cs" />
     <Compile Include="Tasks\CopyCustomSolution.cs" />
     <Compile Include="Tasks\CopyRelatedFiles.cs" />
@@ -448,7 +449,6 @@
   <ItemGroup>
     <Folder Include="Resources\Scripts\" />
     <Folder Include="Tasks\PowerShell.Resources\" />
-    <Folder Include="Tasks\PowerShell\Resources\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="libgit2.props">
