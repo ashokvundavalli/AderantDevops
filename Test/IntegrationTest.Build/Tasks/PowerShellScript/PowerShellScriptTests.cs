@@ -31,7 +31,7 @@ namespace IntegrationTest.Build.Tasks.PowerShellScript {
         public void PowerShellScript_accepts_ScriptBlock_arguments() {
             RunTarget("PowerShellScriptBlock_with_args");
 
-            Assert.AreEqual("TheValue", GetSingleTargetOutputValue());
+            Assert.IsFalse(Logger.HasRaisedErrors);
         }
 
         [TestMethod]

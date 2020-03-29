@@ -3,7 +3,7 @@
 
   <PropertyGroup>
     <CodeSigningEnabled Condition="'$(CodeSigningEnabled)' == ''">true</CodeSigningEnabled>
-    <CertificateHash>1c2a3e8f5e969fd0a526f917100f6231faacb460</CertificateHash>
+		<CodeSigningCertificateThumbprint>6e915bc37303cc4da635089bcee6b448e032531b</CodeSigningCertificateThumbprint>
 
 
     <!-- Search 32-bit registry first on 32-bit Windows to ensure we get the 32-bit key if present -->
@@ -85,7 +85,7 @@
           AfterTargets="PrepareBuildEnvironment"
           Condition="'$(CodeSigningEnabled)' == 'true' And '$(ValidSigningEnvironment)' == ''">
 
-    <CheckCertificate ThumbPrint="$(CertificateHash)" />
+    <CheckCertificate ThumbPrint="$(CodeSigningCertificateThumbprint)" />
 
     <PropertyGroup>
       <ValidSigningEnvironment>true</ValidSigningEnvironment>
@@ -140,7 +140,7 @@
           ContinueOnError="true"
           IgnoreStandardErrorWarningFormat="true"
           YieldDuringToolExecution="true"
-          Command='"$(SignToolPath)" sign /t $(SignServer) /fd sha256 /sha1 $(CertificateHash) /d "%(FilesToSign.ProductName)" "%(FilesToSign.FullPath)"' />
+          Command='"$(SignToolPath)" sign /t $(SignServer) /fd sha256 /sha1 $(CodeSigningCertificateThumbprint) /d "%(FilesToSign.ProductName)" "%(FilesToSign.FullPath)"' />
 
     <PropertyGroup>
       <SignFileResult Condition="'$(SignFileResult)' == '' And '$(MSBuildLastTaskResult)' == 'true'">$([System.String]::Intern($(AlreadySignedKey)))</SignFileResult>
@@ -203,7 +203,7 @@
       ContinueOnError="true"
       IgnoreStandardErrorWarningFormat="true"
       YieldDuringToolExecution="true"
-      Command='"$(SignToolPath)" sign /t $(SignServer) /fd SHA256 /sha1 $(CertificateHash) /s "My" /d "%(InstallerFilesWithInfo.ProductName)" "%(InstallerFilesWithInfo.FullPath)"'/>
+      Command='"$(SignToolPath)" sign /t $(SignServer) /fd SHA256 /sha1 $(CodeSigningCertificateThumbprint) /s "My" /d "%(InstallerFilesWithInfo.ProductName)" "%(InstallerFilesWithInfo.FullPath)"'/>
 
     <PropertyGroup>
       <InstallerSignedResult Condition="'$(InstallerSignedResult)' == '' And '$(MSBuildLastTaskResult)' == 'true'">$([System.String]::Intern($(InstallerSignedKey)))</InstallerSignedResult>
@@ -235,13 +235,13 @@
     <Exec Condition="Exists(%(ClickOnceSignFiles.Manifest))"
           ContinueOnError="false"
           IgnoreExitCode="false"
-          Command="&quot;$(MageToolPath)&quot; -sign %(ClickOnceSignFiles.Manifest) -CertHash $(CertificateHash)"
+          Command="&quot;$(MageToolPath)&quot; -sign %(ClickOnceSignFiles.Manifest) -CertHash $(CodeSigningCertificateThumbprint)"
           YieldDuringToolExecution="true" />
 
     <Exec Condition="Exists(%(ClickOnceSignFiles.Manifest)) And Exists(%(ClickOnceSignFiles.Application))"
           ContinueOnError="false"
           IgnoreExitCode="false"
-          Command="&quot;$(MageToolPath)&quot; -update %(ClickOnceSignFiles.Application) -UseManifestForTrust true -IncludeProviderURL false -AppManifest %(ClickOnceSignFiles.Manifest) -CertHash $(CertificateHash) -MinVersion &quot;$(MinVersion)&quot;"
+          Command="&quot;$(MageToolPath)&quot; -update %(ClickOnceSignFiles.Application) -UseManifestForTrust true -IncludeProviderURL false -AppManifest %(ClickOnceSignFiles.Manifest) -CertHash $(CodeSigningCertificateThumbprint) -MinVersion &quot;$(MinVersion)&quot;"
           YieldDuringToolExecution="true" />
 
   </Target>

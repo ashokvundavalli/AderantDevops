@@ -1,7 +1,7 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <Target Name="CheckCertificate">
-    <CheckCertificate Thumbprint="1c2a3e8f5e969fd0a526f917100f6231faacb460" />
+    <CheckCertificate Thumbprint="6e915bc37303cc4da635089bcee6b448e032531b" />
   </Target>
 
 </Project>
