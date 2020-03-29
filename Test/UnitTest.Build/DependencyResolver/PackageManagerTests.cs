@@ -193,6 +193,16 @@ nuget ThePackageFromNuget";
             Assert.AreNotEqual($"source {Constants.OfficialNuGetUrlV3}", packageManagerLines[1]);
         }
 
+        [TestMethod]
+        public void Dispose_removes_logger() {
+            new NullLogger();
+            using (new PaketPackageManager(null, null, null, new NullLogger(), false)) {
+                Assert.AreEqual(1, PaketPackageManager.GetLoggerReferences().Count);
+            }
+
+            Assert.AreEqual(0, PaketPackageManager.GetLoggerReferences().Count);
+        }
+
         private string GetTestDirectoryPath() {
             return Path.Combine(TestContext.DeploymentDirectory, Path.GetRandomFileName());
         }

@@ -62,12 +62,10 @@ namespace IntegrationTest.Build.Helpers {
             executor.Warning += warning;
             executor.Debug += debug;
 
-            executor.RunScript(
-                new[] {
-                    sb.ToString()
-                },
-                null,
-                CancellationToken.None);
+            var cmd = new PSCommand();
+            cmd.AddScript(sb.ToString());
+
+            executor.RunScript(cmd,  null, CancellationToken.None);
 
             executor.DataReady -= dataReady;
             executor.ErrorReady -= errorReady;

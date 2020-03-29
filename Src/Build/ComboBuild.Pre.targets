@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
          DefaultTargets="EndToEnd"
-         ToolsVersion="14.0"
+         ToolsVersion="Current"
          TreatAsLocalProperty="SolutionDirectoryPath;T4TransformEnabled">
 
   <Import Project="Aderant.Build.Common.targets" />
@@ -31,7 +31,7 @@
   <PropertyGroup>
     <!--
     These targets make up the steps needed to package artifacts shipped as part of the product.
-    These can be skipped if this file is scheduled to satisfy a build tree and wasn't scheduled explicity by the user -->
+    These can be skipped if this file is scheduled to satisfy a build tree and wasn't scheduled explicitly by the user -->
     <TargetsForCustomizationFiles Condition="'$(RunUserTargets)' != 'false' Or '$(IsDesktopBuild)' == 'false'">
       ZipCustomSource;
       SeedPackagePacking;

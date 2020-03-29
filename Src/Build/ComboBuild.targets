@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-         ToolsVersion="14.0"
+         ToolsVersion="Current"
          DefaultTargets="BuildAndPackage"
          InitialTargets="SetPropertiesFromContext;"
          TreatAsLocalProperty="SolutionRoot;BuildFlavor">
@@ -39,7 +39,7 @@
     <RunCodeAnalysis>$(RunCodeAnalysisSetting)</RunCodeAnalysis>
     <RunCodeAnalysis Condition="'$(IsCustomBuild)' == 'true'">false</RunCodeAnalysis>
 
-    <!-- Location to drop artifacts (packaged outputputs) -->
+    <!-- Location to drop artifacts (packaged outputs) -->
     <ArtifactStagingDirectory Condition="'$(ArtifactStagingDirectory)' == ''">$(SolutionRoot)_as\</ArtifactStagingDirectory>
     <LocalExpertBinariesDirectory>$(ArtifactStagingDirectory)product\</LocalExpertBinariesDirectory>
     <ExpertSourceDirectory>$(LocalExpertBinariesDirectory)ExpertSource\</ExpertSourceDirectory>
@@ -107,7 +107,7 @@
       CreatePlan;
       ExecutePlan;
       OrganizeSuppressionFiles;
-      MSBuildRunTests;
+      RunTests;
       WriteStateFiles;
       PackageProduct;
       ProduceUpdatePackage;
@@ -116,13 +116,13 @@
     </BuildAndPackageDependsOn>
   </PropertyGroup>
 
-  <Target Name="MSBuildRunTests" DependsOnTargets="CreatePlan" Condition="'$(RunTests)' != 'false'">
+  <Target Name="RunTests" DependsOnTargets="CreatePlan" Condition="'$(RunTests)' != 'false'">
 
     <PropertyGroup>
       <ImpactedTestAssemblies>@(ImpactedTestAssemblies)</ImpactedTestAssemblies>
     </PropertyGroup>
 
-    <MSBuild Projects="$(MSBuildProjectFile)" Targets="RunTests" Properties="TestPattern=UnitTest;ImpactedTestAssemblies=$(ImpactedTestAssemblies);" />
+    <MSBuild Projects="$(MSBuildProjectFile)" Targets="RunTestsCore" Properties="TestPattern=UnitTest;ImpactedTestAssemblies=$(ImpactedTestAssemblies);" />
 
   </Target>
 
@@ -311,13 +311,13 @@
     <Message Text="Getting dependencies for build." />
 
     <Delete Files="$(SharedDependencyDirectory)paket.dependencies;$(SharedDependencyDirectory)paket.lock" />
-    
+
     <ItemGroup>
       <SharedPaketFiles Include="$(SolutionRoot)Build\shared.paket.dependencies;$(SolutionRoot)Build\paket.lock;" />
       <DependencyDirectories Condition="Exists('$(SolutionRoot)Build')" Include="$(SolutionRoot)Build" />
       <DependencyDirectories Include="@(DirectoriesInBuild)" />
     </ItemGroup>
-    
+
     <Copy Condition="Exists('%(SharedPaketFiles.Identity)')"
       SourceFiles="@(SharedPaketFiles)"
       DestinationFolder="$(SharedDependencyDirectory)" />
@@ -382,7 +382,7 @@
   <Target Name="ExecutePlan">
     <PowerShellScript Condition="'$(BUILD_REASON)' != 'PullRequest'"
                       LogScript="false"
-                      ScriptFromResource="SetBuildTags" />
+                      ScriptFile="$(MSBuildThisFileDirectory)\Vso\SetBuildTags.ps1" />
 
     <PropertyGroup>
       <WixProperties Condition="'$(UseWixShim)' == 'true' And '$(WixTargetsPath)' != ''">
@@ -472,10 +472,15 @@
       <LocalPackageFiles Remove="@(FilesNotWanted)" />
     </ItemGroup>
 
-    <Exec ContinueOnError="false"
-          IgnoreExitCode="false"
-          Command="Powershell -NonInteractive -NoProfile &quot;&amp; { try { $(PackageScriptsDirectory)AssembleProduct.ps1 -productManifestPath $(ProductManifestPath) -binariesDirectory $(LocalExpertBinariesDirectory) } catch [Exception] { $Error[0] | Format-List -Force;throw } }&quot;"
-          WorkingDirectory="$(LocalExpertBinariesDirectory)" />
+    <ItemGroup>
+      <ScriptArguments Include="_">
+        <ProductManifestPath>$(ProductManifestPath)</ProductManifestPath>
+        <BinariesDirectory>$(LocalExpertBinariesDirectory)</BinariesDirectory>
+      </ScriptArguments>
+    </ItemGroup>
+
+    <PowerShellScript ScriptFile="$(PackageScriptsDirectory)AssembleProduct.ps1"
+                      ScriptArguments="@(ScriptArguments)" />
 
     <Message Text="Updating product with outputs from this build..." />
 

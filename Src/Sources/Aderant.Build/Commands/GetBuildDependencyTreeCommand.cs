@@ -37,7 +37,7 @@ namespace Aderant.Build.Commands {
 
             cts = new CancellationTokenSource();
 
-            var logger = new PowerShellLogger(this.Host);
+            var logger = new PowerShellLogger(this);
 
             var projectTree = ProjectTree.CreateDefaultImplementation(logger);
             var collector = new BuildDependenciesCollector();

@@ -1,27 +1,36 @@
 ﻿using System;
-using System.Collections.Concurrent;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
+using System.Management.Automation;
+using System.Management.Automation.Runspaces;
+using System.Text;
 using System.Threading;
 using Aderant.Build.PipelineService;
+using Microsoft.Build.Evaluation;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Tasks;
 using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks.PowerShell {
-    public class PowerShellScript : Task, ICancelableTask {
-        private static ConcurrentDictionary<string, string[]> cache = new ConcurrentDictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// Executes PowerShell as part of the build. This could also be implemented as a TaskFactory for typed property support.
+    /// </summary>
+    public class PowerShellScript : Task, ICancelableTask {
         private CancellationTokenSource cts;
 
-        public bool UseResultCache { get; set; }
-
+        /// <summary>
+        /// The ScriptBlock to execute. Any valid PowerShell is accepted.
+        /// </summary>
         public string ScriptBlock { get; set; }
 
-        public string ScriptFromResource { get; set; }
+        /// <summary>
+        /// The path to a PowerShell script file.
+        /// </summary>
+        public string ScriptFile { get; set; }
 
         public string ProgressPreference { get; set; }
 
@@ -31,6 +40,13 @@ namespace Aderant.Build.Tasks.PowerShell {
 
         public bool LogScript { get; set; } = true;
 
+        /// <summary>
+        /// An array of arguments that will be provided to the <see cref="ScriptBlock"/> or <see cref="ScriptFile"/>.
+        /// Arguments will be passed by splatting
+        /// Using named parameters is recommended.
+        /// </summary>
+        public ITaskItem[] ScriptArguments { get; set; }
+
         [Output]
         public string[] Result { get; set; }
 
@@ -38,24 +54,12 @@ namespace Aderant.Build.Tasks.PowerShell {
             Script script = null;
 
             if (!string.IsNullOrEmpty(ScriptBlock)) {
-                script = new Script(ScriptBlock, ScriptBlock);
-            } if (!string.IsNullOrEmpty(ScriptFromResource)) {
-                script = new Script(LoadResource(ScriptFromResource), ScriptFromResource);
-
-                this.ScriptBlock = script.Value;
+                script = new Script(ScriptBlock, false);
+            } else if (!string.IsNullOrEmpty(ScriptFile)) {
+                script = new Script(ScriptFile, true);
             }
 
-            if (script == null || script.Value == null) {
-                ErrorUtilities.VerifyThrowArgument(ScriptFromResource != null, $"Neither {nameof(ScriptBlock)} or {nameof(ScriptFromResource)} is specified", null);
-            }
-
-            if (UseResultCache) {
-                string[] result;
-                if (cache.TryGetValue(script.CacheKey, out result)) {
-                    Result = result;
-                    return true;
-                }
-            }
+            ErrorUtilities.VerifyThrowArgument(script != null, $"{nameof(ScriptBlock)} is not specified", null);
 
             try {
                 BuildEngine3.Yield();
@@ -75,20 +79,18 @@ namespace Aderant.Build.Tasks.PowerShell {
                     }
                 }
 
+                script.Arguments = ConvertArguments(ScriptArguments);
+
                 if (LogScript) {
-                    Log.LogMessage(MessageImportance.Normal, "Executing script:\r\n{0}", script.Value);
+                    Log.LogMessage(MessageImportance.Normal, "Executing script:{0}{1}", Environment.NewLine, script.Value);
                 }
 
                 try {
-                    if (RunScript(variables, script.Value, Log, thisTaskExecutingDirectory)) {
-                        FailTask(null, script.Value);
+                    if (RunScript(variables, script, Log, thisTaskExecutingDirectory)) {
+                        FailTask(null, script);
                     }
                 } catch (Exception ex) {
-                    FailTask(ex, script.Value);
-                }
-
-                if (UseResultCache) {
-                    cache.TryAdd(script.CacheKey, Result);
+                    FailTask(ex, script);
                 }
 
                 return !Log.HasLoggedErrors;
@@ -97,45 +99,51 @@ namespace Aderant.Build.Tasks.PowerShell {
             }
         }
 
+        private CommandParameterCollection ConvertArguments(ITaskItem[] scriptArguments) {
+            if (scriptArguments == null) {
+                return null;
+            }
+
+            var collection = new CommandParameterCollection();
+
+            foreach (ITaskItem item in scriptArguments) {
+                var customNames = (IDictionary<string, string>)item.CloneCustomMetadata();
+
+                foreach (var arg in customNames) {
+                    collection.Add(new CommandParameter(arg.Key, arg.Value));
+                }
+            }
+
+            return collection;
+        }
+
         public void Cancel() {
             cts.Cancel();
         }
 
-        private string LoadResource(string scriptResource) {
-            var asm = Assembly.GetExecutingAssembly();
-            string[] names = asm.GetManifestResourceNames();
-
-            foreach (string name in names) {
-                var resourceName = typeof(PowerShellScript).Namespace + ".Resources." + scriptResource + ".ps1";
-
-                if (string.Equals(name, resourceName)) {
-                    using (Stream manifestResourceStream = asm.GetManifestResourceStream(resourceName)) {
-                        using (var reader = new StreamReader(manifestResourceStream)) {
-                            return reader.ReadToEnd();
-                        }
-                    }
-                }
-            }
-
-            throw new ArgumentException("There is no resource: " + scriptResource);
-        }
-
-        private void FailTask(Exception exception, string scriptValue) {
-            Log.LogError("[Error] Execution of script: '{0}' failed.", scriptValue);
+        private void FailTask(Exception exception, Script script) {
+            Log.LogError("[Error] Execution of script: {0} failed.", script.Value.Quote());
 
             if (exception != null) {
                 Log.LogErrorFromException(exception);
             }
 
-            using (var proxy = GetProxy()) {
-                if (proxy != null) {
-                    proxy.SetStatus("Failed", OnErrorReason);
+            try {
+                using (var proxy = GetProxy()) {
+                    if (proxy != null) {
+                        proxy.SetStatus("Failed", OnErrorReason);
+                    }
                 }
+            } catch {
+                // If we cannot connect to the build service then we don't mind as
             }
         }
 
-        private bool RunScript(Dictionary<string, object> variables, string scriptValue, TaskLoggingHelper name, string directoryName) {
-            var processRunner = new ProcessRunner(new Exec { BuildEngine = this.BuildEngine });
+        private bool RunScript(Dictionary<string, object> variables, Script script, TaskLoggingHelper name, string directoryName) {
+            cts = new CancellationTokenSource();
+
+            var processRunner = new ProcessRunner(new Exec {BuildEngine = this.BuildEngine}, cts.Token);
+
             var pipelineExecutor = new PowerShellPipelineExecutor {
                 ProcessRunner = processRunner
             };
@@ -144,35 +152,85 @@ namespace Aderant.Build.Tasks.PowerShell {
 
             AttachLogger(name, pipelineExecutor);
 
-            cts = new CancellationTokenSource();
-
             try {
-                var scripts = new List<string>();
+                var command = new PSCommand();
+
                 if (directoryName != null) {
                     string combine = Path.Combine(directoryName, "Build.psm1");
                     if (File.Exists(combine)) {
-                        scripts.Add(
-                            $"Import-Module \"{directoryName}\\Build.psm1\""
-                        );
+                        command.AddScript($"Import-Module \"{directoryName}\\Build.psm1\"");
+                        command.AddStatement();
                     }
                 }
 
-                scripts.Add(scriptValue);
+                if (script.IsFile) {
+                    command.AddCommand(script.Value);
+                    if (script.Arguments != null) {
+                        foreach (var arg in script.Arguments) {
+                            command.AddParameter(arg.Name, GetRealArgValue(arg));
+                        }
+                    }
+                } else {
+                    StringBuilder builder = new StringBuilder();
+
+                    builder.AppendLine("process {");
+                    builder.AppendLine("$namedParameters = $args[1]");
+                    builder.AppendLine("$namedParameters | Format-Table | Out-String");
+                    builder.AppendLine(". $args[0] @namedParameters");
+                    builder.AppendLine("}");
+
+                    var parameterTable = BuildParameterTable(script);
+
+                    command.AddScript(builder.ToString());
+                    command.AddArgument(System.Management.Automation.ScriptBlock.Create(script.Value));
+                    command.AddArgument(parameterTable);
+                }
+
+                command.AddStatement();
 
                 pipelineExecutor.RunScript(
-                    scripts,
+                    command,
                     variables,
                     cts.Token);
 
                 if (pipelineExecutor.Result != null) {
                     Result = pipelineExecutor.Result.ToArray();
                 }
-
             } catch (OperationCanceledException) {
                 // Cancellation was requested
             }
 
             return pipelineExecutor.HadErrors;
+        }
+
+        private static Hashtable BuildParameterTable(Script script) {
+            Hashtable parameterTable = new Hashtable();
+            if (script.Arguments != null) {
+                foreach (var arg in script.Arguments) {
+                    parameterTable.Add(arg.Name, GetRealArgValue(arg));
+                }
+            }
+
+            return parameterTable;
+        }
+
+        private static object GetRealArgValue(CommandParameter arg) {
+            var value = arg.Value;
+
+            string stringValue = value.ToString();
+            if (string.Equals("$true", stringValue, StringComparison.OrdinalIgnoreCase)) {
+                return true;
+            }
+            if (string.Equals("$false", stringValue, StringComparison.OrdinalIgnoreCase)) {
+                return false;
+            }
+
+            if (stringValue.Contains(";")) {
+                var p = new Project();
+                return p.AddItem("_", stringValue).Select(s => s.EvaluatedInclude).ToArray();
+            }
+
+            return value;
         }
 
         private static void AttachLogger(TaskLoggingHelper log, PowerShellPipelineExecutor pipelineExecutor) {
@@ -190,6 +248,7 @@ namespace Aderant.Build.Tasks.PowerShell {
 
             pipelineExecutor.Debug += (sender, message) => { log.LogMessage(MessageImportance.Low, message.ToString()); };
             pipelineExecutor.Verbose += (sender, message) => { log.LogMessage(MessageImportance.Low, message.ToString()); };
+
             pipelineExecutor.Warning += (sender, message) => { log.LogWarning(message.ToString()); };
             pipelineExecutor.Info += (sender, message) => { log.LogMessage(message.ToString()); };
         }
@@ -199,14 +258,17 @@ namespace Aderant.Build.Tasks.PowerShell {
         }
 
         internal class Script {
-            public Script(string value, string cacheKey) {
+
+            public Script(string value, bool isFile) {
+                IsFile = isFile;
                 Value = value;
-                CacheKey = cacheKey;
             }
 
-            public string CacheKey;
-
             public string Value;
+
+            public CommandParameterCollection Arguments { get; set; }
+
+            public bool IsFile { get; }
         }
     }
 
@@ -214,32 +276,46 @@ namespace Aderant.Build.Tasks.PowerShell {
     /// Wraps the build engine command runner
     /// </summary>
     internal class ProcessRunner {
+        private static bool taskCancelled;
 
-        public ProcessRunner(Exec execTask) {
+        public ProcessRunner(Exec execTask, CancellationToken ctsToken) {
+            using (var registration = ctsToken.Register(() => TryCancelTask(execTask))) {
+                StartProcess = command => {
+                    var cancelEventHandler = new ConsoleCancelEventHandler((sender, args) => { TryCancelTask(execTask); });
 
-            StartProcess = command => {
-                var cancelEventHandler = new ConsoleCancelEventHandler((sender, args) => { execTask.Cancel(); });
+                    try {
+                        Console.CancelKeyPress += cancelEventHandler;
 
-                try {
-                    Console.CancelKeyPress += cancelEventHandler;
+                        execTask.Command = command.FileName + " " + command.Arguments;
+                        execTask.IgnoreExitCode = false;
+                        execTask.WorkingDirectory = command.WorkingDirectory;
+                        execTask.IgnoreStandardErrorWarningFormat = true;
+                        execTask.IgnoreStandardErrorWarningFormat = true;
 
-                    execTask.Command = command.FileName + " " + command.Arguments;
-                    execTask.IgnoreExitCode = false;
-                    execTask.WorkingDirectory = command.WorkingDirectory;
-                    execTask.IgnoreStandardErrorWarningFormat = true;
-                    execTask.IgnoreStandardErrorWarningFormat = true;
+                        execTask.StdErrEncoding = execTask.StdOutEncoding = Encoding.UTF8.BodyName;
 
-                    if (command.Environment != null) {
-                        execTask.EnvironmentVariables = command.Environment.Select(s => s.Key + "=" + s.Value).ToArray();
+                        if (command.Environment != null) {
+                            execTask.EnvironmentVariables = command.Environment.Select(s => s.Key + "=" + s.Value).ToArray();
+                        }
+
+                        execTask.Timeout = (int) TimeSpan.FromMinutes(25).TotalMilliseconds;
+                        execTask.Execute();
+                        return execTask.ExitCode;
+                    } finally {
+                        Console.CancelKeyPress -= cancelEventHandler;
+                        registration.Dispose();
                     }
+                };
+            }
+        }
 
-                    execTask.Timeout = (int)TimeSpan.FromMinutes(25).TotalMilliseconds;
-                    execTask.Execute();
-                    return execTask.ExitCode;
-                } finally {
-                    Console.CancelKeyPress -= cancelEventHandler;
-                }
-            };
+        private static void TryCancelTask(Exec execTask) {
+            if (taskCancelled) {
+                return;
+            }
+
+            taskCancelled = true;
+            execTask.Cancel();
         }
 
         public Func<ProcessStartInfo, int> StartProcess { get; set; }
