@@ -371,7 +371,6 @@
     <Compile Include="WellKnownProperties.cs" />
     <Compile Include="XElementExtensions.cs" />
     <Compile Include="Logging\BuildTaskLogger.cs" />
-    <Compile Include="DependencyResolver\DependencyResolvedEventArgs.cs" />
     <Compile Include="DependencyAnalyzer\ExpertModuleMapper.cs" />
     <Compile Include="DependencyAnalyzer\WebModule.cs" />
     <Compile Include="FileSystem.cs" />

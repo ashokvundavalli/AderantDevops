@@ -20,7 +20,7 @@ namespace IntegrationTest.Build.EndToEnd {
 
         private string endpoint;
         private Dictionary<string, string> properties;
-        private BuildPipelineServiceClient client;
+        public BuildPipelineServiceClient Client { get; private set; }
         private BuildPipelineServiceHost service;
 
         public TestBuildServiceHost(bool disableInProcNode, TestContext testContext, string deploymentItemsDirectory) {
@@ -39,7 +39,7 @@ namespace IntegrationTest.Build.EndToEnd {
 
         public void Dispose() {
             try {
-                client?.Dispose();
+                Client?.Dispose();
             } catch {
 
             }
@@ -51,7 +51,7 @@ namespace IntegrationTest.Build.EndToEnd {
             }
         }
 
-        private void Initialize() {
+        public void Initialize() {
             if (properties == null) {
                 endpoint = Path.GetRandomFileName();
                 testContext.WriteLine("Creating test host: " + endpoint);
@@ -63,7 +63,6 @@ namespace IntegrationTest.Build.EndToEnd {
                     { "SolutionRoot", deploymentItemsDirectory },
                     { "ArtifactStagingDirectory", $@"{Path.Combine(testContext.DeploymentDirectory, Path.GetRandomFileName())}\" },
                     { "PackageArtifacts", bool.TrueString },
-                    { "XamlBuildDropLocation", "A" },
                     { "CopyToDropEnabled", bool.TrueString },
                     { "GetProduct", bool.FalseString },
                     { "PackageProduct", bool.TrueString},
@@ -80,7 +79,8 @@ namespace IntegrationTest.Build.EndToEnd {
                 StartService();
                 service.CurrentContext = context;
 
-                client = new BuildPipelineServiceClient(service.ServerUri.AbsoluteUri);
+                Client = new BuildPipelineServiceClient(service.ServerUri.AbsoluteUri);
+                Client.Ping();
 
                 properties["PrimaryDropLocation"] = context.DropLocationInfo.PrimaryDropLocation;
                 properties["BuildCacheLocation"] = context.DropLocationInfo.BuildCacheLocation;

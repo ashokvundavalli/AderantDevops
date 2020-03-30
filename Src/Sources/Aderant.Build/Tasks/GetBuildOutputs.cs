@@ -11,8 +11,6 @@ namespace Aderant.Build.Tasks {
     public class GetBuildOutputs : BuildOperationContextTask {
         private IEnumerable<OnDiskProjectInfo> projects;
 
-        public string SolutionRoot { get; set; }
-
         [Output]
         public string[] SolutionRoots { get; private set; }
 

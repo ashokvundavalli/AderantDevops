@@ -16,6 +16,7 @@
     <_DependencyAnalysisExcludePattern>
       **\obj\**;
       **\bin\**;
+      **\InProcessJobs.dll;
       TestDeployment\**
     </_DependencyAnalysisExcludePattern>
   </PropertyGroup>

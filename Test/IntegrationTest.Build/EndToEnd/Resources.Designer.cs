@@ -83,5 +83,37 @@ namespace IntegrationTest.Build.EndToEnd {
                 return ResourceManager.GetString("CreateRepo", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+        ///&lt;RunSettings&gt;
+        ///  &lt;RunConfiguration&gt;
+        ///    &lt;MaxCpuCount&gt;4&lt;/MaxCpuCount&gt;
+        ///    &lt;TestSessionTimeout&gt;1200000&lt;/TestSessionTimeout&gt;
+        ///  &lt;/RunConfiguration&gt;
+        ///  &lt;!-- MSTest adapter --&gt;
+        ///  &lt;MSTest&gt;
+        ///    &lt;MapInconclusiveToFailed&gt;True&lt;/MapInconclusiveToFailed&gt;
+        ///    &lt;CaptureTraceOutput&gt;true&lt;/CaptureTraceOutput&gt;
+        ///    &lt;DeleteDeploymentDirectoryAfterTestRunIsComplete&gt;false&lt;/DeleteDeploymentDirectoryAfterTestRunIsComplete&gt;
+        ///    &lt;DeploymentEnabled&gt;true&lt;/DeploymentEnabled&gt;
+        ///    &lt;AssemblyR [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string Expected_run_settings {
+            get {
+                return ResourceManager.GetString("Expected_run_settings", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+        ///&lt;RunSettings&gt;
+        ///&lt;/RunSettings&gt;.
+        /// </summary>
+        internal static string my_custom_runsettings {
+            get {
+                return ResourceManager.GetString("my_custom_runsettings", resourceCulture);
+            }
+        }
     }
 }

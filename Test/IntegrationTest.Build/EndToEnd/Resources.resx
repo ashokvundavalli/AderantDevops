@@ -121,4 +121,10 @@
   <data name="CreateRepo" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>resources\[0]\source\createrepo.ps1;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
   </data>
+  <data name="Expected_run_settings" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>expected_run_settings.xml;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="my_custom_runsettings" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>resources\[0]\source\modulea\bar\my_custom.runsettings;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
 </root>

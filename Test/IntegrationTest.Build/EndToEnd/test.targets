@@ -1,9 +1,9 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-         ToolsVersion="14.0">
+         ToolsVersion="Current">
 
-    <Target Name="EndToEnd">
-      <MSBuild Projects="ComboBuild.targets"
-               Targets="BuildAndPackage" />
-    </Target>
+  <Target Name="EndToEnd">
+    <MSBuild Projects="ComboBuild.targets"
+             Targets="BuildAndPackage" />
+  </Target>
 
 </Project>

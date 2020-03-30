@@ -22,14 +22,10 @@
 
 
   <Target Name="CollectTestAssemblies">
-
     <GetBuildOutputs>
       <Output TaskParameter="TrackedProjects" ItemName="TrackedProjects" />
       <Output TaskParameter="SolutionRoots" ItemName="SolutionRoots" />
     </GetBuildOutputs>
-
-    <Message Text="Looking for test assemblies in these directories:" />
-    <Message Text="%(TrackedProjects.OutputPath)" />
   </Target>
 
 
@@ -70,31 +66,45 @@
 
 
   <Target Name="CollectAssemblyPlatforms"
+          DependsOnTargets="CollectTestAssemblies"
           Outputs="%(SolutionRoots.Identity)">
 
     <PropertyGroup>
       <TestRunDirectory>%(SolutionRoots.Identity)</TestRunDirectory>
+
+      <!-- Ensure that any symbols like $ (from the current account) do not get escaped -->
+      <TestRunDirectory>$([MSBuild]::Unescape($(TestRunDirectory)))</TestRunDirectory>
     </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectsForThisRoot Include="@(TrackedProjects->WithMetadataValue('SolutionRoot', '$(TestRunDirectory)'))" />
+      <TestAssemblyDirectories Include="@(ProjectsForThisRoot->'%(OutputPath)'->Distinct())" />
+    </ItemGroup>
+
+    <Message Text="Looking for test assemblies in these directories:" />
+    <Message Text="%(TestAssemblyDirectories.FullPath)" />
+
+    <ItemGroup>
+      <_CustomRunSettingFiles Remove="@(_CustomRunSettingFiles)" />
+    </ItemGroup>
+
+    <CreateItem Include="%(TestAssemblyDirectories.FullPath)\*.runsettings">
+      <Output TaskParameter="Include" ItemName="_CustomRunSettingFiles"/>
+    </CreateItem>
+
+    <Error Text="More than one custom run settings file is present: @(TestAssemblyDirectories)" Condition="'@(_CustomRunSettingFiles->Count())' &gt; 1" />
 
     <PropertyGroup>
-      <!-- Note: CustomRunSettingsFile only supports a run settings file in the repo root - this is not a per-cone variable-->
-      <_CustomRunSettingsFile Condition="'$(CustomRunSettings)' != ''">$(TestWorkingDirectory)$(CustomRunSettings)</_CustomRunSettingsFile>
-
-      <RunSettingsFile>$(MSBuildThisFileDirectory)Testing\default.runsettings</RunSettingsFile>
-      <RunSettingsFile Condition="'$(IsDesktopBuild)' != 'true' And '$(_CustomRunSettingsFile)' != '' And Exists('$(_CustomRunSettingsFile)')">$(_CustomRunSettingsFile)</RunSettingsFile>
+      <RunSettingsFile Condition="'@(_CustomRunSettingFiles)' != ''">@(_CustomRunSettingFiles)</RunSettingsFile>
+      <RunSettingsFile Condition="'$(RunSettingsFile)' == ''">$(MSBuildThisFileDirectory)Testing\default.runsettings</RunSettingsFile>
+      <RunSettingsPropFile>$(TestRunDirectory)\Build\TFSBuild.proj</RunSettingsPropFile>
     </PropertyGroup>
 
-    <!-- Copy the run settings template file and apply and custom transforms -->
+    <!-- Copy the run settings template file and apply any custom transforms -->
     <Copy SourceFiles="$(RunSettingsFile)"
           DestinationFiles="$([System.IO.Path]::GetTempFileName())">
       <Output TaskParameter="DestinationFiles" PropertyName="RunSettingsFile" />
     </Copy>
-
-    <Message Text="TestWorkingDirectory: '$(TestWorkingDirectory)' TestRunDirectory: '$(TestRunDirectory)' RunSettingsFile: '$(RunSettingsFile)' CustomRunSettings: '$(CustomRunSettings)'" />
-
-    <PropertyGroup>
-      <RunSettingsPropFile>$(TestRunDirectory)\Build\TFSBuild.proj</RunSettingsPropFile>
-    </PropertyGroup>
 
     <MSBuild Projects="$(MSBuildThisFileFullPath)"
              Condition="Exists('$(RunSettingsPropFile)')"
@@ -107,12 +117,10 @@
     <XmlPoke Condition="'@(RunSettings)' != ''"
              XmlInputPath="$(RunSettingsFile)"
              Query="%(RunSettings.Identity)"
-             Value="%(RunSettings.Value)"/>
+             Value="%(RunSettings.Value)" />
 
-    <ItemGroup>
-      <ProjectsForThisRoot Include="@(TrackedProjects->WithMetadataValue('SolutionRoot', '$(TestRunDirectory)'))" />
-      <TestAssemblyDirectories Include="@(ProjectsForThisRoot->'%(OutputPath)'->Distinct())" />
-    </ItemGroup>
+    <Message Text="TestRunDirectory: $(TestRunDirectory)
+RunSettingsFile: $(RunSettingsFile)" />
 
     <ItemGroup>
       <CandidateTestAssemblies Include="%(TestAssemblyDirectories.FullPath)\**\*$(TestPattern)*.dll"
@@ -144,7 +152,7 @@
 
     <!-- Determine if we can run the tests using the 64-bit test runner -->
     <GetAssemblyPlatform
-      Condition="'$(Use32BitTestRunner)' == ''"
+      Condition="'$(Use32BitTestRunner)' == '' And '@(TestAssemblies)' != ''"
       Assemblies="@(TestAssemblies)"
       AssemblyDependencies="@(AssemblyDependencies)">
       <Output ItemName="AssembliesWithTargetPlatform" TaskParameter="Assemblies" />
@@ -189,8 +197,8 @@
       <TestAdapterPath>$([System.IO.Path]::GetTempPath())$([System.DateTime]::UtcNow.ToFileTimeUtc())\</TestAdapterPath>
 
       <AdditionalVariables Condition="'$(TestPattern)' != '' And '$(TestPattern)' == 'IntegrationTest'">
-$additionalEnvironmentVariables.Add('EXPERT_ENVIRONMENT_URL', '$(ExpertEnvironmentUrl)');
-$additionalEnvironmentVariables.Add('EXPERT_SOURCE_DIRECTORY', '$(ExpertSourceDirectory)');
+        $additionalEnvironmentVariables.Add('EXPERT_ENVIRONMENT_URL', '$(ExpertEnvironmentUrl)');
+        $additionalEnvironmentVariables.Add('EXPERT_SOURCE_DIRECTORY', '$(ExpertSourceDirectory)');
       </AdditionalVariables>
     </PropertyGroup>
 

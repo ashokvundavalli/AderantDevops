@@ -53,12 +53,20 @@ namespace IntegrationTest.Build {
                 { "BUILD_REPOSITORY_NAME", "Build.Infrastructure" }
             };
 
+            Environment.SetEnvironmentVariable("MSBUILDTARGETOUTPUTLOGGING", "1", EnvironmentVariableTarget.Process);
+            Environment.SetEnvironmentVariable("MSBUILDLOGTASKINPUTS", "1", EnvironmentVariableTarget.Process);
+
             using (ProjectCollection collection = new ProjectCollection(globalProperties)) {
                 collection.UnregisterAllLoggers();
 
                 var logger = new InternalBuildLogger(TestContext, LoggerVerbosity);
 
                 collection.RegisterLogger(Logger = logger);
+                collection.RegisterLogger(new BinaryLogger() {
+                    Verbosity = LoggerVerbosity.Diagnostic,
+                    CollectProjectImports = BinaryLogger.ProjectImportsCollectionMode.None,
+                    Parameters = $"LogFile={Path.Combine(TestContext.TestResultsDirectory, "output.binlog")}"
+                });
 
                 using (var manager = new BuildManager()) {
                     BuildRequestData data = new BuildRequestData(

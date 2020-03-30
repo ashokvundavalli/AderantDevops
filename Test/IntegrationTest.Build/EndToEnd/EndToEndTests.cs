@@ -1,15 +1,14 @@
 ﻿using System.IO;
 using System.Linq;
+using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
 using IntegrationTest.Build.Helpers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build.EndToEnd {
-
     [TestClass]
     [DeploymentItem("EndToEnd\\Resources\\", "Resources\\")]
     public class EndToEndTests : MSBuildIntegrationTestBase {
-
         public string DeploymentItemsDirectory {
             // Square brackets bring gMSA parity to the desktop builds
             // PowerShell has many quirks with square brackets in paths so lets cause more issues locally to
@@ -67,6 +66,9 @@ namespace IntegrationTest.Build.EndToEnd {
             }
         }
 
+        /// <summary>
+        /// Beware: This test affects global state as it removes files from the deployment directory
+        /// </summary>
         [TestMethod]
         public void When_project_is_deleted_build_still_completes() {
             using (var buildService = new TestBuildServiceHost(base.DisableInProcNode, TestContext, DeploymentItemsDirectory)) {
@@ -89,6 +91,50 @@ namespace IntegrationTest.Build.EndToEnd {
                 Assert.AreNotEqual(0, context.BuildStateMetadata.BuildStateFiles.Count);
 
                 RunTarget("EndToEnd", buildService.Properties);
+            }
+        }
+
+        [TestMethod]
+        public void When_custom_runsettings_file_present_it_is_used_by_the_build() {
+            using (var buildService = new TestBuildServiceHost(base.DisableInProcNode, TestContext, DeploymentItemsDirectory)) {
+                buildService.Initialize();
+
+                OnDiskProjectInfo trackedProject;
+                buildService.Client.TrackProject(trackedProject = new OnDiskProjectInfo {
+                    SolutionRoot = Path.Combine(DeploymentItemsDirectory, "ModuleA"),
+                    FullPath = Path.Combine(DeploymentItemsDirectory, @"ModuleA\Bar\Bar.csproj"),
+                    OutputPath = Path.Combine(DeploymentItemsDirectory, @"ModuleA\Bar"),
+                });
+
+                Assert.IsTrue(File.Exists(trackedProject.FullPath));
+
+                RunTarget("CollectAssemblyPlatforms", buildService.Properties);
+
+                string propertyValue = base.Result.ProjectStateAfterBuild.GetPropertyValue("RunSettingsFile");
+
+                Assert.AreEqual(File.ReadAllText(propertyValue), Resources.my_custom_runsettings);
+            }
+        }
+
+        [TestMethod]
+        public void When_custom_runsettings_item_group_present_it_is_used_by_the_build() {
+            using (var buildService = new TestBuildServiceHost(base.DisableInProcNode, TestContext, DeploymentItemsDirectory)) {
+                buildService.Initialize();
+
+                OnDiskProjectInfo trackedProject;
+                buildService.Client.TrackProject(trackedProject = new OnDiskProjectInfo {
+                    SolutionRoot = Path.Combine(DeploymentItemsDirectory, "ModuleB"),
+                    FullPath = Path.Combine(DeploymentItemsDirectory, @"ModuleB\Gaz\Gaz.csproj"),
+                    OutputPath = Path.Combine(DeploymentItemsDirectory, @"ModuleB\Gaz"),
+                });
+
+                Assert.IsTrue(File.Exists(trackedProject.FullPath));
+
+                RunTarget("CollectAssemblyPlatforms", buildService.Properties);
+
+                string propertyValue = base.Result.ProjectStateAfterBuild.GetPropertyValue("RunSettingsFile");
+
+                Assert.AreEqual(File.ReadAllText(propertyValue), Resources.Expected_run_settings);
             }
         }
 

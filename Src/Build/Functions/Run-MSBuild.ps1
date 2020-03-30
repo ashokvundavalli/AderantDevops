@@ -75,6 +75,7 @@ function Exec-CommandCore([string]$command, [string]$commandArgs, [switch]$useCo
         throw "Tool not found $command"
     }
 
+    [Console]::OutputEncoding
     [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
     $startInfo = New-Object System.Diagnostics.ProcessStartInfo
