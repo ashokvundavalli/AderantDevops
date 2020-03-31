@@ -191,7 +191,7 @@ RunSettingsFile: $(RunSettingsFile)" />
 
     <PropertyGroup>
       <PlatformSwitch>/Platform:%(_Assemblies.Platform)</PlatformSwitch>
-      <TestCaseFilter Condition="'%(_Assemblies.CICategory)' != ''">/TestCaseFilter:`&quot;%(_Assemblies.CICategory)`&quot;</TestCaseFilter>
+      <TestCaseFilter Condition="'%(_Assemblies.CICategory)' != ''">/TestCaseFilter:&quot;%(_Assemblies.CICategory)&quot;</TestCaseFilter>
       <TestRunDirectory>%(_Assemblies.TestRunDirectory)</TestRunDirectory>
       <AssembliesUnderTest>@(_Assemblies->'"%(FullPath)"', ' ')</AssembliesUnderTest>
       <TestAdapterPath>$([System.IO.Path]::GetTempPath())$([System.DateTime]::UtcNow.ToFileTimeUtc())\</TestAdapterPath>
