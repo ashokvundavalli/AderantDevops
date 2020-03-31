@@ -54,8 +54,37 @@ function AddSearchDirectory($element, [string]$path, [bool]$includeSubDirectorie
     }
 }
 
+function EnsureRunSettingsHasRequiredNodes() {
+    # Get the minimum settings required to not fail
+    $defaultRunSettings = [System.Xml.XmlDocument](Get-Content -Path "$PSScriptRoot\default.runsettings")
+
+    # Load up the custom run settings file
+    $providedRunSettings = [System.Xml.XmlDocument](Get-Content -Path $RunSettingsFile)
+
+    $xslt = [System.Xml.XmlDocument](Get-Content -Path "$PSScriptRoot\..\merge-xml.xslt")
+
+    # Merge the two documents together, taking elements from the custom
+    # file over the default ones.
+    $transform = [System.Xml.Xsl.XslCompiledTransform]::new()
+    $transform.Load($xslt.CreateNavigator())
+
+    $stringBuilderForXmlWriter = [System.Text.StringBuilder]::new()
+    $settings = [System.Xml.XmlWriterSettings]::new()
+    $settings.Indent = $true
+    $settings.CloseOutput = $true
+    $writer = [System.Xml.XmlWriter]::Create($stringBuilderForXmlWriter, $settings)
+
+    $argList = [System.Xml.Xsl.XsltArgumentList]::new()
+    $argList.AddParam("with", "", $providedRunSettings)
+    $argList.AddParam("replace", "", $true)
+
+    $transform.Transform($defaultRunSettings.CreateNavigator(), $argList, $writer)
+
+    return [System.Xml.XmlDocument]($stringBuilderForXmlWriter.ToString())
+}
+
 function CreateRunSettingsXml() {
-    [xml]$script:settingsDocument = Get-Content -Path $RunSettingsFile
+    $script:settingsDocument = EnsureRunSettingsHasRequiredNodes
     $assemblyResolution = $settingsDocument.RunSettings.MSTest.AssemblyResolution
 
     if ($script:ReferencePaths) {
@@ -80,7 +109,10 @@ function CreateRunSettingsXml() {
         $settingsDocument.RunSettings.RunConfiguration.MaxCpuCount = '1'
     }
 
-    $settingsDocument.RunSettings.RunConfiguration.TestSessionTimeout = $TestSessionTimeout.ToString()
+    $timeout = $settingsDocument.RunSettings.RunConfiguration.TestSessionTimeout
+    if ([string]::IsNullOrWhiteSpace($timeout) -or $timeout -eq "0") {
+        $settingsDocument.RunSettings.RunConfiguration.TestSessionTimeout = $TestSessionTimeout.ToString()
+    }
 
     $sw = [System.IO.StringWriter]::new()
     $writer = New-Object System.Xml.XmlTextWriter($sw)
