@@ -10,6 +10,7 @@ namespace Aderant.Build.Utilities {
         private readonly string pathToBuildTools;
 
         private static readonly List<string> acceptedCodeAnalysisCSharpVersions = new List<string> {
+            "3.5.0.0",  // VS 2019
             "3.4.0.0",  // VS 2019
             "3.3.0.0",  // VS 2019
             "3.2.0.0",  // VS 2019
@@ -26,34 +27,37 @@ namespace Aderant.Build.Utilities {
         }
 
         private Assembly Resolve(object sender, ResolveEventArgs args) {
-            var name = args.Name.Split(',')[0];
+            const string codeAnalysis = "Microsoft.CodeAnalysis.CSharp";
+            const string collectionsImmutable = "System.Collections.Immutable";
 
-            var paths = new [] {
-                "",
+            string name = args.Name.Split(',')[0];
+
+            string[] paths = new [] {
+                string.Empty,
                 "Roslyn"
             };
 
-            if (name == "Microsoft.CodeAnalysis.CSharp") {
+            if (string.Equals(name, codeAnalysis)) {
                 foreach (var path in paths) {
                     string file = Path.Combine(pathToBuildTools, path, name + ".dll");
 
                     if (File.Exists(file)) {
                         AssemblyName assemblyName = AssemblyName.GetAssemblyName(file);
 
-                        if (acceptedCodeAnalysisCSharpVersions.Contains(assemblyName.Version.ToString())) {
+                        if (acceptedCodeAnalysisCSharpVersions.Contains(assemblyName.Version.ToString()) || assemblyName.Version.Major >= 3) {
                             return Assembly.LoadFrom(file);
                         }
                     }
                 }
             }
 
-            if (name == "System.Collections.Immutable") {
-                var immutable = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(asm => asm.FullName.Split(',')[0] == "System.Collections.Immutable");
+            if (string.Equals(name, collectionsImmutable)) {
+                Assembly immutable = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(asm => asm.FullName.Split(',')[0] == collectionsImmutable);
                 if (immutable != null) {
                     return immutable;
                 }
 
-                return Assembly.LoadFile($"{AppDomain.CurrentDomain.BaseDirectory}\\System.Collections.Immutable.dll");
+                return Assembly.LoadFile($"{AppDomain.CurrentDomain.BaseDirectory}\\{collectionsImmutable}.dll");
             }
 
             return null;
@@ -72,7 +76,7 @@ namespace Aderant.Build.Utilities {
         private static Assembly GetCodeAnalysisCSharpAssemblyInternal() {
             const string fullNameUnformatted = "Microsoft.CodeAnalysis.CSharp, Version={0}, Culture=neutral, PublicKeyToken=31bf3856ad364e35";
 
-            //try load each of the accepted versions
+            // Try and load each of the accepted versions of the Microsoft.CodeAnalysis.CSharp assembly.
             foreach (string version in acceptedCodeAnalysisCSharpVersions) {
                 try {
                     return Assembly.Load(string.Format(fullNameUnformatted, version));
