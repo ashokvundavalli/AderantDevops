@@ -177,7 +177,7 @@ namespace Aderant.Build.Tasks {
                         }
                         ZipFile.CreateFromDirectory(packageSrcDir, destination);
 
-                        if (SeedContentHasChanges() && !String.IsNullOrEmpty(StagingPackageDrop)) {
+                        if (SeedContentHasChanges() && !string.IsNullOrEmpty(StagingPackageDrop)) {
                             var stagingFileName = Path.Combine(StagingPackageDrop, "Packages", packageName + ".zip");
                             var updatePackagesFile = stagingFileName.Replace("BinFiles\\", "");
 
@@ -192,8 +192,8 @@ namespace Aderant.Build.Tasks {
                             }
 
                             Log.LogMessage($"Seed package content changes detected, copying {packageName}.zip to {stagingFileName}");
-                            File.Copy(destination, stagingFileName);
-                            File.Copy(destination, updatePackagesFile);
+                            File.Copy(destination, stagingFileName, true);
+                            File.Copy(destination, updatePackagesFile, true);
                         }
                         Log.LogMessage($"{dirs.Length} seed package(s) produced.");
                     } catch (Exception ex) {
