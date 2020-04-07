@@ -18,9 +18,9 @@ namespace Aderant.Build {
     [Export(typeof(IFileSystem))]
     [Export("FileSystemService")]
     public class PhysicalFileSystem : IFileSystem2 {
-        private static CreateSymlinkLink createSymlinkLink = NativeMethods.CreateSymbolicLink;
+        public static CreateSymlinkLink createSymlinkLink = NativeMethods.CreateSymbolicLink;
 
-        private static CreateSymlinkLink createHardlink = (newFileName, target, flags) => NativeMethods.CreateHardLink(newFileName, target, IntPtr.Zero);
+        public static CreateSymlinkLink createHardlink = (newFileName, target, flags) => NativeMethods.CreateHardLink(newFileName, target, IntPtr.Zero);
 
         private ILogger logger;
 
@@ -53,6 +53,10 @@ namespace Aderant.Build {
 
         public string GetParent(string path) {
             return Directory.GetParent(path.TrimEnd(PathUtility.DirectorySeparatorCharArray)).FullName;
+        }
+
+        public string CreateDirectory(string path) {
+            return Directory.CreateDirectory(path).FullName;
         }
 
         public virtual string AddFile(string path, Stream stream) {
@@ -322,12 +326,12 @@ namespace Aderant.Build {
 
         private void CopyViaLink(PathSpec file, CreateSymlinkLink link) {
             try {
-                TryCopyViaLink(file.Location, file.Destination, link);
+                CopyViaLink(file.Location, file.Destination, link);
             } catch (UnauthorizedAccessException) {
                 logger?.Warning("File " + file.Destination + " is in use or can not be accessed. Trying to rename.");
 
                 MoveFile(file.Destination, file.Destination + ".__LOCKED");
-                TryCopyViaLink(file.Location, file.Destination, link);
+                CopyViaLink(file.Location, file.Destination, link);
             }
         }
 
@@ -496,7 +500,7 @@ namespace Aderant.Build {
             Junction
         }
 
-        private void TryCopyViaLink(string fileLocation, string fileDestination, CreateSymlinkLink createLink) {
+        public void CopyViaLink(string fileLocation, string fileDestination, CreateSymlinkLink createLink) {
             FilesRelationship destinationState = CheckFileExistence(fileLocation, fileDestination);
 
             switch (destinationState) {
@@ -543,6 +547,6 @@ namespace Aderant.Build {
             File.Delete(path);
         }
 
-        delegate bool CreateSymlinkLink(string lpSymlinkFileName, string lpTargetFileName, uint dwFlags);
+        public delegate bool CreateSymlinkLink(string lpSymlinkFileName, string lpTargetFileName, uint dwFlags);
     }
 }

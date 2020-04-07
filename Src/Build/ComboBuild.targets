@@ -314,7 +314,7 @@
 
     <ItemGroup>
       <SharedPaketFiles Include="$(SolutionRoot)Build\shared.paket.dependencies;$(SolutionRoot)Build\paket.lock;" />
-      <DependencyDirectories Condition="Exists('$(SolutionRoot)Build')" Include="$(SolutionRoot)Build" />
+      <DependencyDirectories Condition="Exists('$(SolutionRoot)Build\paket.dependencies')" Include="$(SolutionRoot)Build" />
       <DependencyDirectories Include="@(DirectoriesInBuild)" />
     </ItemGroup>
 

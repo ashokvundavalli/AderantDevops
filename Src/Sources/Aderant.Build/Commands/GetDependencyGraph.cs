@@ -5,7 +5,7 @@ using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Providers;
 
 namespace Aderant.Build.Commands {
-    [Cmdlet("Get", "ExpertModuleDependencyGraph")]
+    [Cmdlet(VerbsCommon.Get, "ExpertModuleDependencyGraph")]
     public class GetDependencyGraph : PSCmdlet {
         
         [Parameter(Mandatory = true, Position = 0)]

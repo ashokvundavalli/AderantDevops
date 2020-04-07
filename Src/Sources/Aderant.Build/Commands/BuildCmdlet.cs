@@ -1,7 +1,7 @@
-using Aderant.Build.Logging;
 using System;
 using System.Management.Automation;
 using System.Text;
+using Aderant.Build.Logging;
 
 namespace Aderant.Build.Commands {
     public abstract class BuildCmdlet : PSCmdlet {
