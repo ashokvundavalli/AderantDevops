@@ -9,7 +9,7 @@ using Aderant.Build.ProjectSystem;
 
 namespace Aderant.Build.Commands {
 
-    [Cmdlet(VerbsCommon.Get, "BuildDependencyTree")]
+    [Cmdlet("Get", "BuildDependencyTree")]
     public class GetBuildDependencyTreeCommand : PSCmdlet {
         private CancellationTokenSource cts;
 
@@ -28,11 +28,11 @@ namespace Aderant.Build.Commands {
             List<string> resolvedPaths = new List<string>();
 
             if (Directories == null || Directories.Length == 0) {
-                Directories = new[] { this.SessionState.Path.CurrentFileSystemLocation.Path };
+                Directories = new[] { SessionState.Path.CurrentFileSystemLocation.Path };
             }
 
             foreach (var path in Directories) {
-                resolvedPaths.AddRange(this.SessionState.Path.GetResolvedPSPathFromPSPath(path).Select(s => s.Path));
+                resolvedPaths.AddRange(SessionState.Path.GetResolvedPSPathFromPSPath(path).Select(s => s.Path));
             }
 
             cts = new CancellationTokenSource();
@@ -70,8 +70,8 @@ namespace Aderant.Build.Commands {
             Host.UI.Write(treeText);
 
             if (WriteFile.IsPresent) {
-                ProjectSequencer.WriteBuildTree(new PhysicalFileSystem(), this.SessionState.Path.CurrentFileSystemLocation.Path, treeText);
-                Host.UI.Write($@"{Environment.NewLine}Wrote build tree to: '{this.SessionState.Path.CurrentFileSystemLocation.Path}\BuildTree.txt'.");
+                ProjectSequencer.WriteBuildTree(new PhysicalFileSystem(), SessionState.Path.CurrentFileSystemLocation.Path, treeText);
+                Host.UI.Write($@"{Environment.NewLine}Wrote build tree to: '{SessionState.Path.CurrentFileSystemLocation.Path}\BuildTree.txt'.");
             }
         }
 

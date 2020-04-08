@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text.RegularExpressions;
 using Aderant.Build.DependencyResolver.Models;
 using Aderant.Build.Logging;
 using Microsoft.FSharp.Collections;
+using Microsoft.FSharp.Control;
 using Paket;
 
 namespace Aderant.Build.DependencyResolver {
@@ -23,7 +24,6 @@ namespace Aderant.Build.DependencyResolver {
         private readonly string root;
         private readonly IWellKnownSources wellKnownSources;
         private bool createdNew;
-        private bool initialized;
 
         private Dependencies dependencies;
         private DependenciesFile dependenciesFile;
@@ -38,6 +38,10 @@ namespace Aderant.Build.DependencyResolver {
             this.wellKnownSources = wellKnownSources;
             this.logger = logger;
             this.FileSystem = fileSystem;
+
+            if (null != root) {
+                dependencies = Initialize(root);
+            }
 
             Paket.Logging.verbose = enableVerboseLogging;
 
@@ -93,6 +97,10 @@ namespace Aderant.Build.DependencyResolver {
                 } else {
                     RemoveReference(loggerReference);
                 }
+
+
+
+
             }
         }
 
@@ -142,17 +150,7 @@ namespace Aderant.Build.DependencyResolver {
             }
         }
 
-        private void Initialize() {
-            if (initialized) {
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(root)) {
-                dependencies = null;
-                initialized = true;
-                return;
-            }
-
+        private Dependencies Initialize(string root) {
             try {
                 var file = FileSystem.GetFiles(root, DependenciesFile, true).FirstOrDefault();
                 if (file != null) {
@@ -169,12 +167,10 @@ namespace Aderant.Build.DependencyResolver {
                 }
             }
 
-            initialized = true;
+            return dependencies;
         }
 
         public void Add(IEnumerable<IDependencyRequirement> requirements, ResolverRequest resolverRequest = null) {
-            Initialize();
-
             dependenciesFile = dependencies.GetDependenciesFile();
 
             bool validatePackageConstraints = resolverRequest != null && resolverRequest.ValidatePackageConstraints;
@@ -337,7 +333,6 @@ namespace Aderant.Build.DependencyResolver {
                     try {
                         file = file.Remove(Domain.GroupName(requirement.Group), packageName);
                     } catch {
-                        // Ignored.
                     }
                 }
 
@@ -377,8 +372,6 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         public void Restore(bool force = false) {
-            Initialize();
-
             DoOperationAndHandleCredentialFailure(
                 () => {
                     if (!HasLockFile()) {
@@ -415,8 +408,6 @@ namespace Aderant.Build.DependencyResolver {
         /// Value: Version constraint information
         /// </summary>
         public DependencyGroup GetDependencies(string groupName) {
-            Initialize();
-
             var file = dependenciesFile;
 
             if (file == null) {
@@ -485,11 +476,6 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         public IEnumerable<string> FindGroups() {
-            if (!FileSystem.FileExists(Path.Combine(root, DependenciesFile))) {
-                return new string[] {};
-            }
-
-            Initialize();
             Dependencies dependenciesFile = Dependencies.Locate(root);
             DependenciesFile file = dependenciesFile.GetDependenciesFile();
 
@@ -497,8 +483,6 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         public void SetDependenciesFile(string lines) {
-            Initialize();
-
             this.dependenciesFile = Paket.DependenciesFile.FromSource(this.root, lines);
             this.dependenciesFile.Save();
         }

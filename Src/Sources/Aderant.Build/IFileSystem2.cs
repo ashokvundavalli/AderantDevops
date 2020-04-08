@@ -3,14 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks.Dataflow;
 using Aderant.Build.Packaging;
-using static Aderant.Build.PhysicalFileSystem;
 
 namespace Aderant.Build {
 
     public interface IFileSystem2 : IFileSystem {
         string Root { get; }
-
-        void CopyViaLink(string fileLocation, string fileDestination, CreateSymlinkLink createLink);
     }
 
     public interface IFileSystem {
@@ -33,8 +30,6 @@ namespace Aderant.Build {
         bool FileExists(string path);
 
         bool DirectoryExists(string path);
-
-        string CreateDirectory(string path);
 
         string AddFile(string path, Stream stream);
 

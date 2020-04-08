@@ -9,10 +9,10 @@ using FILETIME = System.Runtime.InteropServices.ComTypes.FILETIME;
 namespace Aderant.Build {
     internal static class NativeMethods {
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-        public static extern bool CreateHardLink(string newFileName, string existingFileName, IntPtr securityAttributes);
+        internal static extern bool CreateHardLink(string newFileName, string existingFileName, IntPtr securityAttributes);
 
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-        public static extern bool DeleteFile(string fileName);
+        internal static extern bool DeleteFile(string fileName);
 
         [StructLayout(LayoutKind.Sequential)]
         public struct BY_HANDLE_FILE_INFORMATION {

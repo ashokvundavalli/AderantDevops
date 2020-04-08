@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Xml.Linq;
@@ -11,15 +10,13 @@ using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
     public class GetDependencies : Task, ICancelableTask {
-        private readonly CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+        private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
         public bool EnableVerboseLogging { get; set; }
 
         public string ModulesRootPath { get; set; }
 
         public string DropPath { get; set; }
-
-        private ExpertManifest productManifest;
 
         public string ProductManifest { get; set; }
 
@@ -61,17 +58,14 @@ namespace Aderant.Build.Tasks {
         /// </value>
         public bool Update { get; set; }
 
-        private bool? enableReplication;
-
-        public bool EnableReplication {
-            get => enableReplication.GetValueOrDefault();
-            set => enableReplication = value;
-        }
+        public bool DisableSharedDependencyDirectory { get; set; }
 
         internal XDocument ConfigurationXml { get; set; }
 
         public string[] EnabledResolvers {
-            get => new string[0];
+            get {
+                return new string[0];
+            }
             set {
                 if (ConfigurationXml == null) {
                     if (value != null && value.Length > 0) {
@@ -90,17 +84,17 @@ namespace Aderant.Build.Tasks {
         }
 
         public override bool Execute() {
-            BuildTaskLogger logger = new BuildTaskLogger(this);
+            BuildTaskLogger logger = new BuildTaskLogger(this);            
 
-            ConfigureTask();
             ExecuteInternal(logger);
 
             return !Log.HasLoggedErrors;
         }
 
-        internal void ConfigureTask() {
+        public void ExecuteInternal(Logging.ILogger logger) {
             ModulesRootPath = Path.GetFullPath(ModulesRootPath);
 
+            ExpertManifest productManifest = null;
             if (!string.IsNullOrWhiteSpace(ProductManifest)) {
                 ProductManifest = Path.GetFullPath(ProductManifest);
 
@@ -110,7 +104,11 @@ namespace Aderant.Build.Tasks {
                 }
             }
 
-            LoadConfigurationXml();
+            if (!string.IsNullOrWhiteSpace(BranchConfigFile)) {
+                ConfigurationXml = XDocument.Load(BranchConfigFile);
+            }
+
+            LogParameters(logger);
 
             // Enable NupkgResolver by default if no resolvers are specified.
             if (EnabledResolvers == null || EnabledResolvers.Length == 0) {
@@ -119,25 +117,24 @@ namespace Aderant.Build.Tasks {
                 };
             }
 
-            ConfigureDependenciesDirectory();
-            ConfigureReplication();
-        }
-
-        public void ExecuteInternal(Logging.ILogger logger) {
-            LogParameters(logger);
-            
             var workflow = new ResolverWorkflow(logger) {
                 ConfigurationXml = ConfigurationXml,
                 ModulesRootPath = ModulesRootPath,
                 DropPath = DropPath
             };
 
-            if (EnableReplication) {
-                if (string.IsNullOrWhiteSpace(DependenciesDirectory)) {
-                    workflow.Request.ReplicationExplicitlyDisabled = true;
-                }
-            } else {
+            if (DisableSharedDependencyDirectory) {
                 workflow.Request.ReplicationExplicitlyDisabled = true;
+            } else {
+                if (string.IsNullOrWhiteSpace(DependenciesDirectory)) {
+                    string dependenciesSubDirectory = ConfigurationXml.Descendants("DependenciesDirectory").FirstOrDefault()?.Value;
+
+                    if (!string.IsNullOrWhiteSpace(dependenciesSubDirectory)) {
+                        DependenciesDirectory = Path.Combine(ModulesRootPath, dependenciesSubDirectory);
+                    } else {
+                        workflow.Request.ReplicationExplicitlyDisabled = true;
+                    }
+                }
             }
 
             workflow.DependenciesDirectory = DependenciesDirectory;
@@ -160,36 +157,12 @@ namespace Aderant.Build.Tasks {
             workflow.Run(cancellationTokenSource.Token, EnableVerboseLogging);
         }
 
-        internal void LoadConfigurationXml() {
-            if (!string.IsNullOrWhiteSpace(BranchConfigFile)) {
-                ConfigurationXml = XDocument.Load(BranchConfigFile);
-            }
-        }
-
-        internal void ConfigureDependenciesDirectory() {
-            if (string.IsNullOrWhiteSpace(DependenciesDirectory)) {
-                string dependenciesSubDirectory = ConfigurationXml?.Descendants("DependenciesDirectory").FirstOrDefault()?.Value;
-
-                if (!string.IsNullOrWhiteSpace(dependenciesSubDirectory)) {
-                    DependenciesDirectory = Path.Combine(ModulesRootPath, dependenciesSubDirectory);
-                }
-            }
-        }
-
-        internal void ConfigureReplication() {
-            if (enableReplication == null) {
-                string replicationSetting = ConfigurationXml?.Descendants("DependencyReplicationEnabled").FirstOrDefault()?.Value;
-
-                EnableReplication = !string.IsNullOrWhiteSpace(replicationSetting) || Convert.ToBoolean(replicationSetting);
-            }
-        }
-
         /// <summary>
         /// Attempts to cancel this instance.
         /// </summary>
         public void Cancel() {
             if (cancellationTokenSource != null) {
-                // Signal the cancellation token that we want to abort the async task.
+                // Signal the cancellation token that we want to abort the async task
                 cancellationTokenSource.Cancel();
             }
         }
