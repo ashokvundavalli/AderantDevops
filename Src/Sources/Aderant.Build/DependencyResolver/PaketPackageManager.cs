@@ -34,7 +34,6 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         public PaketPackageManager(string root, IFileSystem2 fileSystem, IWellKnownSources wellKnownSources, ILogger logger, bool enableVerboseLogging = false) {
-            System.Diagnostics.Debugger.Launch();
             this.root = root;
             this.wellKnownSources = wellKnownSources;
             this.logger = logger;
