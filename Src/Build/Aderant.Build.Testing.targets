@@ -74,6 +74,8 @@
 
       <!-- Ensure that any symbols like $ (from the current account) do not get escaped -->
       <TestRunDirectory>$([MSBuild]::Unescape($(TestRunDirectory)))</TestRunDirectory>
+
+      <RunSettingsPropFile>$(TestRunDirectory)\Build\TFSBuild.proj</RunSettingsPropFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -88,16 +90,31 @@
       <_CustomRunSettingFiles Remove="@(_CustomRunSettingFiles)" />
     </ItemGroup>
 
+    <MSBuild Projects="$(MSBuildThisFileFullPath)"
+         Condition="Exists('$(RunSettingsPropFile)')"
+         Targets="GetUseCustomRunSettings"
+         Properties="RunSettingsPropFile=$(RunSettingsPropFile)"
+         ContinueOnError="true">
+      <Output TaskParameter="TargetOutputs" PropertyName="UseCustomRunSettings" />
+    </MSBuild>
+
+    <MSBuild Projects="$(MSBuildThisFileFullPath)"
+         Condition="Exists('$(RunSettingsPropFile)')"
+         Targets="GetCustomTestSettings"
+         Properties="RunSettingsPropFile=$(RunSettingsPropFile)"
+         ContinueOnError="true">
+      <Output TaskParameter="TargetOutputs" ItemName="RunSettings" />
+    </MSBuild>
+
     <CreateItem Include="%(TestAssemblyDirectories.FullPath)\*.runsettings">
       <Output TaskParameter="Include" ItemName="_CustomRunSettingFiles"/>
     </CreateItem>
 
-    <Error Text="More than one custom run settings file is present: @(TestAssemblyDirectories)" Condition="'@(_CustomRunSettingFiles->Count())' &gt; 1" />
+    <Error Text="More than one custom run settings file is present: @(TestAssemblyDirectories)" Condition="'$(UseCustomRunSettings)' == 'True' And '@(_CustomRunSettingFiles->Count())' &gt; 1" />
 
     <PropertyGroup>
-      <RunSettingsFile Condition="'@(_CustomRunSettingFiles)' != ''">@(_CustomRunSettingFiles)</RunSettingsFile>
+      <RunSettingsFile Condition="'$(UseCustomRunSettings)' == 'True' And '@(_CustomRunSettingFiles)' != ''">@(_CustomRunSettingFiles)</RunSettingsFile>
       <RunSettingsFile Condition="'$(RunSettingsFile)' == ''">$(MSBuildThisFileDirectory)Testing\default.runsettings</RunSettingsFile>
-      <RunSettingsPropFile>$(TestRunDirectory)\Build\TFSBuild.proj</RunSettingsPropFile>
     </PropertyGroup>
 
     <!-- Copy the run settings template file and apply any custom transforms -->
@@ -105,14 +122,6 @@
           DestinationFiles="$([System.IO.Path]::GetTempFileName())">
       <Output TaskParameter="DestinationFiles" PropertyName="RunSettingsFile" />
     </Copy>
-
-    <MSBuild Projects="$(MSBuildThisFileFullPath)"
-             Condition="Exists('$(RunSettingsPropFile)')"
-             Targets="GetCustomTestSettings"
-             Properties="RunSettingsPropFile=$(RunSettingsPropFile)"
-             ContinueOnError="true">
-      <Output TaskParameter="TargetOutputs" ItemName="RunSettings"/>
-    </MSBuild>
 
     <XmlPoke Condition="'@(RunSettings)' != ''"
              XmlInputPath="$(RunSettingsFile)"
@@ -251,6 +260,10 @@ $(AdditionalVariables)
 
   <!-- Imports the props file when GetCustomTestSettings is invoked -->
   <Import Project="$(RunSettingsPropFile)" Condition="Exists('$(RunSettingsPropFile)')" />
+
+  <Target Name="GetUseCustomRunSettings" Returns="$(UseCustomRunSettings)">
+    <!-- Target that returns whether or not a custom runsettings file should be used from a downstream project -->
+  </Target>
 
   <Target Name="GetCustomTestSettings" Returns="@(RunSettings)">
     <!-- Target that returns any custom run settings from a downstream project -->
