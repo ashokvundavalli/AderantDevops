@@ -646,6 +646,11 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
         <ArtifactId>packages</ArtifactId>
         <ArtifactType>Branch</ArtifactType>
       </AdditionalArtifacts>
+      <AdditionalArtifacts Include="$(ArtifactStagingDirectory)ServerImage\ExpertServerImage.zip"
+         Condition="Exists('$(ArtifactStagingDirectory)ServerImage')">
+        <ArtifactId>ServerImage</ArtifactId>
+        <ArtifactType>Branch</ArtifactType>
+      </AdditionalArtifacts>      
     </ItemGroup>
 
     <!-- ToDo: Update this to exclude directories for archived artifacts. -->
@@ -674,9 +679,9 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
 
     <PropertyGroup>
       <ShowCopyToDropTarget>ShowCopyToDropLog</ShowCopyToDropTarget>
-
+      <ExcludeSubDirectories>$(ArtifactStagingDirectory)ServerImage\ExpertServerImage</ExcludeSubDirectories>
       <CopyToDropCommand>
-        robocopy.exe "%(ArtifactPaths.FullPath)" "%(TargetPath)" %(ArtifactPaths.FileName)%(ArtifactPaths.Extension).zip Binaries.zip ExpertServerImage.zip *.nupkg *.metadata *.sha1 /MT /S /NDL /R:10 /NP /LOG:"$(ArtifactStagingDirectory)CopyToDrop.log" /TEE
+        robocopy.exe "%(ArtifactPaths.FullPath)" "%(TargetPath)" %(ArtifactPaths.FileName)%(ArtifactPaths.Extension).zip Binaries.zip ExpertServerImage.zip *.nupkg *.metadata *.sha1 /MT /S /NDL /R:10 /NP /LOG:"$(ArtifactStagingDirectory)CopyToDrop.log" /TEE /XD "$(ExcludeSubDirectories)"
         IF %ERRORLEVEL% LEQ 4 EXIT /B 0
       </CopyToDropCommand>
     </PropertyGroup>
