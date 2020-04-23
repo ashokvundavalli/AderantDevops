@@ -796,7 +796,7 @@ Add-ModuleExpansionParameter –CommandName "Get-WebDependencies" –ParameterNa
     Disable-ExpertPrompt
 #>
 function Disable-ExpertPrompt() {
-    # Copy the current prompt function so we can fall back to it if we're not supposed to handle a command
+    # Copy the current prompt function so we can fall back to it if we're not supposed to handle a command.
     Function global:Prompt {
         $(if (test-path variable:/PSDebugContext) { '[DBG]: ' }
             else { '' }) + 'PS ' + $(Get-Location) `
@@ -804,7 +804,7 @@ function Disable-ExpertPrompt() {
     }
 }
 
-# export functions and variables we want external to this script
+# Export functions and variables we want external to this script.
 $functionsToExport = @(
     [PSCustomObject]@{ function = 'Run-ExpertUITests'; alias = $null; },
     [PSCustomObject]@{ function = 'Run-ExpertSanityTests'; alias = 'rest'; },

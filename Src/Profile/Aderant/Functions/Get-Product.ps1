@@ -66,7 +66,7 @@ Register-ArgumentCompleter -CommandName Get-Product -ParameterName "pullRequestI
 
     # TODO: Externalize
     # TODO: Call build service for caching for people in the US
-    $stem = "http://tfs:8080/tfs/Aderant/ExpertSuite"
+    $stem = 'https://tfs.ap.aderant.com/tfs/ADERANT/ExpertSuite'
     $results = Invoke-RestMethod -Uri "$stem/_apis/git/pullrequests" -ContentType "application/json" -UseDefaultCredentials
 
     $ids = $results.value | Select-Object -Property pullRequestId, title

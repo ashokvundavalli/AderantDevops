@@ -58,7 +58,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
 
                             bool replicationEnabled = true;
                             if (ReplicationExplicitlyDisabled.HasValue) {
-                                if (ReplicationExplicitlyDisabled.Value == true) {
+                                if (ReplicationExplicitlyDisabled.Value) {
                                     replicationEnabled = false;
                                 }
                             }
@@ -153,23 +153,24 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
 
                     resolverRequest.Resolved(requirement, this);
 
-                    // here we override the global requires replication, if the individual package doesn't want to be replicated we honor that.
-                    if (!requirement.ReplicateToDependencies) {
-                        continue;
-                    }
-
-                    if (resolverRequest.RequiresThirdPartyReplication) {
-                        if (resolverRequest.ReplicationExplicitlyDisabled) {
+                    if (!ReplicationExplicitlyDisabled.GetValueOrDefault(false)) {
+                            // here we override the global requires replication, if the individual package doesn't want to be replicated we honor that.
+                        if (!requirement.ReplicateToDependencies) {
                             continue;
                         }
 
-                        ReplicateToDependenciesDirectory(resolverRequest, directory, fileSystem, requirement);
+                        if (resolverRequest.RequiresThirdPartyReplication) {
+                            if (resolverRequest.ReplicationExplicitlyDisabled) {
+                                continue;
+                            }
+
+                            ReplicateToDependenciesDirectory(resolverRequest, directory, fileSystem, requirement);
+                        }
                     }
                 }
             }
         }
-
-
+        
         // TODO: Remove this - now obsolete in 81+
         private void ReplicateToDependenciesDirectory(ResolverRequest resolverRequest, string directory, IFileSystem2 fileSystem, IDependencyRequirement requirement) {
             // For a build all we place the packages folder under dependencies
@@ -204,6 +205,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
                         return;
                     }
 
+                    logger.Info("Replicating {0} to {1}", dir, target);
                     fileSystem.CopyDirectory(dir, target);
                 }
             }

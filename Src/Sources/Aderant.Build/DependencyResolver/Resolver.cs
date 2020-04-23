@@ -40,7 +40,7 @@ namespace Aderant.Build.DependencyResolver {
 
             foreach (IDependencyResolver resolver in resolvers) {
                 if (resolver.ReplicationExplicitlyDisabled != null) {
-                    resolverRequest.ReplicationExplicitlyDisabled = true;
+                    resolverRequest.ReplicationExplicitlyDisabled = resolver.ReplicationExplicitlyDisabled.Value;
                 }
 
                 resolver.EnableVerboseLogging = enableVerboseLogging;

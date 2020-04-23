@@ -59,7 +59,6 @@ namespace Aderant.Build.DependencyResolver {
 
             List<IDependencyResolver> resolvers = new List<IDependencyResolver>();
             if (IncludeResolver(nameof(ExpertModuleResolver))) {
-
                 ExpertModuleResolver moduleResolver;
                 if (!string.IsNullOrWhiteSpace(ManifestFile)) {
                     moduleResolver = new ExpertModuleResolver(new PhysicalFileSystem(ModulesRootPath, Logger), ManifestFile);
@@ -71,7 +70,6 @@ namespace Aderant.Build.DependencyResolver {
 
                 moduleResolver.AddDependencySource(DropPath, ExpertModuleResolver.DropLocation);
                 resolvers.Add(moduleResolver);
-
             }
 
             if (IncludeResolver(nameof(NupkgResolver))) {
