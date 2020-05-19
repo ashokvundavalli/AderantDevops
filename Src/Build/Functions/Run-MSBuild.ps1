@@ -1,4 +1,8 @@
-﻿$Source = @"
+﻿Set-StrictMode -Version 'Latest'
+$ErrorActionPreference = 'Stop'
+$InformationPreference = 'Continue'
+
+$Source = @"
 using System;
 using System.Diagnostics;
 using System.Collections.Generic;
@@ -75,10 +79,7 @@ function Exec-CommandCore([string]$command, [string]$commandArgs, [switch]$useCo
         throw "Tool not found $command"
     }
 
-    [Console]::OutputEncoding
-    [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-
-    $startInfo = New-Object System.Diagnostics.ProcessStartInfo
+    $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
     $startInfo.FileName = $command
     $startInfo.Arguments = $commandArgs
 
@@ -136,7 +137,7 @@ function Exec-CommandCore([string]$command, [string]$commandArgs, [switch]$useCo
 }
 
 function AttachDebuger([System.Diagnostics.Process]$parentProcess, [int]$id) {
-    Write-Output "Attaching debugger"
+    Write-Informaton "Attaching debugger"
     Add-Type -ReferencedAssemblies "Microsoft.CSharp" -TypeDefinition $Source -Language CSharp
 
     $dte = $null
@@ -151,15 +152,11 @@ function AttachDebuger([System.Diagnostics.Process]$parentProcess, [int]$id) {
 
 # Lets the process re-use the current console.
 # This means items like colored output will function correctly.
-function Exec-Console([string]$command, [string]$commandArgs, [HashTable]$variables, [System.Diagnostics.Process]$parentProcess, [bool]$isDesktopBuild) {
-    Set-StrictMode -Version 'Latest'
-    Exec-CommandCore -command $command -commandArgs $commandArgs -useConsole:$isDesktopBuild -variables:$variables -parentProcess:$parentProcess
+function Exec-Console([string]$command, [string]$commandArgs, [HashTable]$variables, [System.Diagnostics.Process]$parentProcess) {
+    Exec-CommandCore -command $command -commandArgs $commandArgs -useConsole:$true -variables:$variables -parentProcess:$parentProcess
 }
 
 function Run-MSBuild([string]$projectFilePath, [string]$buildArgs = "", [string]$logFileName = "", [bool]$isDesktopBuild = $true) {
-    Set-StrictMode -Version 'Latest'
-    $ErrorActionPreference = 'Stop'
-    $InformationPreference = 'Continue'
 
     try {
         $type = [Type]::GetType("System.Management.Automation.PsUtils, System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35")
@@ -236,7 +233,7 @@ function Run-MSBuild([string]$projectFilePath, [string]$buildArgs = "", [string]
     }
 
     try {
-        Exec-Console $tool "$projectFilePath $buildArgs" $environmentBlock $process $isDesktopBuild
+        Exec-Console $tool "$projectFilePath $buildArgs" $environmentBlock $process
     } finally {
         if (Test-Path -Path $logFileName) {
             if ([System.Environment]::UserInteractive) {
