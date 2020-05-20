@@ -111,10 +111,10 @@
     </CreateItem>
 
     <Error Text="More than one custom run settings file is present: @(TestAssemblyDirectories)" Condition="'$(UseCustomRunSettings)' == 'True' And '@(_CustomRunSettingFiles->Count())' &gt; 1" />
-
+    
     <PropertyGroup>
       <RunSettingsFile Condition="'$(UseCustomRunSettings)' == 'True' And '@(_CustomRunSettingFiles)' != ''">@(_CustomRunSettingFiles)</RunSettingsFile>
-      <RunSettingsFile Condition="'$(RunSettingsFile)' == ''">$(MSBuildThisFileDirectory)Testing\default.runsettings</RunSettingsFile>
+      <RunSettingsFile Condition="'$(RunSettingsFile)' == '' Or !Exists('$(RunSettingsFile)')">$(MSBuildThisFileDirectory)Testing\default.runsettings</RunSettingsFile>
     </PropertyGroup>
 
     <!-- Copy the run settings template file and apply any custom transforms -->
