@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using Aderant.Build.Analyzer.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -62,11 +64,73 @@ namespace Aderant.Build.Analyzer.Rules.Logging {
 
         /// <summary>
         /// Gets the interpolation template arguments found
-        /// within the specified method <see cref="ArgumentSyntax"/>.
+        /// within the specified method <see cref="ArgumentSyntax" />.
         /// </summary>
         /// <param name="argument">The argument.</param>
-        protected static IEnumerable<string> GetInterpolationTemplateArguments(ArgumentSyntax argument) {
+        /// <param name="model">The model.</param>
+        protected static IEnumerable<string> GetInterpolationTemplateArguments(ArgumentSyntax argument, SemanticModel model) {
             string template = GetInterpolationTemplate(argument);
+
+            if (template == null) {
+                var identifier = UnwrapParenthesizedExpressionDescending(argument.Expression) as IdentifierNameSyntax;
+
+                if (identifier == null) {
+                    return null;
+                }
+
+                var symbol = model.GetSymbolInfo(argument.Expression).Symbol;
+
+                if (symbol is ILocalSymbol) {
+                    var localSymbol = symbol as ILocalSymbol;
+
+                    if (!localSymbol.IsConst) {
+                        return null;
+                    }
+
+                    var methodDeclaration = argument
+                        .Expression
+                        .GetAncestorOfType<MethodDeclarationSyntax>();
+
+                    if (methodDeclaration == null) {
+                        return null;
+                    }
+
+                    var declarations = new List<LocalDeclarationStatementSyntax>();
+                    GetExpressionsFromChildNodes(ref declarations, methodDeclaration);
+
+                    var variable = declarations
+                        .SelectMany(declaration => declaration.Declaration.Variables)
+                        .FirstOrDefault(declaration => declaration.Identifier.Text == identifier.Identifier.Text);
+
+                    template = (variable?.Initializer.Value as LiteralExpressionSyntax)?.Token.Text;
+                }
+
+                if (symbol is IFieldSymbol) {
+                    var localSymbol = symbol as IFieldSymbol;
+
+                    if (!localSymbol.IsConst) {
+                        return null;
+                    }
+
+                    var classDeclaration = argument
+                        .Expression
+                        .GetAncestorOfType<ClassDeclarationSyntax>();
+
+                    if (classDeclaration == null) {
+                        return null;
+                    }
+
+                    var declarations = new List<FieldDeclarationSyntax>();
+                    GetExpressionsFromChildNodes(ref declarations, classDeclaration);
+
+                    var variable = declarations
+                        .SelectMany(declaration => declaration.Declaration.Variables)
+                        .FirstOrDefault(declaration => declaration.Identifier.Text == identifier.Identifier.Text);
+
+                    template = (variable?.Initializer.Value as LiteralExpressionSyntax)?.Token.Text;
+                }
+            }
+
             return template == null
                 ? null
                 : GetInterpolationTemplateArguments(template);
@@ -134,6 +198,54 @@ namespace Aderant.Build.Analyzer.Rules.Logging {
         }
 
         /// <summary>
+        /// Determines if the specified <see cref="MemberAccessExpressionSyntax"/> is a call to 'TextTranslator.Current'.
+        /// </summary>
+        /// <param name="memberAccessExpression">The member access expression.</param>
+        protected static bool GetIsTextTranslation(MemberAccessExpressionSyntax memberAccessExpression) {
+            const string textTranslator = "TextTranslator";
+            const string current = "Current";
+            const string translate = "Translate";
+
+            if (memberAccessExpression == null) {
+                return false;
+            }
+
+            var nameSyntax = memberAccessExpression.Expression as IdentifierNameSyntax;
+
+            if (string.Equals(
+                nameSyntax?.Identifier.Text,
+                textTranslator,
+                StringComparison.Ordinal)) {
+                return string.Equals(
+                    memberAccessExpression.Name.Identifier.Text,
+                    current,
+                    StringComparison.Ordinal);
+            }
+
+            var childMemberAccessExpression = memberAccessExpression.Expression as MemberAccessExpressionSyntax;
+
+            if (childMemberAccessExpression == null) {
+                return false;
+            }
+
+            nameSyntax = childMemberAccessExpression.Expression as IdentifierNameSyntax;
+
+            return
+                string.Equals(
+                    nameSyntax?.Identifier.Text,
+                    textTranslator,
+                    StringComparison.Ordinal) &&
+                string.Equals(
+                    childMemberAccessExpression.Name.Identifier.Text,
+                    current,
+                    StringComparison.Ordinal) &&
+                string.Equals(
+                    memberAccessExpression.Name.Identifier.Text,
+                    translate,
+                    StringComparison.Ordinal);
+        }
+
+        /// <summary>
         /// Gets the string interpolation template from the specified <see cref="ArgumentSyntax"/>.
         /// </summary>
         /// <param name="argument">The argument.</param>
@@ -157,20 +269,6 @@ namespace Aderant.Build.Analyzer.Rules.Logging {
             }
 
             return builder.ToString();
-        }
-
-        /// <summary>
-        /// Determines if the specified <see cref="MemberAccessExpressionSyntax"/> is a call to 'TextTranslator.Current'.
-        /// </summary>
-        /// <param name="memberAccessExpression">The member access expression.</param>
-        private static bool GetIsTextTranslation(MemberAccessExpressionSyntax memberAccessExpression) {
-            return (memberAccessExpression.Expression as IdentifierNameSyntax)?
-                   .Identifier
-                   .Text == "TextTranslator" &&
-                   memberAccessExpression
-                       .Name
-                       .Identifier
-                       .Text == "Current";
         }
     }
 }

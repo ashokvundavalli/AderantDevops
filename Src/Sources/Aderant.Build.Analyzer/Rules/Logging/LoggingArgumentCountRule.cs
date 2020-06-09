@@ -72,7 +72,7 @@ namespace Aderant.Build.Analyzer.Rules.Logging {
             int actualArgumentCount = GetLogMethodParametersCount(context.SemanticModel, node);
 
             // Argument [0] is the LogLevel, thus argument [1] is the string template.
-            var result = GetInterpolationTemplateArguments(node.ArgumentList.Arguments[1]);
+            var result = GetInterpolationTemplateArguments(node.ArgumentList.Arguments[1], context.SemanticModel);
 
             if (result == null) {
                 return;

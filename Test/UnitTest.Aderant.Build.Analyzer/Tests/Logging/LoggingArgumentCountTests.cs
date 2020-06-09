@@ -590,6 +590,49 @@ namespace Aderant.Framework.Logging {
         }
 
         [TestMethod]
+        public void LoggingArgumentCount_Variable_Field() {
+            const string code = @"
+using System;
+using Aderant.Framework.Logging;
+
+namespace Test {
+    public class TestClass {
+        const string test = ""{0}"";
+
+        public void TestMethod(ILogWriter logWriter) {
+            logWriter.Log(
+                LogLevel.Error,
+                test,
+                new object(),
+                new AccessViolationException());
+        }
+    }
+}
+
+namespace Aderant.Framework.Logging {
+    public enum LogLevel {
+        Trace,
+        Debug,
+        Info,
+        Warning,
+        Error,
+        Fatal
+    }
+
+    public interface ILogWriter {
+        bool IsEnabled(LogLevel level);
+        object Log(LogLevel level, string message);
+        object Log(LogLevel level, string messageTemplate, params object[] detail);
+        object Log(LogLevel level, Exception exception);
+        object Log(LogLevel level, string summaryMessage, Exception exception);
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
         public void LoggingArgumentCount_Variable_Local() {
             const string code = @"
 using System;
@@ -598,7 +641,7 @@ using Aderant.Framework.Logging;
 namespace Test {
     public class TestClass {
         public void TestMethod(ILogWriter logWriter) {
-            string test = """";
+            const string test = ""{0}"";
 
             logWriter.Log(
                 LogLevel.Error,
@@ -641,90 +684,8 @@ using Aderant.Framework.Logging;
 namespace Test {
     public class TestClass {
         public void TestMethod(ILogWriter logWriter) {
-            string test = """";
+            const string test = ""{0}"";
 
-            logWriter.Log(
-                LogLevel.Error,
-                test,
-                new object(),
-                new AccessViolationException());
-        }
-    }
-}
-
-namespace Aderant.Framework.Logging {
-    public enum LogLevel {
-        Trace,
-        Debug,
-        Info,
-        Warning,
-        Error,
-        Fatal
-    }
-
-    public interface ILogWriter {
-        bool IsEnabled(LogLevel level);
-        object Log(LogLevel level, string message);
-        object Log(LogLevel level, string messageTemplate, params object[] detail);
-        object Log(LogLevel level, Exception exception);
-        object Log(LogLevel level, string summaryMessage, Exception exception);
-    }
-}
-";
-
-            VerifyCSharpDiagnostic(code);
-        }
-
-        [TestMethod]
-        public void LoggingArgumentCount_Variable_Parameter() {
-            const string code = @"
-using System;
-using Aderant.Framework.Logging;
-
-namespace Test {
-    public class TestClass {
-        public void TestMethod(ILogWriter logWriter, string test) {
-            logWriter.Log(
-                LogLevel.Error,
-                test,
-                new object(),
-                new AccessViolationException());
-        }
-    }
-}
-
-namespace Aderant.Framework.Logging {
-    public enum LogLevel {
-        Trace,
-        Debug,
-        Info,
-        Warning,
-        Error,
-        Fatal
-    }
-
-    public interface ILogWriter {
-        bool IsEnabled(LogLevel level);
-        object Log(LogLevel level, string message);
-        object Log(LogLevel level, string messageTemplate, params object[] detail);
-        object Log(LogLevel level, Exception exception);
-        object Log(LogLevel level, string summaryMessage, Exception exception);
-    }
-}
-";
-
-            VerifyCSharpDiagnostic(code);
-        }
-
-        [TestMethod]
-        public void LoggingArgumentCount_Variable_Parameter_Exception() {
-            const string code = @"
-using System;
-using Aderant.Framework.Logging;
-
-namespace Test {
-    public class TestClass {
-        public void TestMethod(ILogWriter logWriter, string test) {
             logWriter.Log(
                 LogLevel.Error,
                 test,

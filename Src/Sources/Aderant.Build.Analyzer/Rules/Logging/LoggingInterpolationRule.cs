@@ -1,11 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Aderant.Build.Analyzer.Rules.Logging {
+    /// <summary>
+    /// Responsible for reporting diagnostics associated with string interpolation in ILogWriter.Log() methods.
+    /// </summary>
+    /// <seealso cref="LoggingRuleBase" />
     public class LoggingInterpolationRule : LoggingRuleBase {
         #region Fields
 
@@ -15,6 +18,9 @@ namespace Aderant.Build.Analyzer.Rules.Logging {
 
         #region Properties
 
+        /// <summary>
+        /// Gets the descriptor.
+        /// </summary>
         public override DiagnosticDescriptor Descriptor => new DiagnosticDescriptor(
             Id,
             Title,
@@ -24,14 +30,29 @@ namespace Aderant.Build.Analyzer.Rules.Logging {
             true,
             Description);
 
+        /// <summary>
+        /// Gets the severity.
+        /// </summary>
         internal override DiagnosticSeverity Severity => DiagnosticSeverity.Error;
 
+        /// <summary>
+        /// Gets the identifier.
+        /// </summary>
         internal override string Id => DiagnosticId;
 
+        /// <summary>
+        /// Gets the title.
+        /// </summary>
         internal override string Title => "Invalid Interpolation";
 
+        /// <summary>
+        /// Gets the message format.
+        /// </summary>
         internal override string MessageFormat => Description;
 
+        /// <summary>
+        /// Gets the description.
+        /// </summary>
         internal override string Description => "Illegal use of direct interpolation. " +
                                                 "Interpolation of log messages must utilize " +
                                                 "the 'params object[]' method signature.";
@@ -73,44 +94,81 @@ namespace Aderant.Build.Analyzer.Rules.Logging {
                 return;
             }
 
-            var argumentChildNodes = new List<SyntaxNode>(DefaultCapacity);
-
             // Argument [0] is the LogLevel, thus argument [1] is the string template.
-            GetExpressionsFromChildNodes(ref argumentChildNodes, node.ArgumentList.Arguments[1]);
+            var unwrappedArgument = UnwrapParenthesizedExpressionDescending(node.ArgumentList.Arguments[1].Expression);
 
-            for (int i = 0; i < argumentChildNodes.Count; ++i) {
-                var childNode = argumentChildNodes[i];
-
-                    // $"example {"one"}"
-                if (childNode is InterpolatedStringExpressionSyntax ||
-                    // "example " + "two"
-                    childNode is BinaryExpressionSyntax ||
-                    // string.Format("example {0}", "three")
-                    GetIsInvocationStringFormat(
-                        context.SemanticModel,
-                        childNode as InvocationExpressionSyntax)) {
-                    ReportDiagnostic(
-                        context,
-                        Descriptor,
-                        childNode.GetLocation(),
-                        childNode);
-                }
+            if (GetIsConstantString(unwrappedArgument, context.SemanticModel) ||
+                GetIsConstantBinaryExpression(unwrappedArgument, context.SemanticModel)) {
+                return;
             }
+
+            ReportDiagnostic(
+                context,
+                Descriptor,
+                unwrappedArgument.GetLocation(),
+                unwrappedArgument);
         }
 
         /// <summary>
-        /// Determines if the specified <see cref="InvocationExpressionSyntax"/> is 'string.Format()'.
+        /// Determines whether the specified <see cref="SyntaxNode"/>
+        /// is a binary expression that contains only constant strings.
         /// </summary>
-        /// <param name="model">The model.</param>
         /// <param name="node">The node.</param>
-        private static bool GetIsInvocationStringFormat(
-            SemanticModel model,
-            InvocationExpressionSyntax node) {
-            return node != null &&
-                   (model.GetSymbolInfo(node).Symbol as IMethodSymbol)?
-                   .OriginalDefinition?
-                   .ToDisplayString()?
-                   .IndexOf("string.Format(", StringComparison.OrdinalIgnoreCase) != -1;
+        /// <param name="model">The model.</param>
+        private static bool GetIsConstantBinaryExpression(SyntaxNode node, SemanticModel model) {
+            var binaryExpression = node as BinaryExpressionSyntax;
+
+            if (binaryExpression == null) {
+                return false;
+            }
+
+            var left = UnwrapParenthesizedExpressionDescending(binaryExpression.Left);
+
+            bool result = left is BinaryExpressionSyntax
+                ? GetIsConstantBinaryExpression(left, model)
+                : GetIsConstantString(left, model);
+
+            if (!result) {
+                return false;
+            }
+
+            var right = UnwrapParenthesizedExpressionDescending(binaryExpression.Right);
+
+            return right is BinaryExpressionSyntax
+                ? GetIsConstantBinaryExpression(right, model)
+                : GetIsConstantString(right, model);
+        }
+
+        /// <summary>
+        /// Determines whether the specified <see cref="SyntaxNode"/> is a constant string.
+        /// </summary>
+        /// <param name="node">The node.</param>
+        /// <param name="model">The model.</param>
+        private static bool GetIsConstantString(SyntaxNode node, SemanticModel model) {
+            var unwrappedNode = UnwrapParenthesizedExpressionDescending(node);
+
+            if (unwrappedNode is LiteralExpressionSyntax) {
+                return true;
+            }
+
+            var invocationExpression = unwrappedNode as InvocationExpressionSyntax;
+            if (invocationExpression != null) {
+                return GetIsTextTranslation(invocationExpression.Expression as MemberAccessExpressionSyntax);
+            }
+
+            var identifier = unwrappedNode as IdentifierNameSyntax;
+
+            if (identifier == null) {
+                return false;
+            }
+
+            var symbol = model
+                .GetSymbolInfo(identifier)
+                .Symbol;
+
+            return
+                (symbol as ILocalSymbol)?.IsConst == true ||
+                (symbol as IFieldSymbol)?.IsConst == true;
         }
     }
 }

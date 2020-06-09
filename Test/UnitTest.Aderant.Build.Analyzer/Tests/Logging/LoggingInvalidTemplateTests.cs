@@ -198,6 +198,96 @@ namespace Aderant.Framework.Logging {
         }
 
         [TestMethod]
+        public void LoggingInvalidTemplate_Valid_VariableTemplate_Field() {
+            const string code = @"
+using System;
+using Aderant.Framework.Logging;
+
+namespace Test {
+    public class TestClass {
+        private const string template = ""Template: {0} {1}"";
+        private const string foo = ""Foo"";
+        private const int bar = 4;
+
+        public void TestMethod(ILogWriter logWriter) {
+                logWriter.Log(
+                LogLevel.Debug,
+                template,
+                foo,
+                bar);
+        }
+    }
+}
+
+namespace Aderant.Framework.Logging {
+    public enum LogLevel {
+        Trace,
+        Debug,
+        Info,
+        Warning,
+        Error,
+        Fatal
+    }
+
+    public interface ILogWriter {
+        bool IsEnabled(LogLevel level);
+        object Log(LogLevel level, string message);
+        object Log(LogLevel level, string messageTemplate, params object[] detail);
+        object Log(LogLevel level, Exception exception);
+        object Log(LogLevel level, string summaryMessage, Exception exception);
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void LoggingInvalidTemplate_Valid_VariableTemplate_Local() {
+            const string code = @"
+using System;
+using Aderant.Framework.Logging;
+
+namespace Test {
+    public class TestClass {
+        public void TestMethod(ILogWriter logWriter) {
+            const string template = ""Template: {0} {1}"";
+            const string foo = ""Foo"";
+            const int bar = 4;
+
+            logWriter.Log(
+                LogLevel.Error,
+                template,
+                new object(),
+                new object());
+        }
+    }
+}
+
+namespace Aderant.Framework.Logging {
+    public enum LogLevel {
+        Trace,
+        Debug,
+        Info,
+        Warning,
+        Error,
+        Fatal
+    }
+
+    public interface ILogWriter {
+        bool IsEnabled(LogLevel level);
+        object Log(LogLevel level, string message);
+        object Log(LogLevel level, string messageTemplate, params object[] detail);
+        object Log(LogLevel level, Exception exception);
+        object Log(LogLevel level, string summaryMessage, Exception exception);
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
         public void LoggingInvalidTemplate_Valid_Formatted() {
             const string code = @"
 using System;

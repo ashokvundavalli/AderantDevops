@@ -69,10 +69,85 @@ namespace Aderant.Framework.Logging {
 }
 ";
 
-            VerifyCSharpDiagnostic(
-                code,
-                // Error: "Foo" + "Bar"
-                GetDiagnostic(8, 43));
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void LoggingInterpolation_Concatenation_Field() {
+            const string code = @"
+using System;
+using Aderant.Framework.Logging;
+
+namespace Test {
+    public class TestClass {
+        const string foo = ""Foo"";
+
+        public void TestMethod(ILogWriter logWriter) {
+            logWriter.Log(LogLevel.Error, foo + ""Bar"");
+        }
+    }
+}
+
+namespace Aderant.Framework.Logging {
+    public enum LogLevel {
+        Trace,
+        Debug,
+        Info,
+        Warning,
+        Error,
+        Fatal
+    }
+
+    public interface ILogWriter {
+        bool IsEnabled(LogLevel level);
+        object Log(LogLevel level, string message);
+        object Log(LogLevel level, string messageTemplate, params object[] detail);
+        object Log(LogLevel level, Exception exception);
+        object Log(LogLevel level, string summaryMessage, Exception exception);
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void LoggingInterpolation_Concatenation_Local() {
+            const string code = @"
+using System;
+using Aderant.Framework.Logging;
+
+namespace Test {
+    public class TestClass {
+        public void TestMethod(ILogWriter logWriter) {
+            const string foo = ""Foo"";
+
+            logWriter.Log(LogLevel.Error, foo + ""Bar"");
+        }
+    }
+}
+
+namespace Aderant.Framework.Logging {
+    public enum LogLevel {
+        Trace,
+        Debug,
+        Info,
+        Warning,
+        Error,
+        Fatal
+    }
+
+    public interface ILogWriter {
+        bool IsEnabled(LogLevel level);
+        object Log(LogLevel level, string message);
+        object Log(LogLevel level, string messageTemplate, params object[] detail);
+        object Log(LogLevel level, Exception exception);
+        object Log(LogLevel level, string summaryMessage, Exception exception);
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
         }
 
         [TestMethod]
