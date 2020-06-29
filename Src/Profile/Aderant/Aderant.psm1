@@ -57,7 +57,6 @@ Initialize-Module
 [string]$global:BranchModulesDirectory = [string]::Empty
 [string]$global:BranchBinariesDirectory = [string]::Empty
 [string]$global:BranchExpertSourceDirectory = [string]::Empty
-[string]$global:BuildScriptsDirectory = [string]::Empty
 [string]$global:PackageScriptsDirectory = [string]::Empty
 [string]$global:ProductManifestPath = [string]::Empty
 [PSModuleInfo[]]$script:loadedModuleFeatures = $null
