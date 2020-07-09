@@ -37,6 +37,10 @@ namespace Aderant.Build.DependencyResolver {
                 return new NoAuthorizationHeaderHandler();
             }
 
+            if (args.Item1.IndexOf(".azureedge.net", StringComparison.OrdinalIgnoreCase) >= 0) {
+                return new NoAuthorizationHeaderHandler();
+            }
+
             return defaultHandler.Invoke(args);
         }
     }
