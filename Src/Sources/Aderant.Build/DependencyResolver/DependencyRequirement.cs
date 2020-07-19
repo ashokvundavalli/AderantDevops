@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyResolver.Models;
 
@@ -21,6 +23,8 @@ namespace Aderant.Build.DependencyResolver {
         /// </summary>
         /// <value>The source.</value>
         public GetAction Source { get; protected set; }
+
+        public DependencyGroup DependencyGroup { get; set; }
 
         /// <summary>
         /// Gets or sets the name of the requirement.
@@ -138,7 +142,32 @@ namespace Aderant.Build.DependencyResolver {
             return !Equals(left, right);
         }
 
-        public DependencyGroup DependencyGroup { get; set; }
+
+        /// <summary>
+        /// Creates groups for each dependency requirement.
+        /// </summary>
+        /// <param name="requirements">The requirements with groups or null</param>
+        /// <param name="strict">Should the group allow transitive resolution?</param>
+        public static void AssignGroup(IEnumerable<IDependencyRequirement> requirements, bool strict) {
+            HashSet<string> grouping = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var item in requirements) {
+                if (!string.IsNullOrWhiteSpace(item.Group)) {
+                    grouping.Add(item.Group);
+                }
+            }
+
+            var map = grouping.ToDictionary(g => g, s => new DependencyGroup(s, null) { Strict = strict }, StringComparer.OrdinalIgnoreCase);
+
+            foreach (var item in requirements) {
+                DependencyGroup value;
+                if (map.TryGetValue(item.Group, out value)) {
+                    if (item is IDependencyGroup g) {
+                        g.DependencyGroup = value;
+                    }
+                }
+            }
+        }
     }
 
 }

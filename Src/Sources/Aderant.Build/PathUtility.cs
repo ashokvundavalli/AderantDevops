@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Management.Automation;
 using Aderant.Build.IO;
+using Aderant.Build.Utilities;
 
 namespace Aderant.Build {
     public static class PathUtility {
@@ -18,6 +19,11 @@ namespace Aderant.Build {
         public static string DirectorySeparator { get; private set; } = Path.DirectorySeparatorChar.ToString();
 
         public static string AltDirectorySeparator { get; private set; } = Path.AltDirectorySeparatorChar.ToString();
+
+        /// <summary>
+        /// A path comparer that ignores trailing directory separator characters
+        /// </summary>
+        internal static PathComparer PathComparer { get; } = new PathComparer();
 
         /// <summary>
         /// If the given path doesn't have a trailing slash then add one.

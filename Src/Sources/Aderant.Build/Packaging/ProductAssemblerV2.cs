@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyResolver;
@@ -13,23 +12,36 @@ using Aderant.Build.Packaging.NuGet;
 using Newtonsoft.Json;
 
 namespace Aderant.Build.Packaging {
-    internal class ProductAssembler : IProductAssembler {
+    internal class ProductAssemblerV2 : IProductAssembler {
+        private static readonly string[] illegalExtensions = new string[] {
+            "._"
+        };
+
+        private static readonly string[] ignoredFiles = new[] {
+            "acknowledgements", "license", "licence", "readme",
+
+            // Custom files? Less well-known files? Should this be an external input?
+            "Web.config.install.xdt", "Web.config.uninstall.xdt"
+        };
+
         private readonly ILogger logger;
-        private VersionTracker versionTracker;
-        private string tfvcSourceGetVersion;
+        private readonly Regex regex = new Regex(@"(net)\d+\\");
+        private bool isLocalBuild;
+        private ExpertManifest manifest;
+        private SourceCodeInfo sourceCodeInfo;
         private string teamProject;
-        private string tfvcBranch;
         private string tfsBuildId;
         private string tfsBuildNumber;
-        private bool isLocalBuild;
-        private SourceCodeInfo sourceCodeInfo;
-        private ExpertManifest manifest;
-        public bool EnableVerboseLogging { get; set; }
+        private string tfvcBranch;
+        private string tfvcSourceGetVersion;
+        private VersionTracker versionTracker;
 
-        public ProductAssembler(string productManifestXml, ILogger logger) {
+        public ProductAssemblerV2(string productManifestXml, ILogger logger) {
             this.logger = logger;
             this.manifest = ExpertManifest.Parse(productManifestXml);
         }
+
+        public bool EnableVerboseLogging { get; set; }
 
         public IProductAssemblyResult AssembleProduct(
             IReadOnlyCollection<ExpertModule> modules,
@@ -40,7 +52,6 @@ namespace Aderant.Build.Packaging {
             string tfvcBranch,
             string tfsBuildId,
             string tfsBuildNumber) {
-
             // the additional TFS info will only be passed in a CI build
             if (string.IsNullOrEmpty(tfvcBranch) && string.IsNullOrEmpty(tfvcSourceGetVersion) && string.IsNullOrEmpty(teamProject) && string.IsNullOrEmpty(tfsBuildId) && string.IsNullOrEmpty(tfsBuildNumber)) {
                 this.isLocalBuild = true;
@@ -52,11 +63,10 @@ namespace Aderant.Build.Packaging {
                 this.tfsBuildNumber = tfsBuildNumber;
             }
 
-            var operation = AssembleProduct(new ProductAssemblyContext {
-                Modules = modules.Select(m => manifest.GetModule(m.Name, m.DependencyGroup)).ToList(),
-                BuildOutputs = buildOutputs,
-                ProductDirectory = productDirectory
-            });
+            var operation = AssembleProduct(
+                new ProductAssemblyContext {
+                    Modules = modules.Select(m => manifest.GetModule(m.Name, m.DependencyGroup)).ToList(), BuildOutputs = buildOutputs, ProductDirectory = productDirectory
+                });
 
             return operation;
         }
@@ -89,13 +99,16 @@ namespace Aderant.Build.Packaging {
             var fs = new RetryingPhysicalFileSystem();
 
             using (var manager = new PaketPackageManager(workingDirectory, fs, WellKnownPackageSources.Default, logger, EnableVerboseLogging)) {
-                manager.Add(context.Modules.Select(DependencyRequirement.Create));
+                var requirements = context.Modules.Select(DependencyRequirement.Create).ToList();
+                DependencyRequirement.AssignGroup(requirements, true);
+                manager.Add(requirements);
                 manager.Restore();
             }
 
             var groups = context.Modules
                 .Where(s => s.DependencyGroup != Constants.MainDependencyGroup)
                 .Select(s => s.DependencyGroup)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToArray();
 
 
@@ -114,20 +127,17 @@ namespace Aderant.Build.Packaging {
                 };
             }
 
-            var packages = fs.GetDirectories(Path.Combine(workingDirectory, "packages")).ToArray();
-            packages = packages.Where(p => p.IndexOf("Aderant.Build.Analyzer", StringComparison.OrdinalIgnoreCase) == -1).ToArray();
-
-            var licenseText = CopyPackageContentToProductDirectory(context, fs, packages, null);
+            var licenseText = CopyMainGroup(context, groups, workingDirectory, fs);
 
             foreach (var group in groups) {
                 var path = Path.Combine(workingDirectory, "packages", group);
-                packages = fs.GetDirectories(path).ToArray();
+                var packages = fs.GetDirectories(path).ToList();
 
                 if (!packages.Any()) {
                     throw new InvalidOperationException("There are no packages under path: " + path);
                 }
 
-                CopyPackageContentToProductDirectory(context, fs, packages, group);
+                licenseText = licenseText.Concat(CopyPackageContentToProductDirectory(context, fs, packages, group));
             }
 
             // write assembled information to file (for CI build)
@@ -144,61 +154,28 @@ namespace Aderant.Build.Packaging {
             return licenseText;
         }
 
-        private class SourceCodeInfo {
-            public string FileFormatVersion {
-                get; set;
-            }
-            public TfvcInfo Tfvc {
-                get; set;
-            }
-            public List<GitInfo> Git {
-                get; set;
-            }
+        private IEnumerable<string> CopyMainGroup(ProductAssemblyContext context, string[] groups, string workingDirectory, IFileSystem fs) {
+            var groupDirectories = groups.Select(g => Path.Combine(workingDirectory, "packages", g));
+
+            var packages = fs.GetDirectories(Path.Combine(workingDirectory, "packages"))
+                .ToList();
+
+            // Remove all group directories so we don't double process them
+            packages.RemoveAll(path => groupDirectories.Contains(path, PathUtility.PathComparer));
+
+            // Remove well known package
+            packages.RemoveAll(p => p.IndexOf("Aderant.Build.Analyzer", StringComparison.OrdinalIgnoreCase) >= 0);
+
+            var licenseText = CopyPackageContentToProductDirectory(context, fs, packages, null);
+            return licenseText;
         }
 
-        private class TfvcInfo {
-            public string TeamProject {
-                get; set;
-            }
-            public string Branch {
-                get; set;
-            }
-            public string ChangeSet {
-                get; set;
-            }
-            public string BuildId {
-                get; set;
-            }
-            public string BuildNumber {
-                get; set;
-            }
-        }
-
-        private class GitInfo {
-            public string Repository {
-                get; set;
-            }
-            public string Branch {
-                get; set;
-            }
-            public string CommitHash {
-                get; set;
-            }
-            public string BuildId {
-                get; set;
-            }
-            public string BuildNumber {
-                get; set;
-            }
-            public string PackageVersion {
-                get; set;
-            }
-        }
-
-        private IEnumerable<string> CopyPackageContentToProductDirectory(ProductAssemblyContext context, IFileSystem fs, string[] packages, string group) {
+        private IEnumerable<string> CopyPackageContentToProductDirectory(ProductAssemblyContext context, IFileSystem fs, List<string> packages, string group) {
             ConcurrentBag<string> licenseText = new ConcurrentBag<string>();
 
-            string[] nupkgEntries = new[] { "lib", "content" };
+            string[] nupkgEntries = new[] {
+                "lib", "content"
+            };
 
             foreach (string packageDirectory in packages) {
                 ExpertModule module = context.GetModuleByPackage(packageDirectory, group);
@@ -226,7 +203,6 @@ namespace Aderant.Build.Packaging {
                         // add Git repo source code info (for CI build)
                         if (!isLocalBuild) {
                             foreach (string file in fs.GetFiles(fs.GetFullPath(packageDirectory), "*.nuspec", true)) {
-
                                 logger.Info("Analyzing {0}", file);
 
                                 string text;
@@ -280,13 +256,8 @@ namespace Aderant.Build.Packaging {
             return licenseText;
         }
 
-        private static readonly string[] IllegalExtensions = new string[] {
-            "._"
-        };
 
         private void ProcessDirectoryCopy(IFileSystem fileSystem, string nupkgDir, string relativeDirectory, bool process) {
-            Regex regex = new Regex(@"(net)\d+\\");
-
             string[] files = fileSystem.GetFiles(nupkgDir, "*", true).ToArray();
 
             List<PathSpec> pathSpecs = new List<PathSpec>(files.Length);
@@ -295,8 +266,13 @@ namespace Aderant.Build.Packaging {
 
             foreach (string file in files) {
                 string extension = Path.GetExtension(file);
-                if (extension != null && IllegalExtensions.Contains(extension)) {
+                if (extension != null && illegalExtensions.Contains(extension)) {
                     logger.Info($"Skipping file: '{file}' due to extension.");
+                    continue;
+                }
+
+                if (ignoredFiles.Contains(Path.GetFileNameWithoutExtension(file), StringComparer.OrdinalIgnoreCase) || ignoredFiles.Contains(Path.GetFileName(file), StringComparer.OrdinalIgnoreCase)) {
+                    logger.Info($"Skipping file: '{file}' due to name.");
                     continue;
                 }
 
@@ -312,58 +288,20 @@ namespace Aderant.Build.Packaging {
                 pathSpecs.Add(pathSpec);
             }
 
-            ActionBlock<PathSpec> fileCopy = BulkCopyModule(pathSpecs);
+            ActionBlock<PathSpec> fileCopy = BulkCopyModule(fileSystem, pathSpecs);
             fileCopy.Completion
                 .ConfigureAwait(false)
                 .GetAwaiter()
                 .GetResult();
         }
 
-        public ActionBlock<PathSpec> BulkCopyModule(IEnumerable<PathSpec> pathSpecs) {
-            ExecutionDataflowBlockOptions actionBlockOptions = new ExecutionDataflowBlockOptions {
-                MaxDegreeOfParallelism = Environment.ProcessorCount,
-            };
-
-            const int hResult = -2147024816; // File already exists.
-            HashSet<string> knownPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-            ActionBlock<PathSpec> bulkCopy = new ActionBlock<PathSpec>(
-                async file => {
-                    // Break from synchronous thread context of caller to get onto thread pool thread.
-                    await Task.Yield();
-
-                    string destination = Path.GetDirectoryName(file.Destination);
-
-                    lock (knownPaths) {
-                        if (!knownPaths.Contains(destination)) {
-                            if (!Directory.Exists(destination)) {
-                                Directory.CreateDirectory(destination);
-                            }
-
-                            knownPaths.Add(destination);
-                        }
-                    }
-
-                    try {
-                        File.Copy(file.Location, file.Destination, false);
-                    } catch (IOException exception) {
-                        if (exception.HResult == hResult) {
-                            // Log a warning if the file already exists.
-                            logger.Warning(exception.Message);
-                        } else {
-                            throw;
-                        }
-                    }
-                },
-                actionBlockOptions);
-
-            foreach (PathSpec pathSpec in pathSpecs) {
-                bulkCopy.Post(pathSpec);
+        private ActionBlock<PathSpec> BulkCopyModule(IFileSystem fileSystem, IEnumerable<PathSpec> pathSpecs) {
+            try {
+                return fileSystem.BulkCopy(pathSpecs, false, false, false);
+            } catch (IOException ex) {
+                logger.LogErrorFromException(ex, false, false);
+                throw;
             }
-
-            bulkCopy.Complete();
-
-            return bulkCopy;
         }
 
         private static void ReadLicenseText(IFileSystem fs, string lib, string packageName, ConcurrentBag<string> licenseText) {
@@ -381,19 +319,39 @@ namespace Aderant.Build.Packaging {
                 }
             }
         }
-    }
 
-    internal interface IProductAssembler {
-        bool EnableVerboseLogging { get; set; }
+        private class SourceCodeInfo {
+            public string FileFormatVersion { get; set; }
 
-        IProductAssemblyResult AssembleProduct(
-            IReadOnlyCollection<ExpertModule> modules,
-            IEnumerable<string> buildOutputs,
-            string productDirectory,
-            string tfvcSourceGetVersion,
-            string teamProject,
-            string tfvcBranch,
-            string tfsBuildId,
-            string tfsBuildNumber);
+            public TfvcInfo Tfvc { get; set; }
+
+            public List<GitInfo> Git { get; set; }
+        }
+
+        private class TfvcInfo {
+            public string TeamProject { get; set; }
+
+            public string Branch { get; set; }
+
+            public string ChangeSet { get; set; }
+
+            public string BuildId { get; set; }
+
+            public string BuildNumber { get; set; }
+        }
+
+        private class GitInfo {
+            public string Repository { get; set; }
+
+            public string Branch { get; set; }
+
+            public string CommitHash { get; set; }
+
+            public string BuildId { get; set; }
+
+            public string BuildNumber { get; set; }
+
+            public string PackageVersion { get; set; }
+        }
     }
 }

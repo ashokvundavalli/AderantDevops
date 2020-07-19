@@ -216,4 +216,20 @@ SRCSRV: end ------------------------------------------------</value>
   &lt;/Modules&gt;
 &lt;/ProductManifest&gt;</value>
   </data>
+  <data name="TemplateNuspec" xml:space="preserve">
+    <value>&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd"&gt;
+  &lt;metadata&gt;
+    &lt;id&gt;$id$&lt;/id&gt;
+    &lt;description&gt;Default package for $id$&lt;/description&gt;
+    &lt;version&gt;$version$&lt;/version&gt;
+    &lt;authors&gt;Aderant&lt;/authors&gt;
+    &lt;owners&gt;Aderant&lt;/owners&gt;    
+    &lt;requireLicenseAcceptance&gt;false&lt;/requireLicenseAcceptance&gt;
+  &lt;/metadata&gt;
+  &lt;files&gt;
+    &lt;file src="bin\**" exclude="**\*paket*" target="lib" /&gt;
+  &lt;/files&gt;
+&lt;/package&gt;</value>
+  </data>
 </root>

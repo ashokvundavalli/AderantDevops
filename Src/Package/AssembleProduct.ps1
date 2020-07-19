@@ -146,16 +146,16 @@ begin {
 
                 $isSuccessfulBuild = $false
                 if (Test-Path (Join-Path -Path $pathToLatestSuccessfulBuild -ChildPath "build.succeeded")) {
-                        $isSuccessfulBuild = $true
+                     $isSuccessfulBuild = $true
                 }
 
                 if (Test-Path $successfulBuildBinModule) {
-                        $pathToLatestSuccessfulBuild = $successfulBuildBinModule
+                    $pathToLatestSuccessfulBuild = $successfulBuildBinModule
                 }
 
                 if ($isSuccessfulBuild) {
-                        Write-Debug "Returning: $pathToLatestSuccessfulBuild"
-                        return $pathToLatestSuccessfulBuild
+                    Write-Debug "Returning: $pathToLatestSuccessfulBuild"
+                    return $pathToLatestSuccessfulBuild
                 }
 
                 [string]$buildLog = Join-Path -Path (Join-Path -Path $pathToModuleAssemblyVersion -ChildPath $folderName.Name) -ChildPath "\BuildLog.txt"

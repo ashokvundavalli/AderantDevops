@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using System.Windows.Controls;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
@@ -6,16 +7,21 @@ namespace Aderant.Build.Tasks {
 
     public sealed class PrintBanner : Task {
 
-        private static string header = "╔═════════════════════════════════════════════════════════════════════╗";
+        private static string headerTemplate = "╔{0}╗";
         private static string side = "║";
-        private static string footer = "╚═════════════════════════════════════════════════════════════════════╝";
+        private static string footerTemplate = "╚{0}╝";
 
         public string Text { get; set; }
+
+        public int BannerWidth { get; set; } = 80;
 
         public override bool Execute() {
             if (string.IsNullOrWhiteSpace(Text)) {
                 return true;
             }
+
+            var header = CreateHeader(headerTemplate);
+            var footer = CreateHeader(footerTemplate);
 
             var center = header.Length / 2 + Text.Length / 2;
 
@@ -32,6 +38,11 @@ namespace Aderant.Build.Tasks {
             Log.LogMessage(MessageImportance.High, sb.ToString());
 
             return true;
+        }
+
+        private string CreateHeader(string template) {
+            var repeat = new string('═', BannerWidth);
+            return string.Format(template, repeat);
         }
     }
 

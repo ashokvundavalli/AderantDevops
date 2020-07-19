@@ -1,4 +1,6 @@
-﻿namespace Aderant.Build.Packaging.NuGet {
+﻿using System.Xml.Linq;
+
+namespace Aderant.Build.Packaging.NuGet {
     internal class Nuspec {
         private string text;
 
@@ -25,6 +27,11 @@
         /// Gets or sets the description.
         /// </summary>
         public StringNuspecValue Description { get; set; }
+
+        /// <summary>
+        /// Returns the Files XElement.
+        /// </summary>
+        public XElement Files { get; set; }
 
         public string Save() {
             return NuspecSerializer.Serialize(this, text);

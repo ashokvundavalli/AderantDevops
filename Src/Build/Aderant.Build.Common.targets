@@ -150,25 +150,6 @@
   </Target>
 
 
-  <Target Name="FindProductManifest"
-    AfterTargets="PrepareBuildEnvironment"
-    Condition="'$(IsDesktopBuild)' != 'true' And '$(ProductManifestPath)' == '' And '$(BUILD_REPOSITORY_PROVIDER)' != 'TfsGit'">
-
-    <GetBranchRootFromServerPath
-      BuildProjectFolderPath="$(BuildProjectFolderPath)">
-      <Output PropertyName="BranchRoot"
-        TaskParameter="BranchRoot" />
-    </GetBranchRootFromServerPath>
-
-    <PropertyGroup>
-      <ProductManifestServerPath>$(BranchRoot)Modules/ExpertManifest.xml</ProductManifestServerPath>
-      <ProductManifestPath>$(BuildScriptsDirectory)\ExpertManifest.xml</ProductManifestPath>
-    </PropertyGroup>
-
-    <Exec Command="TF.exe vc view /collection:$(TeamFoundationServerUrl) $(ProductManifestServerPath) /output:$(ProductManifestPath)"
-      WorkingDirectory="C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\IDE" />
-
-  </Target>
 
   <!--
     ==========================================================================================

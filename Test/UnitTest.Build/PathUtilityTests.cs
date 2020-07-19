@@ -66,15 +66,6 @@ namespace UnitTest.Build {
             Assert.AreEqual(@"Bin\Module\\", result);
         }
 
-        //[TestMethod]
-        //public void NormalizeTrailingSlashes2()
-        //{
-        //    string result = PathUtility.NormalizePath(@"Foo\\Bin\\\\\Module\\\");
-
-        //    Assert.AreEqual(@"Bin\Module\\", result);
-        //}
-
-
         [TestMethod]
         public void GetFileName() {
             string result = PathUtility.GetFileName(@"Bin\Module\");
@@ -91,4 +82,5 @@ namespace UnitTest.Build {
             Assert.AreEqual("", result);
         }
     }
+
 }

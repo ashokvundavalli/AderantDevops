@@ -73,8 +73,9 @@ namespace Aderant.Build.Packaging.NuGet {
             }
         }
 
+
         private static XElement GetElementValue(string elementName, XDocument document) {
-            return document.Descendants().First(d => String.Equals(d.Name.LocalName, elementName, StringComparison.OrdinalIgnoreCase));
+            return document.Descendants().FirstOrDefault(d => String.Equals(d.Name.LocalName, elementName, StringComparison.OrdinalIgnoreCase));
         }
 
         public void Deserialize() {
@@ -83,6 +84,7 @@ namespace Aderant.Build.Packaging.NuGet {
             nuspec.Id = new StringNuspecValue { Value = GetElementValue("id", document).Value };
             nuspec.Version = new StringNuspecValue { Value = GetElementValue("version", document).Value };
             nuspec.Description = new StringNuspecValue { Value = GetElementValue("description", document).Value };
+            nuspec.Files = GetElementValue("files", document);
         }
 
         public static string Serialize(Nuspec nuspec, string text) {
@@ -91,6 +93,10 @@ namespace Aderant.Build.Packaging.NuGet {
             GetElementValue("id", document).Value = nuspec.Id.Value;
             GetElementValue("version", document).Value = nuspec.Version.Value;
             GetElementValue("description", document).Value = nuspec.Description.Value;
+
+            if (document.Element("files") != null) {
+                document.Element("Files").ReplaceWith(nuspec.Files);
+            }
 
             return document.ToString();
         }

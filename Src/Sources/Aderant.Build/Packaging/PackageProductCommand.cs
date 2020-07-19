@@ -5,7 +5,6 @@ using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
 
 namespace Aderant.Build.Packaging {
-
     [Cmdlet("Package", "ExpertRelease")]
     [OutputType(typeof(IProductAssemblyResult))]
     public sealed class PackageExpertReleaseCommand : PSCmdlet {
@@ -50,11 +49,11 @@ namespace Aderant.Build.Packaging {
 
                 foreach (PSPropertyInfo moduleProperty in manifestEntry.Properties) {
                     if (string.Equals(moduleProperty.Name, nameof(ExpertModule.Name), StringComparison.OrdinalIgnoreCase)) {
-                        dependencyName = (string)moduleProperty.Value;
+                        dependencyName = (string) moduleProperty.Value;
                     }
 
                     if (string.Equals(moduleProperty.Name, nameof(ExpertModule.DependencyGroup), StringComparison.OrdinalIgnoreCase)) {
-                        dependencyGroup = (string)moduleProperty.Value;
+                        dependencyGroup = (string) moduleProperty.Value;
                     }
                 }
 
@@ -66,7 +65,14 @@ namespace Aderant.Build.Packaging {
             }
 
             try {
-                ProductAssembler assembler = new ProductAssembler(ProductManifestXml, new PowerShellLogger(this));
+                IProductAssembler assembler;
+
+                if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("USE_V2_ASSEMBLER"))) {
+                    assembler = new ProductAssemblerV2(ProductManifestXml, new PowerShellLogger(this));
+                } else {
+                    assembler = new ProductAssembler(ProductManifestXml, new PowerShellLogger(this));
+                }
+
                 assembler.EnableVerboseLogging = MyInvocation.BoundParameters.ContainsKey("Verbose");
                 IProductAssemblyResult result = assembler.AssembleProduct(itemMap, Folders, ProductDirectory, TfvcSourceGetVersion, TeamProject, TfvcBranch, TfsBuildId, TfsBuildNumber);
 

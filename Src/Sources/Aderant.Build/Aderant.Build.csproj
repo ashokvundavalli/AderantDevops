@@ -103,6 +103,8 @@
     <Compile Include="Commands\GetSourceTreeMetadataCommand.cs" />
     <Compile Include="Commands\GetBuildStateMetadataCommand.cs" />
     <Compile Include="DependencyAnalyzer\DirectoryNodeFactory.cs" />
+    <Compile Include="Packaging\ProductAssembler.cs" />
+    <Compile Include="Utilities\PathComparer.cs" />
     <Compile Include="Model\CommitConfiguration.cs" />
     <Compile Include="ProjectSystem\BuildReasonExtensions.cs" />
     <Compile Include="ProjectSystem\ConfiguredProjectExtensions.cs" />
@@ -341,7 +343,7 @@
     <Compile Include="Packaging\PackageVersion.cs" />
     <Compile Include="Packaging\PackResult.cs" />
     <Compile Include="Packaging\PackSpecification.cs" />
-    <Compile Include="Packaging\ProductAssembler.cs" />
+    <Compile Include="Packaging\ProductAssemblerV2.cs" />
     <Compile Include="Packaging\VersionParser.cs" />
     <Compile Include="PathUtility.cs" />
     <Compile Include="PhysicalFileSystem.cs" />
@@ -435,8 +437,6 @@
     <None Include="Scripts\undo-buildpersistence.bat" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Tasks\PowerShell.Resources\" />
-    <Folder Include="Tasks\PowerShell\Resources\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="libgit2.props">

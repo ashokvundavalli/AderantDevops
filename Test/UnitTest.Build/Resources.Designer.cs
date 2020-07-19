@@ -206,6 +206,28 @@ namespace UnitTest.Build {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+        ///&lt;package xmlns=&quot;http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd&quot;&gt;
+        ///  &lt;metadata&gt;
+        ///    &lt;id&gt;$id$&lt;/id&gt;
+        ///    &lt;description&gt;Default package for $id$&lt;/description&gt;
+        ///    &lt;version&gt;$version$&lt;/version&gt;
+        ///    &lt;authors&gt;Aderant&lt;/authors&gt;
+        ///    &lt;owners&gt;Aderant&lt;/owners&gt;    
+        ///    &lt;requireLicenseAcceptance&gt;false&lt;/requireLicenseAcceptance&gt;
+        ///  &lt;/metadata&gt;
+        ///  &lt;files&gt;
+        ///    &lt;file src=&quot;bin\**&quot; exclude=&quot;**\*paket*&quot; target=&quot;lib&quot; /&gt;
+        ///  &lt;/files&gt;
+        ///&lt;/package&gt;.
+        /// </summary>
+        internal static string TemplateNuspec {
+            get {
+                return ResourceManager.GetString("TemplateNuspec", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to type file
         ///id Aderant.Deployment.Core
         ///authors Aderant

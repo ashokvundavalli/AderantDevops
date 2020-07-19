@@ -67,6 +67,10 @@ namespace Aderant.Build {
         /// <summary>
         /// Performs a bulk file copy operation on the specified path specifications.
         /// </summary>
+        /// <param name="pathSpecs">The copy specification</param>
+        /// <param name="overwrite">If the destination exists the file will be overwritten.</param>
+        /// <param name="useSymlinks">The copy process can be optimized using symlinks.</param>
+        /// <param name="useHardlinks">The copy process can be optimized using hardlink.</param>
         ActionBlock<PathSpec> BulkCopy(IEnumerable<PathSpec> pathSpecs, bool overwrite, bool useSymlinks = false, bool useHardlinks = false);
 
         void ExtractZipToDirectory(string sourceArchiveFileName, string destination, bool overwrite = false);

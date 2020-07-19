@@ -268,7 +268,7 @@ namespace Aderant.Build {
 
         public ActionBlock<PathSpec> BulkCopy(IEnumerable<PathSpec> pathSpecs, bool overwrite, bool useSymlinks = false, bool useHardlinks = false) {
             ExecutionDataflowBlockOptions actionBlockOptions = new ExecutionDataflowBlockOptions {
-                MaxDegreeOfParallelism = Environment.ProcessorCount,
+                MaxDegreeOfParallelism = ParallelismHelper.MaxDegreeOfParallelism
             };
 
             HashSet<string> knownPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);

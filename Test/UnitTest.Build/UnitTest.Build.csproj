@@ -118,7 +118,9 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="DependencyResolver\DependencyRequirementTests.cs" />
     <Compile Include="DependencyResolver\ResolverWorkflowTests.cs" />
+    <Compile Include="Utilities\PathComparerTests.cs" />
     <Compile Include="PipelineService\BuildPipelineServiceTests.cs" />
     <Compile Include="ProjectSystem\UnresolvedBuildDependencyProjectReferenceTests.cs" />
     <Compile Include="ProjectSystem\WixReferenceServiceTests.cs" />

@@ -29,13 +29,13 @@ namespace UnitTest.Build.Packaging {
         public void When_no_files_are_versioned_a_default_is_returned() {
             var fileVersionAnalyzer = new Mock<FileVersionAnalyzer>();
             var fs = new Mock<IFileSystem2>();
-          
+
             var analyzer = new VersionAnalyzer(new NullLogger(), fs.Object);
             analyzer.Analyzer = fileVersionAnalyzer.Object;
 
             var version = analyzer.Execute("MyDir");
 
-            Assert.AreEqual(new Version(1, 0, 0), version);
+            Assert.IsNull(version);
         }
     }
 }

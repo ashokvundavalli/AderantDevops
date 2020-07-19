@@ -1,5 +1,6 @@
 ﻿using Aderant.Build.Packaging.NuGet;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Xml.Linq;
 
 namespace UnitTest.Build.Packaging {
     [TestClass]
@@ -16,6 +17,15 @@ namespace UnitTest.Build.Packaging {
             spec.Version.ReplaceToken("$version$", "Foo");
 
             Assert.AreEqual("8.1.0-Foo", spec.Version.Value);
+        }
+
+        [TestMethod]
+        public void SerializeNuspec() {
+            Nuspec nuspec = new Nuspec();
+
+            string result = NuspecSerializer.Serialize(nuspec, Resources.TemplateNuspec);
+
+            Assert.AreEqual(XDocument.Parse(Resources.TemplateNuspec).ToString(), result);
         }
     }
 }
