@@ -198,7 +198,7 @@ function GetSourceTreeMetadata {
     [string]$sourceBranch = [string]::Empty
     [string]$targetBranch = [string]::Empty
 
-    if (-not $context.IsDesktopBuild) {      
+    if (-not $context.IsDesktopBuild) {
         $metadata = $context.BuildMetadata
         $sourceBranch = $metadata.ScmBranch;
         $sourceCommit = $context.BuildMetadata.SourceCommit
@@ -302,16 +302,27 @@ function PrepareEnvironment($BuildScriptsDirectory, $isBuildAgent) {
         }
         Set-ItemProperty -Path "$lockDownPath\Settings" -Name "LOCALMACHINE_CD_UNLOCK" -Value 0 -Force | Out-Null
 
-        # To avoid runtime problems by binding to interesting assemblies, we delete this so MSBuild will always try to bind to our version of WCF and not one found on the computer somewhere
-        $wcfPath32 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319\AssemblyFoldersEx\WCF Data Services Standalone Assemblies"
-        $wcfPath64 = "HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319\AssemblyFoldersEx\WCF Data Services Standalone Assemblies"
-        if (Test-Path $wcfPath32) {
-            Remove-Item -Path $wcfPath32 -Recurse
-        }
+        # To avoid runtime problems by binding to interesting assemblies, we delete this so MSBuild will always try to bind to our versions and not one found on the computer somewhere
 
-        if (Test-Path $wcfPath64) {
-            Remove-Item -Path $wcfPath64 -Recurse
-        }
+        $exFoldersToAvoid = @(
+        "WCF Data Services Standalone Assemblies",
+        "Windows Azure Libraries for .NET v2.9 .NET 4.0 Storage client Reference Assemblies for Visual Studio",
+        "Windows Azure Libraries for .NET v2.9 .NET 4.0 Service Bus client Reference Assemblies for Visual Studio",
+        "Windows Azure Libraries for .NET v2.9 .NET 4.0 Diagnostics client Reference Assemblies for Visual Studio",
+        "Windows Azure Libraries for .NET v2.9 .NET 4.0 Caching client Reference Assemblies for Visual Studio"
+        )
+
+        $exFoldersToAvoid.ForEach({
+            $path32 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319\AssemblyFoldersEx\$_"
+            $path64 = "HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319\AssemblyFoldersEx\$_"
+            if (Test-Path $path64) {
+                Remove-Item -Path $path64 -Recurse
+            }
+
+            if (Test-Path $path32) {
+                Remove-Item -Path $path32 -Recurse
+            }
+        })
 
         Optimize-BuildEnvironment
     } finally {
