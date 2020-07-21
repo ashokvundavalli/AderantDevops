@@ -49,7 +49,7 @@ namespace Aderant.Build.Commands {
 
             string currentDirectory = SessionState.Path.CurrentFileSystemLocation.Path;
             string repository = Repository.Discover(currentDirectory);
-            
+
             if (string.IsNullOrWhiteSpace(repository)) {
                 ThrowTerminatingError(new ErrorRecord(new LibGit2SharpException("Please use the Get-Dependencies command in a git repository."), string.Empty, ErrorCategory.InvalidArgument, nameof(repository)));
             }
@@ -66,7 +66,8 @@ namespace Aderant.Build.Commands {
             Tasks.GetDependencies getDependenciesTask = new Tasks.GetDependencies {
                 ProductManifest = fileSystem.FileExists(productManifest) ? productManifest : null,
                 BranchConfigFile = fileSystem.FileExists(branchConfig) ? branchConfig : null,
-                ModulesRootPath = root
+                ModulesRootPath = root,
+                EnableVerboseLogging = MyInvocation.BoundParameters.ContainsKey("Verbose") || MyInvocation.UnboundArguments.Contains("Verbose")
             };
 
             string[] modulesInBuild = GetModulesInBuild(root, currentDirectory, getDependenciesTask);
@@ -194,7 +195,7 @@ namespace Aderant.Build.Commands {
 
             string dependenciesTarget = Path.Combine(root, dependenciesDirectory);
             string packagesTarget = Path.Combine(dependenciesTarget, "packages");
-            
+
             foreach (string directory in directories) {
                 if (string.Equals(root, directory, StringComparison.OrdinalIgnoreCase)) {
                     continue;

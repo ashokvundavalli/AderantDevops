@@ -347,8 +347,17 @@ function LoadLibGit2Sharp([string]$buildToolsDirectory) {
 }
 
 function SetNuGetProviderPath([string]$buildToolsDirectory) {
+    $currentVariable = [System.Environment]::GetEnvironmentVariable("NUGET_CREDENTIALPROVIDERS_PATH")
+    if (-not ([string]::IsNullOrWhiteSpace($currentVariable))) {
+        return
+    }
+
     # Submodules are initialized asynchronously so this path may not exist when this function is called
     $credentialProviderPath = [System.IO.Path]::Combine($buildToolsDirectory, "NuGet.CredentialProvider")
+    if (-not ([System.IO.Path]::IsPathRooted($credentialProviderPath))) {
+        throw ('Credential provider path must be rooted. Input was: ' + $buildToolsDirectory)
+    }
+
     [System.Environment]::SetEnvironmentVariable("NUGET_CREDENTIALPROVIDERS_PATH", $credentialProviderPath, [System.EnvironmentVariableTarget]::Process)
 }
 
@@ -485,12 +494,10 @@ function EnsureModuleLoaded() {
     }
 }
 
-
 try {
     [void][Aderant.Build.BuildOperationContext]
     # The minimum set needed to not fail.
     EnsureModuleLoaded
-    SetNuGetProviderPath
     return
 } catch {
     # Type not found - we need to bootstrap
@@ -566,7 +573,6 @@ try {
     EnsureModuleLoaded
     LoadLibGit2Sharp $assemblyPathRoot
     LoadVstsTaskLibrary
-    SetNuGetProviderPath $assemblyPathRoot
     EnsureClientCertificateAvailable
 
     # Endpoints are unavailable in the event Initialize-BuildEnvironment is not loaded from the BuildPipeline process.

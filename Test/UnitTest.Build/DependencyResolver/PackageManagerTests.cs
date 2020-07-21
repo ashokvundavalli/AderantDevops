@@ -44,24 +44,6 @@ namespace UnitTest.Build.DependencyResolver {
         }
 
         [TestMethod]
-        public void Auckland_package_server_is_listed_first() {
-            var fs = new Mock<IFileSystem2>();
-            fs.Setup(s => s.Root).Returns(GetTestDirectoryPath());
-            string[] packageManagerLines;
-            using (var packageManager = CreatePackageManager(fs, new WellKnownPackageSources.NonAzureHostedSources())) {
-                packageManager.Add(
-                    new[] {
-                        DependencyRequirement.Create("Foo", "Main"),
-                        DependencyRequirement.Create("Foo", "Bar"),
-                    });
-
-                packageManagerLines = packageManager.Lines;
-            }
-
-            Assert.AreEqual("source " + Constants.PackageServerUrl, packageManagerLines[0]);
-        }
-
-        [TestMethod]
         public void Azure_package_server_is_listed_first() {
             var fs = new Mock<IFileSystem2>();
             fs.Setup(s => s.Root).Returns(GetTestDirectoryPath());
@@ -134,9 +116,8 @@ nuget Gotta.Have.It 4.20 ci";
 
                 packageManagerLines = packageManager.Lines;
             }
-
-            Assert.AreEqual($"source {Constants.PackageServerUrl}", packageManagerLines[0]);
-            Assert.AreEqual($"source {Constants.DatabasePackageUri}", packageManagerLines[1]);
+            
+            Assert.AreEqual($"source {Constants.DatabasePackageUri}", packageManagerLines[0]);
         }
 
         [TestMethod]

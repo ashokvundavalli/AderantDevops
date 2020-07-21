@@ -16,8 +16,6 @@ namespace Aderant.Build {
         /// </summary>
         public static string ModulesDirectory = "Modules";
 
-        public static string PackageServerUrl = "http://packages.ap.aderant.com/packages/nuget";
-
         public static string PackageServerUrlV3 = "https://expertpackages.azurewebsites.net/v3/index.json";
 
         public static string PackageRepositoryUri = @"\\svfp311\PackageRepository\";

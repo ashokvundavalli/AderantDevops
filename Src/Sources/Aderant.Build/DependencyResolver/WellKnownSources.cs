@@ -52,7 +52,6 @@ namespace Aderant.Build.DependencyResolver {
             static NonAzureHostedSources() {
                 Sources = new List<PackageSource> {
                     new PackageSource("DatabasePackages", Constants.DatabasePackageUri),
-                    new PackageSource("Packages", Constants.PackageServerUrl),
                 };
             }
 

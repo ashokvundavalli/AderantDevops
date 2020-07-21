@@ -1,6 +1,6 @@
 <#
 	This script enables write caching and disables write cache buffer flushing to improve disk performance
-	at the expensive of reliablity
+	at the expensive of reliability
 #>
 
 $DiskNumbersToModify = (0)

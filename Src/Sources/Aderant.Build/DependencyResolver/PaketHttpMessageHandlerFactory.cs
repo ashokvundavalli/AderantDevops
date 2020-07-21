@@ -2,8 +2,12 @@
 using Microsoft.FSharp.Core;
 using Paket;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Reflection;
+using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -41,20 +45,67 @@ namespace Aderant.Build.DependencyResolver {
                 return new NoAuthorizationHeaderHandler();
             }
 
+            var uri = new Uri(args.Item1);
+            if (string.Equals(uri.Host, "expertpackages.azurewebsites.net", StringComparison.OrdinalIgnoreCase)) {
+                return new CertificateAuthenticationHandler();
+            }
+
             return defaultHandler.Invoke(args);
+        }
+    }
+
+    internal class CertificateAuthenticationHandler : HttpClientHandler {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
+            HttpClientHandlerHelper.EnableAutoDecompression(this);
+            HttpClientHandlerHelper.EnableTls(this);
+
+            ClientCertificateOptions = ClientCertificateOption.Manual;
+            ClientCertificates.AddRange(GetClientCertificates().ToArray());
+
+            return base.SendAsync(request, cancellationToken);
+        }
+
+
+        internal static IEnumerable<X509Certificate2> GetClientCertificates() {
+            X509Certificate2Collection results;
+            using (var store = new X509Store(StoreName.My, StoreLocation.CurrentUser)) {
+                store.Open(OpenFlags.OpenExistingOnly | OpenFlags.ReadOnly);
+
+                results = store.Certificates.Find(X509FindType.FindByApplicationPolicy, "1.3.6.1.5.5.7.3.2", true);
+            }
+
+            foreach (var cert in results) {
+                if (cert.HasPrivateKey) {
+                    var name = cert.GetNameInfo(X509NameType.SimpleName, true);
+                    if (name != null && name.IndexOf("Aderant", StringComparison.OrdinalIgnoreCase) >= 0) {
+                        yield return cert;
+                    }
+                }
+            }
         }
     }
 
     internal class NoAuthorizationHeaderHandler : HttpClientHandler {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
-            AutomaticDecompression = (DecompressionMethods.GZip | DecompressionMethods.Deflate);
+            HttpClientHandlerHelper.EnableAutoDecompression(this);
+            HttpClientHandlerHelper.EnableTls(this);
 
             request.Headers.Authorization = null;
 
             // If we get x-ms-error-code: BlobNotFound we should probably do something smart on the next request
             return base.SendAsync(request, cancellationToken);
         }
+    }
 
-        public static HttpMessageHandler Default { get; } = new NoAuthorizationHeaderHandler();
+    internal class HttpClientHandlerHelper {
+        public static void EnableAutoDecompression(HttpClientHandler handler) {
+            handler.AutomaticDecompression = (DecompressionMethods.GZip | DecompressionMethods.Deflate);
+        }
+
+        public static void EnableTls(HttpClientHandler handler) {
+            if (!handler.SslProtocols.HasFlag(SslProtocols.Tls12)) {
+                handler.SslProtocols = handler.SslProtocols & SslProtocols.Tls12;
+            }
+        }
     }
 }
