@@ -346,21 +346,6 @@ function LoadLibGit2Sharp([string]$buildToolsDirectory) {
     [void][System.Reflection.Assembly]::LoadFrom("$buildToolsDirectory\LibGit2Sharp.dll")
 }
 
-function SetNuGetProviderPath([string]$buildToolsDirectory) {
-    $currentVariable = [System.Environment]::GetEnvironmentVariable("NUGET_CREDENTIALPROVIDERS_PATH")
-    if (-not ([string]::IsNullOrWhiteSpace($currentVariable))) {
-        return
-    }
-
-    # Submodules are initialized asynchronously so this path may not exist when this function is called
-    $credentialProviderPath = [System.IO.Path]::Combine($buildToolsDirectory, "NuGet.CredentialProvider")
-    if (-not ([System.IO.Path]::IsPathRooted($credentialProviderPath))) {
-        throw ('Credential provider path must be rooted. Input was: ' + $buildToolsDirectory)
-    }
-
-    [System.Environment]::SetEnvironmentVariable("NUGET_CREDENTIALPROVIDERS_PATH", $credentialProviderPath, [System.EnvironmentVariableTarget]::Process)
-}
-
 function DownloadPaket([string]$commit) {
     $bootstrapper = "$BuildScriptsDirectory\paket.bootstrapper.exe"
 
