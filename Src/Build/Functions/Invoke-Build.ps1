@@ -270,7 +270,12 @@ function GetBuildStateMetadata($context) {
         $context.BuildMetadata.ScmBranch = $scmBranch
     }
 
-    $buildState = Get-BuildStateMetadata -BucketIds $ids -Tags $tags -DropLocation $context.DropLocationInfo.BuildCacheLocation -ScmBranch $context.BuildMetadata.ScmBranch
+    [string]$targetBranch = $null
+    if ($context.BuildMetadata.IsPullRequest) {
+        $targetBranch = $context.BuildMetadata.PullRequest.TargetBranch
+    }
+
+    $buildState = Get-BuildStateMetadata -BucketIds $ids -Tags $tags -DropLocation $context.DropLocationInfo.BuildCacheLocation -ScmBranch $context.BuildMetadata.ScmBranch -TargetBranch $targetBranch
 
     $context.BuildStateMetadata = $buildState
 

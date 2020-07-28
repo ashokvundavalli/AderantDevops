@@ -445,13 +445,16 @@ namespace Aderant.Build.Packaging {
         /// </summary>
         public bool ArtifactRestoreSkipped { get; set; }
 
-        public BuildStateMetadata GetBuildStateMetadata(string[] bucketIds, string dropLocation, string scmBranch, CancellationToken token = default(CancellationToken)) {
-            return GetBuildStateMetadata(bucketIds, null, dropLocation, scmBranch, token);
+        public BuildStateMetadata GetBuildStateMetadata(string[] bucketIds, string dropLocation, string scmBranch, string targetBranch, CancellationToken token = default(CancellationToken)) {
+            return GetBuildStateMetadata(bucketIds, null, dropLocation, scmBranch, targetBranch, token);
         }
 
-        public BuildStateMetadata GetBuildStateMetadata(string[] bucketIds, string[] tags, string dropLocation, string scmBranch, CancellationToken token = default(CancellationToken)) {
+        public BuildStateMetadata GetBuildStateMetadata(string[] bucketIds, string[] tags, string dropLocation, string scmBranch, string targetBranch, CancellationToken token = default(CancellationToken)) {
             if (bucketIds == null) {
                 throw new ArgumentNullException(nameof(bucketIds));
+            }
+            if (string.IsNullOrWhiteSpace(dropLocation)) {
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(dropLocation));
             }
 
             if (tags != null && bucketIds.Length > 0 && tags.Length != 0) {
@@ -468,10 +471,15 @@ namespace Aderant.Build.Packaging {
             logger.Info($"Querying prebuilt artifacts from: {dropLocation}");
 
             using (PerformanceTimer.Start(duration => logger.Info($"{nameof(GetBuildStateMetadata)} completed in: {duration.ToString()} ms"))) {
-
                 var metadata = new BuildStateMetadata();
                 var files = new List<BuildStateFile>();
                 metadata.BuildStateFiles = files;
+
+                logger.Info($"Source branch: {scmBranch}");
+
+                if (!string.IsNullOrWhiteSpace(targetBranch)) {
+                    logger.Info($"Target branch: {targetBranch}");
+                }
 
                 foreach (var bucketId in bucketIds) {
                     token.ThrowIfCancellationRequested();
@@ -508,7 +516,7 @@ namespace Aderant.Build.Packaging {
                                 file.Location = folder;
 
                                 string reason;
-                                if (IsFileTrustworthy(scmBranch, file, out reason)) {
+                                if (IsFileTrustworthy(scmBranch, targetBranch, file, out reason)) {
                                     logger.Info($"Candidate-> {stateFile}:{reason}");
                                     files.Add(file);
                                 } else {
@@ -527,6 +535,10 @@ namespace Aderant.Build.Packaging {
         }
 
         internal static bool IsFileTrustworthy(string scmBranch, BuildStateFile file, out string reason) {
+            return IsFileTrustworthy(scmBranch, null, file, out reason);
+        }
+
+        internal static bool IsFileTrustworthy(string scmBranch, string targetBranch, BuildStateFile file, out string reason) {
             if (CheckForRootedPaths(file)) {
                 reason = "Corrupt.";
                 return false;
@@ -542,11 +554,21 @@ namespace Aderant.Build.Packaging {
                 reason = "No Artifacts.";
                 return false;
             }
-
-            if (!string.IsNullOrWhiteSpace(scmBranch) && !scmBranch.Equals(file.ScmBranch)) {
-                reason = $"Different ScmBranch (source: {scmBranch}, artifact: {file.ScmBranch}).";
+            
+            if (!string.IsNullOrWhiteSpace(scmBranch) && !string.Equals(scmBranch, file.ScmBranch)) {
+                if (!string.IsNullOrWhiteSpace(targetBranch)) {
+                    if (string.Equals(targetBranch, file.ScmBranch)) {
+                        reason = "Artifact matches target branch.";
+                    } else {
+                        reason = $"Artifact does not match source or target branch (artifact: {file.ScmBranch})";
+                        return false;
+                    }
+                } else {
+                    reason = $"Different source branch (artifact: {file.ScmBranch}).";
+                    return false;
+                }
             } else {
-                reason = "Acceptable match.";
+                reason = "Artifact matches source branch.";
             }
 
             return true;

@@ -26,10 +26,14 @@ namespace Aderant.Build.Commands {
         [ValidateNotNullOrEmpty]
         public string ScmBranch { get; set; }
 
+        [Parameter(Mandatory = false, HelpMessage = "The target branch used to validate artifacts.")]
+        public string TargetBranch { get; set; }
+
         protected override void ProcessRecord() {
             cancellationTokenSource = new CancellationTokenSource();
             var service = new ArtifactService(new PowerShellLogger(this));
-            var metadata = service.GetBuildStateMetadata(BucketIds, Tags, DropLocation, ScmBranch, cancellationTokenSource.Token);
+
+            var metadata = service.GetBuildStateMetadata(BucketIds, Tags, DropLocation, ScmBranch, TargetBranch, cancellationTokenSource.Token);
 
             if (metadata.BuildStateFiles != null) {
                 WriteInformation("Found " + metadata.BuildStateFiles.Count + " state files", null);

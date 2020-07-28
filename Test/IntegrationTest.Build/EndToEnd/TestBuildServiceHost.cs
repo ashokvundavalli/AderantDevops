@@ -129,9 +129,9 @@ namespace IntegrationTest.Build.EndToEnd {
             var buildStateMetadata = artifactService
                 .GetBuildStateMetadata(
                     context.SourceTreeMetadata.GetBuckets().Select(s => s.Id).ToArray(),
-                    null,
                     context.DropLocationInfo.BuildCacheLocation,
-                    context.BuildMetadata.ScmBranch);
+                    context.BuildMetadata.ScmBranch,
+                    null);
 
             Assert.AreNotEqual(0, buildStateMetadata.BuildStateFiles.Count);
 

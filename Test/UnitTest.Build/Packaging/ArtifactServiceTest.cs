@@ -225,7 +225,7 @@ namespace UnitTest.Build.Packaging {
             };
 
             Assert.IsTrue(ArtifactService.IsFileTrustworthy("refs/heads/master", buildStateFile, out string reason));
-            Assert.IsTrue(reason.IndexOf("Acceptable match", StringComparison.OrdinalIgnoreCase) != -1);
+            Assert.IsTrue(reason.IndexOf("Artifact matches", StringComparison.OrdinalIgnoreCase) != -1);
         }
 
         [TestMethod]
@@ -257,6 +257,23 @@ namespace UnitTest.Build.Packaging {
         }
 
         [TestMethod]
+        public void IsFileTrustworthy_Valid_ScmBranch() {
+            var buildStateFile = new BuildStateFile {
+                ScmBranch = "refs/heads/master",
+                Outputs = new Dictionary<string, ProjectOutputSnapshot>(1) {
+                    { "a", null }
+                },
+                Artifacts = new ArtifactCollection {
+                    { "a", null }
+                }
+            };
+
+            Assert.IsTrue(ArtifactService.IsFileTrustworthy("refs/heads/master", buildStateFile, out string reason));
+            Assert.IsNotNull(reason);
+            Assert.IsTrue(reason.IndexOf("Artifact matches", StringComparison.OrdinalIgnoreCase) != -1);
+        }
+
+        [TestMethod]
         public void IsFileTrustworthy_Invalid_ScmBranch() {
             var buildStateFile = new BuildStateFile {
                 ScmBranch = "refs/heads/update/82SP2",
@@ -268,9 +285,43 @@ namespace UnitTest.Build.Packaging {
                 }
             };
 
-            Assert.IsTrue(ArtifactService.IsFileTrustworthy("refs/heads/master", buildStateFile, out string reason));
+            Assert.IsFalse(ArtifactService.IsFileTrustworthy("refs/heads/master", buildStateFile, out string reason));
             Assert.IsNotNull(reason);
-            Assert.IsTrue(reason.IndexOf("ScmBranch", StringComparison.OrdinalIgnoreCase) != -1);
+            Assert.IsTrue(reason.IndexOf("Different source", StringComparison.OrdinalIgnoreCase) != -1);
+        }
+
+        [TestMethod]
+        public void IsFileTrustworthy_Valid_TargetBranch() {
+            var buildStateFile = new BuildStateFile {
+                ScmBranch = "refs/heads/master",
+                Outputs = new Dictionary<string, ProjectOutputSnapshot>(1) {
+                    { "a", null }
+                },
+                Artifacts = new ArtifactCollection {
+                    { "a", null }
+                }
+            };
+
+            Assert.IsTrue(ArtifactService.IsFileTrustworthy("refs/pull/000000/merge", "refs/heads/master", buildStateFile, out string reason));
+            Assert.IsNotNull(reason);
+            Assert.IsTrue(reason.IndexOf("Artifact matches", StringComparison.OrdinalIgnoreCase) != -1);
+        }
+
+        [TestMethod]
+        public void IsFileTrustworthy_Invalid_TargetBranch() {
+            var buildStateFile = new BuildStateFile {
+                ScmBranch = "refs/heads/update/82SP2",
+                Outputs = new Dictionary<string, ProjectOutputSnapshot>(1) {
+                    { "a", null }
+                },
+                Artifacts = new ArtifactCollection {
+                    { "a", null }
+                }
+            };
+
+            Assert.IsFalse(ArtifactService.IsFileTrustworthy("refs/pull/000000/merge", "refs/heads/master", buildStateFile, out string reason));
+            Assert.IsNotNull(reason);
+            Assert.IsTrue(reason.IndexOf("Artifact does not match", StringComparison.OrdinalIgnoreCase) != -1);
         }
     }
 }
