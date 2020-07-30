@@ -104,7 +104,7 @@ namespace Aderant.Build.Commands {
             string content = fileSystem.ReadAllText(reSharperSettingsFile);
 
             List<Action<string>> actions = new List<Action<string>> {
-                directory => HardLinkEditorConfigFile(configFile, directory),
+                directory => LinkEditorConfigFile(configFile, directory),
                 directory => CopyReSharperSettings(content, directory, buildScriptsDirectory)
             };
 
@@ -115,14 +115,21 @@ namespace Aderant.Build.Commands {
             return ReservedDirectories.Contains(Path.GetFileName(path), StringComparer.OrdinalIgnoreCase);
         }
 
-        internal void HardLinkEditorConfigFile(string configFile, string directory) {
+        internal void LinkEditorConfigFile(string configFile, string directory) {
             if (IsReservedDirectory(directory)) {
                 return;
             }
 
             string destinationLink = Path.Combine(directory, EditorConfig);
-            logger.Info($"Hard linking {EditorConfig} file to: '{destinationLink}'.");
-            fileSystem.CopyViaLink(configFile, destinationLink, PhysicalFileSystem.createHardlink);
+
+            if (!string.Equals(Path.GetPathRoot(configFile), Path.GetPathRoot(destinationLink))) {
+                // Hard links cannot span drives.
+                logger.Info($"Creating symbolic link for file: '{EditorConfig}' to: '{destinationLink}'.");
+                fileSystem.CopyViaLink(configFile, destinationLink, PhysicalFileSystem.createSymlinkLink);
+            } else {
+                logger.Info($"Creating hard link file: '{EditorConfig}' to: '{destinationLink}'.");
+                fileSystem.CopyViaLink(configFile, destinationLink, PhysicalFileSystem.createHardlink);
+            }
         }
 
         internal void CopyReSharperSettings(string content, string destination, string buildScriptsDirectory) {

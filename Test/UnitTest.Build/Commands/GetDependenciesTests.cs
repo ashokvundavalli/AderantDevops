@@ -39,7 +39,7 @@ namespace UnitTest.Build.Commands {
 
             Directory.CreateDirectory(destinationDirectory);
 
-            getDependencies.HardLinkEditorConfigFile(Path.Combine(TestContext.DeploymentDirectory, GetDependencies.EditorConfig), destinationDirectory);
+            getDependencies.LinkEditorConfigFile(Path.Combine(TestContext.DeploymentDirectory, GetDependencies.EditorConfig), destinationDirectory);
 
             Assert.IsTrue(File.Exists(Path.Combine(destinationDirectory, GetDependencies.EditorConfig)));
         }
