@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
@@ -31,7 +32,12 @@ namespace Aderant.Build.Tasks {
         [Output]
         public ITaskItem[] ChangedFiles {
             get {
-                return Context.SourceTreeMetadata.Changes.Select(x => (ITaskItem)new TaskItem(x.FullPath)).ToArray();
+                if (Context.SourceTreeMetadata.Changes != null) {
+                    return Context.SourceTreeMetadata.Changes.Select(x => (ITaskItem)new TaskItem(x.FullPath))
+                        .ToArray();
+                }
+                    
+                return Array.Empty<ITaskItem>();
             }
         }
 
