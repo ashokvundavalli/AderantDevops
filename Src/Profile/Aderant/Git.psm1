@@ -1,6 +1,6 @@
 $currentUser = [Security.Principal.WindowsPrincipal]([Security.Principal.WindowsIdentity]::GetCurrent())
 $isAdminProcess = $currentUser.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-$adminHeader = if ($isAdminProcess) { 'Administrator: ' } else { '' }
+$adminHeader = if ($isAdminProcess) { 'Administrator: ' } else { [string]::Empty }
 
 function global:Enable-GitPrompt {
     Function global:Prompt {
