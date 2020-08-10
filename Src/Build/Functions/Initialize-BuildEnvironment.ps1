@@ -42,8 +42,8 @@ function SetAlternativeStreamValue {
     Set-Content -Path $File -Value $Value -Stream $StreamName
 }
 
-Set-StrictMode -Version "Latest"
-$buildCommitStreamName = "Build.Commit"
+Set-StrictMode -Version 'Latest'
+[string]$buildCommitStreamName = 'Build.Commit'
 
 function DoActionIfNeeded([scriptblock]$action, [string]$file) {
     $version = GetAlternativeStreamValue -File $file -StreamName $buildCommitStreamName
@@ -60,8 +60,15 @@ function DoActionIfNeeded([scriptblock]$action, [string]$file) {
     }
 }
 
-function BuildProjects([string]$mainAssembly, [bool]$forceCompile, [string]$commit) {
-    $msbuildPath = . "$PSScriptRoot\Resolve-MSBuild" "*" "x86"
+function BuildProjects {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$mainAssembly,
+        [Parameter(Mandatory=$true)][ValidateNotNull()][bool]$forceCompile,
+        [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$commit
+    )
+
+    [string]$msbuildPath = . "$PSScriptRoot\Resolve-MSBuild.ps1" -Version '*' -Bitness 'x86'
 
     [void][System.Reflection.Assembly]::LoadFrom("$msbuildPath\Microsoft.Build.dll")
     [void][System.Reflection.Assembly]::LoadFrom("$msbuildPath\Microsoft.Build.Engine.dll")
@@ -71,18 +78,18 @@ function BuildProjects([string]$mainAssembly, [bool]$forceCompile, [string]$comm
     $info = [System.IO.FileInfo]::new($mainAssembly)
 
     if ($info.Exists) {
-        # Should a build fail we may end up with a zero byte file
+        # Should a build fail we may end up with a zero byte file.
         if ($info.Length -gt 0) {
-          if ($forceCompile -eq $false) {
-              return
-          }
+            if ($forceCompile -eq $false) {
+                return
+            }
 
-          $buildCommit = GetAlternativeStreamValue $info.FullName $buildCommitStreamName
+            $buildCommit = GetAlternativeStreamValue $info.FullName $buildCommitStreamName
 
-          if ($buildCommit -eq $commit) {
-              Write-Debug "Skipped compiling $info as it was for your current commit."
-              return
-          }
+            if ($buildCommit -eq $commit) {
+                Write-Debug "Skipped compiling $info as it was for your current commit."
+                return
+            }
         }
     }
 
@@ -98,71 +105,14 @@ function BuildProjects([string]$mainAssembly, [bool]$forceCompile, [string]$comm
     $target = "PrepareBuildEnvironment"
     $projectPath = [System.IO.Path]::Combine($BuildScriptsDirectory, "Aderant.Build.Common.targets")
 
-    $bootstrap = {
-        try {
-            if ($msbuildPath.Contains("2017")) {
-                # 2017 is a mess of binding redirects so give up and invoke the compiler as a tool - this is slower than invoking it in-proc
-                & "$msbuildPath\MSBuild.exe" $projectPath "/t:$target" "/p:project-set=minimal" "/p:BuildScriptsDirectory=$BuildScriptsDirectory" "/nr:false"
-                return
-            }
-
-            $logger = [Microsoft.Build.BuildEngine.ConsoleLogger]::new()
-            if ($DebugPreference -eq 'Continue' -or $VerbosePreference -eq 'Continue') {
-                $logger.Verbosity = [Microsoft.Build.Framework.LoggerVerbosity]::Normal
-            } else {
-                $logger.Verbosity = [Microsoft.Build.Framework.LoggerVerbosity]::Quiet
-            }
-
-            $arraylog = New-Object collections.generic.list[Microsoft.Build.Framework.ILogger]
-            $arraylog.Add($logger)
-
-            $globals = [System.Collections.Generic.Dictionary`2[System.String,System.String]]::new()
-            $globals.Add("BuildScriptsDirectory", $BuildScriptsDirectory)
-            $globals.Add("nologo", $null)
-            $globals.Add("nr", "false")
-            $globals.Add("m", $null)
-            $globals.Add("project-set", "minimal")
-
-            $params = [Microsoft.Build.Execution.BuildParameters]::new()
-            $params.Loggers = $arraylog
-            $params.GlobalProperties = $globals
-            $params.ShutdownInProcNodeOnBuildFinish = $true
-
-            $targets = @($target)
-
-            $request = new-object Microsoft.Build.Execution.BuildRequestData($projectPath, $targets)
-
-            $manager = [Microsoft.Build.Execution.BuildManager]::DefaultBuildManager
-            $result = $manager.Build($params, $request)
-
-            HandleResult $result
-        } finally {
-            if ($LASTEXITCODE -ne 0) {
-                Write-Warning "Please try executing on PowerShell: MSBuild.exe $($projectPath) /t:$($target) /p:project-set=minimal /p:BuildScriptsDirectory=$($BuildScriptsDirectory) /nr:false"
-                throw "FATAL: Compile failed."
-            }
-            SetAlternativeStreamValue $info.FullName $buildCommitStreamName $commit
-        }
-    }
-
-    $timeTaken = (Measure-Command $bootstrap)
-    Write-Information "Projects compiled: $timeTaken"
-}
-
-function HandleResult($result) {
-    if ($result.OverallResult -ne 0) {
-        if ($result.Exception) {
-            throw $result.Exception
-        }
-    }
+    & "$msbuildPath\MSBuild.exe" $projectPath "/t:$target" "/p:project-set=minimal" "/p:BuildScriptsDirectory=$BuildScriptsDirectory" "/nr:false"
 }
 
 function LoadAssembly {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$assemblyPath,
-        [bool]$loadAsModule,
-        [string]$moduleName
+        [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$moduleName
     )
 
     if ([System.IO.File]::Exists($assemblyPath)) {
@@ -177,7 +127,7 @@ function LoadAssembly {
             Write-Error "Failed to load $assemblyPath $_"
         }
 
-        if ($loadAsModule) {
+        if (-not [string]::IsNullOrWhiteSpace($moduleName)) {
             # This load process was built after many days of head scratching trying to get -Global to work.
             # The -Global switch appears to be bug ridden with compiled modules not backed by an on disk assembly which is our use case.
             # Even with the -Global flag the commands within the module are not imported into the global space.
@@ -193,7 +143,7 @@ function LoadAssembly {
             Import-Module $module -Global -DisableNameChecking -ErrorAction Stop
         }
     } else {
-        throw "Fatal error. Assembly $assemblyPath not found"
+        throw "Fatal error. Assembly: '$assemblyPath' not found."
     }
 }
 
@@ -475,7 +425,7 @@ function SetTimeouts {
 function EnsureModuleLoaded() {
     $moduleName = "Aderant.ContinuousDelivery.PowerShell"
     if ($null -eq (Get-Module $moduleName)) {
-        LoadAssembly -assemblyPath $mainAssembly $true $moduleName
+        LoadAssembly -assemblyPath $mainAssembly -moduleName $moduleName
     }
 }
 
@@ -552,7 +502,7 @@ try {
     SetTimeouts
     DownloadPaket $commit
     UpdateMsBuildTasks
-    BuildProjects $mainAssembly $isUsingProfile $commit
+    BuildProjects -mainAssembly $mainAssembly -forceCompile $isUsingProfile -commit $commit
     LoadAssembly -assemblyPath "$assemblyPathRoot\System.Threading.Tasks.Dataflow.dll"
     LoadAssembly -assemblyPath "$assemblyPathRoot\protobuf-net.dll"
     EnsureModuleLoaded
