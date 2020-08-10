@@ -156,9 +156,9 @@ namespace Aderant.Build.Tasks.PowerShell {
                 var command = new PSCommand();
 
                 if (directoryName != null) {
-                    string buildPowerShellModule = Path.Combine(directoryName, "Build.psm1");
-                    if (File.Exists(buildPowerShellModule)) {
-                        command.AddScript($"Import-Module '{buildPowerShellModule}' -DisableNameChecking");
+                    string combine = Path.Combine(directoryName, "Build.psm1");
+                    if (File.Exists(combine)) {
+                        command.AddScript($"Import-Module \"{directoryName}\\Build.psm1\"");
                         command.AddStatement();
                     }
                 }
