@@ -59,7 +59,13 @@
     <Copy Condition="!Exists('$(TransformTask)')"
           SkipUnchangedFiles="true"
           SourceFiles="$(TransformTaskFile)"
-          DestinationFiles="$(TransformTask)" />
+          DestinationFiles="$(TransformTask)"
+          UseHardlinksIfPossible="true"
+          Retries="0"
+          ContinueOnError="True" />
+
+    <Error Text="The TransformTask file: '$(TransformTask)' does not exist."
+      Condition="!Exists('$(TransformTask)')" />
 
     <LoadAssembly AssemblyFile="$(TransformTaskDirectory)Aderant.TextTransform.Core.dll" />
 
