@@ -82,8 +82,15 @@ try {
     $v16 = [Version]'16.0'
     $v15 = [Version]'15.0'
     $vMax = [Version]'9999.0'
-    if (!$Version) {$Version = '*'}
-    $vRequired = if ($Version -eq '*') {$vMax} else {[Version]$Version}
+    if ([string]::IsNullOrEmpty($Version)) {
+        $Version = '*'
+    }
+    
+    $vRequired = if ($Version -eq '*') {
+        $vMax
+    } else {
+        [Version]$Version
+    }
 
     if ($vRequired -eq $v16 -or $vRequired -eq $v15) {
         if ($path = FindBuildEnginePath $Version $Bitness) {

@@ -380,7 +380,7 @@
     ==========================================================================================
   -->
   <Target Name="ExecutePlan">
-    <PowerShellScript Condition="'$(BUILD_REASON)' != 'PullRequest'"
+    <PowerShellScript Condition="'$(IsDesktopBuild)' != 'true' And '$(BUILD_REASON)' != 'PullRequest'"
                       LogScript="false"
                       ScriptFile="$(MSBuildThisFileDirectory)\Vso\SetBuildTags.ps1" />
 

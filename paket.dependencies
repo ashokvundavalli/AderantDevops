@@ -43,4 +43,4 @@ references: strict
 framework: net48
 nuget LibGit2Sharp
 nuget MSBuildTasks = 1.5.0.235
-nuget System.Threading.Tasks.Dataflow = 4.9.0
+nuget System.Threading.Tasks.Dataflow = 4.11.1

@@ -266,4 +266,4 @@ NUGET
       LibGit2Sharp.NativeBinaries (2.0.289)
     LibGit2Sharp.NativeBinaries (2.0.289)
     MSBuildTasks (1.5.0.235)
-    System.Threading.Tasks.Dataflow (4.9)
+    System.Threading.Tasks.Dataflow (4.11.1)
