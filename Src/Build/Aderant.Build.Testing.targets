@@ -98,7 +98,7 @@
     <PropertyGroup>
       <!-- Ensure that any symbols like $ (from the current account) do not get escaped -->
       <TestRunDirectory>$([MSBuild]::Unescape($(SolutionRoot)))</TestRunDirectory>
-      <TestRunDirectory>$(TestRunDirectory.TrimEnd('\').TrimEnd('/'))</TestRunDirectory>
+      <!--<TestRunDirectory>$(TestRunDirectory.TrimEnd('\').TrimEnd('/'))</TestRunDirectory>-->
       <RunSettingsPropFile>$(TestRunDirectory)\Build\TFSBuild.proj</RunSettingsPropFile>
     </PropertyGroup>
 
