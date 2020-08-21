@@ -8,8 +8,7 @@ using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
     public class GetBuildOutputs : BuildOperationContextTask {
-        private IEnumerable<OnDiskProjectInfo> projects;
-        public string[] SolutionRoot { get; private set; }
+        private List<OnDiskProjectInfo> projects;
 
         [Output]
         public string[] SolutionRoots { get; private set; }
@@ -17,16 +16,11 @@ namespace Aderant.Build.Tasks {
 
         [Output]
         public ITaskItem[] TrackedProjects {
-            get { return CreateProjectTaskItems(projects); }
+            get { return CreateProjectTaskItems(); }
         }
 
         public override bool ExecuteTask() {
-            if (SolutionRoot != null)
-            {
-               // System.Diagnostics.Debugger.Launch();
-            }
-
-            projects = PipelineService.GetTrackedProjects();
+            projects = PipelineService.GetTrackedProjects().ToList();
 
             SolutionRoots = projects
                 .Select(s => s.SolutionRoot)
@@ -36,7 +30,7 @@ namespace Aderant.Build.Tasks {
             return true;
         }
 
-        private ITaskItem[] CreateProjectTaskItems(IEnumerable<OnDiskProjectInfo> projects) {
+        private ITaskItem[] CreateProjectTaskItems() {
             List<ITaskItem> projectTaskItems = new List<ITaskItem>();
 
             foreach (var project in projects) {
