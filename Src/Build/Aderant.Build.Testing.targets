@@ -111,6 +111,9 @@
       <ProjectsForThisRoot Include="@(TrackedProjects->WithMetadataValue('SolutionRoot', '$(TestRunDirectory)'))" />
       <TestAssemblyDirectories Include="@(ProjectsForThisRoot->'%(OutputPath)'->Distinct())" />
     </ItemGroup>
+
+    <Message Text="yyy @(ProjectsForThisRoot)" />
+    <Message Text="zzzz @(TestAssemblyDirectories)" />
   </Target>
 
 
