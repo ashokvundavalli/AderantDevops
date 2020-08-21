@@ -108,12 +108,12 @@
     </GetBuildOutputs>
 
     <ItemGroup>
-      <ProjectsForThisRoot Include="@(TrackedProjects->WithMetadataValue('SolutionRoot', '$(TestRunDirectory)'))" />
+      <ProjectsForThisRoot Include="@(TrackedProjects->WithMetadataValue('SolutionRoot', '$(SolutionRoot)'))" />
       <TestAssemblyDirectories Include="@(ProjectsForThisRoot->'%(OutputPath)'->Distinct())" />
     </ItemGroup>
 
-    <Message Text="yyy @(ProjectsForThisRoot)" />
-    <Message Text="zzzz @(TestAssemblyDirectories)" />
+    <Message Text="yyy $(SolutionRoot)" />
+    <Message Text="zzzz $(TestRunDirectory)" />
   </Target>
 
 
