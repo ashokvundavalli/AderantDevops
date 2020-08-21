@@ -9,7 +9,7 @@ namespace Aderant.Build.Tasks {
         public bool Wait { get; set; }
 
         public override bool Execute() {
-            if (Environment.UserInteractive) {
+            if (userInteractive) {
                 if (Wait) {
                     bool sleep = false;
                     SpinWait.SpinUntil(
@@ -35,5 +35,7 @@ namespace Aderant.Build.Tasks {
 
             return !Log.HasLoggedErrors;
         }
+
+        private static readonly bool userInteractive = Environment.UserInteractive;
     }
 }

@@ -5,11 +5,12 @@
 
   <PropertyGroup>
     <RunTestsDependsOn>
-      CollectTestAssemblies;
+      CollectProjectsInBuild;
     </RunTestsDependsOn>
 
     <RunTestsDependsOnInternal>
       SetupTestProperties;
+      CollectTestAssemblyDirectories;
       CollectAssemblyPlatforms;
       RunTestAssemblies;
       RemoveFiles;
@@ -24,7 +25,7 @@
   </Target>
 
 
-  <Target Name="CollectTestAssemblies">
+  <Target Name="CollectProjectsInBuild">
     <GetBuildOutputs>
       <Output TaskParameter="TrackedProjects" ItemName="TrackedProjects" />
       <Output TaskParameter="SolutionRoots" ItemName="SolutionRoots" />
@@ -88,8 +89,7 @@
     <Message Text="TestPattern: $(TestPattern)" />
   </Target>
 
-
-  <Target Name="CollectAssemblyPlatforms">
+  <Target Name="CollectTestAssemblyDirectories">
     <PropertyGroup>
       <!-- Ensure that any symbols like $ (from the current account) do not get escaped -->
       <TestRunDirectory>$([MSBuild]::Unescape($(SolutionRoot)))</TestRunDirectory>
@@ -106,7 +106,10 @@
       <ProjectsForThisRoot Include="@(TrackedProjects->WithMetadataValue('SolutionRoot', '$(TestRunDirectory)'))" />
       <TestAssemblyDirectories Include="@(ProjectsForThisRoot->'%(OutputPath)'->Distinct())" />
     </ItemGroup>
+  </Target>
 
+
+  <Target Name="CollectAssemblyPlatforms" Condition="'@(TestAssemblyDirectories)' != ''">
     <Message Text="Looking for test assemblies in these directories:" />
     <Message Text="%(TestAssemblyDirectories.FullPath)" />
 

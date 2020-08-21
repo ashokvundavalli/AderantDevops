@@ -155,7 +155,7 @@
 
       <ResolveAssemblyReferencesSilent>false</ResolveAssemblyReferencesSilent>
 
-      <!-- This defaults to true within RAR and causes RAR to go off and find dependencies of dependencies which I feel is unnessessary. -->
+      <!-- This defaults to true within RAR and causes RAR to go off and find dependencies of dependencies which I feel is unnecessary. -->
       <!-- <_FindDependencies>false</_FindDependencies>  -->
     </PropertyGroup>
   </Target>
@@ -401,7 +401,7 @@
     <!-- Send all outputs of the project to the update staging area for later collection. -->
     <Message Condition="'$(IncludeOutputInUpdatePackage)' == 'true' And '$(IsTestProject)' == 'False'" Importance="High" Text="Including outputs from $(MSBuildProjectFullPath) in update package" />
     <Message Condition="'$(IsTestProject)' == 'True'" Text="Excluding outputs from: '$(MSBuildProjectFullPath)' in update package as it is considered a test project." />
-    <MSBuild Condition="'$(IncludeOutputInUpdatePackage)' == 'true' And '$(IsTestProject)' == 'False' And '$(IsDatabaseProject)' == 'False' " 
+    <MSBuild Condition="'$(IncludeOutputInUpdatePackage)' == 'true' And '$(IsTestProject)' == 'False' And '$(IsDatabaseProject)' == 'False' "
              Projects="$(MSBuildProjectFullPath)"
              Targets="CopyFilesToOutputDirectory"
              Properties="OutDir=$(UpdateStagingDirectory)\BinFiles;

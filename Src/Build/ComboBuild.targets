@@ -650,7 +650,7 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
          Condition="Exists('$(ArtifactStagingDirectory)ServerImage')">
         <ArtifactId>ServerImage</ArtifactId>
         <ArtifactType>Branch</ArtifactType>
-      </AdditionalArtifacts>      
+      </AdditionalArtifacts>
     </ItemGroup>
 
     <!-- ToDo: Update this to exclude directories for archived artifacts. -->
