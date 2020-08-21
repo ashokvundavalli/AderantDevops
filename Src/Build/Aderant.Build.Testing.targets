@@ -6,11 +6,14 @@
   <PropertyGroup>
     <RunTestsDependsOn>
       CollectTestAssemblies;
+    </RunTestsDependsOn>
+
+    <RunTestsDependsOnInternal>
       SetupTestProperties;
       CollectAssemblyPlatforms;
       RunTestAssemblies;
-      RemoveFiles
-    </RunTestsDependsOn>
+      RemoveFiles;
+    </RunTestsDependsOnInternal>
   </PropertyGroup>
 
 
@@ -26,16 +29,37 @@
       <Output TaskParameter="TrackedProjects" ItemName="TrackedProjects" />
       <Output TaskParameter="SolutionRoots" ItemName="SolutionRoots" />
     </GetBuildOutputs>
+
+    <ItemGroup>
+      <ProjectItems Include="$(MSBuildProjectFullPath)">
+        <Properties>
+          SolutionRoot=%(SolutionRoots.Identity);
+          ArtifactStagingDirectory=$(ArtifactStagingDirectory);
+          ImpactedTestAssemblies=$(ImpactedTestAssemblies)
+        </Properties>
+      </ProjectItems>
+    </ItemGroup>
+
+    <MSBuild Projects="@(ProjectItems)"
+             Targets="RunTestsForSolutionRoot"
+             BuildInParallel="$(BuildInParallel)" />
+  </Target>
+
+
+  <Target Name="RunTestsForSolutionRoot" DependsOnTargets="$(RunTestsDependsOnInternal)">
+
   </Target>
 
 
   <Target Name="SetupTestProperties" Outputs="$(TestPattern)">
+    <Error Condition="'$(SolutionRoot)' == ''" Text="SolutionRoot is undefined" />
+
     <!-- Collect all assemblies to use as test dependencies -->
     <ItemGroup>
       <AllStagedDlls Include="$(ArtifactStagingDirectory)**\*.dll"
                      Exclude="$(ArtifactStagingDirectory)_artifacts\**\*;
                               $(ArtifactStagingDirectory)product\**\*;
-                              $(ArtifactStagingDirectory)BinFiles\**\*;" />
+                              $(ArtifactStagingDirectory)BinFiles\**\*;" /> <!-- TODO: Not sure why this one is here? -->
       <AllDirectoriesWithDlls Include="@(AllStagedDlls->'%(RootDir)%(Directory)'->Distinct())"/>
     </ItemGroup>
 
@@ -65,18 +89,18 @@
   </Target>
 
 
-  <Target Name="CollectAssemblyPlatforms"
-          DependsOnTargets="CollectTestAssemblies"
-          Outputs="%(SolutionRoots.Identity)">
-
+  <Target Name="CollectAssemblyPlatforms">
     <PropertyGroup>
-      <TestRunDirectory>%(SolutionRoots.Identity)</TestRunDirectory>
-
       <!-- Ensure that any symbols like $ (from the current account) do not get escaped -->
-      <TestRunDirectory>$([MSBuild]::Unescape($(TestRunDirectory)))</TestRunDirectory>
-
+      <TestRunDirectory>$([MSBuild]::Unescape($(SolutionRoot)))</TestRunDirectory>
+      <TestRunDirectory>$(TestRunDirectory.TrimEnd('\').TrimEnd('/'))</TestRunDirectory>
       <RunSettingsPropFile>$(TestRunDirectory)\Build\TFSBuild.proj</RunSettingsPropFile>
     </PropertyGroup>
+
+    <!-- Retrieve contextual data from the build service -->
+    <GetBuildOutputs>
+      <Output TaskParameter="TrackedProjects" ItemName="TrackedProjects" />
+    </GetBuildOutputs>
 
     <ItemGroup>
       <ProjectsForThisRoot Include="@(TrackedProjects->WithMetadataValue('SolutionRoot', '$(TestRunDirectory)'))" />
@@ -111,7 +135,7 @@
     </CreateItem>
 
     <Error Text="More than one custom run settings file is present: @(TestAssemblyDirectories)" Condition="'$(UseCustomRunSettings)' == 'True' And '@(_CustomRunSettingFiles->Count())' &gt; 1" />
-    
+
     <PropertyGroup>
       <RunSettingsFile Condition="'$(UseCustomRunSettings)' == 'True' And '@(_CustomRunSettingFiles)' != ''">@(_CustomRunSettingFiles)</RunSettingsFile>
       <RunSettingsFile Condition="'$(RunSettingsFile)' == '' Or !Exists('$(RunSettingsFile)')">$(MSBuildThisFileDirectory)Testing\default.runsettings</RunSettingsFile>
@@ -226,6 +250,10 @@ RunSettingsFile: $(RunSettingsFile)" />
       </ScriptArguments>
     </ItemGroup>
 
+    <ItemGroup>
+      <FileWrites Include="%(_Assemblies.RunSettingsFile)" />
+    </ItemGroup>
+
     <PowerShellScript
       Condition="'$(AssembliesUnderTest)' != ''"
       ScriptArguments="@(ScriptArguments)"
@@ -238,16 +266,12 @@ $(AdditionalVariables)
 . '$(MSBuildThisFileDirectory)Testing\RunTests.ps1' @args -AdditionalEnvironmentVariables $additionalEnvironmentVariables"
       OnErrorReason="Test failure" />
 
-    <ItemGroup>
-      <FileWrites Include="%(_Assemblies.RunSettingsFile)" />
-    </ItemGroup>
-
     <OnError ExecuteTargets="RemoveFiles;ShowTestFailureHelp" />
 
   </Target>
 
   <Target Name="RemoveFiles">
-    <Delete Files="@(FileWrites)" TreatErrorsAsWarnings="true"/>
+    <Delete Files="@(FileWrites)" TreatErrorsAsWarnings="true" />
   </Target>
 
 
