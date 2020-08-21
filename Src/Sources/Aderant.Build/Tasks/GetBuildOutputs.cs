@@ -7,12 +7,13 @@ using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
-
     public class GetBuildOutputs : BuildOperationContextTask {
         private IEnumerable<OnDiskProjectInfo> projects;
+        public string[] SolutionRoot { get; private set; }
 
         [Output]
         public string[] SolutionRoots { get; private set; }
+
 
         [Output]
         public ITaskItem[] TrackedProjects {
@@ -20,6 +21,10 @@ namespace Aderant.Build.Tasks {
         }
 
         public override bool ExecuteTask() {
+            if (SolutionRoot != null) {
+                System.Diagnostics.Debugger.Launch();
+            }
+
             projects = PipelineService.GetTrackedProjects();
 
             SolutionRoots = projects

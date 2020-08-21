@@ -103,7 +103,7 @@
     </PropertyGroup>
 
     <!-- Retrieve contextual data from the build service -->
-    <GetBuildOutputs>
+    <GetBuildOutputs SolutionRoot="$(TestRunDirectory)">
       <Output TaskParameter="TrackedProjects" ItemName="TrackedProjects" />
     </GetBuildOutputs>
 
@@ -111,10 +111,6 @@
       <ProjectsForThisRoot Include="@(TrackedProjects->WithMetadataValue('SolutionRoot', '$(SolutionRoot)'))" />
       <TestAssemblyDirectories Include="@(ProjectsForThisRoot->'%(OutputPath)'->Distinct())" />
     </ItemGroup>
-
-    <Message Text="yyy $(SolutionRoot)" />
-    <Message Text="zzzzzzzzzzzzzzzz" Condition="'%(TrackedProjects.SolutionRoot)' == '$(TestRunDirectory)'" />
-             <Message Text="ttttttttt" Condition="'%(TrackedProjects.SolutionRoot)' == '$(SolutionRoot)'" />
   </Target>
 
 
