@@ -117,15 +117,12 @@ namespace IntegrationTest.Build.EndToEnd {
 
         private string RunTestTargetAndGetOutputs(TestBuildServiceHost buildService) {
             RunTarget("CollectProjectsInBuild", buildService.Properties);
-            var values = base.Result.ProjectStateAfterBuild.GetItems("RunSettingsFiles");
+            var values = base.Result.ProjectStateAfterBuild.GetPropertyValue("RunSettingsFile");
 
             Assert.IsNotNull(values);
-            System.Diagnostics.Debugger.Launch();
-            Assert.IsTrue(values.Count > 0);
-
-            ProjectItemInstance instance = values.FirstOrDefault();
-            var propertyValue = instance.EvaluatedInclude;
-            return propertyValue;
+            
+     
+            return values;
         }
 
         [TestMethod]

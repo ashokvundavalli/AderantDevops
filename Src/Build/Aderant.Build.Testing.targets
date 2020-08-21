@@ -48,6 +48,10 @@
              BuildInParallel="$(BuildInParallel)">
       <Output TaskParameter="TargetOutputs" ItemName="RunSettingsFiles" />
     </MSBuild>
+
+    <PropertyGroup>
+      <RunSettingsFile>@(RunSettingsFiles)</RunSettingsFile>
+    </PropertyGroup>
   </Target>
 
 
