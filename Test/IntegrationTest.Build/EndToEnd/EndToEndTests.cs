@@ -120,6 +120,7 @@ namespace IntegrationTest.Build.EndToEnd {
             var values = base.Result.ProjectStateAfterBuild.GetItems("RunSettingsFiles");
 
             Assert.IsNotNull(values);
+            System.Diagnostics.Debugger.Launch();
             Assert.IsTrue(values.Count > 0);
 
             ProjectItemInstance instance = values.FirstOrDefault();
