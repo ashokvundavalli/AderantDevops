@@ -113,7 +113,8 @@
     </ItemGroup>
 
     <Message Text="yyy $(SolutionRoot)" />
-    <Message Text="zzzz $(TestRunDirectory)" />
+    <Message Text="zzzzzzzzzzzzzzzz" Condition="%(TrackedProjects.SolutionRoot)' == '$(TestRunDirectory)' />
+             <Message Text="ttttttttt" Condition="%(TrackedProjects.SolutionRoot)' == '$(SolutionRoot)' />
   </Target>
 
 
