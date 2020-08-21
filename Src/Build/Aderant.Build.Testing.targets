@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="Current">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
+         ToolsVersion="Current"
+         TreatAsLocalProperty="SolutionRoot">
 
   <Import Project="Aderant.Build.Common.targets" Condition="'$(AderantCommonTargetsImported)' == ''" />
 
@@ -43,12 +45,13 @@
 
     <MSBuild Projects="@(ProjectItems)"
              Targets="RunTestsForSolutionRoot"
-             BuildInParallel="$(BuildInParallel)" />
+             BuildInParallel="$(BuildInParallel)">
+      <Output TaskParameter="TargetOutputs" ItemName="RunSettingsFiles" />
+    </MSBuild>
   </Target>
 
 
-  <Target Name="RunTestsForSolutionRoot" DependsOnTargets="$(RunTestsDependsOnInternal)">
-
+  <Target Name="RunTestsForSolutionRoot" DependsOnTargets="$(RunTestsDependsOnInternal)" Returns="$(RunSettingsFile)">
   </Target>
 
 
@@ -89,6 +92,7 @@
     <Message Text="TestPattern: $(TestPattern)" />
   </Target>
 
+
   <Target Name="CollectTestAssemblyDirectories">
     <PropertyGroup>
       <!-- Ensure that any symbols like $ (from the current account) do not get escaped -->
@@ -109,7 +113,7 @@
   </Target>
 
 
-  <Target Name="CollectAssemblyPlatforms" Condition="'@(TestAssemblyDirectories)' != ''">
+  <Target Name="CollectAssemblyPlatforms" Condition="'@(TestAssemblyDirectories)' != '' ">
     <Message Text="Looking for test assemblies in these directories:" />
     <Message Text="%(TestAssemblyDirectories.FullPath)" />
 

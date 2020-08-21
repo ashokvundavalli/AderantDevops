@@ -3,6 +3,7 @@ using System.Linq;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
 using IntegrationTest.Build.Helpers;
+using Microsoft.Build.Execution;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build.EndToEnd {
@@ -108,12 +109,18 @@ namespace IntegrationTest.Build.EndToEnd {
 
                 Assert.IsTrue(File.Exists(trackedProject.FullPath));
 
-                RunTarget("CollectAssemblyPlatforms", buildService.Properties);
-
-                string propertyValue = base.Result.ProjectStateAfterBuild.GetPropertyValue("RunSettingsFile");
+                var propertyValue = RunTestTargetAndGetOutputs(buildService);
 
                 Assert.AreEqual(File.ReadAllText(propertyValue), Resources.my_custom_runsettings);
             }
+        }
+
+        private string RunTestTargetAndGetOutputs(TestBuildServiceHost buildService) {
+            RunTarget("CollectProjectsInBuild", buildService.Properties);
+            var values = base.Result.ProjectStateAfterBuild.GetItems("RunSettingsFiles");
+            ProjectItemInstance instance = values.FirstOrDefault();
+            var propertyValue = instance.EvaluatedInclude;
+            return propertyValue;
         }
 
         [TestMethod]
@@ -130,9 +137,7 @@ namespace IntegrationTest.Build.EndToEnd {
 
                 Assert.IsTrue(File.Exists(trackedProject.FullPath));
 
-                RunTarget("CollectAssemblyPlatforms", buildService.Properties);
-
-                string propertyValue = base.Result.ProjectStateAfterBuild.GetPropertyValue("RunSettingsFile");
+                var propertyValue = RunTestTargetAndGetOutputs(buildService);
 
                 Assert.AreEqual(File.ReadAllText(propertyValue), Resources.Expected_run_settings);
             }
