@@ -108,7 +108,7 @@ namespace IntegrationTest.Build {
             get {
                 string version = ToolLocationHelper.CurrentToolsVersion;
                 if (version == "Current" || version == "15.0") {
-                //    return true;
+                    return true;
                 }
 
                 return false;
