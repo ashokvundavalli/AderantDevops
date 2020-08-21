@@ -177,7 +177,12 @@ try {
 	$xml = CreateRunSettingsXml
 	Set-Content  -LiteralPath $runSettingsFile -Value $xml -Encoding UTF8
 
-    Write-Information $xml
+    # Log once per processor as the document is usually the same so we don't
+    # need to see it all the time
+    if ([Appdomain]::CurrentDomain.GetData("HAS_LOGGED_RUN_SETTINGS") -eq $null) {
+        Write-Information $xml
+        [Appdomain]::CurrentDomain.SetData("HAS_LOGGED_RUN_SETTINGS", "")
+    }
 
 	$startInfo.Arguments += " /Settings:$RunSettingsFile"
 

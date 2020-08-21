@@ -60,10 +60,7 @@
 
     <!-- Collect all assemblies to use as test dependencies -->
     <ItemGroup>
-      <AllStagedDlls Include="$(ArtifactStagingDirectory)**\*.dll"
-                     Exclude="$(ArtifactStagingDirectory)_artifacts\**\*;
-                              $(ArtifactStagingDirectory)product\**\*;
-                              $(ArtifactStagingDirectory)BinFiles\**\*;" /> <!-- TODO: Not sure why this one is here? -->
+      <AllStagedDlls Include="$(ArtifactStagingDirectory)out\**\*.dll" />
       <AllDirectoriesWithDlls Include="@(AllStagedDlls->'%(RootDir)%(Directory)'->Distinct())"/>
     </ItemGroup>
 
