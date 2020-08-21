@@ -108,13 +108,13 @@
     </GetBuildOutputs>
 
     <ItemGroup>
-      <ProjectsForThisRoot Include="@(TrackedProjects->WithMetadataValue('SolutionRoot', '$(SolutionRoot)'))" />
+      <ProjectsForThisRoot Include="@(TrackedProjects->WithMetadataValue('SolutionRoot', '$(TestRunDirectory)'))" />
       <TestAssemblyDirectories Include="@(ProjectsForThisRoot->'%(OutputPath)'->Distinct())" />
     </ItemGroup>
   </Target>
 
 
-  <Target Name="CollectAssemblyPlatforms" Condition="'@(TestAssemblyDirectories)' != '' ">
+  <Target Name="CollectAssemblyPlatforms">
     <Message Text="Looking for test assemblies in these directories:" />
     <Message Text="%(TestAssemblyDirectories.FullPath)" />
 

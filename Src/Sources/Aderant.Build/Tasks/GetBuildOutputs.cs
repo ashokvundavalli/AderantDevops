@@ -21,8 +21,9 @@ namespace Aderant.Build.Tasks {
         }
 
         public override bool ExecuteTask() {
-            if (SolutionRoot != null) {
-                System.Diagnostics.Debugger.Launch();
+            if (SolutionRoot != null)
+            {
+               // System.Diagnostics.Debugger.Launch();
             }
 
             projects = PipelineService.GetTrackedProjects();
