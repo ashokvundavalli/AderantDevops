@@ -7,7 +7,6 @@ using System.Threading;
 using Aderant.Build.Packaging;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
-using ProtoBuf.ServiceModel;
 
 namespace Aderant.Build.PipelineService {
     /// <summary>
@@ -22,7 +21,7 @@ namespace Aderant.Build.PipelineService {
 
         private readonly string dataCollectionServiceUri;
 
-        private readonly object initializationLock = new object();
+        private readonly object proxyLock = new object();
 
         internal BuildPipelineServiceClient(string dataCollectionServiceUri) {
             this.dataCollectionServiceUri = dataCollectionServiceUri;
@@ -34,9 +33,7 @@ namespace Aderant.Build.PipelineService {
         internal BuildPipelineServiceProxy InnerProxy { get; set; }
 
         internal IBuildPipelineService Contract {
-            get {
-                return InnerProxy.ChannelContract;
-            }
+            get { return InnerProxy.ChannelContract; }
         }
 
         public void AssociateArtifacts(IEnumerable<BuildArtifact> artifacts) {
@@ -146,14 +143,15 @@ namespace Aderant.Build.PipelineService {
             var proxy = InnerProxy;
 
             if (proxy != null) {
-                try {
-                    IDisposable disposable = proxy;
-                    disposable.Dispose();
-                } catch {
+                lock (proxyLock) {
+                    try {
+                        IDisposable disposable = proxy;
+                        disposable.Dispose();
+                        InnerProxy = null;
+                    } catch {
+                    }
                 }
             }
-
-            //threadSpecificProxy = null;
         }
 
         /// <summary>
@@ -167,15 +165,8 @@ namespace Aderant.Build.PipelineService {
         /// Returns a proxy to communicate with the ambient data collection service for the current build environment.
         /// </summary>
         public static IBuildPipelineService GetCurrentProxy() {
-            //var tlsProxy = threadSpecificProxy;
-            //if (tlsProxy == null) {
-                var proxy = GetProxy(BuildPipelineServiceHost.PipeId);
-
-                return proxy;
-                //    return threadSpecificProxy = proxy;
-                //}
-
-                //return tlsProxy;
+            var proxy = GetProxy(BuildPipelineServiceHost.PipeId);
+            return proxy;
         }
 
         /// <summary>
@@ -190,7 +181,9 @@ namespace Aderant.Build.PipelineService {
         private T InvokeServiceAction<T>(Func<T> action) {
             EnsureInitialized();
 
-            if (InnerProxy != null && InnerProxy.State == CommunicationState.Opened) {
+            BuildPipelineServiceProxy proxy = InnerProxy;
+
+            if (proxy != null && proxy.State == CommunicationState.Opened) {
                 try {
                     return action();
                 } catch (FaultException ex) {
@@ -204,7 +197,8 @@ namespace Aderant.Build.PipelineService {
         private void InvokeServiceAction(Action action) {
             EnsureInitialized();
 
-            if (InnerProxy != null && InnerProxy.State == CommunicationState.Opened) {
+            BuildPipelineServiceProxy proxy = InnerProxy;
+            if (proxy != null && proxy.State == CommunicationState.Opened) {
                 try {
                     action();
                     return;
@@ -217,11 +211,7 @@ namespace Aderant.Build.PipelineService {
         }
 
         private void EnsureInitialized() {
-            //if (factory != null) {
-            //    return;
-            //}
-
-            object syncInitialization = initializationLock;
+            object syncInitialization = proxyLock;
 
             lock (syncInitialization) {
                 InitializeInternal();
@@ -253,7 +243,6 @@ namespace Aderant.Build.PipelineService {
             } while (stopwatch.ElapsedMilliseconds < timeout && !connectionValid);
 
             if (!connectionValid) {
-                System.Diagnostics.Debugger.Launch();
                 throw new BuildPlatformException(string.Format("Could not connect to data service within the available time {0}. Reason:{1}", timeout, ex.Message), ex);
             }
 
@@ -265,19 +254,24 @@ namespace Aderant.Build.PipelineService {
             exception = null;
 
             try {
-                var newProxy = new BuildPipelineServiceProxy(binding, address);
+                if (InnerProxy != null) {
+                    proxy = InnerProxy;
+                } else {
+                    var newProxy = new BuildPipelineServiceProxy(binding, address);
+                    proxy = newProxy;
+                }
                 // Ref cache should only have 1 member in it if WCF caching is working correctly
-                //ClientBase<TChannel>.factoryRefCache
+                //ClientBase<IBuildPipelineService>.factoryRefCache
 
-                proxy = newProxy;
-
-                newProxy.Open();
+                if (proxy.State != CommunicationState.Opened) {
+                    proxy.Open();
+                }
 
                 if (string.Equals(lastSeenConnectionUri, dataCollectionServiceUri)) {
                     return true;
                 }
 
-                newProxy.ChannelContract.Ping();
+                proxy.ChannelContract.Ping();
                 lastSeenConnectionUri = dataCollectionServiceUri;
                 return true;
             } catch (Exception ex) {
