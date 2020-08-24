@@ -700,6 +700,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 if (excludeTestProjects) {
                     // Web projects are also test projects so don't be too aggressive here.
                     if (configuredProject.IsTestProject && !configuredProject.IsWebProject) {
+                        configuredProject.IncludeInBuild = false;
                         return false;
                     }
                 }
