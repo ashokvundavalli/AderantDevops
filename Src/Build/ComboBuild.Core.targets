@@ -47,18 +47,20 @@
       StatusDescription="$(BuildGroupId) / $(TotalNumberOfBuildGroups) [$(PadLeft) $(HappyCat) $(PadRight) $(Icecream)]" />
 
     <ItemGroup>
-      <_ProjectsInGroup Include="@(ProjectsInGroup)" Condition="'$(switch-skip-compile)' == 'true' And '%(ProjectsInGroup.IsProjectFile)' != 'true'" />
-      <_ProjectsInGroup Include="@(ProjectsInGroup)" Condition="'$(switch-skip-compile)' != 'true'" />
+      <ProjectsInGroupFinal Include="@(ProjectsInGroup)" Condition="'$(switch-skip-compile)' == 'true' And '%(ProjectsInGroup.IsProjectFile)' != 'true'" />
+      <ProjectsInGroupFinal Include="@(ProjectsInGroup)" Condition="'$(switch-skip-compile)' != 'true'" />
     </ItemGroup>
+
+    <InspectItemGroup ItemGroup="@(ProjectsInGroup)" />
 
     <Warning Text="Skipping compile!" Condition="'$(switch-skip-compile)' == 'true'" />
 
     <Message Text="##vso[task.logdetail id=$(LogId);name=Group $(BuildGroupId) of $(TotalNumberOfBuildGroups);type=build;state=InProgress;progress=0]Build group $(BuildGroupId) started"
              Condition="'$(IsDesktopBuild)' != 'true'" />
 
-    <MSBuild Projects="@(_ProjectsInGroup)"
+    <MSBuild Projects="@(ProjectsInGroupFinal)"
              StopOnFirstFailure="true"
-             Targets="%(_ProjectsInGroup.Targets)"
+             Targets="%(ProjectsInGroupFinal.Targets)"
              UnloadProjectsOnCompletion="true"
              BuildInParallel="$(BuildInParallel)">
     </MSBuild>
@@ -91,9 +93,9 @@
   </Target>
 
 
-  <Target Name="CreateProjectGroup" Returns="@(ProjectsInGroup)">
+  <Target Name="CreateProjectGroup">
     <ItemGroup>
-      <ProjectsInGroup Include="@(ProjectsToBuild->WithMetadataValue('BuildGroupId', '$(BuildGroupId)'))" />
+      <_ProjectsInGroup Include="@(ProjectsToBuild->WithMetadataValue('BuildGroupId', '$(BuildGroupId)'))" />
     </ItemGroup>
 
     <!-- Properties available to both projects files and orchestration participants -->
@@ -103,7 +105,7 @@
         Simulates building a solution and controls whether the Configuration and Platform metadata will be unset, allowing the
         child project to build in its default configuration / platform if the one specified from the solution file doesn't actually exist in the project.
         This is a janky hack and should be removed but removing will trigger trigger a missing configuration/platform error for many projects in the tree
-        -->
+      -->
       <PropertiesCommonToAllProjects>
         ShouldUnsetParentConfigurationAndPlatform=true;
         BuildProjectReferences=false;
@@ -127,23 +129,9 @@
 
     <PropertyGroup>
       <PropertiesCommonToAllProjects Condition="'$(AGENT_BUILDDIRECTORY)' != ''">
-        $(PropertiesCommonToAllProjects);PathMap=$(AGENT_BUILDDIRECTORY)=D:\
+        $(PropertiesCommonToAllProjects);
+        PathMap=$(AGENT_BUILDDIRECTORY)=D:\;
       </PropertiesCommonToAllProjects>
-    </PropertyGroup>
-
-  </Target>
-
-
-  <Target Name="AssignProjectProperties" Inputs="%(ProjectsInGroup.Properties)" Outputs="%(Identity)._" DependsOnTargets="CreateProjectGroup">
-
-    <!--Parse the scalar property list into an item group-->
-    <CreateItem Include="_ParsedPropertyList" AdditionalMetadata="%(ProjectsInGroup.Properties)">
-      <Output TaskParameter="Include" ItemName="_ProjectProperties" />
-    </CreateItem>
-
-    <!-- Extract the solution root value -->
-    <PropertyGroup>
-      <_SolutionRoot>@(_ProjectProperties->Metadata('SolutionRoot'))</_SolutionRoot>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -152,32 +140,52 @@
         WixCATargetsPath=$([System.IO.Path]::ChangeExtension($(WixTargetsPath), '.ca.targets'))
       </WixProperties>
     </PropertyGroup>
+  </Target>
+
+
+  <Target Name="AssignProjectProperties" Inputs="%(_ProjectsInGroup.ProjectInstanceId)" Outputs="%(Identity)._" DependsOnTargets="CreateProjectGroup">
+    <!--Parse the scalar property list into an item group-->
+    <CreateItem Include="_"
+                AdditionalMetadata="%(_ProjectsInGroup.AdditionalProperties)"
+                PreserveExistingMetadata="true">
+      <Output TaskParameter="Include" ItemName="_ProjectProperties" />
+    </CreateItem>
+
+    <!-- Extract the solution root value -->
+    <PropertyGroup>
+      <_SolutionRoot>%(_ProjectProperties.SolutionRoot)</_SolutionRoot>
+    </PropertyGroup>
 
     <ItemGroup>
-      <ProjectsInGroup>
-        <Properties>
-          $(PropertiesCommonToAllProjects);    <!-- Include global (non-project specific) properties -->
-          %(ProjectsInGroup.Properties);       <!-- Include the original properties list -->
-          SolutionRoot=$(_SolutionRoot);       <!-- Merge in build system properties that hang off SolutionRoot -->
+      <_ProjectsInGroup>
+        <AdditionalProperties>
+          $(PropertiesCommonToAllProjects);           <!-- Include global (non-project specific) properties -->
+          %(_ProjectsInGroup.AdditionalProperties);   <!-- Include the original properties list -->
+          SolutionRoot=$(_SolutionRoot);              <!-- Merge in build system properties that hang off SolutionRoot -->
           BinModuleDirectory=$(_SolutionRoot)\Bin\Module\;
           BinTestDirectory=$(_SolutionRoot)\Bin\Test\;
           ModuleSourceDirectory=$(_SolutionRoot)\Src\;
           ModuleTestDirectory=$(_SolutionRoot)\Test\;
           ModuleBuildDirectory=$(_SolutionRoot)\Build\;
           VariableScopeId=$(_SolutionRoot)
-        </Properties>
+        </AdditionalProperties>
 
         <!-- If it's a build system project default to the EndToEnd target -->
         <Targets Condition="'%(IsProjectFile)' != 'true'">EndToEnd</Targets>
-      </ProjectsInGroup>
+      </_ProjectsInGroup>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectsInGroup Condition="'%(IsProjectFile)' == 'true'">
-        <Properties>
-          %(Properties);$(WixProperties)
-        </Properties>
-      </ProjectsInGroup>
+      <_ProjectsInGroup Condition="'%(IsProjectFile)' == 'true'">
+        <AdditionalProperties>
+          %(AdditionalProperties);
+          $(WixProperties)
+        </AdditionalProperties>
+      </_ProjectsInGroup>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectsInGroup Include="@(_ProjectsInGroup)" />
     </ItemGroup>
 
   </Target>
