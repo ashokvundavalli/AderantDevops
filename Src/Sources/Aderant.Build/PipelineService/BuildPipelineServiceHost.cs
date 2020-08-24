@@ -8,7 +8,6 @@ using ProgressRecord = System.Management.Automation.ProgressRecord;
 
 namespace Aderant.Build.PipelineService {
     public class BuildPipelineServiceHost : IDisposable {
-
         private static string pipeId;
         private BuildPipelineServiceImpl dataService;
 
@@ -60,7 +59,7 @@ namespace Aderant.Build.PipelineService {
             StopListener();
 
             try {
-                ((IDisposable)host)?.Dispose();
+                ((IDisposable) host)?.Dispose();
             } catch {
                 // ignored
             } finally {
@@ -78,7 +77,7 @@ namespace Aderant.Build.PipelineService {
                 dataService = new BuildPipelineServiceImpl(consoleAdapter);
                 host = new ServiceHost(dataService, address);
 
-                var namedPipeBinding = CreateNamedPipeBinding();
+                var namedPipeBinding = NamedPipeBinding;
 
                 var endpoint = host.AddServiceEndpoint(typeof(IBuildPipelineService), namedPipeBinding, address);
                 endpoint.Behaviors.Add(new ProtoEndpointBehavior());
@@ -134,26 +133,22 @@ namespace Aderant.Build.PipelineService {
             return new Uri(endpoint);
         }
 
-        internal static Binding CreateNamedPipeBinding() {
-            return new NetNamedPipeBinding {
-                MaxReceivedMessageSize = Int32.MaxValue,
-                MaxBufferSize = Int32.MaxValue,
-                ReaderQuotas = {
-                    MaxArrayLength = Int32.MaxValue,
-                    MaxStringContentLength = Int32.MaxValue,
-                    MaxDepth = Int32.MaxValue
-                },
-                ReceiveTimeout = TimeSpan.MaxValue,
-                SendTimeout = TimeSpan.FromMinutes(1)
-            };
-        }
+        internal static Binding NamedPipeBinding = new NetNamedPipeBinding {
+            MaxReceivedMessageSize = Int32.MaxValue,
+            MaxBufferSize = Int32.MaxValue,
+            ReaderQuotas = {
+                MaxArrayLength = Int32.MaxValue, MaxStringContentLength = Int32.MaxValue, MaxDepth = Int32.MaxValue
+            },
+            ReceiveTimeout = TimeSpan.MaxValue,
+            SendTimeout = TimeSpan.FromMinutes(1)
+        };
     }
+
 
     internal class ConsoleAdapter : IConsoleAdapter {
         public event EventHandler<ProgressRecord> ProgressChanged;
 
         public void RaiseProgressChanged(string currentOperation, string activity, string statusDescription) {
-
             OnProgressChanged(new ProgressRecord(0, activity, statusDescription) {
                 CurrentOperation = currentOperation
             });
@@ -170,4 +165,3 @@ namespace Aderant.Build.PipelineService {
         void RaiseProgressChanged(string currentOperation, string activity, string statusDescription);
     }
 }
-
