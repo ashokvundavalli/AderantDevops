@@ -362,17 +362,17 @@ namespace Aderant.Build.Tasks {
             return new Tuple<bool, string>(ciEnabled, ciCategory);
         }
 
-        private void LogWarning(string message, params object[] args) {
+        private void LogWarning(string message) {
             var logger = Logger as TaskLoggingHelper;
             if (logger != null) {
-                logger.LogWarning(message, args);
+                logger.LogWarning(message);
             }
         }
 
-        private void Log(string message, params object[] args) {
+        private void Log(string message) {
             var logger = Logger as TaskLoggingHelper;
             if (logger != null) {
-                logger.LogMessage(MessageImportance.Low, message, args);
+                logger.LogMessage(MessageImportance.Low, message);
             }
         }
 
