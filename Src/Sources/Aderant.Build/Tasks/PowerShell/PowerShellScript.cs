@@ -224,6 +224,12 @@ namespace Aderant.Build.Tasks.PowerShell {
             if (string.Equals("$false", stringValue, StringComparison.OrdinalIgnoreCase)) {
                 return false;
             }
+            if (string.Equals("true", stringValue, StringComparison.OrdinalIgnoreCase))  {
+                return true;
+            }
+            if (string.Equals("false", stringValue, StringComparison.OrdinalIgnoreCase))  {
+                return false;
+            }
 
             if (stringValue.Contains(";")) {
                 var p = new Project();
