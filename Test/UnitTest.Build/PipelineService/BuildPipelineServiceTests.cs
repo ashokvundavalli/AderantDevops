@@ -26,7 +26,7 @@ namespace UnitTest.Build.PipelineService {
                 { "QueryService.svc", new List<string> { "WebQueryService.svc" } },
                 { "Global.asax", new List<string> { "Domain.htm" } }
             };
-            
+
             service.RecordRelatedFiles(relatedFiles1);
 
             var expected = service.GetRelatedFiles();
@@ -36,10 +36,12 @@ namespace UnitTest.Build.PipelineService {
             service.RecordRelatedFiles(relatedFiles2);
 
             expected = service.GetRelatedFiles();
-            Assert.IsTrue(expected.Keys.SequenceEqual(mergedFiles.Keys));            
+
+            Assert.IsTrue(expected.Keys.OrderBy(s => s).SequenceEqual(mergedFiles.Keys.OrderBy(s => s)));
+
             foreach (var key in expected.Keys) {
                 var values = expected[key];
-                Assert.IsTrue(values.SequenceEqual(mergedFiles[key]));
+                Assert.IsTrue(values.OrderBy(s => s).SequenceEqual(mergedFiles[key].OrderBy(s => s)));
             }
         }
     }
