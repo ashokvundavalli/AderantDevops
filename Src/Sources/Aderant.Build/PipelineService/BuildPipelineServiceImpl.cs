@@ -26,6 +26,7 @@ namespace Aderant.Build.PipelineService {
 
         private BuildOperationContext ctx;
 
+        // These types are generally used with ToList/new List() to avoid any serialization issues
         private readonly ConcurrentBag<BuildArtifact> associatedArtifacts = new ConcurrentBag<BuildArtifact>();
         private readonly ConcurrentBag<BuildDirectoryContribution> directoryMetadata = new ConcurrentBag<BuildDirectoryContribution>();
         private readonly ConcurrentBag<OnDiskProjectInfo> projects = new ConcurrentBag<OnDiskProjectInfo>();
@@ -33,9 +34,9 @@ namespace Aderant.Build.PipelineService {
         private readonly ConcurrentBag<string> impactedProjects = new ConcurrentBag<string>();
         private readonly ConcurrentDictionary<string, List<string>> relatedFiles = new ConcurrentDictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
 
-        private ReaderWriterLockSlim contextLock = new ReaderWriterLockSlim();
-        private ReaderWriterLockSlim artifactsLock = new ReaderWriterLockSlim();
-        private ReaderWriterLockSlim outputsLock = new ReaderWriterLockSlim();
+        private readonly ReaderWriterLockSlim contextLock = new ReaderWriterLockSlim();
+        private readonly ReaderWriterLockSlim artifactsLock = new ReaderWriterLockSlim();
+        private readonly ReaderWriterLockSlim outputsLock = new ReaderWriterLockSlim();
 
         public BuildPipelineServiceImpl() {
         }
@@ -68,7 +69,12 @@ namespace Aderant.Build.PipelineService {
         }
 
         public BuildOperationContext GetContext() {
-            return ctx;
+            try {
+                contextLock.EnterReadLock();
+                return ctx;
+            } finally {
+                contextLock.ExitReadLock();
+            }
         }
 
         public void RecordProjectOutputs(ProjectOutputSnapshot snapshot) {
@@ -101,7 +107,7 @@ namespace Aderant.Build.PipelineService {
             try {
                 outputsLock.EnterReadLock();
 
-                return Outputs.GetProjectsForTag(container);
+                return Outputs.GetProjectsForTag(container).ToList();
             } finally {
                 outputsLock.ExitReadLock();
             }
@@ -115,14 +121,14 @@ namespace Aderant.Build.PipelineService {
             try {
                 outputsLock.EnterReadLock();
 
-                return Outputs.Values;
+                return Outputs.Values.ToList();
             } finally {
                 outputsLock.ExitReadLock();
             }
         }
 
         public IEnumerable<string> GetImpactedProjects() {
-            return impactedProjects;
+            return new List<string>(impactedProjects);
         }
 
         public void RecordArtifacts(string container, IEnumerable<ArtifactManifest> manifests) {
@@ -169,12 +175,13 @@ namespace Aderant.Build.PipelineService {
         }
 
         public IEnumerable<OnDiskProjectInfo> GetTrackedProjects() {
-            return projects;
+            return new List<OnDiskProjectInfo>(projects);
         }
 
         public IEnumerable<OnDiskProjectInfo> GetTrackedProjects(IEnumerable<Guid> ids) {
             ErrorUtilities.IsNotNull(ids, nameof(ids));
-            return projects.Where(p => ids.Contains(p.ProjectGuid));
+
+            return projects.Where(p => ids.Contains(p.ProjectGuid)).ToList();
         }
 
         public IEnumerable<ArtifactManifest> GetArtifactsForContainer(string container) {
@@ -262,7 +269,7 @@ namespace Aderant.Build.PipelineService {
         }
 
         public IReadOnlyCollection<BuildDirectoryContribution> GetContributors() {
-            return directoryMetadata;
+            return directoryMetadata.ToList();
         }
 
         private void InitArtifacts() {

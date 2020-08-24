@@ -30,7 +30,7 @@ namespace Aderant.Build.Tasks {
 
         internal IBuildPipelineService Service {
             get { return pipelineService; }
-            private set { pipelineService = value; }
+            set { pipelineService = value; }
         }
 
         public sealed override bool Execute() {
