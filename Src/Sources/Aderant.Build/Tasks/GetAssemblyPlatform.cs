@@ -297,7 +297,7 @@ namespace Aderant.Build.Tasks {
                         dictionary.Add(key, dependency);
                     } else {
                         // This generates many thousands of entries that no developer will ever do anything about so give up and log at a low level
-                        Log("Already seen file: " + dependency);
+                        //Log("Already seen file: " + dependency);
                     }
                 }
 
@@ -372,7 +372,7 @@ namespace Aderant.Build.Tasks {
         private void Log(string message) {
             var logger = Logger as TaskLoggingHelper;
             if (logger != null) {
-                logger.LogMessage(MessageImportance.Low, message);
+                //logger.LogMessage(MessageImportance.Low, message);
             }
         }
 
