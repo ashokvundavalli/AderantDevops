@@ -253,6 +253,7 @@ namespace Aderant.Build.PipelineService {
             } while (stopwatch.ElapsedMilliseconds < timeout && !connectionValid);
 
             if (!connectionValid) {
+                System.Diagnostics.Debugger.Launch();
                 throw new BuildPlatformException(string.Format("Could not connect to data service within the available time {0}. Reason:{1}", timeout, ex.Message), ex);
             }
 
