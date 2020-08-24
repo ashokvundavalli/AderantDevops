@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Security.Cryptography;
 using Aderant.Build.Utilities;
 using Microsoft.Build.Framework;
+using Microsoft.Build.Framework.XamlTypes;
 using Microsoft.Build.Utilities;
 using ProcessorArchitecture = System.Reflection.ProcessorArchitecture;
 
@@ -295,9 +296,9 @@ namespace Aderant.Build.Tasks {
                     if (!dictionary.ContainsKey(key)) {
                         dictionary.Add(key, dependency);
                     } else {
-                        this.LogWarning("Already seen file: " + dependency);
+                        // This generates many thousands of entries that no developer will ever do anything about so give up and log at a low level
+                        Log("Already seen file: " + dependency);
                     }
-
                 }
 
                 fileMap = dictionary;
@@ -361,17 +362,17 @@ namespace Aderant.Build.Tasks {
             return new Tuple<bool, string>(ciEnabled, ciCategory);
         }
 
-        private void LogWarning(string message) {
+        private void LogWarning(string message, params object[] args) {
             var logger = Logger as TaskLoggingHelper;
             if (logger != null) {
-                logger.LogWarning(message);
+                logger.LogWarning(message, args);
             }
         }
 
-        private void Log(string message) {
+        private void Log(string message, params object[] args) {
             var logger = Logger as TaskLoggingHelper;
             if (logger != null) {
-                logger.LogMessage(MessageImportance.Low, message);
+                logger.LogMessage(MessageImportance.Low, message, args);
             }
         }
 

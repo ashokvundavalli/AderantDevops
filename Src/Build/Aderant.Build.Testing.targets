@@ -39,7 +39,8 @@
           SolutionRoot=%(SolutionRoots.Identity);
           ArtifactStagingDirectory=$(ArtifactStagingDirectory);
           ImpactedTestAssemblies=$(ImpactedTestAssemblies);
-          AderantCommonTargetsImported=true
+          TestResultFileDrop=$(TestResultFileDrop);
+          AderantCommonTargetsImported=true;
         </Properties>
       </ProjectItems>
     </ItemGroup>
@@ -280,9 +281,21 @@ $(AdditionalVariables)
 . '$(MSBuildThisFileDirectory)Testing\RunTests.ps1' @args -AdditionalEnvironmentVariables $additionalEnvironmentVariables"
       OnErrorReason="Test failure" />
 
-    <CallTarget Targets="RemoveFiles" />
-    <OnError ExecuteTargets="RemoveFiles;ShowTestFailureHelp" />
+    <CallTarget Targets="CopyResultFiles;RemoveFiles" />
 
+    <OnError ExecuteTargets="CopyResultFiles;RemoveFiles;ShowTestFailureHelp" />
+
+  </Target>
+
+  <Target Name="CopyResultFiles">
+    <ItemGroup>
+      <ResultFiles Include="$(SolutionRoot)\**\*.trx" />
+    </ItemGroup>
+
+    <Copy
+      Condition="'$(TestResultFileDrop)' != ''"
+      SourceFiles="@(ResultFiles)"
+      DestinationFolder="$(TestResultFileDrop)" />
   </Target>
 
   <Target Name="RemoveFiles">

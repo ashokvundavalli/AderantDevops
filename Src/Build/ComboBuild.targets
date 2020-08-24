@@ -120,9 +120,21 @@
 
     <PropertyGroup>
       <ImpactedTestAssemblies>@(ImpactedTestAssemblies)</ImpactedTestAssemblies>
+
+      <TestProperties>
+        TestPattern=UnitTest;
+        ImpactedTestAssemblies=$(ImpactedTestAssemblies);
+      </TestProperties>
+
+      <TestProperties Condition="'$(BUILD_SOURCESDIRECTORY)' != ''">
+        $(TestProperties);
+        TestResultFileDrop=$(BUILD_SOURCESDIRECTORY)\TestResults
+      </TestProperties>
     </PropertyGroup>
 
-    <MSBuild Projects="$(MSBuildProjectFile)" Targets="RunTestsCore" Properties="TestPattern=UnitTest;ImpactedTestAssemblies=$(ImpactedTestAssemblies);" />
+    <MSBuild Projects="$(MSBuildProjectFile)"
+             Targets="RunTestsCore"
+             Properties="$(TestProperties)" />
 
   </Target>
 
