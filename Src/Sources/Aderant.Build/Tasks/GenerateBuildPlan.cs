@@ -142,7 +142,11 @@ namespace Aderant.Build.Tasks {
 
             WritePlanToFile(context, element);
 
-            ImpactedTestAssemblies = projectTree.LoadedConfiguredProjects.Where(proj => proj.AreTestsImpacted).Select(proj => proj.GetOutputAssemblyWithExtension()).ToArray();
+            ImpactedTestAssemblies = projectTree.LoadedConfiguredProjects
+                .Where(proj => proj.AreTestsImpacted)
+                .Select(proj => proj.GetOutputAssemblyWithExtension())
+                .OrderBy(s => StringComparer.OrdinalIgnoreCase) /* Sorted for determinism */
+                .ToArray();
 
             PipelineService.RecordImpactedProjects(projectTree.LoadedConfiguredProjects.Where(proj => proj.IsDirty || proj.DirtyFiles != null && proj.DirtyFiles.Any()).Select(proj => Path.GetDirectoryName(proj.FullPath)));
 
