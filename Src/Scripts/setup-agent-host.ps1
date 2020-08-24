@@ -46,7 +46,7 @@ process {
     if ([string]::IsNullOrWhiteSpace($agentArchive)) {
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
         $ProgressPreference = 'SilentlyContinue'
-        $agentArchive = "$env:SystemDrive\Scripts\vsts-agent.zip"        
+        $agentArchive = "$env:SystemDrive\Scripts\vsts-agent.zip"
         Invoke-WebRequest "https://vstsagentpackage.azureedge.net/agent/2.141.2/vsts-agent-win-x64-2.141.2.zip" -OutFile $agentArchive
     }
 
@@ -97,8 +97,8 @@ process {
             $directories = Get-ChildItem -LiteralPath $AgentRootDirectory
 
             foreach ($directory in $directories) {
-                cmd /c "$($directory.FullName)\config.cmd remove --auth Integrated"\                      
-                DeleteRecursive $directory.FullName                
+                cmd /c "$($directory.FullName)\config.cmd remove --auth Integrated"\
+                DeleteRecursive $directory.FullName
             }
         }
 
@@ -111,7 +111,7 @@ process {
 
         # If the path doesn't exist Get-ChildItem will happily pick the working directory instead which could delete C:\Windows\ ...
         # https://github.com/PowerShell/PowerShell/issues/5699
-        if (Test-Path $workingDirectory) {            
+        if (Test-Path $workingDirectory) {
             DeleteRecursive $workingDirectory
         }
 
@@ -195,9 +195,23 @@ process {
         }
     }
 
+    function StopUnneededServices() {
+        $services = @(
+            "*SQL*OLAP*",
+            "*SSASTELEMETRY*",
+            "*MsDtsServer*,"
+            "DiagTrack")
+
+        foreach ($service in $services) {
+            Get-Service -Name $service | Stop-Service
+            Get-Service -Name $service | Set-Service –StartupType Manual
+        }
+    }
+
     function ProvisionAgent() {
         SetHighPower
         ConfigureGit
+        StopUnneededServices
 
         $agentName = Get-RandomName
 
