@@ -1,13 +1,12 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using LibGit2Sharp;
 using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks {
-
-    public sealed class GitVersion : Microsoft.Build.Utilities.Task { 
-        private string canonicalBranchName;
-        private string friendlyBranchName;
-        private string sha;
+    public sealed class GitVersion : Microsoft.Build.Utilities.Task {
+        private static ConcurrentDictionary<string, GitInfo> gitInfoCache = new ConcurrentDictionary<string, GitInfo>(StringComparer.OrdinalIgnoreCase);
+        private GitInfo results;
 
         [Required]
         public string WorkingDirectory { get; set; }
@@ -22,38 +21,17 @@ namespace Aderant.Build.Tasks {
         /// <value>The git branch.</value>
         [Output]
         public string FriendlyBranchName {
-            get {
-                // Server builds checkout a specific commit putting the repository into a DETACHED HEAD state.
-                // Rather than try and find all refs that are reachable from the commit we will fall back to the TF VC
-                // environment variable provided information
-                if (string.IsNullOrEmpty(friendlyBranchName) || IsDetachedHead(friendlyBranchName)) {
-                    return GetEnvironmentVariable("BUILD_SOURCEBRANCHNAME");
-                }
-                return friendlyBranchName;
-            }
-            private set { friendlyBranchName = value; }
+            get { return results.FriendlyBranchName; }
         }
 
         [Output]
         public string CanonicalBranchName {
-            get {
-                if (string.IsNullOrEmpty(canonicalBranchName) || IsDetachedHead(canonicalBranchName)) {
-                    return GetEnvironmentVariable("BUILD_SOURCEBRANCH");
-                }
-                return canonicalBranchName;
-            }
-            private set { canonicalBranchName = value; }
+            get { return results.CanonicalBranchName; }
         }
 
         [Output]
         public string Sha {
-            get {
-                if (string.IsNullOrEmpty(sha)) {
-                    return GetEnvironmentVariable("BUILD_SOURCEVERSION");
-                }
-                return sha;
-            }
-            private set { sha = value; }
+            get { return results.Sha; }
         }
 
         /// <summary>
@@ -66,6 +44,19 @@ namespace Aderant.Build.Tasks {
         }
 
         public override bool Execute() {
+            if (!gitInfoCache.TryGetValue(WorkingDirectory, out results)) {
+                RunTask(out var friendlyBranchName, out var canonicalBranchName, out var sha);
+
+                results = new GitInfo(AllowTfsBuildVariableFallback, friendlyBranchName, canonicalBranchName, sha);
+                gitInfoCache.TryAdd(WorkingDirectory, results);
+            }
+
+            return !Log.HasLoggedErrors;
+        }
+
+        private void RunTask(out string friendlyBranchName, out string canonicalBranchName, out string sha) {
+            sha = null;
+
             if (Discover) {
                 string discover = Repository.Discover(WorkingDirectory);
 
@@ -75,7 +66,6 @@ namespace Aderant.Build.Tasks {
             using (var repo = new Repository(WorkingDirectory)) {
                 friendlyBranchName = repo.Head.FriendlyName;
                 Log.LogMessage(MessageImportance.Low, "Set FriendlyBranchName: " + friendlyBranchName);
-                
 
                 canonicalBranchName = repo.Head.CanonicalName;
                 Log.LogMessage(MessageImportance.Low, "Set CanonicalBranchName: " + canonicalBranchName);
@@ -87,18 +77,47 @@ namespace Aderant.Build.Tasks {
                 } catch {
                 }
             }
+        }
+    }
 
-            return !Log.HasLoggedErrors;
+    internal sealed class GitInfo {
+        private readonly bool allowTfsBuildVariableFallback;
+
+        public GitInfo(bool allowTfsBuildVariableFallback, string friendlyBranchName, string canonicalBranchName, string sha) {
+            this.allowTfsBuildVariableFallback = allowTfsBuildVariableFallback;
+            FriendlyBranchName = friendlyBranchName;
+            CanonicalBranchName = canonicalBranchName;
+            Sha = sha;
+
+            // Server builds checkout a specific commit putting the repository into a DETACHED HEAD state.
+            // Rather than try and find all refs that are reachable from the commit we will fall back to the TF VC
+            // environment variable provided information
+            if (string.IsNullOrEmpty(friendlyBranchName) || IsDetachedHead(friendlyBranchName)) {
+                FriendlyBranchName = GetEnvironmentVariable("BUILD_SOURCEBRANCHNAME");
+            }
+
+            if (string.IsNullOrEmpty(canonicalBranchName) || IsDetachedHead(canonicalBranchName)) {
+                CanonicalBranchName = GetEnvironmentVariable("BUILD_SOURCEBRANCH");
+            }
+
+            if (string.IsNullOrEmpty(sha)) {
+                Sha = GetEnvironmentVariable("BUILD_SOURCEVERSION");
+            }
         }
 
-        private bool IsDetachedHead(string branchName) {
+        public string FriendlyBranchName { get; private set; }
+        public string CanonicalBranchName { get; private set; }
+        public string Sha { get; set; }
+
+        private static bool IsDetachedHead(string branchName) {
             return string.Equals(branchName, "(no branch)");
         }
 
         private string GetEnvironmentVariable(string variable) {
-            if (AllowTfsBuildVariableFallback) {
+            if (allowTfsBuildVariableFallback) {
                 return Environment.GetEnvironmentVariable(variable);
             }
+
             return null;
         }
     }
