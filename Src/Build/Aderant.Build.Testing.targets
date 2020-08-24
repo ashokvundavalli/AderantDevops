@@ -38,7 +38,8 @@
         <Properties>
           SolutionRoot=%(SolutionRoots.Identity);
           ArtifactStagingDirectory=$(ArtifactStagingDirectory);
-          ImpactedTestAssemblies=$(ImpactedTestAssemblies)
+          ImpactedTestAssemblies=$(ImpactedTestAssemblies);
+          AderantCommonTargetsImported=true
         </Properties>
       </ProjectItems>
     </ItemGroup>
@@ -98,17 +99,17 @@
     <PropertyGroup>
       <!-- Ensure that any symbols like $ (from the current account) do not get escaped -->
       <TestRunDirectory>$([MSBuild]::Unescape($(SolutionRoot)))</TestRunDirectory>
-      <!--<TestRunDirectory>$(TestRunDirectory.TrimEnd('\').TrimEnd('/'))</TestRunDirectory>-->
       <RunSettingsPropFile>$(TestRunDirectory)\Build\TFSBuild.proj</RunSettingsPropFile>
     </PropertyGroup>
 
     <!-- Retrieve contextual data from the build service -->
-    <GetBuildOutputs>
-      <Output TaskParameter="TrackedProjects" ItemName="TrackedProjects" />
+    <GetBuildOutputs
+        SolutionRoot="$(TestRunDirectory)"
+        NormalizeOutputPath="true">
+      <Output TaskParameter="TrackedProjects" ItemName="ProjectsForThisRoot" />
     </GetBuildOutputs>
 
     <ItemGroup>
-      <ProjectsForThisRoot Include="@(TrackedProjects->WithMetadataValue('SolutionRoot', '$(TestRunDirectory)'))" />
       <TestAssemblyDirectories Include="@(ProjectsForThisRoot->'%(OutputPath)'->Distinct())" />
     </ItemGroup>
   </Target>
@@ -145,7 +146,10 @@
     <Error Text="More than one custom run settings file is present: @(TestAssemblyDirectories)" Condition="'$(UseCustomRunSettings)' == 'True' And '@(_CustomRunSettingFiles->Count())' &gt; 1" />
 
     <PropertyGroup>
+      <UsingCustomRunSettings>false</UsingCustomRunSettings>
       <RunSettingsFile Condition="'$(UseCustomRunSettings)' == 'True' And '@(_CustomRunSettingFiles)' != ''">@(_CustomRunSettingFiles)</RunSettingsFile>
+
+      <UsingCustomRunSettings Condition="'$(RunSettingsFile)' != ''">true</UsingCustomRunSettings>
       <RunSettingsFile Condition="'$(RunSettingsFile)' == '' Or !Exists('$(RunSettingsFile)')">$(MSBuildThisFileDirectory)Testing\default.runsettings</RunSettingsFile>
     </PropertyGroup>
 
@@ -255,6 +259,7 @@ RunSettingsFile: $(RunSettingsFile)" />
         <TestAssemblies>$(AssembliesUnderTest)</TestAssemblies>
         <RunInParallel>$$(RunTestsInParallel)</RunInParallel>
         <RunSettingsFile>%(_Assemblies.RunSettingsFile)</RunSettingsFile>
+        <UsingCustomRunSettingsFile>$(UsingCustomRunSettings)</UsingCustomRunSettingsFile>
       </ScriptArguments>
     </ItemGroup>
 
@@ -262,24 +267,27 @@ RunSettingsFile: $(RunSettingsFile)" />
       <FileWrites Include="%(_Assemblies.RunSettingsFile)" />
     </ItemGroup>
 
+    <MakeDir Directories="$(TestAdapterPath)" />
+
     <PowerShellScript
       Condition="'$(AssembliesUnderTest)' != ''"
       ScriptArguments="@(ScriptArguments)"
       ScriptBlock="
 $ErrorActionPreference = 'Stop'
 $InformationPreference = 'Continue'
-New-Item -ItemType Directory -Path '$(TestAdapterPath)' -Force
 $additionalEnvironmentVariables = @{}
 $(AdditionalVariables)
 . '$(MSBuildThisFileDirectory)Testing\RunTests.ps1' @args -AdditionalEnvironmentVariables $additionalEnvironmentVariables"
       OnErrorReason="Test failure" />
 
+    <CallTarget Targets="RemoveFiles" />
     <OnError ExecuteTargets="RemoveFiles;ShowTestFailureHelp" />
 
   </Target>
 
   <Target Name="RemoveFiles">
     <Delete Files="@(FileWrites)" TreatErrorsAsWarnings="true" />
+    <RemoveDir Directories="$(TestAdapterPath)" ContinueOnError="true" />
   </Target>
 
 
