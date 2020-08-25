@@ -152,7 +152,8 @@
                          ArtifactStagingDirectory=$(ArtifactStagingDirectory);
                          SharedDependencyDirectory=$(SharedDependencyDirectory);
                          TestPattern=IntegrationTest;ImpactedTestAssemblies=$(ImpactedTestAssemblies);
-                         ExpertSourceDirectory=$(ExpertSourceDirectory);" />
+                         ExpertSourceDirectory=$(ExpertSourceDirectory);
+                         RunTests=$(RunTests);" />
   </Target>
 
 
