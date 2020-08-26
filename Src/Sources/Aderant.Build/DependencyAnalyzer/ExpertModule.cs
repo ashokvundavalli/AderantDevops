@@ -302,6 +302,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         specific_path_external_module,
 
         SpecificDropLocation,
-        NuGet
+        NuGet,
+        RemoteFile,
     }
 }

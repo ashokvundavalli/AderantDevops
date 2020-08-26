@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Aderant.Build.DependencyAnalyzer;
-using Aderant.Build.DependencyResolver.Models;
+using Aderant.Build.DependencyResolver.Model;
 
 namespace Aderant.Build.DependencyResolver {
     internal class DependencyRequirement : IDependencyRequirement, IEquatable<DependencyRequirement>, IDependencyGroup {

@@ -119,6 +119,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="DependencyResolver\DependencyRequirementTests.cs" />
+    <Compile Include="DependencyResolver\Model\RemoteFileTests.cs" />
     <Compile Include="DependencyResolver\ResolverWorkflowTests.cs" />
     <Compile Include="Utilities\PathComparerTests.cs" />
     <Compile Include="PipelineService\BuildPipelineServiceTests.cs" />
@@ -359,7 +360,9 @@
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="DependencyResolver\NewFolder1\" />
+  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="..\TestDeployment.proj" />
 </Project>

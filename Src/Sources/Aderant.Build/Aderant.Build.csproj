@@ -104,6 +104,8 @@
     <Compile Include="Commands\GetSourceTreeMetadataCommand.cs" />
     <Compile Include="Commands\GetBuildStateMetadataCommand.cs" />
     <Compile Include="DependencyAnalyzer\DirectoryNodeFactory.cs" />
+    <Compile Include="DependencyResolver\Model\DependencyGroup.cs" />
+    <Compile Include="DependencyResolver\Model\RemoteFile.cs" />
     <Compile Include="Packaging\ProductAssembler.cs" />
     <Compile Include="Utilities\PathComparer.cs" />
     <Compile Include="Model\CommitConfiguration.cs" />
@@ -437,8 +439,7 @@
     <None Include="Scripts\persist-build.ps1" />
     <None Include="Scripts\undo-buildpersistence.bat" />
   </ItemGroup>
-  <ItemGroup>
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <None Include="libgit2.props">
       <SubType>Designer</SubType>

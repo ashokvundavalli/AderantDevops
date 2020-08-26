@@ -7,7 +7,6 @@ using Paket;
 
 namespace Aderant.Build.DependencyResolver.Models {
     internal class DependenciesFileWriter {
-
         public string Write(List<DependenciesGroup> groups, Dictionary<string, IReadOnlyCollection<string>> frameworkRestrictions) {
             StringBuilder sb = new StringBuilder();
 
@@ -42,7 +41,7 @@ namespace Aderant.Build.DependencyResolver.Models {
                             string versionRequirement = packageRequirement.VersionRequirement.ToString();
 
                             if (preReleaseStatuses.All(x => versionRequirement.IndexOf(x, StringComparison.OrdinalIgnoreCase) == -1)) {
-                                preReleaseString = string.Join(" ", ((PreReleaseStatus.Concrete)status).Item);
+                                preReleaseString = string.Join(" ", ((PreReleaseStatus.Concrete) status).Item);
                             }
                         }
 
@@ -55,7 +54,13 @@ namespace Aderant.Build.DependencyResolver.Models {
                     } else {
                         throw new ArgumentException($"Unsupported dependency type for package: {packageRequirement.Name.Name}.");
                     }
+                }
 
+                foreach (var remoteFile in group.RemoteFiles) {
+                    if (remoteFile.Origin.IsHttpLink) {
+                        
+                    }
+                    sb.AppendLine(remoteFile.ToString());
                 }
 
                 sb.AppendLine();
@@ -63,30 +68,5 @@ namespace Aderant.Build.DependencyResolver.Models {
 
             return sb.ToString();
         }
-    }
-
-    internal class DependencyGroup {
-
-        internal DependencyGroup(string groupName, Dictionary<string, VersionRequirement> name) {
-            GroupName = groupName;
-            Requirements = name;
-        }
-
-        /// <summary>
-        /// The name of the group.
-        /// </summary>
-        internal string GroupName { get; }
-
-        /// <summary>
-        /// Do not resolve transitive dependencies
-        /// </summary>
-        internal bool Strict { get; set; }
-
-        /// <summary>
-        /// Any .NET framework restrictions.
-        /// </summary>
-        internal IEnumerable<string> FrameworkRestrictions { get; set; }
-
-        internal IDictionary<string, VersionRequirement> Requirements { get; private set; }
     }
 }
