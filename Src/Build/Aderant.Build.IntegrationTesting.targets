@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="Current">
   <!-- External targets: GetServerImageDependencies, RunTests
-     External variables: ArtifactStagingDirectory, BuildToolsDirectory, ExpertSourceDirectory, SolutionRoot, ImageWorkingDirectory, ImageToolingDirectory, DeploymentEngine, SharedDependencyDirectory, ImpactedTestProjects, ParametersFile -->
+     External variables: ArtifactStagingDirectory, BuildToolsDirectory, ExpertSourceDirectory, SolutionRoot, ImageWorkingDirectory, ImageToolingDirectory, DeploymentEngine, SharedDependencyDirectory, ImpactedTestProjects, ParametersFile, RunTests -->
   <PropertyGroup>
     <DeploymentTargets>$(SharedDependencyDirectory)\packages\Aderant.Deployment.Internal\lib\Targets\</DeploymentTargets>
     <ServerImageTargetExists Condition="Exists('$(DeploymentTargets)Aderant.Build.ServerImage.targets')">true</ServerImageTargetExists>
@@ -15,6 +15,7 @@
   <Import Project="$(DeploymentTargets)Aderant.Build.DeployCI.targets" Condition="'$(DeployTargetExists)' == 'true'" />
   <PropertyGroup>
     <!-- Allows environment variables to override RSP parameters -->
+    <_RunIntegrationTests Condition="'$(RunTests)' == 'false'">$(RunTests)</_RunIntegrationTests>
     <_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">$([System.Environment]::GetEnvironmentVariable('RunIntegrationTests'))</_RunIntegrationTests>
     <_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">$(RunIntegrationTests)</_RunIntegrationTests>
     <_RunIntegrationTests Condition="'$(IsDesktopBuild)' == 'true' And '$(RunDesktopIntegrationTests)' != ''">$(RunDesktopIntegrationTests)</_RunIntegrationTests>
