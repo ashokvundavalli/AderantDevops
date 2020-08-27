@@ -105,8 +105,10 @@ namespace Aderant.Build.PipelineService {
         }
 
         internal static Uri CreateServerUri(string namedPipeProcessToken, string namedPipeIdToken) {
-            return CreateServerUri(namedPipeProcessToken, namedPipeIdToken, Environment.MachineName);
+            return CreateServerUri(namedPipeProcessToken, namedPipeIdToken, MachineName);
         }
+
+        private static string MachineName { get; } = Environment.MachineName;
 
         private static Uri CreateServerUri(string namedPipeProcessToken, string namedPipeIdToken, string machineName) {
             string endpoint = string.Format(

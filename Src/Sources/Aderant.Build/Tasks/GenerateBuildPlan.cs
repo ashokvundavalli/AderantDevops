@@ -171,7 +171,11 @@ namespace Aderant.Build.Tasks {
         private void RebuildFromExistingPlan(BuildOperationContext context, string planFile) {
             if (context.StateFiles == null) {
                 var stateFileController = new StateFileController();
-                context.StateFiles = stateFileController.GetApplicableStateFiles(this.Logger, context);
+                var stateFiles = stateFileController.GetApplicableStateFiles(this.Logger, context);
+                StateFileController.SetIsBuildCacheEnabled(stateFiles, context);
+
+                context.StateFiles = stateFiles;
+
                 PipelineService.Publish(context);
             }
 

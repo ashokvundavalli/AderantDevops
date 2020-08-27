@@ -66,12 +66,10 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 if (stateFiles != null && stateFiles.Count > 0) {
                     context.StateFiles = stateFiles;
-                } else {
-                    isBuildCacheEnabled = false;
                 }
             }
 
-            context.Variables["IsBuildCacheEnabled"] = isBuildCacheEnabled.ToString();
+            isBuildCacheEnabled = StateFileController.SetIsBuildCacheEnabled(stateFiles, context);
 
             var projectGraph = new ProjectDependencyGraph(graph);
 

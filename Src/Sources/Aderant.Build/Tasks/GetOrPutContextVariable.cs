@@ -42,7 +42,7 @@ namespace Aderant.Build.Tasks {
                 if (string.IsNullOrEmpty(Value) && NoProperties()) {
                     var value = GetExistingVariable();
 
-                    if (string.IsNullOrEmpty(Scope) && !string.IsNullOrEmpty(Value)) {
+                    if (string.IsNullOrEmpty(Scope) && !string.IsNullOrEmpty(value)) {
                         lookupCache.TryAdd(VariableName, value);
                     }
 
@@ -99,8 +99,8 @@ namespace Aderant.Build.Tasks {
 
             Log.LogMessage($"Variable {variableName} -> {value}");
 
-            Context.Variables[variableName] = value;
             lookupCache.TryAdd(variableName, value);
+            Context.Variables[variableName] = value;
         }
 
         private bool NoProperties() {
