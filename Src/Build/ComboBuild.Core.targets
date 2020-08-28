@@ -51,8 +51,6 @@
       <ProjectsInGroupFinal Include="@(ProjectsInGroup)" Condition="'$(switch-skip-compile)' != 'true'" />
     </ItemGroup>
 
-    <InspectItemGroup ItemGroup="@(ProjectsInGroup)" />
-
     <Warning Text="Skipping compile!" Condition="'$(switch-skip-compile)' == 'true'" />
 
     <Message Text="##vso[task.logdetail id=$(LogId);name=Group $(BuildGroupId) of $(TotalNumberOfBuildGroups);type=build;state=InProgress;progress=0]Build group $(BuildGroupId) started"
@@ -130,7 +128,7 @@
     <PropertyGroup>
       <PropertiesCommonToAllProjects Condition="'$(AGENT_BUILDDIRECTORY)' != ''">
         $(PropertiesCommonToAllProjects);
-        PathMap=$(AGENT_BUILDDIRECTORY)=D:\;
+        PathMap=$(AGENT_BUILDDIRECTORY)=D:\
       </PropertiesCommonToAllProjects>
     </PropertyGroup>
 

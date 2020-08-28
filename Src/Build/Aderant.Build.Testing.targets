@@ -132,10 +132,13 @@
       <Output TaskParameter="TargetOutputs" PropertyName="UseCustomRunSettings" />
     </MSBuild>
 
+
+    <!-- Customization point - extract an ItemGroup called RunSettings from the project cone -->
     <MSBuild Projects="$(MSBuildThisFileFullPath)"
          Condition="Exists('$(RunSettingsPropFile)')"
          Targets="GetCustomTestSettings"
-         Properties="RunSettingsPropFile=$(RunSettingsPropFile)"
+         Properties="RunSettingsPropFile=$(RunSettingsPropFile);
+                     ArtifactStagingDirectory=$(ArtifactStagingDirectory)"
          ContinueOnError="true">
       <Output TaskParameter="TargetOutputs" ItemName="RunSettings" />
     </MSBuild>
@@ -287,6 +290,7 @@ $(AdditionalVariables)
 
   </Target>
 
+
   <Target Name="CopyResultFiles">
     <ItemGroup>
       <ResultFiles Include="$(SolutionRoot)\**\*.trx" />
@@ -297,6 +301,7 @@ $(AdditionalVariables)
       SourceFiles="@(ResultFiles)"
       DestinationFolder="$(TestResultFileDrop)" />
   </Target>
+
 
   <Target Name="RemoveFiles">
     <Delete Files="@(FileWrites)" TreatErrorsAsWarnings="true" />
