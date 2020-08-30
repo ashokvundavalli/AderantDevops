@@ -76,7 +76,7 @@ namespace Aderant.Build.Packaging {
             }
 
             foreach (var item in packageQueue) {
-                logger.Warning("File was not packaged: " + item.Location);
+                logger.Info("File was not packaged: " + item.Location);
             }
 
             return artifactItems;

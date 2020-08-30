@@ -124,6 +124,8 @@
       <TestProperties>
         TestPattern=UnitTest;
         ImpactedTestAssemblies=$(ImpactedTestAssemblies);
+        ArtifactStagingDirectory=$(ArtifactStagingDirectory);
+        BuildInParallel=true;
       </TestProperties>
 
       <TestProperties Condition="'$(BUILD_SOURCESDIRECTORY)' != ''">
@@ -154,6 +156,7 @@
                          TestPattern=IntegrationTest;
                          ImpactedTestAssemblies=$(ImpactedTestAssemblies);
                          ExpertSourceDirectory=$(ExpertSourceDirectory);
+                         TestResultFileDrop=$(TestResultFileDrop);
                          BuildInParallel=false;
                          RunTests=$(RunTests);" />
   </Target>

@@ -146,7 +146,7 @@ function ShowTestRunReport() {
     $afterRunTrxFiles = GetTestResultFiles
 
     if ($null -eq $afterRunTrxFiles) {
-        Write-Output "Skipped generating HTML report - no .trx files present in directory: '$WorkingDirectory\TestResults'."
+        Write-Information "Skipped generating HTML report - no .trx files present in directory: '$WorkingDirectory\TestResults'."
         return
     }
 
