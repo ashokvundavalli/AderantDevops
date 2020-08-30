@@ -14,6 +14,7 @@ using Aderant.Build.Tasks;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Task = System.Threading.Tasks.Task;
 
 namespace IntegrationTest.Build.Tasks {
     [TestClass]
@@ -135,7 +136,7 @@ namespace IntegrationTest.Build.Tasks {
         }
 
         [TestMethod]
-        public void GenerateUpdateZip() {
+        public async Task GenerateUpdateZip() {
             string outputFile = Path.Combine(TestContext.DeploymentDirectory, "update.zip");
             destinationFiles.Add(outputFile);
 
@@ -151,8 +152,8 @@ namespace IntegrationTest.Build.Tasks {
 
             using (var host = new BuildPipelineServiceHost()) {
                 host.StartService(DateTime.Now.Ticks.ToString());
-                BuildPipelineServiceClient.GetProxy(BuildPipelineServiceHost.PipeId).Publish(context);
-                Thread.Sleep(150);
+                await BuildPipelineServiceClient.GetProxy(BuildPipelineServiceHost.PipeId).PublishAsync(context);
+
                 task.Execute();
             }
 
@@ -164,23 +165,23 @@ namespace IntegrationTest.Build.Tasks {
 
         [TestMethod]
         [DeploymentItem(@"Resources", "Resources")]
-        public void GenerateManifestHandlesRelativePaths() {
+        public async Task GenerateManifestHandlesRelativePaths() {
             var directory = Path.Combine(TestContext.DeploymentDirectory, "Resources");
             var task = new GenerateArchives();
 
             var context = new BuildOperationContext { BuildMetadata = new BuildMetadata { ScmBranch = "branch/Test" } };
             using (var host = new BuildPipelineServiceHost()) {
                 host.StartService(DateTime.Now.Ticks.ToString());
-                BuildPipelineServiceClient.GetProxy(BuildPipelineServiceHost.PipeId).Publish(context);
+                await BuildPipelineServiceClient.GetProxy(BuildPipelineServiceHost.PipeId).PublishAsync(context);
 
                 task.GenerateManifest(directory);
             }
 
             var manifest = XDocument.Load(Path.Combine(directory, "Manifest.xml"));
-            Assert.IsTrue(manifest.Descendants().Any(d => d.Name == "relativePath" && d.Value == "Customization\\NestedFolder"));            
+            Assert.IsTrue(manifest.Descendants().Any(d => d.Name == "relativePath" && d.Value == "Customization\\NestedFolder"));
         }
     }
-    
+
     public class MockBuildEngine : IBuildEngine {
 
         public List<BuildErrorEventArgs> LogErrorEvents = new List<BuildErrorEventArgs>();

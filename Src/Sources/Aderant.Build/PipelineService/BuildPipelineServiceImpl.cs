@@ -5,6 +5,7 @@ using System.Linq;
 using System.ServiceModel;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Markup;
 using Aderant.Build.Packaging;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
@@ -64,6 +65,11 @@ namespace Aderant.Build.PipelineService {
             }
         }
 
+        public Task PublishAsync(BuildOperationContext context) {
+            Publish(context);
+            return Task.CompletedTask;
+        }
+
         public BuildOperationContext GetContext() {
             // If null then not called via WCF (perhaps being called by the build host itself)
             if (OperationContext.Current != null) {
@@ -103,6 +109,11 @@ namespace Aderant.Build.PipelineService {
                     this.relatedFiles.TryAdd(relatedFile, relatedFiles[relatedFile]);
                 }
             }
+        }
+
+        public Task RecordRelatedFilesAsync(Dictionary<string, List<string>> relatedFiles) {
+            RecordRelatedFiles(relatedFiles);
+            return Task.CompletedTask;
         }
 
         public IEnumerable<ProjectOutputSnapshot> GetProjectOutputs(string container) {

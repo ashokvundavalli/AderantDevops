@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ServiceModel;
+using System.Threading.Tasks;
 using Aderant.Build.Packaging;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
@@ -19,13 +20,16 @@ namespace Aderant.Build.PipelineService {
         [OperationContract(IsOneWay = true)]
         void Publish(BuildOperationContext context);
 
+        [OperationContract(Name = "PublishAsync2")]
+        Task PublishAsync(BuildOperationContext context);
+
         [OperationContract]
         BuildOperationContext GetContext();
 
         [OperationContract(IsOneWay = true)]
         void RecordProjectOutputs(ProjectOutputSnapshot snapshot);
 
-        [OperationContract(IsOneWay =  true)]
+        [OperationContract(IsOneWay = true)]
         void RecordImpactedProjects(IEnumerable<string> impactedProjects);
 
         /// <summary>
@@ -33,6 +37,9 @@ namespace Aderant.Build.PipelineService {
         /// </summary>
         [OperationContract(IsOneWay = true)]
         void RecordRelatedFiles(Dictionary<string, List<string>> relatedFiles);
+
+        [OperationContract(Name = "RecordRelatedFilesAsync2")]
+        Task RecordRelatedFilesAsync(Dictionary<string, List<string>> relatedFiles);
 
         /// <summary>
         /// Returns the outputs for a specific container.

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.ServiceModel;
 using System.ServiceModel.Channels;
 using System.Threading;
+using System.Threading.Tasks;
 using Aderant.Build.Packaging;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
@@ -48,6 +49,10 @@ namespace Aderant.Build.PipelineService {
             InvokeServiceAction(() => Contract.Publish(context));
         }
 
+        public Task PublishAsync(BuildOperationContext context) {
+            return InvokeServiceAction(() => Contract.PublishAsync(context));
+        }
+
         public BuildOperationContext GetContext() {
             return InvokeServiceAction(() => Contract.GetContext());
         }
@@ -62,6 +67,10 @@ namespace Aderant.Build.PipelineService {
 
         public void RecordRelatedFiles(Dictionary<string, List<string>> relatedFiles) {
             InvokeServiceAction(() => Contract.RecordRelatedFiles(relatedFiles));
+        }
+
+        public Task RecordRelatedFilesAsync(Dictionary<string, List<string>> relatedFiles) {
+            return InvokeServiceAction(() => Contract.RecordRelatedFilesAsync(relatedFiles));
         }
 
         public IEnumerable<ProjectOutputSnapshot> GetProjectOutputs(string container) {
