@@ -40,13 +40,12 @@ namespace Aderant.Build.PipelineService {
             set { dataService.Publish(value); }
         }
 
-        private static readonly object Pipe = new object();
-
+        /// <summary>
+        /// Returns the current pipe identifier for the build context service.
+        /// </summary>
         public static string PipeId {
             get {
-                lock (Pipe) {
-                    return pipeId ?? (pipeId = Environment.GetEnvironmentVariable(WellKnownProperties.ContextEndpoint));
-                }
+                return pipeId ?? (pipeId = Environment.GetEnvironmentVariable(WellKnownProperties.ContextEndpoint));
             }
             private set { pipeId = value; }
         }

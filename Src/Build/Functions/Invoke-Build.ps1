@@ -444,7 +444,7 @@ function AssignSwitches {
 }
 
 function RegisterChangeEvents($service) {
-    $inputObject = $contextService.ConsoleAdapter
+    $inputObject = $service.ConsoleAdapter
 
     Register-ObjectEvent -InputObject $inputObject -SourceIdentifier $titleEventSource -EventName "ProgressChanged" -Action {
         $Host.UI.RawUI.WindowTitle = ($Event.SourceArgs.CurrentOperation + " " +  $Event.SourceArgs.StatusDescription)
@@ -664,7 +664,7 @@ function global:Invoke-Build2 {
     $context.LogFile = "$root\build.log"
 
     $succeeded = $false
-
+    $contextService = $null
     $currentColor = $host.UI.RawUI.ForegroundColor
     try {
         $contextEndpoint = [DateTime]::UtcNow.ToFileTimeUtc().ToString()
@@ -703,6 +703,7 @@ function global:Invoke-Build2 {
         $succeeded = $false
         Write-Error $PSItem.Tostring()
     } finally {
+
         Get-EventSubscriber -SourceIdentifier $titleEventSource | Unregister-Event
 
         $host.UI.RawUI.ForegroundColor = $currentColor

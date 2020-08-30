@@ -65,9 +65,12 @@ namespace Aderant.Build.PipelineService {
         }
 
         public BuildOperationContext GetContext() {
-            OperationContext.Current.OperationCompleted += OnCurrentOnOperationCompleted;
+            // If null then not called via WCF (perhaps being called by the build host itself)
+            if (OperationContext.Current != null) {
+                OperationContext.Current.OperationCompleted += OnCurrentOnOperationCompleted;
+                contextLock.EnterReadLock();
+            }
 
-            contextLock.EnterReadLock();
             return ctx;
         }
 
