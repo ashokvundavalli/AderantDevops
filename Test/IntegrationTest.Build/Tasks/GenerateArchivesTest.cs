@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Threading;
 using System.Xml.Linq;
 using Aderant.Build;
 using Aderant.Build.Packaging;
@@ -151,7 +152,7 @@ namespace IntegrationTest.Build.Tasks {
             using (var host = new BuildPipelineServiceHost()) {
                 host.StartService(DateTime.Now.Ticks.ToString());
                 BuildPipelineServiceClient.GetProxy(BuildPipelineServiceHost.PipeId).Publish(context);
-
+                Thread.Sleep(150);
                 task.Execute();
             }
 
