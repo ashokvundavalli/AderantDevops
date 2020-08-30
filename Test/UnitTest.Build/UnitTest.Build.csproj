@@ -250,6 +250,7 @@
       <Link>Resources\.editorconfig</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <None Include="App.config" />
     <None Include="StateTracking\ExampleTrackedInputFiles.proj">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <SubType>Designer</SubType>

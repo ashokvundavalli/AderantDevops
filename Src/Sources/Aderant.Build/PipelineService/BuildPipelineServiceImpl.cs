@@ -30,7 +30,7 @@ namespace Aderant.Build.PipelineService {
         private readonly ConcurrentBag<BuildArtifact> associatedArtifacts = new ConcurrentBag<BuildArtifact>();
         private readonly ConcurrentBag<BuildDirectoryContribution> directoryMetadata = new ConcurrentBag<BuildDirectoryContribution>();
         private readonly ConcurrentBag<OnDiskProjectInfo> projects = new ConcurrentBag<OnDiskProjectInfo>();
-        private readonly ConcurrentDictionary<string, IReadOnlyCollection<TrackedInputFile>> trackedDependenciesBySolutionRoot = new ConcurrentDictionary<string, IReadOnlyCollection<TrackedInputFile>>(StringComparer.OrdinalIgnoreCase);
+        private readonly ConcurrentDictionary<string, List<TrackedInputFile>> trackedDependenciesBySolutionRoot = new ConcurrentDictionary<string, List<TrackedInputFile>>(StringComparer.OrdinalIgnoreCase);
         private readonly ConcurrentBag<string> impactedProjects = new ConcurrentBag<string>();
         private readonly ConcurrentDictionary<string, List<string>> relatedFiles = new ConcurrentDictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
 
@@ -241,7 +241,7 @@ namespace Aderant.Build.PipelineService {
         /// Notifies the service it should track a set of files.
         /// </summary>
         public void TrackInputFileDependencies(string solutionRoot, IReadOnlyCollection<TrackedInputFile> fileDependencies) {
-            trackedDependenciesBySolutionRoot[solutionRoot] = fileDependencies;
+            trackedDependenciesBySolutionRoot[solutionRoot] = fileDependencies.ToList();
         }
 
         /// <summary>
@@ -249,7 +249,7 @@ namespace Aderant.Build.PipelineService {
         /// they are removed from the internal buffer.
         /// </summary>
         public IReadOnlyCollection<TrackedInputFile> ClaimTrackedInputFiles(string tag) {
-            IReadOnlyCollection<TrackedInputFile> trackedFiles;
+            List<TrackedInputFile> trackedFiles;
             if (trackedDependenciesBySolutionRoot.TryGetValue(tag, out trackedFiles)) {
                 trackedDependenciesBySolutionRoot.TryRemove(tag, out _);
             }

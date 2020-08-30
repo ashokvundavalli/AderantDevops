@@ -95,7 +95,7 @@ namespace Aderant.Build.PipelineService {
     [ServiceContract]
     internal interface IBuildTreeContributorService {
 
-        [OperationContract(IsOneWay = true)]
+        [OperationContract]
         void AddBuildDirectoryContributor(BuildDirectoryContribution buildDirectoryContribution);
 
         [OperationContract]

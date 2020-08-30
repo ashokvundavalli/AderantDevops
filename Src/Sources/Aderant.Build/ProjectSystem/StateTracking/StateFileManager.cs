@@ -76,7 +76,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                 context.Variables["IsBuildCacheEnabled"] = true.ToString();
                 return true;
             }
-
+            context.Variables["IsBuildCacheEnabled"] = false.ToString();
             return false;
         }
     }
