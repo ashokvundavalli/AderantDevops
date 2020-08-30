@@ -125,9 +125,10 @@
     </ItemGroup>
 
     <MSBuild Projects="$(MSBuildThisFileFullPath)"
-         Condition="Exists('$(RunSettingsPropFile)')"
+         Condition="'$(RunSettingsPropFile)' != '' And Exists('$(RunSettingsPropFile)')"
          Targets="GetUseCustomRunSettings"
-         Properties="RunSettingsPropFile=$(RunSettingsPropFile)"
+         Properties="RunSettingsPropFile=$(RunSettingsPropFile);
+                     AderantCommonTargetsImported=true"
          ContinueOnError="true">
       <Output TaskParameter="TargetOutputs" PropertyName="UseCustomRunSettings" />
     </MSBuild>
@@ -138,7 +139,8 @@
          Condition="Exists('$(RunSettingsPropFile)')"
          Targets="GetCustomTestSettings"
          Properties="RunSettingsPropFile=$(RunSettingsPropFile);
-                     ArtifactStagingDirectory=$(ArtifactStagingDirectory)"
+                     ArtifactStagingDirectory=$(ArtifactStagingDirectory);
+                     AderantCommonTargetsImported=true"
          ContinueOnError="true">
       <Output TaskParameter="TargetOutputs" ItemName="RunSettings" />
     </MSBuild>

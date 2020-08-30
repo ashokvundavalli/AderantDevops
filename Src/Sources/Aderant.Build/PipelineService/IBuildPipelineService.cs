@@ -16,22 +16,22 @@ namespace Aderant.Build.PipelineService {
         [OperationContract]
         object[] Ping();
 
-        [OperationContract]
+        [OperationContract(IsOneWay = true)]
         void Publish(BuildOperationContext context);
 
         [OperationContract]
         BuildOperationContext GetContext();
 
-        [OperationContract]
+        [OperationContract(IsOneWay = true)]
         void RecordProjectOutputs(ProjectOutputSnapshot snapshot);
 
-        [OperationContract]
+        [OperationContract(IsOneWay =  true)]
         void RecordImpactedProjects(IEnumerable<string> impactedProjects);
 
         /// <summary>
         /// Records the list of related files for the file given as the key. Will merge dictionaries together to keep a concise list.
         /// </summary>
-        [OperationContract]
+        [OperationContract(IsOneWay = true)]
         void RecordRelatedFiles(Dictionary<string, List<string>> relatedFiles);
 
         /// <summary>
@@ -55,7 +55,7 @@ namespace Aderant.Build.PipelineService {
         /// <summary>
         /// Places a variable into the build property bag.
         /// </summary>
-        [OperationContract]
+        [OperationContract(IsOneWay = true)]
         void PutVariable(string scope, string variableName, string value);
 
         /// <summary>
@@ -64,13 +64,13 @@ namespace Aderant.Build.PipelineService {
         [OperationContract]
         string GetVariable(string scope, string variableName);
 
-        [OperationContract]
+        [OperationContract(IsOneWay = true)]
         void SetStatus(string status, string reason);
 
         /// <param name="currentOperation">The current operation of the many required to accomplish the activity (such as "copying foo.txt")</param>
         /// <param name="activity">Gets the Id of the activity to which this record corresponds. Used as a 'key' for the linking of subordinate activities.</param>
         /// <param name="statusDescription">The current status of the operation, e.g., "35 of 50 items Copied." or "95% completed." or "100 files purged.".</param>
-        [OperationContract]
+        [OperationContract(IsOneWay = true)]
         void SetProgress(string currentOperation, string activity, string statusDescription);
     }
 
@@ -82,7 +82,7 @@ namespace Aderant.Build.PipelineService {
         /// The data this stores can be useful in later phases of the pipeline where you need to interrogate a project but don't
         /// want to pay the performance cost of loading the project file again.
         /// </summary>
-        [OperationContract]
+        [OperationContract(IsOneWay = true)]
         void TrackProject(OnDiskProjectInfo onDiskProject);
 
         [OperationContract]
@@ -95,7 +95,7 @@ namespace Aderant.Build.PipelineService {
     [ServiceContract]
     internal interface IBuildTreeContributorService {
 
-        [OperationContract]
+        [OperationContract(IsOneWay = true)]
         void AddBuildDirectoryContributor(BuildDirectoryContribution buildDirectoryContribution);
 
         [OperationContract]
@@ -108,7 +108,7 @@ namespace Aderant.Build.PipelineService {
         /// <summary>
         /// Notifies the service it should track a set of files.
         /// </summary>
-        [OperationContract]
+        [OperationContract(IsOneWay = true)]
         void TrackInputFileDependencies(string solutionRoot, IReadOnlyCollection<TrackedInputFile> fileDependencies);
 
         /// <summary>
@@ -126,7 +126,7 @@ namespace Aderant.Build.PipelineService {
         /// Makes an artifact known to the build.
         /// </summary>
         /// <param name="artifacts"></param>
-        [OperationContract]
+        [OperationContract(IsOneWay = true)]
         void AssociateArtifacts(IEnumerable<BuildArtifact> artifacts);
 
         /// <summary>
@@ -139,7 +139,7 @@ namespace Aderant.Build.PipelineService {
         [OperationContract]
         IEnumerable<ArtifactManifest> GetArtifactsForContainer(string container);
 
-        [OperationContract]
+        [OperationContract(IsOneWay = true)]
         void RecordArtifacts(string container, IEnumerable<ArtifactManifest> manifests);
     }
 }

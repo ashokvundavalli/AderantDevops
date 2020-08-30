@@ -79,9 +79,8 @@
     <BuildAnalyzerAssembly>$(BuildAnalyzerDirectory)\analyzers\dotnet\cs\Aderant.Build.Analyzer.dll</BuildAnalyzerAssembly>
   </PropertyGroup>
 
-  <Import Project="Aderant.Build.Common.targets" />
   <Import Project="Aderant.CodeSigning.targets" />
-  <Import Project="Aderant.Build.Testing.targets" />
+  <Import Project="Aderant.Build.Common.targets" />
 
   <Target Name="CleanSuppressionFiles" Condition="'$(SuppressDiagnostics)' == 'true'">
     <Exec ContinueOnError="false"
@@ -116,6 +115,7 @@
     </BuildAndPackageDependsOn>
   </PropertyGroup>
 
+
   <Target Name="RunTests" DependsOnTargets="CreatePlan" Condition="'$(RunTests)' != 'false'">
 
     <PropertyGroup>
@@ -132,7 +132,7 @@
       </TestProperties>
     </PropertyGroup>
 
-    <MSBuild Projects="$(MSBuildProjectFile)"
+    <MSBuild Projects="Aderant.Build.Testing.targets"
              Targets="RunTestsCore"
              Properties="$(TestProperties)" />
 
