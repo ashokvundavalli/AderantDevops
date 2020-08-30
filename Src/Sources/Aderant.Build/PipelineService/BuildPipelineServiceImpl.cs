@@ -37,6 +37,7 @@ namespace Aderant.Build.PipelineService {
         private readonly ReaderWriterLockSlim contextLock = new ReaderWriterLockSlim();
         private readonly ReaderWriterLockSlim artifactsLock = new ReaderWriterLockSlim();
         private readonly ReaderWriterLockSlim outputsLock = new ReaderWriterLockSlim();
+        //private bool hasWriteLock;
 
         public BuildPipelineServiceImpl() {
         }
@@ -49,7 +50,7 @@ namespace Aderant.Build.PipelineService {
 
         public void Publish(BuildOperationContext context) {
             try {
-                contextLock.EnterUpgradeableReadLock();
+                contextLock.EnterWriteLock();
 
                 if (string.IsNullOrEmpty(context.BuildRoot)) {
                     if (ctx != null && !string.IsNullOrEmpty(ctx.BuildRoot)) {
@@ -57,24 +58,22 @@ namespace Aderant.Build.PipelineService {
                     }
                 }
 
-                try {
-                    contextLock.EnterWriteLock();
-                    ctx = context;
-                } finally {
-                    contextLock.ExitWriteLock();
-                }
+                ctx = context;
             } finally {
-                contextLock.ExitUpgradeableReadLock();
+                contextLock.ExitWriteLock();
             }
         }
 
         public BuildOperationContext GetContext() {
-            try {
-                contextLock.EnterReadLock();
-                return ctx;
-            } finally {
-                contextLock.ExitReadLock();
-            }
+            OperationContext.Current.OperationCompleted += OnCurrentOnOperationCompleted;
+
+            contextLock.EnterReadLock();
+            return ctx;
+        }
+
+        private void OnCurrentOnOperationCompleted(object sender, EventArgs args) {
+            contextLock.ExitReadLock();
+            OperationContext.Current.OperationCompleted -= OnCurrentOnOperationCompleted;
         }
 
         public void RecordProjectOutputs(ProjectOutputSnapshot snapshot) {
@@ -192,7 +191,7 @@ namespace Aderant.Build.PipelineService {
                     var artifactsForTag = artifacts.GetArtifactsForTag(container);
 
                     if (artifactsForTag != null) {
-                        return artifactsForTag.SelectMany(s => s.Value);
+                        return artifactsForTag.SelectMany(s => s.Value).ToList();
                     }
                 } finally {
                     artifactsLock.ExitReadLock();
@@ -209,12 +208,18 @@ namespace Aderant.Build.PipelineService {
         }
 
         public void SetStatus(string status, string reason) {
-            if (status != null) {
-                ctx.BuildStatus = status;
-            }
+            try {
+                contextLock.EnterWriteLock();
 
-            if (reason != null) {
-                ctx.BuildStatusReason = reason;
+                if (status != null) {
+                    ctx.BuildStatus = status;
+                }
+
+                if (reason != null) {
+                    ctx.BuildStatusReason = reason;
+                }
+            } finally {
+                contextLock.ExitWriteLock();
             }
         }
 

@@ -3,7 +3,7 @@
          ToolsVersion="Current"
          TreatAsLocalProperty="SolutionRoot">
 
-  <Import Project="Aderant.Build.Common.targets" Condition="'$(AderantCommonTargetsImported)' == ''" />
+  <Import Project="Aderant.Build.Common.targets" Condition="'$(AderantCommonTargetsImported)' != 'true'" />
 
   <PropertyGroup>
     <RunTestsDependsOn>
@@ -289,6 +289,7 @@ $(AdditionalVariables)
     <OnError ExecuteTargets="CopyResultFiles;RemoveFiles;ShowTestFailureHelp" />
 
   </Target>
+
 
 
   <Target Name="CopyResultFiles">

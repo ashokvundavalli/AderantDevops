@@ -151,8 +151,10 @@
                          SolutionRoot=$(SolutionRoot);
                          ArtifactStagingDirectory=$(ArtifactStagingDirectory);
                          SharedDependencyDirectory=$(SharedDependencyDirectory);
-                         TestPattern=IntegrationTest;ImpactedTestAssemblies=$(ImpactedTestAssemblies);
+                         TestPattern=IntegrationTest;
+                         ImpactedTestAssemblies=$(ImpactedTestAssemblies);
                          ExpertSourceDirectory=$(ExpertSourceDirectory);
+                         BuildInParallel=false;
                          RunTests=$(RunTests);" />
   </Target>
 
