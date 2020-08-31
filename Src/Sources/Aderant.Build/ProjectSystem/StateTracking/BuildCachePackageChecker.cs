@@ -50,7 +50,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                     logger.Info(string.Format("    {0} (package id: {1})", checkedArtifact.Id.PadRight(80), checkedArtifact.InstanceId));
                 }
             }
-
+      
             return false;
         }
     }
