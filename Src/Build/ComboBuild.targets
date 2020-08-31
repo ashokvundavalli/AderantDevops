@@ -72,6 +72,9 @@
     <CreateHardLinksForCopyLocal Condition="'$(CreateHardLinksForCopyLocal)' == ''">false</CreateHardLinksForCopyLocal>
     <BuildCacheOptions Condition="'$(BuildCacheOptions)' == ''">DisableCacheWhenProjectChanged</BuildCacheOptions>
 
+    <!-- Specifies that all directories with tests will be run in parallel or one at a time -->
+    <RunTestsForSolutionRootInParallel Condition="'$(RunTestsForSolutionRootInParallel)' == ''">false</RunTestsForSolutionRootInParallel>
+
     <!-- Suppress Diagnostics -->
     <PackagesDirectory Condition="'$(UseSharedDependencyDirectory)' == 'true'">$(SharedDependencyDirectory)packages\</PackagesDirectory>
     <PackagesDirectory Condition="'$(PackagesDirectory)' == ''">$(SolutionRoot)packages\</PackagesDirectory>
@@ -125,7 +128,7 @@
         TestPattern=UnitTest;
         ImpactedTestAssemblies=$(ImpactedTestAssemblies);
         ArtifactStagingDirectory=$(ArtifactStagingDirectory);
-        BuildInParallel=true;
+        RunTestsForSolutionRootInParallel=$(RunTestsForSolutionRootInParallel);
       </TestProperties>
 
       <TestProperties Condition="'$(BUILD_SOURCESDIRECTORY)' != ''">
@@ -157,7 +160,8 @@
                          ImpactedTestAssemblies=$(ImpactedTestAssemblies);
                          ExpertSourceDirectory=$(ExpertSourceDirectory);
                          TestResultFileDrop=$(TestResultFileDrop);
-                         BuildInParallel=false;
+                         RunTestsInParallel=false;
+                         RunTestsForSolutionRootInParallel=false;
                          RunTests=$(RunTests);" />
   </Target>
 

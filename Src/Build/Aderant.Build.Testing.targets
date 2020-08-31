@@ -45,9 +45,10 @@
       </ProjectItems>
     </ItemGroup>
 
+    <!-- RunTestsForSolutionRootInParallel: Specifies that all directories with tests will be run in parallel or one at a time -->
     <MSBuild Projects="@(ProjectItems)"
              Targets="RunTestsForSolutionRoot"
-             BuildInParallel="$(BuildInParallel)">
+             BuildInParallel="$(RunTestsForSolutionRootInParallel)">
       <Output TaskParameter="TargetOutputs" ItemName="RunSettingsFiles" />
     </MSBuild>
 
@@ -82,7 +83,6 @@
       <PathToTestTool>$([System.IO.Path]::GetFullPath('$(PathToTestTool)'))</PathToTestTool>
 
       <IsolationSwitch>/InIsolation</IsolationSwitch>
-      <RunTestsInParallel Condition="'$(TestPattern)' != '' And '$(TestPattern)' == 'IntegrationTest'">false</RunTestsInParallel>
       <RunTestsInParallel>$([MSBuild]::ValueOrDefault('$(RunTestsInParallel)', 'true'))</RunTestsInParallel>
       <ParallelSwitch Condition="'$(RunTestsInParallel)' == 'true'">/Parallel</ParallelSwitch>
 
