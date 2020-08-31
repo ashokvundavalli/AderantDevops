@@ -556,9 +556,9 @@ namespace Aderant.Build.DependencyAnalyzer {
                     }
 
                     // Output assembly is missing - check if this is allowed
-                    if (project.SkipCopyBuildProduct) {
-                        return;
-                    }
+                    //if (project.SkipCopyBuildProduct) {
+                    //    return;
+                    //}
                 } else {
                     logger.Info($"No artifacts exist for '{stateFileKey}' or there are no project outputs.", null);
                 }
