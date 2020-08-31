@@ -38,7 +38,6 @@ namespace Aderant.Build.PipelineService {
         private readonly ReaderWriterLockSlim contextLock = new ReaderWriterLockSlim();
         private readonly ReaderWriterLockSlim artifactsLock = new ReaderWriterLockSlim();
         private readonly ReaderWriterLockSlim outputsLock = new ReaderWriterLockSlim();
-        //private bool hasWriteLock;
 
         public BuildPipelineServiceImpl() {
         }
@@ -281,6 +280,9 @@ namespace Aderant.Build.PipelineService {
         }
 
         public void Dispose() {
+            outputsLock.Dispose();
+            artifactsLock.Dispose();
+            contextLock.Dispose();
         }
 
         public void AddBuildDirectoryContributor(BuildDirectoryContribution buildDirectoryContribution) {
