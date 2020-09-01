@@ -26,7 +26,10 @@ namespace Aderant.Build.PipelineService {
         [OperationContract]
         BuildOperationContext GetContext();
 
-        [OperationContract(IsOneWay = true)]
+        /// <remarks>
+        /// Not marked as OneWay as torn reads with GetProjectSnapshots have been observed
+        /// </remarks>
+        [OperationContract]
         void RecordProjectOutputs(ProjectOutputSnapshot snapshot);
 
         [OperationContract(IsOneWay = true)]
