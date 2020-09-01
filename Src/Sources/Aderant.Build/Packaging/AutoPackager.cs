@@ -18,7 +18,7 @@ namespace Aderant.Build.Packaging {
                 return artifactItems;
             }
 
-            List<string> filesProducedByProjects = new List<string>();
+            List<string> filesProducedByProjects = new List<string>(24);
 
             foreach (var project in outputs) {
                 string outputPath = project.OutputPath;
@@ -76,7 +76,11 @@ namespace Aderant.Build.Packaging {
             }
 
             foreach (var item in packageQueue) {
-                logger.Warning("File was not packaged: " + item.Location);
+                if (item.Location.IndexOf("\\test\\", StringComparison.OrdinalIgnoreCase) >= 0) {
+                    logger.Info("File was not packaged: " + item.Location);
+                } else {
+                    logger.Warning("File was not packaged: " + item.Location);
+                }
             }
 
             return artifactItems;

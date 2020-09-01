@@ -222,7 +222,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         private ItemGroupItem SetConfiguredProjectProperties(int buildGroup, PropertyList propertiesForProjectInstance, ConfiguredProject visualStudioProject, ExtensibilityImposition imposition, Guid projectInstanceId) {
             propertiesForProjectInstance = AddSolutionConfigurationProperties(visualStudioProject, propertiesForProjectInstance);
-            propertiesForProjectInstance["Id"] = projectInstanceId.ToString("D");
+            propertiesForProjectInstance["ProjectInstanceId"] = projectInstanceId.ToString("D");
 
             if (solutionPropertyLists.ContainsKey(propertiesForProjectInstance["SolutionRoot"])) {
                 foreach (KeyValuePair<string, string> keyValuePair in solutionPropertyLists[propertiesForProjectInstance["SolutionRoot"]]) {
@@ -233,7 +233,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             ItemGroupItem project = new ItemGroupItem(visualStudioProject.FullPath) {
-                ["Id"] = projectInstanceId.ToString("D"),
+                ["ProjectInstanceId"] = projectInstanceId.ToString("D"),
                 [BuildGroupId] = buildGroup.ToString(CultureInfo.InvariantCulture),
                 ["IsWebProject"] = visualStudioProject.IsWebProject.ToString(),
                 // Indicates this file is not part of the build system
@@ -247,7 +247,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (visualStudioProject.BuildConfiguration != null) {
                 project["Configuration"] = visualStudioProject.BuildConfiguration.ConfigurationName;
                 project["Platform"] = visualStudioProject.BuildConfiguration.PlatformName;
-                project["AdditionalProperties"] = $"Configuration={visualStudioProject.BuildConfiguration.ConfigurationName}; Platform={visualStudioProject.BuildConfiguration.PlatformName}";
+                project[PropertiesKey] = $"Configuration={visualStudioProject.BuildConfiguration.ConfigurationName}; Platform={visualStudioProject.BuildConfiguration.PlatformName}";
             }
 
             if (visualStudioProject.BuildReason != null && visualStudioProject.BuildReason.Flags.HasFlag(BuildReasonTypes.AlwaysBuild)) {
@@ -266,7 +266,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             OnItemGroupItemMaterialized(new ItemGroupItemMaterializedEventArgs(project, propertiesForProjectInstance));
 
-            project[PropertiesKey] = propertiesForProjectInstance.ToString();
+            project["AdditionalProperties"] = propertiesForProjectInstance.ToString();
             return project;
         }
 
@@ -313,7 +313,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             OnItemGroupItemMaterialized(new ItemGroupItemMaterializedEventArgs(item, properties));
 
-            item[PropertiesKey] = properties.ToString();
+            item["AdditionalProperties"] = properties.ToString();
             return item;
         }
 

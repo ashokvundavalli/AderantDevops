@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Aderant.Build.Logging;
+using System.Threading.Tasks;
 using Aderant.Build.PipelineService;
-using Aderant.Build.ProjectSystem;
 using Aderant.Build.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -16,7 +15,7 @@ namespace IntegrationTest.Build.Tasks {
 
         [TestMethod]
         [DeploymentItem(@"Resources", "Resources")]
-        public void CopyRelatedFilesWithWildcard() {
+        public async Task CopyRelatedFilesWithWildcard() {
             string sourceFile = "*Aderant.Query.*dll";
             var relatedFiles = new List<string> { "ExpertQuery.SqlViews.sql", "*Aderant.Query.*.dll", "*\\Customization*" };
 
@@ -33,7 +32,7 @@ namespace IntegrationTest.Build.Tasks {
             using (var host = new BuildPipelineServiceHost()) {
                 host.StartService(DateTime.Now.Ticks.ToString());
                 var relatedFilesDictionary = new Dictionary<string, List<string>> { { sourceFile, relatedFiles } };
-                BuildPipelineServiceClient.GetProxy(BuildPipelineServiceHost.PipeId).RecordRelatedFiles(relatedFilesDictionary);
+                await BuildPipelineServiceClient.GetProxy(BuildPipelineServiceHost.PipeId).RecordRelatedFilesAsync(relatedFilesDictionary);
 
                 task.ExecuteTask();
             }
@@ -49,7 +48,7 @@ namespace IntegrationTest.Build.Tasks {
 
         [TestMethod]
         [DeploymentItem(@"Resources", "Resources")]
-        public void CopyRelatedFilesWithNoWildcard() {
+        public async Task CopyRelatedFilesWithNoWildcard() {
             string sourceFile = "Aderant.Query.dll";
             var relatedFiles = new List<string> { "ExpertQuery.SqlViews.sql", "Aderant.Query.Resources.dll" };
 
@@ -66,7 +65,7 @@ namespace IntegrationTest.Build.Tasks {
             using (var host = new BuildPipelineServiceHost()) {
                 host.StartService(DateTime.Now.Ticks.ToString());
                 var relatedFilesDictionary = new Dictionary<string, List<string>> { { sourceFile, relatedFiles } };
-                BuildPipelineServiceClient.GetProxy(BuildPipelineServiceHost.PipeId).RecordRelatedFiles(relatedFilesDictionary);
+                await BuildPipelineServiceClient.GetProxy(BuildPipelineServiceHost.PipeId).RecordRelatedFilesAsync(relatedFilesDictionary);
 
                 task.ExecuteTask();
             }

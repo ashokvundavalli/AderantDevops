@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Reflection;
 using System.ServiceModel;
 using System.ServiceModel.Channels;
+using System.ServiceModel.Description;
 using ProtoBuf.ServiceModel;
 
 namespace Aderant.Build.PipelineService {
@@ -18,8 +20,20 @@ namespace Aderant.Build.PipelineService {
 
         public BuildPipelineServiceProxy(Binding binding, EndpointAddress address)
             : base(binding, address) {
-            Endpoint.Behaviors.Add(new ProtoEndpointBehavior());
+
+            if (!Endpoint.Behaviors.Contains(typeof(ProtoEndpointBehavior))) {
+                Endpoint.Behaviors.Add(new ProtoEndpointBehavior());
+            }
+
+            foreach (IEndpointBehavior endpointBehavior in Endpoint.Behaviors) {
+                if (string.Equals("Microsoft.VisualStudio.Diagnostics.ServiceModelSink.Behavior", endpointBehavior.GetType().FullName)) {
+                    Endpoint.Behaviors.Remove(endpointBehavior);
+                    break;
+                }
+            }
         }
+
+
 
         /// <summary>
         /// Exposes the underlying channel contract.

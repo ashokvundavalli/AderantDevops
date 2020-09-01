@@ -61,7 +61,6 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
                 foreach (var sourceChange in changes) {
                     if (sourceChange.Status == FileStatus.Deleted) {
-
                         foreach (var file in stateFiles) {
                             if (file.Outputs.ContainsKey(sourceChange.Path)) {
                                 file.Outputs.Remove(sourceChange.Path);
@@ -70,6 +69,15 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                     }
                 }
             }
+        }
+
+        public static bool SetIsBuildCacheEnabled(List<BuildStateFile> stateFiles, BuildOperationContext context) {
+            if (stateFiles != null && stateFiles.Count > 0) {
+                context.Variables["IsBuildCacheEnabled"] = true.ToString();
+                return true;
+            }
+            context.Variables["IsBuildCacheEnabled"] = false.ToString();
+            return false;
         }
     }
 }

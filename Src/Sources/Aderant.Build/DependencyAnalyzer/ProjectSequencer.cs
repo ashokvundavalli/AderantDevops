@@ -15,7 +15,6 @@ using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.Utilities;
 
 namespace Aderant.Build.DependencyAnalyzer {
-
     [Export(typeof(ISequencer))]
     internal class ProjectSequencer : ISequencer {
         private readonly IFileSystem fileSystem;
@@ -66,12 +65,12 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 if (stateFiles != null && stateFiles.Count > 0) {
                     context.StateFiles = stateFiles;
-                } else {
-                    isBuildCacheEnabled = false;
                 }
-            }
 
-            context.Variables["IsBuildCacheEnabled"] = isBuildCacheEnabled.ToString();
+                isBuildCacheEnabled = StateFileController.SetIsBuildCacheEnabled(stateFiles, context);
+            } else {
+                StateFileController.SetIsBuildCacheEnabled(stateFiles, context);
+            }
 
             var projectGraph = new ProjectDependencyGraph(graph);
 
@@ -380,7 +379,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         private static void DisableBuildCache(IReadOnlyCollection<ConfiguredProject> projects) {
             foreach (var project in projects) {
                 if (project.IsDirty || project.BuildReason != null && (project.BuildReason.Flags.HasFlag(BuildReasonTypes.DependencyChanged) || project.BuildReason.Flags.HasFlag(BuildReasonTypes.InputsChanged))) {
-
                     if (project.DirectoryNode != null) {
                         if (project.BuildReason != null && project.BuildReason.Flags.HasFlag(BuildReasonTypes.ProjectOutputNotFound)) {
                             return;
@@ -433,7 +431,6 @@ namespace Aderant.Build.DependencyAnalyzer {
                         if (contributions != null) {
                             var contribution = contributions.FirstOrDefault(s => string.Equals(s.File, makeFile, StringComparison.OrdinalIgnoreCase));
                             if (contribution != null) {
-
                                 // Ensure the user did not explicitly ask this directory to be built
                                 if (!makeFiles.Contains(contribution.File)) {
                                     startNode.AddedByDependencyAnalysis = true;
@@ -553,17 +550,21 @@ namespace Aderant.Build.DependencyAnalyzer {
                                 return;
                             }
 
-                            MarkDirty(project, BuildReasonTypes.OutputNotFoundInCachedBuild, (string)null);
+                            MarkDirty(project, BuildReasonTypes.OutputNotFoundInCachedBuild, (string) null);
                             return;
                         }
                     }
+
+                    // Output assembly is missing - check if this is allowed
+                    //if (project.SkipCopyBuildProduct) {
+                    //    return;
+                    //}
                 } else {
                     logger.Info($"No artifacts exist for '{stateFileKey}' or there are no project outputs.", null);
                 }
 
-                MarkDirty(project, BuildReasonTypes.ProjectOutputNotFound, (string)null);
+                MarkDirty(project, BuildReasonTypes.ProjectOutputNotFound, (string) null);
                 return;
-
             }
 
             BuildReasonTypes type = BuildReasonTypes.CachedBuildNotFound;
@@ -580,7 +581,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 type |= BuildReasonTypes.InputsChanged;
             }
 
-            MarkDirty(project, type, (string)null);
+            MarkDirty(project, type, (string) null);
         }
 
         private InputFilesDependencyAnalysisResult BeginTrackingInputFiles(BuildStateFile stateFile, string solutionRoot) {
@@ -643,7 +644,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             bool excludeTestProjects,
             ChangesToConsider changesToConsider,
             DependencyRelationshipProcessing dependencyProcessing) {
-
             logger.Info("ChangesToConsider:" + changesToConsider, null);
             logger.Info("DependencyRelationshipProcessing:" + dependencyProcessing, null);
 
@@ -683,7 +683,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (changesToConsider == ChangesToConsider.None) {
                 filteredProjects = buildableProjects;
             } else {
-                filteredProjects = buildableProjects.Where(x => !(x is ConfiguredProject) || ((ConfiguredProject)x).IsDirty).ToList();
+                filteredProjects = buildableProjects.Where(x => !(x is ConfiguredProject) || ((ConfiguredProject) x).IsDirty).ToList();
             }
 
             return filteredProjects;
@@ -700,6 +700,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 if (excludeTestProjects) {
                     // Web projects are also test projects so don't be too aggressive here.
                     if (configuredProject.IsTestProject && !configuredProject.IsWebProject) {
+                        configuredProject.IncludeInBuild = false;
                         return false;
                     }
                 }
@@ -707,7 +708,6 @@ namespace Aderant.Build.DependencyAnalyzer {
                 if (configuredProject.DirtyFiles?.Count > 0) {
                     return true;
                 }
-
             }
 
             if (configuredProject != null) {
@@ -742,14 +742,18 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (configuredProject != null) {
                 if (configuredProject.RequiresBuilding()) {
                     if (showPath) {
-                        children.Add(new TreePrinter.Node { Name = "Path: " + configuredProject.FullPath, });
+                        children.Add(new TreePrinter.Node {
+                            Name = "Path: " + configuredProject.FullPath,
+                        });
                     }
 
                     if (configuredProject.DirtyFiles?.Count > 0) {
                         children.Add(
                             new TreePrinter.Node {
                                 Name = "Dirty files",
-                                Children = configuredProject.DirtyFiles.Select(s => new TreePrinter.Node { Name = s }).ToList()
+                                Children = configuredProject.DirtyFiles.Select(s => new TreePrinter.Node {
+                                    Name = s
+                                }).ToList()
                             });
                     }
 
@@ -759,13 +763,17 @@ namespace Aderant.Build.DependencyAnalyzer {
                             reason = "Reason: " + configuredProject.BuildReason.Description;
                         }
 
-                        children.Add(new TreePrinter.Node { Name = string.Format("Flags: {0}. {1}", configuredProject.BuildReason.Flags, reason) });
+                        children.Add(new TreePrinter.Node {
+                            Name = string.Format("Flags: {0}. {1}", configuredProject.BuildReason.Flags, reason)
+                        });
 
                         if (configuredProject.BuildReason.ChangedDependentProjects != null)
                             children.Add(
                                 new TreePrinter.Node {
                                     Name = "Changed dependencies",
-                                    Children = configuredProject.BuildReason.ChangedDependentProjects.Select(s => new TreePrinter.Node { Name = s }).ToList()
+                                    Children = configuredProject.BuildReason.ChangedDependentProjects.Select(s => new TreePrinter.Node {
+                                        Name = s
+                                    }).ToList()
                                 });
                     }
 
@@ -776,7 +784,9 @@ namespace Aderant.Build.DependencyAnalyzer {
             DirectoryNode node = dependable as DirectoryNode;
             if (node != null) {
                 if (!node.IsPostTargets) {
-                    children.Add(new TreePrinter.Node { Name = "Is building any projects: " + node.IsBuildingAnyProjects });
+                    children.Add(new TreePrinter.Node {
+                        Name = "Is building any projects: " + node.IsBuildingAnyProjects
+                    });
                 }
             }
 
@@ -854,8 +864,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 var changes = DescribeChanges(dependable, showPath);
 
                 yield return new TreePrinter.Node {
-                    Name = dependable.Id.Split(':').Last(),
-                    Children = changes
+                    Name = dependable.Id.Split(':').Last(), Children = changes
                 };
             }
         }

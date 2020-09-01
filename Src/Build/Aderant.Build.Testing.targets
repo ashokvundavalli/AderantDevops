@@ -1,16 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="Current">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
+         ToolsVersion="Current"
+         TreatAsLocalProperty="SolutionRoot">
 
-  <Import Project="Aderant.Build.Common.targets" Condition="'$(AderantCommonTargetsImported)' == ''" />
+  <Import Project="Aderant.Build.Common.targets" Condition="'$(AderantCommonTargetsImported)' != 'true'" />
 
   <PropertyGroup>
     <RunTestsDependsOn>
-      CollectTestAssemblies;
+      CollectProjectsInBuild;
+    </RunTestsDependsOn>
+
+    <RunTestsDependsOnInternal>
       SetupTestProperties;
+      CollectTestAssemblyDirectories;
       CollectAssemblyPlatforms;
       RunTestAssemblies;
-      RemoveFiles
-    </RunTestsDependsOn>
+      RemoveFiles;
+    </RunTestsDependsOnInternal>
   </PropertyGroup>
 
 
@@ -21,21 +27,47 @@
   </Target>
 
 
-  <Target Name="CollectTestAssemblies">
+  <Target Name="CollectProjectsInBuild">
     <GetBuildOutputs>
       <Output TaskParameter="TrackedProjects" ItemName="TrackedProjects" />
       <Output TaskParameter="SolutionRoots" ItemName="SolutionRoots" />
     </GetBuildOutputs>
+
+    <ItemGroup>
+      <ProjectItems Include="$(MSBuildProjectFullPath)">
+        <Properties>
+          SolutionRoot=%(SolutionRoots.Identity);
+          ArtifactStagingDirectory=$(ArtifactStagingDirectory);
+          ImpactedTestAssemblies=$(ImpactedTestAssemblies);
+          TestResultFileDrop=$(TestResultFileDrop);
+          AderantCommonTargetsImported=true;
+        </Properties>
+      </ProjectItems>
+    </ItemGroup>
+
+    <!-- RunTestsForSolutionRootInParallel: Specifies that all directories with tests will be run in parallel or one at a time -->
+    <MSBuild Projects="@(ProjectItems)"
+             Targets="RunTestsForSolutionRoot"
+             BuildInParallel="$(RunTestsForSolutionRootInParallel)">
+      <Output TaskParameter="TargetOutputs" ItemName="RunSettingsFiles" />
+    </MSBuild>
+
+    <PropertyGroup>
+      <RunSettingsFile>@(RunSettingsFiles)</RunSettingsFile>
+    </PropertyGroup>
+  </Target>
+
+
+  <Target Name="RunTestsForSolutionRoot" DependsOnTargets="$(RunTestsDependsOnInternal)" Returns="$(RunSettingsFile)">
   </Target>
 
 
   <Target Name="SetupTestProperties" Outputs="$(TestPattern)">
+    <Error Condition="'$(SolutionRoot)' == ''" Text="SolutionRoot is undefined" />
+
     <!-- Collect all assemblies to use as test dependencies -->
     <ItemGroup>
-      <AllStagedDlls Include="$(ArtifactStagingDirectory)**\*.dll"
-                     Exclude="$(ArtifactStagingDirectory)_artifacts\**\*;
-                              $(ArtifactStagingDirectory)product\**\*;
-                              $(ArtifactStagingDirectory)BinFiles\**\*;" />
+      <AllStagedDlls Include="$(ArtifactStagingDirectory)out\**\*.dll" />
       <AllDirectoriesWithDlls Include="@(AllStagedDlls->'%(RootDir)%(Directory)'->Distinct())"/>
     </ItemGroup>
 
@@ -51,7 +83,6 @@
       <PathToTestTool>$([System.IO.Path]::GetFullPath('$(PathToTestTool)'))</PathToTestTool>
 
       <IsolationSwitch>/InIsolation</IsolationSwitch>
-      <RunTestsInParallel Condition="'$(TestPattern)' != '' And '$(TestPattern)' == 'IntegrationTest'">false</RunTestsInParallel>
       <RunTestsInParallel>$([MSBuild]::ValueOrDefault('$(RunTestsInParallel)', 'true'))</RunTestsInParallel>
       <ParallelSwitch Condition="'$(RunTestsInParallel)' == 'true'">/Parallel</ParallelSwitch>
 
@@ -65,24 +96,27 @@
   </Target>
 
 
-  <Target Name="CollectAssemblyPlatforms"
-          DependsOnTargets="CollectTestAssemblies"
-          Outputs="%(SolutionRoots.Identity)">
-
+  <Target Name="CollectTestAssemblyDirectories">
     <PropertyGroup>
-      <TestRunDirectory>%(SolutionRoots.Identity)</TestRunDirectory>
-
       <!-- Ensure that any symbols like $ (from the current account) do not get escaped -->
-      <TestRunDirectory>$([MSBuild]::Unescape($(TestRunDirectory)))</TestRunDirectory>
-
+      <TestRunDirectory>$([MSBuild]::Unescape($(SolutionRoot)))</TestRunDirectory>
       <RunSettingsPropFile>$(TestRunDirectory)\Build\TFSBuild.proj</RunSettingsPropFile>
     </PropertyGroup>
 
+    <!-- Retrieve contextual data from the build service -->
+    <GetBuildOutputs
+        SolutionRoot="$(TestRunDirectory)"
+        NormalizeOutputPath="true">
+      <Output TaskParameter="TrackedProjects" ItemName="ProjectsForThisRoot" />
+    </GetBuildOutputs>
+
     <ItemGroup>
-      <ProjectsForThisRoot Include="@(TrackedProjects->WithMetadataValue('SolutionRoot', '$(TestRunDirectory)'))" />
       <TestAssemblyDirectories Include="@(ProjectsForThisRoot->'%(OutputPath)'->Distinct())" />
     </ItemGroup>
+  </Target>
 
+
+  <Target Name="CollectAssemblyPlatforms" Condition="'@(TestAssemblyDirectories)' != ''">
     <Message Text="Looking for test assemblies in these directories:" />
     <Message Text="%(TestAssemblyDirectories.FullPath)" />
 
@@ -91,17 +125,22 @@
     </ItemGroup>
 
     <MSBuild Projects="$(MSBuildThisFileFullPath)"
-         Condition="Exists('$(RunSettingsPropFile)')"
+         Condition="'$(RunSettingsPropFile)' != '' And Exists('$(RunSettingsPropFile)')"
          Targets="GetUseCustomRunSettings"
-         Properties="RunSettingsPropFile=$(RunSettingsPropFile)"
+         Properties="RunSettingsPropFile=$(RunSettingsPropFile);
+                     AderantCommonTargetsImported=true"
          ContinueOnError="true">
       <Output TaskParameter="TargetOutputs" PropertyName="UseCustomRunSettings" />
     </MSBuild>
 
+
+    <!-- Customization point - extract an ItemGroup called RunSettings from the project cone -->
     <MSBuild Projects="$(MSBuildThisFileFullPath)"
          Condition="Exists('$(RunSettingsPropFile)')"
          Targets="GetCustomTestSettings"
-         Properties="RunSettingsPropFile=$(RunSettingsPropFile)"
+         Properties="RunSettingsPropFile=$(RunSettingsPropFile);
+                     ArtifactStagingDirectory=$(ArtifactStagingDirectory);
+                     AderantCommonTargetsImported=true"
          ContinueOnError="true">
       <Output TaskParameter="TargetOutputs" ItemName="RunSettings" />
     </MSBuild>
@@ -111,9 +150,12 @@
     </CreateItem>
 
     <Error Text="More than one custom run settings file is present: @(TestAssemblyDirectories)" Condition="'$(UseCustomRunSettings)' == 'True' And '@(_CustomRunSettingFiles->Count())' &gt; 1" />
-    
+
     <PropertyGroup>
+      <UsingCustomRunSettings>false</UsingCustomRunSettings>
       <RunSettingsFile Condition="'$(UseCustomRunSettings)' == 'True' And '@(_CustomRunSettingFiles)' != ''">@(_CustomRunSettingFiles)</RunSettingsFile>
+
+      <UsingCustomRunSettings Condition="'$(RunSettingsFile)' != ''">true</UsingCustomRunSettings>
       <RunSettingsFile Condition="'$(RunSettingsFile)' == '' Or !Exists('$(RunSettingsFile)')">$(MSBuildThisFileDirectory)Testing\default.runsettings</RunSettingsFile>
     </PropertyGroup>
 
@@ -223,8 +265,15 @@ RunSettingsFile: $(RunSettingsFile)" />
         <TestAssemblies>$(AssembliesUnderTest)</TestAssemblies>
         <RunInParallel>$$(RunTestsInParallel)</RunInParallel>
         <RunSettingsFile>%(_Assemblies.RunSettingsFile)</RunSettingsFile>
+        <UsingCustomRunSettingsFile>$(UsingCustomRunSettings)</UsingCustomRunSettingsFile>
       </ScriptArguments>
     </ItemGroup>
+
+    <ItemGroup>
+      <FileWrites Include="%(_Assemblies.RunSettingsFile)" />
+    </ItemGroup>
+
+    <MakeDir Directories="$(TestAdapterPath)" />
 
     <PowerShellScript
       Condition="'$(AssembliesUnderTest)' != ''"
@@ -232,22 +281,33 @@ RunSettingsFile: $(RunSettingsFile)" />
       ScriptBlock="
 $ErrorActionPreference = 'Stop'
 $InformationPreference = 'Continue'
-New-Item -ItemType Directory -Path '$(TestAdapterPath)' -Force
 $additionalEnvironmentVariables = @{}
 $(AdditionalVariables)
 . '$(MSBuildThisFileDirectory)Testing\RunTests.ps1' @args -AdditionalEnvironmentVariables $additionalEnvironmentVariables"
       OnErrorReason="Test failure" />
 
-    <ItemGroup>
-      <FileWrites Include="%(_Assemblies.RunSettingsFile)" />
-    </ItemGroup>
+    <CallTarget Targets="CopyResultFiles;RemoveFiles" />
 
-    <OnError ExecuteTargets="RemoveFiles;ShowTestFailureHelp" />
+    <OnError ExecuteTargets="CopyResultFiles;RemoveFiles;ShowTestFailureHelp" />
 
   </Target>
 
-  <Target Name="RemoveFiles">
-    <Delete Files="@(FileWrites)" TreatErrorsAsWarnings="true"/>
+
+  <Target Name="CopyResultFiles" AfterTargets="RunTestAssemblies">
+    <ItemGroup>
+      <ResultFiles Include="$(SolutionRoot)\**\*.trx" />
+    </ItemGroup>
+
+    <Copy
+      Condition="'$(TestResultFileDrop)' != ''"
+      SourceFiles="@(ResultFiles)"
+      DestinationFolder="$(TestResultFileDrop)" />
+  </Target>
+
+
+  <Target Name="RemoveFiles" AfterTargets="RunTestAssemblies">
+    <Delete Files="@(FileWrites)" TreatErrorsAsWarnings="true" />
+    <RemoveDir Directories="$(TestAdapterPath)" ContinueOnError="true" />
   </Target>
 
 

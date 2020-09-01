@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Markup;
 using Aderant.Build.Packaging;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
@@ -14,7 +17,7 @@ namespace Aderant.Build.PipelineService {
     [ServiceBehavior(
         InstanceContextMode = InstanceContextMode.Single,
         IncludeExceptionDetailInFaults = true,
-        ConcurrencyMode = ConcurrencyMode.Single,
+        ConcurrencyMode = ConcurrencyMode.Multiple,
         MaxItemsInObjectGraph = Int32.MaxValue)]
     internal class BuildPipelineServiceImpl : IBuildPipelineService {
         // The adapter used for writing to the host UI
@@ -22,12 +25,19 @@ namespace Aderant.Build.PipelineService {
 
         private ArtifactCollection artifacts;
 
-        private List<BuildArtifact> associatedArtifacts = new List<BuildArtifact>();
-
         private BuildOperationContext ctx;
-        private List<BuildDirectoryContribution> directoryMetadata = new List<BuildDirectoryContribution>();
-        private List<OnDiskProjectInfo> projects = new List<OnDiskProjectInfo>();
-        private Dictionary<string, IReadOnlyCollection<TrackedInputFile>> trackedDependenciesBySolutionRoot = new Dictionary<string, IReadOnlyCollection<TrackedInputFile>>(StringComparer.OrdinalIgnoreCase);
+
+        // These types are generally used with ToList/new List() to avoid any serialization issues
+        private readonly ConcurrentBag<BuildArtifact> associatedArtifacts = new ConcurrentBag<BuildArtifact>();
+        private readonly ConcurrentBag<BuildDirectoryContribution> directoryMetadata = new ConcurrentBag<BuildDirectoryContribution>();
+        private readonly ConcurrentBag<OnDiskProjectInfo> projects = new ConcurrentBag<OnDiskProjectInfo>();
+        private readonly ConcurrentDictionary<string, List<TrackedInputFile>> trackedDependenciesBySolutionRoot = new ConcurrentDictionary<string, List<TrackedInputFile>>(StringComparer.OrdinalIgnoreCase);
+        private readonly ConcurrentBag<string> impactedProjects = new ConcurrentBag<string>();
+        private readonly ConcurrentDictionary<string, List<string>> relatedFiles = new ConcurrentDictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+
+        private readonly ReaderWriterLockSlim contextLock = new ReaderWriterLockSlim();
+        private readonly ReaderWriterLockSlim artifactsLock = new ReaderWriterLockSlim();
+        private readonly ReaderWriterLockSlim outputsLock = new ReaderWriterLockSlim();
 
         public BuildPipelineServiceImpl() {
         }
@@ -36,81 +46,140 @@ namespace Aderant.Build.PipelineService {
             this.consoleAdapter = consoleAdapter;
         }
 
-        private List<string> ImpactedProjects = new List<string>();
-        private Dictionary<string, List<string>> RelatedFiles = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
-
         internal ProjectTreeOutputSnapshot Outputs { get; } = new ProjectTreeOutputSnapshot();
 
         public void Publish(BuildOperationContext context) {
-            if (string.IsNullOrEmpty(context.BuildRoot)) {
-                if (ctx != null && !string.IsNullOrEmpty(ctx.BuildRoot)) {
-                    context.BuildRoot = ctx.BuildRoot;
+            try {
+                contextLock.EnterWriteLock();
+
+                if (string.IsNullOrEmpty(context.BuildRoot)) {
+                    if (ctx != null && !string.IsNullOrEmpty(ctx.BuildRoot)) {
+                        context.BuildRoot = ctx.BuildRoot;
+                    }
                 }
+
+                ctx = context;
+            } finally {
+                contextLock.ExitWriteLock();
             }
-            ctx = context;
+        }
+
+        public Task PublishAsync(BuildOperationContext context) {
+            Publish(context);
+            return Task.CompletedTask;
         }
 
         public BuildOperationContext GetContext() {
+            // If null then not called via WCF (perhaps being called by the build host itself)
+            if (OperationContext.Current != null) {
+                OperationContext.Current.OperationCompleted += OnCurrentOnOperationCompleted;
+                contextLock.EnterReadLock();
+            }
+
             return ctx;
         }
 
+        private void OnCurrentOnOperationCompleted(object sender, EventArgs args) {
+            contextLock.ExitReadLock();
+            OperationContext.Current.OperationCompleted -= OnCurrentOnOperationCompleted;
+        }
+
         public void RecordProjectOutputs(ProjectOutputSnapshot snapshot) {
-            Outputs[snapshot.ProjectFile] = snapshot;
+            try {
+                outputsLock.EnterWriteLock();
+
+                Outputs[snapshot.ProjectFile] = snapshot;
+            } finally {
+                outputsLock.ExitWriteLock();
+            }
         }
 
         public void RecordImpactedProjects(IEnumerable<string> impactedProjects) {
-            ImpactedProjects = impactedProjects.ToList();
+            foreach (var item in impactedProjects) {
+                this.impactedProjects.Add(item);
+            }
         }
 
-        public void RecordRelatedFiles(Dictionary<string, List<string>> relatedFiles) {            
-            if (RelatedFiles == null) {
-                RelatedFiles = relatedFiles;
-            } else {
-                foreach (var relatedFile in relatedFiles.Keys) {
-                    if (RelatedFiles.ContainsKey(relatedFile)) {
-                        RelatedFiles[relatedFile] = RelatedFiles[relatedFile].Union(relatedFiles[relatedFile]).ToList();
-                    } else {
-                        RelatedFiles.Add(relatedFile, relatedFiles[relatedFile]);
-                    }                    
+        public void RecordRelatedFiles(Dictionary<string, List<string>> relatedFiles) {
+            foreach (var relatedFile in relatedFiles.Keys) {
+                if (this.relatedFiles.ContainsKey(relatedFile)) {
+                    this.relatedFiles[relatedFile] = this.relatedFiles[relatedFile].Union(relatedFiles[relatedFile]).ToList();
+                } else {
+                    this.relatedFiles.TryAdd(relatedFile, relatedFiles[relatedFile]);
                 }
             }
         }
 
+        public Task RecordRelatedFilesAsync(Dictionary<string, List<string>> relatedFiles) {
+            RecordRelatedFiles(relatedFiles);
+            return Task.CompletedTask;
+        }
+
         public IEnumerable<ProjectOutputSnapshot> GetProjectOutputs(string container) {
-            return Outputs.GetProjectsForTag(container);
+            try {
+                outputsLock.EnterReadLock();
+
+                return Outputs.GetProjectsForTag(container).ToList();
+            } finally {
+                outputsLock.ExitReadLock();
+            }
         }
 
         public Dictionary<string, List<string>> GetRelatedFiles() {
-            return RelatedFiles;
+            return new Dictionary<string, List<string>>(relatedFiles);
         }
 
         public IEnumerable<ProjectOutputSnapshot> GetProjectSnapshots() {
-            return Outputs.Values;
+            try {
+                outputsLock.EnterReadLock();
+
+                return Outputs.Values.ToList();
+            } finally {
+                outputsLock.ExitReadLock();
+            }
         }
 
         public IEnumerable<string> GetImpactedProjects() {
-            return ImpactedProjects;
+            return new List<string>(impactedProjects);
         }
 
         public void RecordArtifacts(string container, IEnumerable<ArtifactManifest> manifests) {
-            InitArtifacts();
+            try {
+                artifactsLock.EnterWriteLock();
 
-            ICollection<ArtifactManifest> existing;
-            if (artifacts.TryGetValue(container, out existing)) {
-                foreach (var artifactManifest in manifests) {
-                    existing.Add(artifactManifest);
+                InitArtifacts();
+
+                ICollection<ArtifactManifest> existing;
+                if (artifacts.TryGetValue(container, out existing)) {
+                    foreach (var artifactManifest in manifests) {
+                        existing.Add(artifactManifest);
+                    }
+                } else {
+                    artifacts[container] = manifests.ToList();
                 }
-            } else {
-                artifacts[container] = manifests.ToList();
+            } finally {
+                artifactsLock.ExitWriteLock();
             }
         }
 
         public void PutVariable(string scope, string variableName, string value) {
-            ctx.PutVariable(scope, variableName, value);
+            try {
+                contextLock.EnterWriteLock();
+
+                ctx.PutVariable(scope, variableName, value);
+            } finally {
+                contextLock.ExitWriteLock();
+            }
         }
 
         public string GetVariable(string scope, string variableName) {
-            return ctx.GetVariable(scope, variableName);
+            try {
+                contextLock.EnterReadLock();
+
+                return ctx.GetVariable(scope, variableName);
+            } finally {
+                contextLock.ExitReadLock();
+            }
         }
 
         public void TrackProject(OnDiskProjectInfo onDiskProject) {
@@ -118,21 +187,27 @@ namespace Aderant.Build.PipelineService {
         }
 
         public IEnumerable<OnDiskProjectInfo> GetTrackedProjects() {
-            return projects;
+            return new List<OnDiskProjectInfo>(projects);
         }
 
         public IEnumerable<OnDiskProjectInfo> GetTrackedProjects(IEnumerable<Guid> ids) {
             ErrorUtilities.IsNotNull(ids, nameof(ids));
 
-            return projects.Where(p => ids.Contains(p.ProjectGuid));
+            return projects.Where(p => ids.Contains(p.ProjectGuid)).ToList();
         }
 
         public IEnumerable<ArtifactManifest> GetArtifactsForContainer(string container) {
             if (artifacts != null) {
-                var artifactsForTag = artifacts.GetArtifactsForTag(container);
+                try {
+                    artifactsLock.EnterReadLock();
 
-                if (artifactsForTag != null) {
-                    return artifactsForTag.SelectMany(s => s.Value);
+                    var artifactsForTag = artifacts.GetArtifactsForTag(container);
+
+                    if (artifactsForTag != null) {
+                        return artifactsForTag.SelectMany(s => s.Value).ToList();
+                    }
+                } finally {
+                    artifactsLock.ExitReadLock();
                 }
             }
 
@@ -140,16 +215,24 @@ namespace Aderant.Build.PipelineService {
         }
 
         public object[] Ping() {
-            return new object[] { (byte)1 };
+            return new object[] {
+                (byte) 1
+            };
         }
 
         public void SetStatus(string status, string reason) {
-            if (status != null) {
-                ctx.BuildStatus = status;
-            }
+            try {
+                contextLock.EnterWriteLock();
 
-            if (reason != null) {
-                ctx.BuildStatusReason = reason;
+                if (status != null) {
+                    ctx.BuildStatus = status;
+                }
+
+                if (reason != null) {
+                    ctx.BuildStatusReason = reason;
+                }
+            } finally {
+                contextLock.ExitWriteLock();
             }
         }
 
@@ -168,7 +251,7 @@ namespace Aderant.Build.PipelineService {
         /// Notifies the service it should track a set of files.
         /// </summary>
         public void TrackInputFileDependencies(string solutionRoot, IReadOnlyCollection<TrackedInputFile> fileDependencies) {
-            trackedDependenciesBySolutionRoot[solutionRoot] = fileDependencies;
+            trackedDependenciesBySolutionRoot[solutionRoot] = fileDependencies.ToList();
         }
 
         /// <summary>
@@ -176,9 +259,9 @@ namespace Aderant.Build.PipelineService {
         /// they are removed from the internal buffer.
         /// </summary>
         public IReadOnlyCollection<TrackedInputFile> ClaimTrackedInputFiles(string tag) {
-            IReadOnlyCollection<TrackedInputFile> trackedFiles;
+            List<TrackedInputFile> trackedFiles;
             if (trackedDependenciesBySolutionRoot.TryGetValue(tag, out trackedFiles)) {
-                trackedDependenciesBySolutionRoot.Remove(tag);
+                trackedDependenciesBySolutionRoot.TryRemove(tag, out _);
             }
 
             return trackedFiles;
@@ -186,7 +269,9 @@ namespace Aderant.Build.PipelineService {
 
         public void AssociateArtifacts(IEnumerable<BuildArtifact> artifacts) {
             if (artifacts != null) {
-                associatedArtifacts.AddRange(artifacts);
+                foreach (var item in artifacts) {
+                    associatedArtifacts.Add(item);
+                }
             }
         }
 
@@ -195,6 +280,9 @@ namespace Aderant.Build.PipelineService {
         }
 
         public void Dispose() {
+            outputsLock.Dispose();
+            artifactsLock.Dispose();
+            contextLock.Dispose();
         }
 
         public void AddBuildDirectoryContributor(BuildDirectoryContribution buildDirectoryContribution) {
@@ -202,7 +290,7 @@ namespace Aderant.Build.PipelineService {
         }
 
         public IReadOnlyCollection<BuildDirectoryContribution> GetContributors() {
-            return directoryMetadata;
+            return directoryMetadata.ToList();
         }
 
         private void InitArtifacts() {

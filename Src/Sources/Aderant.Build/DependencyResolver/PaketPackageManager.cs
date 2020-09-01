@@ -4,14 +4,16 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Aderant.Build.DependencyResolver.Model;
 using Aderant.Build.DependencyResolver.Models;
 using Aderant.Build.Logging;
+using LibGit2Sharp;
 using Microsoft.FSharp.Collections;
+using Microsoft.FSharp.Core;
 using Paket;
 
 namespace Aderant.Build.DependencyResolver {
     internal class PaketPackageManager : IDisposable {
-
         private static readonly Regex invalidVersionPattern = new Regex("^0[.]0[.]0-\\w*");
 
         private static readonly InstallOptions defaultInstallOptions = InstallOptions.Default;
@@ -198,6 +200,11 @@ namespace Aderant.Build.DependencyResolver {
                 FSharpList<PackageSources.PackageSource> sources = CreateSources(groupEntry, group, isMainGroup, isUsingMultipleInputFiles);
                 InstallOptions options = CreateInstallOptions(requirements, groupEntry, group, isMainGroup);
 
+                // Paket cannot add new remote files via its internal API so we need to process these last otherwise the will vanish
+                // from the internal data structures if done inside AddModules
+                IEnumerable<RemoteFile> remoteFiles = requirements.Where(s => string.Equals(s.Group, group.Name.Name, StringComparison.OrdinalIgnoreCase)).OfType<RemoteFile>();
+                var remoteFile = AddNewRemoteFile(group.RemoteFiles, remoteFiles);
+
                 DependenciesGroup newGroup = new DependenciesGroup(
                     group.Name,
                     sources,
@@ -205,7 +212,7 @@ namespace Aderant.Build.DependencyResolver {
                     options,
                     group.Packages,
                     group.ExternalLocks,
-                    group.RemoteFiles);
+                    remoteFile);
 
                 if (isMainGroup) {
                     groupList.Insert(0, newGroup);
@@ -230,6 +237,9 @@ namespace Aderant.Build.DependencyResolver {
             dependenciesFile.Save();
 
             Lines = dependenciesFile.Lines;
+        }
+
+        private void MergeRemoteFiles(FSharpList<ModuleResolver.UnresolvedSource> groupRemoteFiles, IEnumerable<RemoteFile> remoteFiles) {
         }
 
         private FSharpList<PackageSources.PackageSource> CreateSources(KeyValuePair<Domain.GroupName, DependenciesGroup> groupEntry, DependenciesGroup group, bool isMainGroup, bool isUsingMultipleInputFiles) {
@@ -330,9 +340,13 @@ namespace Aderant.Build.DependencyResolver {
                     version = requirement.VersionRequirement.ConstraintExpression;
                 }
 
-                var packageName = Domain.PackageName(requirement.Name);
                 var groupName = Domain.GroupName(requirement.Group);
 
+                if (requirement is RemoteFile) {
+                    continue;
+                }
+
+                var packageName = Domain.PackageName(requirement.Name);
                 if (requirement.ReplaceVersionConstraint && hasCustomVersion) {
                     try {
                         file = file.Remove(Domain.GroupName(requirement.Group), packageName);
@@ -370,6 +384,32 @@ namespace Aderant.Build.DependencyResolver {
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Adds a new remote file to the dependency file
+        /// </summary>
+        /// <param name="existingRemoteFiles">The remote file to add</param>
+        /// <param name="remoteFiles">The group to place the file into</param>
+        private static FSharpList<ModuleResolver.UnresolvedSource> AddNewRemoteFile(FSharpList<ModuleResolver.UnresolvedSource> existingRemoteFiles, IEnumerable<RemoteFile> remoteFiles) {
+            foreach (var remoteFile in remoteFiles) {
+                existingRemoteFiles = ListModule.Append(existingRemoteFiles,
+                    new FSharpList<ModuleResolver.UnresolvedSource>(
+                        new ModuleResolver.UnresolvedSource(
+                            "",
+                            "",
+                            "",
+                            ModuleResolver.Origin.NewHttpLink(remoteFile.Name),
+                            ModuleResolver.VersionRestriction.NoVersionRestriction,
+                            FSharpOption<string>.None,
+                            FSharpOption<string>.None,
+                            FSharpOption<string>.None,
+                            FSharpOption<string>.None),
+                        FSharpList<ModuleResolver.UnresolvedSource>.Empty
+                    ));
+            }
+
+            return existingRemoteFiles;
         }
 
         private bool HasLockFile() {
@@ -434,10 +474,12 @@ namespace Aderant.Build.DependencyResolver {
             }
 
             FSharpMap<Domain.PackageName, Paket.VersionRequirement> requirements = file.GetDependenciesInGroup(domainGroup);
+            FSharpList<ModuleResolver.UnresolvedSource> remoteFiles = file.Groups[domainGroup].RemoteFiles;
+
             var map = requirements.ToDictionary(pair => pair.Key.ToString(), pair => NewRequirement(pair, file.FileName));
 
             var dependencyGroup = new DependencyGroup(groupName, map) {
-                Strict = installOptions.Strict
+                Strict = installOptions.Strict, RemoteFiles = RemoteFileMapper.Map(remoteFiles, groupName).ToList()
             };
 
             if (restriction != null) {
@@ -479,14 +521,14 @@ namespace Aderant.Build.DependencyResolver {
             }
 
             return new VersionRequirement {
-                OriginatingFile = filePath,
-                ConstraintExpression = $"{expression} {string.Join(" ", prereleases)}",
+                OriginatingFile = filePath, ConstraintExpression = $"{expression} {string.Join(" ", prereleases)}",
             };
         }
 
         public IEnumerable<string> FindGroups() {
             if (!FileSystem.FileExists(Path.Combine(root, DependenciesFile))) {
-                return new string[] {};
+                return new string[] {
+                };
             }
 
             Initialize();
@@ -501,6 +543,29 @@ namespace Aderant.Build.DependencyResolver {
 
             this.dependenciesFile = Paket.DependenciesFile.FromSource(this.root, lines);
             this.dependenciesFile.Save();
+        }
+
+        internal class RemoteFileMapper {
+            public static IEnumerable<RemoteFile> Map(FSharpList<ModuleResolver.UnresolvedSource> remoteFiles, string groupName) {
+                foreach (var item in remoteFiles) {
+                    string itemName = item.Name;
+                    string uri = item.ToString();
+
+                    // Paket appends "http " and gives us no way to get the raw URL so we need to do some pruning
+                    uri = TrimHttpPrefix(TrimHttpPrefix(uri, "https "), "http ");
+                    uri = uri.TrimEnd(itemName.ToCharArray()).TrimEnd();
+
+                    yield return new RemoteFile(itemName, uri, groupName);
+                }
+            }
+
+            private static string TrimHttpPrefix(string uri, string prefix) {
+                var pos = uri.IndexOf(prefix, StringComparison.OrdinalIgnoreCase);
+                if (pos >= 0 && uri.Length > pos) {
+                    uri = uri.Remove(pos, prefix.Length);
+                }
+                return uri;
+            }
         }
     }
 }

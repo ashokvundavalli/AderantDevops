@@ -72,6 +72,9 @@
     <CreateHardLinksForCopyLocal Condition="'$(CreateHardLinksForCopyLocal)' == ''">false</CreateHardLinksForCopyLocal>
     <BuildCacheOptions Condition="'$(BuildCacheOptions)' == ''">DisableCacheWhenProjectChanged</BuildCacheOptions>
 
+    <!-- Specifies that all directories with tests will be run in parallel or one at a time -->
+    <RunTestsForSolutionRootInParallel Condition="'$(RunTestsForSolutionRootInParallel)' == ''">false</RunTestsForSolutionRootInParallel>
+
     <!-- Suppress Diagnostics -->
     <PackagesDirectory Condition="'$(UseSharedDependencyDirectory)' == 'true'">$(SharedDependencyDirectory)packages\</PackagesDirectory>
     <PackagesDirectory Condition="'$(PackagesDirectory)' == ''">$(SolutionRoot)packages\</PackagesDirectory>
@@ -79,9 +82,8 @@
     <BuildAnalyzerAssembly>$(BuildAnalyzerDirectory)\analyzers\dotnet\cs\Aderant.Build.Analyzer.dll</BuildAnalyzerAssembly>
   </PropertyGroup>
 
-  <Import Project="Aderant.Build.Common.targets" />
   <Import Project="Aderant.CodeSigning.targets" />
-  <Import Project="Aderant.Build.Testing.targets" />
+  <Import Project="Aderant.Build.Common.targets" />
 
   <Target Name="CleanSuppressionFiles" Condition="'$(SuppressDiagnostics)' == 'true'">
     <Exec ContinueOnError="false"
@@ -116,13 +118,28 @@
     </BuildAndPackageDependsOn>
   </PropertyGroup>
 
+
   <Target Name="RunTests" DependsOnTargets="CreatePlan" Condition="'$(RunTests)' != 'false'">
 
     <PropertyGroup>
       <ImpactedTestAssemblies>@(ImpactedTestAssemblies)</ImpactedTestAssemblies>
+
+      <TestProperties>
+        TestPattern=UnitTest;
+        ImpactedTestAssemblies=$(ImpactedTestAssemblies);
+        ArtifactStagingDirectory=$(ArtifactStagingDirectory);
+        RunTestsForSolutionRootInParallel=$(RunTestsForSolutionRootInParallel);
+      </TestProperties>
+
+      <TestProperties Condition="'$(BUILD_SOURCESDIRECTORY)' != ''">
+        $(TestProperties);
+        TestResultFileDrop=$(BUILD_SOURCESDIRECTORY)\TestResults
+      </TestProperties>
     </PropertyGroup>
 
-    <MSBuild Projects="$(MSBuildProjectFile)" Targets="RunTestsCore" Properties="TestPattern=UnitTest;ImpactedTestAssemblies=$(ImpactedTestAssemblies);" />
+    <MSBuild Projects="Aderant.Build.Testing.targets"
+             Targets="RunTestsCore"
+             Properties="$(TestProperties)" />
 
   </Target>
 
@@ -139,8 +156,13 @@
                          SolutionRoot=$(SolutionRoot);
                          ArtifactStagingDirectory=$(ArtifactStagingDirectory);
                          SharedDependencyDirectory=$(SharedDependencyDirectory);
-                         TestPattern=IntegrationTest;ImpactedTestAssemblies=$(ImpactedTestAssemblies);
-                         ExpertSourceDirectory=$(ExpertSourceDirectory);" />
+                         TestPattern=IntegrationTest;
+                         ImpactedTestAssemblies=$(ImpactedTestAssemblies);
+                         ExpertSourceDirectory=$(ExpertSourceDirectory);
+                         TestResultFileDrop=$(TestResultFileDrop);
+                         RunTestsInParallel=false;
+                         RunTestsForSolutionRootInParallel=false;
+                         RunTests=$(RunTests);" />
   </Target>
 
 
@@ -650,7 +672,7 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
          Condition="Exists('$(ArtifactStagingDirectory)ServerImage')">
         <ArtifactId>ServerImage</ArtifactId>
         <ArtifactType>Branch</ArtifactType>
-      </AdditionalArtifacts>      
+      </AdditionalArtifacts>
     </ItemGroup>
 
     <!-- ToDo: Update this to exclude directories for archived artifacts. -->

@@ -5,6 +5,11 @@
     <RunSettings Include="/RunSettings/MSTest/DeleteDeploymentDirectoryAfterTestRunIsComplete">
       <Value>false</Value>
     </RunSettings>
+    <RunSettings Include="/RunSettings/TestRunParameters">
+      <Value>
+        <![CDATA[<Parameter name="a" value="b" />]]>
+      </Value>
+    </RunSettings>
   </ItemGroup>
 
 </Project>

@@ -3,6 +3,7 @@ using System.IO;
 using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyResolver;
+using Aderant.Build.DependencyResolver.Model;
 using Aderant.Build.DependencyResolver.Models;
 using Aderant.Build.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;

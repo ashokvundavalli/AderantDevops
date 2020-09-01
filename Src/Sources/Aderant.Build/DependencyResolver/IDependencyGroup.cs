@@ -1,9 +1,10 @@
-﻿using Aderant.Build.DependencyResolver.Models;
+﻿using Aderant.Build.DependencyResolver.Model;
 
 namespace Aderant.Build.DependencyResolver {
     internal interface IDependencyGroup {
-
-        // The group that this requirement originates from.
+        /// <summary>
+        /// The group that this requirement originates from.
+        /// </summary>
         DependencyGroup DependencyGroup { get; set; }
     }
 }

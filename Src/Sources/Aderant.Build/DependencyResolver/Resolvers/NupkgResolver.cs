@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.DependencyResolver.Model;
 using Aderant.Build.DependencyResolver.Models;
 using Aderant.Build.Logging;
 using Aderant.Build.Providers;
@@ -37,7 +38,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
 
             if (!string.IsNullOrEmpty(moduleDirectory)) {
                 using (var manager = new PaketPackageManager(moduleDirectory, new PhysicalFileSystem(), WellKnownPackageSources.Default, logger, EnableVerboseLogging)) {
-                    IEnumerable<string> groupList = manager.FindGroups();
+                    var groupList = manager.FindGroups().ToList();
 
                     foreach (string groupName in groupList) {
                         DependencyGroup dependencyGroup = manager.GetDependencies(groupName);
@@ -71,6 +72,12 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
 
                             yield return requirement;
                         }
+
+                        var remoteFiles = dependencyGroup.RemoteFiles;
+                        foreach (var file in remoteFiles) {
+                            yield return file;
+                        }
+
                     }
                 }
             }
@@ -170,7 +177,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
                 }
             }
         }
-        
+
         // TODO: Remove this - now obsolete in 81+
         private void ReplicateToDependenciesDirectory(ResolverRequest resolverRequest, string directory, IFileSystem2 fileSystem, IDependencyRequirement requirement) {
             // For a build all we place the packages folder under dependencies

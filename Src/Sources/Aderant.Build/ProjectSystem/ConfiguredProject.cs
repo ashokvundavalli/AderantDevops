@@ -36,6 +36,8 @@ namespace Aderant.Build.ProjectSystem {
             "$(Configuration)|$(Platform)==" + ProjectBuildConfiguration.DebugOnAnyCpu.ToString()
         };
 
+        static char[] separator = new[] { ';' };
+
         private static readonly List<string> emptyFileList = new List<string>(0);
 
         private List<string> dirtyFiles;
@@ -50,6 +52,7 @@ namespace Aderant.Build.ProjectSystem {
         private Memoizer<ConfiguredProject, Guid> projectGuid;
 
         private List<IResolvedDependency> textTemplateDependencies;
+        private Memoizer<ConfiguredProject, bool> skipCopyBuildProduct;
 
         [ImportingConstructor]
         public ConfiguredProject(IProjectTree tree) {
@@ -267,6 +270,15 @@ namespace Aderant.Build.ProjectSystem {
             }
         }
 
+        /// <summary>
+        /// Gets a value indicating if this project is actually producing a compiled output.
+        /// </summary>
+        public bool SkipCopyBuildProduct {
+            get {
+                return skipCopyBuildProduct.Evaluate(this);
+            }
+        }
+
         public string GetAssemblyName() {
             return OutputAssembly;
         }
@@ -331,7 +343,8 @@ namespace Aderant.Build.ProjectSystem {
                     var propertyElement = args.project.Value.GetPropertyValue("ProjectTypeGuids");
 
                     if (!string.IsNullOrEmpty(propertyElement)) {
-                        var guids = propertyElement.Split(';');
+
+                        var guids = propertyElement.Split(separator);
 
                         List<Guid> guidList = new List<Guid>();
 
@@ -361,6 +374,11 @@ namespace Aderant.Build.ProjectSystem {
 
                     return Guid.Empty;
                 });
+
+            skipCopyBuildProduct = new Memoizer<ConfiguredProject, bool>(arg => {
+                var propertyElement = arg.project.Value.GetPropertyValue("SkipCopyBuildProduct");
+                return string.Equals("true", propertyElement, StringComparison.OrdinalIgnoreCase);
+            });
         }
 
         protected virtual Lazy<Project> InitializeProject(Lazy<ProjectRootElement> projectElement) {
@@ -567,7 +585,7 @@ namespace Aderant.Build.ProjectSystem {
             }
 
             // check if this proj contains needed files.
-            List<ProjectItem> items = new List<ProjectItem>();
+            List<ProjectItem> items = new List<ProjectItem>(57);
 
             items.AddRange(project.Value.GetItems("Compile"));
             items.AddRange(project.Value.GetItems("Content"));

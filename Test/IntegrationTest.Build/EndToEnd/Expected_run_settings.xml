@@ -14,5 +14,7 @@
       <!--<Directory path="{SEARCH_DIRECTORY}" includeSubDirectories="true"/>-->
     </AssemblyResolution>
   </MSTest>
-  <TestRunParameters />
+  <TestRunParameters>
+    <Parameter name="a" value="b" />
+  </TestRunParameters>
 </RunSettings>

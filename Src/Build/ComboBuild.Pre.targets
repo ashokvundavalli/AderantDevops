@@ -4,7 +4,7 @@
          ToolsVersion="Current"
          TreatAsLocalProperty="SolutionDirectoryPath;T4TransformEnabled">
 
-  <Import Project="Aderant.Build.Common.targets" />
+  <Import Project="Aderant.Build.Common.targets" Condition="'$(AderantCommonTargetsImported)' != 'true'" />
   <Import Project="RM.TransformTemplates.Targets" />
   <Import Project="Aderant.TextTransform.targets" />
   <Import Project="Aderant.Build.CustomSolutionPackaging.targets" />

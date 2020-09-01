@@ -229,13 +229,13 @@ namespace Aderant.Build.ProjectSystem {
 
             await CollectBuildDependencies(collector);
 
-            IReadOnlyCollection<ISourceChange> changes = null;
-            if (context.SourceTreeMetadata != null) {
-                if (context.SourceTreeMetadata.Changes != null) {
-                    // Feed the file changes in so we can calculate the dirty projects.
-                    changes = collector.SourceChanges = context.SourceTreeMetadata.Changes;
-                }
-            }
+            //IReadOnlyCollection<ISourceChange> changes = null;
+            //if (context.SourceTreeMetadata != null) {
+            //    if (context.SourceTreeMetadata.Changes != null) {
+            //        // Feed the file changes in so we can calculate the dirty projects.
+            //        changes = collector.SourceChanges = context.SourceTreeMetadata.Changes;
+            //    }
+            //}
 
             //if (changes != null) {
             //    // Because developers may have packaged up their projects the solution level or have just relied on the
@@ -255,6 +255,7 @@ namespace Aderant.Build.ProjectSystem {
                 sequencer.MetaprojectXml = this.MetaprojectXml;
 
                 BuildPlan plan = sequencer.CreatePlan(context, jobFiles, graph);
+
                 return plan;
             }
         }

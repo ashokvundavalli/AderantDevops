@@ -19,6 +19,11 @@ param(
   [Parameter(Mandatory=$false)]
   [string]$RunSettingsFile,
 
+  # Even if we don't have a custom file - the build still provides us with a copy of the default
+  # This parameter means 'should we do a settings merge?'
+  [Parameter(Mandatory=$false)]
+  [bool]$UsingCustomRunSettingsFile,
+
   [Parameter(Mandatory=$false, HelpMessage="The paths to provide to the test tool assembly resolver")]
   [string[]]$ReferencePaths,
 
@@ -55,32 +60,38 @@ function AddSearchDirectory($element, [string]$path, [bool]$includeSubDirectorie
 }
 
 function EnsureRunSettingsHasRequiredNodes() {
-    # Get the minimum settings required to not fail
-    $defaultRunSettings = [System.Xml.XmlDocument](Get-Content -Path "$PSScriptRoot\default.runsettings")
-
     # Load up the custom run settings file
     $providedRunSettings = [System.Xml.XmlDocument](Get-Content -Path $RunSettingsFile)
 
-    $xslt = [System.Xml.XmlDocument](Get-Content -Path "$PSScriptRoot\..\merge-xml.xslt")
+    if ($UsingCustomRunSettingsFile) {
+        # Get the minimum settings required to not fail
+        $defaultSettingsFileFullPath = [System.IO.Path]::GetFullPath("$PSScriptRoot\default.runsettings")
+        $defaultRunSettings = [System.Xml.XmlDocument](Get-Content -Path $defaultSettingsFileFullPath)
 
-    # Merge the two documents together, taking elements from the custom
-    # file over the default ones.
-    $transform = [System.Xml.Xsl.XslCompiledTransform]::new()
-    $transform.Load($xslt.CreateNavigator())
+        $xslt = [System.Xml.XmlDocument](Get-Content -Path "$PSScriptRoot\..\merge-xml.xslt")
 
-    $stringBuilderForXmlWriter = [System.Text.StringBuilder]::new()
-    $settings = [System.Xml.XmlWriterSettings]::new()
-    $settings.Indent = $true
-    $settings.CloseOutput = $true
-    $writer = [System.Xml.XmlWriter]::Create($stringBuilderForXmlWriter, $settings)
+        # Merge the two documents together, taking elements from the custom
+        # file over the default ones.
+        $transform = [System.Xml.Xsl.XslCompiledTransform]::new()
+        $transform.Load($xslt.CreateNavigator())
 
-    $argList = [System.Xml.Xsl.XsltArgumentList]::new()
-    $argList.AddParam("with", "", $providedRunSettings)
-    $argList.AddParam("replace", "", $true)
+        $stringBuilderForXmlWriter = [System.Text.StringBuilder]::new()
+        $settings = [System.Xml.XmlWriterSettings]::new()
+        $settings.Indent = $true
+        $settings.CloseOutput = $true
+        $writer = [System.Xml.XmlWriter]::Create($stringBuilderForXmlWriter, $settings)
 
-    $transform.Transform($defaultRunSettings.CreateNavigator(), $argList, $writer)
+        $argList = [System.Xml.Xsl.XsltArgumentList]::new()
+        $argList.AddParam("with", "", $providedRunSettings)
+        $argList.AddParam("replace", "", $true)
 
-    return [System.Xml.XmlDocument]($stringBuilderForXmlWriter.ToString())
+        $transform.Transform($defaultRunSettings.CreateNavigator(), $argList, $writer)
+        return [System.Xml.XmlDocument]($stringBuilderForXmlWriter.ToString())
+    } else {
+        Write-Information "Run settings merge skipped"
+    }
+
+    return $providedRunSettings
 }
 
 function CreateRunSettingsXml() {
@@ -135,7 +146,7 @@ function ShowTestRunReport() {
     $afterRunTrxFiles = GetTestResultFiles
 
     if ($null -eq $afterRunTrxFiles) {
-        Write-Output "Skipped generating HTML report - no .trx files present in directory: '$WorkingDirectory\TestResults'."
+        Write-Information "Skipped generating HTML report - no .trx files present in directory: '$WorkingDirectory\TestResults'."
         return
     }
 
@@ -175,9 +186,16 @@ $exitcode = 0
 try {
 	Write-Information "Creating run settings file..."
 	$xml = CreateRunSettingsXml
-	Set-Content  -LiteralPath $runSettingsFile -Value $xml -Encoding UTF8
+	Set-Content -LiteralPath $runSettingsFile -Value $xml -Encoding UTF8
 
-    Write-Information $xml
+    $hash = (Get-FileHash -LiteralPath $runSettingsFile -Algorithm SHA1).Hash
+
+    # Log once per unique settings file as the document is usually the same so we don't
+    # need to see it all the time
+    if ([Appdomain]::CurrentDomain.GetData($hash) -eq $null) {
+        Write-Information $xml
+        [Appdomain]::CurrentDomain.SetData($hash, "")
+    }
 
 	$startInfo.Arguments += " /Settings:$RunSettingsFile"
 
