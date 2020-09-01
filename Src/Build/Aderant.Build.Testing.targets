@@ -293,8 +293,7 @@ $(AdditionalVariables)
   </Target>
 
 
-
-  <Target Name="CopyResultFiles">
+  <Target Name="CopyResultFiles" AfterTargets="RunTestAssemblies">
     <ItemGroup>
       <ResultFiles Include="$(SolutionRoot)\**\*.trx" />
     </ItemGroup>
@@ -306,7 +305,7 @@ $(AdditionalVariables)
   </Target>
 
 
-  <Target Name="RemoveFiles">
+  <Target Name="RemoveFiles" AfterTargets="RunTestAssemblies">
     <Delete Files="@(FileWrites)" TreatErrorsAsWarnings="true" />
     <RemoveDir Directories="$(TestAdapterPath)" ContinueOnError="true" />
   </Target>
