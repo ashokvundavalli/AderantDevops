@@ -105,6 +105,10 @@ namespace Aderant.Build.VersionControl {
             }
 
             using (var repository = OpenRepository(repositoryPath)) {
+                if (repository.Head.IsTracking) {
+                    info.Branch = repository.Head.UpstreamBranchCanonicalName;
+                }
+
                 // The current tree - what you have
                 // It could be behind some branch you are diffing or it could be the
                 // result of a pull request merge making it the new tree to be committed

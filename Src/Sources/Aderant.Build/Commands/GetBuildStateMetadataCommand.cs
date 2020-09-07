@@ -23,7 +23,6 @@ namespace Aderant.Build.Commands {
         public string DropLocation { get; set; }
 
         [Parameter(Mandatory = false, HelpMessage = "The source branch used to validate artifacts.")]
-        [ValidateNotNullOrEmpty]
         public string ScmBranch { get; set; }
 
         [Parameter(Mandatory = false, HelpMessage = "The target branch used to validate artifacts.")]

@@ -24,12 +24,18 @@
                         <Width>40</Width>
                     </TableColumnHeader>
                     <TableColumnHeader>
+                        <Width>40</Width>
+                    </TableColumnHeader>
+                    <TableColumnHeader>
                         <Width>16</Width>
                     </TableColumnHeader>
                 </TableHeaders>
                 <TableRowEntries>
                     <TableRowEntry>
                         <TableColumnItems>
+                            <TableColumnItem>
+                                <PropertyName>Branch</PropertyName>
+                            </TableColumnItem>
                             <TableColumnItem>
                                 <PropertyName>CommonAncestor</PropertyName>
                             </TableColumnItem>

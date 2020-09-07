@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -495,6 +494,9 @@ namespace Aderant.Build {
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     [DataContract]
     public sealed class SourceTreeMetadata {
+
+        [DataMember]
+        public string Branch { get; set; }
 
         [DataMember]
         public string CommonAncestor { get; set; }

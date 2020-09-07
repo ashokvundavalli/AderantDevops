@@ -475,7 +475,9 @@ namespace Aderant.Build.Packaging {
                 var files = new List<BuildStateFile>();
                 metadata.BuildStateFiles = files;
 
-                logger.Info($"Source branch: {scmBranch}");
+                if (!string.IsNullOrWhiteSpace(scmBranch)) {
+                    logger.Info($"Source branch: {scmBranch}");
+                }
 
                 if (!string.IsNullOrWhiteSpace(targetBranch)) {
                     logger.Info($"Target branch: {targetBranch}");

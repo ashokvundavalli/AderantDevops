@@ -217,8 +217,13 @@ function GetSourceTreeMetadata {
     }
 
     Write-Information "$indent1 Build caching info:"
+    if ($context.SourceTreeMetadata.Branch) {
+        Write-Information "$indent1 Branch: $($context.SourceTreeMetadata.Branch)"
+    }
+
     Write-Information "$indent1 New commit: $($context.SourceTreeMetadata.NewCommitDescription)"
     Write-Information "$indent1 Old commit: $($context.SourceTreeMetadata.OldCommitDescription)"
+
     if ($context.SourceTreeMetadata.CommonAncestor) {
         Write-Information "$indent1 CommonAncestor: $($context.SourceTreeMetadata.CommonAncestor)"
     }
@@ -266,8 +271,10 @@ function GetBuildStateMetadata($context) {
 
     if ($context.IsDesktopBuild -and [string]::IsNullOrWhiteSpace($context.BuildMetadata.ScmBranch)) {
         $sourceTreeMetadata = Get-SourceTreeMetadata
-        $scmBranch = $sourceTreeMetadata.CommonAncestor -replace ".*/origin", "refs/heads"
-        $context.BuildMetadata.ScmBranch = $scmBranch
+
+        if (-not [string]::IsNullOrWhiteSpace($sourceTreeMetadata.Branch)) {
+            $context.BuildMetadata.ScmBranch = $sourceTreeMetadata.Branch
+        }
     }
 
     [string]$targetBranch = $null
