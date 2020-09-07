@@ -149,6 +149,8 @@ function GetTestResultFiles {
 }
 
 function CopyTestResultFiles {
+    Write-Information -MessageData 'Copying test result files from test run.'
+
     if ([string]::IsNullOrWhiteSpace($TestResultFileDrop)) {
         return
     }
@@ -238,7 +240,9 @@ try {
     Write-Information "Starting runner: $($startInfo.FileName) $($startInfo.Arguments)"
 
     $exitcode = $exec.Invoke($startInfo)
-} finally {
+
+    Write-Information -MessageData "Exit code from test run was: '$exitcode'."
+} finally {  
     # Copy test result files
     CopyTestResultFiles
 
