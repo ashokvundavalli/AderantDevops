@@ -40,7 +40,10 @@ param(
   [string]$TestAdapterPath,
 
   [Parameter(Mandatory=$false)]
-  [int]$TestSessionTimeout = 1200000
+  [int]$TestSessionTimeout = 1200000,
+
+  [Parameter(Mandatory=$false)]
+  [string]$TestResultFileDrop
 )
 
 Set-StrictMode -Version "Latest"
@@ -136,10 +139,33 @@ function CreateRunSettingsXml() {
     return $sw.ToString()
 }
 
-function GetTestResultFiles() {
-    $path = "$WorkingDirectory\TestResults"
-    [System.IO.Directory]::CreateDirectory($path)
-    return Get-ChildItem -LiteralPath $path -Filter "*.trx" -ErrorAction SilentlyContinue
+function GetTestResultFiles {
+    [string]$path = "$WorkingDirectory\TestResults"
+    [void][System.IO.Directory]::CreateDirectory($path)
+
+    $trxFiles = Get-ChildItem -LiteralPath $path -Filter '*.trx' -File -ErrorAction 'SilentlyContinue'
+    
+    return $trxFiles
+}
+
+function CopyTestResultFiles() {
+    if ([string]::IsNullOrWhiteSpace($TestResultFileDrop)) {
+        return
+    }
+    
+    [System.IO.FileInfo[]]$trx = GetTestResultFiles
+
+    if ($null -ne $trx -and $trx.Length -gt 0) {
+        [void][System.IO.Directory]::CreateDirectory($TestResultFileDrop)
+
+        foreach ($result in $trx) {
+            # Hardlinks cannot span drives.
+            [string]$targetFile = Join-Path -Path $TestResultFileDrop -ChildPath $result.Name
+
+            Write-Information -MessageData "Copying test result file from: '$($result.FullName)' to: '$targetFile'."
+            New-Item -Path $targetFile -ItemType 'HardLink' -Value $result.FullName -Force
+        }
+    }
 }
 
 function ShowTestRunReport() {
@@ -192,7 +218,7 @@ try {
 
     # Log once per unique settings file as the document is usually the same so we don't
     # need to see it all the time
-    if ([Appdomain]::CurrentDomain.GetData($hash) -eq $null) {
+    if ($null -eq [Appdomain]::CurrentDomain.GetData($hash)) {
         Write-Information $xml
         [Appdomain]::CurrentDomain.SetData($hash, "")
     }
@@ -207,6 +233,9 @@ try {
 
     $exitcode = $exec.Invoke($startInfo)
 } finally {
+    # Copy test result files
+    CopyTestResultFiles
+
     if ($exitcode -eq 0) {
         try {
             if ([System.IO.Directory]::Exists($TestAdapterPath)) {

@@ -266,6 +266,7 @@ RunSettingsFile: $(RunSettingsFile)" />
         <RunInParallel>$$(RunTestsInParallel)</RunInParallel>
         <RunSettingsFile>%(_Assemblies.RunSettingsFile)</RunSettingsFile>
         <UsingCustomRunSettingsFile>$(UsingCustomRunSettings)</UsingCustomRunSettingsFile>
+        <TestResultFileDrop>$(TestResultFileDrop)</TestResultFileDrop>
       </ScriptArguments>
     </ItemGroup>
 
@@ -286,22 +287,10 @@ $(AdditionalVariables)
 . '$(MSBuildThisFileDirectory)Testing\RunTests.ps1' @args -AdditionalEnvironmentVariables $additionalEnvironmentVariables"
       OnErrorReason="Test failure" />
 
-    <CallTarget Targets="CopyResultFiles;RemoveFiles" />
+    <CallTarget Targets="RemoveFiles;" />
 
-    <OnError ExecuteTargets="CopyResultFiles;RemoveFiles;ShowTestFailureHelp" />
+    <OnError ExecuteTargets="RemoveFiles;ShowTestFailureHelp;" />
 
-  </Target>
-
-
-  <Target Name="CopyResultFiles">
-    <ItemGroup>
-      <ResultFiles Include="$(SolutionRoot)\**\*.trx" />
-    </ItemGroup>
-
-    <Copy
-      Condition="'$(TestResultFileDrop)' != ''"
-      SourceFiles="@(ResultFiles)"
-      DestinationFolder="$(TestResultFileDrop)" />
   </Target>
 
 
