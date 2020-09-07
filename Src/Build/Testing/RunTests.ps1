@@ -152,6 +152,7 @@ function CopyTestResultFiles {
     Write-Information -MessageData 'Copying test result files from test run.'
 
     if ([string]::IsNullOrWhiteSpace($TestResultFileDrop)) {
+        Write-Information -MessageData 'Test result file drop location was not specified so the files will not be copied.'
         return
     }
     
