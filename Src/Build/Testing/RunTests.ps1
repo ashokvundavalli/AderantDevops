@@ -148,7 +148,7 @@ function GetTestResultFiles {
     return $trxFiles
 }
 
-function CopyTestResultFiles() {
+function CopyTestResultFiles {
     if ([string]::IsNullOrWhiteSpace($TestResultFileDrop)) {
         return
     }
@@ -165,6 +165,8 @@ function CopyTestResultFiles() {
             Write-Information -MessageData "Copying test result file from: '$($result.FullName)' to: '$targetFile'."
             New-Item -Path $targetFile -ItemType 'HardLink' -Value $result.FullName -Force
         }
+    } else {
+        Write-Warning "Unable to locate test result files in directory: '$WorkingDirectory'."
     }
 }
 
