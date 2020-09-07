@@ -162,7 +162,7 @@ function CopyTestResultFiles {
             # Hardlinks cannot span drives.
             [string]$targetFile = Join-Path -Path $TestResultFileDrop -ChildPath $result.Name
 
-            if ([string]::Equals([System.IO.Path]::GetFullPath($result.FullName), [System.IO.Path]::GetFullPath($targetFile), [System.StringComparer]::OrdinalIgnoreCase)) {
+            if ([string]::Equals([System.IO.Path]::GetFullPath($result.FullName), [System.IO.Path]::GetFullPath($targetFile), [System.StringComparison]::OrdinalIgnoreCase)) {
                 continue
             }
 
