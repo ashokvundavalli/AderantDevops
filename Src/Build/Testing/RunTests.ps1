@@ -140,6 +140,7 @@ function CreateRunSettingsXml() {
 }
 
 function GetTestResultFiles {
+    Write-Information -MessageData 'Collecting test result files.'
     [string]$path = "$WorkingDirectory\TestResults"
     [void][System.IO.Directory]::CreateDirectory($path)
 
@@ -152,11 +153,21 @@ function CopyTestResultFiles {
     Write-Information -MessageData 'Copying test result files from test run.'
 
     if ([string]::IsNullOrWhiteSpace($TestResultFileDrop)) {
-        Write-Information -MessageData 'Test result file drop location was not specified so the files will not be copied.'
-        return
+        Write-Information -MessageData 'Test result file drop location was not specified.'
+        if ([string]::IsNullOrWhiteSpace($SolutionRoot)) {
+            Write-Information -MessageData 'Test result file drop location and solution root were not specified so the files will not be copied.'
+            return
+        } else {
+            [string]$BuildSolutionRoot = Split-Path -Path $SolutionRoot -Parent
+            $TestResultFileDrop = Join-Path -Path $BuildSolutionRoot -ChildPath 'TestResults'
+        }
     }
+
+    Write-Information -MessageData "Test result file drop location is: '$TestResultFileDrop'."
     
     [System.IO.FileInfo[]]$trx = GetTestResultFiles
+
+    Write-Information -MessageData "Total number of trx files are: '$($trx.Length)'."
 
     if ($null -ne $trx -and $trx.Length -gt 0) {
         [void][System.IO.Directory]::CreateDirectory($TestResultFileDrop)
@@ -166,6 +177,7 @@ function CopyTestResultFiles {
             [string]$targetFile = Join-Path -Path $TestResultFileDrop -ChildPath $result.Name
 
             if ([string]::Equals([System.IO.Path]::GetFullPath($result.FullName), [System.IO.Path]::GetFullPath($targetFile), [System.StringComparison]::OrdinalIgnoreCase)) {
+                Write-Information -MessageData "Not copying the test result file from: '$($result.FullName)' to: '$targetFile' as they are at the same location."    
                 continue
             }
 
