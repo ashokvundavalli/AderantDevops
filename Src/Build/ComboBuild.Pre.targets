@@ -217,7 +217,7 @@
 
     <Message Text="SolutionDirectoryPath: $(SolutionDirectoryPath)" />
     <Message Text="T4TransformEnabled:    $(rmBCItemTransformTemplatesEnabled)" />
-    <Message Text="ZipCustomSource:       $(ZipCustomSource)" />
+    <Message Text="ZipSource:             $(ZipSource)" />
     <Message Text="VersionMajor:          $(VersionMajor)" />
     <Message Text="VersionMinor:          $(VersionMinor)" />
     <Message Text="VersionBuild:          $(VersionBuild)" />
