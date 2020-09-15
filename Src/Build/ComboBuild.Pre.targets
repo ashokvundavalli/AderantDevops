@@ -194,7 +194,7 @@
 
     <MSBuild Condition="'@(ExtensibilityFiles->Count())' != '0' And '$(ArtifactRestoreSkipped)' != 'true'"
       Projects="$(MSBuildThisFileFullPath)"
-      Properties="DirPropFile=%(ExtensibilityFiles.FullPath)"
+      Properties="DirPropFile=%(ExtensibilityFiles.FullPath);CommonOutputDirectory=$(BinModuleDirectory);SolutionRoot=$(SolutionRoot)"
       Targets="ExtractBuildCachePackages" />
 
   </Target>
