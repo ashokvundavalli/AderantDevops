@@ -5,9 +5,7 @@ using System.Linq;
 using System.Management.Automation;
 using Aderant.Build.Logging;
 using Aderant.Build.PipelineService;
-using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
-using Debugger = System.Diagnostics.Debugger;
 
 namespace Aderant.Build.Packaging {
     class LocalArtifactFileComparer : IEqualityComparer<LocalArtifactFile> {
@@ -213,13 +211,22 @@ namespace Aderant.Build.Packaging {
             var targetPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             targetPaths.Add(Path.GetFullPath(Path.Combine(directoryOfProject, outputPath)));
 
-            if (!isTestProject) {
-                if (CommonDependencyDirectory != null) {
+            // We allow distribution of test projects that are rooted under something other than \test\ as they are
+            // considered public projects
+            if (CommonDependencyDirectory != null) {
+                if (!isTestProject || IsPublicProjectByPath(directoryOfProject)) {
                     targetPaths.Add(CommonDependencyDirectory);
                 }
             }
 
             return targetPaths;
+        }
+
+        /// <summary>
+        /// Determines if a project file path looks like a public project.
+        /// </summary>
+        private static bool IsPublicProjectByPath(string directoryOfProject) {
+            return directoryOfProject.IndexOf(@"\test\", StringComparison.OrdinalIgnoreCase) == -1;
         }
 
         /// <param name="destinationPaths">The complete set of paths to written to. Used to prevent double writes.</param>
