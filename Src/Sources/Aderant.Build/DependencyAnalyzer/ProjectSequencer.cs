@@ -458,7 +458,12 @@ namespace Aderant.Build.DependencyAnalyzer {
                 DependencyManifest manifest;
                 if (!manifestMap.TryGetValue(manifestFilePath, out manifest)) {
                     if (fileSystem.FileExists(manifestFilePath)) {
-                        manifest = new DependencyManifest("", XDocument.Parse(fileSystem.ReadAllText(manifestFilePath)));
+                        try {
+                            manifest = new DependencyManifest(string.Empty, XDocument.Parse(fileSystem.ReadAllText(manifestFilePath)));
+                        } catch {
+                            logger.Error("Failed to parse manifest: '{0}'.", manifestFilePath);
+                            throw;
+                        }
                     }
                 }
 
