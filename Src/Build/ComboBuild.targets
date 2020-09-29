@@ -113,7 +113,7 @@
       WriteStateFiles;
       PackageProduct;
       ProduceUpdatePackage;
-      MSBuildRunIntegrationTests;
+      RunIntegrationTests;
       CopyToDrop;
     </BuildAndPackageDependsOn>
   </PropertyGroup>
@@ -144,25 +144,34 @@
   </Target>
 
 
-  <Target Name="MSBuildRunIntegrationTests" DependsOnTargets="CreatePlan">
+  <Target Name="RunIntegrationTests" DependsOnTargets="CreatePlan" Condition="'$(RunTests)' != 'false'" >
 
     <PropertyGroup>
       <ImpactedTestAssemblies>@(ImpactedTestAssemblies)</ImpactedTestAssemblies>
+
+      <TestProperties>
+        ParametersFile=$(ParametersFile);
+        SolutionRoot=$(SolutionRoot);
+        ArtifactStagingDirectory=$(ArtifactStagingDirectory);
+        SharedDependencyDirectory=$(SharedDependencyDirectory);
+        TestPattern=IntegrationTest;
+        ImpactedTestAssemblies=$(ImpactedTestAssemblies);
+        ExpertSourceDirectory=$(ExpertSourceDirectory);
+        RunTestsInParallel=false;
+        RunTestsForSolutionRootInParallel=false;
+        RunTests=$(RunTests);
+      </TestProperties>
+
+      <TestProperties Condition="'$(BUILD_SOURCESDIRECTORY)' != ''">
+        $(TestProperties);
+        TestResultFileDrop=$(BUILD_SOURCESDIRECTORY)\TestResults
+      </TestProperties>
     </PropertyGroup>
 
     <MSBuild Projects="Aderant.Build.IntegrationTesting.targets"
-             Targets="RunIntegrationTests"
-             Properties="ParametersFile=$(ParametersFile);
-                         SolutionRoot=$(SolutionRoot);
-                         ArtifactStagingDirectory=$(ArtifactStagingDirectory);
-                         SharedDependencyDirectory=$(SharedDependencyDirectory);
-                         TestPattern=IntegrationTest;
-                         ImpactedTestAssemblies=$(ImpactedTestAssemblies);
-                         ExpertSourceDirectory=$(ExpertSourceDirectory);
-                         TestResultFileDrop=$(TestResultFileDrop);
-                         RunTestsInParallel=false;
-                         RunTestsForSolutionRootInParallel=false;
-                         RunTests=$(RunTests);" />
+             Targets="RunIntegrationTestsCore"
+             Properties="$(TestProperties)" />
+
   </Target>
 
 

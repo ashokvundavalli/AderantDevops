@@ -175,7 +175,7 @@ RunSettingsFile: $(RunSettingsFile)" />
 
     <ItemGroup>
       <CandidateTestAssemblies Include="%(TestAssemblyDirectories.FullPath)\**\*$(TestPattern)*.dll"
-                               Exclude="%(TestAssemblyDirectories.FullPath)\**\*Helpers*.dll;
+                               Exclude="%(TestAssemblyDirectories.FullPath)\**\*Helper*.dll;
                                         %(TestAssemblyDirectories.FullPath)\**\Microsoft.*;
                                         %(TestAssemblyDirectories.FullPath)\**\System.*;" />
 
@@ -239,6 +239,8 @@ RunSettingsFile: $(RunSettingsFile)" />
 
 
   <Target Name="RunTestAssemblies" Inputs="@(_Assemblies)" Outputs="%(_Assemblies.TestRunDirectory);%(_Assemblies.Platform)">
+
+    <Message Text="Assembly Test Filters: '%(_Assemblies.CICategory)'" />
 
     <PropertyGroup>
       <PlatformSwitch>/Platform:%(_Assemblies.Platform)</PlatformSwitch>

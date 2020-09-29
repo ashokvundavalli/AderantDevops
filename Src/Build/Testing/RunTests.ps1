@@ -1,6 +1,7 @@
 ﻿[CmdletBinding()]
 param(
   [Parameter(Mandatory=$true, HelpMessage="The path to the test runner such as vstest.console.exe")]
+  [ValidateNotNullOrEmpty()]
   [string]$PathToTestTool,
 
   [Parameter(Mandatory=$false, HelpMessage="The tool arguments such as the logger type")]

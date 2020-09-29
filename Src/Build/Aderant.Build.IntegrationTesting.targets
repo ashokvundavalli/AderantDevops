@@ -13,9 +13,9 @@
   <Import Project="Aderant.Build.Testing.targets" />
   <Import Project="$(DeploymentTargets)Aderant.Build.ServerImage.targets" Condition="'$(ServerImageTargetExists)' == 'true'" />
   <Import Project="$(DeploymentTargets)Aderant.Build.DeployCI.targets" Condition="'$(DeployTargetExists)' == 'true'" />
+  
   <PropertyGroup>
     <!-- Allows environment variables to override RSP parameters -->
-    <_RunIntegrationTests Condition="'$(RunTests)' == 'false'">$(RunTests)</_RunIntegrationTests>
     <_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">$([System.Environment]::GetEnvironmentVariable('RunIntegrationTests'))</_RunIntegrationTests>
     <_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">$(RunIntegrationTests)</_RunIntegrationTests>
     <_RunIntegrationTests Condition="'$(IsDesktopBuild)' == 'true' And '$(RunDesktopIntegrationTests)' != ''">$(RunDesktopIntegrationTests)</_RunIntegrationTests>
@@ -29,13 +29,13 @@
 
   </PropertyGroup>
 
-  <Target Name="RunIntegrationTestsCore" BeforeTargets="RunIntegrationTests">
+  
+  <Target Name="RunIntegrationTestsCore" DependsOnTargets="RunIntegrationTests">
   </Target>
 
 
-
   <Target Name="RunIntegrationTests"
-    DependsOnTargets="RunIntegrationTestsCore;$(RunIntegrationTestsDependsOn)"
+    DependsOnTargets="$(RunIntegrationTestsDependsOn)"
     Condition="'$(_RunIntegrationTests)' == 'true'">
 
     <PropertyGroup>

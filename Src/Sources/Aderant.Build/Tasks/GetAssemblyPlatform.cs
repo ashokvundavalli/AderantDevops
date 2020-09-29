@@ -104,7 +104,7 @@ namespace Aderant.Build.Tasks {
 
                     if (ShouldAnalyze(analyzedAssemblies, hash, item)) {
                         try {
-                            bool checkCiStatus = fullPath.IndexOf("IntegrationTest", StringComparison.OrdinalIgnoreCase) != -1;
+                            bool checkCiStatus = ShouldCheckCIStatus(Path.GetFileNameWithoutExtension(fullPath));
 
                             ProcessorArchitecture[] referenceArchitectures;
                             ImageFileMachine imageFileMachine;
@@ -232,6 +232,16 @@ namespace Aderant.Build.Tasks {
             return inspector;
         }
 
+        internal static bool ShouldCheckCIStatus(string fileName) {
+            if (fileName.StartsWith("IntegrationTest", StringComparison.OrdinalIgnoreCase)) {
+                if (!fileName.EndsWith("Helper", StringComparison.OrdinalIgnoreCase) && !fileName.EndsWith("Helpers", StringComparison.OrdinalIgnoreCase)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private bool ShouldAnalyze(Dictionary<ITaskItem, string> analyzedAssemblies, string hash, ITaskItem item) {
             // We have already seen this assembly based on it's file name. Loading it again will probably cause a FileLoadException as
             // the CLR will not allow the loading of identical assemblies from two different locations in to the same domain.
@@ -282,7 +292,8 @@ namespace Aderant.Build.Tasks {
         /// etc.
         /// </param>
         /// <param name="imageFileMachine"></param>
-        /// <param name="ciEnabled"></param>
+        /// <param name="ciEnabled">Used to determine whether integration test assemblies are eligible to be included in a test run on build.</param>
+        /// <param name="ciCategory">Contains test filters for integration test assemblies to provide to the test runner.</param>
         /// <param name="exception"></param>
         public PortableExecutableKinds Inspect(string assembly, bool checkCiStatus, out ProcessorArchitecture[] referenceArchitectures, out ImageFileMachine imageFileMachine, out bool ciEnabled, out string ciCategory, out Exception exception) {
             referenceArchitectures = null;
@@ -310,12 +321,12 @@ namespace Aderant.Build.Tasks {
             asm.ManifestModule.GetPEKind(out peKind, out imageFileMachine);
 
             if (checkCiStatus) {
-                assemblyLocation = Path.GetDirectoryName(asm.Location);
-                AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve += ReflectionOnlyAssemblyResolveEventHandler;
+                    assemblyLocation = Path.GetDirectoryName(asm.Location);
+                    AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve += ReflectionOnlyAssemblyResolveEventHandler;
 
-                Tuple<bool, string> ciProperties = DetermineCiStatus(asm.CustomAttributes);
-                ciEnabled = ciProperties.Item1;
-                ciCategory = ciProperties.Item2;
+                    Tuple<bool, string> ciProperties = DetermineCiStatus(asm.CustomAttributes);
+                    ciEnabled = ciProperties.Item1;
+                    ciCategory = ciProperties.Item2;
             } else {
                 ciEnabled = false;
                 ciCategory = null;

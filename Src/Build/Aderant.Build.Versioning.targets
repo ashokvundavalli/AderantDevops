@@ -47,7 +47,11 @@
       <_PaketLockFile>$([System.IO.Path]::Combine($(SolutionDirectoryPath), 'paket.lock'))</_PaketLockFile>
       <_PaketLockText Condition="Exists($(_PaketLockFile))">$([System.IO.File]::ReadAllText($(_PaketLockFile)))</_PaketLockText>
 
-      <IsIntegrationTest>$(MSBuildProjectName.StartsWith('IntegrationTest.'))</IsIntegrationTest>
+      <IsIntegrationTest Condition="$(MSBuildProjectName.StartsWith('IntegrationTest')) And !($(MSBuildProjectName.EndsWith('Helper')) Or $(MSBuildProjectName.EndsWith('Helpers')))">true</IsIntegrationTest>
+      <IsIntegrationTest Condition="'$(IsIntegrationTest)' == ''">false</IsIntegrationTest>
+
+      <IsIntegrationTestHelper Condition="$(MSBuildProjectName.StartsWith('IntegrationTest')) And ($(MSBuildProjectName.EndsWith('Helper')) Or $(MSBuildProjectName.EndsWith('Helpers')))">true</IsIntegrationTestHelper>
+      <IsIntegrationTestHelper Condition="'$(IsIntegrationTestHelper)' == ''">false</IsIntegrationTestHelper>
 
       <CIEnabled Condition="'$(IsIntegrationTest)' == 'true' And '$(CIEnabled)' == ''">false</CIEnabled>
     </PropertyGroup>
@@ -109,7 +113,7 @@
 
 
   <Target Name="FindRoleFiles">
-    <RoleManifestPackageIdentifier Condition="'$(IsIntegrationTest)' == 'true'"
+    <RoleManifestPackageIdentifier Condition="'$(IsIntegrationTest)' == 'true' Or '$(IsIntegrationTestHelper)' == 'true'"
       ManifestSearchDirectories="@(ManifestSearchDirectories)"
       DependentRoles="@(DependentRoles)"
       PackageBlacklist="@(PackageBlacklist)" >
@@ -117,7 +121,7 @@
     </RoleManifestPackageIdentifier>
 
     <ItemGroup>
-      <_AssemblyAttributes Condition="'$(IsIntegrationTest)' == 'true'" Include="@(DependentPackages)" />
+      <_AssemblyAttributes Condition="'$(IsIntegrationTest)' == 'true' Or '$(IsIntegrationTestHelper)' == 'true'" Include="@(DependentPackages)" />
     </ItemGroup>
   </Target>
 
