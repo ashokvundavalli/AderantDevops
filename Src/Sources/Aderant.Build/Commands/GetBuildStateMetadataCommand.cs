@@ -11,10 +11,6 @@ namespace Aderant.Build.Commands {
     public class GetBuildStateMetadataCommand : PSCmdlet {
         private CancellationTokenSource cancellationTokenSource;
 
-        [Parameter(Mandatory = true, HelpMessage = "The root directory.")]
-        [ValidateNotNullOrEmpty]
-        public string RootDirectory { get; set; }
-
         [Parameter(Mandatory = true, HelpMessage = "Specifies the SHA1 hashes to query in the cache.")]
         [ValidateNotNullOrEmpty]
         public string[] BucketIds { get; set; }
@@ -26,15 +22,8 @@ namespace Aderant.Build.Commands {
         [ValidateNotNullOrEmpty]
         public string DropLocation { get; set; }
 
-        [Parameter(Mandatory = false, HelpMessage = "Release or Debug.")]
-        [ValidateSet("Debug", "Release")]
-        public string BuildFlavor { get; set; }
-
         [Parameter(Mandatory = false, HelpMessage = "The source branch used to validate artifacts.")]
         public string ScmBranch { get; set; }
-
-        [Parameter(Mandatory = false, HelpMessage = "The common ancestor branch used to validate artifacts.")]
-        public string CommonAncestor { get; set; }
 
         [Parameter(Mandatory = false, HelpMessage = "The target branch used to validate artifacts.")]
         public string TargetBranch { get; set; }
@@ -43,7 +32,7 @@ namespace Aderant.Build.Commands {
             cancellationTokenSource = new CancellationTokenSource();
             var service = new ArtifactService(new PowerShellLogger(this));
 
-            var metadata = service.GetBuildStateMetadata(RootDirectory, BucketIds, Tags, DropLocation, ScmBranch, TargetBranch, CommonAncestor, BuildFlavor, cancellationTokenSource.Token);
+            var metadata = service.GetBuildStateMetadata(BucketIds, Tags, DropLocation, ScmBranch, TargetBranch, cancellationTokenSource.Token);
 
             if (metadata.BuildStateFiles != null) {
                 WriteInformation("Found " + metadata.BuildStateFiles.Count + " state files", null);

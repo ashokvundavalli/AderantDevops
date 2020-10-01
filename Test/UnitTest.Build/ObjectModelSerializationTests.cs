@@ -8,11 +8,10 @@ using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.VersionControl.Model;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ProtoBuf;
-using UnitTest.Build.Serialization;
 
 namespace UnitTest.Build {
     [TestClass]
-    public class ObjectModelSerializationTests : SerializationBase {
+    public class ObjectModelSerializationTests {
 
         [TestMethod]
         public void BuildArtifactSerialization() {
@@ -183,5 +182,24 @@ namespace UnitTest.Build {
             Assert.IsNotNull(instance);
             Assert.AreEqual("Abc", instance.File);
         }
+
+        private static T RoundTrip<T>(T artifact) {
+            return ProtoDeserialize<T>(ProtoSerialize(artifact));
+        }
+
+        private static T ProtoDeserialize<T>(byte[] data) {
+            using (var stream = new MemoryStream(data)) {
+                return Serializer.Deserialize<T>(stream);
+            }
+        }
+
+        private static byte[] ProtoSerialize<T>(T graph) {
+            using (var stream = new MemoryStream()) {
+                Serializer.Serialize(stream, graph);
+                stream.Position = 0;
+                return stream.ToArray();
+            }
+        }
     }
+
 }

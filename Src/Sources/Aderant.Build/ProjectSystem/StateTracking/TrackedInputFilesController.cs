@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Aderant.Build.DependencyResolver;
 using Aderant.Build.Logging;
 using Microsoft.Build.Evaluation;
 using Microsoft.Build.Execution;
@@ -25,56 +24,21 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
         public bool TreatInputAsFiles { get; set; } = true;
 
-        private bool ComparePackageHashes(string directory, string artifactHash) {
-            // Reject artifacts with different external package names/versions.
-
-            string paketLockFile = Path.Combine(directory, Constants.PaketLock);
-
-            if (!fileSystem.FileExists(paketLockFile)) {
-                // Nothing to check.
-                return true;
-            }
-
-            string existingHash = PaketLockOperations.HashLockFile(paketLockFile, fileSystem);
-
-            if (string.Equals(existingHash, artifactHash)) {
-                return true;
-            }
-
-            return false;
-        }
-
-        public InputFilesDependencyAnalysisResult PerformDependencyAnalysis(ICollection<TrackedInputFile> trackedFiles, string projectSolutionRoot, string packageHash) {
-            InputFilesDependencyAnalysisResult result = new InputFilesDependencyAnalysisResult();
-
+        public InputFilesDependencyAnalysisResult PerformDependencyAnalysis(ICollection<TrackedInputFile> trackedFiles, string projectSolutionRoot) {
             if (!string.IsNullOrEmpty(projectSolutionRoot)) {
                 var filesToTrack = GetFilesToTrack(projectSolutionRoot);
-
                 if (filesToTrack != null) {
-                    CorrelateInputs(result, filesToTrack, trackedFiles, packageHash);
+                    return CorrelateInputs(filesToTrack, trackedFiles);
                 }
-
-                return result;
             }
 
-            result.IsUpToDate = true;
-            result.TrackedFiles = trackedFiles?.ToList();
-
-            return result;
+            return new InputFilesDependencyAnalysisResult(true, trackedFiles?.ToList());
         }
 
-        internal void CorrelateInputs(InputFilesDependencyAnalysisResult result, IReadOnlyCollection<TrackedInputFile> trackedInputFiles, ICollection<TrackedInputFile> existingTrackedFiles, string packageHash) {
+        internal InputFilesDependencyAnalysisResult CorrelateInputs(IReadOnlyCollection<TrackedInputFile> trackedInputFiles, ICollection<TrackedInputFile> existingTrackedFiles) {
             // Attempts to correlate inputs
             // Note: two item vector transforms may not be able to be correlated, even if they reference the same item vector, because
             // depending on the transform expression, there might be no relation between the results of the transforms
-
-            if (!string.IsNullOrWhiteSpace(packageHash)) {
-                if (existingTrackedFiles == null) {
-                    existingTrackedFiles = new List<TrackedInputFile>(1);
-                }
-
-                existingTrackedFiles.Add(new TrackedMetadataFile(Constants.PaketLock) { Sha1 = packageHash });
-            }
 
             if (existingTrackedFiles != null && existingTrackedFiles.Any()) {
                 Dictionary<string, TrackedInputFile> newTable = CreateDictionaryFromTrackedInputFiles(trackedInputFiles);
@@ -93,15 +57,11 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                         logger.Info($"File is detected as modified or new: {inputFile.FileName}", null);
                     }
 
-                    result.IsUpToDate = false;
-                    result.TrackedFiles = trackedInputFiles;
-
-                    return;
+                    return new InputFilesDependencyAnalysisResult(false, trackedInputFiles);
                 }
             }
 
-            result.IsUpToDate = true;
-            result.TrackedFiles = trackedInputFiles;
+            return new InputFilesDependencyAnalysisResult(true, trackedInputFiles);
         }
 
         private Dictionary<string, TrackedInputFile> CreateDictionaryFromTrackedInputFiles(IEnumerable<TrackedInputFile> trackedInputFiles) {
@@ -109,12 +69,6 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
             if (trackedInputFiles != null) {
                 foreach (var file in trackedInputFiles) {
-                    if (file is TrackedMetadataFile) {
-                        dictionary.Add(file.Sha1, file);
-                        
-                        continue;
-                    }
-
                     if (TreatInputAsFiles) {
                         if (file.Sha1 != null) {
                             dictionary.Add(file.Sha1, file);
@@ -152,41 +106,17 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         public virtual IReadOnlyCollection<TrackedInputFile> GetFilesToTrack(string directory) {
             var directoryPropertiesFile = Path.Combine(directory, "dir.props");
 
-            // Get paket.lock if it exists
-            string paketLockFile = Path.Combine(directory, Constants.PaketLock);
-
-            List<TrackedInputFile> trackedInputFiles = new List<TrackedInputFile>();
-
-            if (fileSystem.FileExists(paketLockFile)) {
-                PaketLockOperations paketLockOperations = new PaketLockOperations(paketLockFile, fileSystem.ReadAllLines(paketLockFile));
-
-                string packageHash = PaketLockOperations.HashLockFile(paketLockOperations.LockFileContent);
-
-                trackedInputFiles.Add(new TrackedMetadataFile(paketLockFile) {
-                    PackageHash = packageHash,
-                    PackageGroups = paketLockOperations.GetPackageInfo(),
-                    Sha1 = packageHash
-                });
-            }
-
             if (fileSystem.FileExists(directoryPropertiesFile)) {
                 logger.Info($"Using file: {directoryPropertiesFile} to get tracked inputs from", null);
 
-                return trackedInputFiles.Concat(GetFilesToTrack(directoryPropertiesFile, directory)).ToList().AsReadOnly();
+                return GetFilesToTrack(directoryPropertiesFile, directory);
             }
 
-            if (trackedInputFiles.Count == 0) {
-                return null;
-            }
-
-            return trackedInputFiles.AsReadOnly();
+            return null;
         }
 
         internal IReadOnlyCollection<TrackedInputFile> GetFilesToTrack(string directoryPropertiesFile, string directory) {
             var globalProps = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { { "SolutionRoot", directory } };
-
-            List<TrackedInputFile> filesToTrack = new List<TrackedInputFile>();
-
             using (var collection = new ProjectCollection(globalProps)) {
                 collection.RegisterLogger(new LoggerAdapter(logger));
                 collection.IsBuildEnabled = true;
@@ -216,6 +146,8 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                         if (result.HasResultsForTarget(target)) {
                             TargetResult targetResult = result.ResultsByTarget[target];
 
+                            List<TrackedInputFile> filesToTrack = new List<TrackedInputFile>();
+
                             foreach (ITaskItem item in targetResult.Items) {
                                 string itemFullPath = item.GetMetadata("FullPath");
 
@@ -234,7 +166,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                 }
             }
 
-            return filesToTrack;
+            return null;
         }
 
         protected virtual Project LoadProject(string directoryPropertiesFile, ProjectCollection collection) {
@@ -276,7 +208,6 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
     }
 
     internal class InputFilesDependencyAnalysisResult {
-
         public InputFilesDependencyAnalysisResult() {
         }
 
@@ -288,8 +219,8 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         /// <summary>
         /// Gets a value that indicates if the inputs are up to date.
         /// </summary>
-        public bool? IsUpToDate { get; internal set; }
+        public bool? IsUpToDate { get; }
 
-        public IReadOnlyCollection<TrackedInputFile> TrackedFiles { get; internal set; }
+        public IReadOnlyCollection<TrackedInputFile> TrackedFiles { get; private set; }
     }
 }

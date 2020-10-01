@@ -16,8 +16,6 @@ namespace UnitTest.Build.Packaging {
     [TestClass]
     public class ArtifactServiceTest {
 
-        public TestContext TestContext { get; set; }
-
         [TestMethod]
         public void CreateArtifacts() {
             var bucketMock = new Mock<IBucketPathBuilder>();
@@ -226,7 +224,7 @@ namespace UnitTest.Build.Packaging {
                 }
             };
 
-            Assert.IsTrue(ArtifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, "refs/heads/master", null, null, buildStateFile, null, null, out string reason));
+            Assert.IsTrue(ArtifactService.IsFileTrustworthy("refs/heads/master", buildStateFile, out string reason));
             Assert.IsTrue(reason.IndexOf("Artifact matches", StringComparison.OrdinalIgnoreCase) != -1);
         }
 
@@ -239,7 +237,7 @@ namespace UnitTest.Build.Packaging {
                 }
             };
 
-            Assert.IsFalse(ArtifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, "refs/heads/master", null, null, buildStateFile, null, null, out string reason));
+            Assert.IsFalse(ArtifactService.IsFileTrustworthy("refs/heads/master", buildStateFile, out string reason));
             Assert.IsNotNull(reason);
             Assert.IsTrue(reason.IndexOf("outputs", StringComparison.OrdinalIgnoreCase) != -1);
         }
@@ -253,7 +251,7 @@ namespace UnitTest.Build.Packaging {
                 }
             };
 
-            Assert.IsFalse(ArtifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, "refs/heads/master", null, null, buildStateFile, null, null, out string reason));
+            Assert.IsFalse(ArtifactService.IsFileTrustworthy("refs/heads/master", buildStateFile, out string reason));
             Assert.IsNotNull(reason);
             Assert.IsTrue(reason.IndexOf("Artifacts", StringComparison.OrdinalIgnoreCase) != -1);
         }
@@ -270,7 +268,7 @@ namespace UnitTest.Build.Packaging {
                 }
             };
 
-            Assert.IsTrue(ArtifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, "refs/heads/master", null, null, buildStateFile, null, null, out string reason));
+            Assert.IsTrue(ArtifactService.IsFileTrustworthy("refs/heads/master", buildStateFile, out string reason));
             Assert.IsNotNull(reason);
             Assert.IsTrue(reason.IndexOf("Artifact matches", StringComparison.OrdinalIgnoreCase) != -1);
         }
@@ -287,9 +285,9 @@ namespace UnitTest.Build.Packaging {
                 }
             };
 
-            Assert.IsFalse(ArtifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, "refs/heads/master", null, null, buildStateFile, null, null, out string reason));
+            Assert.IsFalse(ArtifactService.IsFileTrustworthy("refs/heads/master", buildStateFile, out string reason));
             Assert.IsNotNull(reason);
-            Assert.IsTrue(reason.IndexOf("Artifact does not match", StringComparison.OrdinalIgnoreCase) != -1);
+            Assert.IsTrue(reason.IndexOf("Different source", StringComparison.OrdinalIgnoreCase) != -1);
         }
 
         [TestMethod]
@@ -304,7 +302,7 @@ namespace UnitTest.Build.Packaging {
                 }
             };
 
-            Assert.IsTrue(ArtifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, "refs/pull/000000/merge", "refs/heads/master", null, buildStateFile, null, null, out string reason));
+            Assert.IsTrue(ArtifactService.IsFileTrustworthy("refs/pull/000000/merge", "refs/heads/master", buildStateFile, out string reason));
             Assert.IsNotNull(reason);
             Assert.IsTrue(reason.IndexOf("Artifact matches", StringComparison.OrdinalIgnoreCase) != -1);
         }
@@ -321,124 +319,9 @@ namespace UnitTest.Build.Packaging {
                 }
             };
 
-            Assert.IsFalse(ArtifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, "refs/pull/000000/merge", "refs/heads/master", null, buildStateFile, null, null, out string reason));
+            Assert.IsFalse(ArtifactService.IsFileTrustworthy("refs/pull/000000/merge", "refs/heads/master", buildStateFile, out string reason));
             Assert.IsNotNull(reason);
             Assert.IsTrue(reason.IndexOf("Artifact does not match", StringComparison.OrdinalIgnoreCase) != -1);
-        }
-
-        [TestMethod]
-        public void IsFileTrustworthy_Valid_CommonAncestor() {
-            var buildStateFile = new BuildStateFile {
-                ScmBranch = "refs/heads/master",
-                Outputs = new Dictionary<string, ProjectOutputSnapshot>(1) {
-                    { "a", null }
-                },
-                Artifacts = new ArtifactCollection {
-                    { "a", null }
-                }
-            };
-
-            Assert.IsTrue(ArtifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, null, null, "refs/heads/master", buildStateFile, null, null, out string reason));
-            Assert.IsNotNull(reason);
-            Assert.IsTrue(reason.IndexOf("Artifact matches common ancestor", StringComparison.OrdinalIgnoreCase) != -1);
-        }
-
-        [TestMethod]
-        public void IsFileTrustworthy_Invalid_CommonAncestor() {
-            var buildStateFile = new BuildStateFile {
-                ScmBranch = "refs/heads/master",
-                Outputs = new Dictionary<string, ProjectOutputSnapshot>(1) {
-                    { "a", null }
-                },
-                Artifacts = new ArtifactCollection {
-                    { "a", null }
-                }
-            };
-
-            Assert.IsFalse(ArtifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, "refs/pull/000000/merge", null, "refs/heads/update/82SP2", buildStateFile, null, null, out string reason));
-            Assert.IsNotNull(reason);
-            Assert.IsTrue(reason.IndexOf("Artifact does not match", StringComparison.OrdinalIgnoreCase) != -1);
-        }
-
-        [TestMethod]
-        [Description("'Release' flavor builds should accept 'Release' artifacts.")]
-        public void IsFileTrustworthy_Release_BuildFlavor_Release_Artifact() {
-            var buildStateFile = new BuildStateFile {
-                ScmBranch = "refs/heads/master",
-                BuildConfiguration = new Dictionary<string, string>(1) {
-                    { "Flavor", "Release" }
-                },
-                Outputs = new Dictionary<string, ProjectOutputSnapshot>(1) {
-                    { "a", null }
-                },
-                Artifacts = new ArtifactCollection {
-                    { "a", null }
-                }
-            };
-
-            Assert.IsTrue(ArtifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, null, null, null, buildStateFile, null, "Release", out string reason));
-            Assert.IsNotNull(reason);
-        }
-
-        [TestMethod]
-        [Description("'Release' flavor builds should not accept 'Debug' artifacts.")]
-        public void IsFileTrustworthy_Release_BuildFlavor_Debug_Artifact() {
-            var buildStateFile = new BuildStateFile {
-                ScmBranch = "refs/heads/master",
-                BuildConfiguration = new Dictionary<string, string>(1) {
-                    { "Flavor", "Debug" }
-                },
-                Outputs = new Dictionary<string, ProjectOutputSnapshot>(1) {
-                    { "a", null }
-                },
-                Artifacts = new ArtifactCollection {
-                    { "a", null }
-                }
-            };
-
-            Assert.IsFalse(ArtifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, null, null, null, buildStateFile, null, "Release", out string reason));
-            Assert.IsNotNull(reason);
-            Assert.IsTrue(reason.IndexOf("does not match required configuration: 'Release'", StringComparison.OrdinalIgnoreCase) != -1);
-        }
-
-        [TestMethod]
-        [Description("'Debug' flavor builds should accept 'Release' artifacts.")]
-        public void IsFileTrustworthy_Debug_BuildFlavor_Release_Artifact() {
-            var buildStateFile = new BuildStateFile {
-                ScmBranch = "refs/heads/master",
-                BuildConfiguration = new Dictionary<string, string>(1) {
-                    { "Flavor", "Release" }
-                },
-                Outputs = new Dictionary<string, ProjectOutputSnapshot>(1) {
-                    { "a", null }
-                },
-                Artifacts = new ArtifactCollection {
-                    { "a", null }
-                }
-            };
-
-            Assert.IsTrue(ArtifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, null, null, "refs/heads/master", buildStateFile, null, "Debug", out string reason));
-            Assert.IsNotNull(reason);
-        }
-
-        [TestMethod]
-        [Description("'Debug' flavor builds should accept 'Debug' artifacts.")]
-        public void IsFileTrustworthy_Debug_BuildFlavor_Debug_Artifact() {
-            var buildStateFile = new BuildStateFile {
-                ScmBranch = "refs/heads/master",
-                BuildConfiguration = new Dictionary<string, string>(1) {
-                    { "Flavor", "Debug" }
-                },
-                Outputs = new Dictionary<string, ProjectOutputSnapshot>(1) {
-                    { "a", null }
-                },
-                Artifacts = new ArtifactCollection {
-                    { "a", null }
-                }
-            };
-
-            Assert.IsTrue(ArtifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, null, null, "refs/heads/master", buildStateFile, null, "Debug", out string reason));
-            Assert.IsNotNull(reason);
         }
     }
 }

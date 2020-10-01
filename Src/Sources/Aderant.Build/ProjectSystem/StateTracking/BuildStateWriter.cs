@@ -24,7 +24,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             this.WrittenStateFiles = new List<string>();
         }
 
-        public static string DefaultFileName { get; } = "buildstate.metadata";
+        public static string DefaultFileName { get; private set; } = "buildstate.metadata";
 
         public ICollection<string> WrittenStateFiles { get; set; }
 
@@ -38,32 +38,29 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         /// <param name="sourceTreeMetadata">A description of the source tree</param>
         /// <param name="buildMetadata">A description of the current build environment</param>
         /// <param name="destinationPath">The path to write the file to</param>
-        /// <param name="rootDirectory"></param>
         public string WriteStateFile(
             BuildStateFile previousBuild,
             BucketId bucket,
             IEnumerable<ProjectOutputSnapshot> currentOutputs,
-            ICollection<TrackedInputFile> trackedInputFiles,
+            IEnumerable<TrackedInputFile> trackedInputFiles,
             IDictionary<string, ICollection<ArtifactManifest>> artifacts,
             SourceTreeMetadata sourceTreeMetadata,
             BuildMetadata buildMetadata,
-            string destinationPath,
-            string rootDirectory) {
+            string destinationPath) {
 
             BuildStateFile newFile;
-            return WriteStateFile(previousBuild, bucket, currentOutputs, trackedInputFiles, artifacts, sourceTreeMetadata, buildMetadata, destinationPath, rootDirectory, out newFile);
+            return WriteStateFile(previousBuild, bucket, currentOutputs, trackedInputFiles, artifacts, sourceTreeMetadata, buildMetadata, destinationPath, out newFile);
         }
 
         internal string WriteStateFile(
             BuildStateFile previousBuild,
             BucketId bucket,
             IEnumerable<ProjectOutputSnapshot> currentOutputs,
-            ICollection<TrackedInputFile> trackedInputFiles,
+            IEnumerable<TrackedInputFile> trackedInputFiles,
             IDictionary<string, ICollection<ArtifactManifest>> artifacts,
             SourceTreeMetadata sourceTreeMetadata,
             BuildMetadata buildMetadata,
             string destinationPath,
-            string rootDirectory,
             out BuildStateFile stateFile) {
 
             string treeShaValue = null;
@@ -92,22 +89,6 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                 //MergeExistingOutputs(previousBuild.BuildId, previousBuild.Outputs, currentOutputs);
             }
 
-            // Set build configuration.
-            if (buildMetadata != null) {
-                stateFile.BuildConfiguration = new Dictionary<string, string> {
-                    {nameof(BuildMetadata.Flavor), buildMetadata.Flavor}
-                };
-
-                stateFile.BuildId = buildMetadata.BuildId.ToString(CultureInfo.InvariantCulture);
-
-                if (buildMetadata.IsPullRequest) {
-                    stateFile.PullRequestInfo = buildMetadata.PullRequest;
-                } else {
-                    stateFile.ScmBranch = buildMetadata.ScmBranch;
-                    stateFile.ScmCommitId = buildMetadata.ScmCommitId;
-                }
-            }
-
             stateFile.Outputs = currentOutputs.ToDictionary(key => key.ProjectFile, value => value);
 
             // If there are no outputs and no associated artifacts, avoid writing the state file.
@@ -119,14 +100,18 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
             stateFile.Artifacts = artifacts;
             if (trackedInputFiles != null) {
-                var trackedMetadataFiles = trackedInputFiles.Where(x => x is TrackedMetadataFile).ToList();
+                stateFile.TrackedFiles = trackedInputFiles.ToList();
+            }
 
-                foreach (var trackedMetadataFile in trackedMetadataFiles) {
-                    trackedMetadataFile.EnrichStateFile(stateFile);
+            if (buildMetadata != null) {
+                stateFile.BuildId = buildMetadata.BuildId.ToString(CultureInfo.InvariantCulture);
+
+                if (buildMetadata.IsPullRequest) {
+                    stateFile.PullRequestInfo = buildMetadata.PullRequest;
+                } else {
+                    stateFile.ScmBranch = buildMetadata.ScmBranch;
+                    stateFile.ScmCommitId = buildMetadata.ScmCommitId;
                 }
-
-                // Filter out metadata files.
-                stateFile.TrackedFiles = trackedInputFiles.Except(trackedMetadataFiles).ToList();
             }
 
             stateFile.PrepareForSerialization();
@@ -207,7 +192,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                     collection[tag] = artifactManifests.ToList();
                 }
 
-                BuildArtifact buildArtifact = WriteStateFile(previousBuild, bucket, trackedInputFiles?.ToList(), projectOutputSnapshot, collection, context);
+                BuildArtifact buildArtifact = WriteStateFile(previousBuild, bucket, trackedInputFiles, projectOutputSnapshot, collection, context);
 
                 if (buildArtifact == null) {
                     continue;
@@ -219,7 +204,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             return files;
         }
 
-        private BuildArtifact WriteStateFile(BuildStateFile previousBuild, BucketId bucket, ICollection<TrackedInputFile> trackedInputFiles, IEnumerable<ProjectOutputSnapshot> projectOutputSnapshot, ArtifactCollection artifactCollection, BuildOperationContext context) {
+        private BuildArtifact WriteStateFile(BuildStateFile previousBuild, BucketId bucket, IEnumerable<TrackedInputFile> trackedInputFiles, IEnumerable<ProjectOutputSnapshot> projectOutputSnapshot, ArtifactCollection artifactCollection, BuildOperationContext context) {
             ArtifactStagingPathBuilder pathBuilder = new ArtifactStagingPathBuilder(context.ArtifactStagingDirectory, context.BuildMetadata.BuildId, context.SourceTreeMetadata);
 
             string containerName = CreateContainerName(bucket.Id);
@@ -236,7 +221,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
             string bucketInstance = Path.Combine(stateFileRoot, DefaultFileName);
 
-            string stateFile = WriteStateFile(previousBuild, bucket, projectOutputSnapshot, trackedInputFiles, artifactCollection, context.SourceTreeMetadata, context.BuildMetadata, bucketInstance, context.BuildRoot);
+            string stateFile = WriteStateFile(previousBuild, bucket, projectOutputSnapshot, trackedInputFiles, artifactCollection, context.SourceTreeMetadata, context.BuildMetadata, bucketInstance);
 
             if (string.IsNullOrWhiteSpace(stateFile)) {
                 return null;

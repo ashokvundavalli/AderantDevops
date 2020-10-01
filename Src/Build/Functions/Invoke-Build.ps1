@@ -269,36 +269,20 @@ function GetBuildStateMetadata($context) {
         return
     }
 
-    [string]$commonAncestor = [string]::Empty
-
     if ($context.IsDesktopBuild -and [string]::IsNullOrWhiteSpace($context.BuildMetadata.ScmBranch)) {
         $sourceTreeMetadata = Get-SourceTreeMetadata
 
         if (-not [string]::IsNullOrWhiteSpace($sourceTreeMetadata.Branch)) {
             $context.BuildMetadata.ScmBranch = $sourceTreeMetadata.Branch
         }
-
-        $commonAncestor = $sourceTreeMetadata.CommonAncestor -replace ".*/origin", "refs/heads"
-    } else {
-        $commonAncestor = $sourceTreeMetadata.CommonAncestor
     }
-    
+
     [string]$targetBranch = $null
     if ($context.BuildMetadata.IsPullRequest) {
         $targetBranch = $context.BuildMetadata.PullRequest.TargetBranch
     }
 
-    [string]$flavor = [string]::Empty
-
-    if (-not $context.isDesktopBuild) {
-        $flavor = $context.BuildMetadata.Flavor
-    } elseif ($Release.IsPresent) {
-        $flavor = 'Release'
-    } else {
-        $flavor = 'Debug'
-    }
-
-    $buildState = Get-BuildStateMetadata -RootDirectory $context.BuildRoot -BucketIds $ids -Tags $tags -DropLocation $context.DropLocationInfo.BuildCacheLocation -ScmBranch $context.BuildMetadata.ScmBranch -TargetBranch $targetBranch -CommonAncestor $commonAncestor -BuildFlavor $flavor
+    $buildState = Get-BuildStateMetadata -BucketIds $ids -Tags $tags -DropLocation $context.DropLocationInfo.BuildCacheLocation -ScmBranch $context.BuildMetadata.ScmBranch -TargetBranch $targetBranch
 
     $context.BuildStateMetadata = $buildState
 

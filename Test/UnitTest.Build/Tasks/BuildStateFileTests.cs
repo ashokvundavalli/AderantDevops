@@ -6,7 +6,6 @@ using System.Text;
 using Aderant.Build;
 using Aderant.Build.Logging;
 using Aderant.Build.ProjectSystem.StateTracking;
-using Aderant.Build.VersionControl;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
@@ -101,7 +100,6 @@ namespace UnitTest.Build.Tasks {
                 null,
                 null,
                 null,
-                null,
                 "foo");
 
             Assert.IsNotNull(text);
@@ -130,7 +128,6 @@ namespace UnitTest.Build.Tasks {
                 null,
                 null,
                 new ProjectOutputSnapshot[0],
-                null,
                 null,
                 null,
                 null,
@@ -165,7 +162,6 @@ namespace UnitTest.Build.Tasks {
                 new ProjectOutputSnapshot[0],
                 null,
                 new Dictionary<string, ICollection<ArtifactManifest>> { {"Test", new List<ArtifactManifest> { new ArtifactManifest() }} },
-                null,
                 null,
                 null,
                 "foo");
@@ -205,7 +201,6 @@ namespace UnitTest.Build.Tasks {
                         OutputPath = "bin\\test",
                     }
                 },
-                null,
                 null,
                 null,
                 null,

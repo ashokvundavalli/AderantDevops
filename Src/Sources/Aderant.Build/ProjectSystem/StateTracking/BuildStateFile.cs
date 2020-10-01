@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
-using Aderant.Build.DependencyResolver.Model;
 using Aderant.Build.VersionControl;
 using ProtoBuf;
 
@@ -15,9 +14,6 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
         [DataMember]
         private IDictionary<string, ProjectOutputSnapshot> outputs;
-
-        [DataMember]
-        private IDictionary<string, string> buildConfiguration;
 
         [DataMember(EmitDefaultValue = false)]
         public BucketId BucketId { get; set; }
@@ -45,11 +41,6 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
         [DataMember(EmitDefaultValue = false)]
         public string ScmCommitId { get; set; }
-
-        internal IDictionary<string, string> BuildConfiguration {
-            get => buildConfiguration;
-            set => buildConfiguration = value;
-        }
 
         internal IDictionary<string, ProjectOutputSnapshot> Outputs {
             get {
@@ -82,12 +73,6 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         [DataMember(EmitDefaultValue = false)]
         public ICollection<TrackedInputFile> TrackedFiles { get; set; }
 
-        [DataMember(EmitDefaultValue = false)]
-        public ICollection<PackageGroup> PackageGroups { get; set; }
-
-        [DataMember(EmitDefaultValue = false)]
-        public string PackageHash { get; set; }
-
         internal void PrepareForSerialization() {
             Location = null;
         }
@@ -96,8 +81,6 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         internal void OnDeserializing(StreamingContext context) {
             outputs = new ProjectTreeOutputSnapshot();
             artifacts = new ArtifactCollection();
-            BuildConfiguration = new Dictionary<string, string>();
-            PackageGroups = new List<PackageGroup>();
         }
 
         [OnSerializing]
@@ -112,7 +95,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         }
 
         /// <summary>
-        /// Gets the projects GUIDs contained within the snapshot.
+        /// Gets the projects guids contained within the snapshot.
         /// </summary>
         public IReadOnlyCollection<Guid> GetProjectGuids() {
             List<Guid> ids = new List<Guid>();
@@ -124,4 +107,5 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             return ids;
         }
     }
+
 }

@@ -10,9 +10,9 @@ namespace Aderant.Build {
 
         public BuildMetadata() {
             BuildId = 0;
-            ScmBranch = string.Empty;
-            ScmCommitId = string.Empty;
-            Flavor = string.Empty;
+            ScmBranch = "";
+            ScmCommitId = "";
+            Flavor = "";
         }
 
         [DataMember]
