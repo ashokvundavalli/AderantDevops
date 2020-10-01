@@ -1,7 +1,7 @@
 ﻿[CmdletBinding()]
 param(
-    [Parameter(Mandatory=$false)][int]$agentsToProvision = 0,
-    [Switch]$removeAllAgents = $true,
+    [Parameter(Mandatory=$false)][int]$agentsToProvision = 1,
+    [Parameter(Mandatory=$false)][bool]$removeAllAgents = $true,
     [Parameter(Mandatory=$false)][string]$agentArchive,
     [Parameter(Mandatory=$false)][string]$tfsHost = "https://tfs.aderant.com/tfs",
     [Parameter(Mandatory=$false)][string]$agentPool,
@@ -12,11 +12,11 @@ param(
 begin {
     Set-StrictMode -Version Latest
 
-    if ($agentsToProvision -eq 0) {
-        $agentsToProvision = ((Get-CimInstance -Class win32_Processor).NumberOfCores / 2)
-
+    if ($agentsToProvision -lt 1) {
         if ((Get-CimInstance win32_computersystem).Model -eq "Virtual Machine") {
             $agentsToProvision = 1
+        } else {
+            $agentsToProvision = ((Get-CimInstance -Class win32_Processor).NumberOfCores / 2)
         }
 
         if ($agentsToProvision -eq 0) {
