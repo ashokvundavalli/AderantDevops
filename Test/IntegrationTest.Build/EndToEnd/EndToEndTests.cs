@@ -1,9 +1,9 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
 using IntegrationTest.Build.Helpers;
-using Microsoft.Build.Execution;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build.EndToEnd {
@@ -45,7 +45,7 @@ namespace IntegrationTest.Build.EndToEnd {
                 var context = buildService.GetContext();
 
                 foreach (string entry in context.WrittenStateFiles) {
-                    if (entry.EndsWith(@"1\StateFile\buildstate.metadata")) {
+                    if (entry.EndsWith("buildstate.metadata")) {
                         BuildStateFile stateFile;
                         using (var fs = new FileStream(entry, FileMode.Open)) {
                             stateFile = StateFileBase.DeserializeCache<BuildStateFile>(fs);
@@ -57,11 +57,18 @@ namespace IntegrationTest.Build.EndToEnd {
                             Assert.IsTrue(stateFile.Artifacts.ContainsKey("ModuleA"));
 
                             var manifest = stateFile.Artifacts["ModuleA"];
-                            Assert.IsTrue(manifest.Any(m => m.Id == "ModuleA"));
-                            Assert.IsTrue(manifest.Any(m => m.Id == "Tests.ModuleA"));
+                            Assert.IsTrue(manifest.Any(m => string.Equals(m.Id, "ModuleA", StringComparison.OrdinalIgnoreCase)));
+                            Assert.IsTrue(manifest.Any(m => string.Equals(m.Id, "Tests.ModuleA", StringComparison.OrdinalIgnoreCase)));
 
                             Assert.IsNotNull(stateFile.Outputs);
                         }
+
+                        Assert.IsNotNull(stateFile.BuildConfiguration);
+                        Assert.IsNotNull(stateFile.BuildConfiguration["Flavor"]);
+
+                        Assert.IsNotNull(stateFile.PackageHash);
+                        Assert.IsNotNull(stateFile.PackageGroups);
+                        Assert.AreEqual(2, stateFile.PackageGroups.Count);
                     }
                 }
             }

@@ -135,6 +135,24 @@ namespace UnitTest.Build {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to REFERENCES: STRICT
+        ///NUGET
+        ///  remote: https://expertpackages.azurewebsites.net/v3/index.json
+        ///    Aderant.Build.Analyzer (2.1.1)
+        ///    
+        ///GROUP Development
+        ///REFERENCES: STRICT
+        ///NUGET
+        ///  remote: https://expertpackages.azurewebsites.net/v3/index.json
+        ///    Aderant.Build.Analyzer (3.1.1).
+        /// </summary>
+        internal static string PaketLock {
+            get {
+                return ResourceManager.GetString("PaketLock", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
         ///&lt;Project DefaultTargets=&quot;ModuleBuild&quot;
         ///         xmlns=&quot;http://schemas.microsoft.com/developer/msbuild/2003&quot;

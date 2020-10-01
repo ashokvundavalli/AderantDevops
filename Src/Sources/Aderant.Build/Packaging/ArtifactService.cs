@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Aderant.Build.AzurePipelines;
+using Aderant.Build.DependencyResolver;
 using Aderant.Build.Logging;
 using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem;
@@ -445,24 +446,13 @@ namespace Aderant.Build.Packaging {
         /// </summary>
         public bool ArtifactRestoreSkipped { get; set; }
 
-        public BuildStateMetadata GetBuildStateMetadata(string[] bucketIds, string dropLocation, string scmBranch, string targetBranch, CancellationToken token = default(CancellationToken)) {
-            return GetBuildStateMetadata(bucketIds, null, dropLocation, scmBranch, targetBranch, token);
-        }
-
-        public BuildStateMetadata GetBuildStateMetadata(string[] bucketIds, string[] tags, string dropLocation, string scmBranch, string targetBranch, CancellationToken token = default(CancellationToken)) {
-            if (bucketIds == null) {
-                throw new ArgumentNullException(nameof(bucketIds));
-            }
-            if (string.IsNullOrWhiteSpace(dropLocation)) {
-                throw new ArgumentException("Value cannot be null or whitespace.", nameof(dropLocation));
-            }
-
-            if (tags != null && bucketIds.Length > 0 && tags.Length != 0) {
+        public BuildStateMetadata GetBuildStateMetadata(string rootDirectory, string[] bucketIds, string[] tags, string dropLocation, string scmBranch, string targetBranch, string commonAncestor, string buildFlavor, CancellationToken token = default(CancellationToken)) {
+            if (bucketIds != null && tags != null && bucketIds.Length > 0 && tags.Length != 0) {
                 if (bucketIds.Length != tags.Length) {
                     // The two vectors must have the same length
                     throw new InvalidOperationException(string.Format("{2} refers to {0} item(s), and {3} refers to {1} item(s). They must have the same number of items.",
                         bucketIds.Length,
-                        bucketIds.Length,
+                        tags.Length,
                         "DestinationFiles",
                         "SourceFiles"));
                 }
@@ -481,6 +471,10 @@ namespace Aderant.Build.Packaging {
 
                 if (!string.IsNullOrWhiteSpace(targetBranch)) {
                     logger.Info($"Target branch: {targetBranch}");
+                }
+
+                if (!string.IsNullOrWhiteSpace(commonAncestor)) {
+                    logger.Info($"Common ancestor branch: {commonAncestor}");
                 }
 
                 foreach (var bucketId in bucketIds) {
@@ -515,10 +509,15 @@ namespace Aderant.Build.Packaging {
                                     file = StateFileBase.DeserializeCache<BuildStateFile>(stream);
                                 }
 
+                                if (file == null) {
+                                    logger.Info($"Unable to deserialize file: '{stateFile}'.");
+                                    continue;
+                                }
+
                                 file.Location = folder;
 
                                 string reason;
-                                if (IsFileTrustworthy(scmBranch, targetBranch, file, out reason)) {
+                                if (IsFileTrustworthy(rootDirectory, scmBranch, targetBranch, commonAncestor, file, fileSystem, buildFlavor, out reason)) {
                                     logger.Info($"Candidate-> {stateFile}:{reason}");
                                     files.Add(file);
                                 } else {
@@ -536,43 +535,77 @@ namespace Aderant.Build.Packaging {
             }
         }
 
-        internal static bool IsFileTrustworthy(string scmBranch, BuildStateFile file, out string reason) {
-            return IsFileTrustworthy(scmBranch, null, file, out reason);
-        }
-
-        internal static bool IsFileTrustworthy(string scmBranch, string targetBranch, BuildStateFile file, out string reason) {
+        internal static bool IsFileTrustworthy(string rootDirectory, string scmBranch, string targetBranch, string commonAncestor, BuildStateFile file, IFileSystem fileSystem, string buildFlavor, out string reason) {
             if (CheckForRootedPaths(file)) {
                 reason = "Corrupt.";
                 return false;
             }
 
-            // Reject files that provide no value
+            // Reject files that provide no value.
             if (file.Outputs == null || file.Outputs.Count == 0) {
                 reason = "No outputs.";
                 return false;
             }
 
+            // Reject artifacts which contain no content.
             if (file.Artifacts == null || file.Artifacts.Count == 0) {
                 reason = "No Artifacts.";
                 return false;
             }
-            
-            if (!string.IsNullOrWhiteSpace(scmBranch) && !string.Equals(scmBranch, file.ScmBranch)) {
-                if (!string.IsNullOrWhiteSpace(targetBranch)) {
-                    if (string.Equals(targetBranch, file.ScmBranch)) {
-                        reason = "Artifact matches target branch.";
-                    } else {
-                        reason = $"Artifact does not match source or target branch (artifact: {file.ScmBranch})";
+
+            // Reject artifacts if they were built with a different configuration.
+            if (!string.IsNullOrWhiteSpace(buildFlavor)) {
+                // If the build flavor is set to release, disable use of debug artifacts.
+                if (string.Equals("Release", buildFlavor, StringComparison.OrdinalIgnoreCase)) {
+                    file.BuildConfiguration.TryGetValue(nameof(BuildMetadata.Flavor), out string value);
+
+                    if (!string.Equals(buildFlavor, value, StringComparison.OrdinalIgnoreCase)) {
+                        reason = $"Artifact build configuration: '{value}' does not match required configuration: '{buildFlavor}'";
                         return false;
                     }
-                } else {
-                    reason = $"Different source branch (artifact: {file.ScmBranch}).";
-                    return false;
                 }
-            } else {
-                reason = "Artifact matches source branch.";
             }
 
+            // Reject artifacts with different external package names/versions.
+            if (!string.IsNullOrWhiteSpace(file.PackageHash)) {
+                string path = Path.Combine(rootDirectory, file.BucketId.Tag);
+
+                string paketLockFile = Path.Combine(path, Constants.PaketLock);
+
+                if (fileSystem.FileExists(paketLockFile)) {
+                    string existingHash = PaketLockOperations.HashLockFile(paketLockFile, fileSystem);
+
+                    if (string.Equals(existingHash, file.PackageHash)) {
+                        reason = $"{Constants.PaketLock} file hash match.";
+                        return true;
+                    }
+                }
+            }
+            
+            // Fall back to branch checks. - ToDo: Remove once newer artifacts have been published.
+            string artifactBranch = file.ScmBranch;
+
+            if (string.Equals(scmBranch, artifactBranch)) {
+                reason = "Artifact matches source branch.";
+                return true;
+            }
+
+            if (string.Equals(targetBranch, artifactBranch)) {
+                reason = "Artifact matches target branch.";
+                return true;
+            }
+
+            if (string.Equals(commonAncestor, artifactBranch)) {
+                reason = "Artifact matches common ancestor branch.";
+                return true;
+            }
+
+            if (!string.IsNullOrWhiteSpace(scmBranch)) {
+                reason = $"Artifact does not match source, ancestor or target branch (artifact: {artifactBranch}).";
+                return false;
+            }
+
+            reason = string.Empty;
             return true;
         }
 

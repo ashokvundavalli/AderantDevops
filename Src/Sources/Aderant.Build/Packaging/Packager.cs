@@ -20,7 +20,7 @@ namespace Aderant.Build.Packaging {
         }
 
         public PackResult Pack(string version, bool replicate) {
-            var files = fs.GetFiles(fs.Root, "paket.dependencies", false);
+            var files = fs.GetFiles(fs.Root, Constants.PaketDependencies, false);
 
             string dependenciesFilePath = null;
             int packedTemplates = 0;

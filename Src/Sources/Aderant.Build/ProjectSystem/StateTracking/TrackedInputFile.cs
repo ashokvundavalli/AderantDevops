@@ -5,8 +5,9 @@ using ProtoBuf;
 namespace Aderant.Build.ProjectSystem.StateTracking {
     [DataContract]
     [ProtoContract]
+    [ProtoInclude(101, typeof(TrackedMetadataFile))]
     public class TrackedInputFile {
-        private TrackedInputFile() {
+        internal TrackedInputFile() {
         }
 
         public TrackedInputFile(string itemSpec) {
@@ -23,5 +24,8 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         [DataMember]
         [ProtoMember(2)]
         public string Sha1 { get; set; }
+
+        public virtual void EnrichStateFile(BuildStateFile stateFile) {
+        }
     }
 }

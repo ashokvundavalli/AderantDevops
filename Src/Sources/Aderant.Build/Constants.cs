@@ -16,6 +16,10 @@ namespace Aderant.Build {
         /// </summary>
         public static string ModulesDirectory = "Modules";
 
+        public static string PaketDependencies = Paket.Constants.DependenciesFileName;
+
+        public static string PaketLock = Paket.Constants.LockFileName;
+
         public static string PackageServerUrlV3 = "https://expertpackages.azurewebsites.net/v3/index.json";
 
         public static string PackageRepositoryUri = @"\\svfp311\PackageRepository\";

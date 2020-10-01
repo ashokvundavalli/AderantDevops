@@ -1,0 +1,10 @@
+﻿REFERENCES: STRICT
+NUGET
+  remote: https://expertpackages.azurewebsites.net/v3/index.json
+    Aderant.Build.Analyzer (1.1.1)
+    
+GROUP Development
+REFERENCES: STRICT
+NUGET
+  remote: https://expertpackages.azurewebsites.net/v3/index.json
+    Aderant.Build.Analyzer (2.1.1)

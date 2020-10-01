@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Aderant.Build.Logging;
 using LibGit2Sharp;
@@ -21,7 +20,7 @@ namespace Aderant.Build.Commands {
         [Parameter(Mandatory = false, HelpMessage = "Whether to force retrieval of dependencies", Position = 1), ValidateNotNull]
         public SwitchParameter Force { get; set; }
 
-        private static readonly string DependenciesFile = "paket.dependencies";
+        private static readonly string DependenciesFile = Constants.PaketDependencies;
         internal static readonly string EditorConfig = ".editorconfig";
         internal static readonly string ResharperSettings = "sln.DotSettings";
         internal static readonly string AbsolutePathToken = "[ABSOLUTEPATH]";

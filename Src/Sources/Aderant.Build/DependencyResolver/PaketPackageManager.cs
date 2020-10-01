@@ -73,7 +73,7 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         public IFileSystem FileSystem { get; }
-        public static string DependenciesFile { get; } = "paket.dependencies";
+        public static string DependenciesFile { get; } = Constants.PaketDependencies;
 
         public string[] Lines { get; private set; }
 

@@ -38,9 +38,11 @@ namespace UnitTest.Build.StateTracking {
             var controller = new TrackedInputFilesController();
             controller.TreatInputAsFiles = false;
 
-            InputFilesDependencyAnalysisResult result = controller.CorrelateInputs(
+            InputFilesDependencyAnalysisResult result = new InputFilesDependencyAnalysisResult();
+                
+            controller.CorrelateInputs(result,
                 new[] { new TrackedInputFile("abc") },
-                new[] { new TrackedInputFile("abc"), new TrackedInputFile("def") });
+                new[] { new TrackedInputFile("abc"), new TrackedInputFile("def") }, null);
 
             Assert.IsNotNull(result.IsUpToDate);
             Assert.IsFalse(result.IsUpToDate.Value);
@@ -51,9 +53,11 @@ namespace UnitTest.Build.StateTracking {
             var controller = new TrackedInputFilesController();
             controller.TreatInputAsFiles = false;
 
-            InputFilesDependencyAnalysisResult result = controller.CorrelateInputs(
+            InputFilesDependencyAnalysisResult result = new InputFilesDependencyAnalysisResult();
+
+            controller.CorrelateInputs(result,
                 new[] { new TrackedInputFile("abc"), new TrackedInputFile("def") },
-                new[] { new TrackedInputFile("abc") });
+                new[] { new TrackedInputFile("abc") }, null);
 
             Assert.IsNotNull(result.IsUpToDate);
             Assert.IsFalse(result.IsUpToDate.Value);
@@ -65,9 +69,11 @@ namespace UnitTest.Build.StateTracking {
             var controller = new TrackedInputFilesController();
             controller.TreatInputAsFiles = false;
 
-            InputFilesDependencyAnalysisResult result = controller.CorrelateInputs(
+            InputFilesDependencyAnalysisResult result = new InputFilesDependencyAnalysisResult();
+
+            controller.CorrelateInputs(result,
                 new[] { new TrackedInputFile("abc") },
-                new[] { new TrackedInputFile("abc") });
+                new[] { new TrackedInputFile("abc") }, null);
 
             Assert.IsTrue(result.IsUpToDate.Value);
         }
@@ -77,10 +83,38 @@ namespace UnitTest.Build.StateTracking {
             var controller = new TrackedInputFilesController();
             controller.TreatInputAsFiles = false;
 
-            var areInputsUpToDate = controller.PerformDependencyAnalysis(null, null);
+            var areInputsUpToDate = controller.PerformDependencyAnalysis(null, null, null);
 
             Assert.IsNotNull(areInputsUpToDate);
             Assert.IsTrue(areInputsUpToDate.IsUpToDate.Value);
+        }
+
+        [TestMethod]
+        public void PaketHashCorrelationMatch() {
+            var controller = new TrackedInputFilesController {
+                TreatInputAsFiles = false
+            };
+
+            var result = new InputFilesDependencyAnalysisResult(false, null);
+
+            controller.CorrelateInputs(result, new [] { new TrackedMetadataFile(Constants.PaketLock) { Sha1 = "BBED1D49615C071DAAAD48AD1FC057E1112148D0" } }, new List<TrackedInputFile>(0), "BBED1D49615C071DAAAD48AD1FC057E1112148D0");
+
+            Assert.IsNotNull(result.TrackedFiles);
+            Assert.IsTrue(result.IsUpToDate.Value);
+        }
+
+        [TestMethod]
+        public void PaketHashCorrelationMismatch() {
+            var controller = new TrackedInputFilesController {
+                TreatInputAsFiles = false
+            };
+
+            var result = new InputFilesDependencyAnalysisResult(false, null);
+
+            controller.CorrelateInputs(result, new[] { new TrackedMetadataFile(Constants.PaketLock) { Sha1 = "BBED1D49615C071DAAAD48AD1FC057E1112148D0" } }, new List<TrackedInputFile>(0), "A6E011421E1080AD1C4E5F0B7048D64F23B2A67C");
+
+            Assert.IsNotNull(result.TrackedFiles);
+            Assert.IsFalse(result.IsUpToDate.Value);
         }
     }
 
