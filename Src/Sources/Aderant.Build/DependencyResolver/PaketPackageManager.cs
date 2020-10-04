@@ -188,31 +188,34 @@ namespace Aderant.Build.DependencyResolver {
             // Indicates if the system is resolving for a single directory or multiple directories.
             bool isUsingMultipleInputFiles = resolverRequest != null && resolverRequest.Modules.Count() > 1;
 
-            FSharpMap<Domain.GroupName, DependenciesGroup> groups = dependenciesFile.Groups;
+            var groups = dependenciesFile.Groups;
 
-            List<DependenciesGroup> groupList = new List<DependenciesGroup>();
+            var groupList = new List<DependenciesGroup>();
 
             foreach (var groupEntry in groups) {
-                DependenciesGroup group = dependenciesFile.GetGroup(groupEntry.Key);
+                var group = dependenciesFile.GetGroup(groupEntry.Key);
 
                 bool isMainGroup = string.Equals(group.Name.Name, Constants.MainDependencyGroup, StringComparison.OrdinalIgnoreCase);
 
-                FSharpList<PackageSources.PackageSource> sources = CreateSources(groupEntry, group, isMainGroup, isUsingMultipleInputFiles);
-                InstallOptions options = CreateInstallOptions(requirements, groupEntry, group, isMainGroup);
+                var sources = CreateSources(groupEntry, group, isMainGroup, isUsingMultipleInputFiles);
+                var options = CreateInstallOptions(requirements, groupEntry, group, isMainGroup);
 
-                // Paket cannot add new remote files via its internal API so we need to process these last otherwise the will vanish
-                // from the internal data structures if done inside AddModules
-                IEnumerable<RemoteFile> remoteFiles = requirements.Where(s => string.Equals(s.Group, group.Name.Name, StringComparison.OrdinalIgnoreCase)).OfType<RemoteFile>();
-                var remoteFile = AddNewRemoteFile(group.RemoteFiles, remoteFiles);
+                var requiredRemoteFiles = requirements.Where(s => string.Equals(s.Group, group.Name.Name, StringComparison.OrdinalIgnoreCase)).OfType<RemoteFile>();
+                var remoteFileList = group.RemoteFiles;
+                if (remoteFileList.Length != requiredRemoteFiles.Count()) {
+                    // Paket cannot add new remote files via its internal API so we need to process these last otherwise the will vanish
+                    // from the internal data structures if done inside AddModules
+                    remoteFileList = AddNewRemoteFile(group.RemoteFiles, requiredRemoteFiles);
+                }
 
-                DependenciesGroup newGroup = new DependenciesGroup(
+                var newGroup = new DependenciesGroup(
                     group.Name,
                     sources,
                     group.Caches,
                     options,
                     group.Packages,
                     group.ExternalLocks,
-                    remoteFile);
+                    remoteFileList);
 
                 if (isMainGroup) {
                     groupList.Insert(0, newGroup);
@@ -221,11 +224,11 @@ namespace Aderant.Build.DependencyResolver {
                 }
             }
 
-            DependenciesFileWriter fileWriter = new DependenciesFileWriter();
+            var fileWriter = new DependenciesFileWriter();
             var result = fileWriter.Write(groupList, resolverRequest?.GetFrameworkRestrictions());
 
-            FSharpMap<Domain.GroupName, DependenciesGroup> map = MapModule.Empty<Domain.GroupName, DependenciesGroup>();
-            foreach (DependenciesGroup group in groupList) {
+            var map = MapModule.Empty<Domain.GroupName, DependenciesGroup>();
+            foreach (var group in groupList) {
                 map = map.Add(group.Name, group);
             }
 

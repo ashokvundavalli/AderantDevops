@@ -57,9 +57,6 @@ namespace Aderant.Build.DependencyResolver.Models {
                 }
 
                 foreach (var remoteFile in group.RemoteFiles) {
-                    if (remoteFile.Origin.IsHttpLink) {
-                        
-                    }
                     sb.AppendLine(remoteFile.ToString());
                 }
 

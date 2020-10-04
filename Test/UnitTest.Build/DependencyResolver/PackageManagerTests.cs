@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyResolver;
@@ -117,7 +118,7 @@ nuget Gotta.Have.It 4.20 ci";
 
                 packageManagerLines = packageManager.Lines;
             }
-            
+
             Assert.AreEqual($"source {Constants.DatabasePackageUri}", packageManagerLines[0]);
         }
 
@@ -173,6 +174,28 @@ nuget ThePackageFromNuget";
 
             Assert.AreEqual(3, packageManagerLines.Length);
             Assert.AreNotEqual($"source {Constants.OfficialNuGetUrlV3}", packageManagerLines[1]);
+        }
+
+        [TestMethod]
+        public void When_using_single_file_http_sources_are_not_duplicated() {
+            var fs = new Mock<IFileSystem2>();
+            fs.Setup(s => s.Root).Returns(GetTestDirectoryPath());
+            string[] packageManagerLines;
+
+            var request = new ResolverRequest(NullLogger.Default);
+            request.AddModule("C:\\Module1");
+
+            using (var packageManager = CreatePackageManager(fs)) {
+                packageManager.Add(
+                    new[] {
+                        new RemoteFile("Foo", "https://my-file-host", "main")
+                    },
+                    request);
+
+                packageManagerLines = packageManager.Lines;
+                Assert.AreEqual(3, packageManagerLines.Length);
+                Assert.AreEqual("http https://my-file-host ", packageManagerLines.Last());
+            }
         }
 
         [TestMethod]

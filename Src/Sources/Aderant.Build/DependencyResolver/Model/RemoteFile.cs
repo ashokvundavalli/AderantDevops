@@ -3,9 +3,11 @@
     /// Represents a file
     /// </summary>
     internal class RemoteFile : IDependencyRequirement {
+        private readonly string itemName;
         public string Uri { get; }
 
         public RemoteFile(string itemName, string uri, string groupName) {
+            this.itemName = itemName;
             Uri = uri;
             Group = groupName;
         }
