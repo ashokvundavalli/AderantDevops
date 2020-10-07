@@ -69,6 +69,100 @@ function global:Start-DeploymentEngine {
         [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$binariesDirectory
     )
 
+    begin {
+        function Get-EnvironmentFromXml([string]$xpath) {
+            #I'd love it if this returned an object model representation such as Environment.expertPath or Environment.networkSharePath
+            if ([string]::IsNullOrEmpty($xpath)) {
+                Write-Host -ForegroundColor Yellow "You need to specify an xpath expression";
+                return $null;
+            }
+            if (Test-Path $global:ShellContext.BranchBinariesDirectory) {
+                $environmentXmlPath = [System.IO.Path]::Combine($global:ShellContext.BranchBinariesDirectory, "environment.xml");
+                [xml]$xml = Get-Content $environmentXmlPath;
+                $returnValue = Select-Xml $xpath $xml;
+                return $returnValue;
+            } else {
+                Write-Host -ForegroundColor Yellow "I don't know where your Branch Binaries Directory is.";
+            }
+            return $null;
+        }
+        
+        function Get-DatabaseServer {
+            <#
+            .Synopsis
+                Returns the Database Server\Instance for the current local deployment.
+            .Description
+                Uses Get-EnvironmentFromXml to return the Database Server\Instance for the current local deployment.
+            #>
+            [CmdletBinding()]
+            param (
+                [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$binariesDirectory
+            )
+        
+            if ([string]::IsNullOrWhiteSpace($binariesDirectory)) {
+                $binariesDirectory = "$Env:SystemDrive\AderantExpert\Binaries"
+            }
+        
+            if (-Not (Test-Path ([System.IO.Path]::Combine($binariesDirectory, "environment.xml")))) {
+                $databaseServer = $env:COMPUTERNAME
+                Write-Host "Server instance set to: $databaseServer"
+                return $databaseServer
+            } else {
+                try {
+                    [string]$databaseServer = [regex]::Match((Get-EnvironmentFromXml "/environment/expertDatabaseServer/@serverName"), "[^/]*$").ToString()
+                    Write-Debug "Database server set to: $databaseServer"
+                } catch {
+                    throw "Unable to get database server from environment.xml"
+                }
+        
+                [string]$serverInstance = Get-EnvironmentFromXml "/environment/expertDatabaseServer/@serverInstance"
+        
+                if (-not [string]::IsNullOrWhiteSpace($serverInstance)) {
+                    [string]$serverInstance = [regex]::Match($serverInstance, "[^/]*$").ToString()
+                    $databaseServer = "$($databaseServer)\$($serverInstance)"
+                    Write-Debug "Server instance set to: $serverInstance"
+                } else {
+                    Write-Debug "Unable to get database server instance from environment.xml"
+                }
+        
+                Write-Host "Server instance set to: $databaseServer"
+                return $databaseServer
+            }
+        }
+        
+        function Get-Database {
+            <#
+            .Synopsis
+                Returns the database name for the current local deployment.
+            .Description
+                Uses Get-EnvironmentFromXml to return the database name for the current local deployment.
+            #>
+            [CmdletBinding()]
+            param (
+                [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$binariesDirectory
+            )
+        
+            if ([string]::IsNullOrWhiteSpace($binariesDirectory)) {
+                $binariesDirectory = "$Env:SystemDrive\AderantExpert\Binaries"
+            }
+        
+            Write-Host "Searching for environment.xml in BranchBinariesDirectory: $binariesDirectory"
+            if (-Not (Test-Path ([System.IO.Path]::Combine($binariesDirectory, "environment.xml")))) {
+                $database = Read-Host -Prompt "No environment.xml found. Please specify a database name"
+                return $database
+            } else {
+                try {
+                    [string]$database = [regex]::Match((Get-EnvironmentFromXml "/environment/expertDatabaseServer/databaseConnection/@databaseName"), "[^/]*$").ToString()
+                    Write-Host "Database name set to: $database"
+                } catch {
+                    throw "Unable to get database name from environment.xml"
+                }
+        
+                return $database
+            }
+        }
+    }
+
     process {
         if (-not (Test-Path $global:ShellContext.DeploymentEngine)) {
             Write-Error "Couldn't locate the DeploymentEngine.exe, please place it at $($global:ShellContext.DeploymentEngine)"
@@ -158,96 +252,4 @@ function global:Uninstall-DeploymentManager {
 
     $pathToUninstallScript = [System.IO.Path]::Combine($binariesDirectory, 'AutomatedDeployment\UninstallDeploymentManager.ps1')
     & $pathToUninstallScript -deploymentManagerMsiDirectory $binariesDirectory
-}
-
-function Get-EnvironmentFromXml([string]$xpath) {
-    #I'd love it if this returned an object model representation such as Environment.expertPath or Environment.networkSharePath
-    if ([string]::IsNullOrEmpty($xpath)) {
-        Write-Host -ForegroundColor Yellow "You need to specify an xpath expression";
-        return $null;
-    }
-    if (Test-Path $global:ShellContext.BranchBinariesDirectory) {
-        $environmentXmlPath = [System.IO.Path]::Combine($global:ShellContext.BranchBinariesDirectory, "environment.xml");
-        [xml]$xml = Get-Content $environmentXmlPath;
-        $returnValue = Select-Xml $xpath $xml;
-        return $returnValue;
-    } else {
-        Write-Host -ForegroundColor Yellow "I don't know where your Branch Binaries Directory is.";
-    }
-    return $null;
-}
-
-function global:Get-DatabaseServer {
-    <#
-    .Synopsis
-        Returns the Database Server\Instance for the current local deployment.
-    .Description
-        Uses Get-EnvironmentFromXml to return the Database Server\Instance for the current local deployment.
-    #>
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$binariesDirectory
-    )
-
-    if ([string]::IsNullOrWhiteSpace($binariesDirectory)) {
-        $binariesDirectory = "$Env:SystemDrive\AderantExpert\Binaries"
-    }
-
-    if (-Not (Test-Path ([System.IO.Path]::Combine($binariesDirectory, "environment.xml")))) {
-        $databaseServer = $env:COMPUTERNAME
-        Write-Host "Server instance set to: $databaseServer"
-        return $databaseServer
-    } else {
-        try {
-            [string]$databaseServer = [regex]::Match((Get-EnvironmentFromXml "/environment/expertDatabaseServer/@serverName"), "[^/]*$").ToString()
-            Write-Debug "Database server set to: $databaseServer"
-        } catch {
-            throw "Unable to get database server from environment.xml"
-        }
-
-        [string]$serverInstance = Get-EnvironmentFromXml "/environment/expertDatabaseServer/@serverInstance"
-
-        if (-not [string]::IsNullOrWhiteSpace($serverInstance)) {
-            [string]$serverInstance = [regex]::Match($serverInstance, "[^/]*$").ToString()
-            $databaseServer = "$($databaseServer)\$($serverInstance)"
-            Write-Debug "Server instance set to: $serverInstance"
-        } else {
-            Write-Debug "Unable to get database server instance from environment.xml"
-        }
-
-        Write-Host "Server instance set to: $databaseServer"
-        return $databaseServer
-    }
-}
-
-function global:Get-Database {
-    <#
-    .Synopsis
-        Returns the database name for the current local deployment.
-    .Description
-        Uses Get-EnvironmentFromXml to return the database name for the current local deployment.
-    #>
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$binariesDirectory
-    )
-
-    if ([string]::IsNullOrWhiteSpace($binariesDirectory)) {
-        $binariesDirectory = "$Env:SystemDrive\AderantExpert\Binaries"
-    }
-
-    Write-Host "Searching for environment.xml in BranchBinariesDirectory: $binariesDirectory"
-    if (-Not (Test-Path ([System.IO.Path]::Combine($binariesDirectory, "environment.xml")))) {
-        $database = Read-Host -Prompt "No environment.xml found. Please specify a database name"
-        return $database
-    } else {
-        try {
-            [string]$database = [regex]::Match((Get-EnvironmentFromXml "/environment/expertDatabaseServer/databaseConnection/@databaseName"), "[^/]*$").ToString()
-            Write-Host "Database name set to: $database"
-        } catch {
-            throw "Unable to get database name from environment.xml"
-        }
-
-        return $database
-    }
 }
