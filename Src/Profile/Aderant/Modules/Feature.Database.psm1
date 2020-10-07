@@ -198,9 +198,6 @@ function global:Backup-ExpertDatabase {
     }
 }
 
-Export-ModuleMember -Function 'Restore-ExpertDatabase'
-Export-ModuleMember -Function 'Backup-ExpertDatabase'
-
 function global:Edit-ExpertOwner {
     <#
     .Synopsis
@@ -300,8 +297,6 @@ UPDATE HBM_PARMS SET FIRM_NAME = @OWNER;"
         Write-Information -MessageData "Expert owner set to: $Owner"
     }
 }
-
-Export-ModuleMember -Function 'Edit-ExpertOwner'
 
 # Provides auto-complete for databases found on SQL Server
 Register-ArgumentCompleter -CommandName "Restore-ExpertDatabase" -ParameterName "database" -ScriptBlock $databaseNameScriptBlock

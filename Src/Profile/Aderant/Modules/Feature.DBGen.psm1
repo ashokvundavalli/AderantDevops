@@ -1,49 +1,52 @@
-<#
-.Synopsis
-    Starts dbgen.exe. This is very similar to Update-Database -interactive. You may want to use that instead.
-.Description
-    Starts dbgen.exe found in your expert source directory. This is very similar (but inferior) to Update-Database -interactive. You might want to use that instead.
-#>
-function Start-DBGen() {
+function global:Start-DBGen {
+    <#
+    .Synopsis
+        Starts dbgen.exe. This is very similar to Update-Database -interactive. You may want to use that instead.
+    .Description
+        Starts dbgen.exe found in your expert source directory. This is very similar (but inferior) to Update-Database -interactive. You might want to use that instead.
+    #>
+    [CmdletBinding()]
+    [Alias("dbgen")]
+
     #Normally found at: C:\CMS.NET\Bin\dbgen.exe
     $dbgen = [System.IO.Path]::Combine($global:ShellContext.BranchServerDirectory, "dbgen\dbgen.exe")
     Invoke-Expression $dbgen
 }
 
-Export-ModuleMember Start-DBGen
-
-<#
-.Synopsis
-    Runs dbprepare.exe on the specified database. Defaults to version 81.
-.Description
-    Runs dbprepare.exe on the specified database. Defaults to version 81.
-.PARAMETER database
-    MANDATORY: The name of the database to use. 
-.PARAMETER saPassword
-    MANDATORY: The sa user password for the database server.
-.PARAMETER server
-    The name of the database server. Defaults to the local machine name.
-.PARAMETER instance
-    The database serverinstance that the database resides on.
-.PARAMETER version
-    The version to prep the database to. Defaults to 81.
-.PARAMETER interactive
-    Starts DBPREPARE in interactive mode
-#>
-function Prepare-Database (
-    [Parameter(Mandatory = $true)]
-    [string]$database,
-    [Parameter(Mandatory = $true)]
-    [string]$saPassword,
-    [string]$server = $env:COMPUTERNAME,
-    [string]$instance,
-    [string]$version = "81",
-    [switch]$interactive
-) {
+function global:Prepare-Database {
+    <#
+    .Synopsis
+        Runs dbprepare.exe on the specified database. Defaults to version 81.
+    .Description
+        Runs dbprepare.exe on the specified database. Defaults to version 81.
+    .PARAMETER database
+        MANDATORY: The name of the database to use.
+    .PARAMETER saPassword
+        MANDATORY: The sa user password for the database server.
+    .PARAMETER server
+        The name of the database server. Defaults to the local machine name.
+    .PARAMETER instance
+        The database serverinstance that the database resides on.
+    .PARAMETER version
+        The version to prep the database to. Defaults to 81.
+    .PARAMETER interactive
+        Starts DBPREPARE in interactive mode
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$database,
+        [Parameter(Mandatory = $true)]
+        [string]$saPassword,
+        [string]$server = $env:COMPUTERNAME,
+        [string]$instance,
+        [string]$version = "81",
+        [switch]$interactive
+    )
 
     [string]$cmsConnection
     if (-Not [string]::IsNullOrWhiteSpace($instance)) {
-        $instance = "\$instance"    
+        $instance = "\$instance"
         $cmsConnection = "[$server]`r`nVendor=1`r`nLocation=$server$instance`r`nDatabase=$database`r`nTitle=$server.$database`r`nForceManualLogin=0"
         Write-Debug "Running dbprepare against database: $database on server: $server$instance"
     } else {
@@ -79,21 +82,25 @@ function Prepare-Database (
     Start-Process -FilePath $dbPreparePath -ArgumentList $dbPrepareArgs -Wait -PassThru | Out-Null
 }
 
-Export-ModuleMember Prepare-Database
+function global:Update-Database {
+    <#
+    .Synopsis
+        Deploys the database project to your database defined in the environment manifest
+    .Description
+        Deploys the database project, thereby updating your database to the correct definition.
+    .PARAMETER interactive
+        Starts DBGEN in interactive mode
+    #>
+    [CmdletBinding()]
+    [Alias("upd")]
+    param(
+        [string]$manifestName,
+        [switch]$interactive
+    )
 
-<#
-.Synopsis
-    Deploys the database project to your database defined in the environment manifest
-.Description
-    Deploys the database project, thereby updating your database to the correct definition.
-.PARAMETER interactive
-    Starts DBGEN in interactive mode
-#>
-function Update-Database([string]$manifestName, [switch]$interactive) {
-    [string]$fullManifest = ''
+    [string]$fullManifest = [string]::Empty
 
     Write-Warning "The 'upd' command is currently unavailable. Please use DBGen for now to update your database."
-
     return
 
     if ($global:ShellContext.BranchExpertVersion.StartsWith("8")) {
@@ -106,7 +113,6 @@ function Update-Database([string]$manifestName, [switch]$interactive) {
             $fullManifest = Join-Path -Path $global:ShellContext.BranchBinariesDirectory -ChildPath "\$manifestName.environment.xml"
         }
     }
-
 
     if (Test-Path $fullManifest) {
         Write-Debug "Using manifest: $fullManifest"
@@ -139,5 +145,3 @@ commit
         Write-Error "No manifest specified at path: $fullManifest"
     }
 }
-
-Export-ModuleMember Update-Database

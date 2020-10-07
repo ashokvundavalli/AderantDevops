@@ -72,6 +72,7 @@
     <UsingTask TaskName="Aderant.Build.Tasks.GetBuildOutputs"                                     AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.CopyFiles"                                           AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.GatherProjectsToBuild"                               AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.Testing.BuildTestRunParametersXml"                               AssemblyFile="$(BuildAssembly)" />
 
     <UsingTask TaskName="Aderant.Build.Tasks.ZipBuildScripts"                                     AssemblyFile="$(BuildAssembly)" />
 
@@ -152,24 +153,6 @@
       </Task>
     </UsingTask>
 
-    <UsingTask
-TaskName="GetBranchRootFromServerPath"
-TaskFactory="CodeTaskFactory"
-AssemblyFile="$(CodeTaskFactoryAssembly)">
-    <ParameterGroup>
-      <BuildProjectFolderPath ParameterType="System.String" Required="true" />
-      <BranchRoot ParameterType="System.String" Output="true" />
-    </ParameterGroup>
-    <Task>
-      <Using Namespace="System.Reflection" />
-      <Using Namespace="System.IO" />
-      <Using Namespace="System.Diagnostics" />
-      <Code Type="Fragment" Language="cs">
-        int pos = BuildProjectFolderPath.IndexOf("Modules/", StringComparison.OrdinalIgnoreCase);
-        BranchRoot = BuildProjectFolderPath.Substring(0, pos);
-      </Code>
-    </Task>
-  </UsingTask>
 
     <UsingTask
     TaskName="XDocumentPoke"

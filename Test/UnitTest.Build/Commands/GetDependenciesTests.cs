@@ -3,7 +3,6 @@ using System.IO;
 using Aderant.Build;
 using Aderant.Build.Commands;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using UnitTest.Build.Helpers;
 
 namespace UnitTest.Build.Commands {
     [TestClass]
@@ -14,7 +13,7 @@ namespace UnitTest.Build.Commands {
         [TestMethod]
         [DeploymentItem(@"Resources\sln.DotSettings")]
         public void ReSharperFileWriteTest() {
-            var getDependencies = new GetDependencies(new TextContextLogger(TestContext), new PhysicalFileSystem());
+            var getDependencies = new GetDependencies(new PhysicalFileSystem());
 
             string destinationDirectory = Path.Combine(TestContext.DeploymentDirectory, Path.GetRandomFileName());
 
@@ -33,7 +32,7 @@ namespace UnitTest.Build.Commands {
         [TestMethod]
         [DeploymentItem(@"Resources\.editorconfig")]
         public void HardLinkTest() {
-            var getDependencies = new GetDependencies(new TextContextLogger(TestContext), new PhysicalFileSystem());
+            var getDependencies = new GetDependencies(new PhysicalFileSystem());
 
             string destinationDirectory = Path.Combine(TestContext.DeploymentDirectory, Path.GetRandomFileName());
 

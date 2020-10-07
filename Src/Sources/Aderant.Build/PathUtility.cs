@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Management.Automation;
-using Aderant.Build.IO;
 using Aderant.Build.Utilities;
 
 namespace Aderant.Build {
@@ -23,7 +22,7 @@ namespace Aderant.Build {
         /// <summary>
         /// A path comparer that ignores trailing directory separator characters
         /// </summary>
-        internal static PathComparer PathComparer { get; } = new PathComparer();
+        internal static IEqualityComparer<string> PathComparer { get; } = Aderant.Build.Utilities.PathComparer.Default;
 
         /// <summary>
         /// If the given path doesn't have a trailing slash then add one.
@@ -34,7 +33,7 @@ namespace Aderant.Build {
         internal static string EnsureTrailingSlash(string fileSpec) {
             fileSpec = FixFilePath(fileSpec);
             if (fileSpec.Length > 0 && !EndsWithSlash(fileSpec)) {
-                fileSpec += Path.DirectorySeparatorChar;
+                fileSpec += DirectorySeparator;
             }
 
             return fileSpec;

@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Linq;
+using System.Xml.Linq;
+using Aderant.Build.DependencyResolver;
+using Aderant.Build.Model;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
@@ -9,8 +12,20 @@ namespace Aderant.Build.Tasks {
     /// Extracts key properties from the context and returns them to MSBuild
     /// </summary>
     public sealed class GetPropertiesFromContext : BuildOperationContextTask {
-        // TODO: This class also sets...what name to give it?
+
+        [Output]
         public string ArtifactStagingDirectory { get; set; }
+
+        [Output]
+        public string SharedDependencyDirectory { get; set; }
+
+        /// <Remarks>
+        /// Unfortunately we support 'DependenciesDirectory' being specified in this file
+        /// as it crosses the boundary between compile and dependency resolution.
+        /// Ideally the build would tell the resolver what to do via parameters.props
+        /// but that ship has sailed and instead the branch config file can override the dependency path
+        /// </Remarks>
+        public string BranchConfigFile { get; set; }
 
         [Output]
         public bool IsDesktopBuild {
@@ -36,7 +51,7 @@ namespace Aderant.Build.Tasks {
                     return Context.SourceTreeMetadata.Changes.Select(x => (ITaskItem)new TaskItem(x.FullPath))
                         .ToArray();
                 }
-                    
+
                 return Array.Empty<ITaskItem>();
             }
         }
@@ -51,6 +66,8 @@ namespace Aderant.Build.Tasks {
 
             SetFlavor(context);
 
+            ReadBranchConfigFile(BranchConfigFile, new PhysicalFileSystem());
+
             if (!string.IsNullOrWhiteSpace(ArtifactStagingDirectory)) {
                 context.ArtifactStagingDirectory = ArtifactStagingDirectory;
             }
@@ -62,6 +79,19 @@ namespace Aderant.Build.Tasks {
             PipelineService.Publish(context);
 
             return !Log.HasLoggedErrors;
+        }
+
+        private void ReadBranchConfigFile(string branchConfigFile, IFileSystem fileSystem) {
+            if (fileSystem.FileExists(branchConfigFile)) {
+                var stream = fileSystem.OpenFile(branchConfigFile);
+
+                var document = XDocument.Load(stream);
+
+                ResolverSettingsReader.ReadResolverSettings(null, document, branchConfigFile, Context.BuildRoot, out string sharedDependencyDirectory);
+                if (!string.IsNullOrWhiteSpace(sharedDependencyDirectory)) {
+                    SharedDependencyDirectory = sharedDependencyDirectory;
+                }
+            }
         }
 
         private void SetFlavor(BuildOperationContext context) {

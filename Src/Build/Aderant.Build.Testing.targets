@@ -145,6 +145,14 @@
       <Output TaskParameter="TargetOutputs" ItemName="RunSettings" />
     </MSBuild>
 
+
+    <!-- Combine global properties and any local properties into a single parameter set -->
+    <BuildTestRunParametersXml
+      TestRunParameters="@(RunSettings)">
+      <Output TaskParameter="TestRunParameters" ItemName="RunSettings" />
+    </BuildTestRunParametersXml>
+
+
     <CreateItem Include="%(TestAssemblyDirectories.FullPath)\*.runsettings">
       <Output TaskParameter="Include" ItemName="_CustomRunSettingFiles"/>
     </CreateItem>

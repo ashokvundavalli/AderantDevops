@@ -426,6 +426,17 @@ function EnsureModuleLoaded() {
     $moduleName = "Aderant.ContinuousDelivery.PowerShell"
     if ($null -eq (Get-Module $moduleName)) {
         LoadAssembly -assemblyPath $mainAssembly -moduleName $moduleName
+
+        $commands = @((Get-Module $moduleName).ExportedCommands.Values)
+
+        foreach ($command in $commands) {
+            $attributes = $command.ImplementingType.GetCustomAttributes([System.Management.Automation.AliasAttribute], $false)
+            $aliases = @()
+            foreach ($attribute in $attributes) {
+                $aliases += $attribute.AliasNames
+            }
+            $aliases.ForEach({ Set-Alias -Name $_ -value $command.Name -Scope Global })
+        }
     }
 }
 
@@ -521,4 +532,6 @@ try {
     [System.AppDomain]::CurrentDomain.SetData("BuildScriptsDirectory", $BuildScriptsDirectory)
 } finally {
     $ErrorActionPreference = $originalErrorActionPreference
+    $Error.Clear()
 }
+

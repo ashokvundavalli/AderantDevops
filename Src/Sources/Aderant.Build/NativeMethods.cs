@@ -56,7 +56,11 @@ namespace Aderant.Build {
             return null;
         }
 
-        [DllImport("kernel32.dll")]
+        /// <remarks>
+        /// The unmanaged prototype contains a return directive because the CreateSymbolicLink API function returns BOOLEAN, a one-byte data type.
+        /// The default marshaling for bool is four bytes.
+        /// </remarks>
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         [return: MarshalAs(UnmanagedType.I1)]
         internal static extern bool CreateSymbolicLink(string lpSymlinkFileName, string lpTargetFileName, uint dwFlags);
 
