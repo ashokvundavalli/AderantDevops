@@ -7,7 +7,6 @@ using Aderant.Build.IO;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 using Aderant.Build.Logging;
-using ILogger = Aderant.Build.Logging.ILogger;
 
 namespace Aderant.Build.Tasks {
     public class MakeSymlink : Task {
@@ -40,30 +39,28 @@ namespace Aderant.Build.Tasks {
 
             var logger = new BuildTaskLogger(this);
 
-            ExecuteInternal(logger, new PhysicalFileSystem());
+            ExecuteInternal(logger);
 
             return !Log.HasLoggedErrors;
         }
 
-        public void ExecuteInternal(ILogger logger, IFileSystem fileSystem) {
+        public void ExecuteInternal(Logging.ILogger logger) {
             NativeMethods.SymbolicLink link = NativeMethods.SymbolicLink.SYMBOLIC_LINK_FLAG_DIRECTORY;
 
             bool useJunction = false;
 
             if (!string.IsNullOrEmpty(Type)) {
-                switch (Type[0]) {
+                switch (Char.ToLowerInvariant(Type[0])) {
                     case 'f':
-                    case 'F':
                         link = NativeMethods.SymbolicLink.SYMBOLIC_LINK_FLAG_FILE;
                         break;
                     case 'd':
-                    case 'D':
                         link = NativeMethods.SymbolicLink.SYMBOLIC_LINK_FLAG_DIRECTORY;
                         break;
-                    case 'j':
-                    case 'J':
-                        useJunction = true;
-                        break;
+                    case 'j': {
+                            useJunction = true;
+                            break;
+                        }
                 }
             }
 

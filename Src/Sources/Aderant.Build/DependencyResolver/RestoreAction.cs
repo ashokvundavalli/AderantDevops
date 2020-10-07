@@ -1,5 +1,4 @@
-﻿using System.Threading;
-using Microsoft.FSharp.Collections;
+﻿using Microsoft.FSharp.Collections;
 using Microsoft.FSharp.Core;
 using Paket;
 
@@ -13,11 +12,10 @@ namespace Aderant.Build.DependencyResolver {
             this.force = force;
         }
 
-        public void Run(CancellationToken cancellationToken) {
+        public void Run() {
             FSharpList<string> groups = dependencies.GetGroups();
 
             foreach (string group in groups) {
-                cancellationToken.ThrowIfCancellationRequested();
                 dependencies.Restore(force, new FSharpOption<string>(group), FSharpList<string>.Empty, false, false, false, FSharpOption<string>.None, FSharpOption<string>.None);
             }
         }

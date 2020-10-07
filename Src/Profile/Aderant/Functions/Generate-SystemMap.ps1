@@ -1,12 +1,11 @@
-function global:New-SystemMap {
-    <#
-    .Synopsis
-        Generates a System Map to the expertsource folder of the current branch
-    .Description
-        Generates a System Map using the the default ITE information to the expertsource folder of the current branch
-    #>
-
-    [string]$inDirectory = Join-Path -Path $global:ShellContext.BranchBinariesDirectory -ChildPath 'ExpertSource'
+<#
+.Synopsis
+    Generates a System Map to the expertsource folder of the current branch
+.Description
+    Generates a System Map using the the default ITE information to the expertsource folder of the current branch
+#>
+function Generate-SystemMap() {
+    $inDirectory = Join-Path $global:BranchBinariesDirectory 'ExpertSource'
     $systemMapConnectionString = (Get-SystemMapConnectionString)
     if ($systemMapConnectionString.ToLower().Contains("/pdbs:") -and $systemMapConnectionString.ToLower().Contains("/pdbd:") -and $systemMapConnectionString.ToLower().Contains("/pdbid:") -and $systemMapConnectionString.ToLower().Contains("/pdbpw:")) {
         $connectionParts = $systemMapConnectionString.Split(" ")

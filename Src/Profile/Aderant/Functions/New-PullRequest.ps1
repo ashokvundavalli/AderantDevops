@@ -1,6 +1,5 @@
-function global:New-PullRequest {
+function New-PullRequest {
     [CmdletBinding()]
-    [Alias('npr')]
     param(
         [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()]$targetBranch = 'master'
     )
@@ -22,3 +21,6 @@ function global:New-PullRequest {
         }
     }
 }
+
+Set-Alias -Name 'npr' -Value 'New-PullRequest'
+Export-ModuleMember -Function 'New-PullRequest' -Alias 'npr'

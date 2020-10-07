@@ -1,13 +1,11 @@
-﻿using System;
+using System;
 using System.Management.Automation;
 using System.Text;
-using System.Threading;
 using Aderant.Build.Logging;
 
 namespace Aderant.Build.Commands {
     public abstract class BuildCmdlet : PSCmdlet {
         private ILogger logger;
-        private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
         protected sealed override void ProcessRecord() {
             try {
@@ -23,12 +21,6 @@ namespace Aderant.Build.Commands {
             }
         }
 
-        protected override void StopProcessing() {
-            cancellationTokenSource.Cancel();
-
-            base.StopProcessing();
-        }
-
         /// <summary>
         /// Gets or sets a PowerShell aware logger.
         /// </summary>
@@ -41,15 +33,6 @@ namespace Aderant.Build.Commands {
             }
 
             set { logger = value; }
-        }
-
-        /// <summary>
-        /// Gives you a cancellation token connected to the PowerShell pipeline to abort operations.
-        /// </summary>
-        protected CancellationToken CancellationToken {
-            get {
-                return cancellationTokenSource.Token;
-            }
         }
 
         /// <summary>

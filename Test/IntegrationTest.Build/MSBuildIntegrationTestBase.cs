@@ -62,13 +62,10 @@ namespace IntegrationTest.Build {
                 var logger = new InternalBuildLogger(TestContext, LoggerVerbosity);
 
                 collection.RegisterLogger(Logger = logger);
-
-                string logFile = $"LogFile={Path.Combine(TestContext.TestResultsDirectory, TestContext.TestName + ".binlog")}";
-
                 collection.RegisterLogger(new BinaryLogger() {
                     Verbosity = LoggerVerbosity.Diagnostic,
                     CollectProjectImports = BinaryLogger.ProjectImportsCollectionMode.None,
-                    Parameters = logFile
+                    Parameters = $"LogFile={Path.Combine(TestContext.TestResultsDirectory, "output.binlog")}"
                 });
 
                 using (var manager = new BuildManager()) {
@@ -92,7 +89,8 @@ namespace IntegrationTest.Build {
 
 
                     if (result.OverallResult == BuildResultCode.Failure) {
-                        LogFile = logFile;
+                        LogFile = Path.Combine(TestContext.DeploymentDirectory, $"{TestContext.TestName}.log");
+                        WriteLogFile(LogFile, logger.LogLines);
                     }
 
                     Result = result;
@@ -123,7 +121,16 @@ namespace IntegrationTest.Build {
 
         public bool BuildMustSucceed { get; set; } = true;
 
+        protected void WriteLogFile(string path, List<string> logFile) {
+            using (FileStream file = new FileStream(path, FileMode.Create)) {
+                var writer = new StreamWriter(file);
 
+                foreach (var text in logFile) {
+                    writer.Write(text);
+                }
+                file.Flush(true);
+            }
+        }
 
         public class InternalBuildLogger : ConsoleLogger {
 

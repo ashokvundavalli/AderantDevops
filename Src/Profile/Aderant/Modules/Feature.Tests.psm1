@@ -1,17 +1,17 @@
-function global:Run-ExpertUITests {
-    <#
-    .SYNOPSIS
-    Runs UI tests for the current module
-    .PARAMETER productname
-        The name of the product you want to run tests against
-    .PARAMETER testCaseFilter
-        The vstest testcasefilter string to use
-    .PARAMETER dockerHost
-        The dockerHost to run the docker container on
-    .EXAMPLE
-        Run-ExpertUITest -productname "Web.Inquiries" -testCaseFilter "TestCategory=Smoke"
-        If Inquiries is the current module, all smoke tests for the inquiries product will be executed
-    #>
+<#
+.SYNOPSIS
+Runs UI tests for the current module
+.PARAMETER productname
+    The name of the product you want to run tests against
+.PARAMETER testCaseFilter
+    The vstest testcasefilter string to use
+.PARAMETER dockerHost
+    The dockerHost to run the docker container on
+.EXAMPLE
+    Run-ExpertUITest -productname "Web.Inquiries" -testCaseFilter "TestCategory=Smoke"
+    If Inquiries is the current module, all smoke tests for the inquiries product will be executed
+#>
+function Run-ExpertUITests {
     param(
         [Parameter(Mandatory = $false)] [string]$productName = "*",
         [Parameter(Mandatory = $false)] [string]$testCaseFilter = "TestCategory=Sanity",
@@ -21,7 +21,6 @@ function global:Run-ExpertUITests {
         [Parameter(Mandatory = $false)] [switch]$noBuild,
         [Parameter(Mandatory = $false)] [switch]$noDocker
     )
-
     if (-Not $CurrentModuleName) {
         Write-Error "You must select a module to run this command"
         Break
@@ -61,9 +60,9 @@ function global:Run-ExpertUITests {
             '
         }
 
-        $runSettingsContent = '<?xml version="1.0" encoding="utf-8"?>
+        $runSettingsContent = '<?xml version="1.0" encoding="utf-8"?>  
         <RunSettings>
-            <!-- Parameters used by tests at runtime -->
+            <!-- Parameters used by tests at runtime -->  
             <TestRunParameters>
             ' + $runSettingsParameters +
         '</TestRunParameters>
@@ -90,19 +89,19 @@ function global:Run-ExpertUITests {
     vstest.console.exe $testAssemblies /TestCaseFilter:$testCaseFilter /TestAdapterPath:$testOutputPath /Logger:trx $runSettings
 }
 
-function global:Run-ExpertSanityTests {
-    <#
-    .SYNOPSIS
-        Runs UI sanity tests for the current module
-    .PARAMETER productName
-        The name of the product you want to run tests against
-    .EXAMPLE
-        Run-ExpertSanityTests -productName "Web.Inquiries"
-        rest "Web.Inquiries" -deployment
-        This will run the UI sanity tests for the Inquiries product against a deployment url
-    #>
-    [CmdletBinding()]
-    [Alias("rest")]
+Export-ModuleMember -Function Run-ExpertUITests
+
+<#
+.SYNOPSIS
+    Runs UI sanity tests for the current module
+.PARAMETER productName
+    The name of the product you want to run tests against
+.EXAMPLE
+    Run-ExpertSanityTests -productName "Web.Inquiries"
+    rest "Web.Inquiries" -deployment
+    This will run the UI sanity tests for the Inquiries product against a deployment url
+#>
+function Run-ExpertSanityTests {
     param(
         [Parameter(Mandatory=$false)] [string]$productName = "*",
         [Parameter(Mandatory=$false)] [string]$dockerHost = "",
@@ -114,25 +113,25 @@ function global:Run-ExpertSanityTests {
     Run-ExpertUITests -productName $productName -testCaseFilter "TestCategory=Sanity" -dockerHost:$dockerHost -deployment:$deployment -noDocker:$noDocker -browserName $browserName
 }
 
-function global:Run-ExpertVisualTests {
-    <#
-    .SYNOPSIS
-        Runs UI visual tests for the current module
-    .PARAMETER productName
-        The name of the product you want to run tests against
-    .PARAMETER development
-        Run against the developer environment
-    .PARAMETER noDocker
-        Don't use docker
-    .PARAMETER browserName
-        Browser to use for the test
-    .EXAMPLE
-        Run-ExpertVisualTests -productName "Web.Inquiries"
-        rest "Web.Inquiries" -deployment
-        This will run the UI visual tests for the Inquiries product against a deployment url
-    #>
-    [CmdletBinding()]
-    [Alias("revt")]
+Export-ModuleMember -Function Run-ExpertSanityTests
+
+<#
+.SYNOPSIS
+    Runs UI visual tests for the current module
+.PARAMETER productName
+    The name of the product you want to run tests against
+.PARAMETER development
+    Run against the developer environment
+.PARAMETER noDocker
+    Don't use docker
+.PARAMETER browserName
+    Browser to use for the test
+.EXAMPLE
+    Run-ExpertVisualTests -productName "Web.Inquiries"
+    rest "Web.Inquiries" -deployment
+    This will run the UI visual tests for the Inquiries product against a deployment url
+#>
+function Run-ExpertVisualTests {
     param(
         [Parameter(Mandatory = $false)] [string]$productName = "*",
         [Parameter(Mandatory = $false)] [string]$dockerHost = "",
@@ -143,3 +142,5 @@ function global:Run-ExpertVisualTests {
     )
     Run-ExpertUITests -productName $productName -testCaseFilter "TestCategory=Visual" -dockerHost:$dockerHost -deployment:$deployment -noDocker:$noDocker -browserName $browserName
 }
+
+Export-ModuleMember -Function Run-ExpertVisualTests

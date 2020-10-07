@@ -64,32 +64,38 @@ function AddSearchDirectory($element, [string]$path, [bool]$includeSubDirectorie
 }
 
 function EnsureRunSettingsHasRequiredNodes() {
-    # Get the minimum settings required to not fail
-    $defaultRunSettings = [System.Xml.XmlDocument](Get-Content -Path "$PSScriptRoot\default.runsettings")
-
     # Load up the custom run settings file
     $providedRunSettings = [System.Xml.XmlDocument](Get-Content -Path $RunSettingsFile)
 
-    $xslt = [System.Xml.XmlDocument](Get-Content -Path "$PSScriptRoot\..\merge-xml.xslt")
+    if ($UsingCustomRunSettingsFile) {
+        # Get the minimum settings required to not fail
+        $defaultSettingsFileFullPath = [System.IO.Path]::GetFullPath("$PSScriptRoot\default.runsettings")
+        $defaultRunSettings = [System.Xml.XmlDocument](Get-Content -Path $defaultSettingsFileFullPath)
 
-    # Merge the two documents together, taking elements from the custom
-    # file over the default ones.
-    $transform = [System.Xml.Xsl.XslCompiledTransform]::new()
-    $transform.Load($xslt.CreateNavigator())
+        $xslt = [System.Xml.XmlDocument](Get-Content -Path "$PSScriptRoot\..\merge-xml.xslt")
 
-    $stringBuilderForXmlWriter = [System.Text.StringBuilder]::new()
-    $settings = [System.Xml.XmlWriterSettings]::new()
-    $settings.Indent = $true
-    $settings.CloseOutput = $true
-    $writer = [System.Xml.XmlWriter]::Create($stringBuilderForXmlWriter, $settings)
+        # Merge the two documents together, taking elements from the custom
+        # file over the default ones.
+        $transform = [System.Xml.Xsl.XslCompiledTransform]::new()
+        $transform.Load($xslt.CreateNavigator())
 
-    $argList = [System.Xml.Xsl.XsltArgumentList]::new()
-    $argList.AddParam("with", "", $providedRunSettings)
-    $argList.AddParam("replace", "", $true)
+        $stringBuilderForXmlWriter = [System.Text.StringBuilder]::new()
+        $settings = [System.Xml.XmlWriterSettings]::new()
+        $settings.Indent = $true
+        $settings.CloseOutput = $true
+        $writer = [System.Xml.XmlWriter]::Create($stringBuilderForXmlWriter, $settings)
 
-    $transform.Transform($defaultRunSettings.CreateNavigator(), $argList, $writer)
+        $argList = [System.Xml.Xsl.XsltArgumentList]::new()
+        $argList.AddParam("with", "", $providedRunSettings)
+        $argList.AddParam("replace", "", $true)
 
-    return [System.Xml.XmlDocument]($stringBuilderForXmlWriter.ToString())
+        $transform.Transform($defaultRunSettings.CreateNavigator(), $argList, $writer)
+        return [System.Xml.XmlDocument]($stringBuilderForXmlWriter.ToString())
+    } else {
+        Write-Information "Run settings merge skipped"
+    }
+
+    return $providedRunSettings
 }
 
 function CreateRunSettingsXml() {
@@ -140,7 +146,7 @@ function GetTestResultFiles {
     [void][System.IO.Directory]::CreateDirectory($path)
 
     $trxFiles = Get-ChildItem -LiteralPath $path -Filter '*.trx' -File -ErrorAction 'SilentlyContinue'
-
+    
     return $trxFiles
 }
 
@@ -159,7 +165,7 @@ function CopyTestResultFiles {
     }
 
     Write-Information -MessageData "Test result file drop location is: '$TestResultFileDrop'."
-
+    
     [System.IO.FileInfo[]]$trx = GetTestResultFiles
 
     Write-Information -MessageData "Total number of trx files are: '$($trx.Length)'."
@@ -172,7 +178,7 @@ function CopyTestResultFiles {
             [string]$targetFile = Join-Path -Path $TestResultFileDrop -ChildPath $result.Name
 
             if ([string]::Equals([System.IO.Path]::GetFullPath($result.FullName), [System.IO.Path]::GetFullPath($targetFile), [System.StringComparison]::OrdinalIgnoreCase)) {
-                Write-Information -MessageData "Not copying the test result file from: '$($result.FullName)' to: '$targetFile' as they are at the same location."
+                Write-Information -MessageData "Not copying the test result file from: '$($result.FullName)' to: '$targetFile' as they are at the same location."    
                 continue
             }
 
@@ -250,11 +256,9 @@ try {
     $exitcode = $exec.Invoke($startInfo)
 
     Write-Information -MessageData "Exit code from test run was: '$exitcode'."
-} finally {
-    if (-not $IsDesktopBuild) {
-        # Copy test result files
-        CopyTestResultFiles
-    }
+} finally {  
+    # Copy test result files
+    CopyTestResultFiles
 
     if ($exitcode -eq 0) {
         try {

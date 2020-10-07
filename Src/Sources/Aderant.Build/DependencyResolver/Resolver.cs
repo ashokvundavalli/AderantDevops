@@ -26,9 +26,8 @@ namespace Aderant.Build.DependencyResolver {
         /// Resolves the dependencies for the given request.
         /// </summary>
         /// <param name="resolverRequest">The resolver request.</param>
-        /// <param name="enableVerboseLogging">Emit verbose details from the resolver.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
-        public void ResolveDependencies(ResolverRequest resolverRequest, bool enableVerboseLogging = false, CancellationToken cancellationToken = default(CancellationToken)) {
+        public void ResolveDependencies(ResolverRequest resolverRequest, CancellationToken cancellationToken = default(CancellationToken), bool enableVerboseLogging = false) {
             List<IDependencyRequirement> requirements = new List<IDependencyRequirement>();
 
             GatherRequirements(resolverRequest, requirements);

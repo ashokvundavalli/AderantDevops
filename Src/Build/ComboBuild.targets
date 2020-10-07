@@ -39,6 +39,18 @@
     <RunCodeAnalysis>$(RunCodeAnalysisSetting)</RunCodeAnalysis>
     <RunCodeAnalysis Condition="'$(IsCustomBuild)' == 'true'">false</RunCodeAnalysis>
 
+    <!-- Location to drop artifacts (packaged outputs) -->
+    <ArtifactStagingDirectory Condition="'$(ArtifactStagingDirectory)' == ''">$(SolutionRoot)_as\</ArtifactStagingDirectory>
+    <LocalExpertBinariesDirectory>$(ArtifactStagingDirectory)product\</LocalExpertBinariesDirectory>
+    <ExpertSourceDirectory>$(LocalExpertBinariesDirectory)ExpertSource\</ExpertSourceDirectory>
+
+    <!-- Location to drop outputs to share within the build -->
+    <UseSharedDependencyDirectory Condition="'$(UseSharedDependencyDirectory)' == ''">false</UseSharedDependencyDirectory>
+    <SharedDependencyDirectory Condition="'$(SharedDependencyDirectory)' == ''">$(ArtifactStagingDirectory)out\</SharedDependencyDirectory>
+
+    <!-- Specifies the drop location for patch/update content -->
+    <UpdateStagingDirectory Condition="'$(UpdateStagingDirectory)' == ''">$(ArtifactStagingDirectory)update\</UpdateStagingDirectory>
+
     <BuildInfrastructureDirectory Condition="'$(BuildInfrastructureDirectory)' == ''">$(MSBuildThisFileDirectory)..\..\</BuildInfrastructureDirectory>
     <BuildInfrastructureDirectory>$([System.IO.Path]::GetFullPath(`$(BuildInfrastructureDirectory)`))</BuildInfrastructureDirectory>
     <BuildInfrastructureDirectory Condition="'$(BuildInfrastructureDirectory)' != '' and !HasTrailingSlash('$(BuildInfrastructureDirectory)')">$(BuildInfrastructureDirectory)\</BuildInfrastructureDirectory>
@@ -54,6 +66,20 @@
     <PackageProduct Condition="'$(BUILD_REPOSITORY_NAME)' == 'ExpertSuite' And '$(CopyToDropEnabled)' == 'true'">true</PackageProduct>
 
     <BranchConfigFile>$(SolutionRoot)Build\BranchConfig.xml</BranchConfigFile>
+
+    <AlwaysBuildWebProjects Condition="'$(AlwaysBuildWebProjects)' == ''">true</AlwaysBuildWebProjects>
+    <RequireSynchronizedOutputPaths Condition="'$(RequireSynchronizedOutputPaths)' == ''">false</RequireSynchronizedOutputPaths>
+    <CreateHardLinksForCopyLocal Condition="'$(CreateHardLinksForCopyLocal)' == ''">false</CreateHardLinksForCopyLocal>
+    <BuildCacheOptions Condition="'$(BuildCacheOptions)' == ''">DisableCacheWhenProjectChanged</BuildCacheOptions>
+
+    <!-- Specifies that all directories with tests will be run in parallel or one at a time -->
+    <RunTestsForSolutionRootInParallel Condition="'$(RunTestsForSolutionRootInParallel)' == ''">false</RunTestsForSolutionRootInParallel>
+
+    <!-- Suppress Diagnostics -->
+    <PackagesDirectory Condition="'$(UseSharedDependencyDirectory)' == 'true'">$(SharedDependencyDirectory)packages\</PackagesDirectory>
+    <PackagesDirectory Condition="'$(PackagesDirectory)' == ''">$(SolutionRoot)packages\</PackagesDirectory>
+    <BuildAnalyzerDirectory>$(PackagesDirectory)Aderant.Build.Analyzer</BuildAnalyzerDirectory>
+    <BuildAnalyzerAssembly>$(BuildAnalyzerDirectory)\analyzers\dotnet\cs\Aderant.Build.Analyzer.dll</BuildAnalyzerAssembly>
   </PropertyGroup>
 
   <Import Project="Aderant.CodeSigning.targets" />
@@ -287,40 +313,14 @@
 
     <WaitForDebugger Wait="$(WaitForDebugger)" />
 
-    <PropertyGroup>
-      <!-- Location to drop artifacts (packaged outputs) -->
-      <DefaultArtifactStagingDirectory>$(SolutionRoot)_as\</DefaultArtifactStagingDirectory>
-      <DefaultSharedDependencyDirectory>$(DefaultArtifactStagingDirectory)out\</DefaultSharedDependencyDirectory>
-
-      <DefaultArtifactStagingDirectory Condition="'$(ArtifactStagingDirectory)' != ''">$(ArtifactStagingDirectory)</DefaultArtifactStagingDirectory>
-      <DefaultSharedDependencyDirectory Condition="'$(SharedDependencyDirectory)' != ''">$(SharedDependencyDirectory)</DefaultSharedDependencyDirectory>
-    </PropertyGroup>
-
     <GetPropertiesFromContext
       ContextEndpoint="$(ContextEndpoint)"
-      BranchConfigFile="$(BranchConfigFile)"
-      ArtifactStagingDirectory="$(DefaultArtifactStagingDirectory)"
-      SharedDependencyDirectory="$(DefaultSharedDependencyDirectory)">
+      ArtifactStagingDirectory="$(ArtifactStagingDirectory)">
       <Output TaskParameter="IsDesktopBuild" PropertyName="IsDesktopBuild" />
       <Output TaskParameter="BuildSystemDirectory" PropertyName="BuildSystemDirectory" />
       <Output TaskParameter="BuildFlavor" PropertyName="BuildFlavor" />
-      <Output TaskParameter="ArtifactStagingDirectory" PropertyName="ArtifactStagingDirectory" />
-      <Output TaskParameter="SharedDependencyDirectory" PropertyName="SharedDependencyDirectory" />
     </GetPropertiesFromContext>
 
-    <PropertyGroup>
-      <!-- Location to drop outputs to share within the build -->
-      <UseSharedDependencyDirectory Condition="'$(UseSharedDependencyDirectory)' == ''">false</UseSharedDependencyDirectory>
-
-      <!-- Specifies the drop location for patch/update content -->
-      <UpdateStagingDirectory Condition="'$(UpdateStagingDirectory)' == ''">$(ArtifactStagingDirectory)update\</UpdateStagingDirectory>
-
-      <PackagesDirectory Condition="'$(UseSharedDependencyDirectory)' == 'true'">$(SharedDependencyDirectory)packages\</PackagesDirectory>
-      <PackagesDirectory Condition="'$(PackagesDirectory)' == ''">$(SolutionRoot)packages\</PackagesDirectory>
-
-      <LocalExpertBinariesDirectory>$(ArtifactStagingDirectory)product\</LocalExpertBinariesDirectory>
-      <ExpertSourceDirectory>$(LocalExpertBinariesDirectory)ExpertSource\</ExpertSourceDirectory>
-    </PropertyGroup>
   </Target>
 
 
@@ -345,7 +345,8 @@
 
     <ItemGroup>
       <SharedPaketFiles Include="$(SolutionRoot)Build\shared.paket.dependencies;$(SolutionRoot)Build\paket.lock;" />
-      <DirectoriesInBuild Condition="Exists('$(SolutionRoot)Build')" Include="$(SolutionRoot)Build" />
+      <DependencyDirectories Condition="Exists('$(SolutionRoot)Build')" Include="$(SolutionRoot)Build" />
+      <DependencyDirectories Include="@(DirectoriesInBuild)" />
     </ItemGroup>
 
     <Copy Condition="Exists('%(SharedPaketFiles.Identity)')"
@@ -361,9 +362,33 @@
       BranchConfigFile="$(BranchConfigFile)"
       ModulesRootPath="$(SolutionRoot)"
       DependenciesDirectory="$(SharedDependencyDirectory)"
-      ModulesInBuild="@(DirectoriesInBuild)"
+      DropPath="$(XamlBuildDropLocation)"
+      ModulesInBuild="@(DependencyDirectories)"
       EnabledResolvers="@(EnabledResolvers)"
       EnableVerboseLogging="$(PaketVerboseLogging)" />
+
+    <PropertyGroup>
+      <SolutionRootNoSlash>$(SolutionRoot.TrimEnd('\'))</SolutionRootNoSlash>
+    </PropertyGroup>
+
+    <MakeSymlink
+      Condition="'%(DirectoriesInBuild.FullPath)' != '$(SolutionRootNoSlash)'"
+      Link="%(DirectoriesInBuild.FullPath)\Dependencies"
+      Target="$(SharedDependencyDirectory)"
+      Type="D">
+        <Output TaskParameter="Link" ItemName="CreatedLinks" />
+    </MakeSymlink>
+
+    <MakeSymlink
+      Condition="'%(DirectoriesInBuild.FullPath)' != '$(SolutionRootNoSlash)'"
+      Link="%(DirectoriesInBuild.FullPath)\packages"
+      Target="$(SharedDependencyDirectory)packages"
+      FailIfLinkIsDirectoryWithContent="true"
+      Type="D">
+        <Output TaskParameter="Link" ItemName="CreatedLinks" />
+    </MakeSymlink>
+
+    <WriteLinesToFile File="$(SolutionRoot)CreatedLinks.txt" Lines="@(CreatedLinks)" />
 
     <!--
         TFS: 122744
@@ -378,8 +403,6 @@
 
     <Delete Files="@(MessageFiles)" />
   </Target>
-
-
 
 
   <!--
@@ -796,6 +819,77 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
       ZipFileName="$(ZipFile)"
       WorkingDirectory="$(LocalExpertBinariesDirectory)"
       ParallelCompression="false" />
+
+    <!-- Replace files in ExpertSource with the Elite bin folder overrides, used for things like message files and help. -->
+    <!--
+    <Copy
+      SourceFiles="@(EliteOverrideFiles)"
+      DestinationFiles="@(EliteOverrideFiles->'$(LocalExpertBinariesDirectory)\ExpertSource\%(RecursiveDir)%(Filename)%(Extension)')" />
+
+    -->
+    <!-- Essentially rename Elite.Help to Expert.Help -->
+    <!--
+    <Copy
+      SourceFiles="$(LocalExpertBinariesDirectory)\ExpertSource\Help\Elite.Help.sfx"
+      DestinationFiles="$(LocalExpertBinariesDirectory)\ExpertSource\Help\Expert.Help.sfx" />
+
+    <Delete
+      Files="$(LocalExpertBinariesDirectory)\ExpertSource\Help\Elite.Help.sfx" />
+
+    -->
+    <!-- Move the Elite specific docs into the Documents folder-->
+    <!--
+    <Delete
+      Files="@(Documents)" />
+
+    <Copy
+      SourceFiles="@(EliteDocuments)"
+      DestinationFiles="@(EliteDocuments->'$(LocalExpertBinariesDirectory)\Documentation\%(RecursiveDir)%(Filename)%(Extension)')" />
+
+    -->
+    <!-- This item group must go after the copy so that any moved files are included -->
+    <!--
+    <ItemGroup>
+      <ZipEliteEnterpriseSourceFiles
+        Include="$(LocalExpertBinariesDirectory)\**\*.*"
+        Exclude="@(SharedExclusions);@(EliteRoleExclusions);@(EliteDocuments)" />
+    </ItemGroup>
+
+    -->
+    <!-- Create ZIP for Elite Enterprise ExpertSource -->
+    <!--
+    <MSBuild.Community.Tasks.Zip
+      Files="@(ZipEliteEnterpriseSourceFiles)"
+      ZipFileName="$(EliteEnterpriseZipFile)"
+      WorkingDirectory="$(LocalExpertBinariesDirectory)"
+      ParallelCompression="false" />
+
+    -->
+    <!-- Create ZIP for LicenseGenerator -->
+    <!--
+    <MSBuild.Community.Tasks.Zip
+      Files="@(ZipLicenseGeneratorFiles)"
+      ZipFileName="$(LicenseZipFile)"
+      WorkingDirectory="$(LocalExpertBinariesDirectory)\ExpertSource\Internal\LicenseGenerator"
+      ParallelCompression="false" />
+
+    -->
+    <!-- Create ZIP for RegistrationService -->
+    <!--
+    <MSBuild.Community.Tasks.Zip
+      Files="@(ZipRegistrationServiceFiles)"
+      ZipFileName="$(RegistrationZipFile)"
+      WorkingDirectory="$(LocalExpertBinariesDirectory)\ExpertSource\Internal\RegistrationService"
+      ParallelCompression="false" />
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true')"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildUri)"
+      Id="$(BuildStepId)"
+      Status="Succeeded" />
+
+    <OnError ExecuteTargets="MarkBuildStepAsFailed" />-->
   </Target>
 
 </Project>

@@ -104,13 +104,9 @@
     <Compile Include="Commands\GetSourceTreeMetadataCommand.cs" />
     <Compile Include="Commands\GetBuildStateMetadataCommand.cs" />
     <Compile Include="DependencyAnalyzer\DirectoryNodeFactory.cs" />
-    <Compile Include="DependencyResolver\DefaultSharedDependencyController.cs" />
     <Compile Include="DependencyResolver\Model\DependencyGroup.cs" />
     <Compile Include="DependencyResolver\Model\RemoteFile.cs" />
-    <Compile Include="IFileSystemLinkOps.cs" />
     <Compile Include="Packaging\ProductAssembler.cs" />
-    <Compile Include="DependencyResolver\ResolverSettingsReader.cs" />
-    <Compile Include="Tasks\Testing\BuildTestRunParametersXml.cs" />
     <Compile Include="Utilities\PathComparer.cs" />
     <Compile Include="Model\CommitConfiguration.cs" />
     <Compile Include="ProjectSystem\BuildReasonExtensions.cs" />

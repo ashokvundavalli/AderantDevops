@@ -4,11 +4,9 @@ using System.ComponentModel.Composition;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using Aderant.Build.IO;
 using Aderant.Build.Logging;
 using Aderant.Build.Packaging;
 using Aderant.Build.Utilities;
@@ -20,30 +18,9 @@ namespace Aderant.Build {
     [Export(typeof(IFileSystem))]
     [Export("FileSystemService")]
     public class PhysicalFileSystem : IFileSystem2 {
-        private static class LinkHelper {
-            public static readonly CreateSymlinkLink CreateSymlinkLink = (newFileName, target, flags) => {
-                var result = NativeMethods.CreateSymbolicLink(newFileName, target, 0);
-                if (!result) {
-                    CheckLastError(newFileName, target);
-                }
-                return result;
-            };
+        public static CreateSymlinkLink createSymlinkLink = NativeMethods.CreateSymbolicLink;
 
-            public static readonly CreateSymlinkLink CreateHardlink = (newFileName, target, flags) => {
-                var result = NativeMethods.CreateHardLink(newFileName, target, IntPtr.Zero);
-                if (!result) {
-                    CheckLastError(newFileName, target);
-                }
-
-                return result;
-            };
-
-            private static void CheckLastError(string newFileName, string target) {
-                if (Marshal.GetLastWin32Error() != 0) {
-                    throw new IOException($"Failed to create link {newFileName} ==> {target}", Marshal.GetExceptionForHR(Marshal.GetHRForLastWin32Error()));
-                }
-            }
-        }
+        public static CreateSymlinkLink createHardlink = (newFileName, target, flags) => NativeMethods.CreateHardLink(newFileName, target, IntPtr.Zero);
 
         private ILogger logger;
 
@@ -71,7 +48,6 @@ namespace Aderant.Build {
 
         public virtual string GetFullPath(string path) {
             ErrorUtilities.IsNotNull(path, nameof(path));
-
             return Path.GetFullPath(path);
         }
 
@@ -84,13 +60,17 @@ namespace Aderant.Build {
         }
 
         public virtual string AddFile(string path, Stream stream) {
-            ErrorUtilities.IsNotNull(stream, nameof(stream));
+            if (stream == null) {
+                throw new ArgumentNullException(nameof(stream));
+            }
 
             return AddFileCore(path, targetStream => stream.CopyTo(targetStream));
         }
 
         public virtual string AddFile(string path, Action<Stream> writeToStream) {
-            ErrorUtilities.IsNotNull(writeToStream, nameof(writeToStream));
+            if (writeToStream == null) {
+                throw new ArgumentNullException(nameof(writeToStream));
+            }
 
             return AddFileCore(path, writeToStream);
         }
@@ -117,10 +97,10 @@ namespace Aderant.Build {
             }
         }
 
-        public virtual IEnumerable<string> GetFiles(string path, string inclusiveFilter = null, bool recursive = true) {
+        public virtual IEnumerable<string> GetFiles(string path, string inclusiveFilter, bool recursive) {
             path = PathUtility.EnsureTrailingSlash(GetFullPath(path));
             if (string.IsNullOrEmpty(inclusiveFilter)) {
-                inclusiveFilter = "*";
+                inclusiveFilter = "*.*";
             }
 
             try {
@@ -295,9 +275,9 @@ namespace Aderant.Build {
 
             CreateSymlinkLink link = null;
             if (useSymlinks) {
-                link = LinkHelper.CreateSymlinkLink;
+                link = createSymlinkLink;
             } else if (useHardlinks) {
-                link = LinkHelper.CreateHardlink;
+                link = createHardlink;
             }
 
             ActionBlock<PathSpec> bulkCopy = new ActionBlock<PathSpec>(
@@ -316,10 +296,12 @@ namespace Aderant.Build {
 
                     switch (file.UseHardLink) {
                         case true:
-                            CopyViaLink(file, LinkHelper.CreateHardlink);
+                            CopyViaLink(file, PhysicalFileSystem.createHardlink);
+
                             break;
                         case false:
                             CopyFileInternal(file.Location, file.Destination, overwrite);
+
                             break;
                         default:
                             if (link != null) {
@@ -327,6 +309,7 @@ namespace Aderant.Build {
                             } else {
                                 CopyFileInternal(file.Location, file.Destination, overwrite);
                             }
+
                             break;
                     }
                 },
@@ -341,16 +324,14 @@ namespace Aderant.Build {
             return bulkCopy;
         }
 
-
-
         private void CopyViaLink(PathSpec file, CreateSymlinkLink link) {
             try {
-                CreateLink(file.Location, file.Destination, link, true);
+                CopyViaLink(file.Location, file.Destination, link);
             } catch (UnauthorizedAccessException) {
                 logger?.Warning("File " + file.Destination + " is in use or can not be accessed. Trying to rename.");
 
                 MoveFile(file.Destination, file.Destination + ".__LOCKED");
-                CreateLink(file.Location, file.Destination, link, true);
+                CopyViaLink(file.Location, file.Destination, link);
             }
         }
 
@@ -358,8 +339,8 @@ namespace Aderant.Build {
             ExtractToDirectory(sourceArchiveFileName, destination, overwrite);
         }
 
-        public bool IsSymlink(string linkPath) {
-            DirectoryInfo directoryInfo = new DirectoryInfo(linkPath);
+        public bool IsSymlink(string directory) {
+            DirectoryInfo directoryInfo = new DirectoryInfo(directory);
             if (directoryInfo.Exists) {
                 return directoryInfo.Attributes.HasFlag(FileAttributes.ReparsePoint);
             }
@@ -367,61 +348,15 @@ namespace Aderant.Build {
             return false;
         }
 
-        /// <summary>
-        /// Makes a file link.
-        /// </summary>
-        /// <param name="linkPath">The link path.</param>
-        /// <param name="actualFilePath">The actual file path.</param>
-        /// <param name="overwrite">If true overwrites an existing reparse point or empty directory</param>
-        public void CreateFileHardLink(string linkPath, string actualFilePath, bool overwrite = false) {
-            if (Path.IsPathRooted(linkPath) && Path.IsPathRooted(actualFilePath)) {
-                var linkRoot = Path.GetPathRoot(linkPath);
-                var actualPathRoot = Path.GetPathRoot(actualFilePath);
-
-                if (!string.Equals(linkRoot, actualPathRoot)) {
-                    CreateFileSymlink(actualFilePath, linkPath, overwrite);
-                    return;
-                }
-            }
-            CreateLink(actualFilePath, linkPath, LinkHelper.CreateHardlink, overwrite);
-        }
-
-        /// <summary>
-        /// Makes a file link.
-        /// </summary>
-        /// <param name="linkPath">The link path.</param>
-        /// <param name="actualFilePath">The actual file path.</param>
-        /// <param name="overwrite">If true overwrites an existing reparse point or empty directory</param>
-        public void CreateFileSymlink(string linkPath, string actualFilePath, bool overwrite = false) {
-            CreateLink(actualFilePath, linkPath, LinkHelper.CreateSymlinkLink, overwrite);
-        }
-
-        /// <summary>
-        /// Creates a junction point from the specified directory to the specified target directory.
-        /// </summary>
-        /// <param name="linkPath">The link path.</param>
-        /// <param name="actualFolderPath">The actual folder path.</param>
-        /// <param name="overwrite">If true overwrites an existing reparse point or empty directory</param>
-        public void CreateDirectoryLink(string linkPath, string actualFolderPath, bool overwrite = false) {
-            if (logger != null) {
-                logger.Info("Creating junction {0} <=====> {1}", linkPath, actualFolderPath);
-            }
-
-            if (overwrite) {
-                DeleteDirectory(linkPath, true);
-            }
-
-            JunctionNativeMethods.CreateJunction(actualFolderPath, linkPath, overwrite);
-        }
-
         internal static void CopyFileInternal(string source, string destination, bool overwrite) {
-            var linkTargetState = GetLinkTargetState(source, destination);
+            FilesRelationship destinationState = CheckFileExistence(source, destination);
 
-            switch (linkTargetState) {
-                case LinkTargetState.IsSibling:
-                case LinkTargetState.IsSameOrSibling:
+            switch (destinationState) {
+                case FilesRelationship.Junction:
                     return;
-                case LinkTargetState.NonExistent:
+                case FilesRelationship.DestinationExists:
+                    return;
+                case FilesRelationship.NonExistent:
                     break;
             }
 
@@ -438,6 +373,10 @@ namespace Aderant.Build {
             }
 
             return fullPath;
+        }
+
+        public virtual void DeleteDirectory(string path) {
+            DeleteDirectory(path, recursive: false);
         }
 
         public virtual IEnumerable<string> GetFiles(string path, bool recursive) {
@@ -532,9 +471,9 @@ namespace Aderant.Build {
             }
         }
 
-        internal static LinkTargetState GetLinkTargetState(string fileLocation, string fileDestination) {
+        internal static FilesRelationship CheckFileExistence(string fileLocation, string fileDestination) {
             if (fileLocation.Equals(fileDestination, StringComparison.OrdinalIgnoreCase)) {
-                return LinkTargetState.IsSameOrSibling;
+                return FilesRelationship.DestinationExists;
             }
 
             // This can be subject to race conditions - if we are invoked by multiple projects
@@ -547,32 +486,29 @@ namespace Aderant.Build {
                 // Test if source and destination are already the same file.
                 foreach (string link in links) {
                     if (string.Equals(link, fileDestination, StringComparison.OrdinalIgnoreCase)) {
-                        return LinkTargetState.IsSibling;
+                        return FilesRelationship.Junction;
                     }
                 }
             }
 
-            return LinkTargetState.NonExistent;
+            return FilesRelationship.NonExistent;
         }
 
-        internal enum LinkTargetState {
+        internal enum FilesRelationship {
             NonExistent,
-            IsSameOrSibling,
-            IsSibling
+            DestinationExists,
+            Junction
         }
 
-        /// <param name="fileLocation">The symbolic link to be created.</param>
-        /// <param name="fileDestination">The target of the symbolic link.</param>
-        /// <param name="createLink">The creation delegate.</param>
-        /// <param name="overwrite"></param>
-        private void CreateLink(string fileLocation, string fileDestination, CreateSymlinkLink createLink, bool overwrite) {
-            var destinationState = GetLinkTargetState(fileLocation, fileDestination);
+        public void CopyViaLink(string fileLocation, string fileDestination, CreateSymlinkLink createLink) {
+            FilesRelationship destinationState = CheckFileExistence(fileLocation, fileDestination);
 
             switch (destinationState) {
-                case LinkTargetState.IsSibling:
-                case LinkTargetState.IsSameOrSibling:
+                case FilesRelationship.Junction:
                     return;
-                case LinkTargetState.NonExistent:
+                case FilesRelationship.DestinationExists:
+                    return;
+                case FilesRelationship.NonExistent:
                     break;
             }
 
@@ -580,17 +516,17 @@ namespace Aderant.Build {
             // so we need to delete the existing entry before we create the hard or symbolic link.
             DeleteFile(fileDestination, true);
 
-
-
             // Check again if the file exists, it does we must be racing with another thread.
             var exists = FileExists(fileDestination);
 
             if (!exists) {
-                createLink(fileDestination, fileLocation, (uint) NativeMethods.SymbolicLink.SYMBOLIC_LINK_FLAG_FILE);
+                if (!createLink(fileDestination, fileLocation, (uint)NativeMethods.SymbolicLink.SYMBOLIC_LINK_FLAG_FILE)) {
+                    throw new InvalidOperationException($"Failed to create link {fileDestination} ==> {fileLocation}");
+                }
             }
         }
 
-        private void DeleteFile(string path, bool skipChecks) {
+        internal void DeleteFile(string path, bool skipChecks) {
             if (!FileExists(path)) {
                 return;
             }
@@ -607,10 +543,10 @@ namespace Aderant.Build {
             }
         }
 
-        protected internal virtual void DeleteFileCore(string path) {
+        internal virtual void DeleteFileCore(string path) {
             File.Delete(path);
         }
 
-        internal delegate bool CreateSymlinkLink(string lpSymlinkFileName, string lpTargetFileName, uint dwFlags);
+        public delegate bool CreateSymlinkLink(string lpSymlinkFileName, string lpTargetFileName, uint dwFlags);
     }
 }

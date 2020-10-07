@@ -3,6 +3,7 @@ using System.Linq;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
 using IntegrationTest.Build.Helpers;
+using Microsoft.Build.Execution;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build.EndToEnd {
@@ -110,7 +111,7 @@ namespace IntegrationTest.Build.EndToEnd {
 
                 var propertyValue = RunTestTargetAndGetOutputs(buildService);
 
-                Assert.AreEqual(Resources.my_custom_runsettings, File.ReadAllText(propertyValue));
+                Assert.AreEqual(File.ReadAllText(propertyValue), Resources.my_custom_runsettings);
             }
         }
 
@@ -138,7 +139,7 @@ namespace IntegrationTest.Build.EndToEnd {
 
                 var propertyValue = RunTestTargetAndGetOutputs(buildService);
 
-                Assert.AreEqual(Resources.Expected_run_settings, File.ReadAllText(propertyValue));
+                Assert.AreEqual(File.ReadAllText(propertyValue), Resources.Expected_run_settings);
             }
         }
 

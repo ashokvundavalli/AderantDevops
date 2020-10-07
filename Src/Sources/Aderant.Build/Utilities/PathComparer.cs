@@ -9,16 +9,16 @@ namespace Aderant.Build.Utilities {
             if (x != null && y != null) {
 
                 if (x.EndsWith(PathUtility.DirectorySeparator) && y.EndsWith(PathUtility.DirectorySeparator)) {
-                    return PathsAreEqual(x, y);
+                    return PathsAreSame(x, y);
                 }
 
                 x = x.TrimTrailingSlashes();
                 y = y.TrimTrailingSlashes();
 
-                return PathsAreEqual(x, y);
+                return PathsAreSame(x, y);
             }
 
-            return PathsAreEqual(x, y);
+            return PathsAreSame(x, y);
         }
 
         /// <summary>Returns a hash code for the specified object.</summary>
@@ -27,13 +27,8 @@ namespace Aderant.Build.Utilities {
             return StringComparer.OrdinalIgnoreCase.GetHashCode(s.TrimTrailingSlashes());
         }
 
-        private static bool PathsAreEqual(string x, string y) {
+        private static bool PathsAreSame(string x, string y) {
             return string.Equals(x, y, StringComparison.OrdinalIgnoreCase);
         }
-
-        /// <summary>
-        /// A path comparer that ignores trailing directory separator characters
-        /// </summary>
-        public static IEqualityComparer<string> Default { get; } = new PathComparer();
     }
 }

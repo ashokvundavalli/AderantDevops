@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading;
 using Aderant.Build.DependencyResolver.Model;
 using Aderant.Build.DependencyResolver.Models;
 using Aderant.Build.Logging;
@@ -36,7 +35,7 @@ namespace Aderant.Build.DependencyResolver {
             PaketHttpMessageHandlerFactory.Configure();
         }
 
-        public PaketPackageManager(string root, IFileSystem fileSystem, IWellKnownSources wellKnownSources, ILogger logger, bool enableVerboseLogging = false) {
+        public PaketPackageManager(string root, IFileSystem2 fileSystem, IWellKnownSources wellKnownSources, ILogger logger, bool enableVerboseLogging = false) {
             this.root = root;
             this.wellKnownSources = wellKnownSources;
             this.logger = logger;
@@ -112,7 +111,9 @@ namespace Aderant.Build.DependencyResolver {
             var references = GetLoggerReferences();
 
             foreach (var loggerReference in references) {
-                if (loggerReference.TryGetTarget(out var target)) {
+                loggerReference.TryGetTarget(out var target);
+
+                if (target != null) {
                     Log(target, args);
                 }
             }
@@ -418,17 +419,17 @@ namespace Aderant.Build.DependencyResolver {
             return FileSystem.FileExists(dependencies.GetDependenciesFile().FindLockFile().FullName);
         }
 
-        public void Restore(bool force = false, CancellationToken cancellationToken = default(CancellationToken)) {
+        public void Restore(bool force = false) {
             Initialize();
 
             DoOperationAndHandleCredentialFailure(
                 () => {
                     if (!HasLockFile()) {
-                        new UpdateAction(dependencies, force).Run(cancellationToken);
+                        new UpdateAction(dependencies, force).Run();
                         return;
                     }
 
-                    new RestoreAction(dependencies, force).Run(cancellationToken);
+                    new RestoreAction(dependencies, force).Run();
                 });
         }
 
@@ -442,9 +443,9 @@ namespace Aderant.Build.DependencyResolver {
             }
         }
 
-        public void Update(bool force, CancellationToken cancellationToken = default(CancellationToken)) {
+        public void Update(bool force) {
             DoOperationAndHandleCredentialFailure(
-                () => { new UpdateAction(dependencies, force).Run(cancellationToken); });
+                () => { new UpdateAction(dependencies, force).Run(); });
         }
 
         public DependencyGroup GetDependencies() {
@@ -475,8 +476,8 @@ namespace Aderant.Build.DependencyResolver {
                 restriction = restrictions as Requirements.FrameworkRestrictions.ExplicitRestriction;
             }
 
-            var requirements = file.GetDependenciesInGroup(domainGroup);
-            var remoteFiles = file.Groups[domainGroup].RemoteFiles;
+            FSharpMap<Domain.PackageName, Paket.VersionRequirement> requirements = file.GetDependenciesInGroup(domainGroup);
+            FSharpList<ModuleResolver.UnresolvedSource> remoteFiles = file.Groups[domainGroup].RemoteFiles;
 
             var map = requirements.ToDictionary(pair => pair.Key.ToString(), pair => NewRequirement(pair, file.FileName));
 
@@ -495,11 +496,11 @@ namespace Aderant.Build.DependencyResolver {
             List<string> prereleases = new List<string>();
 
             if (pair.Value.PreReleases.IsConcrete) {
-                var concrete = pair.Value.Item2 as PreReleaseStatus.Concrete;
+                PreReleaseStatus.Concrete concrete = pair.Value.Item2 as PreReleaseStatus.Concrete;
                 if (concrete != null) {
                     prereleases.Add(concrete.Item.HeadOrDefault);
 
-                    var item = concrete.Item.TailOrNull;
+                    FSharpList<string> item = concrete.Item.TailOrNull;
                     while (item != null) {
                         if (!item.IsEmpty) {
                             if (item.Head != null) {

@@ -5,20 +5,48 @@ $environmentConfigured = $false
 [string]$indent1 = "  "
 [string]$indent2 = "        "
 
-function ApplyBranchConfig($context, [string]$root) {
-    $result = Get-BuildConfigFilePaths $root
+function Get-BuildDirectory {
+    if (Test-Path -Path 'variable:global:BranchConfigPath') {
+        if (-not [string]::IsNullOrWhiteSpace($global:BranchConfigPath)) {
+            If (Test-Path -Path $global:BranchConfigPath) {
+                [string]$manifest = Join-Path -Path $global:BranchConfigPath -ChildPath 'ExpertManifest.xml'
+                [string]$config = Join-Path -Path $global:BranchConfigPath -ChildPath 'BranchConfig.xml'
 
-    if (-not [string]::IsNullOrWhiteSpace($result.BranchConfigFile)) {
-        [xml]$config = Get-Content -Raw -LiteralPath ($result.BranchConfigFile)
-
-        $context.DropLocationInfo.PrimaryDropLocation = $config.BranchConfig.DropLocations.PrimaryDropLocation
-        $context.DropLocationInfo.BuildCacheLocation = $config.BranchConfig.DropLocations.BuildCacheLocation
-        $context.DropLocationInfo.PullRequestDropLocation = $config.BranchConfig.DropLocations.PullRequestDropLocation
-        $context.DropLocationInfo.XamlBuildDropLocation = $config.BranchConfig.DropLocations.XamlBuildDropLocation
+                if ((Test-Path -Path $manifest) -and (Test-Path -Path $config)) {
+                    return $true
+                }
+            }
+        }
     }
 
-    if (-not [string]::IsNullOrWhiteSpace($result.ProductManifestFile)) {
-        $context.ProductManifestPath = $result.ProductManifestFile
+   return $false
+}
+
+function ApplyBranchConfig($context, [string]$root) {
+    $configPath = [System.IO.Path]::Combine($root, "Build\BranchConfig.xml")
+
+    [xml]$config = $null
+    if (-not (Test-Path -Path $configPath)) {
+        if (Get-BuildDirectory) {
+            $config = Get-Content -Raw -LiteralPath (Join-Path -Path $global:BranchConfigPath -ChildPath "BranchConfig.xml")
+        } else {
+            return
+        }
+    } else {
+        $config = Get-Content -Raw -LiteralPath $configPath
+    }
+
+    $context.DropLocationInfo.PrimaryDropLocation = $config.BranchConfig.DropLocations.PrimaryDropLocation
+    $context.DropLocationInfo.BuildCacheLocation = $config.BranchConfig.DropLocations.BuildCacheLocation
+    $context.DropLocationInfo.PullRequestDropLocation = $config.BranchConfig.DropLocations.PullRequestDropLocation
+    $context.DropLocationInfo.XamlBuildDropLocation = $config.BranchConfig.DropLocations.XamlBuildDropLocation
+}
+
+function FindProductManifest($context, [string]$root) {
+    [string]$configPath = [System.IO.Path]::Combine($root, 'Build\ExpertManifest.xml')
+
+    if ([System.IO.File]::Exists($configPath)) {
+        $context.ProductManifestPath = $configPath
     }
 }
 
@@ -263,23 +291,6 @@ function GetBuildStateMetadata($context) {
     }
 }
 
-
-function SetupInternetExplorerLegacy() {
-    # Setup environment for legacy JavaScript tests
-    $lockDownPath = "HKCU:\SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_LOCALMACHINE_LOCKDOWN"
-    if (-not ( Test-Path $lockDownPath)) {
-        New-Item -Path "$lockDownPath" -Type Directory -Force | Out-Null
-    }
-
-    Set-ItemProperty -Path $lockDownPath -Name "iexplore.exe" -Type "DWORD" -Value 0 | Out-Null
-
-    if ((Test-Path "$lockDownPath\Settings") -eq 0) {
-        New-Item -Path "$lockDownPath\Settings" -Type Directory -Force | Out-Null
-    }
-    Set-ItemProperty -Path "$lockDownPath\Settings" -Name "LOCALMACHINE_CD_UNLOCK" -Value 0 -Force | Out-Null
-}
-
-
 function PrepareEnvironment($BuildScriptsDirectory, $isBuildAgent) {
     if ($environmentConfigured) {
         return
@@ -290,7 +301,18 @@ function PrepareEnvironment($BuildScriptsDirectory, $isBuildAgent) {
     }
 
     try {
-        SetupInternetExplorerLegacy
+        # Setup environment for JavaScript tests
+        $lockDownPath = "HKCU:\SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_LOCALMACHINE_LOCKDOWN"
+        if (-not ( Test-Path $lockDownPath)) {
+            New-Item -Path "$lockDownPath" -Type Directory -Force | Out-Null
+        }
+
+        Set-ItemProperty -Path $lockDownPath -Name "iexplore.exe" -Type "DWORD" -Value 0 | Out-Null
+
+        if ((Test-Path "$lockDownPath\Settings") -eq 0) {
+            New-Item -Path "$lockDownPath\Settings" -Type Directory -Force | Out-Null
+        }
+        Set-ItemProperty -Path "$lockDownPath\Settings" -Name "LOCALMACHINE_CD_UNLOCK" -Value 0 -Force | Out-Null
 
         # To avoid runtime problems by binding to interesting assemblies, we delete this so MSBuild will always try to bind to our versions and not one found on the computer somewhere
 
@@ -445,7 +467,6 @@ function RegisterChangeEvents($service) {
 # This file is run by an CI agent. The CI agent PowerShell runner does not subscribe to Write-Information.
 function global:Invoke-Build2 {
     [CmdletBinding(DefaultParameterSetName="Build", SupportsShouldProcess=$true)]
-    [Alias("bm")]
     param (
         [Parameter(ParameterSetName="Build", Mandatory=$false, Position=0)]
         [string]$ModulePath = [string]::Empty,
@@ -569,7 +590,7 @@ function global:Invoke-Build2 {
         The build will attempt to automatically resolve dependencies between modules by examining
         the projects and manifests which specify dependencies along the provided input paths.
         Should the specified inputs require additional dependencies then they are added to the build tree
-        automatically. To suppress this behaviour and restrict the build tree to just the paths provided specify this parameter.
+        automatically. To suppress this behaviour and restict the build tree to just the paths provided specify this parameter.
         #>
         [Parameter()]
         [Alias("NoExpand")]
@@ -634,8 +655,9 @@ function global:Invoke-Build2 {
     GetSourceTreeMetadata -context $context -repositoryPath $root -sourceCommit $SourceCommit
 
     ApplyBranchConfig -context $context -root $root
+    FindProductManifest -context $context -root $root
 
-    $standalone = [string]::IsNullOrWhiteSpace($context.DropLocationInfo.PrimaryDropLocation)
+    [bool]$standalone = [string]::IsNullOrWhiteSpace($context.DropLocationInfo.PrimaryDropLocation)
 
     AssignSwitches
 
@@ -725,3 +747,5 @@ function global:Invoke-Build2 {
         }
     }
 }
+
+Set-Alias -Name bm -Value global:Invoke-Build2 -Scope 'Global'

@@ -1,123 +1,107 @@
-#Requires -RunAsAdministrator
+<#
+.SYNOPSIS
+Looks for web applications registered in IIS that do not map to the file system
 
-function global:Hunt-Zombies {
-    <#
-    .SYNOPSIS
-    Looks for web applications registered in IIS that do not map to the file system
+.PARAMETER virtualPath
+Virtual path to search within
 
-    .PARAMETER virtualPath
-    Virtual path to search within
+.EXAMPLE
+Hunt-Zombies -VirtualPath 'Expert_Local'
 
-    .EXAMPLE
-    Hunt-Zombies -VirtualPath 'Expert_Local'
-
-    Finds all the zombie applications in Expert_Local
-    #>
-    [CmdletBinding()]
-    [Alias("hz")]
+Finds all the zombie applications in Expert_Local 
+#>
+function Hunt-Zombies {
     param(
-        [Parameter(Mandatory = $false)][string]$virtualPath = ''
+        [Parameter(Mandatory = $false)] [string] $virtualPath = ''
     )
-
-    begin {
-        $InformationPreference = 'Continue'
-
-        if (-not (Get-Module -Name 'WebAdministration')) {
-            Import-Module -Name 'WebAdministration'
-        }
-
-        if (-not (Get-Module -Name 'ApplicationServer')) {
-            Import-Module -Name 'ApplicationServer'
-        }
+    if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+        Write-Warning "You do not have Administrator rights to run this script`nPlease re-run this script as an Administrator"
+        Break
     }
 
-    process {
-        if ([String]::IsNullOrWhitespace($virtualPath)) {
-            $expertWebApplications = Get-ASApplication -SiteName 'Default Web Site'
-        } else {
-            $expertWebApplications = Get-ASApplication -SiteName 'Default Web Site' -VirtualPath $virtualPath
-        }
+    Import-Module WebAdministration
+    Import-Module ApplicationServer
 
-        foreach ($webApp in $expertWebApplications) {
-            if (-not ((Test-Path -Path $webApp.IISPath) -band (Test-Path -Path $webApp.PhysicalPath))) {
-                if ($webApp.ApplicationName) {
-                    $iisPath = $webApp.IISPath
-                    $filePath = $webApp.PhysicalPath
-                    Write-Information -MessageData "Found zombie web application $iisPath, could not find path $filePath."
-                }
-            }
-        }
-
-        Write-Information -MessageData 'Zombie hunt complete.'
+    if ([String]::IsNullOrWhitespace($virtualPath)) {
+        $expertWebApplications = get-ASApplication -SiteName 'Default Web Site'
+    } else {
+        $expertWebApplications = get-ASApplication -SiteName 'Default Web Site' -VirtualPath $virtualPath
     }
+    
+    foreach ($webApp in $expertWebApplications) {
+        if (-not ((Test-Path $webApp.IISPath) -band (Test-Path $($webApp.PhysicalPath)))) {
+            if ($webApp.ApplicationName) {
+                $iisPath = $webApp.IISPath
+                $filePath = $webApp.PhysicalPath
+                Write-Output "Found zombie web application $iisPath, could not find path $filePath."
+            }    
+        }
+    }    
+    Write-Output 'Zombie hunt complete.'
 }
 
-function global:Remove-Zombies {
-    <#
-    .SYNOPSIS
-    Removes web applications registered in IIS that do not map to the file system
+Export-ModuleMember Hunt-Zombies
 
-    .PARAMETER virtualPath
-    Virtual path to search within
+<#
+.SYNOPSIS
+Removes web applications registered in IIS that do not map to the file system
 
-    .EXAMPLE
-    Remove-Zombies -VirtualPath 'Expert_Local'
+.PARAMETER virtualPath
+Virtual path to search within
 
-    Removes all the zombie applications in Expert_Local
-    #>
-    [CmdletBinding()]
-    [Alias("rz")]
+.EXAMPLE
+Remove-Zombies -VirtualPath 'Expert_Local'
+
+Removes all the zombie applications in Expert_Local 
+#>
+function Remove-Zombies {
     param(
-        [Parameter(Mandatory = $false)][string]$virtualPath = ''
+        [Parameter(Mandatory = $false)] [string] $virtualPath = ''
     )
 
-    begin {
-        $InformationPreference = 'Continue'
-
-        if (-not (Get-Module -Name 'WebAdministration')) {
-            Import-Module -Name 'WebAdministration'
-        }
-
-        if (-not (Get-Module -Name 'ApplicationServer')) {
-            Import-Module -Name 'ApplicationServer'
-        }
+    if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+        Write-Warning "You do not have Administrator rights to run this script`nPlease re-run this script as an Administrator"
+        Break
     }
 
-    process {
-        if ([String]::IsNullOrWhitespace($virtualPath)) {
-            $expertWebApplications = get-ASApplication -SiteName 'Default Web Site'
-        } else {
-            $expertWebApplications = get-ASApplication -SiteName 'Default Web Site' -VirtualPath $virtualPath
-        }
+    Import-Module WebAdministration
+    Import-Module ApplicationServer
 
-        foreach ($webApp in $expertWebApplications) {
-            if (-not ((Test-Path $webApp.IISPath) -band (Test-Path $webApp.PhysicalPath))) {
-                if ($webApp.ApplicationName) {
-                    $iisPath = $webApp.IISPath
-                    Remove-Item -Path $iisPath
-                    Write-Information -MessageData "Removed zombie web application $iisPath"
-                }
+    if ([String]::IsNullOrWhitespace($virtualPath)) {
+        $expertWebApplications = get-ASApplication -SiteName 'Default Web Site'
+    } else {
+        $expertWebApplications = get-ASApplication -SiteName 'Default Web Site' -VirtualPath $virtualPath
+    }
+    
+    foreach ($webApp in $expertWebApplications) {
+        if (-not ((Test-Path $webApp.IISPath) -band (Test-Path $($webApp.PhysicalPath)))) {
+            if ($webApp.ApplicationName) {
+                $iisPath = $webApp.IISPath
+                Remove-Item -Path $iisPath
+                Write-Output "Removed zombie web application $iisPath"
             }
         }
-        Write-Information -MessageData 'Zombie removal complete.'
     }
+    Write-Output 'Zombie removal complete.'
 }
 
-function global:CleanupIISCache {
-    <#
-    .Synopsis
-        Cleans the old cache files created by IIS Dynamic Compilation.
-    .Description
-        Following files will be deleted in the module:
-            *\Windows\Microsoft.NET\Framework64\v4.0.30319\Temporary ASP.NET Files\*
-        Only the files which created X time ago would be removed.
-    .PARAMETER Days
-        Removed all the caches which created/modified $days ago.
-    .PARAMETER Directory
-        Specify the destination of the IIS Cache.
-    .EXAMPLE
-        CleanupIISCache -days 0
-    #>
+Export-ModuleMember -Function Remove-Zombies
+
+<#
+.Synopsis
+    Cleans the old cache files created by IIS Dynamic Compilation.
+.Description
+    Following files will be deleted in the module:
+        *\Windows\Microsoft.NET\Framework64\v4.0.30319\Temporary ASP.NET Files\*
+    Only the files which created X time ago would be removed.
+.PARAMETER Days
+    Removed all the caches which created/modified $days ago.
+.PARAMETER Directory
+    Specify the destination of the IIS Cache.
+.EXAMPLE
+    CleanupIISCache -days 0
+#>
+function CleanupIISCache {
     param(
         [Parameter(Mandatory = $false)][int] $days = 1,
         [Parameter(Mandatory = $false)][string] $directory = 'C:\Windows\Microsoft.NET\Framework64\v4.0.30319\Temporary ASP.NET Files'
@@ -127,34 +111,34 @@ function global:CleanupIISCache {
     Get-ChildItem $directory | Where-Object { $_.LastWriteTime -lt $lastWriteTime} | Remove-Item -Recurse -Force
 }
 
-function global:Get-WorkerProcessIds {
-    <#
-    .Synopsis
-        Get the process Ids and App pool names of all running IIS Worker Processes.  Handy for deciding which w3wp process to attach to in VS.
-    .Description
-        Get the process Ids and App pool names of all running IIS Worker Processes.  Handy for deciding which w3wp process to attach to in VS.
-    .PARAMETER all
-        Switch - boolean value to return all IIS Worker Processes otherwise just get ones using ExpertApplications_Local App pool (most common thing people debug)
-    .EXAMPLE
-        wpid -all
-    #>
-    [CmdletBinding()]
-    [Alias("wpid")]
-    param (
-        [switch]$all
-    )
+Export-ModuleMember -Function CleanupIISCache
+
+<# 
+.Synopsis 
+    Get the process Ids and App pool names of all running IIS Worker Processes.  Handy for deciding which w3wp process to attach to in VS.
+.Description   
+    Get the process Ids and App pool names of all running IIS Worker Processes.  Handy for deciding which w3wp process to attach to in VS.
+.PARAMETER all
+    Switch - boolean value to return all IIS Worker Processes otherwise just get ones using ExpertApplications_Local App pool (most common thing people debug)
+.EXAMPLE
+    wpid -all
+#>
+function Get-WorkerProcessIds() {
+    param ([switch] $all = $false)
 
     $process = "w3wp.exe"
     $processObjects = Get-WmiObject Win32_Process -Filter "name = '$process'" | Select-Object Handle, CommandLine
 
-    foreach ($processObject in $processObjects) {
+    ForEach ($processObject in $processObjects) {
         $commandLine = $processObject.CommandLine.Substring($processObject.CommandLine.IndexOf("`"") + 1)
         $commandLineAndHandle = $commandLine.Substring(0, $commandLine.IndexOf("`"")) + " --> " + $processObject.Handle
-
-        if ($all.IsPresent) {
+        
+        If ($all -eq $true) {
             Write-Host $commandLineAndHandle -ForegroundColor Green
-        } elseif ($commandLine.StartsWith("ExpertApplications_")) {
+        } Elseif ($commandLine.StartsWith("ExpertApplications_")) {
             Write-Host $commandLineAndHandle -ForegroundColor Green
         }
     }
 }
+
+Export-ModuleMember -Function Get-WorkerProcessIds

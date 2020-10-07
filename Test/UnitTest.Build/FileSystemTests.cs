@@ -22,14 +22,14 @@ namespace UnitTest.Build {
             string file = Assembly.GetExecutingAssembly().Location;
 
             // File does exist as the source and target file locations are the same.
-            Assert.AreEqual(PhysicalFileSystem.LinkTargetState.IsSameOrSibling, PhysicalFileSystem.GetLinkTargetState(file, file));
+            Assert.AreEqual(PhysicalFileSystem.FilesRelationship.DestinationExists, PhysicalFileSystem.CheckFileExistence(file, file));
         }
 
         [TestMethod]
         public void NoFileExistsTest() {
             string file = Assembly.GetExecutingAssembly().Location;
 
-            Assert.AreEqual(PhysicalFileSystem.LinkTargetState.NonExistent, PhysicalFileSystem.GetLinkTargetState(file, Path.Combine(TestContext.DeploymentDirectory, Path.GetRandomFileName())));
+            Assert.AreEqual(PhysicalFileSystem.FilesRelationship.NonExistent, PhysicalFileSystem.CheckFileExistence(file, Path.Combine(TestContext.DeploymentDirectory, Path.GetRandomFileName())));
         }
 
         [TestMethod]
@@ -41,7 +41,7 @@ namespace UnitTest.Build {
             try {
                 // Create Hard Link between source and target files and check if we can validate that they have a junction.
                 NativeMethods.CreateHardLink(targetFile, sourceFile, IntPtr.Zero);
-                Assert.AreEqual(PhysicalFileSystem.LinkTargetState.IsSibling, PhysicalFileSystem.GetLinkTargetState(sourceFile, targetFile));
+                Assert.AreEqual(PhysicalFileSystem.FilesRelationship.Junction, PhysicalFileSystem.CheckFileExistence(sourceFile, targetFile));
             } finally {
                 File.Delete(targetFile);
             }

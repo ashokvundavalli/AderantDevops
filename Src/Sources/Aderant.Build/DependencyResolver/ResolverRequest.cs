@@ -68,10 +68,6 @@ namespace Aderant.Build.DependencyResolver {
         /// </summary>
         public bool ReplicationExplicitlyDisabled { get; set; }
 
-        /// <summary>
-        /// Requests that the system performs dependencies constraint validation.
-        /// All dependencies within the same group must demand the same version of a package.
-        /// </summary>
         public bool ValidatePackageConstraints { get; set; }
 
         /// <summary>
@@ -206,7 +202,7 @@ namespace Aderant.Build.DependencyResolver {
             return dependenciesRequiredForBuild;
         }
 
-        /// <summary>
+           /// <summary>
         /// Captures any .NET framework restrictions and the group they are associated with.
         /// </summary>
         public void AddFrameworkRestriction(string group, string frameworkVersion) {
@@ -220,6 +216,10 @@ namespace Aderant.Build.DependencyResolver {
 
         public Dictionary<string, IReadOnlyCollection<string>> GetFrameworkRestrictions() {
             return restrictions.ToDictionary(s => s.Key, s => (IReadOnlyCollection<string>)s.Value.ToList());
+        }
+
+        public IEnumerable<ExpertModule> GetModulesInBuild() {
+            return modules.Where(m => m.IsInBuildChain).Select(s => s.Item).ToList();
         }
     }
 

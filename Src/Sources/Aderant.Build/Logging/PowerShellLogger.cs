@@ -11,7 +11,6 @@ namespace Aderant.Build.Logging {
     /// Allows internal components to write to a PowerShell host.
     /// </summary>
     public class PowerShellLogger : ILogger {
-        private readonly PSCmdlet cmdlet;
 
         private const int DebugLevel = 0;
         private const int InfoLevel = 1;
@@ -32,7 +31,6 @@ namespace Aderant.Build.Logging {
         /// Initializes a new instance of the <see cref="PowerShellLogger" /> class.
         /// </summary>
         public PowerShellLogger(PSCmdlet cmdlet) {
-            this.cmdlet = cmdlet;
             permittedToWriteThread = Thread.CurrentThread;
 
             writeInformation = cmdlet.WriteInformation;
@@ -78,20 +76,17 @@ namespace Aderant.Build.Logging {
         }
 
         private void CheckPermittedToWrite(int level, string message, object[] args) {
-            // If there is no command runtime we cannot log
-            if (cmdlet.CommandRuntime != null) {
-                // PowerShell does not allow cross thread writes, if we are not on the cmdlet thread then defer the message
-                if (Thread.CurrentThread != permittedToWriteThread) {
-                    pendingWrites.Enqueue(Tuple.Create(level, message, args));
-                } else {
-                    WriteMessage(level, message, args);
+            // PowerShell does not allow cross thread writes, if we are not on the cmdlet thread then defer the message
+            if (Thread.CurrentThread != permittedToWriteThread) {
+                pendingWrites.Enqueue(Tuple.Create(level, message, args));
+            } else {
+                WriteMessage(level, message, args);
 
-                    if (pendingWrites.Count > 0) {
-                        while (pendingWrites.Count > 0) {
-                            Tuple<int, string, object[]> value;
-                            if (pendingWrites.TryDequeue(out value)) {
-                                WriteMessage(value.Item1, value.Item2, value.Item3);
-                            }
+                if (pendingWrites.Count > 0) {
+                    while (pendingWrites.Count > 0) {
+                        Tuple<int, string, object[]> value;
+                        if (pendingWrites.TryDequeue(out value)) {
+                            WriteMessage(value.Item1, value.Item2, value.Item3);
                         }
                     }
                 }
@@ -103,22 +98,16 @@ namespace Aderant.Build.Logging {
 
             switch (level) {
                 case DebugLevel: {
-                    if (writeDebug != null) {
                         writeDebug(message);
-                    }
-                    break;
+                        break;
                     }
                 case InfoLevel: {
-                    if (writeInformation != null) {
                         writeInformation(message, null);
-                    }
-                    break;
+                        break;
                     }
                 case WarningLevel: {
-                    if (writeWarning != null) {
                         writeWarning(message);
-                    }
-                    break;
+                        break;
                     }
                 case ErrorLevel: {
                         LogError(message);
@@ -137,9 +126,7 @@ namespace Aderant.Build.Logging {
             err.ErrorDetails =
                 new ErrorDetails(message);
 
-            if (writeError != null) {
-                writeError(err);
-            }
+            writeError(err);
         }
 
         public static ILogger Create(PSHost host) {
