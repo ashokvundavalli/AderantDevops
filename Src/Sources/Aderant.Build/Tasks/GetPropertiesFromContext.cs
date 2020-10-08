@@ -65,7 +65,7 @@ namespace Aderant.Build.Tasks {
 
             SetFlavor(context);
 
-            if (string.IsNullOrWhiteSpace(BranchConfigFile)) {
+            if (!string.IsNullOrWhiteSpace(BranchConfigFile)) {
                 ReadBranchConfigFile(BranchConfigFile, new PhysicalFileSystem());
             }
 
