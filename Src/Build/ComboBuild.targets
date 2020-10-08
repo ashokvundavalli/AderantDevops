@@ -78,7 +78,6 @@
       CleanStagingDirectory;
       MakeStagingDirectory;
       GatherProjectsToBuild;
-      GetAllDependencies;
       CleanSuppressionFiles;
       CreatePlan;
       ExecutePlan;
@@ -159,14 +158,26 @@
 
   <Target Name="CleanStagingDirectory" DependsOnTargets="RemoveLockedFilesFromLastBuild">
 
-    <RemoveDir Condition="'$(IsDesktopBuild)' == 'false'"
-               Directories="$(ArtifactStagingDirectory)" />
-
     <MakeDir Condition="!Exists('$(SharedDependencyDirectory)')"
              Directories="$(SharedDependencyDirectory)" />
 
-    <MakeDir Directories="$(UpdateStagingDirectory)" />
+    <MakeDir Condition="!Exists('$(UpdateStagingDirectory)')"
+             Directories="$(UpdateStagingDirectory)" />
+
   </Target>
+
+
+  <Target Name="CleanMessageFiles" Condition="'$(UseSharedDependencyDirectory)' == 'true'" AfterTargets="CleanStagingDirectory">
+
+    <ItemGroup>
+      <MessageFiles Include="$(SharedDependencyDirectory)\cmsmsg*.msg;" />
+    </ItemGroup>
+
+    <Delete Files="@(MessageFiles)" />
+
+  </Target>
+
+
 
   <Target Name="MakeStagingDirectory">
     <MakeDir Condition="!Exists('$(UpdateStagingDirectory)')"
@@ -344,13 +355,8 @@
     <Delete Files="$(SharedDependencyDirectory)paket.dependencies;$(SharedDependencyDirectory)paket.lock" />
 
     <ItemGroup>
-      <SharedPaketFiles Include="$(SolutionRoot)Build\shared.paket.dependencies;$(SolutionRoot)Build\paket.lock;" />
       <DirectoriesInBuild Condition="Exists('$(SolutionRoot)Build')" Include="$(SolutionRoot)Build" />
     </ItemGroup>
-
-    <Copy Condition="Exists('%(SharedPaketFiles.Identity)')"
-      SourceFiles="@(SharedPaketFiles)"
-      DestinationFolder="$(SharedDependencyDirectory)" />
 
     <MakeDir
       Condition="!Exists('$(SharedDependencyDirectory)packages)')"

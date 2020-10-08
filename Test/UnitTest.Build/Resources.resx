@@ -232,4 +232,16 @@ SRCSRV: end ------------------------------------------------</value>
   &lt;/files&gt;
 &lt;/package&gt;</value>
   </data>
+  <data name="PaketLock" xml:space="preserve">
+    <value>REFERENCES: STRICT
+NUGET
+  remote: https://expertpackages.azurewebsites.net/v3/index.json
+    Aderant.Build.Analyzer (2.1.1)
+    
+GROUP Development
+REFERENCES: STRICT
+NUGET
+  remote: https://expertpackages.azurewebsites.net/v3/index.json
+    Aderant.Build.Analyzer (3.1.1)</value>
+  </data>
 </root>

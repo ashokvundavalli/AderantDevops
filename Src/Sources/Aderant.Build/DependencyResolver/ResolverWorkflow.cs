@@ -77,10 +77,11 @@ namespace Aderant.Build.DependencyResolver {
 
             if (!string.IsNullOrWhiteSpace(DependenciesDirectory)) {
                 Request.SetDependenciesDirectory(DependenciesDirectory);
+
                 EnsureSymlinks();
 
                 if (Force) {
-                    // Work around for extraction bug that does not specify overwrite
+                    // Work around for extraction bug that does not specify overwrite.
                     RemovePaketFiles(DependenciesDirectory);
                 }
             } else {
@@ -116,7 +117,7 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         private void RemovePaketFiles(string dependenciesDirectory) {
-            fileSystem.DeleteDirectory(System.IO.Path.Combine(dependenciesDirectory, "paket-files"), true);
+            fileSystem.DeleteDirectory(Path.Combine(dependenciesDirectory, "paket-files"), true);
         }
 
         private void EnsureSymlinks() {
@@ -126,8 +127,8 @@ namespace Aderant.Build.DependencyResolver {
         private void EnsureDestinationDirectoryFullPath() {
             // Small issue here, the original definition of DependenciesDirectory in BranchConfig.xml assumes its relative to .git
             // So we have to blindly assume ModulesRootPath=.git
-            if (DependenciesDirectory != null && !System.IO.Path.IsPathRooted(DependenciesDirectory)) {
-                DependenciesDirectory = System.IO.Path.Combine(ModulesRootPath, DependenciesDirectory);
+            if (DependenciesDirectory != null && !Path.IsPathRooted(DependenciesDirectory)) {
+                DependenciesDirectory = Path.Combine(ModulesRootPath, DependenciesDirectory);
             }
         }
 

@@ -241,20 +241,34 @@ function GetBuildStateMetadata($context) {
         return
     }
 
+    [string]$commonAncestor = [string]::Empty
+
     if ($context.IsDesktopBuild -and [string]::IsNullOrWhiteSpace($context.BuildMetadata.ScmBranch)) {
-        $sourceTreeMetadata = Get-SourceTreeMetadata
-
-        if (-not [string]::IsNullOrWhiteSpace($sourceTreeMetadata.Branch)) {
-            $context.BuildMetadata.ScmBranch = $sourceTreeMetadata.Branch
+        if (-not [string]::IsNullOrWhiteSpace($stm.Branch)) {
+            $context.BuildMetadata.ScmBranch = $stm.Branch
         }
-    }
 
+        $commonAncestor = $stm.CommonAncestor -replace ".*/origin", "refs/heads"
+    } else {
+        $commonAncestor = $stm.CommonAncestor
+    }
+    
     [string]$targetBranch = $null
     if ($context.BuildMetadata.IsPullRequest) {
         $targetBranch = $context.BuildMetadata.PullRequest.TargetBranch
     }
 
-    $buildState = Get-BuildStateMetadata -BucketIds $ids -Tags $tags -DropLocation $context.DropLocationInfo.BuildCacheLocation -ScmBranch $context.BuildMetadata.ScmBranch -TargetBranch $targetBranch
+    [string]$flavor = [string]::Empty
+
+    if (-not $context.isDesktopBuild) {
+        $flavor = $context.BuildMetadata.Flavor
+    } elseif ($Release.IsPresent) {
+        $flavor = 'Release'
+    } else {
+        $flavor = 'Debug'
+    }
+
+    $buildState = Get-BuildStateMetadata -RootDirectory $context.BuildRoot -BucketIds $ids -Tags $tags -DropLocation $context.DropLocationInfo.BuildCacheLocation -ScmBranch $context.BuildMetadata.ScmBranch -TargetBranch $targetBranch -CommonAncestor $commonAncestor -BuildFlavor $flavor
 
     $context.BuildStateMetadata = $buildState
 
@@ -630,6 +644,17 @@ function global:Invoke-Build2 {
     AssignIncludeExclude -include $Include -exclude $Exclude -rootPath $repositoryPath -gitDirectory $root
 
     $context.BuildRoot = $root
+
+    if ((-not $context.IsDesktopbuild) -or $GetDependencies.IsPresent) {
+        Write-Information -MessageData 'GetDependencies'
+
+        try {
+            Push-Location -Path $repositoryPath
+            Get-Dependencies -NoConfig:$context.IsDesktopBuild
+        } finally {
+            Pop-Location
+        }
+    }
 
     GetSourceTreeMetadata -context $context -repositoryPath $root -sourceCommit $SourceCommit
 

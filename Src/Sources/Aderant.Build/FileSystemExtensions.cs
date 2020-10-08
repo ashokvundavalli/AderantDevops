@@ -46,10 +46,17 @@ namespace Aderant.Build {
         /// </summary>
         public static string ComputeSha1Hash(this IFileSystem fileSystem, string file) {
             using (Stream stream = fileSystem.OpenFile(file)) {
-                using (var sha1 = SHA1.Create()) {
-                    var computedHash = sha1.ComputeHash(stream);
-                    return BitConverter.ToString(computedHash).Replace("-", string.Empty); // Yay allocations
-                }
+                return ComputeSha1Hash(stream);
+            }
+        }
+
+        /// <summary>
+        /// Creates a 40 character SHA1 hash of the given byte stream.
+        /// </summary>
+        internal static string ComputeSha1Hash(this Stream stream) {
+            using (var sha1 = SHA1.Create()) {
+                var computedHash = sha1.ComputeHash(stream);
+                return BitConverter.ToString(computedHash).Replace("-", string.Empty); // Yay allocations
             }
         }
 

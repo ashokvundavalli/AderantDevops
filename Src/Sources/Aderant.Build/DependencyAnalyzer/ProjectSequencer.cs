@@ -508,8 +508,9 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             bool upToDate = result.IsUpToDate.GetValueOrDefault(true);
             bool hasTrackedFiles = result.TrackedFiles != null && result.TrackedFiles.Any();
+
             if (!upToDate && hasTrackedFiles) {
-                MarkDirty(project, BuildReasonTypes.InputsChanged, "");
+                MarkDirty(project, BuildReasonTypes.InputsChanged, string.Empty);
                 return;
             }
 
@@ -591,15 +592,19 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         private InputFilesDependencyAnalysisResult BeginTrackingInputFiles(BuildStateFile stateFile, string solutionRoot) {
             if (!trackedInputs.ContainsKey(solutionRoot)) {
-                var inputFilesAnalysisResult = trackedInputFilesCheck.PerformDependencyAnalysis(stateFile?.TrackedFiles, solutionRoot);
+                InputFilesDependencyAnalysisResult inputFilesAnalysisResult = trackedInputFilesCheck.PerformDependencyAnalysis(stateFile?.TrackedFiles, solutionRoot, stateFile?.PackageHash);
 
                 if (inputFilesAnalysisResult != null) {
                     trackedInputs.Add(solutionRoot, inputFilesAnalysisResult);
 
                     if (PipelineService != null) {
                         if (inputFilesAnalysisResult.TrackedFiles != null && inputFilesAnalysisResult.TrackedFiles.Any()) {
-                            var solutionRootName = PathUtility.GetFileName(solutionRoot);
+                            string solutionRootName = PathUtility.GetFileName(solutionRoot);
                             logger.Info($"Tracking {inputFilesAnalysisResult.TrackedFiles.Count} input files for {solutionRootName}", null);
+
+                            if (inputFilesAnalysisResult.IsUpToDate != null) {
+                                logger.Info($"State file {stateFile?.Id} tracked files are up to date: {inputFilesAnalysisResult.IsUpToDate}");
+                            }
 
                             PipelineService.TrackInputFileDependencies(solutionRootName, inputFilesAnalysisResult.TrackedFiles);
                         }

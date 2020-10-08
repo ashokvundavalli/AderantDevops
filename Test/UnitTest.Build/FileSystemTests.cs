@@ -11,10 +11,23 @@ namespace UnitTest.Build {
         public TestContext TestContext { get; set; }
 
         [TestMethod]
-        public void ComputeSha1Hash() {
+        public void ComputeSha1HashFromFile() {
             string hash = new PhysicalFileSystem().ComputeSha1Hash(typeof(FileSystem).Assembly.Location);
 
             Assert.IsNotNull(hash);
+            Assert.AreEqual(40, hash.Length);
+        }
+
+        [TestMethod]
+        public void ComputeSha1HashFromStream() {
+            string hash;
+
+            using (Stream stream = nameof(FileSystemTests).ToStream()) {
+                hash = stream.ComputeSha1Hash();
+            }
+
+            Assert.IsNotNull(hash);
+            Assert.AreEqual(40, hash.Length);
         }
 
         [TestMethod]

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using Aderant.Build;
 using Aderant.Build.Logging;
 using Aderant.Build.Packaging;
@@ -127,11 +128,15 @@ namespace IntegrationTest.Build.EndToEnd {
             artifactService.AllowZeroBuildId = true;
 
             var buildStateMetadata = artifactService
-                .GetBuildStateMetadata(
-                    context.SourceTreeMetadata.GetBuckets().Select(s => s.Id).ToArray(),
+                .GetBuildStateMetadata(testContext.DeploymentDirectory,
+                    context.SourceTreeMetadata.GetBuckets().Select(s => s.Id).ToArray(), 
+                    null,
                     context.DropLocationInfo.BuildCacheLocation,
                     context.BuildMetadata.ScmBranch,
-                    null);
+                    null, 
+                    null,
+                    null,
+                    CancellationToken.None);
 
             Assert.AreNotEqual(0, buildStateMetadata.BuildStateFiles.Count);
 
@@ -142,7 +147,7 @@ namespace IntegrationTest.Build.EndToEnd {
 
         private SourceTreeMetadata GetSourceTreeMetadata() {
             var versionControl = new GitVersionControlService();
-            return versionControl.GetMetadata(deploymentItemsDirectory, "", "");
+            return versionControl.GetMetadata(deploymentItemsDirectory, string.Empty, string.Empty);
         }
     }
 }

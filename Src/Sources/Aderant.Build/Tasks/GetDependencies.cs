@@ -90,7 +90,7 @@ namespace Aderant.Build.Tasks {
                 .WithResolvers(EnabledResolvers)
                 .WithProductManifest(ProductManifest)
                 .UseDependenciesDirectory(DependenciesDirectory)
-                .WithDirectoriesInBuild(ModulesInBuild.Select(s => s.ItemSpec).Union(new[] {ModuleName}, StringComparer.OrdinalIgnoreCase));
+                .WithDirectoriesInBuild(ModulesInBuild.Select(s => s.ItemSpec).Where(x => !x.StartsWith("_")).Union(new[] {ModuleName}, StringComparer.OrdinalIgnoreCase));
 
             workflow.Run(Update, EnableVerboseLogging, cancellationTokenSource.Token);
         }

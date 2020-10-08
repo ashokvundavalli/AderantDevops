@@ -12,10 +12,10 @@ namespace Aderant.Build.Commands {
     [Cmdlet(VerbsCommon.Get, "Dependencies"), Alias("gd")]
     public sealed class GetDependencies : BuildCmdlet {
 
-        [Parameter(Mandatory = false, HelpMessage = "Whether or not to use Symbolic Links", Position = 0), ValidateNotNull]
-        public SwitchParameter NoSymLinks { get; set; }
+        [Parameter(Mandatory = false, HelpMessage = "Disables writing configuration files to modules.", Position = 0), ValidateNotNull]
+        public SwitchParameter NoConfig { get; set; }
 
-        [Parameter(Mandatory = false, HelpMessage = "Whether to force retrieval of dependencies", Position = 1), ValidateNotNull]
+        [Parameter(Mandatory = false, HelpMessage = "Whether to force retrieval of dependencies.", Position = 1), ValidateNotNull]
         public SwitchParameter Force { get; set; }
 
         internal static readonly string EditorConfig = ".editorconfig";
@@ -68,7 +68,9 @@ namespace Aderant.Build.Commands {
 
             workflow.Run(update, MyInvocation.BoundParameters.ContainsKey("Verbose") || MyInvocation.UnboundArguments.Contains("Verbose"), base.CancellationToken);
 
-            WriteConfigFiles(workflow.DirectoriesInBuild);
+            if (!NoConfig.IsPresent) {
+                WriteConfigFiles(workflow.DirectoriesInBuild);
+            }
         }
 
         private static (string branchConfigFile, string productManifestFile) RunGetBuildConfigFilePaths(string startingDirectory, string ceilingDirectory) {

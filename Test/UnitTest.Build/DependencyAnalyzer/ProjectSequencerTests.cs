@@ -254,9 +254,9 @@ namespace UnitTest.Build.DependencyAnalyzer {
 
             var graph = new ProjectDependencyGraph(p1, p2, p3);
 
-            var list = sequencer.GetProjectsBuildList(graph, new[] { p1, p2, p3 }, null, false, ChangesToConsider.None, DependencyRelationshipProcessing.Direct);
+            sequencer.GetProjectsBuildList(graph, new[] { p1, p2, p3 }, null, false, ChangesToConsider.None, DependencyRelationshipProcessing.Direct);
 
-            Assert.AreEqual(p1.BuildReason.Flags, BuildReasonTypes.CachedBuildNotFound | BuildReasonTypes.InputsChanged);
+            Assert.AreEqual(BuildReasonTypes.CachedBuildNotFound | BuildReasonTypes.InputsChanged, p1.BuildReason.Flags);
             Assert.IsTrue(p1.IsDirty);
             Assert.IsTrue(p2.IsDirty);
             Assert.AreEqual(BuildReasonTypes.DependencyChanged, p2.BuildReason.Flags);

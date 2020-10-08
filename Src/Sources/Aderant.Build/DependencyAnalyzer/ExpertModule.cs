@@ -89,6 +89,8 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
+        internal List<IDependencyRequirement> DependencyRequirements { get; set; }
+
         /// <summary>
         /// Indicates whether the current object is equal to another object of the same type.
         /// </summary>

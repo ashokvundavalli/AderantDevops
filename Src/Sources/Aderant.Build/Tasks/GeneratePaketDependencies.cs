@@ -37,7 +37,7 @@ namespace Aderant.Build.Tasks {
                 Directory.CreateDirectory(OutputDirectory);
             }
 
-            File.WriteAllText(Path.Combine(OutputDirectory, "paket.dependencies"), GeneratePaketDependenciesContent(expertManifest, DependencyMappings), Encoding.UTF8);
+            File.WriteAllText(Path.Combine(OutputDirectory, Constants.PaketDependencies), GeneratePaketDependenciesContent(expertManifest, DependencyMappings), Encoding.UTF8);
 
             return !Log.HasLoggedErrors;
         }

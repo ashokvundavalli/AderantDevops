@@ -73,6 +73,9 @@
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
     </Reference>
+    <Reference Include="System.Numerics.Vectors, Version=4.1.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\devtools\System.Numerics.Vectors\lib\net46\System.Numerics.Vectors.dll</HintPath>
+    </Reference>
     <Reference Include="System.Threading.Tasks.Dataflow, Version=4.6.5.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\..\packages\devtools\System.Threading.Tasks.Dataflow\lib\net461\System.Threading.Tasks.Dataflow.dll</HintPath>
     </Reference>
@@ -120,7 +123,11 @@
     </Compile>
     <Compile Include="DependencyResolver\DependencyRequirementTests.cs" />
     <Compile Include="DependencyResolver\Model\RemoteFileTests.cs" />
+    <Compile Include="Serialization\PackageInfoSerializationTests.cs" />
+    <Compile Include="DependencyResolver\PaketLockOperationsTests.cs" />
     <Compile Include="DependencyResolver\ResolverWorkflowTests.cs" />
+    <Compile Include="Serialization\SerializationBase.cs" />
+    <Compile Include="Serialization\TrackedMetadataFileSerializationTests.cs" />
     <Compile Include="Tasks\BuildTestRunParametersXmlTests.cs" />
     <Compile Include="Utilities\PathComparerTests.cs" />
     <Compile Include="PipelineService\BuildPipelineServiceTests.cs" />
@@ -181,7 +188,7 @@
     <Compile Include="DependencyResolver\PackageManagerTests.cs" />
     <Compile Include="PackageProcessorTests.cs" />
     <Compile Include="Packaging\ArtifactPackageTests.cs" />
-    <Compile Include="ObjectModelSerializationTests.cs" />
+    <Compile Include="Serialization\ObjectModelSerializationTests.cs" />
     <Compile Include="Packaging\PathSpecTests.cs" />
     <Compile Include="Packaging\AutoPackagerTests.cs" />
     <Compile Include="ProjectSystem\ProjectOutputTrackerTests.cs" />
@@ -360,9 +367,6 @@
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="DependencyResolver\NewFolder1\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="..\TestDeployment.proj" />
