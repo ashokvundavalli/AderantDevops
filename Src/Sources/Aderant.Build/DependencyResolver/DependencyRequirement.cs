@@ -121,7 +121,8 @@ namespace Aderant.Build.DependencyResolver {
             if (reference.RepositoryType == RepositoryType.NuGet) {
                 return new DependencyRequirement(reference.Name, reference.DependencyGroup, reference.VersionRequirement) {
                     ReplicateToDependencies = reference.ReplicateToDependencies,
-                    ReplaceVersionConstraint = true
+                    ReplaceVersionConstraint = true,
+                    Source = GetAction.NuGet
                 };
             }
 

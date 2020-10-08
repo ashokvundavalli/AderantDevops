@@ -1,5 +1,7 @@
+﻿using System.Threading;
+
 namespace Aderant.Build.DependencyResolver {
     internal interface IDependencyAction {
-        void Run();
+        void Run(CancellationToken cancellationToken);
     }
 }

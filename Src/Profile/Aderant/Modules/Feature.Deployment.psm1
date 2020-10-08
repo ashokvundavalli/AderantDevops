@@ -1,48 +1,65 @@
-<#
-.Synopsis
-    Starts DeploymentManager
-.Description
-    Starts DeploymentManager.exe
-#>
+#Requires -RunAsAdministrator
+
 function global:Start-DeploymentManager {
-    if (Test-Path $global:ShellContext.DeploymentManager) {
-        Write-Host "Starting Deployment Manager..."
-        $shell = $global:ShellContext.DeploymentManager
-    } else {
-        $shell = $null
-        Write-Warning "Please ensure that the DeploymentManager.exe is located at: $($global:ShellContext.DeploymentManager)"
+    <#
+    .SYNOPSIS
+        Starts DeploymentManager.
+    .DESCRIPTION
+        Starts DeploymentManager.exe.
+    .PARAMETER deploymentManager
+        The full path for DeploymentManager.exe.
+    #>
+    [CmdletBinding()]
+    [Alias('dm')]
+    param (
+        [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$deploymentManager = $global:ShellContext.DeploymentManager
+    )
+
+    begin {
+        $InformationPreference = 'Continue'
     }
 
-    if ($shell) {
-        Invoke-Expression $shell
+    process {
+        if (-not (Test-Path -Path $deploymentManager)) {
+            Write-Warning "Please ensure that DeploymentManager.exe is located at: '$deploymentManager'."
+            return
+        }
+
+        Write-Information -MessageData 'Starting Deployment Manager...'
+
+        try {
+            Push-Location -Path ([System.IO.Path]::GetDirectoryName($global:ShellContext.DeploymentManager))
+            Invoke-Expression $deploymentManager
+        } finally {
+            Pop-Location
+        }
     }
 }
 
-Export-ModuleMember -Function 'Start-DeploymentManager'
-
-<#
-.Synopsis
-    Run DeploymentEngine for your current branch
-.Description
-    Starts DeploymentEngine.exe with the specified command.
-.PARAMETER command
-    The action you want the deployment engine to take.
-.PARAMETER serverName
-    The name of the database server.
-.PARAMETER databaseName
-    The name of the database containing the environment manifest.
-.PARAMETER skipPackageImports
-    Flag to skip package imports.
-.PARAMETER skipHelpDeployment
-    Flag to skip deployment of Help.
-.EXAMPLE
-    DeploymentEngine -action Deploy -serverName MyServer01 -databaseName MyMain
-    DeploymentEngine -action Remove -serverName MyServer01 -databaseName MyMain
-    DeploymentEngine -action ExportEnvironmentManifest -serverName MyServer01 -databaseName MyMain
-    DeploymentEngine -action ImportEnvironmentManifest -serverName MyServer01 -databaseName MyMain
-#>
-function Start-DeploymentEngine {
+function global:Start-DeploymentEngine {
+    <#
+    .Synopsis
+        Run DeploymentEngine for your current branch
+    .Description
+        Starts DeploymentEngine.exe with the specified command.
+    .PARAMETER command
+        The action you want the deployment engine to take.
+    .PARAMETER serverName
+        The name of the database server.
+    .PARAMETER databaseName
+        The name of the database containing the environment manifest.
+    .PARAMETER skipPackageImports
+        Flag to skip package imports.
+    .PARAMETER skipHelpDeployment
+        Flag to skip deployment of Help.
+    .EXAMPLE
+        DeploymentEngine -action Deploy -serverName MyServer01 -databaseName MyMain
+        DeploymentEngine -action Remove -serverName MyServer01 -databaseName MyMain
+        DeploymentEngine -action ExportEnvironmentManifest -serverName MyServer01 -databaseName MyMain
+        DeploymentEngine -action ImportEnvironmentManifest -serverName MyServer01 -databaseName MyMain
+    #>
     [CmdletBinding()]
+    [Alias("de")]
     param (
         [Parameter(Mandatory = $true)][ValidateSet("Deploy", "Remove", "ExportEnvironmentManifest", "ImportEnvironmentManifest", "EnableFilestream", "DeploySilent", "RemoveSilent")][string]$command,
         [Parameter(Mandatory = $false)][ValidateNotNullOrEmpty()][string]$serverName,
@@ -97,18 +114,16 @@ function Start-DeploymentEngine {
     }
 }
 
-Export-ModuleMember Start-DeploymentEngine
-
-<#
-.Synopsis
-    Installs DeploymentManager.msi from the current branch binaries directory.
-.Description
-    Installs Deployment Manager from the .msi located in the current branch.
-.EXAMPLE
-    Install-DeploymentManager
-        Installs Deployment Manager from the current branch binaries directory.
-#>
 function global:Install-DeploymentManager {
+    <#
+    .Synopsis
+        Installs DeploymentManager.msi from the current branch binaries directory.
+    .Description
+        Installs Deployment Manager from the .msi located in the current branch.
+    .EXAMPLE
+        Install-DeploymentManager
+            Installs Deployment Manager from the current branch binaries directory.
+    #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$binariesDirectory
@@ -122,18 +137,16 @@ function global:Install-DeploymentManager {
     & $pathToInstallScript -deploymentManagerMsiDirectory $binariesDirectory
 }
 
-Export-ModuleMember -Function 'Install-DeploymentManager'
-
-<#
-.Synopsis
-    Uninstalls DeploymentManager.msi from the current branch binaries directory.
-.Description
-    Uninstalls Deployment Manager from the .msi located in the current branch.
-.EXAMPLE
-    Uninstall-DeploymentManager
-        Uninstalls Deployment Manager using the .msi in the current branch binaries directory.
-#>
 function global:Uninstall-DeploymentManager {
+    <#
+    .Synopsis
+        Uninstalls DeploymentManager.msi from the current branch binaries directory.
+    .Description
+        Uninstalls Deployment Manager from the .msi located in the current branch.
+    .EXAMPLE
+        Uninstall-DeploymentManager
+            Uninstalls Deployment Manager using the .msi in the current branch binaries directory.
+    #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$binariesDirectory
@@ -146,8 +159,6 @@ function global:Uninstall-DeploymentManager {
     $pathToUninstallScript = [System.IO.Path]::Combine($binariesDirectory, 'AutomatedDeployment\UninstallDeploymentManager.ps1')
     & $pathToUninstallScript -deploymentManagerMsiDirectory $binariesDirectory
 }
-
-Export-ModuleMember -Function 'Uninstall-DeploymentManager'
 
 function Get-EnvironmentFromXml([string]$xpath) {
     #I'd love it if this returned an object model representation such as Environment.expertPath or Environment.networkSharePath
@@ -166,13 +177,13 @@ function Get-EnvironmentFromXml([string]$xpath) {
     return $null;
 }
 
-<#
-.Synopsis
-    Returns the Database Server\Instance for the current local deployment.
-.Description
-    Uses Get-EnvironmentFromXml to return the Database Server\Instance for the current local deployment.
-#>
-function Get-DatabaseServer() {
+function global:Get-DatabaseServer {
+    <#
+    .Synopsis
+        Returns the Database Server\Instance for the current local deployment.
+    .Description
+        Uses Get-EnvironmentFromXml to return the Database Server\Instance for the current local deployment.
+    #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$binariesDirectory
@@ -209,15 +220,13 @@ function Get-DatabaseServer() {
     }
 }
 
-Export-ModuleMember -Function Get-DatabaseServer
-
-<#
-.Synopsis
-    Returns the database name for the current local deployment.
-.Description
-    Uses Get-EnvironmentFromXml to return the the database name for the current local deployment.
-#>
-function Get-Database() {
+function global:Get-Database {
+    <#
+    .Synopsis
+        Returns the database name for the current local deployment.
+    .Description
+        Uses Get-EnvironmentFromXml to return the database name for the current local deployment.
+    #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$binariesDirectory
@@ -242,5 +251,3 @@ function Get-Database() {
         return $database
     }
 }
-
-Export-ModuleMember -Function Get-Database

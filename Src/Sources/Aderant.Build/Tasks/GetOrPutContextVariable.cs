@@ -13,8 +13,12 @@ namespace Aderant.Build.Tasks {
 
         private bool hasChanges;
 
+        /// The optional bucket to place the variable into
         public string Scope { get; set; }
 
+        /// <summary>
+        /// The name of the variable to get or put
+        /// </summary>
         public string VariableName { get; set; }
 
         [Output]
@@ -52,6 +56,9 @@ namespace Aderant.Build.Tasks {
 
                     return !Log.HasLoggedErrors;
                 }
+
+                PipelineService.PutVariable(Scope ?? string.Empty, VariableName, Value);
+                return !Log.HasLoggedErrors;
             }
 
             if (Properties != null) {
@@ -89,7 +96,7 @@ namespace Aderant.Build.Tasks {
             if (hasChanges) {
                 // Post the values up to the build coordinator
                 foreach (var item in Context.Variables) {
-                    Service.PutVariable("", item.Key, item.Value);
+                    PipelineService.PutVariable("", item.Key, item.Value);
                 }
             }
         }

@@ -204,7 +204,7 @@ namespace Aderant.Build.IO
 
             if (!Directory.Exists(sourceDir))
             {
-                throw new IOException($"Source path does not exist or is not a directory.");
+                throw new IOException($"Source path '{sourceDir}' does not exist or is not a directory.");
             }
 
             if (Directory.Exists(targetDir))

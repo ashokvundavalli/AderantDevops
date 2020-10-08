@@ -1,8 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks.Dataflow;
+using Aderant.Build.Packaging;
+using Aderant.Build.Utilities;
 
 namespace Aderant.Build {
     public static class FileSystemExtensions {
@@ -55,6 +59,24 @@ namespace Aderant.Build {
         internal static Stream ToStream(this string contents) {
             byte[] byteArray = Encoding.UTF8.GetBytes(contents);
             return new MemoryStream(byteArray);
+        }
+
+        /// <summary>
+        /// Convenient method for replicating tree without copying. Delegates to <see cref="IFileSystem.BulkCopy"/>.
+        /// </summary>
+        public static ActionBlock<PathSpec> CopyDirectoryUsingLinks(this IFileSystem fileSystem, string source, string target) {
+            ErrorUtilities.IsNotNull(source, nameof(source));
+            ErrorUtilities.IsNotNull(target, nameof(target));
+
+            source = PathUtility.EnsureTrailingSlash(source);
+            target = PathUtility.EnsureTrailingSlash(target);
+
+            IEnumerable<string> files = fileSystem.GetFiles(source);
+            IEnumerable<PathSpec> destinationMap = files.Select(location => new PathSpec(
+                location,
+                location.Replace(source, target, StringComparison.OrdinalIgnoreCase), true));
+
+            return fileSystem.BulkCopy(destinationMap, true, false, true);
         }
     }
 }

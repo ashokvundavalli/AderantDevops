@@ -1,10 +1,8 @@
 ﻿using System;
-using System.IO;
 using System.Linq;
 using System.Threading;
-using System.Xml.Linq;
-using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyResolver;
+using Aderant.Build.DependencyResolver.Resolvers;
 using Aderant.Build.Logging;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
@@ -12,14 +10,13 @@ using Microsoft.Build.Utilities;
 namespace Aderant.Build.Tasks {
     public class GetDependencies : Task, ICancelableTask {
         private readonly CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+        private bool? enableReplication;
 
         public bool EnableVerboseLogging { get; set; }
 
         public string ModulesRootPath { get; set; }
 
         public string DropPath { get; set; }
-
-        private ExpertManifest productManifest;
 
         public string ProductManifest { get; set; }
 
@@ -43,7 +40,7 @@ namespace Aderant.Build.Tasks {
         /// <value>
         /// The modules in build.
         /// </value>
-        public ITaskItem[] ModulesInBuild { get; set; }
+        public ITaskItem[] ModulesInBuild { get; set; } = Array.Empty<ITaskItem>();
 
         /// <summary>
         /// Gets or sets the path to the branch configuration file.
@@ -61,128 +58,41 @@ namespace Aderant.Build.Tasks {
         /// </value>
         public bool Update { get; set; }
 
-        private bool? enableReplication;
-
         public bool EnableReplication {
-            get => enableReplication.GetValueOrDefault(false);
-            set => enableReplication = value;
+            get { return enableReplication.GetValueOrDefault(false); }
+            set { enableReplication = value; }
         }
 
-        internal XDocument ConfigurationXml { get; set; }
-
-        public string[] EnabledResolvers {
-            get => new string[0];
-            set {
-                if (ConfigurationXml == null) {
-                    if (value != null && value.Length > 0) {
-                        var resolvers = new XElement("DependencyResolvers");
-                        foreach (string name in value) {
-                            resolvers.Add(new XElement(name));
-                        }
-
-                        var doc = new XDocument();
-                        doc.Add(new XElement("BranchConfig", resolvers));
-
-                        ConfigurationXml = doc;
-                    }
-                }
-            }
-        }
+        /// <remarks>
+        /// NupkgResolver is enabled by default if no resolvers are specified.
+        /// </remarks>
+        public string[] EnabledResolvers { get; set; } = {nameof(NupkgResolver)};
 
         public override bool Execute() {
             BuildTaskLogger logger = new BuildTaskLogger(this);
 
-            ConfigureTask();
             ExecuteInternal(logger);
 
             return !Log.HasLoggedErrors;
         }
 
-        internal void ConfigureTask() {
-            ModulesRootPath = Path.GetFullPath(ModulesRootPath);
-
-            if (!string.IsNullOrWhiteSpace(ProductManifest)) {
-                ProductManifest = Path.GetFullPath(ProductManifest);
-
-                if (File.Exists(ProductManifest)) {
-                    productManifest = ExpertManifest.Load(ProductManifest);
-                    productManifest.ModulesDirectory = ModulesRootPath;
-                }
-            }
-
-            LoadConfigurationXml();
-
-            // Enable NupkgResolver by default if no resolvers are specified.
-            if (EnabledResolvers == null || EnabledResolvers.Length == 0) {
-                EnabledResolvers = new string[] {
-                    "NupkgResolver"
-                };
-            }
-
-            ConfigureDependenciesDirectory();
-            ConfigureReplication();
-        }
-
-        public void ExecuteInternal(Logging.ILogger logger) {
+        private void ExecuteInternal(Logging.ILogger logger) {
             LogParameters(logger);
-            
-            var workflow = new ResolverWorkflow(logger) {
-                ConfigurationXml = ConfigurationXml,
-                ModulesRootPath = ModulesRootPath,
+
+            var workflow = new ResolverWorkflow(logger, new PhysicalFileSystem()) {
                 DropPath = DropPath
             };
 
-            if (!EnableReplication) {
-                workflow.Request.ReplicationExplicitlyDisabled = true;
-            }
+            workflow
+                .WithRootPath(ModulesRootPath)
+                .UseReplication(EnableReplication)
+                .WithConfigurationFile(BranchConfigFile)
+                .WithResolvers(EnabledResolvers)
+                .WithProductManifest(ProductManifest)
+                .UseDependenciesDirectory(DependenciesDirectory)
+                .WithDirectoriesInBuild(ModulesInBuild.Select(s => s.ItemSpec).Union(new[] {ModuleName}, StringComparer.OrdinalIgnoreCase));
 
-            workflow.DependenciesDirectory = DependenciesDirectory;
-            workflow.Request.ModuleFactory = productManifest;
-
-            if (!string.IsNullOrEmpty(ModuleName)) {
-                workflow.Request.AddModule(ModuleName);
-            }
-
-            if (ModulesInBuild != null) {
-                foreach (ITaskItem module in ModulesInBuild.Distinct()) {
-                    workflow.Request.AddModule(module.ItemSpec);
-                }
-            }
-
-            if (Update) {
-                workflow.Request.Update = Update;
-            }
-
-            workflow.Run(cancellationTokenSource.Token, EnableVerboseLogging);
-        }
-
-        internal void LoadConfigurationXml() {
-            if (!string.IsNullOrWhiteSpace(BranchConfigFile)) {
-                ConfigurationXml = XDocument.Load(BranchConfigFile);
-            }
-        }
-
-        internal void ConfigureDependenciesDirectory() {
-            if (string.IsNullOrWhiteSpace(DependenciesDirectory)) {
-                string dependenciesSubDirectory = ConfigurationXml?.Descendants("DependenciesDirectory").FirstOrDefault()?.Value;
-
-                if (!string.IsNullOrWhiteSpace(dependenciesSubDirectory)) {
-                    DependenciesDirectory = Path.Combine(ModulesRootPath, dependenciesSubDirectory);
-                }
-            }
-        }
-
-        internal void ConfigureReplication() {
-            if (enableReplication == null) {
-                string replicationSetting = ConfigurationXml?.Descendants("DependencyReplicationEnabled").FirstOrDefault()?.Value;
-
-                if (string.IsNullOrWhiteSpace(replicationSetting)) {
-                    // Enable replication by default for backwards compatibility.
-                    EnableReplication = productManifest != null;
-                } else {
-                    EnableReplication = Convert.ToBoolean(replicationSetting);
-                }
-            }
+            workflow.Run(Update, EnableVerboseLogging, cancellationTokenSource.Token);
         }
 
         /// <summary>
@@ -194,7 +104,7 @@ namespace Aderant.Build.Tasks {
                 cancellationTokenSource.Cancel();
             }
         }
-        
+
         private void LogParameters(Logging.ILogger logger) {
             logger.Info($"ModulesRootPath: {ModulesRootPath}");
             logger.Info($"DropPath: {DropPath}");

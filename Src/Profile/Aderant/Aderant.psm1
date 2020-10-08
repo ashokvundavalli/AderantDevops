@@ -7,7 +7,7 @@ $InformationPreference = 'Continue'
 $imports = @(
     (Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath '..\..\Build\Functions') -Filter '*.ps1'),
     (Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath 'Functions') -Filter '*.ps1'),
-    (Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath 'Modules') -Filter '*.psm1')
+    (Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath 'Modules') -Filter '*.psd1')
 )
 
 foreach ($directory in $imports) {
@@ -21,7 +21,7 @@ foreach ($directory in $imports) {
             continue
         }
 
-        if ($file.Extension -eq '.psm1') {
+        if ($file.Extension -eq '.psd1') {
             if ($DebugPreference -eq 'SilentlyContinue') {
                 Import-Module $file.FullName -DisableNameChecking
             } else {
@@ -50,7 +50,6 @@ function Initialize-Module {
 
 Initialize-Module
 
-[string]$global:BranchConfigPath = [string]::Empty
 [string]$ShellContext.BranchName = [string]::Empty
 [string]$script:BranchLocalDirectory = [string]::Empty
 [string]$global:BranchServerDirectory = [string]::Empty
@@ -92,7 +91,7 @@ Initialize-Module
 $Host.UI.RawUI.WindowTitle = Get-Random -InputObject $titles
 
 <#
-Expert specific variables
+Expert-specific variables
 #>
 
 # gets a value from the global defaults storage, or creates a default
@@ -145,10 +144,11 @@ function global:GetDefaultValue {
     }
 }
 
-<#
-    Default Path and Binaries Directory information.
-#>
 function Set-DefaultPaths {
+    <#
+        Default Path and Binaries Directory information.
+    #>
+
     Write-Debug 'Setting information from your defaults.'
 
     $script:BranchLocalDirectory = (GetDefaultValue -propertyName 'DevBranchFolder')
@@ -162,12 +162,12 @@ function Set-DefaultPaths {
     }
 }
 
-<#
-Set-ExpertSourcePath is called on startup.  It sets $ShellContext.BranchExpertVersion
-Pre-8.0 environments still use the old folder structure where everything was in the binaries folder, so BranchExpertSourceDirectory is set
-according to the setting in the ExpertManifest.xml file.
-#>
 function Set-ExpertSourcePath {
+    <#
+    Set-ExpertSourcePath is called on startup.  It sets $ShellContext.BranchExpertVersion
+    Pre-8.0 environments still use the old folder structure where everything was in the binaries folder, so BranchExpertSourceDirectory is set
+    according to the setting in the ExpertManifest.xml file.
+    #>
     if (Test-Path $ShellContext.ProductManifestPath) {
         [xml]$manifest = Get-Content $ShellContext.ProductManifestPath
         [string]$branchExpertVersion = $manifest.ProductManifest.ExpertVersion
@@ -192,7 +192,7 @@ function Find-InstallLocation ($programName) {
         $key = [Microsoft.Win32.Registry]::LocalMachine.OpenSubKey('SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall')
         foreach ($installKey in $key.GetSubKeyNames()) {
             $productKey = $key.OpenSubKey($installKey)
-    
+
             foreach ($productEntry in $productKey.GetValueNames()) {
                 if ($productEntry -eq "DisplayName") {
                     if ($productKey.GetValue($productEntry) -eq "Expert Deployment Manager") {
@@ -226,7 +226,9 @@ function Set-ExpertVariables {
     }
 }
 
-function Set-CurrentModule {
+function global:Set-CurrentModule {
+    [CmdletBinding()]
+    [Alias('cm')]
     param (
         [Parameter(Mandatory=$false)][string]$name
     )
@@ -244,7 +246,7 @@ function Set-CurrentModule {
 
         if ($null -ne $script:loadedModuleFeatures) {
             foreach ($currentModuleFeature in $script:loadedModuleFeatures) {
-                if (Get-Module | Where-Object -Property Name -eq $currentModuleFeature.Name) {
+                if (Get-Module -All | Where-Object -Property Name -eq $currentModuleFeature.Name) {
                     Remove-Module $currentModuleFeature
                 }
             }
@@ -260,23 +262,12 @@ function Set-CurrentModule {
 
             Write-Debug "Setting repository: $name"
 
-            if (-not (Get-Module -Name 'Git')) {
-                Import-Module "$PSScriptRoot\Git.psm1" -Global
+            if (-not (Get-Module -Name 'Git' -All)) {
+                Import-Module "$PSScriptRoot\Git.psd1" -Global
             }
 
             Set-Location $ShellContext.CurrentModulePath
-
-            if ([string]::IsNullOrWhiteSpace($global:BranchConfigPath)) {
-                [string]$buildDirectory = Join-Path -Path $ShellContext.CurrentModulePath -ChildPath 'Build'
-                If (Test-Path -Path $buildDirectory) {
-                    [string]$manifest = Join-Path -Path $buildDirectory -ChildPath 'ExpertManifest.xml'
-                    [string]$config = Join-Path -Path $buildDirectory -ChildPath 'BranchConfig.xml'
-
-                    if ((Test-Path -Path $manifest) -and (Test-Path -Path $config)) {
-                        $global:BranchConfigPath = $buildDirectory
-                    }
-                }
-            }
+            Get-BuildConfigFilePaths -startingDirectory $ShellContext.CurrentModulePath -setPathAsGlobalVariable $true | Out-Null
 
             if ((IsGitRepository $ShellContext.CurrentModulePath) -or (IsGitRepository ([System.IO.DirectoryInfo]::new($ShellContext.CurrentModulePath).Parent.FullName))) {
                 ImportFeatureModules $ShellContext.CurrentModulePath
@@ -346,7 +337,7 @@ function ImportFeatureModules([string]$path) {
 
 function ImportFeatureModule([string]$featureModule) {
     Import-Module -Name $featureModule -Scope Global -WarningAction SilentlyContinue
-    $currentModuleFeature = Get-Module | Where-Object -Property Path -eq $featureModule
+    $currentModuleFeature = Get-Module -All | Where-Object -Property Path -eq $featureModule
     if ($null -eq $script:loadedModuleFeatures) {
         $script:loadedModuleFeatures = @()
     }
@@ -356,13 +347,14 @@ function ImportFeatureModule([string]$featureModule) {
     Get-Command -Module $currentModuleFeature.Name
 }
 
-<#
-.Synopsis
-    Installs the latest version of the Software Factory
-.Description
-    Will uninstall the previous vsix and then install the latest version from the drop location
-#>
 function Install-LatestSoftwareFactory([switch]$local) {
+    <#
+    .Synopsis
+        Installs the latest version of the Software Factory
+    .Description
+        Will uninstall the previous vsix and then install the latest version from the drop location
+    #>
+
     # Paket-TODO: don't perfom this check now, revisit this if necessary when we have successfully switched to Paket
     # (the current check is invalid anyway as it check a wrong SW Factory version in the wrong VS version)
     #if (Check-LatestSoftwareFactory) {
@@ -376,21 +368,25 @@ function Install-LatestSoftwareFactory([switch]$local) {
     #}
 }
 
-<#
-.Synopsis
-    Installs the latest version of the given module
-.Description
-    Will uninstall the previous vsix and then install the latest version from the drop location
-.Example
-    Install-LatestVisualStudioExtension SDK.Database
-    Will install the latest version of the SDK.Database project
-#>
-function Install-LatestVisualStudioExtension(
-    [Parameter(Mandatory = $true)]
-    [ValidateNotNullOrEmpty()]
-    [ValidateSet('SDK.Database', 'Libraries.SoftwareFactory')]
-    [String]$module,
-    [switch]$local) {
+function Install-LatestVisualStudioExtension {
+    <#
+    .Synopsis
+        Installs the latest version of the given module
+    .Description
+        Will uninstall the previous vsix and then install the latest version from the drop location
+    .Example
+        Install-LatestVisualStudioExtension SDK.Database
+        Will install the latest version of the SDK.Database project
+    #>
+
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [ValidateSet('SDK.Database', 'Libraries.SoftwareFactory')]
+        [string]$module,
+        [switch]$local
+    ) 
 
     $installDetails = $null
 
@@ -420,80 +416,84 @@ function Install-LatestVisualStudioExtension(
 }
 
 function Install-LatestVisualStudioExtensionImpl($installDetails, [switch]$local) {
-    # Uninstall the extension
-    Write-Host "Uninstalling $($installDetails.ProductManifestName)..."
-    $vsix = "VSIXInstaller.exe"
-    Start-Process -FilePath $vsix -ArgumentList "/q /uninstall:$($info.ExtensionName)" -Wait -PassThru | Out-Null
-
-    # Take VSIX out of local source directory
-    if ($local) {
-        Write-Host "Attempting to install $($info.ProductManifestName) from local source directory."
-        $vsixFile = [System.IO.Path]::Combine($ShellContext.BranchServerDirectory, $info.ExtensionFile)
-    } else { # Take VSIX from drop folder
-        Write-Host "Attempting to install $($info.ProductManifestName) from drop folder."
-        $localInstallDirectory = [System.IO.Path]::Combine($script:BranchLocalDirectory, $info.ProductManifestName + ".Install")
-
-        [xml]$manifest = Get-Content $ShellContext.ProductManifestPath
-        [System.Xml.XmlNode]$module = $manifest.ProductManifest.Modules.SelectNodes("Module") | Where-Object { $_.Name.Contains($info.ProductManifestName)}
-
-        $dropPathVSIX = (GetPathToBinaries $module $ShellContext.BranchServerDirectory)
-
-        if (-not (Test-Path $localInstallDirectory)) {
-            New-Item $localInstallDirectory -ItemType directory
-        } else {
-            Remove-Item -Path "$localInstallDirectory\*" -Recurse -Force 
-        }
-
-        CopyContents -copyFrom $dropPathVSIX -copyTo $localInstallDirectory
-
-        $vsixFile = [System.IO.Path]::Combine($localInstallDirectory, $info.ExtensionFile)
-    }
-
-    Write-Host $vsixFile
-
-    if ([System.IO.File]::Exists($vsixFile)) {
-        $lastWriteTime = (Get-ChildItem $vsixFile).LastWriteTime
-        Write-Host "VSIX updated on $lastWriteTime"
-        Write-Host "Installing $($info.ProductManifestPathName). Please wait..."
-        Start-Process -FilePath $vsix -ArgumentList "/quiet $vsixFile" -Wait -PassThru | Out-Null
-        $errorsOccurred = Output-VSIXLog
-
-        if (-not $errorsOccurred) {
-            Write-Host "Updated $($info.ProductManifestPathName). Restart Visual Studio for the changes to take effect."
-        } else {
-            Write-Host ""
-            $displayName = $info.ExtensionDisplayName
-            Write-Host -ForegroundColor Yellow "Something went wrong here. If you open Visual Studio and go to 'TOOLS -> Exensions and Updates' check if there is the '$displayName' extension installed and disabled. If so, remove it by hitting 'Uninstall' and try this command again."
+    begin {
+        function Output-VSIXLog {
+            $errorsOccurred = $false
+            $lastLogFile = Get-ChildItem $env:TEMP | Where-Object { $_.Name.StartsWith("VSIX") } | Sort-Object LastWriteTime | Select-Object -last 1
+        
+            if ($null -ne $lastLogFile) {
+                $logFileContent = Get-Content $lastLogFile.FullName
+                foreach ($line in $logFileContent) {
+                    if ($line.Contains("Exception")) {
+                        $errorsOccurred = $true
+                        Write-Host -ForegroundColor Red $line
+                        notepad $lastLogFile.FullName
+                    }
+                }
+            }
+            return $errorsOccurred
         }
     }
-}
 
-function Output-VSIXLog {
-    $errorsOccurred = $false
-    $lastLogFile = Get-ChildItem $env:TEMP | Where-Object { $_.Name.StartsWith("VSIX") } | Sort-Object LastWriteTime | Select-Object -last 1
+    process {
+        # Uninstall the extension
+        Write-Host "Uninstalling $($installDetails.ProductManifestName)..."
+        $vsix = "VSIXInstaller.exe"
+        Start-Process -FilePath $vsix -ArgumentList "/q /uninstall:$($info.ExtensionName)" -Wait -PassThru | Out-Null
 
-    if ($null -ne $lastLogFile) {
-        $logFileContent = Get-Content $lastLogFile.FullName
-        foreach ($line in $logFileContent) {
-            if ($line.Contains("Exception")) {
-                $errorsOccurred = $true
-                Write-Host -ForegroundColor Red $line
-                notepad $lastLogFile.FullName
+        # Take VSIX out of local source directory
+        if ($local) {
+            Write-Host "Attempting to install $($info.ProductManifestName) from local source directory."
+            $vsixFile = [System.IO.Path]::Combine($ShellContext.BranchServerDirectory, $info.ExtensionFile)
+        } else { # Take VSIX from drop folder
+            Write-Host "Attempting to install $($info.ProductManifestName) from drop folder."
+            $localInstallDirectory = [System.IO.Path]::Combine($script:BranchLocalDirectory, $info.ProductManifestName + ".Install")
+
+            [xml]$manifest = Get-Content $ShellContext.ProductManifestPath
+            [System.Xml.XmlNode]$module = $manifest.ProductManifest.Modules.SelectNodes("Module") | Where-Object { $_.Name.Contains($info.ProductManifestName)}
+
+            $dropPathVSIX = (GetPathToBinaries $module $ShellContext.BranchServerDirectory)
+
+            if (-not (Test-Path $localInstallDirectory)) {
+                New-Item $localInstallDirectory -ItemType directory
+            } else {
+                Remove-Item -Path "$localInstallDirectory\*" -Recurse -Force
+            }
+
+            CopyContents -copyFrom $dropPathVSIX -copyTo $localInstallDirectory
+
+            $vsixFile = [System.IO.Path]::Combine($localInstallDirectory, $info.ExtensionFile)
+        }
+
+        Write-Host $vsixFile
+
+        if ([System.IO.File]::Exists($vsixFile)) {
+            $lastWriteTime = (Get-ChildItem $vsixFile).LastWriteTime
+            Write-Host "VSIX updated on $lastWriteTime"
+            Write-Host "Installing $($info.ProductManifestPathName). Please wait..."
+            Start-Process -FilePath $vsix -ArgumentList "/quiet $vsixFile" -Wait -PassThru | Out-Null
+            $errorsOccurred = Output-VSIXLog
+
+            if (-not $errorsOccurred) {
+                Write-Host "Updated $($info.ProductManifestPathName). Restart Visual Studio for the changes to take effect."
+            } else {
+                Write-Host ""
+                $displayName = $info.ExtensionDisplayName
+                Write-Host -ForegroundColor Yellow "Something went wrong here. If you open Visual Studio and go to 'TOOLS -> Exensions and Updates' check if there is the '$displayName' extension installed and disabled. If so, remove it by hitting 'Uninstall' and try this command again."
             }
         }
     }
-    return $errorsOccurred
 }
 
-<#
-.Synopsis
-    Sets up visual studio environment, called from Profile.ps1 when starting PS.
-.Description
-    Sets up visual studio environment, called from Profile.ps1 when starting PS.
-.PARAMETER initialize
-    Sets branch paths and installs Pester.
-#>
 function Set-Environment {
+    <#
+    .Synopsis
+        Sets up visual studio environment, called from Profile.ps1 when starting PS.
+    .Description
+        Sets up visual studio environment, called from Profile.ps1 when starting PS.
+    .PARAMETER initialize
+        Sets branch paths and installs Pester.
+    #>
     param (
         [switch]$Initialize
     )
@@ -551,7 +551,7 @@ function global:SetDefaultValue {
     [Environment]::SetEnvironmentVariable("Expert$propertyName", $defaultValue, "User")
 }
 
-function Open-ModuleSolution {
+function global:Open-ModuleSolution {
     <#
     .Synopsis
         Opens the solution for a module in the current branch
@@ -569,6 +569,7 @@ function Open-ModuleSolution {
 
     #>
     [CmdletBinding()]
+    [Alias('vs')]
     param (
         [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$ModuleName,
         [switch]$getDependencies,
@@ -623,9 +624,9 @@ function Open-ModuleSolution {
         }
 
         Write-Host "Opening solution for module: $ModuleName"
-        $expertSuiteModuleSolutionPath = Join-Path $expertSuiteRootPath "$ModuleName.sln"       
-        $devenvPath = ""
-        $codePath = ""
+        $expertSuiteModuleSolutionPath = Join-Path $expertSuiteRootPath "$ModuleName.sln"
+        $devenvPath = [string]::Empty
+        $codePath = [string]::Empty
 
         if (Test-Path $expertSuiteModuleSolutionPath) {
             $devenvPath = $expertSuiteModuleSolutionPath
@@ -679,13 +680,13 @@ function TabExpansion([string] $line, [string] $lastword) {
         $parser = [Aderant.Build.AutoCompletionParser]::new($line, $lastword, $aliases)
 
         # Evaluate Branches
-        Try {
+        try {
             foreach ($tabExpansionParm in $global:expertTabBranchExpansions) {
                 if ($parser.IsAutoCompletionForParameter($tabExpansionParm.CommandName.ToString(), $tabExpansionParm.ParameterName.ToString(), $tabExpansionParm.IsDefault.IsPresent)) {
                     Get-ExpertBranches $lastword | Get-Unique
                 }
             }
-        } Catch {
+        } catch {
             [system.exception]
             Write-Host $_.Exception.ToString()
         }
@@ -724,7 +725,6 @@ function Add-ModuleExpansionParameter {
 
         # Evaluate Modules
         try {
-
             $parser.GetModuleMatches($wordToComplete, $ShellContext.CurrentModulePath, $ShellContext.BranchModulesDirectory, $ShellContext.ProductManifestPath) | Get-Unique | ForEach-Object {
                     [System.Management.Automation.CompletionResult]::new($_)
             }
@@ -769,6 +769,25 @@ function Add-BranchExpansionParameter([string]$CommandName, [string]$ParameterNa
     $global:expertTabBranchExpansions += $objNewExpansion
 }
 
+function Test-ExpertPackageFeed {
+    $p = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), [System.IO.Path]::GetRandomFileName())
+    [void](New-Item -Path $p -ItemType 'Directory')
+
+    try {
+        Push-Location $p
+
+    $c = @'
+source https://expertpackages.azurewebsites.net/v3/index.json
+nuget Aderant.Build.Analyzer
+'@
+
+        Set-Content -Path "$p\paket.dependencies" $c
+        & $ShellContext.PackagingTool update --verbose
+    } finally {
+        Pop-Location
+    }
+}
+
 # Add module auto completion scenarios
 Add-ModuleExpansionParameter -CommandName "Set-CurrentModule" -ParameterName "name"
 Add-ModuleExpansionParameter -CommandName "Branch-Module" -ParameterName "moduleName"
@@ -788,68 +807,23 @@ Add-ModuleExpansionParameter -CommandName "Copy-BinToEnvironment" -ParameterName
 Add-ModuleExpansionParameter -CommandName "CleanupIISCache" -ParameterName "moduleNames"
 Add-ModuleExpansionParameter –CommandName "Get-WebDependencies" –ParameterName "ModuleName"
 
-<#
-.Synopsis
-    Disables the Expert prompt with branch and module information
-.Description
-    Disable-ExpertPrompt
-#>
-function Disable-ExpertPrompt() {
+function Disable-ExpertPrompt {
+    <#
+    .Synopsis
+        Disables the Expert prompt with branch and module information
+    .Description
+        Disable-ExpertPrompt
+    #>
+
     # Copy the current prompt function so we can fall back to it if we're not supposed to handle a command.
-    Function global:Prompt {
+    function global:Prompt {
         $(if (test-path variable:/PSDebugContext) { '[DBG]: ' }
             else { '' }) + 'PS ' + $(Get-Location) `
             + $(if ($nestedpromptlevel -ge 1) { '>>' }) + '> '
     }
 }
 
-# Export functions and variables we want external to this script.
-$functionsToExport = @(
-    [PSCustomObject]@{ function = 'Run-ExpertUITests'; alias = $null; },
-    [PSCustomObject]@{ function = 'Run-ExpertSanityTests'; alias = 'rest'; },
-    [PSCustomObject]@{ function = 'Run-ExpertVisualTests'; alias = 'revt'; },
-    [PSCustomObject]@{ function = 'Build-ExpertModules'; alias = $null; },
-    [PSCustomObject]@{ function = 'Build-ExpertPatch'; alias = $null; },
-    [PSCustomObject]@{ function = 'Edit-ExpertOwner'; alias = $null; },
-    [PSCustomObject]@{ function = 'Clear-ExpertCache'; alias = 'ccache'; },
-    [PSCustomObject]@{ function = 'Copy-BinariesFromCurrentModule'; alias = 'cb'; },
-    [PSCustomObject]@{ function = 'Disable-ExpertPrompt'; advanced = $true; alias = $null; },
-    [PSCustomObject]@{ function = 'Generate-SystemMap'; alias = $null; },
-    [PSCustomObject]@{ function = 'Get-CurrentModule'; alias = $null; },
-    [PSCustomObject]@{ function = 'Get-Dependencies'; alias = 'gd'; },
-    [PSCustomObject]@{ function = 'Get-Database'; alias = $null; },
-    [PSCustomObject]@{ function = 'Get-DatabaseServer'; alias = $null; },
-    [PSCustomObject]@{ function = 'Get-Product'; alias = $null; },
-    [PSCustomObject]@{ function = 'Get-ProductBuild'; alias = 'gpb'; },
-#    [PSCustomObject]@{ function = 'Install-LatestSoftwareFactory'; alias = 'usf'; },
-#    [PSCustomObject]@{ function = 'Install-LatestVisualStudioExtension'; alias = $null; },
-    [PSCustomObject]@{ function = 'Open-ModuleSolution'; alias = 'vs'; },
-    [PSCustomObject]@{ function = 'Set-CurrentModule'; alias = 'cm'; },
-    [PSCustomObject]@{ function = 'Set-Environment'; advanced = $true; alias = $null; },
-    [PSCustomObject]@{ function = 'Start-dbgen'; alias = 'dbgen'; },
-    [PSCustomObject]@{ function = 'Start-DeploymentEngine'; alias = 'de'; },
-    [PSCustomObject]@{ function = 'Start-DeploymentManager'; alias = 'dm'; },
-    [PSCustomObject]@{ function = 'Prepare-Database'; alias = 'dbprep'; },
-    [PSCustomObject]@{ function = 'Update-Database'; alias = 'upd'; },
-    [PSCustomObject]@{ function = 'CleanupIISCache'; alias = $null; },
-
-    # IIS related functions
-    [PSCustomObject]@{ function = 'Hunt-Zombies'; alias = 'hz'},
-    [PSCustomObject]@{ function = 'Remove-Zombies'; alias = 'rz'},
-    [PSCustomObject]@{ function = 'Get-WorkerProcessIds'; alias = 'wpid'}
-)
-
-# Exporting the functions and aliases
-foreach ($toExport in $functionsToExport) {
-    Export-ModuleMember -function $toExport.function
-
-    if ($toExport.alias) {
-        Set-Alias $toExport.alias $toExport.function
-        Export-ModuleMember -Alias $toExport.alias
-    }
-}
-
-# paths
+# Paths
 Export-ModuleMember -variable CurrentModuleName
 Export-ModuleMember -variable BranchServerDirectory
 Export-ModuleMember -variable BranchLocalDirectory
@@ -858,35 +832,12 @@ Export-ModuleMember -variable BranchBinariesDirectory
 Export-ModuleMember -variable BranchName
 Export-ModuleMember -variable BranchModulesDirectory
 Export-ModuleMember -variable ProductManifestPath
-
-#Check-Vsix "NUnit3.TestAdapter" "0da0f6bd-9bb6-4ae3-87a8-537788622f2d" "NUnit.NUnit3TestAdapter"
-#Check-Vsix "Aderant.DeveloperTools" "b36002e4-cf03-4ed9-9f5c-bf15991e15e4"
-
-#$ShellContext.LastVsixCheckCommit("", "LastVsixCheckCommit", $ShellContext.CurrentCommit) | Out-Null
+Export-ModuleMember -Variable $script:ShellContext
 
 Set-Environment -Initialize
 
 Write-Information -MessageData "Type:
     Get-Command -Module 'Aderant'
 For a list of commands.$([System.Environment]::NewLine)"
-
-function Test-ExpertPackageFeed {
-    $p = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), [System.IO.Path]::GetRandomFileName())
-    new-item -type directory $p
-    Push-Location $p
-
-$c = @'
-source https://expertpackages.azurewebsites.net/v3/index.json
-nuget Aderant.Build.Analyzer
-'@
-
-    Set-Content -Path "$p\paket.dependencies" $c
-    & $ShellContext.PackagingTool update --verbose
-
-    Pop-Location
-}
-
-Export-ModuleMember -Function Test-ExpertPackageFeed
-Export-ModuleMember -Variable $script:ShellContext
 
 Set-Location -Path $script:BranchLocalDirectory

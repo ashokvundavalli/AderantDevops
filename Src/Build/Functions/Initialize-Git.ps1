@@ -45,10 +45,11 @@ function Add-GitCommandIntercept {
                                 $newArgs += '-e'
                                 $newArgs += $dirToKeep
                             }
+                            break
                         }
                     }
-                
-                    & $command $newArgs				  
+
+                    & $command $newArgs
                 }
             }.GetNewClosure()
         }

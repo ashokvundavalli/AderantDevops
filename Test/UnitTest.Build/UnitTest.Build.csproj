@@ -121,12 +121,12 @@
     <Compile Include="DependencyResolver\DependencyRequirementTests.cs" />
     <Compile Include="DependencyResolver\Model\RemoteFileTests.cs" />
     <Compile Include="DependencyResolver\ResolverWorkflowTests.cs" />
+    <Compile Include="Tasks\BuildTestRunParametersXmlTests.cs" />
     <Compile Include="Utilities\PathComparerTests.cs" />
     <Compile Include="PipelineService\BuildPipelineServiceTests.cs" />
     <Compile Include="ProjectSystem\UnresolvedBuildDependencyProjectReferenceTests.cs" />
     <Compile Include="ProjectSystem\WixReferenceServiceTests.cs" />
     <Compile Include="Tasks\GenerateBuildPlanTests.cs" />
-    <Compile Include="Tasks\GetDependenciesTaskTests.cs" />
     <Compile Include="DirectoryMetadataServiceTests.cs" />
     <Compile Include="Packaging\FileRestoreTests.cs" />
     <Compile Include="ProjectSystem\ConfiguredProjectTests.cs" />

@@ -6,21 +6,17 @@ using Aderant.Build.Packaging;
 using static Aderant.Build.PhysicalFileSystem;
 
 namespace Aderant.Build {
-
     public interface IFileSystem2 : IFileSystem {
         string Root { get; }
-
-        void CopyViaLink(string fileLocation, string fileDestination, CreateSymlinkLink createLink);
     }
 
-    public interface IFileSystem {
-
+    public interface IFileSystem : IFileSystemLinkOps {
         void DeleteDirectory(string path, bool recursive);
 
         /// <summary>
         /// Returns the full path of files present in a directory that match the <see cref="inclusiveFilter"/>.
         /// </summary>
-        IEnumerable<string> GetFiles(string path, string inclusiveFilter, bool recursive);
+        IEnumerable<string> GetFiles(string path, string inclusiveFilter = null, bool recursive = true);
 
         IEnumerable<string> GetDirectories(string path, bool recursive = false);
 
@@ -74,7 +70,5 @@ namespace Aderant.Build {
         ActionBlock<PathSpec> BulkCopy(IEnumerable<PathSpec> pathSpecs, bool overwrite, bool useSymlinks = false, bool useHardlinks = false);
 
         void ExtractZipToDirectory(string sourceArchiveFileName, string destination, bool overwrite = false);
-
-        bool IsSymlink(string directory);
     }
 }

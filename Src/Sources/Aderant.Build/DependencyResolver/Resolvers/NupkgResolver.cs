@@ -4,9 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using System.Threading.Tasks;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyResolver.Model;
-using Aderant.Build.DependencyResolver.Models;
 using Aderant.Build.Logging;
 using Aderant.Build.Providers;
 
@@ -138,10 +138,11 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
         private void ServerBuildRestore(ResolverRequest resolverRequest, IEnumerable<IDependencyRequirement> requirements, CancellationToken cancellationToken) {
             var grouping = requirements.GroupBy(requirement => resolverRequest.GetDependenciesDirectory(requirement));
 
+            var fileSystem = new PhysicalFileSystem();
             foreach (var group in grouping) {
                 logger.Info("Resolving packages for path: " + group.Key, null);
 
-                PackageRestore(resolverRequest, group.Key, new PhysicalFileSystem(), group.ToList(), cancellationToken);
+                PackageRestore(resolverRequest, group.Key, fileSystem, group.ToList(), cancellationToken);
             }
         }
 
@@ -150,10 +151,12 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
                 manager.Add(requirements, resolverRequest);
 
                 if (resolverRequest.Update) {
-                    manager.Update(resolverRequest.Force);
+                    manager.Update(resolverRequest.Force, cancellationToken);
                 }
 
                 manager.Restore(resolverRequest.Force);
+
+                List<Task> replicationTasks = new List<Task>();
 
                 foreach (var requirement in requirements) {
                     cancellationToken.ThrowIfCancellationRequested();
@@ -171,15 +174,17 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
                                 continue;
                             }
 
-                            ReplicateToDependenciesDirectory(resolverRequest, directory, fileSystem, requirement);
+                            ReplicateToDependenciesDirectory(resolverRequest, directory, fileSystem, requirement, replicationTasks);
                         }
                     }
                 }
+
+                Task.WaitAll(replicationTasks.ToArray());
             }
         }
 
         // TODO: Remove this - now obsolete in 81+
-        private void ReplicateToDependenciesDirectory(ResolverRequest resolverRequest, string directory, IFileSystem2 fileSystem, IDependencyRequirement requirement) {
+        private void ReplicateToDependenciesDirectory(ResolverRequest resolverRequest, string directory, IFileSystem2 fileSystem, IDependencyRequirement requirement, List<Task> replicationTasks) {
             // For a build all we place the packages folder under dependencies
             // For a single module, it goes next to the dependencies folder
             if (requirement.Group == "Development") {
@@ -208,12 +213,12 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
                         // We need to do some "drafting" on the target path for Web module dependencies - a different destination path is
                         // used depending on the content type.
                         var selector = new WebContentDestinationRule(requirement, target);
-                        FileSystem.DirectoryCopyAsync(dir, target, selector.GetDestinationForFile, true, false).Wait();
+                        replicationTasks.Add(FileSystem.DirectoryCopyAsync(dir, target, selector.GetDestinationForFile, true, false));
                         return;
                     }
 
                     logger.Info("Replicating {0} to {1}", dir, target);
-                    fileSystem.CopyDirectory(dir, target);
+                    replicationTasks.Add(fileSystem.CopyDirectoryUsingLinks(dir, target).Completion);
                 }
             }
         }
@@ -223,6 +228,9 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
             return Path.Combine(directory, "packages", path, requirement.Name);
         }
 
+        /// <summary>
+        /// Used to bring this type into the application domain
+        /// </summary>
         public static void Initialize() {
         }
     }

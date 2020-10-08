@@ -1,19 +1,21 @@
-<#
-.Synopsis
-    Clears the Expert cache for the specified user.
-.Description
-    Clears the local and roaming caches for the specified user.
-.PARAMETER user
-    The user account to clear the Expert cache for.
-.PARAMETER environmentName
-    Remove the cache for a specific Expert environment.
-.PARAMETER removeCMSINI
-    Removes the CMS.INI file from AppData\Roaming\Aderant.
-.EXAMPLE
-    Clear-ExpertCache -user TTQA1 -environmentName ITEGG -removeCMSINI
-    This will clear the local and roaming caches for the ITEGG environment for TTQA1 and remove CMS.INI from AppData\Roaming\Aderant.
-#>
-function Clear-ExpertCache {
+function global:Clear-ExpertCache {
+    <#
+    .Synopsis
+        Clears the Expert cache for the specified user.
+    .Description
+        Clears the local and roaming caches for the specified user.
+    .PARAMETER user
+        The user account to clear the Expert cache for.
+    .PARAMETER environmentName
+        Remove the cache for a specific Expert environment.
+    .PARAMETER removeCMSINI
+        Removes the CMS.INI file from AppData\Roaming\Aderant.
+    .EXAMPLE
+        Clear-ExpertCache -user TTQA1 -environmentName ITEGG -removeCMSINI
+        This will clear the local and roaming caches for the ITEGG environment for TTQA1 and remove CMS.INI from AppData\Roaming\Aderant.
+    #>
+    [CmdletBinding()]
+    [Alias('ccache')]
     param(
         [Parameter(Mandatory = $false)] [string]$user = [Environment]::UserName,
         [Parameter(Mandatory = $false)] [string]$environmentName,
@@ -21,11 +23,11 @@ function Clear-ExpertCache {
     )
 
     [string]$cache = "Aderant"
-    [string]$localAppData = ""
-    [string]$roamingAppData = ""
+    [string]$localAppData = [string]::Empty
+    [string]$roamingAppData = [string]::Empty
 
     Write-Warning '***'
-    Write-Warning 'If the product has caching issues, please raise a bug in TFS'
+    Write-Warning 'If the product has caching issues, please raise a bug in TFS.'
     Write-Warning '***'
 
     if (-not [string]::IsNullOrWhiteSpace($environmentName)) {
@@ -33,14 +35,14 @@ function Clear-ExpertCache {
     }
 
     if (-not ($user -match [Environment]::UserName)) {
-        $localAppData = "C:\Users\$user\AppData\Local"    
+        $localAppData = "C:\Users\$user\AppData\Local"
         $roamingAppData = "C:\Users\$user\AppData\Roaming"
     } else {
         $localAppData = $env:LOCALAPPDATA
         $roamingAppData = $env:APPDATA
     }
 
-    if (Test-Path("$localAppData\$cache")) {
+    if (Test-Path -Path "$localAppData\$cache") {
         if (-not (Get-Item "$localAppData\$cache").PSIsContainer) {
             Write-Error "Please specify a valid environment name"
             Break
@@ -58,7 +60,7 @@ function Clear-ExpertCache {
         Write-Host "No cache present at $localAppData\$cache"
     }
 
-    if (Test-Path("$roamingAppData\$cache")) {
+    if (Test-Path -Path "$roamingAppData\$cache") {
         if (-not (Get-Item "$roamingAppData\$cache").PSIsContainer) {
             Write-Error "Please specify a valid environment name"
             Break
@@ -79,7 +81,7 @@ function Clear-ExpertCache {
     }
 
     if ($removeCMSINI.IsPresent) {
-        if (Test-Path("$roamingAppData\Aderant\CMS.INI")) {
+        if (Test-Path -Path "$roamingAppData\Aderant\CMS.INI") {
             try {
                 Remove-Item -Path "$roamingAppData\Aderant\CMS.INI" -Force
                 Write-Host "Successfully removed CMS.INI"

@@ -1,4 +1,6 @@
-﻿using Aderant.Build.DependencyResolver.Resolvers;
+﻿using System;
+using System.IO;
+using Aderant.Build.DependencyResolver.Resolvers;
 
 namespace Aderant.Build {
     public static class Constants {
@@ -10,11 +12,6 @@ namespace Aderant.Build {
         /// The build infrastructure directory
         /// </summary>
         public static string BuildInfrastructureDirectory = "Build.Infrastructure";
-
-        /// <summary>
-        /// The modules directory
-        /// </summary>
-        public static string ModulesDirectory = "Modules";
 
         public static string PackageServerUrlV3 = "https://expertpackages.azurewebsites.net/v3/index.json";
 
@@ -37,13 +34,18 @@ namespace Aderant.Build {
 
     public static class WellKnownPaths {
         /// <summary>
-        /// Defines the file that marks a directory as a build contributor.
+        /// Defines the common build directory name.
         /// </summary>
-        public static string EntryPointFileName = "TFSBuild.proj";
+        public static readonly string BuildDirectory = "Build";
 
         /// <summary>
-        /// Defines the directory prefix and file that marks a directory as a build contributor.
+        /// Defines the file that marks a directory as a build contributor.
         /// </summary>
-        public static string EntryPointFilePath = "Build\\" + EntryPointFileName;
+        public static readonly string EntryPointFileName = "TFSBuild.proj";
+
+        /// <summary>
+        /// Defines the directory segment that marks a directory as a build contributor.
+        /// </summary>
+        public static readonly string EntryPointFilePath = string.Concat(BuildDirectory, Path.DirectorySeparatorChar,  EntryPointFileName);
     }
 }

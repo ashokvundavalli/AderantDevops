@@ -7,7 +7,7 @@
         Test-PatchItems
     Verifies the contents based on your current branch and PatchingManifest.xml in your Build.Infrastructure.
 #>
-function Test-PatchItems() {
+function global:Test-PatchItems() {
     param (
         [switch]$noget,
         [Parameter(Mandatory=$false)][string]$repositoryPatchBranch
