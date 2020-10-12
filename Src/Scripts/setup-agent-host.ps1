@@ -102,23 +102,28 @@ process {
             }
         }
 
-        # Stop IIS while removing build agent directories to prevent file locks
-        Import-Module WebAdministration
-        iisreset.exe /STOP
+        if ($null -ne (Get-Module -Name 'WebAdministration' -ListAvailable)) {
+            # Stop IIS while removing build agent directories to prevent file locks
+            if (-not (Get-Module -Name 'WebAdministration')) {
+                Import-Module 'WebAdministration'
+            }
 
-        # Clear build agent working directory
-        [string]$workingDirectory = [System.IO.Path]::Combine($workDirectory, "B")
+            iisreset.exe /STOP
 
-        # If the path doesn't exist Get-ChildItem will happily pick the working directory instead which could delete C:\Windows\ ...
-        # https://github.com/PowerShell/PowerShell/issues/5699
-        if (Test-Path $workingDirectory) {
-            DeleteRecursive $workingDirectory
+            # Clear build agent working directory
+            [string]$workingDirectory = [System.IO.Path]::Combine($workDirectory, "B")
+
+            # If the path doesn't exist Get-ChildItem will happily pick the working directory instead which could delete C:\Windows\ ...
+            # https://github.com/PowerShell/PowerShell/issues/5699
+            if (Test-Path $workingDirectory) {
+                DeleteRecursive $workingDirectory
+            }
+
+            & $PSScriptRoot\iis-cleanup.ps1
+
+            # Start IIS after removing files
+            iisreset.exe /START
         }
-
-        & $PSScriptRoot\iis-cleanup.ps1
-
-        # Start IIS after removing files
-        iisreset.exe /START
     }
 
     function SetHighPower() {
