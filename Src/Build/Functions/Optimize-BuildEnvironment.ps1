@@ -56,7 +56,10 @@ function Optimize-BuildEnvironment {
             try {
                 Add-MpPreference -ExclusionProcess $proc
             } catch {
-                Write-Debug $_
+                Write-Debug $Error[0]
+                Write-Debug -Message 'Attempting to re-enable Windows Defender. Please try restarting your computer.'
+                Set-ItemProperty 'HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender' DisableAntiSpyware 0
+                break
             }
         }
     }
