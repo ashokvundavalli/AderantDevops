@@ -13,14 +13,14 @@ if ($debug) {
     $DebugPreference = 'Continue'
 }
 
-$script:packageTag = "PublishPackages"
+$script:packageTag = 'PublishedPackages'
 
 # https://docs.microsoft.com/en-us/rest/api/azure/devops/build/builds/list?view=azure-devops-rest-5.1
 function GetAllBuilds {
-    $buildsUrl  = "https://tfs.aderant.com/tfs/ADERANT/ExpertSuite/_apis/build/builds"
+    [string]$buildsUrl  = 'https://tfs.aderant.com/tfs/ADERANT/ExpertSuite/_apis/build/builds'
 
-    $minDate = (Get-Date).AddDays(-31).ToUniversalTime().ToString("O")
-    $url = "$($buildsUrl)?deletedFilter=onlyDeleted&tagFilters=$($script:packageTag)&queryOrder=finishTimeAscending&minTime=$($minDate)"
+    $minDate = (Get-Date).AddDays(-31).ToUniversalTime().ToString('O')
+    [string]$url = "$($buildsUrl)?deletedFilter=onlyDeleted&tagFilters=$($script:packageTag)&queryOrder=finishTimeAscending&minTime=$($minDate)&`$top=5000"
     $result = @()
 
     try {
@@ -78,20 +78,35 @@ function DeleteNugetPackages {
             "X-NuGet-ApiKey" = $packageKey
         }
 
-        foreach ($buildToDelete in $buildsToDelete.GetEnumerator()) {
-            foreach ($packageToDelete in $buildToDelete.Value) {
-                $package = $packageToDelete.package
-                $version = $packageToDelete.version
-                $url = "$($packageUrl)/api/v2/package/$($package)/$($version)"
+        try {
+            $store = [System.Security.Cryptography.X509Certificates.X509Store]::new('My', 'CurrentUser')
+            $store.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadOnly)
+            $certificates = $store.Certificates.Find([System.Security.Cryptography.X509Certificates.X509FindType]::FindByApplicationPolicy, "1.3.6.1.5.5.7.3.2", $true)
+    
+            if ($certificates.Count -eq 0) {
+                Write-Error 'No certificates for client authentication are available.'
+                exit 1
+            }
 
-                try {
-                    Write-Information "Deleting package: $package$version"
-                    Invoke-WebRequest -Method Delete $url -Headers $headers
-                } catch {
-                    # We expect this to fail when it tries to delete a package that has already been deleted.
-                    Write-Warning "Failed to delete package: $($packageToDelete.package)$($packageToDelete.version) => $($_.ToString())"
+            $certificate = $certificates[0]
+
+            foreach ($buildToDelete in $buildsToDelete.GetEnumerator()) {
+                foreach ($packageToDelete in $buildToDelete.Value) {
+                    $package = $packageToDelete.package
+                    $version = $packageToDelete.version
+                    $url = "$($packageUrl)/api/v2/package/$($package)/$($version)"
+    
+                    try {
+                        Write-Information "Deleting package: $package$version"
+                        Invoke-WebRequest -Method Delete $url -Headers $headers -Certificate $certificate
+                    } catch {
+                        # We expect this to fail when it tries to delete a package that has already been deleted.
+                        Write-Warning "Failed to delete package: $($packageToDelete.package)$($packageToDelete.version) => $($_.ToString())"
+                    }
                 }
             }
+        } finally {
+            $store.Dispose()
         }
     }
 }
@@ -115,13 +130,16 @@ foreach ($build in $builds) {
     }
 
     if (-not $build.tags.Contains($script:packageTag)) {
-        Write-Debug $build.tags
+        foreach ($tag in $build.tags) {
+            Write-Debug $tag
+        }
+        
         continue
     }
 
     $tags = GetPackageTags $build
 
-    if (($null -eq $tags.PSObject.Properties.Item("count")) -or ($tags.count -le 0)) {
+    if (($null -eq $tags.PSObject.Properties.Item('count')) -or ($tags.count -le 0)) {
         Write-Debug 'No associated packages.'
         continue
     }
