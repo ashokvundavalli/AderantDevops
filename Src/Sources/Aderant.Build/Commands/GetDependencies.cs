@@ -23,7 +23,7 @@ namespace Aderant.Build.Commands {
         internal static readonly string AbsolutePathToken = "[ABSOLUTEPATH]";
         internal static readonly string RelativePathToken = "[RELATIVEPATH]";
 
-        private static readonly string[] ReservedDirectories = new string[] {
+        private static readonly string[] reservedDirectories = new string[] {
             "Build"
         };
 
@@ -114,7 +114,7 @@ namespace Aderant.Build.Commands {
         }
 
         private bool IsReservedDirectory(string path) {
-            return ReservedDirectories.Contains(Path.GetFileName(path), StringComparer.OrdinalIgnoreCase);
+            return reservedDirectories.Contains(Path.GetFileName(path), StringComparer.OrdinalIgnoreCase);
         }
 
         internal void LinkEditorConfigFile(string configFile, string directory) {

@@ -252,7 +252,7 @@ function GetBuildStateMetadata($context) {
     } else {
         $commonAncestor = $stm.CommonAncestor
     }
-    
+
     [string]$targetBranch = $null
     if ($context.BuildMetadata.IsPullRequest) {
         $targetBranch = $context.BuildMetadata.PullRequest.TargetBranch
@@ -268,7 +268,7 @@ function GetBuildStateMetadata($context) {
         $flavor = 'Debug'
     }
 
-    $buildState = Get-BuildStateMetadata -RootDirectory $context.BuildRoot -BucketIds $ids -Tags $tags -DropLocation $context.DropLocationInfo.BuildCacheLocation -ScmBranch $context.BuildMetadata.ScmBranch -TargetBranch $targetBranch -CommonAncestor $commonAncestor -BuildFlavor $flavor
+    $buildState = Get-BuildStateMetadata -RootDirectory $context.BuildRoot -BucketIds $ids -Tags $tags -DropLocation $context.DropLocationInfo.BuildCacheLocation -ScmBranch $context.BuildMetadata.ScmBranch -TargetBranch $targetBranch -CommonAncestor $commonAncestor -BuildFlavor $flavor -SkipNugetPackageHashCheck $SkipNugetPackageHashCheck.ToBool()
 
     $context.BuildStateMetadata = $buildState
 
@@ -600,6 +600,12 @@ function global:Invoke-Build2 {
         #>
         [Parameter()]
         [switch]$MinimalConsoleLogging,
+
+        <#
+        Instructs the build to ignore differences in NuGet packages when finding a cached build.
+        #>
+        [Parameter()]
+        [switch]$SkipNugetPackageHashCheck,
 
         [Parameter(ValueFromRemainingArguments)]
         [string[]]$RemainingArgs

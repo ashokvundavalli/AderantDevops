@@ -1,11 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyResolver;
 using Aderant.Build.DependencyResolver.Model;
-using Aderant.Build.DependencyResolver.Models;
 using Aderant.Build.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
@@ -148,7 +148,7 @@ nuget ThePackageFromNuget";
                 packageManagerLines = packageManager.Lines;
             }
 
-            Assert.AreEqual(5, packageManagerLines.Length);
+            Assert.AreEqual(6, packageManagerLines.Length);
             Assert.AreEqual($"source {Constants.OfficialNuGetUrlV3}", packageManagerLines[1]);
         }
 
@@ -172,7 +172,7 @@ nuget ThePackageFromNuget";
                 packageManagerLines = packageManager.Lines;
             }
 
-            Assert.AreEqual(3, packageManagerLines.Length);
+            Assert.AreEqual(4, packageManagerLines.Length);
             Assert.AreNotEqual($"source {Constants.OfficialNuGetUrlV3}", packageManagerLines[1]);
         }
 
@@ -180,7 +180,6 @@ nuget ThePackageFromNuget";
         public void When_using_single_file_http_sources_are_not_duplicated() {
             var fs = new Mock<IFileSystem2>();
             fs.Setup(s => s.Root).Returns(GetTestDirectoryPath());
-            string[] packageManagerLines;
 
             var request = new ResolverRequest(NullLogger.Default);
             request.AddModule("C:\\Module1");
@@ -192,9 +191,9 @@ nuget ThePackageFromNuget";
                     },
                     request);
 
-                packageManagerLines = packageManager.Lines;
-                Assert.AreEqual(3, packageManagerLines.Length);
-                Assert.AreEqual("http https://my-file-host ", packageManagerLines.Last());
+                var packageManagerLines = packageManager.Lines;
+                Assert.AreEqual(4, packageManagerLines.Length);
+                Assert.AreEqual("http https://my-file-host Foo", packageManagerLines[packageManagerLines.Length-2]);
             }
         }
 
@@ -210,7 +209,6 @@ nuget ThePackageFromNuget";
 
         private string GetTestDirectoryPath() {
             return Path.Combine(TestContext.DeploymentDirectory, Path.GetRandomFileName());
-        }
+        }       
     }
-
 }

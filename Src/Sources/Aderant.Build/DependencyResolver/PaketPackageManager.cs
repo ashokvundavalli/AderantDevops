@@ -6,9 +6,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using Aderant.Build.DependencyResolver.Model;
-using Aderant.Build.DependencyResolver.Models;
 using Aderant.Build.Logging;
-using LibGit2Sharp;
 using Microsoft.FSharp.Collections;
 using Microsoft.FSharp.Core;
 using Paket;
@@ -40,7 +38,7 @@ namespace Aderant.Build.DependencyResolver {
             this.root = root;
             this.wellKnownSources = wellKnownSources;
             this.logger = logger;
-            this.FileSystem = fileSystem;
+            FileSystem = fileSystem;
 
             Paket.Logging.verbose = enableVerboseLogging;
 
@@ -199,13 +197,11 @@ namespace Aderant.Build.DependencyResolver {
                 var sources = CreateSources(groupEntry, group, isMainGroup, isUsingMultipleInputFiles);
                 var options = CreateInstallOptions(requirements, groupEntry, group, isMainGroup);
 
-                var requiredRemoteFiles = requirements.Where(s => string.Equals(s.Group, group.Name.Name, StringComparison.OrdinalIgnoreCase)).OfType<RemoteFile>();
-                var remoteFileList = group.RemoteFiles;
-                if (remoteFileList.Length != requiredRemoteFiles.Count()) {
-                    // Paket cannot add new remote files via its internal API so we need to process these last otherwise the will vanish
-                    // from the internal data structures if done inside AddModules
-                    remoteFileList = AddNewRemoteFile(group.RemoteFiles, requiredRemoteFiles);
-                }
+                var requiredRemoteFiles = requirements.Where(s => string.Equals(s.Group, group.Name.Name, StringComparison.OrdinalIgnoreCase)).OfType<RemoteFile>().ToList();
+
+                // Paket cannot add new remote files via its internal API so we need to process these last otherwise the will vanish
+                // from the internal data structures if done inside AddModules
+                var remoteFileList = MergeRemoteFiles(requiredRemoteFiles);
 
                 var newGroup = new DependenciesGroup(
                     group.Name,
@@ -234,14 +230,11 @@ namespace Aderant.Build.DependencyResolver {
             dependenciesFile = new DependenciesFile(
                 dependenciesFile.FileName,
                 map,
-                result.Split(Environment.NewLine.ToCharArray(), StringSplitOptions.RemoveEmptyEntries));
+                result.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None));
 
             dependenciesFile.Save();
 
             Lines = dependenciesFile.Lines;
-        }
-
-        private void MergeRemoteFiles(FSharpList<ModuleResolver.UnresolvedSource> groupRemoteFiles, IEnumerable<RemoteFile> remoteFiles) {
         }
 
         private FSharpList<PackageSources.PackageSource> CreateSources(KeyValuePair<Domain.GroupName, DependenciesGroup> groupEntry, DependenciesGroup group, bool isMainGroup, bool isUsingMultipleInputFiles) {
@@ -391,27 +384,19 @@ namespace Aderant.Build.DependencyResolver {
         /// <summary>
         /// Adds a new remote file to the dependency file
         /// </summary>
-        /// <param name="existingRemoteFiles">The remote file to add</param>
-        /// <param name="remoteFiles">The group to place the file into</param>
-        private static FSharpList<ModuleResolver.UnresolvedSource> AddNewRemoteFile(FSharpList<ModuleResolver.UnresolvedSource> existingRemoteFiles, IEnumerable<RemoteFile> remoteFiles) {
-            foreach (var remoteFile in remoteFiles) {
-                existingRemoteFiles = ListModule.Append(existingRemoteFiles,
-                    new FSharpList<ModuleResolver.UnresolvedSource>(
-                        new ModuleResolver.UnresolvedSource(
-                            "",
-                            "",
-                            "",
-                            ModuleResolver.Origin.NewHttpLink(remoteFile.Name),
-                            ModuleResolver.VersionRestriction.NoVersionRestriction,
-                            FSharpOption<string>.None,
-                            FSharpOption<string>.None,
-                            FSharpOption<string>.None,
-                            FSharpOption<string>.None),
-                        FSharpList<ModuleResolver.UnresolvedSource>.Empty
-                    ));
-            }
-
-            return existingRemoteFiles;
+        /// <param name="newRemoteFiles">The group to place the file into</param>
+        private static FSharpList<ModuleResolver.UnresolvedSource> MergeRemoteFiles(List<RemoteFile> newRemoteFiles) {
+            return ListModule.OfSeq(
+                newRemoteFiles.Select(s => new ModuleResolver.UnresolvedSource(
+                    "",
+                    "",
+                    s.ItemName,
+                    ModuleResolver.Origin.NewHttpLink(s.Name),
+                    ModuleResolver.VersionRestriction.NoVersionRestriction,
+                    FSharpOption<string>.None,
+                    FSharpOption<string>.None,
+                    FSharpOption<string>.None,
+                    FSharpOption<string>.None)));
         }
 
         private bool HasLockFile() {
@@ -543,12 +528,16 @@ namespace Aderant.Build.DependencyResolver {
         public void SetDependenciesFile(string lines) {
             Initialize();
 
-            this.dependenciesFile = Paket.DependenciesFile.FromSource(this.root, lines);
-            this.dependenciesFile.Save();
+            dependenciesFile = Paket.DependenciesFile.FromSource(root, lines);
+            dependenciesFile.Save();
         }
 
         internal class RemoteFileMapper {
-            public static IEnumerable<RemoteFile> Map(FSharpList<ModuleResolver.UnresolvedSource> remoteFiles, string groupName) {
+            public static RemoteFile Map(ModuleResolver.UnresolvedSource remoteFile, string groupName) {
+                return Map(new[] {remoteFile}, groupName).FirstOrDefault();
+            }
+
+            public static IEnumerable<RemoteFile> Map(IEnumerable<ModuleResolver.UnresolvedSource> remoteFiles, string groupName) {
                 foreach (var item in remoteFiles) {
                     string itemName = item.Name;
                     string uri = item.ToString();
@@ -566,6 +555,7 @@ namespace Aderant.Build.DependencyResolver {
                 if (pos >= 0 && uri.Length > pos) {
                     uri = uri.Remove(pos, prefix.Length);
                 }
+
                 return uri;
             }
         }

@@ -103,6 +103,7 @@
     <Compile Include="AutoCompletionParser.cs" />
     <Compile Include="Build.cs" />
     <Compile Include="Annotations\ReSharperAttributes.cs" />
+    <Compile Include="Packaging\BuildStateQueryOptions.cs" />
     <Compile Include="Commands\GetDependencies.cs" />
     <Compile Include="Commands\GetSourceTreeMetadataCommand.cs" />
     <Compile Include="Commands\GetBuildStateMetadataCommand.cs" />

@@ -13,14 +13,10 @@ namespace Aderant.Build {
         /// </summary>
         public static string BuildInfrastructureDirectory = "Build.Infrastructure";
 
-        /// <summary>
-        /// The modules directory
-        /// </summary>
-        public static string ModulesDirectory = "Modules";
+        // Do not change this to a compile reference as there is a complex interplay between paket.exe and this assembly
+        public static string PaketDependencies = "paket.dependencies";
 
-        public static string PaketDependencies = Paket.Constants.DependenciesFileName;
-
-        public static string PaketLock = Paket.Constants.LockFileName;
+        public static string PaketLock = "paket.lock";
 
         public static string PackageServerUrlV3 = "https://expertpackages.azurewebsites.net/v3/index.json";
 
@@ -32,13 +28,7 @@ namespace Aderant.Build {
 
         public static string OfficialNuGetUrl = "https://www.nuget.org/api/v2";
 
-        private static string mainDependencyGroup;
-
-        internal static string MainDependencyGroup {
-            get {
-                return mainDependencyGroup ?? (mainDependencyGroup = Paket.Constants.MainDependencyGroup.ToString());
-            }
-        }
+        internal static string MainDependencyGroup = "Main";
     }
 
     public static class WellKnownPaths {

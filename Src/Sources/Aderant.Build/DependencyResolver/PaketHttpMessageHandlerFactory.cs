@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 namespace Aderant.Build.DependencyResolver {
     internal class PaketHttpMessageHandlerFactory : FSharpFunc<Tuple<string, FSharpOption<NetUtils.Auth>>, HttpMessageHandler> {
         private readonly FSharpFunc<Tuple<string, FSharpOption<NetUtils.Auth>>, HttpMessageHandler> defaultHandler;
-        private static bool IsConfigured;
+        private static bool isConfigured;
 
         public PaketHttpMessageHandlerFactory(FSharpFunc<Tuple<string, FSharpOption<NetUtils.Auth>>, HttpMessageHandler> defaultHandler) {
             this.defaultHandler = defaultHandler;
@@ -25,16 +25,17 @@ namespace Aderant.Build.DependencyResolver {
         /// Paket gives us no customization points to remove the header so we are forced to inject ourselves into their pipeline via monkey patching
         /// </summary>
         public static void Configure() {
-            if (IsConfigured) {
+            if (isConfigured) {
                 return;
             }
             // Monkey patch the built in HttpClient so we can control the headers. I need a shower.
             var member = typeof(NetUtils).Assembly.GetType("<StartupCode$Paket-Core>.$Paket.NetUtils").GetField("createHttpHandler@409", BindingFlags.Static | BindingFlags.NonPublic);
             var defaultHandler = (FSharpFunc<Tuple<string, FSharpOption<NetUtils.Auth>>, HttpMessageHandler>)member.GetValue(null);
             member.SetValue(null, new PaketHttpMessageHandlerFactory(defaultHandler));
-
-            IsConfigured = true;
+            isConfigured = true;
         }
+
+
 
         public override HttpMessageHandler Invoke(Tuple<string, FSharpOption<NetUtils.Auth>> args) {
             if (args.Item1.IndexOf("blob.core.windows.net", StringComparison.OrdinalIgnoreCase) >= 0) {
@@ -47,12 +48,30 @@ namespace Aderant.Build.DependencyResolver {
 
             var uri = new Uri(args.Item1);
             if (string.Equals(uri.Host, "expertpackages.azurewebsites.net", StringComparison.OrdinalIgnoreCase)) {
+
                 return new CertificateAuthenticationHandler();
             }
 
+#if DEBUG
+            var httpMessageHandler = defaultHandler.Invoke(args);
+            return new InspectionHandler(httpMessageHandler);
+#else
             return defaultHandler.Invoke(args);
+#endif
+
         }
     }
+
+#if DEBUG
+    internal class InspectionHandler : DelegatingHandler {
+        public InspectionHandler(HttpMessageHandler httpMessageHandler) : base(httpMessageHandler) {
+        }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
+            return base.SendAsync(request, cancellationToken);
+        }
+    }
+#endif
 
     internal class CertificateAuthenticationHandler : HttpClientHandler {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {

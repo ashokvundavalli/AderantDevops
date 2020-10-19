@@ -26,7 +26,7 @@ function Optimize-BuildEnvironment {
             "testhost.exe",
             "testhost.x86.exe",
             "testhostw.exe",
-            "VBCSCCompiler.exe",
+            "VBCSCompiler.exe",
             "aspnet_compiler.exe",
             "vstest.console.exe",
             "vstest.discoveryengine.exe",
@@ -39,12 +39,12 @@ function Optimize-BuildEnvironment {
 
             "FxCopCmd.exe",
             "dbprepare.exe",
+            "dbgen.exe",
             "DeploymentEngine.exe",
             "DeploymentManager.exe",
             "Expert.Help.sfx"
             "PackageManagerConsole.exe",
 
-            "ffmpeg.exe",
             "Agent.Listener.exe",
             "AgentService.exe",
             "robocopy.exe"
@@ -52,6 +52,25 @@ function Optimize-BuildEnvironment {
     }
 
     process {
+        # Put a mutex around pokingDefender since it is a machine scope tool
+        [System.Threading.Mutex]$mutex = $null
+        $mutexOpened = [System.Threading.Mutex]::TryOpenExisting("DefenderOptimizationMutex", [ref]$mutex)
+
+        if ($mutexOpened) {
+            return
+        }
+
+        $startedMutex = [System.Threading.Mutex]::new($false, "DefenderOptimizationMutex")
+        # Take ownership of mutex
+        $mutex = [System.Threading.Mutex]::OpenExisting("DefenderOptimizationMutex")
+
+        # Prevent
+        [System.AppDomain]::CurrentDomain.SetData("DefenderOptimizationMutex", $mutex)
+
+        if (-not $mutex.WaitOne(100)) {
+            return
+        }
+
         foreach ($proc in $processes) {
             try {
                 Add-MpPreference -ExclusionProcess $proc

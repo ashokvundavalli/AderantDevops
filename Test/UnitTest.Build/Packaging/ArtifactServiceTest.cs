@@ -396,7 +396,7 @@ namespace UnitTest.Build.Packaging {
 
             ArtifactService artifactService = new ArtifactService(new NullLogger());
 
-            Assert.IsTrue(artifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, null, null, null, buildStateFile, "Release", out string reason));
+            Assert.IsTrue(artifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, null, null, null, buildStateFile, new BuildStateQueryOptions { BuildFlavor = "Release" }, out string reason));
             Assert.IsNotNull(reason);
         }
 
@@ -418,7 +418,7 @@ namespace UnitTest.Build.Packaging {
 
             ArtifactService artifactService = new ArtifactService(new NullLogger());
 
-            Assert.IsFalse(artifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, null, null, null, buildStateFile, "Release", out string reason));
+            Assert.IsFalse(artifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, null, null, null, buildStateFile, new BuildStateQueryOptions { BuildFlavor = "Release" }, out string reason));
             Assert.IsNotNull(reason);
             Assert.IsTrue(reason.IndexOf("does not match required configuration: 'Release'", StringComparison.OrdinalIgnoreCase) != -1);
         }
@@ -441,7 +441,7 @@ namespace UnitTest.Build.Packaging {
 
             ArtifactService artifactService = new ArtifactService(new NullLogger());
 
-            Assert.IsTrue(artifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, null, null, "refs/heads/master", buildStateFile, "Debug", out string reason));
+            Assert.IsTrue(artifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, null, null, "refs/heads/master", buildStateFile, new BuildStateQueryOptions { BuildFlavor = "Debug" }, out string reason));
             Assert.IsNotNull(reason);
         }
 
@@ -463,7 +463,7 @@ namespace UnitTest.Build.Packaging {
 
             ArtifactService artifactService = new ArtifactService(new NullLogger());
 
-            Assert.IsTrue(artifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, null, null, "refs/heads/master", buildStateFile, "Debug", out string reason));
+            Assert.IsTrue(artifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, null, null, "refs/heads/master", buildStateFile, new BuildStateQueryOptions { BuildFlavor = "Debug" }, out string reason));
             Assert.IsNotNull(reason);
         }
     }

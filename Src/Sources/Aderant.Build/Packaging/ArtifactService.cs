@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Aderant.Build.AzurePipelines;
+using Aderant.Build.Commands;
 using Aderant.Build.DependencyResolver;
 using Aderant.Build.Logging;
 using Aderant.Build.PipelineService;
@@ -447,7 +448,7 @@ namespace Aderant.Build.Packaging {
         /// </summary>
         public bool ArtifactRestoreSkipped { get; set; }
 
-        public BuildStateMetadata GetBuildStateMetadata(string rootDirectory, string[] bucketIds, string[] tags, string dropLocation, string scmBranch, string targetBranch, string commonAncestor, string buildFlavor, CancellationToken token = default(CancellationToken)) {
+        public BuildStateMetadata GetBuildStateMetadata(string rootDirectory, string[] bucketIds, string[] tags, string dropLocation, string scmBranch, string targetBranch, string commonAncestor, BuildStateQueryOptions options, CancellationToken token = default(CancellationToken)) {
             if (bucketIds != null && tags != null && bucketIds.Length > 0 && tags.Length != 0) {
                 if (bucketIds.Length != tags.Length) {
                     // The two vectors must have the same length
@@ -518,7 +519,7 @@ namespace Aderant.Build.Packaging {
                                 file.Location = folder;
 
                                 string reason;
-                                if (IsFileTrustworthy(rootDirectory, scmBranch, targetBranch, commonAncestor, file, buildFlavor, out reason)) {
+                                if (IsFileTrustworthy(rootDirectory, scmBranch, targetBranch, commonAncestor, file, options, out reason)) {
                                     logger.Info($"Candidate-> {stateFile}:{reason}");
                                     files.Add(file);
                                 } else {
@@ -542,7 +543,7 @@ namespace Aderant.Build.Packaging {
             if (packageHashResults.TryGetValue(paketLockFile, out bool result)) {
                 return result;
             }
-            
+
             string existingHash = PaketLockOperations.HashLockFile(paketLockFile, fileSystem);
 
             logger.Info($"{paketLockFile} package hash: '{existingHash}'.");
@@ -554,7 +555,7 @@ namespace Aderant.Build.Packaging {
             return match;
         }
 
-        internal bool IsFileTrustworthy(string rootDirectory, string scmBranch, string targetBranch, string commonAncestor, BuildStateFile file, string buildFlavor, out string reason) {
+        internal bool IsFileTrustworthy(string rootDirectory, string scmBranch, string targetBranch, string commonAncestor, BuildStateFile file, BuildStateQueryOptions options, out string reason) {
             if (CheckForRootedPaths(file)) {
                 reason = "Corrupt.";
                 return false;
@@ -573,15 +574,24 @@ namespace Aderant.Build.Packaging {
             }
 
             // Reject artifacts if they were built with a different configuration.
-            if (!string.IsNullOrWhiteSpace(buildFlavor)) {
-                // If the build flavor is set to release, disable use of debug artifacts.
-                if (string.Equals("Release", buildFlavor, StringComparison.OrdinalIgnoreCase)) {
-                    file.BuildConfiguration.TryGetValue(nameof(BuildMetadata.Flavor), out string value);
+            if (options != null) {
+                string optionsBuildFlavor = options.BuildFlavor;
 
-                    if (!string.IsNullOrWhiteSpace(value) && !string.Equals(buildFlavor, value, StringComparison.OrdinalIgnoreCase)) {
-                        reason = $"Artifact build configuration: '{value}' does not match required configuration: '{buildFlavor}'";
-                        return false;
+                if (!string.IsNullOrWhiteSpace(optionsBuildFlavor)) {
+                    // If the build flavor is set to release, disable use of debug artifacts.
+                    if (string.Equals("Release", optionsBuildFlavor, StringComparison.OrdinalIgnoreCase)) {
+                        file.BuildConfiguration.TryGetValue(nameof(BuildMetadata.Flavor), out string value);
+
+                        if (!string.IsNullOrWhiteSpace(value) && !string.Equals(optionsBuildFlavor, value, StringComparison.OrdinalIgnoreCase)) {
+                            reason = $"Artifact build configuration: '{value}' does not match required configuration: '{optionsBuildFlavor}'";
+                            return false;
+                        }
                     }
+                }
+
+                if (options.SkipNugetPackageHashCheck) {
+                    reason = string.Empty;
+                    return true;
                 }
             }
 
@@ -602,7 +612,8 @@ namespace Aderant.Build.Packaging {
 
                 logger.Info($"Module {Constants.PaketLock} file: '{paketLockFile}' does not exist.");
             }
-            
+
+
             // Fall back to branch checks. - ToDo: Remove once newer artifacts have been published.
             string artifactBranch = file.ScmBranch;
 
@@ -665,6 +676,8 @@ namespace Aderant.Build.Packaging {
         /// Useful for testing as tests do not generate a build id.
         /// </summary>
         internal bool AllowZeroBuildId { get; set; }
+
+        public bool IgnorePackageHash { get; set; }
 
         public void RegisterHandler(IArtifactHandler handler) {
             this.handlers.Add(handler);
