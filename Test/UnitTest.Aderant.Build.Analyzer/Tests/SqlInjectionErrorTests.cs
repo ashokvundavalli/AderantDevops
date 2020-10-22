@@ -123,6 +123,80 @@ namespace Test {
         }
 
         [TestMethod]
+        public void SqlInjectionError_CommandText_MethodParameter_NoDiagnostic_CommandTypeStoredProcedure() {
+            const string test = @"
+using System.Data.SqlClient;
+
+namespace Test {
+    public class Program {
+        public static void Main() {
+            // Empty.
+        }
+
+        public static void Execute(string sql, SqlConnection connection) {
+            using (var command = connection.CreateCommand()) {
+                command.CommandType = System.Data.CommandType.StoredProcedure;
+                command.CommandText = sql;
+                command.ExecuteNonQuery();
+            }
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(test);
+        }
+
+        [TestMethod]
+        public void SqlInjectionError_CommandText_MethodParameter_Diagnostic_CommandTypeText() {
+            const string test = @"
+using System.Data.SqlClient;
+
+namespace Test {
+    public class Program {
+        public static void Main() {
+            // Empty.
+        }
+
+        public static void Execute(string sql, SqlConnection connection) {
+            using (var command = connection.CreateCommand()) {
+                command.CommandType = ( System.Data.CommandType.Text ) ;
+                command.CommandText = sql;
+                command.ExecuteNonQuery();
+            }
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(test, GetDiagnostic(13, 17));
+        }
+
+        [TestMethod]
+        public void SqlInjectionError_CommandText_MethodParameter_Diagnostic_CommandTypeDefault() {
+            const string test = @"
+using System.Data.SqlClient;
+
+namespace Test {
+    public class Program {
+        public static void Main() {
+            // Empty.
+        }
+
+        public static void Execute(string sql, SqlConnection connection) {
+            using (var command = connection.CreateCommand()) {
+                command.CommandText = sql;
+                command.ExecuteNonQuery();
+            }
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(test, GetDiagnostic(12, 17));
+        }
+
+        [TestMethod]
         public void SqlInjectionError_CommandText_MethodParameter_NoDiagnostic() {
             const string test = @"
 using System.Data.SqlClient;
@@ -530,6 +604,106 @@ namespace Test {
 ";
 
             VerifyCSharpDiagnostic(test, GetDiagnostic(11, 27));
+        }
+
+        [TestMethod]
+        public void SqlInjectionError_NewSqlCommandParams_DiagnosticCommandTypeText() {
+            const string test = @"
+using System.Data.SqlClient;
+
+namespace Test {
+    public class Program {
+        public static void Main() {
+            Foo("""");
+        }
+
+        public static void Foo(string test) {
+            var command = new SqlCommand(test);
+            command.CommandType = (System.Data.CommandType.Text);
+            command.Dispose();
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(test, GetDiagnostic(11, 27));
+        }
+
+        [TestMethod]
+        public void SqlInjectionError_NewSqlCommandNoParams_DiagnosticCommandTypeText() {
+            const string test = @"
+using System.Data.SqlClient;
+
+namespace Test {
+    public class Program {
+        public static void Main() {
+            Foo("""");
+        }
+
+        public static void Foo(string test) {
+            var command = new SqlCommand() {
+                CommandText = test,
+                CommandType = System.Data.CommandType.Text
+            };
+            command.Dispose();
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(test, GetDiagnostic(11, 27));
+        }
+
+        [TestMethod]
+        public void SqlInjectionError_NewSqlCommandParams_NoDiagnostic_CommandTypeStoredProcedure() {
+            const string test = @"
+namespace Test
+{
+    public class Program
+    {
+        public static void Main()
+        {
+            Foo("");
+        }
+
+        public static void Foo(string test)
+        {
+            var command = new SqlCommand(test);
+            command.CommandType = (System.Data.CommandType.StoredProcedure);
+            command.Dispose();
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(test);
+        }
+
+        [TestMethod]
+        public void SqlInjectionError_NewSqlCommandNoParams_NoDiagnostic_CommandTypeStoredProcedure() {
+            const string test = @"
+namespace Test
+{
+    public class Program
+    {
+        public static void Main()
+        {
+            Foo("");
+        }
+
+        public static void Foo(string test)
+        {
+            var command = new SqlCommand() {
+                CommandText = test,
+                CommandType = (System.Data.CommandType.StoredProcedure)
+            };
+            command.Dispose();
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(test);
         }
 
         [TestMethod]

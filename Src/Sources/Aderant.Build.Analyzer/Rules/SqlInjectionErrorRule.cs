@@ -145,13 +145,20 @@ namespace Aderant.Build.Analyzer.Rules {
 
             // Get detailed information regarding the property being accessed.
             var propertySymbol = semanticModel.GetSymbolInfo(memberAccessExpression).Symbol as IPropertySymbol;
-
+                      
             if (propertySymbol == null) {
                 return RuleViolationSeverityEnum.None;
             }
 
             // If the current property is not blacklisted.
-            if (!SQLInjectionBlacklists.Properties.Any(value => propertySymbol.ToString().Equals(value.Item2))) {
+            string propertySymbolString = propertySymbol.ToString();
+            if (!SQLInjectionBlacklists.Properties.Any(value => propertySymbolString.Equals(value.Item2))) {
+                return RuleViolationSeverityEnum.None;
+            }
+
+            // If CommandType != "Text" (the default), we can ignore
+            var symbolName = (UnwrapParenthesizedExpressionDescending(memberAccessExpression.Expression) as IdentifierNameSyntax)?.Identifier.Text;
+            if (IsCommandTypePropertyModifiedFromDefault(node.Expression, symbolName)) {
                 return RuleViolationSeverityEnum.None;
             }
 
@@ -217,13 +224,16 @@ namespace Aderant.Build.Analyzer.Rules {
             ref Location location,
             SemanticModel semanticModel,
             ObjectCreationExpressionSyntax node) {
+
+            string symbolName;
+
             // Exit early if the node is not creating a new SqlCommand.
             if (!node.ToString().StartsWith("new SqlCommand")) {
                 return RuleViolationSeverityEnum.None;
             }
 
             // If there were no arguments passed to the creation of the object...
-            if (node.ArgumentList == null) {
+            if (node.ArgumentList == null || node.ArgumentList.Arguments.Count == 0) {
                 // ...determine if the object was created using the object initializer syntax.
                 var initializationExpression = node.ChildNodes().OfType<InitializerExpressionSyntax>().FirstOrDefault();
 
@@ -232,22 +242,29 @@ namespace Aderant.Build.Analyzer.Rules {
                     return RuleViolationSeverityEnum.None;
                 }
 
-                // Iterate through all child nodes that are assignment exressions.
-                // Expressions can be in any order.
-                foreach (var assignmentChildNode in initializationExpression.ChildNodes().OfType<AssignmentExpressionSyntax>()) {
-                    if (!string.Equals(assignmentChildNode.Left.ToString(), "CommandText")) {
-                        continue;
-                    }
 
-                    // Determine if the data being assigned to the 'CommandText' property is immutable.
-                    return IsDataImmutable(ref location, semanticModel, assignmentChildNode.Right)
-                        ? RuleViolationSeverityEnum.None
-                        : RuleViolationSeverityEnum.Error;
+                // Iterate through all child nodes that are assignment exressions.
+                // Expressions can be in any order. If we find a non-Text CommandType, exit early
+                AssignmentExpressionSyntax commandTextAssignmentChildNode = null;
+                foreach (var assignmentChildNode in initializationExpression.ChildNodes().OfType<AssignmentExpressionSyntax>()) {
+                    if (string.Equals(((IdentifierNameSyntax)(assignmentChildNode.Left)).Identifier.Text, "CommandText")) {
+                        commandTextAssignmentChildNode = assignmentChildNode;
+                        continue;
+                    } else if (string.Equals(((IdentifierNameSyntax)(assignmentChildNode.Left)).Identifier.Text, "CommandType") &&
+                        IsCommandTypeAssignmentExpressionNotText(assignmentChildNode)) {
+                        return RuleViolationSeverityEnum.None;
+                    }
                 }
+
+                // Determine if the data being assigned to the 'CommandText' property is immutable.
+                return commandTextAssignmentChildNode == null || IsDataImmutable(ref location, semanticModel, commandTextAssignmentChildNode.Right)
+                    ? RuleViolationSeverityEnum.None
+                    : RuleViolationSeverityEnum.Error;                
             }
 
-            // If the argument list exists but is empty, there is nothing to inject into.
-            if (!node.ArgumentList.Arguments.Any()) {
+            // If CommandType != "Text" (the default), we can ignore
+            symbolName = (UnwrapParenthesizedExpressionDescending(node.GetAncestorOfType<VariableDeclaratorSyntax>()) as VariableDeclaratorSyntax)?.Identifier.Text;
+            if (IsCommandTypePropertyModifiedFromDefault(node, symbolName)) {
                 return RuleViolationSeverityEnum.None;
             }
 
@@ -255,6 +272,58 @@ namespace Aderant.Build.Analyzer.Rules {
             return IsDataImmutable(ref location, semanticModel, node.ArgumentList.Arguments.First().Expression)
                 ? RuleViolationSeverityEnum.None
                 : RuleViolationSeverityEnum.Error;
+        }
+
+        /// <summary>
+        /// Evaluates whether the commandSymbol's CommandType property has been modified
+        /// from its default value of CommandType.Text
+        /// </summary>
+        /// <param name="node">The node from which to begin our evaluation</param>
+        /// <param name="symbolName">The command symbol of the SqlCommand which we are interrogating</param>
+        /// <returns>A bool representing whether the CommandType has been modified to be anything other than CommandType.Text</returns>
+        private bool IsCommandTypePropertyModifiedFromDefault(ExpressionSyntax node, string symbolName) {
+            // Get the method declaration ancestor of this node
+            var methodDeclarationSyntax = node.GetAncestorOfType<MethodDeclarationSyntax>();
+            if (methodDeclarationSyntax == null) {
+                return false; // can't do anything here
+            }
+
+            var memberAccessExpressions = new List<MemberAccessExpressionSyntax>();
+
+            // Find all member access expressions in this method
+            GetExpressionsFromChildNodes<MemberAccessExpressionSyntax>(ref memberAccessExpressions, methodDeclarationSyntax);
+
+            for (int i = 0; i < memberAccessExpressions.Count; ++i) {
+                // Unwrap each one
+                var unwrappedNode = UnwrapParenthesizedExpressionDescending(memberAccessExpressions[i]) as MemberAccessExpressionSyntax;
+
+                // Only interested in assignments to the CommandType property of the commandSymbol object in question, eg. command.CommandType[ = X]
+                if (unwrappedNode?.Expression == null ||
+                    !(unwrappedNode.Expression is IdentifierNameSyntax) ||
+                    unwrappedNode.Name == null ||
+                    ((IdentifierNameSyntax)unwrappedNode.Expression).Identifier.Text != symbolName ||
+                    !string.Equals(unwrappedNode.Name.Identifier.Text, "CommandType")) {
+                    continue;
+                }
+
+                // Get the greater assignment expression
+                var assignmentExpression = unwrappedNode.GetAncestorOfType<AssignmentExpressionSyntax>();
+                if (assignmentExpression == null) {
+                    continue;
+                }
+
+                if (IsCommandTypeAssignmentExpressionNotText(assignmentExpression)) {
+                    return true; // Exit early
+                }
+            }
+            return false;
+        }
+
+        private bool IsCommandTypeAssignmentExpressionNotText(AssignmentExpressionSyntax assignmentExpression) {
+            var expression = UnwrapParenthesizedExpressionDescending(assignmentExpression.Right) as MemberAccessExpressionSyntax;
+            // Nullcheck and such
+            return (expression != null &&
+                !string.Equals(expression.GetLastToken().Text, "Text"));
         }
 
         /// <summary>
