@@ -169,10 +169,10 @@ function CopyTestResultFiles {
 
         foreach ($result in $trx) {
             # Hardlinks cannot span drives.
-            [string]$targetFile = Join-Path -Path $TestResultFileDrop -ChildPath $result.Name
+            [string]$targetFile = Join-Path -Path $TestResultFileDrop -ChildPath ([string]::Concat([System.IO.Path]::GetRandomFileName(), $result.Extension))
 
-            if ([string]::Equals([System.IO.Path]::GetFullPath($result.FullName), [System.IO.Path]::GetFullPath($targetFile), [System.StringComparison]::OrdinalIgnoreCase)) {
-                Write-Information -MessageData "Not copying the test result file from: '$($result.FullName)' to: '$targetFile' as they are at the same location."
+            if ([string]::Equals([System.IO.Path]::GetFullPath([System.IO.Path]::GetDirectoryName($result.FullName)), [System.IO.Path]::GetFullPath([System.IO.Path]::GetDirectoryName($targetFile)), [System.StringComparison]::OrdinalIgnoreCase)) {
+                Write-Information -MessageData "Not copying the test result file from: '$($result.FullName)' to: '$targetFile' as the directory is the same."
                 continue
             }
 
