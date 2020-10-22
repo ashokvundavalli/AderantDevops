@@ -464,8 +464,7 @@ namespace Aderant.Build.Packaging {
 
             using (PerformanceTimer.Start(duration => logger.Info($"{nameof(GetBuildStateMetadata)} completed in: {duration.ToString()} ms"))) {
                 var metadata = new BuildStateMetadata();
-                var files = new List<BuildStateFile>();
-                metadata.BuildStateFiles = files;
+                var files = new List<(BuildStateFile, ArtifactCacheValidationReason)>();
 
                 if (!string.IsNullOrWhiteSpace(scmBranch)) {
                     logger.Info($"Source branch: {scmBranch}");
@@ -518,14 +517,14 @@ namespace Aderant.Build.Packaging {
 
                                 file.Location = folder;
 
+                                ArtifactCacheValidationReason validationEnum;
                                 string reason;
-                                if (IsFileTrustworthy(rootDirectory, scmBranch, targetBranch, commonAncestor, file, options, out reason)) {
+                                if (IsFileTrustworthy(rootDirectory, scmBranch, targetBranch, commonAncestor, file, options, out reason, out validationEnum)) {
                                     logger.Info($"Candidate-> {stateFile}:{reason}");
-                                    files.Add(file);
+                                    files.Add((file, validationEnum));
                                 } else {
                                     logger.Info($"Rejected-> {stateFile}:{reason}");
                                 }
-
                             }
                         }
                     } else {
@@ -533,7 +532,42 @@ namespace Aderant.Build.Packaging {
                     }
                 }
 
+                var priorityArtifacts = files.Where(x => x.Item2 == ArtifactCacheValidationReason.PackageHashMatch).Select(y => y.Item1).ToList();
+
+                if (priorityArtifacts.Any()) {
+                    metadata.BuildStateFiles = priorityArtifacts;
+                } else {
+                    metadata.BuildStateFiles = files.Select(x => x.Item1).ToList();
+                }
+
                 return metadata;
+            }
+        }
+
+        internal enum ArtifactCacheValidationReason {
+            NotValidated,
+            Corrupt,
+            NoOutputs,
+            NoArtifacts,
+            PackageHashMatch,
+            PackageHashMismatch,
+            BuildConfigurationMismatch
+        }
+
+        internal string GetReasonMessage(ArtifactCacheValidationReason reason) {
+            switch (reason) {
+                case ArtifactCacheValidationReason.NotValidated:
+                    return "Not validated.";
+                case ArtifactCacheValidationReason.Corrupt:
+                    return "Corrupt.";
+                case ArtifactCacheValidationReason.NoOutputs:
+                    return "No outputs.";
+                case ArtifactCacheValidationReason.NoArtifacts:
+                    return "No artifacts.";
+                case ArtifactCacheValidationReason.PackageHashMismatch:
+                    return $"{Constants.PaketLock} hash does not match artifact package hash.";
+                default:
+                    return string.Empty;
             }
         }
 
@@ -555,21 +589,25 @@ namespace Aderant.Build.Packaging {
             return match;
         }
 
-        internal bool IsFileTrustworthy(string rootDirectory, string scmBranch, string targetBranch, string commonAncestor, BuildStateFile file, BuildStateQueryOptions options, out string reason) {
+        internal bool IsFileTrustworthy(string rootDirectory, string scmBranch, string targetBranch, string commonAncestor, BuildStateFile file, BuildStateQueryOptions options, out string reason, out ArtifactCacheValidationReason validationEnum) {
+            // ToDo: Remove all references to branches.
             if (CheckForRootedPaths(file)) {
-                reason = "Corrupt.";
+                validationEnum = ArtifactCacheValidationReason.Corrupt;
+                reason = GetReasonMessage(validationEnum);
                 return false;
             }
 
             // Reject files that provide no value.
             if (file.Outputs == null || file.Outputs.Count == 0) {
-                reason = "No outputs.";
+                validationEnum = ArtifactCacheValidationReason.NoOutputs;
+                reason = GetReasonMessage(validationEnum);
                 return false;
             }
 
             // Reject artifacts which contain no content.
             if (file.Artifacts == null || file.Artifacts.Count == 0) {
-                reason = "No Artifacts.";
+                validationEnum = ArtifactCacheValidationReason.NoArtifacts;
+                reason = GetReasonMessage(validationEnum);
                 return false;
             }
 
@@ -583,6 +621,7 @@ namespace Aderant.Build.Packaging {
                         file.BuildConfiguration.TryGetValue(nameof(BuildMetadata.Flavor), out string value);
 
                         if (!string.IsNullOrWhiteSpace(value) && !string.Equals(optionsBuildFlavor, value, StringComparison.OrdinalIgnoreCase)) {
+                            validationEnum = ArtifactCacheValidationReason.BuildConfigurationMismatch;
                             reason = $"Artifact build configuration: '{value}' does not match required configuration: '{optionsBuildFlavor}'";
                             return false;
                         }
@@ -590,7 +629,8 @@ namespace Aderant.Build.Packaging {
                 }
 
                 if (options.SkipNugetPackageHashCheck) {
-                    reason = string.Empty;
+                    validationEnum = ArtifactCacheValidationReason.NotValidated;
+                    reason = GetReasonMessage(validationEnum);
                     return true;
                 }
             }
@@ -602,42 +642,22 @@ namespace Aderant.Build.Packaging {
 
                 if (packageHashResults.ContainsKey(paketLockFile) || fileSystem.FileExists(paketLockFile)) {
                     if (PackageHashesMatch(paketLockFile, file.PackageHash)) {
+                        validationEnum = ArtifactCacheValidationReason.PackageHashMatch;
                         reason = $"{Constants.PaketLock} hash matches artifact package hash.";
                         return true;
                     }
 
-                    reason = $"{Constants.PaketLock} hash does not match artifact package hash.";
-                    return false;
+                    validationEnum = ArtifactCacheValidationReason.PackageHashMismatch;
+                    reason = GetReasonMessage(validationEnum);
+                    return true;
                 }
 
                 logger.Info($"Module {Constants.PaketLock} file: '{paketLockFile}' does not exist.");
             }
 
-
-            // Fall back to branch checks. - ToDo: Remove once newer artifacts have been published.
-            string artifactBranch = file.ScmBranch;
-
-            if (string.Equals(scmBranch, artifactBranch)) {
-                reason = "Artifact matches source branch.";
-                return true;
-            }
-
-            if (string.Equals(targetBranch, artifactBranch)) {
-                reason = "Artifact matches target branch.";
-                return true;
-            }
-
-            if (string.Equals(commonAncestor, artifactBranch)) {
-                reason = "Artifact matches common ancestor branch.";
-                return true;
-            }
-
-            if (!string.IsNullOrWhiteSpace(scmBranch)) {
-                reason = $"Artifact does not match source, ancestor or target branch (artifact: {artifactBranch}).";
-                return false;
-            }
-
-            reason = string.Empty;
+            validationEnum = ArtifactCacheValidationReason.NotValidated;
+            reason = GetReasonMessage(validationEnum);
+            
             return true;
         }
 
