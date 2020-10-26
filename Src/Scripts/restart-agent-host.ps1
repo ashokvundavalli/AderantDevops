@@ -27,6 +27,8 @@
                 Start-Sleep -Seconds $delay
                 $retrycount++
             }
+        } finally {
+            Stop-Transcript
         }
     }
 }
