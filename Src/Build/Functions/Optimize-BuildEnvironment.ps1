@@ -52,6 +52,11 @@ function Optimize-BuildEnvironment {
     }
 
     process {
+        $service = Get-Service Windefend
+        if ($service.Status -eq "Stopped") {
+            return
+        }
+
         # Put a mutex around pokingDefender since it is a machine scope tool
         [System.Threading.Mutex]$mutex = $null
         $mutexOpened = [System.Threading.Mutex]::TryOpenExisting("DefenderOptimizationMutex", [ref]$mutex)
@@ -72,14 +77,7 @@ function Optimize-BuildEnvironment {
         }
 
         foreach ($proc in $processes) {
-            try {
-                Add-MpPreference -ExclusionProcess $proc
-            } catch {
-                Write-Debug $Error[0]
-                Write-Debug -Message 'Attempting to re-enable Windows Defender. Please try restarting your computer.'
-                Set-ItemProperty 'HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender' DisableAntiSpyware 0
-                break
-            }
+            Add-MpPreference -ExclusionProcess $proc -ErrorAction SilentlyContinue
         }
     }
 
