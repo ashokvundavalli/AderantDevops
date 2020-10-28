@@ -177,7 +177,7 @@ function CopyTestResultFiles {
             }
 
             Write-Information -MessageData "Copying test result file from: '$($result.FullName)' to: '$targetFile'."
-            New-Item -Path $targetFile -ItemType 'HardLink' -Value $result.FullName -Force
+            Move-Item -Path $result.FullName -Destination $targetFile -Force
         }
     } else {
         Write-Warning "Unable to locate test result files in directory: '$WorkingDirectory'."
