@@ -425,6 +425,7 @@ function AssignSwitches {
     $switches.ChangedFilesOnly = $ChangedFilesOnly.IsPresent
     $switches.RestrictToProvidedPaths = $RestrictToProvidedPaths.IsPresent -and -not $standalone
     $switches.ExcludeTestProjects = $ExcludeTestProjects.IsPresent
+    $switches.SkipNugetPackageHashCheck = $SkipNugetPackageHashCheck.IsPresent
 
     $boundParameters = $PSCmdLet.MyInvocation.BoundParameters
 

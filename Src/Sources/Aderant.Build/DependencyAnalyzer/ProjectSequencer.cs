@@ -74,7 +74,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             var projectGraph = new ProjectDependencyGraph(graph);
 
-            Sequence(context.Switches.ChangedFilesOnly, considerStateFiles, files.MakeFiles, projectGraph);
+            Sequence(context.Switches, considerStateFiles, files.MakeFiles, projectGraph);
 
             var projectsInDependencyOrder = projectGraph.GetDependencyOrder();
 
@@ -297,10 +297,10 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        public void Sequence(bool changedFilesOnly, bool considerStateFiles, IReadOnlyCollection<string> makeFiles, ProjectDependencyGraph graph) {
+        public void Sequence(BuildSwitches switches, bool considerStateFiles, IReadOnlyCollection<string> makeFiles, ProjectDependencyGraph graph) {
             var projects = graph.Projects;
 
-            if (changedFilesOnly) {
+            if (switches.ChangedFilesOnly) {
                 foreach (var project in projects) {
                     if (!project.IsDirty) {
                         project.IncludeInBuild = false;
@@ -361,9 +361,9 @@ namespace Aderant.Build.DependencyAnalyzer {
                         }
                     }
 
-                    if (!changedFilesOnly) {
+                    if (!switches.ChangedFilesOnly) {
                         if (considerStateFiles) {
-                            ApplyStateFile(stateFile, solutionDirectoryName, project, ref hasLoggedUpToDate);
+                            ApplyStateFile(stateFile, solutionDirectoryName, project, switches.SkipNugetPackageHashCheck, ref hasLoggedUpToDate);
 
                             if (project.IsDirty) {
                                 startNode.IsBuildingAnyProjects = true;
@@ -502,9 +502,9 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// If the outputs look sane and safe then the project is removed from the build tree and the cached outputs are
         /// substituted in.
         /// </summary>
-        internal void ApplyStateFile(BuildStateFile stateFile, string stateFileKey, ConfiguredProject project, ref bool hasLoggedUpToDate) {
+        internal void ApplyStateFile(BuildStateFile stateFile, string stateFileKey, ConfiguredProject project, bool skipNugetPackageHashCheck, ref bool hasLoggedUpToDate) {
             string solutionRoot = project.SolutionRoot;
-            InputFilesDependencyAnalysisResult result = BeginTrackingInputFiles(stateFile, solutionRoot);
+            InputFilesDependencyAnalysisResult result = BeginTrackingInputFiles(stateFile, solutionRoot, skipNugetPackageHashCheck);
 
             bool upToDate = result.IsUpToDate.GetValueOrDefault(true);
             bool hasTrackedFiles = result.TrackedFiles != null && result.TrackedFiles.Any();
@@ -590,8 +590,9 @@ namespace Aderant.Build.DependencyAnalyzer {
             MarkDirty(project, type, (string) null);
         }
 
-        private InputFilesDependencyAnalysisResult BeginTrackingInputFiles(BuildStateFile stateFile, string solutionRoot) {
+        private InputFilesDependencyAnalysisResult BeginTrackingInputFiles(BuildStateFile stateFile, string solutionRoot, bool skipNugetPackageHashCheck) {
             if (!trackedInputs.ContainsKey(solutionRoot)) {
+                trackedInputFilesCheck.SkipNugetPackageHashCheck = skipNugetPackageHashCheck;
                 InputFilesDependencyAnalysisResult inputFilesAnalysisResult = trackedInputFilesCheck.PerformDependencyAnalysis(stateFile?.TrackedFiles, solutionRoot, stateFile?.PackageHash);
 
                 if (inputFilesAnalysisResult != null) {

@@ -211,7 +211,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
 
             var sequencer = new ProjectSequencer(NullLogger.Default, null);
             bool hasLoggedUpToDate = false;
-            sequencer.ApplyStateFile(file, string.Empty, p1, ref hasLoggedUpToDate);
+            sequencer.ApplyStateFile(file, string.Empty, p1, false, ref hasLoggedUpToDate);
 
             Assert.AreEqual(p1.BuildReason.Flags, BuildReasonTypes.ProjectOutputNotFound);
             Assert.IsTrue(p1.IsDirty);
@@ -250,7 +250,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
                 Files = new[] { new TrackedInputFile("File") },
             };
             bool hasLoggedUpToDate = false;
-            sequencer.ApplyStateFile(null, string.Empty, p1, ref hasLoggedUpToDate);
+            sequencer.ApplyStateFile(null, string.Empty, p1, false, ref hasLoggedUpToDate);
 
             var graph = new ProjectDependencyGraph(p1, p2, p3);
 

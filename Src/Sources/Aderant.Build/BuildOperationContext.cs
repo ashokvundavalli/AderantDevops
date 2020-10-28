@@ -577,5 +577,11 @@ namespace Aderant.Build {
 
         [DataMember]
         public bool SuppressDiagnostics { get; set; }
+
+        /// <summary>
+        /// Instructs the build to ignore differences in NuGet packages when finding a cached build.
+        /// </summary>
+        [DataMember]
+        public bool SkipNugetPackageHashCheck { get; set; }
     }
 }

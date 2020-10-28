@@ -7,6 +7,7 @@ using Aderant.Build.Logging;
 using Microsoft.Build.Evaluation;
 using Microsoft.Build.Execution;
 using Microsoft.Build.Framework;
+using Microsoft.PowerShell.Commands;
 using ILogger = Aderant.Build.Logging.ILogger;
 
 namespace Aderant.Build.ProjectSystem.StateTracking {
@@ -25,24 +26,10 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
         public bool TreatInputAsFiles { get; set; } = true;
 
-        private bool ComparePackageHashes(string directory, string artifactHash) {
-            // Reject artifacts with different external package names/versions.
-
-            string paketLockFile = Path.Combine(directory, Constants.PaketLock);
-
-            if (!fileSystem.FileExists(paketLockFile)) {
-                // Nothing to check.
-                return true;
-            }
-
-            string existingHash = PaketLockOperations.HashLockFile(paketLockFile, fileSystem);
-
-            if (string.Equals(existingHash, artifactHash)) {
-                return true;
-            }
-
-            return false;
-        }
+        /// <summary>
+        /// Instructs the build to ignore differences in NuGet packages when finding a cached build.
+        /// </summary>
+        public bool SkipNugetPackageHashCheck { get; set; }
 
         public InputFilesDependencyAnalysisResult PerformDependencyAnalysis(ICollection<TrackedInputFile> trackedFiles, string projectSolutionRoot, string packageHash) {
             InputFilesDependencyAnalysisResult result = new InputFilesDependencyAnalysisResult();
@@ -80,6 +67,11 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                 Dictionary<string, TrackedInputFile> newTable = CreateDictionaryFromTrackedInputFiles(trackedInputFiles);
                 Dictionary<string, TrackedInputFile> oldTable = CreateDictionaryFromTrackedInputFiles(existingTrackedFiles);
 
+                if (SkipNugetPackageHashCheck) {
+                    RemoveLockFile(newTable);
+                    RemoveLockFile(oldTable);
+                }
+
                 List<string> commonKeys;
                 List<string> uniqueKeysInNewTable;
                 List<string> uniqueKeysInOldTable;
@@ -104,6 +96,15 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             result.TrackedFiles = trackedInputFiles;
         }
 
+        private void RemoveLockFile(Dictionary<string, TrackedInputFile> table) {
+            foreach (var file in table.Keys.ToList()) {
+                var item = table[file];
+                if (string.Equals(item.FileName, Constants.PaketLock, StringComparison.OrdinalIgnoreCase)) {
+                    table.Remove(file);
+                }
+            }
+        }
+
         private Dictionary<string, TrackedInputFile> CreateDictionaryFromTrackedInputFiles(IEnumerable<TrackedInputFile> trackedInputFiles) {
             Dictionary<string, TrackedInputFile> dictionary = new Dictionary<string, TrackedInputFile>(StringComparer.OrdinalIgnoreCase);
 
@@ -111,7 +112,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                 foreach (var file in trackedInputFiles) {
                     if (file is TrackedMetadataFile) {
                         dictionary.Add(file.Sha1, file);
-                        
+
                         continue;
                     }
 

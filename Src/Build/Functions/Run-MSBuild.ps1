@@ -109,35 +109,35 @@ function Exec-CommandCore([string]$command, [string]$commandArgs, [switch]$useCo
             # on completion already.
             $out = $process.StandardOutput
             while (-not $out.EndOfStream) {
-            $line = $out.ReadLine()
-            Write-Information -MessageData $line
+                $line = $out.ReadLine()
+                Write-Information -MessageData $line
+            }
         }
-    }
 
-    while (-not $process.WaitForExit(100)) {
-        if ($parentProcess) {
-        AttachDebuger $parentProcess $process.Id
-        $parentProcess = $null
+        while (-not $process.WaitForExit(100)) {
+            if ($parentProcess) {
+                AttachDebuger $parentProcess $process.Id
+                $parentProcess = $null
+            }
+            # Non-blocking loop done to allow ctr-c interrupts
         }
-        # Non-blocking loop done to allow ctr-c interrupts
-    }
 
-    $finished = $true
-    if ($process.ExitCode -ne 0) {
-        throw "Command failed to execute successfully: $command $commandArgs"
-    }
+        $finished = $true
+        if ($process.ExitCode -ne 0) {
+            throw "Command failed to execute successfully: $command $commandArgs"
+        }
     } finally {
-    # If we didn't finish then an error occurred or the user hit ctrl-c.  Either
-    # way kill the process
-    if (-not $finished) {
-        $process.Kill()
-    }
-    $process.Dispose()
+        # If we didn't finish then an error occurred or the user hit ctrl-c.  Either
+        # way kill the process
+        if (-not $finished) {
+            $process.Kill()
+        }
+        $process.Dispose()
     }
 }
 
 function AttachDebuger([System.Diagnostics.Process]$parentProcess, [int]$id) {
-    Write-Informaton "Attaching debugger"
+    Write-Information "Attaching debugger"
     Add-Type -ReferencedAssemblies "Microsoft.CSharp" -TypeDefinition $Source -Language CSharp
 
     $dte = $null
@@ -147,7 +147,7 @@ function AttachDebuger([System.Diagnostics.Process]$parentProcess, [int]$id) {
         $dte = [_.DteHelper]::GetDteInstances() | Sort-Object -Property Version -Descending | Select-Object -First 1
     }
 
-    ($dte.Debugger.LocalProcesses | Where-Object ProcessId -match $id).Attach()
+    ($dte.Debugger.LocalProcesses | Where-Object ProcessId -EQ $id).Attach()
 }
 
 # Lets the process re-use the current console.
