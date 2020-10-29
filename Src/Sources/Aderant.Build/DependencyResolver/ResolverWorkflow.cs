@@ -60,6 +60,11 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         /// <summary>
+        /// Does not modify the paket.dependencies file in anyway - for example does not add or remove sources.
+        /// </summary>
+        public bool ReadOnly { get; set; }
+
+        /// <summary>
         /// Runs the resolver workflow.
         /// </summary>
         /// <param name="update">Determines if new versions of packages should be searched for.</param>
@@ -72,6 +77,7 @@ namespace Aderant.Build.DependencyResolver {
 
             Request.Force = Force;
             Request.Update = update;
+            Request.ReadOnly = ReadOnly;
 
             EnsureDestinationDirectoryFullPath();
 

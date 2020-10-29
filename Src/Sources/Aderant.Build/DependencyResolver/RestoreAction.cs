@@ -18,7 +18,15 @@ namespace Aderant.Build.DependencyResolver {
 
             foreach (string group in groups) {
                 cancellationToken.ThrowIfCancellationRequested();
-                dependencies.Restore(force, new FSharpOption<string>(group), FSharpList<string>.Empty, false, false, false, FSharpOption<string>.None, FSharpOption<string>.None);
+
+                dependencies.Restore(force: force,
+                    @group: new FSharpOption<string>(group),
+                    files: FSharpList<string>.Empty,
+                    touchAffectedRefs: false,
+                    ignoreChecks: false,
+                    failOnChecks: false,
+                    targetFramework: FSharpOption<string>.None,
+                    outputPath: FSharpOption<string>.None);
             }
         }
     }

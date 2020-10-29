@@ -23,6 +23,13 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
             if (!string.IsNullOrEmpty(data)) {
                 Assembly.LoadFrom(Path.Combine(data, "paket.exe"));
             }
+
+            // Lifted from Paket.Program.main()
+            // Using runtime resolution causes each group - and thus the packages in that group to be queried at least twice which is extremely slow
+            string disableRunResolution = Environment.GetEnvironmentVariable("PAKET_DISABLE_RUNTIME_RESOLUTION");
+            if (string.IsNullOrEmpty(disableRunResolution)) {
+                Environment.SetEnvironmentVariable("PAKET_DISABLE_RUNTIME_RESOLUTION", "true");
+            }
         }
 
         public NupkgResolver() {
@@ -154,7 +161,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
                     manager.Update(resolverRequest.Force, cancellationToken);
                 }
 
-                manager.Restore(resolverRequest.Force);
+                manager.Restore(resolverRequest.Force, cancellationToken);
 
                 List<Task> replicationTasks = new List<Task>();
 

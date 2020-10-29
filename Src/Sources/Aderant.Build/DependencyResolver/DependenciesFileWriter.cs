@@ -16,6 +16,11 @@ namespace Aderant.Build.DependencyResolver {
                     sb.AppendLine();
                 }
 
+                if (!group.Packages.Any() && !group.RemoteFiles.Any()) {
+                    // No content - bail out
+                    continue;
+                }
+
                 foreach (var source in group.Sources) {
                     sb.Append("source ");
                     sb.Append(source.Url);
@@ -68,6 +73,7 @@ namespace Aderant.Build.DependencyResolver {
                             sb.Append(" ");
                             sb.Append(preReleaseString);
                         }
+
                         sb.AppendLine();
                     } else {
                         throw new ArgumentException($"Unsupported dependency type for package: {packageRequirement.Name.Name}.");

@@ -11,12 +11,17 @@ using LibGit2Sharp;
 namespace Aderant.Build.Commands {
     [Cmdlet(VerbsCommon.Get, "Dependencies"), Alias("gd")]
     public sealed class GetDependencies : BuildCmdlet {
-
-        [Parameter(Mandatory = false, HelpMessage = "Disables writing configuration files to modules.", Position = 0), ValidateNotNull]
+        [Parameter(Mandatory = false, HelpMessage = "Disables writing configuration files to modules.", Position = 0)]
         public SwitchParameter NoConfig { get; set; }
 
-        [Parameter(Mandatory = false, HelpMessage = "Whether to force retrieval of dependencies.", Position = 1), ValidateNotNull]
+        [Parameter(Mandatory = false, HelpMessage = "Whether to force download and re-installation of all dependencies.", Position = 1)]
         public SwitchParameter Force { get; set; }
+
+        [Parameter(Mandatory = false, HelpMessage = "Controls if the package resolver should be run. Use this switch if you have added or removed packages. (Prefer this over Force)", Position = 2)]
+        public SwitchParameter Update { get; set; }
+
+        [Parameter(Mandatory = false, HelpMessage = "Does not modify the paket.dependencies file in anyway. E.g does not add or remove sources.", Position = 3)]
+        public SwitchParameter ReadOnly { get; set; }
 
         internal static readonly string EditorConfig = ".editorconfig";
         internal static readonly string ResharperSettings = "sln.DotSettings";
@@ -61,8 +66,14 @@ namespace Aderant.Build.Commands {
                 .WithDirectoriesInBuild(currentDirectory, root);
 
             workflow.Force = Force.ToBool();
+            workflow.ReadOnly = ReadOnly.ToBool();
 
             bool update = !string.Equals(currentDirectory, root, StringComparison.OrdinalIgnoreCase);
+            if (!update) {
+                if (Update.IsPresent) {
+                    update = Update.ToBool();
+                }
+            }
 
             Logger.Debug($"Update: {update}");
 

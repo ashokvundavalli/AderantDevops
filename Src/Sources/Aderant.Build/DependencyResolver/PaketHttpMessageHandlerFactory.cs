@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 namespace Aderant.Build.DependencyResolver {
     internal class PaketHttpMessageHandlerFactory : FSharpFunc<Tuple<string, FSharpOption<NetUtils.Auth>>, HttpMessageHandler> {
         private readonly FSharpFunc<Tuple<string, FSharpOption<NetUtils.Auth>>, HttpMessageHandler> defaultHandler;
+
         private static bool isConfigured;
 
         public PaketHttpMessageHandlerFactory(FSharpFunc<Tuple<string, FSharpOption<NetUtils.Auth>>, HttpMessageHandler> defaultHandler) {
@@ -74,12 +75,14 @@ namespace Aderant.Build.DependencyResolver {
 #endif
 
     internal class CertificateAuthenticationHandler : HttpClientHandler {
+        private static readonly Lazy<X509Certificate2[]> clientCertificates = new Lazy<X509Certificate2[]>(() => GetClientCertificates().ToArray());
+
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
             HttpClientHandlerHelper.EnableAutoDecompression(this);
             HttpClientHandlerHelper.EnableTls(this);
 
             ClientCertificateOptions = ClientCertificateOption.Manual;
-            ClientCertificates.AddRange(GetClientCertificates().ToArray());
+            ClientCertificates.AddRange(clientCertificates.Value);
 
             return base.SendAsync(request, cancellationToken);
         }

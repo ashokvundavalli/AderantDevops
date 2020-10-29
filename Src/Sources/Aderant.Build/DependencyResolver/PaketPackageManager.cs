@@ -326,9 +326,11 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         private void AddModules(IEnumerable<IDependencyRequirement> requirements, bool validatePackageConstraints, ref DependenciesFile file) {
+            var installSettings = Requirements.InstallSettings.Default;
+
             foreach (var requirement in requirements.OrderBy(m => m.Name, StringComparer.OrdinalIgnoreCase)) {
-                bool hasCustomVersion = false;
-                string version = string.Empty;
+                var hasCustomVersion = false;
+                var version = string.Empty;
 
                 if (requirement.VersionRequirement != null && !string.IsNullOrWhiteSpace(requirement.VersionRequirement.ConstraintExpression)) {
                     hasCustomVersion = true;
@@ -352,7 +354,7 @@ namespace Aderant.Build.DependencyResolver {
 
                 if (!file.HasPackage(groupName, packageName)) {
                     try {
-                        file = file.Add(groupName, packageName, version, Requirements.InstallSettings.Default);
+                        file = file.Add(groupName, packageName, version, installSettings);
                     } catch (Exception ex) {
                         if (requirement.VersionRequirement != null && requirement.VersionRequirement.OriginatingFile != null) {
                             string message = ex.Message;
@@ -367,16 +369,22 @@ namespace Aderant.Build.DependencyResolver {
                     }
                 } else {
                     if (validatePackageConstraints) {
-                        Requirements.PackageRequirement packageRequirement = file.GetPackage(groupName, packageName);
+                        // This is inefficient as it walks the input set many times but the input length is short enough
+                        // that it won't be a performance bottleneck
+                        if (requirements.Count(s => string.Equals(s.Group, requirement.Group, StringComparison.OrdinalIgnoreCase) && string.Equals(s.Name, requirement.Name, StringComparison.OrdinalIgnoreCase)) > 1) {
+                            var packageRequirement = file.GetPackage(groupName, packageName);
 
-                        VersionStrategy versionStrategy = DependenciesFileParser.parseVersionString(version);
-                        var requestedVersion = versionStrategy.VersionRequirement.FormatInNuGetSyntax();
-                        var dependencyFileVersion = packageRequirement.VersionRequirement.FormatInNuGetSyntax();
+                            var versionStrategy = DependenciesFileParser.parseVersionString(version);
+                            var requestedVersion = versionStrategy.VersionRequirement.FormatInNuGetSyntax();
+                            var dependencyFileVersion = packageRequirement.VersionRequirement.FormatInNuGetSyntax();
 
-                        if (requestedVersion != dependencyFileVersion) {
-                            throw new DependencyException($"The package {packageName.name} in group {groupName.Name} has incompatible constraints defined ['{requestedVersion}' != '{dependencyFileVersion}']. Unify the constraints or move the package to a unique group.");
+                            if (requestedVersion != dependencyFileVersion) {
+                                throw new DependencyException($"The package {packageName.name} in group {groupName.Name} has incompatible constraints defined ['{requestedVersion}' != '{dependencyFileVersion}']. Unify the constraints or move one of the packages to a unique group.");
+                            }
                         }
                     }
+                    file = file.Remove(groupName, packageName);
+                    file = file.Add(groupName, packageName, version, installSettings);
                 }
             }
         }
@@ -534,7 +542,7 @@ namespace Aderant.Build.DependencyResolver {
 
         internal class RemoteFileMapper {
             public static RemoteFile Map(ModuleResolver.UnresolvedSource remoteFile, string groupName) {
-                return Map(new[] {remoteFile}, groupName).FirstOrDefault();
+                return Map(new[] { remoteFile }, groupName).FirstOrDefault();
             }
 
             public static IEnumerable<RemoteFile> Map(IEnumerable<ModuleResolver.UnresolvedSource> remoteFiles, string groupName) {

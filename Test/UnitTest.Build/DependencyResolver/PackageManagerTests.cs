@@ -193,7 +193,36 @@ nuget ThePackageFromNuget";
 
                 var packageManagerLines = packageManager.Lines;
                 Assert.AreEqual(4, packageManagerLines.Length);
-                Assert.AreEqual("http https://my-file-host Foo", packageManagerLines[packageManagerLines.Length-2]);
+                Assert.AreEqual("http https://my-file-host Foo", packageManagerLines[packageManagerLines.Length - 2]);
+            }
+        }
+
+        /// <summary>
+        /// When a single package exists then a new package can replace the existing package.
+        /// </summary>
+        [TestMethod]
+        public void When_ValidatePackageConstraints_is_true_updating_a_version_is_allowed() {
+            var fs = new Mock<IFileSystem2>();
+            fs.Setup(s => s.Root).Returns(GetTestDirectoryPath());
+
+            var request = new ResolverRequest(NullLogger.Default);
+            request.AddModule("C:\\Module1");
+            request.ValidatePackageConstraints = true;
+
+            using (var packageManager = CreatePackageManager(fs)) {
+                packageManager.Add(
+                    new[] {
+                        DependencyRequirement.Create("SomeOtherPackage", "Main", new VersionRequirement() { ConstraintExpression = ">= 1.0.5"}),
+                    },
+                    request);
+
+                packageManager.Add(
+                    new[] {
+                        DependencyRequirement.Create("SomeOtherPackage", "Main"),
+                    },
+                    request);
+
+                Assert.AreEqual("SomeOtherPackage", packageManager.GetDependencies().Requirements.SingleOrDefault(s => string.IsNullOrEmpty(s.Value.ConstraintExpression)).Key);
             }
         }
 
@@ -209,6 +238,6 @@ nuget ThePackageFromNuget";
 
         private string GetTestDirectoryPath() {
             return Path.Combine(TestContext.DeploymentDirectory, Path.GetRandomFileName());
-        }       
+        }
     }
 }

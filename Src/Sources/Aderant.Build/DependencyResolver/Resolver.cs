@@ -46,7 +46,9 @@ namespace Aderant.Build.DependencyResolver {
 
             GatherRequirements(resolverRequest, requirements);
 
-            IDependencyRequirement analyzer = AddAlwaysRequired(resolverRequest, requirements);
+            if (!resolverRequest.ReadOnly) {
+                AddAlwaysRequired(resolverRequest, requirements);
+            }
 
             List<IDependencyRequirement> distinctRequirements = requirements.Distinct().ToList();
 
@@ -70,7 +72,7 @@ namespace Aderant.Build.DependencyResolver {
 
             string dependenciesDirectory = null;
             try {
-                dependenciesDirectory = Path.Combine(resolverRequest.GetDependenciesDirectory(analyzer), Constants.PaketLock);
+                dependenciesDirectory = Path.Combine(resolverRequest.GetDependenciesDirectory(requirements[0]), Constants.PaketLock);
             } catch (InvalidOperationException) {
                 // No assigned dependencies directory.
             }
@@ -81,11 +83,11 @@ namespace Aderant.Build.DependencyResolver {
             }
         }
 
-        private IDependencyRequirement AddAlwaysRequired(ResolverRequest resolverRequest, List<IDependencyRequirement> requirements) {
+        private void AddAlwaysRequired(ResolverRequest resolverRequest, List<IDependencyRequirement> requirements) {
             const string buildAnalyzer = "Aderant.Build.Analyzer";
 
             if (resolverRequest.Modules.All(m => string.Equals(m.Name, "Build.Infrastructure"))) {
-                return null;
+                return;
             }
 
             ExpertModule module = null;
@@ -111,8 +113,6 @@ namespace Aderant.Build.DependencyResolver {
             analyzer.ReplicateToDependencies = false;
 
             requirements.Add(analyzer);
-
-            return analyzer;
         }
 
         internal void GatherRequirements(ResolverRequest resolverRequest, List<IDependencyRequirement> requirements) {

@@ -75,6 +75,12 @@ namespace Aderant.Build.DependencyResolver {
         public bool ValidatePackageConstraints { get; set; }
 
         /// <summary>
+        /// Does not modify the paket.dependencies file in anyway.
+        /// E.g does not add or remove sources.
+        /// </summary>
+        public bool ReadOnly { get; set; }
+
+        /// <summary>
         /// Sets the dependencies directory to place dependencies into.
         /// </summary>
         /// <value>The dependencies directory.</value>

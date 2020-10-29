@@ -124,10 +124,14 @@ namespace Aderant.Build.DependencyResolver {
             }
 
             // Remote files are incompatible.
-            foreach (IDependencyRequirement dependencyRequirement in dependencyRequirements.Where(x => !(x is RemoteFile))) {
+            foreach (var dependencyRequirement in dependencyRequirements.Where(x => !(x is RemoteFile))) {
                 // Map dependency requirement to resolved PackageInfo.
-                PackageResolver.PackageInfo packageInfo = GroupedResolution[Tuple.Create(Domain.GroupName(dependencyRequirement.Group), Domain.PackageName(dependencyRequirement.Name))];
-                resolvedPackages.Add(Tuple.Create(dependencyRequirement.Group, packageInfo));
+                var pair = Tuple.Create(Domain.GroupName(dependencyRequirement.Group), Domain.PackageName(dependencyRequirement.Name));
+
+                if (GroupedResolution.ContainsKey(pair)) {
+                    var packageInfo = GroupedResolution[pair];
+                    resolvedPackages.Add(Tuple.Create(dependencyRequirement.Group, packageInfo));
+                }
             }
 
             return resolvedPackages;

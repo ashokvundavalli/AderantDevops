@@ -1,5 +1,6 @@
 ﻿using System.Threading;
 using Microsoft.FSharp.Collections;
+using Microsoft.FSharp.Core;
 using Paket;
 
 namespace Aderant.Build.DependencyResolver {
@@ -13,12 +14,22 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         public void Run(CancellationToken cancellationToken) {
-            FSharpList<string> groups = dependencies.GetGroups();
+            cancellationToken.ThrowIfCancellationRequested();
 
-            foreach (var group in groups) {
-                cancellationToken.ThrowIfCancellationRequested();
-                dependencies.UpdateGroup(group, force, false, false, false, true, SemVerUpdateMode.NoRestriction, false);
-            }
+            UpdateProcess.Update(dependenciesFileName: dependencies.DependenciesFile,
+                options: new UpdaterOptions(
+                    common: new InstallerOptions(force: force,
+                        semVerUpdateMode: SemVerUpdateMode.NoRestriction,
+                        redirects: Requirements.BindingRedirectsSettings.Off,
+                        alternativeProjectRoot: FSharpOption<string>.None,
+                        cleanBindingRedirects: false,
+                        createNewBindingFiles: false,
+                        onlyReferenced: false,
+                        generateLoadScripts: false,
+                        providedScriptTypes: FSharpList<string>.Empty,
+                        providedFrameworks: FSharpList<string>.Empty,
+                        touchAffectedRefs: false),
+                    noInstall: false));
         }
     }
 }
