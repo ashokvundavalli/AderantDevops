@@ -215,10 +215,8 @@ namespace UnitTest.Build.Packaging {
         }
 
         [TestMethod]
-        [Ignore]
         public void IsFileTrustworthy_Yes() {
             var buildStateFile = new BuildStateFile {
-                ScmBranch = "refs/heads/master",
                 Outputs = new Dictionary<string, ProjectOutputSnapshot>(1) {
                     { "a", null }
                 },
@@ -229,8 +227,9 @@ namespace UnitTest.Build.Packaging {
 
             ArtifactService artifactService = new ArtifactService(new NullLogger());
 
-            Assert.IsTrue(artifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, "refs/heads/master", null, null, buildStateFile,  null, out string reason, out ArtifactService.ArtifactCacheValidationReason validationEnum));
-            Assert.IsTrue(reason.IndexOf("Artifact matches", StringComparison.OrdinalIgnoreCase) != -1);
+            Assert.IsTrue(artifactService.IsFileTrustworthy(buildStateFile,  null, out string reason, out ArtifactCacheValidationReason artifactCacheValidationEnum));
+            Assert.IsNotNull(reason);
+            Assert.AreEqual(ArtifactCacheValidationReason.Candidate, artifactCacheValidationEnum);
         }
 
         [TestMethod]
@@ -244,15 +243,14 @@ namespace UnitTest.Build.Packaging {
 
             ArtifactService artifactService = new ArtifactService(new NullLogger());
 
-            Assert.IsFalse(artifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, "refs/heads/master", null, null, buildStateFile, null, out string reason, out ArtifactService.ArtifactCacheValidationReason validationEnum));
+            Assert.IsFalse(artifactService.IsFileTrustworthy(buildStateFile, null, out string reason, out ArtifactCacheValidationReason artifactCacheValidationEnum));
             Assert.IsNotNull(reason);
-            Assert.IsTrue(reason.IndexOf("outputs", StringComparison.OrdinalIgnoreCase) != -1);
+            Assert.AreEqual(ArtifactCacheValidationReason.NoOutputs, artifactCacheValidationEnum);
         }
 
         [TestMethod]
         public void IsFileTrustworthy_Invalid_ArtifactCollection() {
             var buildStateFile = new BuildStateFile {
-                ScmBranch = "refs/heads/master",
                 Outputs = new Dictionary<string, ProjectOutputSnapshot>(1) {
                     { "a", null }
                 }
@@ -260,136 +258,30 @@ namespace UnitTest.Build.Packaging {
 
             ArtifactService artifactService = new ArtifactService(new NullLogger());
 
-            Assert.IsFalse(artifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, "refs/heads/master", null, null, buildStateFile,  null, out string reason, out ArtifactService.ArtifactCacheValidationReason validationEnum));
+            Assert.IsFalse(artifactService.IsFileTrustworthy(buildStateFile,  null, out string reason, out ArtifactCacheValidationReason artifactCacheValidationEnum));
             Assert.IsNotNull(reason);
-            Assert.IsTrue(reason.IndexOf("Artifacts", StringComparison.OrdinalIgnoreCase) != -1);
+            Assert.AreEqual(ArtifactCacheValidationReason.NoArtifacts, artifactCacheValidationEnum);
         }
 
         [TestMethod]
-        [Ignore]
-        public void IsFileTrustworthy_Valid_ScmBranch() {
+        public void IsFileTrustworthy_Corrupt_ArtifactCollection() {
             var buildStateFile = new BuildStateFile {
-                ScmBranch = "refs/heads/master",
                 Outputs = new Dictionary<string, ProjectOutputSnapshot>(1) {
-                    { "a", null }
-                },
-                Artifacts = new ArtifactCollection {
-                    { "a", null }
+                    { @"C:\B\476\1\s\a", new ProjectOutputSnapshot() }
                 }
             };
 
             ArtifactService artifactService = new ArtifactService(new NullLogger());
 
-            Assert.IsTrue(artifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, "refs/heads/master", null, null, buildStateFile, null, out string reason, out ArtifactService.ArtifactCacheValidationReason validationEnum));
+            Assert.IsFalse(artifactService.IsFileTrustworthy(buildStateFile, null, out string reason, out ArtifactCacheValidationReason artifactCacheValidationEnum));
             Assert.IsNotNull(reason);
-            Assert.IsTrue(reason.IndexOf("Artifact matches", StringComparison.OrdinalIgnoreCase) != -1);
-        }
-
-        [TestMethod]
-        [Ignore]
-        public void IsFileTrustworthy_Invalid_ScmBranch() {
-            var buildStateFile = new BuildStateFile {
-                ScmBranch = "refs/heads/update/82SP2",
-                Outputs = new Dictionary<string, ProjectOutputSnapshot>(1) {
-                    { "a", null }
-                },
-                Artifacts = new ArtifactCollection {
-                    { "a", null }
-                }
-            };
-
-            ArtifactService artifactService = new ArtifactService(new NullLogger());
-
-            Assert.IsFalse(artifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, "refs/heads/master", null, null, buildStateFile, null, out string reason, out ArtifactService.ArtifactCacheValidationReason validationEnum));
-            Assert.IsNotNull(reason);
-            Assert.IsTrue(reason.IndexOf("Artifact does not match", StringComparison.OrdinalIgnoreCase) != -1);
-        }
-
-        [TestMethod]
-        [Ignore]
-        public void IsFileTrustworthy_Valid_TargetBranch() {
-            var buildStateFile = new BuildStateFile {
-                ScmBranch = "refs/heads/master",
-                Outputs = new Dictionary<string, ProjectOutputSnapshot>(1) {
-                    { "a", null }
-                },
-                Artifacts = new ArtifactCollection {
-                    { "a", null }
-                }
-            };
-
-            ArtifactService artifactService = new ArtifactService(new NullLogger());
-
-            Assert.IsTrue(artifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, "refs/pull/000000/merge", "refs/heads/master", null, buildStateFile, null, out string reason, out ArtifactService.ArtifactCacheValidationReason validationEnum));
-            Assert.IsNotNull(reason);
-            Assert.IsTrue(reason.IndexOf("Artifact matches", StringComparison.OrdinalIgnoreCase) != -1);
-        }
-
-        [TestMethod]
-        [Ignore]
-        public void IsFileTrustworthy_Invalid_TargetBranch() {
-            var buildStateFile = new BuildStateFile {
-                ScmBranch = "refs/heads/update/82SP2",
-                Outputs = new Dictionary<string, ProjectOutputSnapshot>(1) {
-                    { "a", null }
-                },
-                Artifacts = new ArtifactCollection {
-                    { "a", null }
-                }
-            };
-
-            ArtifactService artifactService = new ArtifactService(new NullLogger());
-
-            Assert.IsFalse(artifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, "refs/pull/000000/merge", "refs/heads/master", null, buildStateFile, null, out string reason, out ArtifactService.ArtifactCacheValidationReason validationEnum));
-            Assert.IsNotNull(reason);
-            Assert.IsTrue(reason.IndexOf("Artifact does not match", StringComparison.OrdinalIgnoreCase) != -1);
-        }
-
-        [TestMethod]
-        [Ignore]
-        public void IsFileTrustworthy_Valid_CommonAncestor() {
-            var buildStateFile = new BuildStateFile {
-                ScmBranch = "refs/heads/master",
-                Outputs = new Dictionary<string, ProjectOutputSnapshot>(1) {
-                    { "a", null }
-                },
-                Artifacts = new ArtifactCollection {
-                    { "a", null }
-                }
-            };
-
-            ArtifactService artifactService = new ArtifactService(new NullLogger());
-
-            Assert.IsTrue(artifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, null, null, "refs/heads/master", buildStateFile, null, out string reason, out ArtifactService.ArtifactCacheValidationReason validationEnum));
-            Assert.IsNotNull(reason);
-            Assert.IsTrue(reason.IndexOf("Artifact matches common ancestor", StringComparison.OrdinalIgnoreCase) != -1);
-        }
-
-        [TestMethod]
-        [Ignore]
-        public void IsFileTrustworthy_Invalid_CommonAncestor() {
-            var buildStateFile = new BuildStateFile {
-                ScmBranch = "refs/heads/master",
-                Outputs = new Dictionary<string, ProjectOutputSnapshot>(1) {
-                    { "a", null }
-                },
-                Artifacts = new ArtifactCollection {
-                    { "a", null }
-                }
-            };
-
-            ArtifactService artifactService = new ArtifactService(new NullLogger());
-
-            Assert.IsFalse(artifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, "refs/pull/000000/merge", null, "refs/heads/update/82SP2", buildStateFile, null, out string reason, out ArtifactService.ArtifactCacheValidationReason validationEnum));
-            Assert.IsNotNull(reason);
-            Assert.IsTrue(reason.IndexOf("Artifact does not match", StringComparison.OrdinalIgnoreCase) != -1);
+            Assert.AreEqual(ArtifactCacheValidationReason.Corrupt, artifactCacheValidationEnum);
         }
 
         [TestMethod]
         [Description("'Release' flavor builds should accept 'Release' artifacts.")]
         public void IsFileTrustworthy_Release_BuildFlavor_Release_Artifact() {
             var buildStateFile = new BuildStateFile {
-                ScmBranch = "refs/heads/master",
                 BuildConfiguration = new Dictionary<string, string>(1) {
                     { "Flavor", "Release" }
                 },
@@ -403,8 +295,9 @@ namespace UnitTest.Build.Packaging {
 
             ArtifactService artifactService = new ArtifactService(new NullLogger());
 
-            Assert.IsTrue(artifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, null, null, null, buildStateFile, new BuildStateQueryOptions { BuildFlavor = "Release" }, out string reason, out ArtifactService.ArtifactCacheValidationReason validationEnum));
+            Assert.IsTrue(artifactService.IsFileTrustworthy(buildStateFile, new BuildStateQueryOptions { BuildFlavor = "Release" }, out string reason, out ArtifactCacheValidationReason artifactCacheValidationEnum));
             Assert.IsNotNull(reason);
+            Assert.AreEqual(ArtifactCacheValidationReason.Candidate, artifactCacheValidationEnum);
         }
 
         [TestMethod]
@@ -425,9 +318,9 @@ namespace UnitTest.Build.Packaging {
 
             ArtifactService artifactService = new ArtifactService(new NullLogger());
 
-            Assert.IsFalse(artifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, null, null, null, buildStateFile, new BuildStateQueryOptions { BuildFlavor = "Release" }, out string reason, out ArtifactService.ArtifactCacheValidationReason validationEnum));
+            Assert.IsFalse(artifactService.IsFileTrustworthy(buildStateFile, new BuildStateQueryOptions { BuildFlavor = "Release" }, out string reason, out ArtifactCacheValidationReason artifactCacheValidationEnum));
             Assert.IsNotNull(reason);
-            Assert.IsTrue(reason.IndexOf("does not match required configuration: 'Release'", StringComparison.OrdinalIgnoreCase) != -1);
+            Assert.AreEqual(ArtifactCacheValidationReason.BuildConfigurationMismatch, artifactCacheValidationEnum);
         }
 
         [TestMethod]
@@ -448,8 +341,9 @@ namespace UnitTest.Build.Packaging {
 
             ArtifactService artifactService = new ArtifactService(new NullLogger());
 
-            Assert.IsTrue(artifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, null, null, "refs/heads/master", buildStateFile, new BuildStateQueryOptions { BuildFlavor = "Debug" }, out string reason, out ArtifactService.ArtifactCacheValidationReason validationEnum));
+            Assert.IsTrue(artifactService.IsFileTrustworthy(buildStateFile, new BuildStateQueryOptions { BuildFlavor = "Debug" }, out string reason, out ArtifactCacheValidationReason artifactCacheValidationEnum));
             Assert.IsNotNull(reason);
+            Assert.AreEqual(ArtifactCacheValidationReason.Candidate, artifactCacheValidationEnum);
         }
 
         [TestMethod]
@@ -470,8 +364,9 @@ namespace UnitTest.Build.Packaging {
 
             ArtifactService artifactService = new ArtifactService(new NullLogger());
 
-            Assert.IsTrue(artifactService.IsFileTrustworthy(TestContext.DeploymentDirectory, null, null, "refs/heads/master", buildStateFile, new BuildStateQueryOptions { BuildFlavor = "Debug" }, out string reason, out ArtifactService.ArtifactCacheValidationReason validationEnum));
+            Assert.IsTrue(artifactService.IsFileTrustworthy(buildStateFile, new BuildStateQueryOptions { BuildFlavor = "Debug" }, out string reason, out ArtifactCacheValidationReason artifactCacheValidationEnum));
             Assert.IsNotNull(reason);
+            Assert.AreEqual(ArtifactCacheValidationReason.Candidate, artifactCacheValidationEnum);
         }
     }
 }

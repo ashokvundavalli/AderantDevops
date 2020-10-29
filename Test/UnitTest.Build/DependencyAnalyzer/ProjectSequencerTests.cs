@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -211,7 +212,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
 
             var sequencer = new ProjectSequencer(NullLogger.Default, null);
             bool hasLoggedUpToDate = false;
-            sequencer.ApplyStateFile(file, string.Empty, p1, false, ref hasLoggedUpToDate);
+            sequencer.ApplyStateFile(new BuildStateFile[] { file }, string.Empty, p1, false, ref hasLoggedUpToDate);
 
             Assert.AreEqual(p1.BuildReason.Flags, BuildReasonTypes.ProjectOutputNotFound);
             Assert.IsTrue(p1.IsDirty);
@@ -246,8 +247,8 @@ namespace UnitTest.Build.DependencyAnalyzer {
             p3.AddResolvedDependency(null, p2);
 
             var sequencer = new ProjectSequencer(NullLogger.Default, null);
-            sequencer.TrackedInputFilesCheck = new TestTrackedInputFilesController(null, null) {
-                Files = new[] { new TrackedInputFile("File") },
+            sequencer.TrackedInputFilesCheck = new TestTrackedInputFilesController(new PhysicalFileSystem(), null) {
+                Files = new List<TrackedInputFile>(1) { new TrackedInputFile("File") }
             };
             bool hasLoggedUpToDate = false;
             sequencer.ApplyStateFile(null, string.Empty, p1, false, ref hasLoggedUpToDate);
@@ -445,6 +446,51 @@ namespace UnitTest.Build.DependencyAnalyzer {
 
             Assert.IsFalse(p2.RequiresBuilding());
         }
+
+        [TestMethod]
+        public void FilterStateFiles() {
+            var projectSequencer = new ProjectSequencer(new NullLogger(), null);
+
+            const string packageHash = "BBED1D49615C071DAAAD48AD1FC057E1112148D0";
+
+            Guid chosenGuid = Guid.NewGuid();
+
+            BuildStateFile[] buildStateFiles = new BuildStateFile[] {
+                new BuildStateFile(),
+                new BuildStateFile {
+                    Id = chosenGuid,
+                    PackageHash = packageHash
+                }
+            };
+
+            BuildStateFile file = projectSequencer.FilterStateFiles(buildStateFiles, packageHash);
+
+            Assert.IsNotNull(file);
+            Assert.AreEqual(file.PackageHash, packageHash);
+            Assert.AreEqual(file.Id, chosenGuid);
+        }
+
+        [TestMethod]
+        public void FilterStateFilesNoPackageHashMatch() {
+            var projectSequencer = new ProjectSequencer(new NullLogger(), null);
+
+            const string packageHash = "BBED1D49615C071DAAAD48AD1FC057E1112148D0";
+
+            Guid chosenGuid = Guid.NewGuid();
+
+            BuildStateFile[] buildStateFiles = new BuildStateFile[] {
+                new BuildStateFile {
+                    Id = chosenGuid
+                },
+                new BuildStateFile()
+                };
+
+            BuildStateFile file = projectSequencer.FilterStateFiles(buildStateFiles, packageHash);
+
+            Assert.IsNotNull(file);
+            Assert.AreNotEqual(file.PackageHash, packageHash);
+            Assert.AreEqual(file.Id, chosenGuid);
+        }
     }
 
     internal class ProjectTreeBuilder {
@@ -452,7 +498,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
 
         public BuildOperationContext CreateContext() {
             return new BuildOperationContext {
-                BuildRoot = "",
+                BuildRoot = string.Empty,
                 Switches = new BuildSwitches {
                     Downstream = true
                 },

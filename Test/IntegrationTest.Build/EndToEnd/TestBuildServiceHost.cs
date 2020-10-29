@@ -132,9 +132,6 @@ namespace IntegrationTest.Build.EndToEnd {
                     context.SourceTreeMetadata.GetBuckets().Select(s => s.Id).ToArray(), 
                     null,
                     context.DropLocationInfo.BuildCacheLocation,
-                    context.BuildMetadata.ScmBranch,
-                    null, 
-                    null,
                     null,
                     CancellationToken.None);
 

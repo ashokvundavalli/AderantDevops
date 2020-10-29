@@ -30,27 +30,14 @@ namespace Aderant.Build.Commands {
         [ValidateSet("Debug", "Release")]
         public string BuildFlavor { get; set; }
 
-        [Parameter(Mandatory = false, HelpMessage = "The source branch used to validate artifacts.")]
-        public string ScmBranch { get; set; }
-
-        [Parameter(Mandatory = false, HelpMessage = "The common ancestor branch used to validate artifacts.")]
-        public string CommonAncestor { get; set; }
-
-        [Parameter(Mandatory = false, HelpMessage = "The target branch used to validate artifacts.")]
-        public string TargetBranch { get; set; }
-
-        [Parameter(Mandatory = false, HelpMessage = "Tells the build that the NuGet packages are always valid.")]
-        public bool SkipNugetPackageHashCheck { get; set; }
-
         protected override void ProcessRecord() {
             cancellationTokenSource = new CancellationTokenSource();
             var service = new ArtifactService(new PowerShellLogger(this));
 
             var options = new BuildStateQueryOptions {
-                BuildFlavor = BuildFlavor,
-                SkipNugetPackageHashCheck = SkipNugetPackageHashCheck,
+                BuildFlavor = BuildFlavor
             };
-            var metadata = service.GetBuildStateMetadata(RootDirectory, BucketIds, Tags, DropLocation, ScmBranch, TargetBranch, CommonAncestor, options, cancellationTokenSource.Token);
+            var metadata = service.GetBuildStateMetadata(RootDirectory, BucketIds, Tags, DropLocation, options, cancellationTokenSource.Token);
 
             if (metadata.BuildStateFiles != null) {
                 WriteInformation("Found " + metadata.BuildStateFiles.Count + " state files", null);

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -10,7 +9,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Aderant.Build.AzurePipelines;
-using Aderant.Build.Commands;
 using Aderant.Build.DependencyResolver;
 using Aderant.Build.Logging;
 using Aderant.Build.PipelineService;
@@ -448,10 +446,10 @@ namespace Aderant.Build.Packaging {
         /// </summary>
         public bool ArtifactRestoreSkipped { get; set; }
 
-        public BuildStateMetadata GetBuildStateMetadata(string rootDirectory, string[] bucketIds, string[] tags, string dropLocation, string scmBranch, string targetBranch, string commonAncestor, BuildStateQueryOptions options, CancellationToken token = default(CancellationToken)) {
+        public BuildStateMetadata GetBuildStateMetadata(string rootDirectory, string[] bucketIds, string[] tags, string dropLocation, BuildStateQueryOptions options, CancellationToken token = default(CancellationToken)) {
             if (bucketIds != null && tags != null && bucketIds.Length > 0 && tags.Length != 0) {
                 if (bucketIds.Length != tags.Length) {
-                    // The two vectors must have the same length
+                    // The two vectors must have the same length.
                     throw new InvalidOperationException(string.Format("{2} refers to {0} item(s), and {3} refers to {1} item(s). They must have the same number of items.",
                         bucketIds.Length,
                         tags.Length,
@@ -464,19 +462,12 @@ namespace Aderant.Build.Packaging {
 
             using (PerformanceTimer.Start(duration => logger.Info($"{nameof(GetBuildStateMetadata)} completed in: {duration.ToString()} ms"))) {
                 var metadata = new BuildStateMetadata();
-                var files = new List<(BuildStateFile, ArtifactCacheValidationReason)>();
-
-                if (!string.IsNullOrWhiteSpace(scmBranch)) {
-                    logger.Info($"Source branch: {scmBranch}");
+                
+                if (bucketIds == null) {
+                    return metadata;
                 }
 
-                if (!string.IsNullOrWhiteSpace(targetBranch)) {
-                    logger.Info($"Target branch: {targetBranch}");
-                }
-
-                if (!string.IsNullOrWhiteSpace(commonAncestor)) {
-                    logger.Info($"Common ancestor branch: {commonAncestor}");
-                }
+                var files = new List<BuildStateFile>();
 
                 foreach (var bucketId in bucketIds) {
                     token.ThrowIfCancellationRequested();
@@ -517,11 +508,10 @@ namespace Aderant.Build.Packaging {
 
                                 file.Location = folder;
 
-                                ArtifactCacheValidationReason validationEnum;
                                 string reason;
-                                if (IsFileTrustworthy(rootDirectory, scmBranch, targetBranch, commonAncestor, file, options, out reason, out validationEnum)) {
+                                if (IsFileTrustworthy(file, options, out reason, out ArtifactCacheValidationReason artifactCacheValidationEnum)) {
                                     logger.Info($"Candidate-> {stateFile}:{reason}");
-                                    files.Add((file, validationEnum));
+                                    files.Add(file);
                                 } else {
                                     logger.Info($"Rejected-> {stateFile}:{reason}");
                                 }
@@ -532,65 +522,30 @@ namespace Aderant.Build.Packaging {
                     }
                 }
 
-                var priorityArtifacts = files.Where(x => x.Item2 == ArtifactCacheValidationReason.PackageHashMatch).Select(y => y.Item1).ToList();
-
-                if (priorityArtifacts.Any()) {
-                    metadata.BuildStateFiles = priorityArtifacts;
-                } else {
-                    metadata.BuildStateFiles = files.Select(x => x.Item1).ToList();
-                }
+                metadata.BuildStateFiles = files;
 
                 return metadata;
             }
         }
 
-        internal enum ArtifactCacheValidationReason {
-            NotValidated,
-            Corrupt,
-            NoOutputs,
-            NoArtifacts,
-            PackageHashMatch,
-            PackageHashMismatch,
-            BuildConfigurationMismatch
-        }
-
         internal string GetReasonMessage(ArtifactCacheValidationReason reason) {
             switch (reason) {
-                case ArtifactCacheValidationReason.NotValidated:
-                    return "Not validated.";
+                case ArtifactCacheValidationReason.Candidate:
+                    return "Viable candidate.";
                 case ArtifactCacheValidationReason.Corrupt:
                     return "Corrupt.";
                 case ArtifactCacheValidationReason.NoOutputs:
                     return "No outputs.";
                 case ArtifactCacheValidationReason.NoArtifacts:
                     return "No artifacts.";
-                case ArtifactCacheValidationReason.PackageHashMismatch:
-                    return $"{Constants.PaketLock} hash does not match artifact package hash.";
+                case ArtifactCacheValidationReason.BuildConfigurationMismatch:
+                    return "Artifact build configuration: '{0}' does not match required configuration: '{1}'";
                 default:
                     return string.Empty;
             }
         }
 
-        private readonly Dictionary<string, bool> packageHashResults = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
-
-        private bool PackageHashesMatch(string paketLockFile, string artifactPackageHash) {
-            if (packageHashResults.TryGetValue(paketLockFile, out bool result)) {
-                return result;
-            }
-
-            string existingHash = PaketLockOperations.HashLockFile(paketLockFile, fileSystem);
-
-            logger.Info($"{paketLockFile} package hash: '{existingHash}'.");
-
-            bool match = PaketLockOperations.PackageHashMatch(existingHash, artifactPackageHash);
-
-            packageHashResults.Add(paketLockFile, match);
-
-            return match;
-        }
-
-        internal bool IsFileTrustworthy(string rootDirectory, string scmBranch, string targetBranch, string commonAncestor, BuildStateFile file, BuildStateQueryOptions options, out string reason, out ArtifactCacheValidationReason validationEnum) {
-            // ToDo: Remove all references to branches.
+        internal bool IsFileTrustworthy(BuildStateFile file, BuildStateQueryOptions options, out string reason, out ArtifactCacheValidationReason validationEnum) {
             if (CheckForRootedPaths(file)) {
                 validationEnum = ArtifactCacheValidationReason.Corrupt;
                 reason = GetReasonMessage(validationEnum);
@@ -622,40 +577,14 @@ namespace Aderant.Build.Packaging {
 
                         if (!string.IsNullOrWhiteSpace(value) && !string.Equals(optionsBuildFlavor, value, StringComparison.OrdinalIgnoreCase)) {
                             validationEnum = ArtifactCacheValidationReason.BuildConfigurationMismatch;
-                            reason = $"Artifact build configuration: '{value}' does not match required configuration: '{optionsBuildFlavor}'";
+                            reason = string.Format(GetReasonMessage(validationEnum), value, optionsBuildFlavor);
                             return false;
                         }
                     }
                 }
-
-                if (options.SkipNugetPackageHashCheck) {
-                    validationEnum = ArtifactCacheValidationReason.NotValidated;
-                    reason = GetReasonMessage(validationEnum);
-                    return true;
-                }
             }
 
-            // Reject artifacts with different external package names/versions.
-            if (!string.IsNullOrWhiteSpace(file.PackageHash)) {
-                string path = Path.Combine(rootDirectory, file.BucketId.Tag);
-                string paketLockFile = Path.Combine(path, Constants.PaketLock);
-
-                if (packageHashResults.ContainsKey(paketLockFile) || fileSystem.FileExists(paketLockFile)) {
-                    if (PackageHashesMatch(paketLockFile, file.PackageHash)) {
-                        validationEnum = ArtifactCacheValidationReason.PackageHashMatch;
-                        reason = $"{Constants.PaketLock} hash matches artifact package hash.";
-                        return true;
-                    }
-
-                    validationEnum = ArtifactCacheValidationReason.PackageHashMismatch;
-                    reason = GetReasonMessage(validationEnum);
-                    return true;
-                }
-
-                logger.Info($"Module {Constants.PaketLock} file: '{paketLockFile}' does not exist.");
-            }
-
-            validationEnum = ArtifactCacheValidationReason.NotValidated;
+            validationEnum = ArtifactCacheValidationReason.Candidate;
             reason = GetReasonMessage(validationEnum);
             
             return true;
@@ -816,6 +745,14 @@ namespace Aderant.Build.Packaging {
                 }
             }
         }
+    }
+
+    internal enum ArtifactCacheValidationReason {
+        Candidate,
+        Corrupt,
+        NoOutputs,
+        NoArtifacts,
+        BuildConfigurationMismatch
     }
 
     internal enum ArtifactState {

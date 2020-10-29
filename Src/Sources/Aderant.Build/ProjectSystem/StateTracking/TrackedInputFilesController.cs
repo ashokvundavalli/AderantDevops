@@ -7,7 +7,6 @@ using Aderant.Build.Logging;
 using Microsoft.Build.Evaluation;
 using Microsoft.Build.Execution;
 using Microsoft.Build.Framework;
-using Microsoft.PowerShell.Commands;
 using ILogger = Aderant.Build.Logging.ILogger;
 
 namespace Aderant.Build.ProjectSystem.StateTracking {
@@ -31,15 +30,31 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         /// </summary>
         public bool SkipNugetPackageHashCheck { get; set; }
 
-        public InputFilesDependencyAnalysisResult PerformDependencyAnalysis(ICollection<TrackedInputFile> trackedFiles, string projectSolutionRoot, string packageHash) {
+        public InputFilesDependencyAnalysisResult PerformDependencyAnalysis(ICollection<TrackedInputFile> trackedFiles, string projectSolutionRoot, IList<TrackedMetadataFile> trackedMetadataFiles) {
             InputFilesDependencyAnalysisResult result = new InputFilesDependencyAnalysisResult();
 
             if (!string.IsNullOrEmpty(projectSolutionRoot)) {
-                var filesToTrack = GetFilesToTrack(projectSolutionRoot);
+                List<TrackedInputFile> filesToTrack = GetFilesToTrack(projectSolutionRoot);
 
-                if (filesToTrack != null) {
-                    CorrelateInputs(result, filesToTrack, trackedFiles, packageHash);
+                // ToDo: Enable this check once package content is tracked. See work item: 246523.
+                //if (!string.IsNullOrWhiteSpace(packageHash)) {
+                //    if (trackedFiles == null) {
+                //        trackedFiles = new List<TrackedInputFile>(1);
+                //    }
+
+                //    trackedFiles.Add(new TrackedMetadataFile(Constants.PaketLock) { Sha1 = packageHash });
+                //}
+
+                if (filesToTrack.Count > 0) {
+                    CorrelateInputs(result, filesToTrack, trackedFiles);
                 }
+
+                // ToDo: Add paket.lock file to tracked files before running CorrelateInputs once package content is tracked. See work item: 246523.
+                if (trackedMetadataFiles != null) {
+                    filesToTrack.AddRange(trackedMetadataFiles);
+                }
+
+                result.TrackedFiles = filesToTrack?.ToList().AsReadOnly();
 
                 return result;
             }
@@ -50,18 +65,33 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             return result;
         }
 
-        internal void CorrelateInputs(InputFilesDependencyAnalysisResult result, IReadOnlyCollection<TrackedInputFile> trackedInputFiles, ICollection<TrackedInputFile> existingTrackedFiles, string packageHash) {
+        private ICollection<TrackedInputFile> AddPaketLockToTrackedFiles(string directory, ICollection<TrackedInputFile> trackedInputFiles) {
+            // Get paket.lock if it exists
+            string paketLockFile = Path.Combine(directory, Constants.PaketLock);
+
+            if (fileSystem.FileExists(paketLockFile)) {
+                PaketLockOperations paketLockOperations = new PaketLockOperations(paketLockFile, fileSystem.ReadAllLines(paketLockFile));
+
+                string packageHash = PaketLockOperations.HashLockFile(paketLockOperations.LockFileContent);
+
+                if (trackedInputFiles == null) {
+                    trackedInputFiles = new List<TrackedInputFile>(1);
+                }
+
+                trackedInputFiles.Add(new TrackedMetadataFile(paketLockFile) {
+                    PackageHash = packageHash,
+                    PackageGroups = paketLockOperations.GetPackageInfo(),
+                    Sha1 = packageHash
+                });
+            }
+
+            return trackedInputFiles;
+        }
+
+        internal void CorrelateInputs(InputFilesDependencyAnalysisResult result, ICollection<TrackedInputFile> trackedInputFiles, ICollection<TrackedInputFile> existingTrackedFiles) {
             // Attempts to correlate inputs
             // Note: two item vector transforms may not be able to be correlated, even if they reference the same item vector, because
             // depending on the transform expression, there might be no relation between the results of the transforms
-
-            if (!string.IsNullOrWhiteSpace(packageHash)) {
-                if (existingTrackedFiles == null) {
-                    existingTrackedFiles = new List<TrackedInputFile>(1);
-                }
-
-                existingTrackedFiles.Add(new TrackedMetadataFile(Constants.PaketLock) { Sha1 = packageHash });
-            }
 
             if (existingTrackedFiles != null && existingTrackedFiles.Any()) {
                 Dictionary<string, TrackedInputFile> newTable = CreateDictionaryFromTrackedInputFiles(trackedInputFiles);
@@ -86,14 +116,12 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                     }
 
                     result.IsUpToDate = false;
-                    result.TrackedFiles = trackedInputFiles;
 
                     return;
                 }
             }
 
             result.IsUpToDate = true;
-            result.TrackedFiles = trackedInputFiles;
         }
 
         private void RemoveLockFile(Dictionary<string, TrackedInputFile> table) {
@@ -150,37 +178,18 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             }
         }
 
-        public virtual IReadOnlyCollection<TrackedInputFile> GetFilesToTrack(string directory) {
+        public virtual List<TrackedInputFile> GetFilesToTrack(string directory) {
             var directoryPropertiesFile = Path.Combine(directory, "dir.props");
 
-            // Get paket.lock if it exists
-            string paketLockFile = Path.Combine(directory, Constants.PaketLock);
-
             List<TrackedInputFile> trackedInputFiles = new List<TrackedInputFile>();
-
-            if (fileSystem.FileExists(paketLockFile)) {
-                PaketLockOperations paketLockOperations = new PaketLockOperations(paketLockFile, fileSystem.ReadAllLines(paketLockFile));
-
-                string packageHash = PaketLockOperations.HashLockFile(paketLockOperations.LockFileContent);
-
-                trackedInputFiles.Add(new TrackedMetadataFile(paketLockFile) {
-                    PackageHash = packageHash,
-                    PackageGroups = paketLockOperations.GetPackageInfo(),
-                    Sha1 = packageHash
-                });
-            }
 
             if (fileSystem.FileExists(directoryPropertiesFile)) {
                 logger.Info($"Using file: {directoryPropertiesFile} to get tracked inputs from", null);
 
-                return trackedInputFiles.Concat(GetFilesToTrack(directoryPropertiesFile, directory)).ToList().AsReadOnly();
+                return trackedInputFiles.Concat(GetFilesToTrack(directoryPropertiesFile, directory)).ToList();
             }
 
-            if (trackedInputFiles.Count == 0) {
-                return null;
-            }
-
-            return trackedInputFiles.AsReadOnly();
+            return trackedInputFiles;
         }
 
         internal IReadOnlyCollection<TrackedInputFile> GetFilesToTrack(string directoryPropertiesFile, string directory) {
@@ -292,5 +301,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         public bool? IsUpToDate { get; internal set; }
 
         public IReadOnlyCollection<TrackedInputFile> TrackedFiles { get; internal set; }
+
+        internal BuildStateFile BuildStateFile { get; set; }
     }
 }

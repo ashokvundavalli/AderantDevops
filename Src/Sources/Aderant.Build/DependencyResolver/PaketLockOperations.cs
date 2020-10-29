@@ -177,7 +177,7 @@ namespace Aderant.Build.DependencyResolver {
                 content.AppendFormat("{0}{1}{2}", item.Key.Item1.Name, item.Key.Item2.Name, item.Value.Version.AsString);
             }
 
-            using (Stream stream = content.ToString().ToStream()) {
+            using (Stream stream = content.ToString().ToUpperInvariant().ToStream()) {
                 return stream.ComputeSha1Hash();
             }
         }

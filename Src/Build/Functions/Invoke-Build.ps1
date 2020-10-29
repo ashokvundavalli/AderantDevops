@@ -241,16 +241,10 @@ function GetBuildStateMetadata($context) {
         return
     }
 
-    [string]$commonAncestor = [string]::Empty
-
     if ($context.IsDesktopBuild -and [string]::IsNullOrWhiteSpace($context.BuildMetadata.ScmBranch)) {
         if (-not [string]::IsNullOrWhiteSpace($stm.Branch)) {
             $context.BuildMetadata.ScmBranch = $stm.Branch
         }
-
-        $commonAncestor = $stm.CommonAncestor -replace ".*/origin", "refs/heads"
-    } else {
-        $commonAncestor = $stm.CommonAncestor
     }
 
     [string]$targetBranch = $null
@@ -268,7 +262,7 @@ function GetBuildStateMetadata($context) {
         $flavor = 'Debug'
     }
 
-    $buildState = Get-BuildStateMetadata -RootDirectory $context.BuildRoot -BucketIds $ids -Tags $tags -DropLocation $context.DropLocationInfo.BuildCacheLocation -ScmBranch $context.BuildMetadata.ScmBranch -TargetBranch $targetBranch -CommonAncestor $commonAncestor -BuildFlavor $flavor -SkipNugetPackageHashCheck $SkipNugetPackageHashCheck.ToBool()
+    $buildState = Get-BuildStateMetadata -RootDirectory $context.BuildRoot -BucketIds $ids -Tags $tags -DropLocation $context.DropLocationInfo.BuildCacheLocation -BuildFlavor $flavor
 
     $context.BuildStateMetadata = $buildState
 

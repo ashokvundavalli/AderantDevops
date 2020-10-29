@@ -50,7 +50,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\packages\Moq\lib\net45\Moq.dll</HintPath>
     </Reference>
-    <Reference Include="paket, Version=5.247.4.0, Culture=neutral, processorArchitecture=MSIL" />
+    <Reference Include="paket, Version=5.247.4.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Data" />
