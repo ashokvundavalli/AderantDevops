@@ -92,27 +92,30 @@ namespace Aderant.Build.DependencyResolver {
 
             ExpertModule module = null;
 
-
             if (resolverRequest.ModuleFactory != null) {
                 module = resolverRequest.ModuleFactory.GetModule(buildAnalyzer);
             }
 
-            IDependencyRequirement analyzer = requirements.FirstOrDefault(r => string.Equals(r.Name, buildAnalyzer));
+            var analyzer = requirements.FirstOrDefault(r => string.Equals(r.Name, buildAnalyzer));
 
             if (analyzer != null) {
                 requirements.Remove(analyzer);
             }
 
+            IDependencyRequirement newRequirement;
             if (module != null) {
-                analyzer = DependencyRequirement.Create(module);
+                newRequirement = DependencyRequirement.Create(module);
             } else {
-                analyzer = DependencyRequirement.Create(buildAnalyzer, Constants.MainDependencyGroup);
+                newRequirement = DependencyRequirement.Create(buildAnalyzer, Constants.MainDependencyGroup);
+                if (analyzer != null) {
+                    newRequirement.VersionRequirement = analyzer.VersionRequirement;
+                }
             }
 
-            analyzer.ReplaceVersionConstraint = true;
-            analyzer.ReplicateToDependencies = false;
+            newRequirement.ReplaceVersionConstraint = true;
+            newRequirement.ReplicateToDependencies = false;
 
-            requirements.Add(analyzer);
+            requirements.Add(newRequirement);
         }
 
         internal void GatherRequirements(ResolverRequest resolverRequest, List<IDependencyRequirement> requirements) {
