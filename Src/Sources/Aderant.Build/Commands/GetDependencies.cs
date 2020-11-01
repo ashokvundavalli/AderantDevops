@@ -134,6 +134,7 @@ namespace Aderant.Build.Commands {
             }
 
             string destinationLink = Path.Combine(directory, EditorConfig);
+            Logger.Info("Creating link to .editorconfig file at: '{0}'.", destinationLink);
 
             fileSystem.CreateFileHardLink(destinationLink, configFile);
         }

@@ -1,10 +1,16 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Aderant.Build.Utilities;
 
 namespace Aderant.Build.DependencyResolver {
     internal class DefaultSharedDependencyController {
         private readonly IFileSystem fileSystem;
+
+        private readonly string[] reservedDirectories = new string[] {
+            "Build"
+        };
 
         public DefaultSharedDependencyController(IFileSystem fileSystem) {
             this.fileSystem = fileSystem;
@@ -30,6 +36,10 @@ namespace Aderant.Build.DependencyResolver {
 
             foreach (var directory in directoriesInBuild) {
                 if (PathComparer.Default.Equals(rootDirectory, directory)) {
+                    continue;
+                }
+
+                if (reservedDirectories.Contains(Path.GetFileName(directory), StringComparer.OrdinalIgnoreCase)) {
                     continue;
                 }
 

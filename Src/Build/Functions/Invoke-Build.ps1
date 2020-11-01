@@ -651,7 +651,7 @@ function global:Invoke-Build2 {
 
         try {
             Push-Location -Path $repositoryPath
-            Get-Dependencies -NoConfig:$context.IsDesktopBuild
+            Get-Dependencies -NoConfig:(-not $context.IsDesktopBuild)
         } finally {
             Pop-Location
         }
