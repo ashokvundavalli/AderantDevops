@@ -34,7 +34,7 @@ namespace Aderant.Build.Analyzer.Rules.Security {
         internal override string MessageFormat => Description;
 
         internal override string Description => "Illegal modification of 'DtdProcessing' property. " +
-                                                "Valid assignment values are 'DtdProcessing.Prohibit' and 'DtdProcessing.Ignore'.";
+                                                "Only direct assignments of 'System.Xml.DtdProcessing.Prohibit' and 'System.Xml.DtdProcessing.Ignore' values are valid.";
 
         #endregion Properties
 
@@ -88,13 +88,14 @@ namespace Aderant.Build.Analyzer.Rules.Security {
 
             var right = UnwrapParenthesizedExpressionDescending(node.Right) as MemberAccessExpressionSyntax;
             if (right == null) {
-                // Assignment is a DTDProcessing property, but a non-enum value is assigned to it.
+                // Assignment is a DTDProcessing property, but a non-enum value is assigned
+                // or an indirect DtdProcessing enum value is assigned to it.
                 // This is invalid.
                 return false;
             }
 
-            var expression = right.Expression as IdentifierNameSyntax;
-            if (expression?.Identifier.Text != "DtdProcessing") {
+            var rightTypeInfo = model.GetTypeInfo(right.Expression);
+            if (rightTypeInfo.ConvertedType.ToDisplayString() != "System.Xml.DtdProcessing") {
                 // Assignment value is not a 'DtdProcessing' enum.
                 // This should not compile, but this sanity check exists for safety.
                 return false;

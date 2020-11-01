@@ -130,8 +130,81 @@ namespace System.Xml {
 
             VerifyCSharpDiagnostic(
                 code,
-                // Error: DtdProcessing = DtdProcessing.Allow
                 GetDiagnostic(8, 13));
+        }
+
+        [TestMethod]
+        public void SecurityBanNewXmlReader_Invalid_IndirectAssignment() {
+            const string code = @"
+using System.Xml;
+
+namespace Test {
+    public class TestClass {
+        public void TestMethod() {
+            var value = DtdProcessing.Ignore;
+            var item = new XmlReaderSettings();
+            item.DtdProcessing = value;
+        }
+    }
+}
+
+namespace System.Xml {
+    public enum DtdProcessing {
+        Allow,
+        Ignore,
+        Prohibit
+    }
+
+    public sealed class XmlReaderSettings {
+        public DtdProcessing DtdProcessing { get; set; }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(
+                code,
+                GetDiagnostic(9, 13));
+        }
+
+        [TestMethod]
+        public void SecurityBanNewXmlReader_Invalid_IncorrectNamespaceAssignment() {
+            const string code = @"
+using System.Fake;
+using System.Xml;
+
+namespace Test {
+    public class TestClass {
+        public void TestMethod() {
+            var item = new XmlReaderSettings();
+            item.DtdProcessing = System.Fake.DtdProcessing.Allow;
+        }
+    }
+}
+
+namespace System.Xml {
+    public enum DtdProcessing {
+        Allow,
+        Ignore,
+        Prohibit
+    }
+
+    public sealed class XmlReaderSettings {
+        public DtdProcessing DtdProcessing { get; set; }
+    }
+}
+
+namespace System.Fake {
+    public enum DtdProcessing {
+        Allow,
+        Ignore,
+        Prohibit
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(
+                code,
+                GetDiagnostic(9, 13));
         }
 
         [TestMethod]
@@ -189,6 +262,36 @@ namespace Test {
         public void TestMethod() {
             var item = new XmlReaderSettings();
             item.DtdProcessing = DtdProcessing.Prohibit;
+        }
+    }
+}
+
+namespace System.Xml {
+    public enum DtdProcessing {
+        Allow,
+        Ignore,
+        Prohibit
+    }
+
+    public sealed class XmlReaderSettings {
+        public DtdProcessing DtdProcessing { get; set; }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void SecurityBanNewXmlReader_Valid_FullNameSpace() {
+            const string code = @"
+using System.Xml;
+
+namespace Test {
+    public class TestClass {
+        public void TestMethod() {
+            var item = new System.Xml.XmlReaderSettings();
+            item.DtdProcessing = System.Xml.DtdProcessing.Prohibit;
         }
     }
 }
