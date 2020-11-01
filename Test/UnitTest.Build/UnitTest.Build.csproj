@@ -119,6 +119,7 @@
     </Compile>
     <Compile Include="DependencyResolver\DependencyRequirementTests.cs" />
     <Compile Include="DependencyResolver\Model\RemoteFileTests.cs" />
+    <Compile Include="Packaging\StateFileServiceTests.cs" />
     <Compile Include="Serialization\PackageInfoSerializationTests.cs" />
     <Compile Include="DependencyResolver\PaketLockOperationsTests.cs" />
     <Compile Include="DependencyResolver\ResolverWorkflowTests.cs" />

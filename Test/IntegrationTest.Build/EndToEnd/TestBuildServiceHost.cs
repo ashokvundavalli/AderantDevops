@@ -8,6 +8,7 @@ using Aderant.Build;
 using Aderant.Build.Logging;
 using Aderant.Build.Packaging;
 using Aderant.Build.PipelineService;
+using Aderant.Build.ProjectSystem;
 using Aderant.Build.VersionControl;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -124,12 +125,11 @@ namespace IntegrationTest.Build.EndToEnd {
             context = CreateContext(properties);
             context.BuildMetadata.BuildId += 1;
 
-            var artifactService = new ArtifactService(NullLogger.Default);
+            var artifactService = new StateFileService(NullLogger.Default);
             artifactService.AllowZeroBuildId = true;
 
             var buildStateMetadata = artifactService
-                .GetBuildStateMetadata(testContext.DeploymentDirectory,
-                    context.SourceTreeMetadata.GetBuckets().Select(s => s.Id).ToArray(), 
+                .GetBuildStateMetadata(context.SourceTreeMetadata.GetBuckets().Select(s => s.Id).ToArray(),
                     null,
                     context.DropLocationInfo.BuildCacheLocation,
                     null,

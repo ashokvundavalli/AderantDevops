@@ -262,7 +262,7 @@ function GetBuildStateMetadata($context) {
         $flavor = 'Debug'
     }
 
-    $buildState = Get-BuildStateMetadata -RootDirectory $context.BuildRoot -BucketIds $ids -Tags $tags -DropLocation $context.DropLocationInfo.BuildCacheLocation -BuildFlavor $flavor
+    $buildState = Get-BuildStateMetadata -BucketIds $ids -Tags $tags -DropLocation $context.DropLocationInfo.BuildCacheLocation -BuildFlavor $flavor
 
     $context.BuildStateMetadata = $buildState
 

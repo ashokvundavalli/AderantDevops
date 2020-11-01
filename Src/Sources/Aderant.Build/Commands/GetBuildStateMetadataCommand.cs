@@ -11,10 +11,6 @@ namespace Aderant.Build.Commands {
     public class GetBuildStateMetadataCommand : PSCmdlet {
         private CancellationTokenSource cancellationTokenSource;
 
-        [Parameter(Mandatory = true, HelpMessage = "The root directory.")]
-        [ValidateNotNullOrEmpty]
-        public string RootDirectory { get; set; }
-
         [Parameter(Mandatory = true, HelpMessage = "Specifies the SHA1 hashes to query in the cache.")]
         [ValidateNotNullOrEmpty]
         public string[] BucketIds { get; set; }
@@ -32,12 +28,12 @@ namespace Aderant.Build.Commands {
 
         protected override void ProcessRecord() {
             cancellationTokenSource = new CancellationTokenSource();
-            var service = new ArtifactService(new PowerShellLogger(this));
+            var service = new StateFileService(new PowerShellLogger(this));
 
             var options = new BuildStateQueryOptions {
                 BuildFlavor = BuildFlavor
             };
-            var metadata = service.GetBuildStateMetadata(RootDirectory, BucketIds, Tags, DropLocation, options, cancellationTokenSource.Token);
+            var metadata = service.GetBuildStateMetadata(BucketIds, Tags, DropLocation, options, cancellationTokenSource.Token);
 
             if (metadata.BuildStateFiles != null) {
                 WriteInformation("Found " + metadata.BuildStateFiles.Count + " state files", null);
