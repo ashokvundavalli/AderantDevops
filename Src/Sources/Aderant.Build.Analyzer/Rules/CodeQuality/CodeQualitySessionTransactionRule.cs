@@ -12,10 +12,6 @@ namespace Aderant.Build.Analyzer.Rules.CodeQuality {
 
         internal const string DiagnosticId = "Aderant_CodeQuality_SessionTransaction";
 
-        internal static Tuple<string, string>[] ValidSuppressionMessages = {
-            new Tuple<string, string>("\"Code Quality\"", "\"Aderant_SessionTransaction\""),
-        };
-
         #endregion Fields
 
         #region Properties
@@ -52,7 +48,7 @@ namespace Aderant.Build.Analyzer.Rules.CodeQuality {
 
             if (node == null ||
                 !string.Equals("BeginTransaction", node.Name.Identifier.Text, StringComparison.Ordinal) ||
-                IsAnalysisSuppressed(node, ValidSuppressionMessages)) {
+                IsAnalysisSuppressed(node, DiagnosticId)) {
                 return;
             }
 

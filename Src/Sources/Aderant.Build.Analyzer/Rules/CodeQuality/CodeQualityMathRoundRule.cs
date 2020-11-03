@@ -10,10 +10,6 @@ namespace Aderant.Build.Analyzer.Rules.CodeQuality {
 
         internal const string DiagnosticId = "Aderant_CodeQuality_MathRound";
 
-        internal static Tuple<string, string>[] ValidSuppressionMessages = {
-            new Tuple<string, string>("\"Code Quality\"", $"\"{DiagnosticId}\""),
-        };
-
         #endregion Fields
 
         #region Properties
@@ -55,7 +51,7 @@ namespace Aderant.Build.Analyzer.Rules.CodeQuality {
             var exp = node.Expression as MemberAccessExpressionSyntax;
 
             if (exp == null ||
-                IsAnalysisSuppressed(node, ValidSuppressionMessages) ||
+                IsAnalysisSuppressed(node, DiagnosticId) ||
                 !"System.Math.Round".EndsWith(exp.GetText().ToString(), StringComparison.Ordinal) &&
                 !"System.Decimal.Round".EndsWith(exp.GetText().ToString(), StringComparison.Ordinal) &&
                 !"decimal.Round".EndsWith(exp.GetText().ToString(), StringComparison.Ordinal)) {

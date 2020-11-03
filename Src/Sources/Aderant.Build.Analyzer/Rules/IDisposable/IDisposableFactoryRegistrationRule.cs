@@ -37,7 +37,7 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
             //      or if analysis is suppressed.
             //      or if the class doesn't implements System.IDisposable.
             if (node == null ||
-                IsAnalysisSuppressed(node, ValidSuppressionMessages) ||
+                IsAnalysisSuppressed(node, DiagnosticId) ||
                 !GetIsNodeDisposable(node, context.SemanticModel)) {
                 return;
             }

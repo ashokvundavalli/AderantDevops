@@ -37,7 +37,7 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
             //      or if the node is not Disposable.
             //      or if the node's parent is a using statement, or assignment expression.
             if (node == null ||
-                IsAnalysisSuppressed(node, ValidSuppressionMessages) ||
+                IsAnalysisSuppressed(node, DiagnosticId) ||
                 !GetIsNodeDisposable(node, context.SemanticModel) ||
                 node.Parent is UsingStatementSyntax ||
                 node.Parent is AssignmentExpressionSyntax ||

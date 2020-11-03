@@ -11,10 +11,6 @@ namespace Aderant.Build.Analyzer.Rules {
     internal class QueryServiceQueryAllRule : RuleBase {
         internal const string DiagnosticId = "Aderant_QueryAllError";
 
-        internal static Tuple<string, string>[] ValidSuppressionMessages = {
-            new Tuple<string, string>("\"SQL Query\"", "\"Aderant_QueryAllError")
-        };
-
         internal override DiagnosticSeverity Severity => DiagnosticSeverity.Error;
 
         internal override string Id => DiagnosticId;
@@ -42,7 +38,7 @@ namespace Aderant.Build.Analyzer.Rules {
         private void AnalyzeNodePropertyAccessor(SyntaxNodeAnalysisContext context) {
             // If node is not a member access expression, exit early.
             if (!(context.Node is MemberAccessExpressionSyntax) ||
-                IsAnalysisSuppressed(context.Node, ValidSuppressionMessages)) {
+                IsAnalysisSuppressed(context.Node, DiagnosticId)) {
                 return;
             }
 

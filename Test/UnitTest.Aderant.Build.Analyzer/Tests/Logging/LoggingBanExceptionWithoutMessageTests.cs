@@ -145,6 +145,170 @@ namespace Aderant.Framework.Logging {
             VerifyCSharpDiagnostic(code, GetDiagnostic(8, 13));
         }
 
+        [TestMethod]
+        public void LoggingBanExceptionWithoutMessage_Exception_ExceptionProperty() {
+            const string code = @"
+using System;
+using Aderant.Framework.Logging;
+
+namespace Test {
+    public class TestClass {
+        public void TestMethod(ILogWriter logWriter) {
+            var exception = new InvalidOperationException();
+
+            logWriter.Log(LogLevel.Error, ((((exception)).Message)), exception);
+        }
+    }
+}
+
+namespace Aderant.Framework.Logging {
+    public enum LogLevel {
+        Trace,
+        Debug,
+        Info,
+        Warning,
+        Error,
+        Fatal
+    }
+
+    public interface ILogWriter {
+        bool IsEnabled(LogLevel level);
+        object Log(LogLevel level, string message);
+        object Log(LogLevel level, string messageTemplate, params object[] detail);
+        object Log(LogLevel level, Exception exception);
+        object Log(LogLevel level, string summaryMessage, Exception exception);
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(
+                code,
+                // Error: ((((exception)).Message))
+                GetDiagnostic(10, 13));
+        }
+
+        [TestMethod]
+        public void LoggingBanExceptionWithoutMessage_Exception_Property() {
+            const string code = @"
+using System;
+using Aderant.Framework.Logging;
+
+namespace Test {
+    public class TestClass {
+        public string Foo { get; }
+
+        public void TestMethod(ILogWriter logWriter) {
+            var exception = new InvalidOperationException();
+
+            logWriter.Log(LogLevel.Error, this.Foo, exception);
+        }
+    }
+}
+
+namespace Aderant.Framework.Logging {
+    public enum LogLevel {
+        Trace,
+        Debug,
+        Info,
+        Warning,
+        Error,
+        Fatal
+    }
+
+    public interface ILogWriter {
+        bool IsEnabled(LogLevel level);
+        object Log(LogLevel level, string message);
+        object Log(LogLevel level, string messageTemplate, params object[] detail);
+        object Log(LogLevel level, Exception exception);
+        object Log(LogLevel level, string summaryMessage, Exception exception);
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void LoggingBanExceptionWithoutMessage_ExceptionMessage() {
+            const string code = @"
+using System;
+using Aderant.Framework.Logging;
+
+namespace Test {
+    public class TestClass {
+        public void TestMethod(ILogWriter logWriter) {
+            var exception = new InvalidOperationException();
+
+            logWriter.Log(LogLevel.Error, exception.Message, exception);
+        }
+    }
+}
+
+namespace Aderant.Framework.Logging {
+    public enum LogLevel {
+        Trace,
+        Debug,
+        Info,
+        Warning,
+        Error,
+        Fatal
+    }
+
+    public interface ILogWriter {
+        bool IsEnabled(LogLevel level);
+        object Log(LogLevel level, string message);
+        object Log(LogLevel level, string messageTemplate, params object[] detail);
+        object Log(LogLevel level, Exception exception);
+        object Log(LogLevel level, string summaryMessage, Exception exception);
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(
+                code,
+                // Error: exception.Message
+                GetDiagnostic(10, 13));
+        }
+
+        [TestMethod]
+        public void LoggingBanExceptionWithoutMessage_ExceptionMessage_Valid() {
+            const string code = @"
+using System;
+using Aderant.Framework.Logging;
+
+namespace Test {
+    public class TestClass {
+        public void TestMethod(ILogWriter logWriter) {
+            logWriter.Log(LogLevel.Error, this.Message, exception);
+        }
+
+        public string Message { get; }
+    }
+}
+
+namespace Aderant.Framework.Logging {
+    public enum LogLevel {
+        Trace,
+        Debug,
+        Info,
+        Warning,
+        Error,
+        Fatal
+    }
+
+    public interface ILogWriter {
+        bool IsEnabled(LogLevel level);
+        object Log(LogLevel level, string message);
+        object Log(LogLevel level, string messageTemplate, params object[] detail);
+        object Log(LogLevel level, Exception exception);
+        object Log(LogLevel level, string summaryMessage, Exception exception);
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
         #endregion Tests
     }
 }

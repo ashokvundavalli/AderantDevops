@@ -66,7 +66,7 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
             // Exit early if execution is not processing a class declaration,
             //      or if analysis is suppressed.
             if (classNode == null ||
-                IsAnalysisSuppressed(classNode, ValidSuppressionMessages)) {
+                IsAnalysisSuppressed(classNode, DiagnosticId)) {
                 return;
             }
 

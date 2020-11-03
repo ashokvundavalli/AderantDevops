@@ -24,11 +24,6 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests {
                 true,
                 Description);
 
-            private static readonly Tuple<string, string>[] ValidSuppressionMessages = {
-                new Tuple<string, string>("\"TestPart0\"", "\"TestPart1\""),
-                new Tuple<string, string>("\"TestPart2\"", "\"TestPart3")
-            };
-
             internal override DiagnosticSeverity Severity => DiagnosticSeverity.Error;
 
             internal override string Id => "SuppressionTestRuleId";
@@ -44,7 +39,7 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests {
             }
 
             internal void EvaluateNode(SyntaxNodeAnalysisContext context) {
-                if (IsAnalysisSuppressed(context.Node, ValidSuppressionMessages, AnalyzeTests)) {
+                if (IsAnalysisSuppressed(context.Node, Id, AnalyzeTests)) {
                     return;
                 }
 
@@ -242,6 +237,7 @@ namespace Test {
                 diagnostic => true);
 
             testRule.AnalyzeTests = false;
+
             testRule.EvaluateNode(context);
 
             Assert.IsFalse(diagnosticReported, unexpectedDiagnosticError);
@@ -268,6 +264,7 @@ namespace Test {
                 diagnostic => true);
 
             testRule.AnalyzeTests = false;
+
             testRule.EvaluateNode(context);
 
             Assert.IsFalse(diagnosticReported, unexpectedDiagnosticError);
@@ -292,6 +289,7 @@ namespace Test {
                 diagnostic => true);
 
             testRule.AnalyzeTests = false;
+
             testRule.EvaluateNode(context);
 
             Assert.IsFalse(diagnosticReported, unexpectedDiagnosticError);
@@ -318,6 +316,7 @@ namespace Test {
                 diagnostic => true);
 
             testRule.AnalyzeTests = false;
+
             testRule.EvaluateNode(context);
 
             Assert.IsFalse(diagnosticReported, unexpectedDiagnosticError);
@@ -328,7 +327,7 @@ namespace Test {
             const string code = @"
 namespace Test {
     public class TestClass {
-        [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute(""TestPart0"", ""TestPart1"")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("""", ""SuppressionTestRuleId"")]
         public void TestMethod() {
             new object();
         }
@@ -353,7 +352,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Test {
     public class TestClass {
-        [SuppressMessageAttribute(""TestPart0"", ""TestPart1"")]
+        [SuppressMessageAttribute("""", ""SuppressionTestRuleId"")]
         public void TestMethod() {
             new object();
         }
@@ -376,7 +375,7 @@ namespace Test {
             const string code = @"
 namespace Test {
     public class TestClass {
-        [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute(""TestPart2"", ""TestPart3"")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("""", ""SuppressionTestRuleId"")]
         public void TestMethod() {
             new object();
         }
@@ -401,7 +400,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Test {
     public class TestClass {
-        [SuppressMessageAttribute(""TestPart2"", ""TestPart3"")]
+        [SuppressMessageAttribute("""", ""SuppressionTestRuleId"")]
         public void TestMethod() {
             new object();
         }
@@ -424,7 +423,7 @@ namespace Test {
             const string code = @"
 namespace Test {
     public class TestClass {
-        [System.Diagnostics.CodeAnalysis.SuppressMessage(""TestPart0"", ""TestPart1"")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("""", ""SuppressionTestRuleId"")]
         public void TestMethod() {
             new object();
         }
@@ -449,7 +448,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Test {
     public class TestClass {
-        [SuppressMessage(""TestPart0"", ""TestPart1"")]
+        [SuppressMessage("""", ""SuppressionTestRuleId"")]
         public void TestMethod() {
             new object();
         }
@@ -472,7 +471,7 @@ namespace Test {
             const string code = @"
 namespace Test {
     public class TestClass {
-        [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute(""TestPart2"", ""TestPart3"")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("""", ""SuppressionTestRuleId"")]
         public void TestMethod() {
             new object();
         }
@@ -497,7 +496,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Test {
     public class TestClass {
-        [SuppressMessage(""TestPart2"", ""TestPart3"")]
+        [SuppressMessage("""", ((""SuppressionTestRuleId"")))]
         public void TestMethod() {
             new object();
         }
@@ -618,7 +617,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Test {
     public class TestClass {
-        [SuppressMessage(""TestPart0"", ""TestPart1""), SuppressMessage(""TestPart2"", ""TestPart3"")]
+        [SuppressMessage("""", ""SuppressionTestRuleId""), SuppressMessage("""", ""SuppressionTestRuleId"")]
         public void TestMethod() {
             new object();
         }
@@ -643,8 +642,8 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Test {
     public class TestClass {
-        [SuppressMessage(""TestPart0"", ""TestPart1"")]
-        [SuppressMessage(""TestPart2"", ""TestPart3"")]
+        [SuppressMessage("""", ""SuppressionTestRuleId"")]
+        [SuppressMessage("""", ""SuppressionTestRuleId"")]
         public void TestMethod() {
             new object();
         }
@@ -669,8 +668,8 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Test {
     public class TestClass {
-        [SuppressMessage(""TestPart0"", ""TestPart1""), SuppressMessage(""TestPart2"", ""TestPart3"")]
-        [SuppressMessage(""TestPart0"", ""TestPart1""), SuppressMessage(""TestPart2"", ""TestPart3"")]
+        [SuppressMessage("""", ""SuppressionTestRuleId""), SuppressMessage("""", ""SuppressionTestRuleId"")]
+        [SuppressMessage("""", ""SuppressionTestRuleId""), SuppressMessage("""", ""SuppressionTestRuleId"")]
         public void TestMethod() {
             new object();
         }
@@ -696,7 +695,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Test {
     public class TestClass {
-        [SuppressMessage(""TestPart2"", ""TestPart3""), Obsolete]
+        [SuppressMessage("""", ""SuppressionTestRuleId""), Obsolete]
         public void TestMethod() {
             new object();
         }
@@ -722,7 +721,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Test {
     public class TestClass {
-        [Obsolete, SuppressMessage(""TestPart2"", ""TestPart3"")]
+        [Obsolete, SuppressMessage("""", ""SuppressionTestRuleId"")]
         public void TestMethod() {
             new object();
         }
@@ -748,7 +747,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Test {
     public class TestClass {
-        [SuppressMessage(""TestPart2"", ""TestPart3"")]
+        [SuppressMessage("""", ""SuppressionTestRuleId"")]
         [Obsolete]
         public void TestMethod() {
             new object();
@@ -776,7 +775,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace Test {
     public class TestClass {
         [Obsolete]
-        [SuppressMessage(""TestPart2"", ""TestPart3"")]
+        [SuppressMessage("""", ""SuppressionTestRuleId"")]
         public void TestMethod() {
             new object();
         }

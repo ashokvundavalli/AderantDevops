@@ -8,14 +8,9 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Aderant.Build.Analyzer.Rules.CodeQuality {
     internal class CodeQualityApprovalsReporterRule : RuleBase{
-
         #region Fields
 
         internal const string DiagnosticId = "Aderant_CodeQuality_ApprovalsReporter";
-
-        internal static Tuple<string, string>[] ValidSuppressionMessages = {
-            new Tuple<string, string>("\"Code Quality\"", $"\"{DiagnosticId}\"")
-        };
 
         private static HashSet<string> whitelistedReporters = new HashSet<string>() {
             "ApprovalTests.Reporters.TfsVnextReporter",
@@ -56,7 +51,7 @@ namespace Aderant.Build.Analyzer.Rules.CodeQuality {
             var node = context.Node as AttributeSyntax;
 
             if(node == null || 
-               IsAnalysisSuppressed(node, ValidSuppressionMessages, true)) {
+               IsAnalysisSuppressed(node, DiagnosticId, true)) {
                 return;
             }
 

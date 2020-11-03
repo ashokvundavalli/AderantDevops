@@ -36,7 +36,7 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
             //      or if the class declaration is static.
             //      or if the class is whitelisted.
             if (node == null ||
-                IsAnalysisSuppressed(node, ValidSuppressionMessages) ||
+                IsAnalysisSuppressed(node, DiagnosticId) ||
                 GetIsNodeDisposable(node, context.SemanticModel) ||
                 GetIsDeclarationStatic(node.Modifiers) ||
                 GetIsClassNodeWhitelisted(node, context.SemanticModel)) {

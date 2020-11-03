@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -45,12 +44,7 @@ namespace Aderant.Build.Analyzer.Rules.Logging {
         private void AnalyzeInvocationNode(SyntaxNodeAnalysisContext context) {
             var node = context.Node as InvocationExpressionSyntax;
 
-            if (node == null ||
-                // The below ensures that this rule
-                // cannot be formally suppressed within the source code.
-                // Though suppression via the GlobalSuppression.cs file,
-                // and thus the automated suppression, is still honoured.
-                IsAnalysisSuppressed(node, new Tuple<string, string>[0])) {
+            if (node == null) {
                 return;
             }
 

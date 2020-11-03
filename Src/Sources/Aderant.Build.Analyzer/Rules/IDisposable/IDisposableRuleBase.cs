@@ -12,10 +12,6 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
 
         protected const string DiagnosticId = "Aderant_IDisposableDiagnostic";
 
-        internal static Tuple<string, string>[] ValidSuppressionMessages = {
-            new Tuple<string, string>("\"IDisposable\"", "\"Aderant_IDisposableDiagnostic\"")
-        };
-
         #endregion Fields
 
         #region Properties

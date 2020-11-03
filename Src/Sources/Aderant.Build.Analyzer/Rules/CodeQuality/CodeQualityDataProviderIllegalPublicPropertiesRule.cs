@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -56,12 +55,7 @@ namespace Aderant.Build.Analyzer.Rules.CodeQuality {
         private void AnalyzeNodeClassDeclaration(SyntaxNodeAnalysisContext context) {
             var node = context.Node as ClassDeclarationSyntax;
 
-            if (node == null ||
-                // The below ensures that this rule
-                // cannot be formally suppressed within the source code.
-                // Though suppression via the GlobalSuppression.cs file,
-                // and thus the automated suppression, is still honoured.
-                IsAnalysisSuppressed(node, new Tuple<string, string>[0])) {
+            if (node == null) {
                 return;
             }
 

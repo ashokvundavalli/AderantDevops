@@ -151,34 +151,6 @@ namespace Aderant.Build.Analyzer.Rules.Logging {
         }
 
         /// <summary>
-        /// Determines if the specified <see cref="ArgumentSyntax" />
-        /// has a data type of <see cref="System.Exception" />.
-        /// </summary>
-        /// <param name="model">The model.</param>
-        /// <param name="argument">The argument.</param>
-        protected bool GetIsArgumentException(SemanticModel model, ArgumentSyntax argument) {
-            var symbol = model
-                .GetTypeInfo(UnwrapParenthesizedExpressionDescending(argument.Expression))
-                .Type;
-
-            if (symbol == null) {
-                return false;
-            }
-
-            while (true) {
-                if (symbol.OriginalDefinition?.ToDisplayString() == "System.Exception") {
-                    return true;
-                }
-
-                if (symbol.BaseType == null) {
-                    return false;
-                }
-
-                symbol = symbol.BaseType;
-            }
-        }
-
-        /// <summary>
         /// Returns the number of items provided as the 'params object[]' argument to the specified Log method.
         /// </summary>
         /// <param name="model">The model.</param>
@@ -195,6 +167,38 @@ namespace Aderant.Build.Analyzer.Rules.Logging {
             }
 
             return argumentCount;
+        }
+
+        /// <summary>
+        /// Determines if the specified <see cref="ArgumentSyntax" />
+        /// has a data type of <see cref="Exception" />.
+        /// </summary>
+        /// <param name="model">The model.</param>
+        /// <param name="argument">The argument.</param>
+        protected bool GetIsArgumentException(SemanticModel model, ArgumentSyntax argument) {
+            var symbol = model
+                .GetTypeInfo(UnwrapParenthesizedExpressionDescending(argument.Expression))
+                .Type as INamedTypeSymbol;
+
+            return IsException(symbol);
+        }
+
+        /// <summary>
+        /// Determines whether the specified symbol is a System.Exception from mscorlib.
+        /// </summary>
+        /// <param name="symbol">The symbol.</param>
+        protected static bool IsException(INamedTypeSymbol symbol) {
+            while (symbol != null) {
+                if (symbol.Name == "Exception" &&
+                    symbol.ContainingAssembly.Name == "mscorlib" &&
+                    symbol.ContainingNamespace.Name == "System") {
+                    return true;
+                }
+
+                symbol = symbol.BaseType;
+            }
+
+            return false;
         }
 
         /// <summary>

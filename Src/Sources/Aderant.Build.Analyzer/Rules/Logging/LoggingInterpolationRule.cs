@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -66,12 +66,7 @@ namespace Aderant.Build.Analyzer.Rules.Logging {
         private void AnalyzeInvocationNode(SyntaxNodeAnalysisContext context) {
             var node = context.Node as InvocationExpressionSyntax;
 
-            if (node == null ||
-                // The below ensures that this rule
-                // cannot be formally suppressed within the source code.
-                // Though suppression via the GlobalSuppression.cs file,
-                // and thus the automated suppression, is still honoured.
-                IsAnalysisSuppressed(node, new Tuple<string, string>[0])) {
+            if (node == null) {
                 return;
             }
 
@@ -97,16 +92,49 @@ namespace Aderant.Build.Analyzer.Rules.Logging {
             // Argument [0] is the LogLevel, thus argument [1] is the string template.
             var unwrappedArgument = UnwrapParenthesizedExpressionDescending(node.ArgumentList.Arguments[1].Expression);
 
-            if (GetIsConstantString(unwrappedArgument, context.SemanticModel) ||
-                GetIsConstantBinaryExpression(unwrappedArgument, context.SemanticModel)) {
-                return;
+            if (!IsMessageValid(unwrappedArgument, context.SemanticModel)) {
+                ReportDiagnostic(
+                    context,
+                    Descriptor,
+                    unwrappedArgument.GetLocation(),
+                    unwrappedArgument);
+            }
+        }
+
+        /// <summary>
+        /// Determines whether the specified Log() message is valid.
+        /// </summary>
+        /// <param name="node">The node.</param>
+        /// <param name="model">The model.</param>
+        private static bool IsMessageValid(SyntaxNode node, SemanticModel model) {
+            var unwrappedNode = UnwrapParenthesizedExpressionDescending(node);
+
+            if (GetIsConstantString(unwrappedNode, model)) {
+                return true;
             }
 
-            ReportDiagnostic(
-                context,
-                Descriptor,
-                unwrappedArgument.GetLocation(),
-                unwrappedArgument);
+            if (unwrappedNode is InterpolatedStringExpressionSyntax) {
+                return false;
+            }
+
+            var expressions = new List<MemberAccessExpressionSyntax>();
+            GetExpressionsFromChildNodes(ref expressions, unwrappedNode.Parent);
+
+            for (int i = 0; i < expressions.Count; ++i) {
+                var symbol = model.GetSymbolInfo(UnwrapParenthesizedExpressionDescending(expressions[i].Expression)).Symbol;
+
+                var typeSymbol = symbol as INamedTypeSymbol;
+
+                if (typeSymbol != null &&
+                    typeSymbol.Name == "String" &&
+                    typeSymbol.ContainingNamespace.Name == "System" &&
+                    typeSymbol.ContainingAssembly.Name == "mscorlib") {
+                    return false;
+                }
+            }
+
+            return !(unwrappedNode is BinaryExpressionSyntax) ||
+                   GetIsConstantBinaryExpression(unwrappedNode, model);
         }
 
         /// <summary>

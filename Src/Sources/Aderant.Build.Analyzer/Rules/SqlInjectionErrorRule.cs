@@ -12,11 +12,6 @@ namespace Aderant.Build.Analyzer.Rules {
     internal class SqlInjectionErrorRule : RuleBase {
         internal const string DiagnosticId = "Aderant_SqlInjectionError";
 
-        internal static readonly Tuple<string, string>[] ValidSuppressionMessages = {
-            new Tuple<string, string>("\"SQL Injection\"", $"\"{DiagnosticId}\""),
-            new Tuple<string, string>("\"Microsoft.Security\"", "\"CA2100:")
-        };
-
         internal override DiagnosticSeverity Severity => DiagnosticSeverity.Error;
 
         internal override string Id => DiagnosticId;
@@ -52,7 +47,8 @@ namespace Aderant.Build.Analyzer.Rules {
             var expression = context.Node as ExpressionStatementSyntax;
 
             if (expression == null ||
-                IsAnalysisSuppressed(expression, ValidSuppressionMessages)) {
+                IsAnalysisSuppressed(expression, DiagnosticId) ||
+                IsAnalysisSuppressed(expression, "CA2100")) {
                 return;
             }
 
@@ -77,7 +73,8 @@ namespace Aderant.Build.Analyzer.Rules {
             var expression = context.Node as InvocationExpressionSyntax;
 
             if (expression == null ||
-                IsAnalysisSuppressed(expression, ValidSuppressionMessages)) {
+                IsAnalysisSuppressed(expression, DiagnosticId) ||
+                IsAnalysisSuppressed(expression, "CA2100")) {
                 return;
             }
 
@@ -102,7 +99,8 @@ namespace Aderant.Build.Analyzer.Rules {
             var expression = context.Node as ObjectCreationExpressionSyntax;
 
             if (expression == null ||
-                IsAnalysisSuppressed(expression, ValidSuppressionMessages)) {
+                IsAnalysisSuppressed(expression, DiagnosticId) ||
+                IsAnalysisSuppressed(expression, "CA2100")) {
                 return;
             }
 

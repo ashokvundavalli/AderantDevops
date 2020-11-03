@@ -33,6 +33,51 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests.IDisposable {
         #region Tests
 
         [TestMethod]
+        public void IDisposableConstructorRule_ConstructorInjection_InterfaceArgument_NotReadOnly_NotDisposed() {
+            const string code = @"
+using System;
+using Aderant.Framework;
+
+namespace Test {
+    public class TestClass {
+        private IFactory factory;
+
+        public TestClass()
+            : this(Factory.Current) {
+            // Empty.
+        }
+
+        internal TestClass(IFactory factory) {
+            this.factory = factory;
+        }
+    }
+
+    public class DisposeMe : IDisposable {
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+
+namespace Aderant.Framework {
+    public class Factory : IFactory {
+        public static Factory Current { get; }
+
+        public void Dispose() {
+            // Empty.
+        }
+    }
+
+    public interface IFactory : IDisposable {
+
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
         public void IDisposableConstructorRule_ConstructorParameter_Public_Disposed() {
             const string code = @"
 using System;

@@ -41,7 +41,7 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
             //       or if the invocation expression's direct parent is a using statement.
             if (node == null ||
                 node.Parent is UsingStatementSyntax ||
-                IsAnalysisSuppressed(node, ValidSuppressionMessages) ||
+                IsAnalysisSuppressed(node, DiagnosticId) ||
                 GetIsWhitelisted(node, context.SemanticModel)) {
                 return;
             }

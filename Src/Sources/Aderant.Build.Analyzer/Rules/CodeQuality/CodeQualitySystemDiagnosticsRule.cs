@@ -10,10 +10,6 @@ namespace Aderant.Build.Analyzer.Rules.CodeQuality {
 
         internal const string DiagnosticId = "Aderant_CodeQuality_SystemDiagnostics";
 
-        internal static Tuple<string, string>[] ValidSuppressionMessages = {
-            new Tuple<string, string>("\"Code Quality\"", "\"Aderant_SystemDiagnostics\""),
-        };
-
         #endregion Fields
 
         #region Properties
@@ -50,7 +46,7 @@ namespace Aderant.Build.Analyzer.Rules.CodeQuality {
             var node = (context.Node as InvocationExpressionSyntax)?.Expression as MemberAccessExpressionSyntax;
 
             if (node == null ||
-                IsAnalysisSuppressed(node, ValidSuppressionMessages, true)) {
+                IsAnalysisSuppressed(node, DiagnosticId, true)) {
                 return;
             }
 

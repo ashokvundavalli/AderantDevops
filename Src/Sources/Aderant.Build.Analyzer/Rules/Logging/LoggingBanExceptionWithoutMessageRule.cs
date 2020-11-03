@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -31,8 +30,7 @@ namespace Aderant.Build.Analyzer.Rules.Logging {
 
         internal override string MessageFormat => Description;
 
-        internal override string Description => "Log cannot contain an exception without a message " +
-                                                "to give more context to about the exception that is being logged.";
+        internal override string Description => "Log messages must be descriptive and provide detail that explains why an exception occurred.";
 
         #endregion Properties
 
@@ -45,12 +43,7 @@ namespace Aderant.Build.Analyzer.Rules.Logging {
         private void AnalyzeInvocationNode(SyntaxNodeAnalysisContext context) {
             var node = context.Node as InvocationExpressionSyntax;
 
-            if (node == null ||
-                // The below ensures that this rule
-                // cannot be formally suppressed within the source code.
-                // Though suppression via the GlobalSuppression.cs file,
-                // and thus the automated suppression, is still honoured.
-                IsAnalysisSuppressed(node, new Tuple<string, string>[0])) {
+            if (node == null) {
                 return;
             }
 
@@ -61,7 +54,7 @@ namespace Aderant.Build.Analyzer.Rules.Logging {
                 .Symbol as IMethodSymbol;
 
             if (methodSymbol == null ||
-                GetLogMethodSignature(methodSymbol) != LogMethodSignature.Exception) {
+                IsSignatureValid(node, methodSymbol, context.SemanticModel)) {
                 return;
             }
 
@@ -74,6 +67,63 @@ namespace Aderant.Build.Analyzer.Rules.Logging {
                 node);
         }
 
+        /// <summary>
+        /// Determines whether the provided <see cref="InvocationExpressionSyntax"/> is a valid Log() method signature.
+        /// </summary>
+        /// <param name="node">The node.</param>
+        /// <param name="symbol">The symbol.</param>
+        /// <param name="semanticModel">The semantic model.</param>
+        private static bool IsSignatureValid(
+            InvocationExpressionSyntax node,
+            IMethodSymbol symbol,
+            SemanticModel semanticModel) {
+            switch (GetLogMethodSignature(symbol)) {
+                case LogMethodSignature.None: {
+                    return true;
+                }
+                case LogMethodSignature.Message:
+                case LogMethodSignature.MessageException:
+                case LogMethodSignature.MessageParams: {
+                    return IsMessageSignatureValid(node, semanticModel);
+                }
+                default: {
+                    return false;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Determines whether the provided <see cref="InvocationExpressionSyntax"/> is a valid Log() message signature.
+        /// </summary>
+        /// <param name="node">The node.</param>
+        /// <param name="semanticModel">The semantic model.</param>
+        private static bool IsMessageSignatureValid(InvocationExpressionSyntax node, SemanticModel semanticModel) {
+            if (node.ArgumentList.Arguments.Count < 2) {
+                return true;
+            }
+
+            var unwrappedArgument = UnwrapParenthesizedExpressionDescending(node.ArgumentList.Arguments[1]) as ArgumentSyntax;
+            if (unwrappedArgument == null) {
+                return true;
+            }
+
+            var expression = UnwrapParenthesizedExpressionDescending(unwrappedArgument.Expression) as MemberAccessExpressionSyntax;
+            if (expression == null) {
+                return true;
+            }
+
+            var identifer = UnwrapParenthesizedExpressionDescending(expression.Expression) as IdentifierNameSyntax;
+            if (identifer == null) {
+                return true;
+            }
+
+            var symbol = semanticModel.GetSymbolInfo(identifer).Symbol as ILocalSymbol;
+            if (symbol == null) {
+                return true;
+            }
+
+            return !IsException(symbol.Type as INamedTypeSymbol);
+        }
 
         #endregion
     }
