@@ -33,10 +33,38 @@ namespace Aderant.Build.DependencyResolver {
             var member = typeof(NetUtils).Assembly.GetType("<StartupCode$Paket-Core>.$Paket.NetUtils").GetField("createHttpHandler@409", BindingFlags.Static | BindingFlags.NonPublic);
             var defaultHandler = (FSharpFunc<Tuple<string, FSharpOption<NetUtils.Auth>>, HttpMessageHandler>)member.GetValue(null);
             member.SetValue(null, new PaketHttpMessageHandlerFactory(defaultHandler));
+
+            FixQuirks();
+
             isConfigured = true;
         }
 
+        /// <summary>
+        /// Implements DontUnescapePathDotsAndSlashes for PowerShell where we cannot change the app.config
+        /// </summary>
+        private static void FixQuirks() {
+            string url = "http://foo/%2f/1";
+            var uri = new Uri(url);
 
+            if (!uri.PathAndQuery.Contains("%2f")) {
+                var getSyntaxMethod = typeof(UriParser).GetMethod("GetSyntax", BindingFlags.Static | BindingFlags.NonPublic);
+                if (getSyntaxMethod == null) {
+                    throw new MissingMethodException("UriParser", "GetSyntax");
+                }
+
+                foreach (string scheme in new[] { Uri.UriSchemeHttp, Uri.UriSchemeHttps }) {
+                    var uriParser = getSyntaxMethod.Invoke(null, new object[] { scheme });
+
+                    var setUpdatableFlagsMethod = uriParser.GetType().GetMethod("SetUpdatableFlags", BindingFlags.Instance | BindingFlags.NonPublic);
+                    if (setUpdatableFlagsMethod == null) {
+                        throw new MissingMethodException("UriParser", "SetUpdatableFlags");
+                    }
+
+                    setUpdatableFlagsMethod.Invoke(uriParser, new object[] { 0 });
+                }
+
+            }
+        }
 
         public override HttpMessageHandler Invoke(Tuple<string, FSharpOption<NetUtils.Auth>> args) {
             if (args.Item1.IndexOf("blob.core.windows.net", StringComparison.OrdinalIgnoreCase) >= 0) {

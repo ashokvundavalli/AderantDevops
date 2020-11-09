@@ -108,6 +108,7 @@
     <Compile Include="BuildLogProcessorTests.cs" />
     <Compile Include="BuildMetadataTests.cs" />
     <Compile Include="BuildProjectCheckTests.cs" />
+    <Compile Include="UriQuirksFixTests.cs" />
     <Compile Include="Commands\GetDependenciesTests.cs" />
     <Compile Include="DependencyAnalyzer\BuildPlanGeneratorTests.cs" />
     <Compile Include="DependencyAnalyzer\DirectoryNodeFactoryTests.cs" />
