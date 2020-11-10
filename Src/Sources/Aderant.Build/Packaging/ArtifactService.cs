@@ -451,14 +451,12 @@ namespace Aderant.Build.Packaging {
 
             List<BuildArtifact> artifactsWithStoragePaths = new List<BuildArtifact>();
 
-            if (!metadata.IsPullRequest) {
-                // Phase 1 - assumes everything is a prebuilt/cache artifact
-                var artifacts = pipelineService.GetAssociatedArtifacts();
-                AssignDropLocation(artifactStagingDirectory, dropLocationInfo.BuildCacheLocation, artifacts, buildId);
-                foreach (BuildArtifact artifact in artifacts) {
-                    if (artifact.SendToArtifactCache) {
-                        artifactsWithStoragePaths.Add(artifact);
-                    }
+            // Phase 1 - assumes everything is a prebuilt/cache artifact
+            var artifacts = pipelineService.GetAssociatedArtifacts();
+            AssignDropLocation(artifactStagingDirectory, dropLocationInfo.BuildCacheLocation, artifacts, buildId);
+            foreach (BuildArtifact artifact in artifacts) {
+                if (artifact.SendToArtifactCache) {
+                    artifactsWithStoragePaths.Add(artifact);
                 }
             }
 
