@@ -1,8 +1,8 @@
 ﻿function Retry-Command {
     param (
-		[Parameter(Mandatory=$true)][ScriptBlock]$Command,  
-		[Parameter(Mandatory=$false)][int]$Retries = 5, 
-		[Parameter(Mandatory=$false)][int]$MinutesToWait = 5
+        [Parameter(Mandatory=$true)][ScriptBlock]$Command,
+        [Parameter(Mandatory=$false)][int]$Retries = 5,
+        [Parameter(Mandatory=$false)][int]$MinutesToWait = 5
     )
 
     Set-StrictMode -Version 'Latest'
@@ -13,7 +13,7 @@
 
     while (-not $completed) {
         try {
-            & $Command            
+            & $Command
             $completed = $true
         } catch {
             if ($retrycount -ge $Retries) {
@@ -22,8 +22,8 @@
             } else {
                 $delay = ($MinutesToWait * 60)
 
-                Write-Host ("{0}. Retrying in {1} seconds." -f $_.Exception.Message, $delay)               
-            
+                Write-Host ("{0}. Retrying in {1} seconds." -f $_.Exception.Message, $delay)
+
                 Start-Sleep -Seconds $delay
                 $retrycount++
             }
@@ -34,14 +34,14 @@
 }
 
 Retry-Command -Command {
-	$processCount = @(Get-Process MSBuild -ErrorAction SilentlyContinue).Count
-	$processCount += @(Get-Process VSTest* -ErrorAction SilentlyContinue).Count
-	$processCount += @(Get-Process Git -ErrorAction SilentlyContinue).Count
+    $processCount = @(Get-Process MSBuild -ErrorAction SilentlyContinue).Count
+    $processCount += @(Get-Process VSTest* -ErrorAction SilentlyContinue).Count
+    $processCount += @(Get-Process Git -ErrorAction SilentlyContinue).Count
 
-	if ($processCount -eq 0) {
-		Write-Host "Can restart!"
-		Restart-Computer -Force
-	} else {
-		throw "Something build-related is running."
-	}
+    if ($processCount -eq 0) {
+        Write-Host "Can restart!"
+        Restart-Computer -Force
+    } else {
+        throw "Something build-related is running."
+    }
 }
