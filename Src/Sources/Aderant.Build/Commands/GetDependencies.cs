@@ -24,6 +24,7 @@ namespace Aderant.Build.Commands {
         public SwitchParameter ReadOnly { get; set; }
 
         internal static readonly string EditorConfig = ".editorconfig";
+        internal static readonly string MSTestV2CommonProject = "MSTest_V2_Common.proj";
         internal static readonly string ResharperSettings = "sln.DotSettings";
         internal static readonly string AbsolutePathToken = "[ABSOLUTEPATH]";
         internal static readonly string RelativePathToken = "[RELATIVEPATH]";
@@ -117,7 +118,8 @@ namespace Aderant.Build.Commands {
             string content = fileSystem.ReadAllText(reSharperSettingsFile);
 
             List<Action<string>> actions = new List<Action<string>> {
-                directory => LinkEditorConfigFile(configFile, directory),
+                directory => LinkFile(profileDirectory, EditorConfig, directory),
+                directory => LinkFile(buildScriptsDirectory, MSTestV2CommonProject, directory, "Test"),
                 directory => CopyReSharperSettings(content, directory, buildScriptsDirectory)
             };
 
@@ -128,15 +130,19 @@ namespace Aderant.Build.Commands {
             return reservedDirectories.Contains(Path.GetFileName(path), StringComparer.OrdinalIgnoreCase);
         }
 
-        internal void LinkEditorConfigFile(string configFile, string directory) {
-            if (IsReservedDirectory(directory)) {
+        internal void LinkFile(string sourceDirectory, string fileName, string destination, string target = null) {
+            if (IsReservedDirectory(destination)) {
                 return;
             }
 
-            string destinationLink = Path.Combine(directory, EditorConfig);
-            Logger.Info("Creating link to .editorconfig file at: '{0}'.", destinationLink);
+            if (target != null) {
+                destination = Path.Combine(destination, target);
+            }
 
-            fileSystem.CreateFileHardLink(destinationLink, configFile);
+            string destinationLink = Path.Combine(destination, fileName);
+            Logger.Info("Creating link to: {0} file at: '{1}'.", fileName, destinationLink);
+
+            fileSystem.CreateFileHardLink(destinationLink, Path.Combine(sourceDirectory, fileName));
         }
 
         internal void CopyReSharperSettings(string content, string destination, string buildScriptsDirectory) {

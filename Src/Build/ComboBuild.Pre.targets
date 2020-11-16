@@ -233,6 +233,9 @@
       <BuildExtensionFiles Include="$(MSBuildThisFileDirectory)Aderant.wpp.common.targets">
         <Destination>Build\wpp</Destination>
       </BuildExtensionFiles>
+      <BuildExtensionFiles Include="$(MSBuildThisFileDirectory)\MSTest_V2_Common.proj">
+        <Destination>Test</Destination>
+      </BuildExtensionFiles>
     </ItemGroup>
 
     <Copy SourceFiles="@(BuildExtensionFiles)"
