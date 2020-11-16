@@ -514,6 +514,8 @@ try {
     DownloadPaket $commit
     UpdateMsBuildTasks
     BuildProjects -mainAssembly $mainAssembly -forceCompile $isUsingProfile -commit $commit
+    LoadAssembly -assemblyPath "$assemblyPathRoot\System.Numerics.Vectors.dll"
+    LoadAssembly -assemblyPath "$assemblyPathRoot\System.Runtime.CompilerServices.Unsafe.dll"
     LoadAssembly -assemblyPath "$assemblyPathRoot\System.Threading.Tasks.Dataflow.dll"
     LoadAssembly -assemblyPath "$assemblyPathRoot\protobuf-net.dll"
     EnsureModuleLoaded
