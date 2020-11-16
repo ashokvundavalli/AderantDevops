@@ -113,7 +113,6 @@ namespace Aderant.Build.Commands {
 
             string profileDirectory = Path.Combine(buildScriptsDirectory, "..\\Profile");
 
-            string configFile = Path.Combine(profileDirectory, EditorConfig);
             string reSharperSettingsFile = Path.Combine(profileDirectory, ResharperSettings);
             string content = fileSystem.ReadAllText(reSharperSettingsFile);
 
@@ -140,9 +139,11 @@ namespace Aderant.Build.Commands {
             }
 
             string destinationLink = Path.Combine(destination, fileName);
-            Logger.Info("Creating link to: {0} file at: '{1}'.", fileName, destinationLink);
 
-            fileSystem.CreateFileHardLink(destinationLink, Path.Combine(sourceDirectory, fileName));
+            if (fileSystem.DirectoryExists(destination)) {
+                Logger.Info("Creating link to: {0} file at: '{1}'.", fileName, destinationLink);
+                fileSystem.CreateFileHardLink(destinationLink, Path.Combine(sourceDirectory, fileName));
+            }
         }
 
         internal void CopyReSharperSettings(string content, string destination, string buildScriptsDirectory) {
