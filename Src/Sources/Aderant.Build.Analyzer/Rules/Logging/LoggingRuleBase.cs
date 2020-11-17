@@ -204,49 +204,22 @@ namespace Aderant.Build.Analyzer.Rules.Logging {
         /// <summary>
         /// Determines if the specified <see cref="MemberAccessExpressionSyntax"/> is a call to 'TextTranslator.Current'.
         /// </summary>
-        /// <param name="memberAccessExpression">The member access expression.</param>
-        protected static bool GetIsTextTranslation(MemberAccessExpressionSyntax memberAccessExpression) {
-            const string textTranslator = "TextTranslator";
-            const string current = "Current";
-            const string translate = "Translate";
-
-            if (memberAccessExpression == null) {
+        /// <param name="accessExpression">The member access expression.</param>
+        protected static bool GetIsTextTranslation(MemberAccessExpressionSyntax accessExpression) {
+            if (accessExpression == null ||
+                !string.Equals(
+                    "Current",
+                    accessExpression.Name.Identifier.Text,
+                    StringComparison.Ordinal)) {
                 return false;
             }
 
-            var nameSyntax = memberAccessExpression.Expression as IdentifierNameSyntax;
+            var identifierExpression = UnwrapParenthesizedExpressionDescending(accessExpression.Expression) as IdentifierNameSyntax;
 
-            if (string.Equals(
-                nameSyntax?.Identifier.Text,
-                textTranslator,
-                StringComparison.Ordinal)) {
-                return string.Equals(
-                    memberAccessExpression.Name.Identifier.Text,
-                    current,
-                    StringComparison.Ordinal);
-            }
-
-            var childMemberAccessExpression = memberAccessExpression.Expression as MemberAccessExpressionSyntax;
-
-            if (childMemberAccessExpression == null) {
-                return false;
-            }
-
-            nameSyntax = childMemberAccessExpression.Expression as IdentifierNameSyntax;
-
-            return
-                string.Equals(
-                    nameSyntax?.Identifier.Text,
-                    textTranslator,
-                    StringComparison.Ordinal) &&
-                string.Equals(
-                    childMemberAccessExpression.Name.Identifier.Text,
-                    current,
-                    StringComparison.Ordinal) &&
-                string.Equals(
-                    memberAccessExpression.Name.Identifier.Text,
-                    translate,
-                    StringComparison.Ordinal);
+            return string.Equals(
+                "TextTranslator",
+                identifierExpression?.Identifier.Text,
+                StringComparison.Ordinal);
         }
 
         /// <summary>

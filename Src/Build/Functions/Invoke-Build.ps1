@@ -609,12 +609,8 @@ function global:Invoke-Build2 {
     Set-StrictMode -Version 'Latest'
     $ErrorActionPreference = 'Stop'
 
-    if ($SuppressDiagnostics.IsPresent) {
-        if (-not $Release.IsPresent) {
-            throw '-Release must be specified when suppressing diagnostics.'
-        }
-
-        [System.Environment]::SetEnvironmentVariable('AderantRoslynRuleAutomaticSuppression', 'true', [System.EnvironmentVariableTarget]::Process)
+    if ($SuppressDiagnostics.IsPresent -and -not $Release.IsPresent) {
+        throw '-Release must be specified when suppressing diagnostics.'
     }
 
     if ($Clean.IsPresent) {

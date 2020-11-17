@@ -551,9 +551,58 @@ namespace Test {
         public void TestMethod(ILogWriter logWriter) {
             logWriter.Log(
                 LogLevel.Error,
-                TextTranslator.Current.Translate(""Test{2}""),
+                ""{12}"" + (TextTranslator.Current.FooBar(""Test{2}"")) + new object().ToString(),
                 new object(),
                 new object());
+        }
+    }
+
+    public class TextTranslator {
+        public static TextTranslator Current { get; }
+
+        public string Translate(string test) {
+            return test;
+        }
+    }
+}
+
+namespace Aderant.Framework.Logging {
+    public enum LogLevel {
+        Trace,
+        Debug,
+        Info,
+        Warning,
+        Error,
+        Fatal
+    }
+
+    public interface ILogWriter {
+        bool IsEnabled(LogLevel level);
+        object Log(LogLevel level, string message);
+        object Log(LogLevel level, string messageTemplate, params object[] detail);
+        object Log(LogLevel level, Exception exception);
+        object Log(LogLevel level, string summaryMessage, Exception exception);
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void LoggingArgumentCount_TextTranslation_GetMessageText() {
+            const string code = @"
+using System;
+using System.Collections.Generic;
+using Aderant.Framework.Logging;
+
+namespace Test {
+    public class TestClass {
+        public void TestMethod(ILogWriter logwriter) {
+            var xamlEx = new InvalidOperationException();
+            var kvp = new KeyValuePair<string, string>();
+
+            logwriter.Log(LogLevel.Error, TextTranslator.Current.GetMessageText(Resources.ModulePath, ""TEMPLATESELECTORLOADERROR""), kvp.Key, xamlEx);
         }
     }
 

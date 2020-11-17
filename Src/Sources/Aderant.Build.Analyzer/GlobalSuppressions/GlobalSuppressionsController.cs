@@ -12,17 +12,8 @@ namespace Aderant.Build.Analyzer.GlobalSuppressions {
     /// with the intent of keeping changesets as small as possible.
     /// </summary>
     public static class GlobalSuppressionsController {
-        private const string aderantGeneratedSuppression =
-            "[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage(\"Aderant.GeneratedSuppression\", \"";
-
-        private const string aderantSyntax =
-            "[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage(\"Aderant.Syntax\", \"";
-
-        private const string completeSuppressionAttribute =
-            "[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage(";
-
-        private const string incompleteSuppressionAttribute =
-            "[assembly: SuppressMessage(";
+        private const string suppressionPrefix =
+            @"[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage(""Aderant.GeneratedSuppression"", ";
 
         private const string suppressionsProjectContent =
             "<Compile Include=\"GlobalSuppressions.cs\" />";
@@ -73,29 +64,10 @@ namespace Aderant.Build.Analyzer.GlobalSuppressions {
         private static void CleanFile(string filePath) {
             var contents = File.ReadAllLines(filePath);
 
-            // Cleans up 'using' statements,
-            // replacing each suppression attribute with the long-form name.
-            for (int i = 0; i < contents.Length; ++i) {
-                if (contents[i].StartsWith(incompleteSuppressionAttribute)) {
-                    contents[i] = contents[i].Replace(
-                        incompleteSuppressionAttribute,
-                        completeSuppressionAttribute);
-                }
-            }
-
-            // Removes all lines from suppression files that are not suppression messages.
-            // Also removes all auto-generated Roslyn Rule suppression messages.
-            // The above occurs under the expection that auto-suppression will be re-run,
-            // which will reinstate any necessary automatic suppressions,
-            // thus ensuring unused cruft is removed.
-            var cleanContents = contents
-                .Where(line =>
-                    line.StartsWith(completeSuppressionAttribute) &&
-                    !line.StartsWith(aderantGeneratedSuppression) &&
-                    !line.StartsWith(aderantSyntax))
-                .OrderBy(line => line);
-
-            WriteToFile(filePath, cleanContents, Encoding.UTF8);
+            WriteToFile(
+                filePath,
+                contents.Where(line => !line.StartsWith(suppressionPrefix)),
+                Encoding.UTF8);
         }
 
         /// <summary>
@@ -122,16 +94,31 @@ namespace Aderant.Build.Analyzer.GlobalSuppressions {
             var contents = File.ReadAllLines(filePath);
 
             if (contents.Length < 1 ||
-                contents.All(string.IsNullOrWhiteSpace)) {
+                contents.All(line => string.IsNullOrWhiteSpace(line) || line.StartsWith("//"))) {
                 RemoveFileFromProject(filePath);
                 return;
             }
 
-            var orderedContents = contents
-                .Where(line => !string.IsNullOrWhiteSpace(line))
-                .OrderBy(line => line);
+            var newContents = new List<string>(contents.Length);
+            var analyzerContents = new List<string>(contents.Length);
 
-            WriteToFile(filePath, orderedContents, Encoding.UTF8);
+            for (int i = 0; i < contents.Length; ++i) {
+                if (string.IsNullOrWhiteSpace(contents[i])) {
+                    continue;
+                }
+
+                if (contents[i].StartsWith(suppressionPrefix)) {
+                    analyzerContents.Add(contents[i]);
+                } else {
+                    newContents.Add(contents[i]);
+                }
+            }
+
+            if (analyzerContents.Count > 0) {
+                newContents.AddRange(analyzerContents.OrderBy(line => line));
+            }
+
+            WriteToFile(filePath, newContents, Encoding.UTF8);
         }
 
         /// <summary>

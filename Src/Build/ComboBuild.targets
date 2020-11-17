@@ -54,6 +54,12 @@
     <PackageProduct Condition="'$(BUILD_REPOSITORY_NAME)' == 'ExpertSuite' And '$(CopyToDropEnabled)' == 'true'">true</PackageProduct>
 
     <BranchConfigFile>$(SolutionRoot)Build\BranchConfig.xml</BranchConfigFile>
+
+    <!--Build Analyzer Dependencies -->
+    <BuildAnalyzerPackagesDirectory Condition="'$(UseSharedDependencyDirectory)' == 'true'">$(SolutionRoot)_as\out\packages\</BuildAnalyzerPackagesDirectory>
+    <BuildAnalyzerPackagesDirectory Condition="'$(BuildAnalyzerPackagesDirectory)' == ''">$(SolutionRoot)packages\</BuildAnalyzerPackagesDirectory>
+    <BuildAnalyzerDirectory>$(BuildAnalyzerPackagesDirectory)Aderant.Build.Analyzer</BuildAnalyzerDirectory>
+    <BuildAnalyzerAssembly>$(BuildAnalyzerDirectory)\analyzers\dotnet\cs\Aderant.Build.Analyzer.dll</BuildAnalyzerAssembly>
   </PropertyGroup>
 
   <Import Project="Aderant.CodeSigning.targets" />

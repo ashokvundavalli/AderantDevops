@@ -53,6 +53,26 @@ namespace Test {
         }
 
         [TestMethod]
+        public void IDisposableClassRule_Field_NestedClass_AssignedFromConstructor_MultiParam_NoDiagnostic() {
+            const string code = @"
+using System;
+
+namespace Test {
+    public class Parent {
+        public class Child {
+            private readonly IDisposable item;
+
+            public Child(IDisposable item, int itemA, string itemB) {
+                this.item = item;
+            }
+        }
+    }
+}";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
         public void IDisposableClassRule_Disposable_Field() {
             const string code = @"
 namespace Test {

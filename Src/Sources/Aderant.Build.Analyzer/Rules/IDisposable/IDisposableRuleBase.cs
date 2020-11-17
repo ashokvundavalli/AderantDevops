@@ -171,7 +171,7 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 foreach (var value in data.Values) {
                     if (data
                         .Parameters
-                        .All(
+                        .Any(
                             param => string.Equals(
                                 value.Identifier.Text,
                                 param.Identifier.Text,
