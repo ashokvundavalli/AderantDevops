@@ -43,16 +43,16 @@ namespace Aderant.Build.DependencyResolver {
         /// Implements DontUnescapePathDotsAndSlashes for PowerShell where we cannot change the app.config
         /// </summary>
         private static void FixQuirks() {
-            string url = "http://foo/%2f/1";
-            var uri = new Uri(url);
+            foreach (string scheme in new[] { Uri.UriSchemeHttp, Uri.UriSchemeHttps }) {
+                string url = scheme + "://foo/%2f/1";
+                var uri = new Uri(url);
 
-            if (!uri.PathAndQuery.Contains("%2f")) {
-                var getSyntaxMethod = typeof(UriParser).GetMethod("GetSyntax", BindingFlags.Static | BindingFlags.NonPublic);
-                if (getSyntaxMethod == null) {
-                    throw new MissingMethodException("UriParser", "GetSyntax");
-                }
+                if (!uri.PathAndQuery.Contains("%2f")) {
+                    var getSyntaxMethod = typeof(UriParser).GetMethod("GetSyntax", BindingFlags.Static | BindingFlags.NonPublic);
+                    if (getSyntaxMethod == null) {
+                        throw new MissingMethodException("UriParser", "GetSyntax");
+                    }
 
-                foreach (string scheme in new[] { Uri.UriSchemeHttp, Uri.UriSchemeHttps }) {
                     var uriParser = getSyntaxMethod.Invoke(null, new object[] { scheme });
 
                     var setUpdatableFlagsMethod = uriParser.GetType().GetMethod("SetUpdatableFlags", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -62,7 +62,6 @@ namespace Aderant.Build.DependencyResolver {
 
                     setUpdatableFlagsMethod.Invoke(uriParser, new object[] { 0 });
                 }
-
             }
         }
 
