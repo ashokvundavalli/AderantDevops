@@ -61,7 +61,7 @@ namespace Aderant.Build.Commands {
             var projectDependencyGraph = new ProjectDependencyGraph(buildDependencyGraph);
 
             var fs = new ProjectSequencer(logger, new PhysicalFileSystem());
-            fs.Sequence(new BuildSwitches(), false, null, projectDependencyGraph);
+            fs.Sequence(new BuildSwitches(), false, null, projectDependencyGraph, new BuildMetadata());
 
             var groups = projectDependencyGraph.GetBuildGroups();
 

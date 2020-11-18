@@ -183,5 +183,4 @@ namespace Aderant.Build.Tasks {
             DirectoriesInBuild = planLoader.LoadPlan(planFile, PipelineService).ToArray();
         }
     }
-
 }

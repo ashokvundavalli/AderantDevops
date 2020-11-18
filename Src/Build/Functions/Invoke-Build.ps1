@@ -15,6 +15,10 @@ function ApplyBranchConfig($context, [string]$root) {
         $context.DropLocationInfo.BuildCacheLocation = $config.BranchConfig.DropLocations.BuildCacheLocation
         $context.DropLocationInfo.PullRequestDropLocation = $config.BranchConfig.DropLocations.PullRequestDropLocation
         $context.DropLocationInfo.XamlBuildDropLocation = $config.BranchConfig.DropLocations.XamlBuildDropLocation
+
+        if ($config.BranchConfig.SelectNodes('ArtifactMetadataConfiguration').Count -gt 0 -and $config.BranchConfig.ArtifactMetadataConfiguration.SelectNodes('PackageHashVersionExclusions').Count -gt 0) {
+            $context.BuildMetadata.PackageHashVersionExclusions = $config.BranchConfig.ArtifactMetadataConfiguration.PackageHashVersionExclusions.Split(';')
+        }
     }
 
     if (-not [string]::IsNullOrWhiteSpace($result.ProductManifestFile)) {

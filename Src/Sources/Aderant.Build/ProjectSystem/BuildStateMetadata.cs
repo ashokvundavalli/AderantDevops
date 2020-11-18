@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.Serialization;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.VersionControl;
@@ -25,17 +26,10 @@ namespace Aderant.Build.ProjectSystem {
             }
 
             foreach (var bucketId in bucketIds) {
-                BuildStateFile stateFile = null;
+                var stateFiles = BuildStateFiles.Where(x => string.Equals(x.BucketId.Id, bucketId.Id, StringComparison.OrdinalIgnoreCase)).ToList();
 
-                foreach (var file in BuildStateFiles) {
-                    if (string.Equals(file.BucketId.Id, bucketId.Id, StringComparison.OrdinalIgnoreCase)) {
-                        stateFile = file;
-                        break;
-                    }
-                }
-
-                if (stateFile != null) {
-                    assignedBuckets.Add(stateFile);
+                if (stateFiles.Any()) {
+                    assignedBuckets.AddRange(stateFiles);
                 } else {
                     unassignedBuckets.Add(bucketId);
                 }

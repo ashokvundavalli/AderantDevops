@@ -51,6 +51,7 @@ namespace Aderant.Build.Packaging {
         /// <param name="container">Optional. Used to identify the container</param>
         /// <param name="definitions">The artifacts to publish</param>
         internal IReadOnlyCollection<BuildArtifact> CreateArtifacts(BuildOperationContext context, string container, IReadOnlyCollection<ArtifactPackageDefinition> definitions) {
+            // ToDo: Avoid re-publishing artifacts if they have not changed. See work item: 243636.
             ErrorUtilities.IsNotNull(container, nameof(container));
 
             this.pathBuilder = new ArtifactStagingPathBuilder(context.ArtifactStagingDirectory, context.BuildMetadata.BuildId, context.SourceTreeMetadata);

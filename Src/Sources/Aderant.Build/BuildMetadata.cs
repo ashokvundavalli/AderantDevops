@@ -39,6 +39,9 @@ namespace Aderant.Build {
         [DataMember]
         public PullRequestInfo PullRequest { get; set; }
 
+        [DataMember]
+        public string[] PackageHashVersionExclusions { get; set; }
+
         /// <summary>
         /// Indicates if this build is running within the context of a pull request
         /// </summary>

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Xml;
 using Aderant.Build;
@@ -34,48 +35,37 @@ namespace UnitTest.Build.StateTracking {
         }
 
         [TestMethod]
-        public void Analysis_result_is_changed_when_when_a_file_is_removed() {
+        public void CorrelateInputs_returns_false_when_a_file_is_removed() {
             var controller = new TrackedInputFilesController();
             controller.TreatInputAsFiles = false;
+               
+            bool upToDate = controller.CorrelateInputs(new[] { new TrackedInputFile("abc") },
+                new[] { new TrackedInputFile("abc"), new TrackedInputFile("def") }, false);
 
-            InputFilesDependencyAnalysisResult result = new InputFilesDependencyAnalysisResult();
-                
-            controller.CorrelateInputs(result,
-                new[] { new TrackedInputFile("abc") },
-                new[] { new TrackedInputFile("abc"), new TrackedInputFile("def") });
-
-            Assert.IsNotNull(result.IsUpToDate);
-            Assert.IsFalse(result.IsUpToDate.Value);
+            Assert.IsFalse(upToDate);
         }
 
         [TestMethod]
-        public void Analysis_result_is_changed_when_when_a_file_is_added() {
+        public void CorrelateInputs_returns_false_when_when_a_file_is_added() {
             var controller = new TrackedInputFilesController();
             controller.TreatInputAsFiles = false;
 
-            InputFilesDependencyAnalysisResult result = new InputFilesDependencyAnalysisResult();
+            bool upToDate = controller.CorrelateInputs(new[] { new TrackedInputFile("abc"), new TrackedInputFile("def") },
+                new[] { new TrackedInputFile("abc") }, false);
 
-            controller.CorrelateInputs(result,
-                new[] { new TrackedInputFile("abc"), new TrackedInputFile("def") },
-                new[] { new TrackedInputFile("abc") });
-
-            Assert.IsNotNull(result.IsUpToDate);
-            Assert.IsFalse(result.IsUpToDate.Value);
+            Assert.IsFalse(upToDate);
         }
 
 
         [TestMethod]
-        public void Files_are_examined_when_input_set_is_unchanged() {
+        public void CorrelateInputs_returns_true_when_input_set_is_unchanged() {
             var controller = new TrackedInputFilesController();
             controller.TreatInputAsFiles = false;
 
-            InputFilesDependencyAnalysisResult result = new InputFilesDependencyAnalysisResult();
+            bool upToDate = controller.CorrelateInputs(new[] { new TrackedInputFile("abc") },
+                new[] { new TrackedInputFile("abc") }, false);
 
-            controller.CorrelateInputs(result,
-                new[] { new TrackedInputFile("abc") },
-                new[] { new TrackedInputFile("abc") });
-
-            Assert.IsTrue(result.IsUpToDate.Value);
+            Assert.IsTrue(upToDate);
         }
 
         [TestMethod]
@@ -86,7 +76,7 @@ namespace UnitTest.Build.StateTracking {
             var areInputsUpToDate = controller.PerformDependencyAnalysis(null, null, null);
 
             Assert.IsNotNull(areInputsUpToDate);
-            Assert.IsTrue(areInputsUpToDate.IsUpToDate.Value);
+            Assert.IsTrue(Convert.ToBoolean(areInputsUpToDate.IsUpToDate));
         }
 
         [TestMethod]
@@ -99,10 +89,9 @@ namespace UnitTest.Build.StateTracking {
 
             List<TrackedInputFile> artifactFiles = new List<TrackedInputFile>(1) { new TrackedMetadataFile(Constants.PaketLock) { Sha1 = artifactHash } };
 
-            var result = new InputFilesDependencyAnalysisResult(false, null);
-            controller.CorrelateInputs(result, new [] { new TrackedMetadataFile(Constants.PaketLock) { Sha1 = "BBED1D49615C071DAAAD48AD1FC057E1112148D0" } }, artifactFiles);
+            bool isUpToDate = controller.CorrelateInputs( new [] { new TrackedMetadataFile(Constants.PaketLock) { Sha1 = artifactHash } }, artifactFiles, false);
 
-            Assert.IsTrue(result.IsUpToDate.Value);
+            Assert.IsTrue(isUpToDate);
         }
 
         [TestMethod]
@@ -115,12 +104,132 @@ namespace UnitTest.Build.StateTracking {
 
             List<TrackedInputFile> artifactFiles = new List<TrackedInputFile>(1) { new TrackedMetadataFile(Constants.PaketLock) { Sha1 = artifactHash } };
 
-            var result = new InputFilesDependencyAnalysisResult(false, null);
-            result.TrackedFiles = artifactFiles;
+            bool isUpToDate = controller.CorrelateInputs(new[] { new TrackedMetadataFile(Constants.PaketLock) { Sha1 = "BBED1D49615C071DAAAD48AD1FC057E1112148D0" } }, artifactFiles, false);
 
-            controller.CorrelateInputs(result, new[] { new TrackedMetadataFile(Constants.PaketLock) { Sha1 = "BBED1D49615C071DAAAD48AD1FC057E1112148D0" } }, artifactFiles);
+            Assert.IsFalse(isUpToDate);
+        }
 
-            Assert.IsFalse(result.IsUpToDate.Value);
+        [TestMethod]
+        public void PerformDependencyAnalysis_IsUpToDate() {
+            var controller = new TrackedInputFilesController {
+                TreatInputAsFiles = false
+            };
+
+            const string sha1 = "A6E011421E1080AD1C4E5F0B7048D64F23B2A67C";
+
+            BuildStateFile[] buildStateFiles = new BuildStateFile[1] {
+                new BuildStateFile {
+                    TrackedFiles = new List<TrackedInputFile>(1) {
+                        new TrackedInputFile("Test") {
+                            Sha1 = sha1
+                        }
+                    }
+                }
+            };
+
+            var filesToTrack = new List<TrackedInputFile>(1) {
+                new TrackedInputFile("Test") {
+                    Sha1 = sha1
+                }
+            };
+
+            InputFilesDependencyAnalysisResult result = controller.PerformDependencyAnalysis(buildStateFiles, filesToTrack, null);
+
+            Assert.IsTrue(Convert.ToBoolean(result.IsUpToDate));
+        }
+
+        [TestMethod]
+        public void PerformDependencyAnalysis_IsNotUpToDate() {
+            var controller = new TrackedInputFilesController {
+                TreatInputAsFiles = true
+            };
+
+            BuildStateFile[] buildStateFiles = new BuildStateFile[1] {
+                new BuildStateFile {
+                    TrackedFiles = new List<TrackedInputFile>(1) {
+                        new TrackedInputFile("Test") {
+                            Sha1 = "A6E011421E1080AD1C4E5F0B7048D64F23B2A67C"
+                        }
+                    }
+                }
+            };
+
+            var filesToTrack = new List<TrackedInputFile>(1) {
+                new TrackedInputFile("Test") {
+                    Sha1 = "60BF068293525D7358E90EEB1C9E80D70CA93B36"
+                }
+            };
+
+            InputFilesDependencyAnalysisResult result = controller.PerformDependencyAnalysis(buildStateFiles, filesToTrack, null);
+
+            Assert.IsFalse(Convert.ToBoolean(result.IsUpToDate));
+        }
+
+        [TestMethod]
+        public void PerformDependencyAnalysis_IsUpToDate_Metadata() {
+            var controller = new TrackedInputFilesController {
+                TreatInputAsFiles = false
+            };
+
+            const string artifactHash = "A6E011421E1080AD1C4E5F0B7048D64F23B2A67C";
+
+            BuildStateFile[] buildStateFiles = new BuildStateFile[1] {
+                new BuildStateFile {
+                    TrackedFiles = new List<TrackedInputFile>(2) {
+                        new TrackedInputFile("Test") {
+                            Sha1 = artifactHash
+                        }
+                    },
+                    PackageHash = artifactHash,
+                    TrackPackageHash = true
+                }
+            };
+
+            var filesToTrack = new List<TrackedInputFile>(1) {
+                new TrackedInputFile("Test") {
+                    Sha1 = artifactHash
+                }
+            };
+
+            var trackedMetadataFiles = new List<TrackedMetadataFile> {
+                new TrackedMetadataFile(Constants.PaketLock) {
+                    PackageHash = artifactHash,
+                    TrackPackageHash = true,
+                    Sha1 = artifactHash
+                }
+            };
+
+            InputFilesDependencyAnalysisResult result = controller.PerformDependencyAnalysis(buildStateFiles, filesToTrack, trackedMetadataFiles);
+
+            Assert.IsTrue(Convert.ToBoolean(result.IsUpToDate));
+        }
+
+        [TestMethod]
+        public void PerformDependencyAnalysis_IsUpToDate_Metadata_Mismatch() {
+            var controller = new TrackedInputFilesController {
+                TreatInputAsFiles = false
+            };
+
+            BuildStateFile[] buildStateFiles = new BuildStateFile[1] {
+                new BuildStateFile {
+                    PackageHash = "60BF068293525D7358E90EEB1C9E80D70CA93B36",
+                    TrackPackageHash = true
+                }
+            };
+
+            const string packageHash = "A6E011421E1080AD1C4E5F0B7048D64F23B2A67C";
+
+            var trackedMetadataFiles = new List<TrackedMetadataFile> {
+                new TrackedMetadataFile(Constants.PaketLock) {
+                    PackageHash = packageHash,
+                    TrackPackageHash = true,
+                    Sha1 = packageHash
+                }
+            };
+
+            InputFilesDependencyAnalysisResult result = controller.PerformDependencyAnalysis(buildStateFiles, null, trackedMetadataFiles);
+
+            Assert.IsFalse(Convert.ToBoolean(result.IsUpToDate));
         }
     }
 

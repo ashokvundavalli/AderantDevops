@@ -16,6 +16,10 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         [ProtoMember(4)]
         public ICollection<PackageGroup> PackageGroups { get; set; }
 
+        [DataMember]
+        [ProtoMember(5)]
+        public bool TrackPackageHash { get; set; }
+
         private TrackedMetadataFile() {
         }
 
@@ -25,6 +29,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         public override void EnrichStateFile(BuildStateFile stateFile) {
             stateFile.PackageHash = PackageHash;
             stateFile.PackageGroups = PackageGroups;
+            stateFile.TrackPackageHash = TrackPackageHash;
         }
 
         [OnDeserializing]

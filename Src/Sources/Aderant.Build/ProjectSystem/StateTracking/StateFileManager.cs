@@ -35,7 +35,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                     files = buildStateMetadata.QueryCacheForBuckets(buckets, out missingIds);
 
                     foreach (var stateFile in files) {
-                        logger.Info($"Using state file: {stateFile.Id} -> {stateFile.BuildId} -> {stateFile.Location}:{stateFile.BucketId.Tag}", null);
+                        logger.Debug("Using state file: {0} -> {1} -> {2}:{3}", stateFile.Id, stateFile.BuildId, stateFile.Location, stateFile.BucketId.Tag);
                     }
 
                     foreach (var missingId in missingIds) {

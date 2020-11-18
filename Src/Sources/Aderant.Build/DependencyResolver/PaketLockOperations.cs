@@ -162,19 +162,27 @@ namespace Aderant.Build.DependencyResolver {
             return generatedGroups;
         }
 
-        internal static string HashLockFile(string lockFilePath, IFileSystem fileSystem) {
+        internal static string HashLockFile(string lockFilePath, IFileSystem fileSystem, string[] packageHashVersionExclusions) {
             LockFile lockFile = LoadLockFile(lockFilePath, fileSystem);
 
-            return HashLockFile(lockFile);
+            return HashLockFile(lockFile, packageHashVersionExclusions);
         }
 
-        internal static string HashLockFile(LockFile lockFile) {
+        internal static string HashLockFile(LockFile lockFile, string[] packageHashVersionExclusions) {
             var groupedResolutionToHash = lockFile.GetGroupedResolution();
 
             StringBuilder content = new StringBuilder();
 
             foreach (var item in groupedResolutionToHash) {
-                content.AppendFormat("{0}{1}{2}", item.Key.Item1.Name, item.Key.Item2.Name, item.Value.Version.AsString);
+                // if names match, blank the version
+                string version;
+                if (packageHashVersionExclusions != null && packageHashVersionExclusions.Any(x => string.Equals(item.Key.Item2.Name, x, StringComparison.OrdinalIgnoreCase))) {
+                    version = string.Empty;
+                } else {
+                    version = item.Value.Version.AsString;
+                }
+
+                content.AppendFormat("{0}{1}{2}", item.Key.Item1.Name, item.Key.Item2.Name, version);
             }
 
             using (Stream stream = content.ToString().ToUpperInvariant().ToStream()) {

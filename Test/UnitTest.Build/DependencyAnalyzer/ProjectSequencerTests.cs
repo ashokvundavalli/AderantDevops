@@ -212,9 +212,9 @@ namespace UnitTest.Build.DependencyAnalyzer {
 
             var sequencer = new ProjectSequencer(NullLogger.Default, null);
             bool hasLoggedUpToDate = false;
-            sequencer.ApplyStateFile(new BuildStateFile[] { file }, string.Empty, p1, false, ref hasLoggedUpToDate);
+            sequencer.ApplyStateFile(new BuildStateFile[] { file }, string.Empty, p1, false, ref hasLoggedUpToDate, null);
 
-            Assert.AreEqual(p1.BuildReason.Flags, BuildReasonTypes.ProjectOutputNotFound);
+            Assert.AreEqual(BuildReasonTypes.ProjectOutputNotFound, p1.BuildReason.Flags);
             Assert.IsTrue(p1.IsDirty);
         }
 
@@ -247,17 +247,17 @@ namespace UnitTest.Build.DependencyAnalyzer {
             p3.AddResolvedDependency(null, p2);
 
             var sequencer = new ProjectSequencer(NullLogger.Default, null);
-            sequencer.TrackedInputFilesCheck = new TestTrackedInputFilesController(new PhysicalFileSystem(), null) {
+            sequencer.TrackedInputFilesCheck = new TestTrackedInputFilesController(new PhysicalFileSystem(), new NullLogger()) {
                 Files = new List<TrackedInputFile>(1) { new TrackedInputFile("File") }
             };
             bool hasLoggedUpToDate = false;
-            sequencer.ApplyStateFile(null, string.Empty, p1, false, ref hasLoggedUpToDate);
+            sequencer.ApplyStateFile(null, string.Empty, p1, false, ref hasLoggedUpToDate, null);
 
             var graph = new ProjectDependencyGraph(p1, p2, p3);
 
             sequencer.GetProjectsBuildList(graph, new[] { p1, p2, p3 }, null, false, ChangesToConsider.None, DependencyRelationshipProcessing.Direct);
 
-            Assert.AreEqual(BuildReasonTypes.CachedBuildNotFound | BuildReasonTypes.InputsChanged, p1.BuildReason.Flags);
+            Assert.AreEqual(BuildReasonTypes.InputsChanged, p1.BuildReason.Flags);
             Assert.IsTrue(p1.IsDirty);
             Assert.IsTrue(p2.IsDirty);
             Assert.AreEqual(BuildReasonTypes.DependencyChanged, p2.BuildReason.Flags);
@@ -463,11 +463,11 @@ namespace UnitTest.Build.DependencyAnalyzer {
                 }
             };
 
-            BuildStateFile file = projectSequencer.FilterStateFiles(buildStateFiles, packageHash);
+            BuildStateFile[] files = projectSequencer.FilterStateFiles(buildStateFiles, packageHash);
 
-            Assert.IsNotNull(file);
-            Assert.AreEqual(file.PackageHash, packageHash);
-            Assert.AreEqual(file.Id, chosenGuid);
+            Assert.IsNotNull(files);
+            Assert.AreEqual(packageHash, files[0].PackageHash);
+            Assert.AreEqual(chosenGuid, files[0].Id);
         }
 
         [TestMethod]
@@ -485,11 +485,11 @@ namespace UnitTest.Build.DependencyAnalyzer {
                 new BuildStateFile()
                 };
 
-            BuildStateFile file = projectSequencer.FilterStateFiles(buildStateFiles, packageHash);
+            BuildStateFile[] files = projectSequencer.FilterStateFiles(buildStateFiles, packageHash);
 
-            Assert.IsNotNull(file);
-            Assert.AreNotEqual(file.PackageHash, packageHash);
-            Assert.AreEqual(file.Id, chosenGuid);
+            Assert.IsNotNull(files);
+            Assert.AreNotEqual(packageHash, files[0].PackageHash);
+            Assert.AreEqual(chosenGuid, files[0].Id);
         }
     }
 

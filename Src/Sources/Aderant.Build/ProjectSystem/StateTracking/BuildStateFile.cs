@@ -88,6 +88,9 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         [DataMember(EmitDefaultValue = false)]
         public string PackageHash { get; set; }
 
+        [DataMember(EmitDefaultValue = false)]
+        public bool TrackPackageHash { get; set; }
+
         internal void PrepareForSerialization() {
             Location = null;
         }
