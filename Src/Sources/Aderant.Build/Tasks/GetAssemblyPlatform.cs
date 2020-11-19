@@ -282,12 +282,6 @@ namespace Aderant.Build.Tasks {
                 return Assembly.ReflectionOnlyLoadFrom(assembly);
             }
 
-            try {
-                return Assembly.ReflectionOnlyLoad(args.Name);
-            } catch (Exception ex){
-                LogWarning("Exception while loading assembly: " + args.Name + ". Error message is: " + ex);
-            }
-
             return null;
         }
 
@@ -314,14 +308,13 @@ namespace Aderant.Build.Tasks {
                         dictionary.Add(key, dependency);
                     } else {
                         // This generates many thousands of entries that no developer will ever do anything about so give up and log at a low level
-                        Log("Already seen file: " + dependency);
+                        //Log("Already seen file: " + dependency);
                     }
                 }
 
                 fileMap = dictionary;
             }
 
-            // ToDo: Replace with System.Reflection.Metadata - see work item 247530.
             Assembly asm = Assembly.ReflectionOnlyLoadFrom(assembly);
 
             PortableExecutableKinds peKind;
@@ -390,7 +383,7 @@ namespace Aderant.Build.Tasks {
         private void Log(string message) {
             var logger = Logger as TaskLoggingHelper;
             if (logger != null) {
-                logger.LogMessage(MessageImportance.Low, message);
+                //logger.LogMessage(MessageImportance.Low, message);
             }
         }
 
