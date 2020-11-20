@@ -284,8 +284,8 @@ namespace Aderant.Build.Tasks {
 
             try {
                 return Assembly.ReflectionOnlyLoad(args.Name);
-            } catch (Exception ex){
-                LogWarning("Exception while loading assembly: " + args.Name + ". Error message is: " + ex);
+            } catch {
+                LogWarning($"Exception while loading assembly: {args.Name}");
             }
 
             return null;
