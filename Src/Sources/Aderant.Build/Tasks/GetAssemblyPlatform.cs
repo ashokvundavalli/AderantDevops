@@ -314,7 +314,7 @@ namespace Aderant.Build.Tasks {
                         dictionary.Add(key, dependency);
                     } else {
                         // This generates many thousands of entries that no developer will ever do anything about so give up and log at a low level
-                        Log($"Already seen file: '{dependency}'.");
+                        // Log($"Already seen file: '{dependency}'.");
                     }
                 }
 
