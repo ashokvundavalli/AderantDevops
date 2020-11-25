@@ -308,6 +308,10 @@ namespace Aderant.Build.DependencyAnalyzer {
                 properties["T4TransformEnabled"] = bool.FalseString;
             }
 
+            if (!properties.ContainsKey("IsBuildingAnyProjects")) {
+                properties.Add("IsBuildingAnyProjects", node.IsBuildingAnyProjects ? bool.TrueString : bool.FalseString);
+            }
+
             properties["ProjectInstanceId"] = projectInstanceId.ToString("D");
             properties["RunUserTargets"] = node.AddedByDependencyAnalysis ? bool.FalseString : bool.TrueString;
 
