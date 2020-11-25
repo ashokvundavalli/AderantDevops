@@ -21,6 +21,11 @@ namespace Aderant.Build.DependencyResolver {
                     continue;
                 }
 
+                if (group.Name.Name.Equals("FileStore")) {
+                    sb.AppendLine("strategy: min");
+                    sb.AppendLine("lowest_matching: true");
+                }
+
                 foreach (var source in group.Sources) {
                     sb.Append("source ");
                     sb.Append(source.Url);

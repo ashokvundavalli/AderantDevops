@@ -133,7 +133,7 @@ namespace Aderant.Build.DependencyResolver {
             }
 
             if (args.Level == TraceLevel.Error) {
-                if (args.Text.StartsWith("Could not detect any platforms from 'any'")) {
+                if (args.Text.StartsWith("Could not detect any platforms from")) {
                     logger.Warning(args.Text, null);
                 } else {
                     logger.Error(args.Text, null);
