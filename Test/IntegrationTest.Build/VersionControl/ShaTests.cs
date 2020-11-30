@@ -46,8 +46,9 @@ Add-Content -LiteralPath $dir2 -Value '456' -Force
             var vc = new GitVersionControlService();
             var result = vc.GetMetadata(repositoryPath, "", "");
 
+            const string dir2Sha = "53d9f188d4c8cb79c6b98bc56e5c629def625ca1";
             Assert.AreEqual("12ea309af9a27ee662c636f4b82246f8619b3bee", result.GetBucket("Dir1").Id);
-            Assert.AreEqual("53d9f188d4c8cb79c6b98bc56e5c629def625ca1", result.GetBucket("Dir2").Id);
+            Assert.AreEqual(dir2Sha, result.GetBucket("Dir2").Id);
 
             var updateScript = @"
 [string]$cwd = (Get-Location)
@@ -62,7 +63,7 @@ Add-Content -LiteralPath $dir2 -Value '456123'
 
             result = vc.GetMetadata(repositoryPath, "", "");
             Assert.AreEqual("12ea309af9a27ee662c636f4b82246f8619b3bee", result.GetBucket("Dir1").Id);
-            Assert.AreEqual("ccf18c9c16647bcc54c09191ac44e566a4a760d8", result.GetBucket("Dir2").Id);
+            Assert.AreEqual(dir2Sha, result.GetBucket("Dir2").Id);//Dir2 has a change, so the previous SHA should be used for the cache.
         }
 
 
