@@ -19,7 +19,7 @@ namespace IntegrationTest.Build.VersionControl {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -104,31 +104,6 @@ namespace IntegrationTest.Build.VersionControl {
         internal static string CreateRepo {
             get {
                 return ResourceManager.GetString("CreateRepo", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Set-StrictMode -Version &apos;Latest&apos;
-        ///
-        ///# PowerShell has many quirks with square brackets in paths
-        ///[string]$cwd = Get-Location
-        ///[string]$subfolder = &apos;Master&apos;
-        ///
-        ///#Create root folder for a &quot;cone&quot;
-        ///New-Item -Path $cwd -Name $subfolder -ItemType &quot;directory&quot;
-        ///&amp; git init .
-        ///cd ($subfolder)
-        ///$cwd = Get-Location
-        ///
-        ///#Create sub-directories under the cone
-        ///[string]$subSubfolder1 = &apos;Subfolder1&apos;
-        ///[string]$subSubfolder2 = &apos;Subfolder2&apos;
-        ///New-Item -Path $cwd -Name $subSubFolder1 -ItemType &quot;directory&quot;
-        ///New-Item -Path $cwd -Nam [rest of string was truncated]&quot;;.
-        /// </summary>
-        internal static string CreateSubfoldersRepo {
-            get {
-                return ResourceManager.GetString("CreateSubfoldersRepo", resourceCulture);
             }
         }
         

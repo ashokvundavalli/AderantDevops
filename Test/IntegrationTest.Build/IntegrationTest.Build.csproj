@@ -134,9 +134,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Compile Include="AssemblyInitializer.cs" />
-    <Compile Include="EndToEnd\EndToEndTests.WithDeletes.cs" />
     <Compile Include="EndToEnd\EndToEndTests.cs" />
-    <Compile Include="EndToEnd\EndToEndTestsBase.cs" />
     <Compile Include="Helpers\PowerShellHelper.cs" />
     <Compile Include="EndToEnd\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -156,7 +154,6 @@
     <Compile Include="Tasks\GenerateArchivesTest.cs" />
     <Compile Include="Tasks\CopyRelatedFilesTests.cs" />
     <Compile Include="VersionControl\GitVersionControlTestBase.cs" />
-    <Compile Include="VersionControl\GitVersionControlNestedChangesTests.cs" />
     <Compile Include="VersionControl\GitVersionControlTests.cs" />
     <Compile Include="ConfiguredProjectTests\ConfiguredProjectTests.cs" />
     <Compile Include="ConfiguredProjectTests\Resources.Designer.cs">
@@ -250,7 +247,6 @@
     <Content Include="Tasks\RetrieveArtifacts\test.targets">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <None Include="VersionControl\Resources\CreateSubfoldersRepo.ps1" />
     <None Include="VersionControl\Resources\Merge.ps1" />
     <None Include="VersionControl\Resources\CreateRepo.ps1" />
   </ItemGroup>
@@ -262,7 +258,6 @@
     <EmbeddedResource Include="EndToEnd\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="VersionControl\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

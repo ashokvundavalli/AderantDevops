@@ -47,22 +47,9 @@ namespace Aderant.Build.VersionControl {
         private void PopulateBuckets(HashSet<BucketId> bucketKeys, SourceTreeMetadata info, Repository repository, Commit sourceCommit, Commit destinationCommit, bool includeLocalChanges) {
             bucketKeys.Add(new BucketId(destinationCommit.Tree.Sha, BucketId.Current));
 
-            Dictionary<string, string> changedDirectoryShas = null;
-            if (sourceCommit != null) {
-                // Collect all changed files between the two commits.
-                GetChanges(includeLocalChanges, repository, sourceCommit, destinationCommit, repository.Info.WorkingDirectory, info);
-                var changedFolders = info.Changes.Select(c => PathUtility.GetRootDirectory(c.Path)).Where(c => !string.IsNullOrEmpty(c)).ToHashSet(StringComparer.OrdinalIgnoreCase);
-                changedDirectoryShas = sourceCommit.Tree.Where(t => t.Mode == Mode.Directory && changedFolders.Contains(t.Name))
-                    .ToDictionary(t => t.Name, t => t.Target.Sha, StringComparer.OrdinalIgnoreCase);
-            }
-
             foreach (var e in destinationCommit.Tree) {
                 if (e.Mode == Mode.Directory) {
                     var targetSha = e.Target.Sha;
-                    if (changedDirectoryShas?.ContainsKey(e.Name) ?? false) {
-                        //Change this to use source commit where we have changes.
-                        targetSha = changedDirectoryShas[e.Name];
-                    }
                     bucketKeys.Add(new BucketId(targetSha, e.Name));
                 }
             }
@@ -71,6 +58,9 @@ namespace Aderant.Build.VersionControl {
                 info.CommonCommit = sourceCommit.Id.Sha;
                 info.OldCommitDescription = $"{sourceCommit.Id.Sha}: {sourceCommit.MessageShort}";
                 info.NewCommitDescription = $"{destinationCommit.Id.Sha}: {destinationCommit.MessageShort}";
+
+                // Collect all changed files between the two commits.
+                GetChanges(includeLocalChanges, repository, sourceCommit, destinationCommit, repository.Info.WorkingDirectory, info);
 
                 if (!string.Equals(destinationCommit.Tree.Sha, sourceCommit.Tree.Sha)) {
                     bucketKeys.Add(new BucketId(sourceCommit.Tree.Sha, BucketId.Previous));
