@@ -229,12 +229,16 @@
           DependsOnTargets="CollectPackageContent">
 
     <Message Condition="'$(SkipPackageValidation)' == 'true'" Text="SeedPackage validation skipped because of the SkipPackageValidation flag." Importance="High" />
-
+	
+	<PropertyGroup>
+      <SeedPackageDrop Condition="'$(SeedPackageDrop)' == ''">Bin\Module\Packages</SeedPackageDrop>
+    </PropertyGroup>
+	
     <SeedPackagePacking
         SkipPackageValidation="$(SkipPackageValidation)"
         BuildFrom="$(SolutionDirectoryPath)"
         SeedPackageSrc="$(SolutionDirectoryPath)Src\SeedPackages"
-        SeedPackageDrop="$(SolutionDirectoryPath)Bin\Module\Packages"
+        SeedPackageDrop="$(SolutionDirectoryPath)$(SeedPackageDrop)"
         StagingPackageDrop="$(UpdateStagingDirectory)\BinFiles" />
 
     <SeedPackagePacking
