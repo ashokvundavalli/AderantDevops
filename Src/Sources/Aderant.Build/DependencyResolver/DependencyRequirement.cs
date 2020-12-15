@@ -71,6 +71,11 @@ namespace Aderant.Build.DependencyResolver {
         /// </summary>
         public bool ReplicateToDependencies { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether the package has an associated script to run.
+        /// </summary>
+        public string PostProcess { get; set; }
+
         public bool Equals(DependencyRequirement other) {
             if (ReferenceEquals(null, other)) {
                 return false;

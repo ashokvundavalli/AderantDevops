@@ -28,6 +28,7 @@ namespace Aderant.Build.DependencyResolver.Model {
         public VersionRequirement VersionRequirement { get; set; }
         public bool ReplaceVersionConstraint { get; set; }
         public bool ReplicateToDependencies { get; set; }
+        public string PostProcess { get; set; }
 
         public string ItemName { get; }
 

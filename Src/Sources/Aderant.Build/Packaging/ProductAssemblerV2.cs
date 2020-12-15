@@ -27,7 +27,7 @@ namespace Aderant.Build.Packaging {
         private readonly ILogger logger;
         private readonly Regex regex = new Regex(@"(net)\d+\\");
         private bool isLocalBuild;
-        private ExpertManifest manifest;
+        private readonly ExpertManifest manifest;
         private SourceCodeInfo sourceCodeInfo;
         private string teamProject;
         private string tfsBuildId;
@@ -36,9 +36,9 @@ namespace Aderant.Build.Packaging {
         private string tfvcSourceGetVersion;
         private VersionTracker versionTracker;
 
-        public ProductAssemblerV2(string productManifestXml, ILogger logger) {
+        public ProductAssemblerV2(ExpertManifest expertManifest, ILogger logger) {
             this.logger = logger;
-            this.manifest = ExpertManifest.Parse(productManifestXml);
+            this.manifest = expertManifest;
         }
 
         public bool EnableVerboseLogging { get; set; }

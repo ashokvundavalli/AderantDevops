@@ -58,7 +58,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// The product manifest path.
         /// </value>
         public string ProductManifestPath {
-            get; private set;
+            get; internal set;
         }
 
         /// <summary>

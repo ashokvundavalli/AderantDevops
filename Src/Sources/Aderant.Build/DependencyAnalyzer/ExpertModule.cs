@@ -192,6 +192,11 @@ namespace Aderant.Build.DependencyAnalyzer {
         public string Target { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether the package has an associated script to run.
+        /// </summary>
+        public string PostProcess { get; set; } = null;
+
+        /// <summary>
         /// Gets or sets a value indicating whether to replicate this instance to the dependencies folder (otherwise it just stays in package)
         /// </summary>
         public bool ReplicateToDependencies {

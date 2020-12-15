@@ -304,14 +304,15 @@ begin {
     function RetreiveModules {
         [CmdletBinding()]
         param (
+            [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$productManifestPath,
             [Parameter(Mandatory=$true)][ValidateNotNull()][Xml]$productManifestXml,
             [Parameter(Mandatory=$true)][ValidateNotNull()]$modules,
             [Parameter(Mandatory=$false)][string[]]$folders,
-            [Parameter(Mandatory=$true)][ValidateNotNull()][string]$expertSourceDirectory
+            [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$expertSourceDirectory
         )
 
         try {
-            $result = Package-ExpertRelease -ProductManifestXml $productManifestXml.InnerXml -Modules $modules -Folders $folders -ProductDirectory $expertSourceDirectory
+            $result = Package-ExpertRelease -ProductManifestPath $productManifestPath -ProductManifestXml $productManifestXml.InnerXml -Modules $modules -Folders $folders -ProductDirectory $expertSourceDirectory
         } catch [Exception] {
             Write-Error "PackageExpertReleaseCommand failed. Exception: '$($_.Exception.Message)' Stack trace: '$($_.Exception.StackTrace)'."
             throw
@@ -384,7 +385,7 @@ process {
 
     $packagedModules = $modules | Where-Object { $_.PSObject.Properties.Name -match 'GetAction' -and $_.GetAction -eq "NuGet" -or (IsThirdParty $_) }
 
-    RetreiveModules -productManifestXml $productManifest -modules $packagedModules -folders $folders -expertSourceDirectory $expertSourceDirectory
+    RetreiveModules -ProductManifestPath $productManifestPath -productManifestXml $productManifest -modules $packagedModules -folders $folders -expertSourceDirectory $expertSourceDirectory
 
     attrib.exe -r $binariesDirectory /d
 

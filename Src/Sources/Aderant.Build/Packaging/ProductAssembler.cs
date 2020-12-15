@@ -3,7 +3,9 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Management.Automation;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Aderant.Build.DependencyAnalyzer;
@@ -23,12 +25,12 @@ namespace Aderant.Build.Packaging {
         private string tfsBuildNumber;
         private bool isLocalBuild;
         private SourceCodeInfo sourceCodeInfo;
-        private ExpertManifest manifest;
+        private readonly ExpertManifest manifest;
         public bool EnableVerboseLogging { get; set; }
 
-        public ProductAssembler(string productManifestXml, ILogger logger) {
+        public ProductAssembler(ExpertManifest expertManifest, ILogger logger) {
             this.logger = logger;
-            this.manifest = ExpertManifest.Parse(productManifestXml);
+            this.manifest = expertManifest;
         }
 
         public IProductAssemblyResult AssembleProduct(
@@ -200,8 +202,24 @@ namespace Aderant.Build.Packaging {
 
             string[] nupkgEntries = new[] { "lib", "content" };
 
+            var powerShell = new PowerShellPipelineExecutor();
+
             foreach (string packageDirectory in packages) {
                 ExpertModule module = context.GetModuleByPackage(packageDirectory, group);
+
+                if (module?.PostProcess != null) {
+                    // Set working directory.
+                    string script = Path.Combine(Path.GetDirectoryName(manifest.ProductManifestPath), module.PostProcess);
+
+                    if (!fs.FileExists(script)) {
+                        throw new FileNotFoundException($"Post process script for module: '{module.Name}' does not exist.", script);
+                    }
+
+                    PSCommand command = new PSCommand();
+                    command.AddScript(fs.ReadAllText(script));
+
+                    powerShell.RunScript(command, new Dictionary<string, object>(1) { { "Package", packageDirectory } }, context.ResolvePackageRelativeDirectory(module));
+                }
 
                 foreach (string packageDir in nupkgEntries) {
                     string nupkgDir = Path.Combine(packageDirectory, packageDir);
@@ -209,10 +227,10 @@ namespace Aderant.Build.Packaging {
                     if (fs.DirectoryExists(nupkgDir)) {
                         string packageName = Path.GetFileName(packageDirectory);
 
-                        if (module != null) {
+                        if (module != null && module.PostProcess == null) {
                             if (context.RequiresContentProcessing(module)) {
                                 RootItemHandler processor = new RootItemHandler(fs) {
-                                    Module = module,
+                                    Module = module
                                 };
 
                                 processor.MoveContent(context, nupkgDir);

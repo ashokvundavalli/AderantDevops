@@ -152,6 +152,8 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             SetPropertyValue("ReplaceVersionConstraint", value => expertModule.ReplaceVersionConstraint = ToBoolean(value));
 
+            SetPropertyValue("PostProcess", value => expertModule.PostProcess = value);
+
             SetPropertyValue("DependencyGroup", value => expertModule.DependencyGroup = value);
 
             SetPropertyValue("ExcludeFromPackaging", value => expertModule.ExcludeFromPackaging = ToBoolean(value));

@@ -23,5 +23,10 @@
         /// Gets or sets a value indicating whether to replicate this instance to the dependencies folder (otherwise it just stays in package)
         /// </summary>
         bool ReplicateToDependencies { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the package has an associated script to run.
+        /// </summary>
+        string PostProcess { get; set; }
     }
 }

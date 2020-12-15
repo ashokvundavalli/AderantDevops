@@ -34,15 +34,28 @@ namespace Aderant.Build {
 
         public event EventHandler<DebugRecord> Debug;
 
+        internal IFileSystem FileSystem;
+
+        public PowerShellPipelineExecutor() : this(new PhysicalFileSystem()) {
+        }
+
+        internal PowerShellPipelineExecutor(IFileSystem fileSystem) {
+            this.FileSystem = fileSystem;
+        }
+
         public void RunScript(PSCommand command, Dictionary<string, object> variables, CancellationToken cancellationToken = default(CancellationToken)) {
+            RunScript(command, variables, null, cancellationToken);
+        }
+
+        public void RunScript(PSCommand command, Dictionary<string, object> variables, string workingDirectory, CancellationToken cancellationToken = default(CancellationToken)) {
             using (PowerShell shell = PowerShell.Create()) {
                 using (cancellationToken.Register(shell.Stop)) {
-                    InvokePipeline(command, variables, shell);
+                    InvokePipeline(command, variables, shell, workingDirectory);
                 }
             }
         }
 
-        private void InvokePipeline(PSCommand command, Dictionary<string, object> variables, PowerShell shell) {
+        private void InvokePipeline(PSCommand command, Dictionary<string, object> variables, PowerShell shell, string workingDirectory) {
             Collection<PSObject> result = new Collection<PSObject>();
 
             using (var runspace = RunspaceFactory.CreateRunspace()) {
@@ -61,6 +74,15 @@ namespace Aderant.Build {
                     foreach (var variable in variables) {
                         runspace.SessionStateProxy.SetVariable(variable.Key, variable.Value);
                     }
+                }
+
+                if (!string.IsNullOrWhiteSpace(workingDirectory)) {
+                    // The working directory cannot be set if it does not exist.
+                    if (!FileSystem.DirectoryExists(workingDirectory)) {
+                        FileSystem.CreateDirectory(workingDirectory);
+                    }
+
+                    runspace.SessionStateProxy.Path.SetLocation(workingDirectory);
                 }
 
                 Pipeline pipeline = null;
