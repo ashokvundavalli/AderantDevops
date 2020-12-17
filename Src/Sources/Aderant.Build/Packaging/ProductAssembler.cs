@@ -218,6 +218,8 @@ namespace Aderant.Build.Packaging {
                     PSCommand command = new PSCommand();
                     command.AddScript(fs.ReadAllText(script));
 
+                    logger.Info("Running post-process script: '{0}'", script);
+
                     powerShell.RunScript(command, new Dictionary<string, object>(1) { { "Package", packageDirectory } }, context.ResolvePackageRelativeDirectory(module));
                 }
 
