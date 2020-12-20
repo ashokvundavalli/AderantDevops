@@ -9,12 +9,17 @@ namespace Aderant.Build.ProjectSystem.SolutionParser {
 
             var result = new ParseResult {
                 SolutionFile = solutionFile,
-                ProjectsByGuid = file.ProjectsByGuid.ToDictionary(k => Guid.Parse(k.Key), v => v.Value),
-                ProjectsInOrder = file.ProjectsInOrder,
-                SolutionConfigurations = file.SolutionConfigurations
+                ProjectsByGuid = file.ProjectsByGuid
+                    .Where(s => IsProject(s.Value))
+                    .ToDictionary(k => Guid.Parse(k.Key), v => new ProjectInSolutionWrapper(v.Value)),
+                ProjectsInOrder = file.ProjectsInOrder.Where(s => IsProject(s)).Select(s => new ProjectInSolutionWrapper(s)),
             };
 
             return result;
+        }
+
+        private static bool IsProject(ProjectInSolution s) {
+            return s.ProjectType != SolutionProjectType.SolutionFolder;
         }
     }
 }

@@ -12,7 +12,6 @@ namespace UnitTest.Build {
                 OutputPath = "Foo",
                 IsTestProject = true,
                 ProjectFile = "Bar",
-                ProjectGuid = Guid.NewGuid()
             };
 
             var newSnapshot = new ProjectOutputSnapshotWithFullPath(snapshot);
@@ -20,7 +19,6 @@ namespace UnitTest.Build {
             Assert.AreEqual("Foo", newSnapshot.OutputPath);
             Assert.AreEqual("Foo", newSnapshot.OutputPath);
             Assert.AreEqual("Bar", newSnapshot.ProjectFile);
-            Assert.AreEqual(snapshot.ProjectGuid, newSnapshot.ProjectGuid);
             Assert.IsTrue(newSnapshot.IsTestProject);
         }
     }

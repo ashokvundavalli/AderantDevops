@@ -7,9 +7,9 @@ namespace Aderant.Build.ProjectSystem {
     /// </summary>
     internal class SolutionSearchResult {
 
-        public SolutionSearchResult(string file, ProjectInSolution project) {
+        public SolutionSearchResult(string file, ProjectInSolutionWrapper project) {
             SolutionFile = file;
-            Project = new ProjectInSolutionWrapper(project);
+            Project = project;
             Found = true;
         }
 
@@ -31,6 +31,9 @@ namespace Aderant.Build.ProjectSystem {
         public bool Found { get; internal set; }
     }
 
+    /// <summary>
+    /// Isolation seam between MS Build object model and the build tree.
+    /// </summary>
     internal class ProjectConfigurationInSolutionWrapper {
 
         internal ProjectConfigurationInSolutionWrapper(ProjectConfigurationInSolution configuration)
@@ -50,6 +53,9 @@ namespace Aderant.Build.ProjectSystem {
         public bool IncludeInBuild { get; }
     }
 
+    /// <summary>
+    /// Isolation seam between MS Build object model and the build tree.
+    /// </summary>
     internal class ProjectInSolutionWrapper {
         private readonly ProjectInSolution project;
 

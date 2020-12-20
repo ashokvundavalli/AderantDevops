@@ -21,7 +21,7 @@ namespace Aderant.Build.ProjectSystem {
             this.configurationToBuild = configurationToBuild;
         }
 
-        public string CreateSolutionProject(IEnumerable<ProjectInSolution> projectsInSolutions) {
+        public string CreateSolutionProject(IEnumerable<ProjectInSolutionWrapper> projectsInSolutions) {
             var sb = new StringBuilder(1024);
 
             XmlWriterSettings settings = new XmlWriterSettings {
@@ -33,7 +33,7 @@ namespace Aderant.Build.ProjectSystem {
                 xmlWriter.WriteStartElement("SolutionConfiguration");
 
                 foreach (var project in projectsInSolutions) {
-                    ProjectConfigurationInSolution projectConfigurationInSolution;
+                    ProjectConfigurationInSolutionWrapper projectConfigurationInSolution;
                     if (project.ProjectConfigurations.TryGetValue(configurationToBuild.FullName, out projectConfigurationInSolution)) {
                         xmlWriter.WriteStartElement("ProjectConfiguration");
                         xmlWriter.WriteAttributeString("Project", project.ProjectGuid);

@@ -4,6 +4,8 @@ using System.IO;
 using System.Xml;
 using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem;
+using Aderant.Build.ProjectSystem.References;
+using Aderant.Build.ProjectSystem.References.Wix;
 using Aderant.Build.VersionControl.Model;
 using Microsoft.Build.Construction;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -12,7 +14,6 @@ using Moq;
 namespace UnitTest.Build.ProjectSystem {
     [TestClass]
     public class ConfiguredProjectTests {
-
         /// <summary>
         /// Ensures that the property memoization does not bleed across project instances.
         /// </summary>
@@ -230,7 +231,7 @@ namespace UnitTest.Build.ProjectSystem {
                     }),
                 "");
 
-            project.CalculateDirtyStateFromChanges(new List<ISourceChange> { new SourceChange("", "MyPage.xaml", FileStatus.Modified) });
+            project.CalculateDirtyStateFromChanges(new List<ISourceChange> {new SourceChange("", "MyPage.xaml", FileStatus.Modified)});
 
             Assert.IsTrue(project.IsDirty);
         }
@@ -251,7 +252,7 @@ namespace UnitTest.Build.ProjectSystem {
                     }),
                 string.Empty);
 
-            project.CalculateDirtyStateFromChanges(new List<ISourceChange> { new SourceChange(string.Empty, "SomeoneElsesFile.cs", FileStatus.Modified) });
+            project.CalculateDirtyStateFromChanges(new List<ISourceChange> {new SourceChange(string.Empty, "SomeoneElsesFile.cs", FileStatus.Modified)});
 
             Assert.IsFalse(project.IsDirty);
         }
@@ -292,12 +293,13 @@ namespace UnitTest.Build.ProjectSystem {
                     () => {
                         var element = ProjectRootElement.Create();
                         ProjectPropertyGroupElement propertyGroup1 = element.AddPropertyGroup();
-                        propertyGroup1.AddProperty("TargetExt", ".wixlib");
+                        propertyGroup1.AddProperty("TargetExt", WixReferenceService.WixLibraryExtension);
 
                         return element;
                     }),
                 "");
 
+            Assert.AreEqual(WixReferenceService.WixLibraryExtension, project.OutputType);
             Assert.AreEqual(".wixlib", project.OutputType);
         }
 
@@ -313,13 +315,14 @@ namespace UnitTest.Build.ProjectSystem {
                     () => {
                         var element = ProjectRootElement.Create();
                         ProjectPropertyGroupElement propertyGroup1 = element.AddPropertyGroup();
-                        propertyGroup1.AddProperty("TargetExt", "WinExe");
+                        propertyGroup1.AddProperty("TargetExt", AssemblyReferencesService.WindowsExecutable);
 
                         return element;
                     }),
                 "");
 
-            Assert.AreEqual("WinExe", project.OutputType);
+            Assert.AreEqual(AssemblyReferencesService.WindowsExecutable, project.OutputType);
+            StringAssert.StartsWith(project.OutputType, "winexe");
         }
 
         [TestMethod]
@@ -343,6 +346,28 @@ namespace UnitTest.Build.ProjectSystem {
 
             var projectIsTestProject = project.IsTestProject; // Force some kind of evaluation
         }
-    }
 
+        [TestMethod]
+        public void netstandard_20_parsing() {
+            var tree = new Mock<IProjectTree>();
+            var project = new ConfiguredProject(tree.Object);
+            string csproj = "C:\\Foo\\Foo.csproj";
+
+            var doc = new XmlDocument();
+
+            doc.LoadXml(@"<Project Sdk=""Microsoft.NET.Sdk"">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <ProjectGuid>CE7A54E4-1BC6-4C15-BE08-FE7EB979EF8B</ProjectGuid>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+</Project>");
+
+            project.Initialize(new Lazy<ProjectRootElement>(() => UnconfiguredProject.CreateProjectRootElementFromReader(doc, csproj)), csproj);
+
+            var projectIsTestProject = project.OutputAssembly;
+
+            Assert.AreEqual("Foo", project.OutputAssembly);
+        }
+    }
 }

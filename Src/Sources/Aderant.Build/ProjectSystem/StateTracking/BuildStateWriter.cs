@@ -165,18 +165,6 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             }
         }
 
-        private static void MergeExistingOutputs(string buildId, IDictionary<string, ProjectOutputSnapshot> oldOutput, IEnumerable<ProjectOutputSnapshot> newOutput) {
-            var merger = new OutputMerger();
-            //foreach (var projectOutputs in oldOutput) {s
-            //    if (!newOutput.ContainsKey(projectOutputs.Key)) {
-            //        var outputs = projectOutputs.Value;
-            //        outputs.Origin = buildId;
-
-            //        newOutput[projectOutputs.Key] = outputs;
-            //    }
-            //}
-        }
-
         public IEnumerable<BuildArtifact> WriteStateFiles(BuildOperationContext context, IEnumerable<ProjectOutputSnapshot> outputs, IBuildPipelineService service) {
             IReadOnlyCollection<BucketId> buckets = context.SourceTreeMetadata.GetBuckets();
 

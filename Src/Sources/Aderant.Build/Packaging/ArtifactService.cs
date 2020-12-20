@@ -546,7 +546,7 @@ namespace Aderant.Build.Packaging {
             foreach (var previous in previousProjects) {
                 bool add = true;
                 foreach (var snapshot in snapshots) {
-                    if (snapshot.ProjectGuid == previous.ProjectGuid) {
+                    if (string.Equals(snapshot.ProjectFile, previous.ProjectFile, StringComparison.OrdinalIgnoreCase)) {
                         add = false;
                         break;
                     }

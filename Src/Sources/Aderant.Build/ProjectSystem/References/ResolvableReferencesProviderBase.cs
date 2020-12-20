@@ -29,8 +29,11 @@ namespace Aderant.Build.ProjectSystem.References {
             List<TUnresolvedReference> references = new List<TUnresolvedReference>();
 
             foreach (var projectItem in projectItems) {
-                var unresolvedReference = CreateUnresolvedReference(projectItem);
-                references.Add(unresolvedReference);
+                // TargetFramework >= netstandard2.0 brings any many direct assembly references, ignore these by filtering the extension
+                if (!projectItem.EvaluatedInclude.EndsWith(AssemblyReferencesService.DllExtension, StringComparison.OrdinalIgnoreCase)) {
+                    var unresolvedReference = CreateUnresolvedReference(projectItem);
+                    references.Add(unresolvedReference);
+                }
             }
 
             return UnresolvedReferences = references;

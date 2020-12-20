@@ -68,7 +68,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             }
         }
 
-        public ProjectOutputSnapshot BuildSnapshot(Guid projectGuid) {
+        public ProjectOutputSnapshot BuildSnapshot() {
             string projectFile = ProjectFile;
 
             string projectFileFullPath = ProjectFile;
@@ -87,7 +87,6 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
             var snapshot = new ProjectOutputSnapshot {
                 ProjectFile = projectFile,
-                ProjectGuid = projectGuid,
                 FilesWritten = RemoveIntermediateObjects(CleanFileWrites(FileWrites), IntermediateDirectories),
                 OutputPath = relativeOutputPath,
                 Origin = "ThisBuild",
@@ -178,9 +177,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             return isTestProject;
         }
 
-        internal static ProjectOutputSnapshot RecordProjectOutputs(
-            Guid projectGuid,
-            string sourcesDirectory,
+        internal static ProjectOutputSnapshot RecordProjectOutputs(string sourcesDirectory,
             string projectFile,
             string[] projectOutputs,
             string outputPath,
@@ -194,7 +191,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             var tracker = new ProjectOutputSnapshotBuilder(sourcesDirectory, projectFile, projectOutputs, outputPath, intermediateDirectories,
                 projectTypeGuids, testProjectType, references);
 
-            return tracker.BuildSnapshot(projectGuid);
+            return tracker.BuildSnapshot();
         }
     }
 }

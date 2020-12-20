@@ -24,9 +24,6 @@ namespace Aderant.Build.Tasks {
         [Required]
         public ITaskItem OutputPath { get; set; }
 
-        [Required]
-        public string ProjectGuid { get; set; }
-
         public string[] FileWrites { get; set; }
 
         public string[] ProjectTypeGuids { get; set; }
@@ -39,7 +36,7 @@ namespace Aderant.Build.Tasks {
             var builder = new ProjectOutputSnapshotBuilder(SolutionRoot, ProjectFile, FileWrites, OutputPath.ItemSpec, IntermediateDirectories, ProjectTypeGuids,
                 TestProjectType, References);
 
-            var snapshot = builder.BuildSnapshot(Guid.Parse(ProjectGuid));
+            var snapshot = builder.BuildSnapshot();
 
             PipelineService.RecordProjectOutputs(snapshot);
 

@@ -13,7 +13,6 @@ namespace Aderant.Build.ProjectSystem.References.Wix {
         }
 
         protected override IAssemblyReference CreateResolvedReference(IReadOnlyCollection<IUnresolvedReference> references, IUnresolvedAssemblyReference unresolved, Dictionary<string, string> aliasMap) {
-            //throw new NotImplementedException();
             if (unresolved is UnresolvedWixReference) {
                 IReadOnlyCollection<ConfiguredProject> projects = ConfiguredProject.Tree.LoadedConfiguredProjects;
                 string name = unresolved.GetAssemblyName() + WixLibraryExtension;

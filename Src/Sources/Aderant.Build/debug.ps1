@@ -3,6 +3,7 @@
 
 
 
-cd C:\Source\ExpertSuite
-bm -include .\Billing\
+cd C:\Source\ExpertSuite\Identity
+#bm -include .\Billing\
+bm
 

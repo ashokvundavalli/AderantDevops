@@ -64,6 +64,19 @@ namespace Aderant.Build.ProjectSystem {
         public void Initialize(XmlReader reader, string projectLocation) {
             FullPath = projectLocation;
 
+            ProjectCollection projectCollection;
+
+            if (ProjectCollection == null) {
+                // Create a project collection for each project since the toolset might change depending on the type of project
+                projectCollection = CreateProjectCollection();
+            } else {
+                projectCollection = ProjectCollection;
+            }
+
+            InitializeInternal(this, reader, projectLocation, projectCollection);
+        }
+
+        private void InitializeInternal(UnconfiguredProject unconfiguredProject, XmlReader reader, string projectLocation, ProjectCollection projectCollection) {
             // CreateReader from XDocument doesn't work with ProjectRootElement.Create so use the old XmlDocument API
             XmlReaderSettings xmlReaderSettings = new XmlReaderSettings {
                 DtdProcessing = DtdProcessing.Ignore,
@@ -86,48 +99,56 @@ namespace Aderant.Build.ProjectSystem {
 
             projectElement = new Lazy<ProjectRootElement>(
                 () => {
-                    ProjectCollection projectCollection;
-
-                    if (ProjectCollection == null) {
-                        // Create a project collection for each project since the toolset might change depending on the type of project
-                        projectCollection = CreateProjectCollection();
-                    } else {
-                        projectCollection = ProjectCollection;
-                    }
-
-                    using (XmlNodeList elementsByTagName = projectDocument.GetElementsByTagName("TargetFrameworkVersion")) {
-                        foreach (XmlElement item in elementsByTagName) {
-                            if (string.Equals(item.InnerText, "v$targetframeworkversion$", StringComparison.OrdinalIgnoreCase)) {
-                                isTemplateProject = true;
-                                return null;
-                            }
-                        }
-                    }
-
-                    ProjectRootElement element;
-                    using (XmlReader xmlReader = new XmlNodeReader(projectDocument)) {
-                        element = ProjectRootElement.Create(xmlReader, projectCollection);
-                    }
-
-                    ProcessImports(projectLocation, element);
-
-                    AssignPath(projectLocation, element);
-
-                    return element;
-
-                },
-                LazyThreadSafetyMode.PublicationOnly);
+                    return CreateProjectRootElementFromReader(projectDocument, projectLocation, unconfiguredProject, projectCollection);
+                }, LazyThreadSafetyMode.PublicationOnly);
         }
 
-        private void AssignPath(string projectLocation, ProjectRootElement element) {
-            if (!string.IsNullOrEmpty(FullPath)) {
+        /// <summary>
+        /// Factory method for creating a Project Root Element.
+        /// </summary>
+        /// <param name="projectDocument">The project XML.</param>
+        /// <param name="projectLocation">The optional on disk location.</param>
+        /// <param name="unconfiguredProject">The optional unconfigured project that provides the evaluation context.</param>
+        /// <param name="projectCollection">The optional global project location.</param>
+        /// <returns></returns>
+        internal static ProjectRootElement CreateProjectRootElementFromReader(XmlDocument projectDocument, string projectLocation = null, UnconfiguredProject unconfiguredProject = null, ProjectCollection projectCollection = null) {
+            using (XmlNodeList elementsByTagName = projectDocument.GetElementsByTagName("TargetFrameworkVersion")) {
+                foreach (XmlElement item in elementsByTagName) {
+                    if (string.Equals(item.InnerText, "v$targetframeworkversion$", StringComparison.OrdinalIgnoreCase)) {
+                        if (unconfiguredProject != null) {
+                            unconfiguredProject.isTemplateProject = true;
+                        }
+
+                        return null;
+                    }
+                }
+            }
+
+            if (projectCollection == null) {
+                // Create a project collection for each project since the toolset might change depending on the type of project
+                projectCollection = CreateProjectCollection();
+            }
+
+            using (XmlReader xmlReader = new XmlNodeReader(projectDocument)) {
+                var element = ProjectRootElement.Create(xmlReader, projectCollection);
+
+                AssignPath(projectLocation, element);
+
+                ProcessImports(unconfiguredProject, projectLocation, element);
+
+                return element;
+            }
+        }
+
+        private static void AssignPath(string projectLocation, ProjectRootElement element) {
+            if (!string.IsNullOrEmpty(projectLocation)) {
                 element.FullPath = projectLocation;
             } else {
                 element.FullPath = Path.GetRandomFileName();
             }
         }
 
-        private void ProcessImports(string projectLocation, ProjectRootElement element) {
+        private static void ProcessImports(UnconfiguredProject unconfiguredProject, string projectLocation, ProjectRootElement element) {
             // PERF: We don't care about any imports, just the base project data
             var imports = element.Imports.ToList();
 
@@ -136,10 +157,15 @@ namespace Aderant.Build.ProjectSystem {
             foreach (var import in imports) {
                 if (import.Project.IndexOf("Microsoft", StringComparison.OrdinalIgnoreCase) >= 0) {
                     importsToRemove.Add(import);
+                    continue;
+                }
+
+                if (import.Project.IndexOf("MSTest_V2_Common", StringComparison.OrdinalIgnoreCase) >= 0) {
+                    importsToRemove.Add(import);
                 }
             }
 
-            if (AllowConformityModification) {
+            if (unconfiguredProject != null && unconfiguredProject.AllowConformityModification) {
                 if (!string.IsNullOrEmpty(projectLocation)) {
                     var controller = new ProjectConformityController();
                     controller.AddDirProjectIfNecessary(element, projectLocation);
@@ -151,8 +177,8 @@ namespace Aderant.Build.ProjectSystem {
             }
         }
 
-        private ProjectCollection CreateProjectCollection() {
-            ProjectCollection projectCollection = new ProjectCollection();
+        private static ProjectCollection CreateProjectCollection() {
+            var projectCollection = new ProjectCollection();
             projectCollection.SkipEvaluation = true;
             projectCollection.IsBuildEnabled = false;
             return projectCollection;

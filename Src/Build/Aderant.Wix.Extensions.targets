@@ -33,7 +33,6 @@
     <RecordProjectOutputs
         ContextEndpoint="$(ContextEndpoint)"
         SolutionRoot="$(SolutionRoot)"
-        ProjectGuid="$(ProjectGuid)"
         ProjectFile="$(MSBuildProjectFullPath)"
         IntermediateDirectories="$(IntermediateOutputPath)"
         OutputPath="$(TargetDir)"

@@ -422,11 +422,30 @@ namespace Aderant.Build {
 
         private string outputPath;
 
+        [DataMember(Name = nameof(ProjectFile))]
+        private string projectFile;
+
         public ProjectOutputSnapshot() {
         }
 
-        [DataMember]
-        public string ProjectFile { get; set; }
+        /// <summary>
+        /// The unique project location - used to identify this project file within the source tree
+        /// </summary>
+        public string ProjectFile {
+            get { return projectFile; }
+            set {
+                EnsureNotRooted(value);
+                projectFile = value;
+            }
+        }
+
+        private static void EnsureNotRooted(string value) {
+            if (value != null) {
+                if (Path.IsPathRooted(value)) {
+                    throw new InvalidOperationException("Corrupted model. Path must not be rooted. " + value);
+                }
+            }
+        }
 
         [DataMember]
         public string[] FilesWritten { get; set; }
@@ -449,12 +468,7 @@ namespace Aderant.Build {
         public string Directory {
             get { return directory; }
             set {
-                if (value != null) {
-                    if (Path.IsPathRooted(value)) {
-                        throw new InvalidOperationException("Corrupted model. Directory must not be rooted.");
-                    }
-                }
-
+                EnsureNotRooted(value);
                 directory = value;
             }
         }
@@ -464,12 +478,6 @@ namespace Aderant.Build {
         /// </summary>
         [DataMember]
         public bool IsTestProject { get; set; }
-
-        /// <summary>
-        /// The unique project guid - used to identify this project file within the source tree
-        /// </summary>
-        [DataMember]
-        public Guid ProjectGuid { get; set; }
     }
 
     internal class ProjectOutputSnapshotWithFullPath : ProjectOutputSnapshot {
@@ -480,7 +488,6 @@ namespace Aderant.Build {
             Origin = snapshot.Origin;
             Directory = snapshot.Directory;
             IsTestProject = snapshot.IsTestProject;
-            ProjectGuid = snapshot.ProjectGuid;
         }
 
         /// <summary>

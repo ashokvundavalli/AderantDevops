@@ -5,6 +5,7 @@ using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -16,6 +17,7 @@ using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem.SolutionParser;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.Services;
+using Aderant.Build.Tasks.ArtifactHandling;
 using Aderant.Build.Utilities;
 using Aderant.Build.VersionControl.Model;
 using Microsoft.Build.Construction;
@@ -42,13 +44,7 @@ namespace Aderant.Build.ProjectSystem {
 
         private ProjectCollection projectCollection;
 
-        // First level cache for parsed solution information
-        // Also stores the data needed to create the "CurrentSolutionConfigurationContents" object that
-        // MSBuild uses when building from a solution. Unfortunately the build engine doesn't let us build just projects
-        // due to the way that AssignProjectConfiguration in Microsoft.Common.CurrentVersion.targets assumes that you are coming from a solution
-        // and attempts to assign platforms and targets to project references, even if you are not building them.
-        private Dictionary<Guid, ProjectInSolution> projectsByGuid = new Dictionary<Guid, ProjectInSolution>();
-        private Dictionary<Guid, string> projectToSolutionMap = new Dictionary<Guid, string>();
+        private ProjectToSolutionMap projectToSolutionMap = new ProjectToSolutionMap();
 
 
         public ProjectTree() {
@@ -283,11 +279,8 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         public SolutionSearchResult GetSolutionForProject(string projectFilePath, Guid projectGuid) {
-            ProjectInSolution projectInSolution;
-            projectsByGuid.TryGetValue(projectGuid, out projectInSolution);
-
-            string solutionFile;
-            projectToSolutionMap.TryGetValue(projectGuid, out solutionFile);
+            var projectInSolution = projectToSolutionMap.GetProjectInSolution(projectFilePath);
+            var solutionFile = projectToSolutionMap.GetSolution(projectInSolution);
 
             if (projectInSolution == null || solutionFile == null) {
 
@@ -316,7 +309,7 @@ namespace Aderant.Build.ProjectSystem {
                                 }
                             }
 
-                            if (projectToSolutionMap.Values.FirstOrDefault(s => string.Equals(s, file, StringComparison.OrdinalIgnoreCase)) != null) {
+                            if (projectToSolutionMap.HasSeenFile(file)) {
                                 // Already seen this file - project must be orphaned
                                 break;
                             }
@@ -324,32 +317,7 @@ namespace Aderant.Build.ProjectSystem {
                             var parser = InitializeSolutionParser();
                             ParseResult parseResult = parser.Parse(file);
 
-                            foreach (var kvp in parseResult.ProjectsByGuid) {
-                                if (kvp.Value.ProjectType == SolutionProjectType.SolutionFolder) {
-                                    continue;
-                                }
-
-                                Guid key = kvp.Key;
-
-                                if (!projectToSolutionMap.ContainsKey(key)) {
-                                    projectToSolutionMap.Add(key, parseResult.SolutionFile);
-                                } else {
-                                    string solutionAlreadyTrackingThisProject = projectToSolutionMap[key];
-                                    throw new DuplicateGuidException(key, $"The project guid {key} as part of {file} is already tracked by {solutionAlreadyTrackingThisProject}.");
-                                }
-
-                                if (!projectsByGuid.ContainsKey(key)) {
-                                    projectsByGuid.Add(key, kvp.Value);
-                                }
-                            }
-
-                            if (parseResult.ProjectsByGuid.TryGetValue(projectGuid, out projectInSolution)) {
-                                if (exactMatch != null) {
-                                    logger.Info($"Found exact solution match for project {projectFilePath} -> {exactMatch}");
-                                } else {
-                                    logger.Info($"Found inexact solution match for project {projectFilePath} -> {file}");
-                                }
-
+                            if (RetrieveFirstProjectMatch(projectFilePath, projectGuid, parseResult, file, exactMatch, out projectInSolution)) {
                                 solutionFile = parseResult.SolutionFile;
                                 directoryToSearch = null;
                                 break;
@@ -369,6 +337,40 @@ namespace Aderant.Build.ProjectSystem {
 
             return new SolutionSearchResult(solutionFile, projectInSolution);
         }
+
+        private bool RetrieveFirstProjectMatch(string projectFilePath, Guid projectGuid, ParseResult parseResult, string possibleSolutionFile, string exactMatch, out ProjectInSolutionWrapper projectInSolution) {
+            var project = parseResult.ProjectsInOrder.FirstOrDefault(s => string.Equals(s.AbsolutePath, projectFilePath, StringComparison.OrdinalIgnoreCase));
+            if (project != null) {
+                projectToSolutionMap.AddProject(projectFilePath, projectGuid, parseResult.SolutionFile, project);
+            }
+
+            // Populate the cache with all project data from the solution, we don't actually know if the project GUIDs are correct here
+            foreach (var wrapper in parseResult.ProjectsInOrder) {
+                var parsed = Guid.Parse(wrapper.ProjectGuid);
+                if (parsed == projectGuid) {
+                    continue;
+                }
+
+                projectToSolutionMap.AddProject(wrapper.AbsolutePath, parsed, parseResult.SolutionFile, wrapper);
+            }
+
+            var result = projectToSolutionMap.GetProjectInSolution(projectFilePath);
+            if (result != null) {
+
+                if (exactMatch != null) {
+                    logger.Info($"Found exact solution match for project {projectFilePath} -> {exactMatch}");
+                } else {
+                    logger.Info($"Found inexact solution match for project {projectFilePath} -> {possibleSolutionFile}");
+                }
+
+                projectInSolution = result;
+                return true;
+            }
+
+            projectInSolution = null;
+            return false;
+        }
+
 
         private void UnloadAllProjects() {
             if (projectCollection != null) {
@@ -392,10 +394,8 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         private void GenerateCurrentSolutionConfigurationXml(ConfigurationToBuild collectorProjectConfiguration) {
-            var projectsInSolutions = projectsByGuid.Values;
-
             var generator = new SolutionConfigurationContentsGenerator(collectorProjectConfiguration);
-            MetaprojectXml = generator.CreateSolutionProject(projectsInSolutions);
+            MetaprojectXml = generator.CreateSolutionProject(projectToSolutionMap.AllProjects);
         }
 
         private void LoadProjects(AnalysisContext analysisContext) {

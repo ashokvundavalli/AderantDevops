@@ -8,6 +8,8 @@ namespace Aderant.Build.ProjectSystem.References {
     [Export(typeof(IAssemblyReferencesService))]
     [ExportMetadata("Scope", nameof(ProjectSystem.ConfiguredProject))]
     internal class AssemblyReferencesService : AssemblyReferencesServiceBase {
+        public const string DllExtension = ".dll";
+        public const string ExecutableExtension = ".exe";
 
         public static string LibraryType { get; } = "Library";
         public static string WindowsExecutable { get; } = "winexe";
@@ -64,17 +66,17 @@ namespace Aderant.Build.ProjectSystem.References {
 
         public static bool TryGetOutputAssemblyWithExtension(string outputType, string outputAssembly, out string name) {
             if (string.Equals(outputType, LibraryType, StringComparison.OrdinalIgnoreCase)) {
-                name = outputAssembly + ".dll";
+                name = outputAssembly + DllExtension;
                 return true;
             }
 
             if (string.Equals(outputType, WindowsExecutable, StringComparison.OrdinalIgnoreCase)) {
-                name = outputAssembly + ".exe";
+                name = outputAssembly + ExecutableExtension;
                 return true;
             }
 
             if (string.Equals(outputType, Executable, StringComparison.OrdinalIgnoreCase)) {
-                name = outputAssembly + ".exe";
+                name = outputAssembly + ExecutableExtension;
                 return true;
             }
 

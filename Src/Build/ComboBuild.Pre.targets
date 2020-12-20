@@ -18,16 +18,6 @@
     <CallTarget Targets="PreBuild" />
   </Target>
 
-  <!--
-       Pull the entry targets into our context.
-       This lets us call into it and lets people who want to customize the workflow change stuff in here
-  -->
-  <Import Project="$(SolutionDirectoryPath)Build\TFSBuild.proj" Condition="'$(RunUserTargets)' != 'false' And Exists('$(SolutionDirectoryPath)Build\TFSBuild.proj')" />
-
-  <!-- Entry target -->
-  <Target Name="EndToEnd" DependsOnTargets="$(RunBuildDependsOn)">
-  </Target>
-
   <PropertyGroup>
     <!--
     These targets make up the steps needed to package artifacts shipped as part of the product.
@@ -55,6 +45,16 @@
       rmTransformTemplates;
     </RunBuildDependsOn>
   </PropertyGroup>
+
+  <!--
+       Pull the entry targets into our context.
+       This lets us call into it and lets people who want to customize the workflow change stuff in here
+  -->
+  <Import Project="$(SolutionDirectoryPath)Build\TFSBuild.proj" Condition="'$(RunUserTargets)' != 'false' And Exists('$(SolutionDirectoryPath)Build\TFSBuild.proj')" />
+
+  <!-- Entry target -->
+  <Target Name="EndToEnd" DependsOnTargets="$(RunBuildDependsOn)">
+  </Target>
 
   <PropertyGroup>
     <ModuleBuildTempDirectory Condition="'$(ModuleBuildTempDirectory)' == ''">$(SolutionDirectoryPath)_tmp\</ModuleBuildTempDirectory>

@@ -14,7 +14,9 @@ using Aderant.Build.ProjectSystem.References.Wix;
 using Aderant.Build.Utilities;
 using Aderant.Build.VersionControl.Model;
 using Microsoft.Build.Construction;
+using Microsoft.Build.Definition;
 using Microsoft.Build.Evaluation;
+using Microsoft.Build.Evaluation.Context;
 
 namespace Aderant.Build.ProjectSystem {
 
@@ -302,8 +304,14 @@ namespace Aderant.Build.ProjectSystem {
 
             outputType = new Memoizer<ConfiguredProject, string>(
                 configuredProject => {
-                    Project projectInstance = configuredProject.project.Value;
+                    Project projectInstance = configuredProject.InnerProject;
+
                     string projectOutputType = projectInstance.GetPropertyValue("OutputType");
+
+                    if (IsSdkStyleProject(configuredProject)) {
+                        return projectOutputType;
+                    }
+
                     ProjectProperty targetExtension = projectInstance.GetProperty("TargetExt");
 
                     // Purity violation - this class knows to interrogate a WIX project, C# project and test projects. If we add any more cross type concerns
@@ -311,9 +319,7 @@ namespace Aderant.Build.ProjectSystem {
                     if (targetExtension != null) {
                         var value = targetExtension.EvaluatedValue;
 
-                        if (string.Equals(value, ".exe", StringComparison.OrdinalIgnoreCase) &&
-                            string.Equals(projectOutputType, AssemblyReferencesService.WindowsExecutable,
-                                StringComparison.OrdinalIgnoreCase)) {
+                        if (string.Equals(value, AssemblyReferencesService.ExecutableExtension, StringComparison.OrdinalIgnoreCase) && string.Equals(projectOutputType, AssemblyReferencesService.WindowsExecutable, StringComparison.OrdinalIgnoreCase)) {
                             return projectOutputType;
                         }
 
@@ -327,12 +333,16 @@ namespace Aderant.Build.ProjectSystem {
 
             outputAssembly = new Memoizer<ConfiguredProject, string>(
                 configuredProject => {
-                    var projectProperty = configuredProject.project.Value.GetProperty("AssemblyName");
+                    var projectProperty = configuredProject.InnerProject.GetProperty("AssemblyName");
+
+                    if (IsSdkStyleProject(configuredProject)) {
+                        return projectProperty.EvaluatedValue;
+                    }
 
                     if (projectProperty == null || projectProperty.IsImported) {
                         // Windows Installer projects define a default AssemblyName in an import, we ignore it and go straight for the
                         // output name instead
-                        return configuredProject.project.Value.GetPropertyValue("OutputName");
+                        return configuredProject.InnerProject.GetPropertyValue("OutputName");
                     }
 
                     return projectProperty.EvaluatedValue;
@@ -340,7 +350,7 @@ namespace Aderant.Build.ProjectSystem {
 
             extractTypeGuids = new Memoizer<ConfiguredProject, IReadOnlyList<Guid>>(
                 args => {
-                    var propertyElement = args.project.Value.GetPropertyValue("ProjectTypeGuids");
+                    var propertyElement = args.InnerProject.GetPropertyValue("ProjectTypeGuids");
 
                     if (!string.IsNullOrEmpty(propertyElement)) {
 
@@ -363,8 +373,12 @@ namespace Aderant.Build.ProjectSystem {
 
             projectGuid = new Memoizer<ConfiguredProject, Guid>(
                 arg => {
-                    var propertyElement = arg.project.Value.GetPropertyValue("ProjectGuid");
+                    var propertyElement = arg.InnerProject.GetPropertyValue("ProjectGuid");
                     if (propertyElement != null) {
+                        if (string.IsNullOrWhiteSpace(propertyElement) && IsSdkStyleProject(arg)) {
+                            return Guid.Empty;
+                        }
+
                         try {
                             return Guid.Parse(propertyElement);
                         } catch (FormatException ex) {
@@ -376,9 +390,22 @@ namespace Aderant.Build.ProjectSystem {
                 });
 
             skipCopyBuildProduct = new Memoizer<ConfiguredProject, bool>(arg => {
-                var propertyElement = arg.project.Value.GetPropertyValue("SkipCopyBuildProduct");
+                var propertyElement = arg.InnerProject.GetPropertyValue("SkipCopyBuildProduct");
                 return string.Equals("true", propertyElement, StringComparison.OrdinalIgnoreCase);
             });
+        }
+
+        private Project InnerProject {
+            get { return project.Value; }
+        }
+
+        private static bool IsSdkStyleProject(ConfiguredProject configuredProject) {
+            string propertyValue = configuredProject.InnerProject.GetPropertyValue("TargetFramework");
+            if (propertyValue.StartsWith("netstandard", StringComparison.OrdinalIgnoreCase)) {
+                return configuredProject.InnerProject.Imports.Any(s => s.SdkResult != null);
+            }
+
+            return false;
         }
 
         protected virtual Lazy<Project> InitializeProject(Lazy<ProjectRootElement> projectElement) {
@@ -389,15 +416,18 @@ namespace Aderant.Build.ProjectSystem {
 
             return new Lazy<Project>(
                 () => {
-                    return new Project(
-                        projectElement.Value,
-                        properties,
-                        null,
-                        CreateProjectCollection(),
-                        ProjectLoadSettings.IgnoreMissingImports |
-                        ProjectLoadSettings.IgnoreInvalidImports |
-                        ProjectLoadSettings.IgnoreEmptyImports
-                        );
+                    var newProject =  Project.FromProjectRootElement(projectElement.Value, new ProjectOptions() {
+                        ProjectCollection =  CreateProjectCollection(),
+                        GlobalProperties = properties,
+                        LoadSettings = ProjectLoadSettings.IgnoreMissingImports | ProjectLoadSettings.IgnoreInvalidImports | ProjectLoadSettings.IgnoreEmptyImports
+                    });
+
+                    if (!string.IsNullOrWhiteSpace(FullPath) && string.IsNullOrEmpty(newProject.FullPath)) {
+                        newProject.FullPath = FullPath;
+                    }
+
+                    return newProject;
+
                 });
         }
 
@@ -419,7 +449,7 @@ namespace Aderant.Build.ProjectSystem {
         /// </summary>
         /// <param name="itemType">The item group name</param>
         public virtual ICollection<ProjectItem> GetItems(string itemType) {
-            return project.Value.GetItems(itemType);
+            return InnerProject.GetItems(itemType);
         }
 
         public void AssignProjectConfiguration(ConfigurationToBuild solutionBuildConfiguration) {
@@ -457,7 +487,7 @@ namespace Aderant.Build.ProjectSystem {
 
         private void SetOutputPath() {
             if (project != null) {
-                var projectValue = project.Value;
+                var projectValue = InnerProject;
 
                 projectValue.SetProperty("Configuration", BuildConfiguration.ConfigurationName);
                 projectValue.SetProperty("Platform", BuildConfiguration.PlatformName);
@@ -587,11 +617,13 @@ namespace Aderant.Build.ProjectSystem {
             // check if this proj contains needed files.
             List<ProjectItem> items = new List<ProjectItem>(57);
 
-            items.AddRange(project.Value.GetItems("Compile"));
-            items.AddRange(project.Value.GetItems("Content"));
-            items.AddRange(project.Value.GetItems("None"));
-            items.AddRange(project.Value.GetItems("XamlAppdef"));
-            items.AddRange(project.Value.GetItems("Page"));
+            Project innerProject = InnerProject;
+
+            items.AddRange(innerProject.GetItems("Compile"));
+            items.AddRange(innerProject.GetItems("Content"));
+            items.AddRange(innerProject.GetItems("None"));
+            items.AddRange(innerProject.GetItems("XamlAppdef"));
+            items.AddRange(innerProject.GetItems("Page"));
 
             foreach (var item in items) {
                 if (changes.Count == 0) {
@@ -672,7 +704,7 @@ namespace Aderant.Build.ProjectSystem {
 
         private void ValidateProperty(string configuration, string platform, string property) {
             if (project != null) {
-                var projectValue = project.Value;
+                var projectValue = InnerProject;
 
                 List<ProjectPropertyGroupElement> groups = new List<ProjectPropertyGroupElement>();
 

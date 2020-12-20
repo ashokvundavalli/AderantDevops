@@ -434,7 +434,6 @@
 	    Condition="'$(IsCustomBuild)' != 'true'"
       ContextEndpoint="$(ContextEndpoint)"
       SolutionRoot="$(SolutionRoot)"
-      ProjectGuid="$(ProjectGuid)"
       ProjectTypeGuids="$(ProjectTypeGuids)"
       TestProjectType="$(TestProjectType)"
       References="@(Reference)"
