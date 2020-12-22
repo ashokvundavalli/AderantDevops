@@ -100,7 +100,7 @@ try {
         }
 
         # Clean up databases
-        if ($null -eq $env:AgentPool -or $env:AgentPool.Equals('Default')) {
+        if ($null -eq $Env:AgentPool -or $Env:AgentPool.Equals('Default') -or $Env:AgentPool.Equals('Database')) {
             Import-Module SqlServer
             Set-Location sqlserver:\
             Set-Location sql\localhost\default\databases
