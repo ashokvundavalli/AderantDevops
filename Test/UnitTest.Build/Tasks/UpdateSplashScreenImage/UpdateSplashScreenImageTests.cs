@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using Aderant.Build;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -6,14 +8,25 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace UnitTest.Build.Tasks.UpdateSplashScreenImage {
     [TestClass]
     public class UpdateSplashScreenImageTests {
+
         public TestContext TestContext { get; set; }
 
         [TestMethod]
-        [DeploymentItem(@"Tasks\UpdateSplashScreenImage\Expert_SplashScreen_Domain Customization Wizard.png")]
-        [DeploymentItem(@"Tasks\UpdateSplashScreenImage\\Expert_2014_style.png")]
-        public void Test_splash_screen_generation() {
+        public void UpdateSplashScreenImageDefaultsToCurrentYear() {
             Aderant.Build.Tasks.UpdateSplashScreenImage updater = new Aderant.Build.Tasks.UpdateSplashScreenImage();
-            updater.OutputFile = Path.Combine(TestContext.DeploymentDirectory, "Updated.png");
+
+            Assert.AreEqual(DateTime.UtcNow.Year.ToString(CultureInfo.InvariantCulture), updater.Year);
+        }
+
+        [TestMethod]
+        [DeploymentItem(@"Tasks\UpdateSplashScreenImage\Expert_SplashScreen_Domain Customization Wizard.png")]
+        [DeploymentItem(@"Tasks\UpdateSplashScreenImage\Expert_2014_style.png")]
+        public void Test_splash_screen_generation() {
+            Aderant.Build.Tasks.UpdateSplashScreenImage updater =
+                new Aderant.Build.Tasks.UpdateSplashScreenImage {
+                    OutputFile = Path.Combine(TestContext.DeploymentDirectory, "Updated.png"),
+                    Year = new DateTime(2020, 1, 1, 0, 0, 0).Year.ToString(CultureInfo.InvariantCulture)
+        };
 
             string image = Path.Combine(TestContext.DeploymentDirectory,
                 "Expert_SplashScreen_Domain Customization Wizard.png");
@@ -24,7 +37,7 @@ namespace UnitTest.Build.Tasks.UpdateSplashScreenImage {
                 "My Awesome Product",
                 "Admin");
 
-            Assert.IsTrue(FileEquals(Path.Combine(TestContext.DeploymentDirectory, "Expert_2014_style.png"), updater.OutputFile), "If this fails in the new year it's because you need to update the splash screen Expert_2014_style.png to include the new year.");
+            Assert.IsTrue(FileEquals(Path.Combine(TestContext.DeploymentDirectory, "Expert_2014_style.png"), updater.OutputFile), "Resulting file is not identical to 'Expert_2014_style.png'.");
         }
 
         [TestMethod]
