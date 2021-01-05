@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Management.Automation;
-using Aderant.Build.Utilities;
 
 namespace Aderant.Build {
     public static class PathUtility {
@@ -205,6 +204,37 @@ namespace Aderant.Build {
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Returns the root directory of a path.
+        /// Supports paths with drives like "C:\Source\Foo\1.txt" or relative like "Source\Foo\1.txt"
+        /// </summary>
+        /// <example>
+        /// "C:\Source\Foo\1.txt" returns "C:\"
+        /// "Source\Foo\1.txt" returns "Source"
+        /// </example>
+        /// <returns>The root directory.</returns>
+        public static string GetRootDirectory(string path) {
+            if (!string.IsNullOrWhiteSpace(path)) {
+                string directory = Path.GetPathRoot(path);
+                if (!string.IsNullOrEmpty(directory)) {
+                    //If we can use Path.GetPathRoot then use it.
+                    return directory;
+                }
+                //Handle cases where we only have a relative path like "Source/Foo/file.txt" or "Source\\Foo\\file.txt"
+                int charLocation = path.IndexOf(AltDirectorySeparator, StringComparison.OrdinalIgnoreCase);
+                if (charLocation > 0) {
+                    return path.Substring(0, charLocation);
+                }
+
+                charLocation = path.IndexOf(DirectorySeparator, StringComparison.OrdinalIgnoreCase);
+                if (charLocation > 0) {
+                    return path.Substring(0, charLocation);
+                }
+            }
+
+            return string.Empty;
         }
     }
 }

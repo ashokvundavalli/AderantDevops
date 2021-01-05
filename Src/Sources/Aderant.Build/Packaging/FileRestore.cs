@@ -173,7 +173,7 @@ namespace Aderant.Build.Packaging {
                         }
                     }
                 } else {
-                    throw new FileNotFoundException($"The file {localProjectFile} does not exist or cannot be accessed.", localProjectFile);
+                    logger.Info($"Did not restore file: {localProjectFile} because it has been deleted.");
                 }
             }
 
