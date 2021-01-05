@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project
   xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-  ToolsVersion="14.0" 
+  ToolsVersion="14.0"
   TreatAsLocalProperty="BuildNumber">
 
   <PropertyGroup>
@@ -33,17 +33,17 @@
   <ItemGroup>
     <ModulesInBuild Include="@(Modules)" />
   </ItemGroup>
-  
+
   <Target Name="GetAllModuleDependencies"
           DependsOnTargets="PrepareBuildEnvironment;SetBuildNumbers"
           BeforeTargets="BuildAndPackage"
           Condition="'$(UseSharedDependencyDirectory)' == 'true'">
-    
+
     <Message Text="Using build scripts: $(BuildScriptsDirectory)" />
 
     <!-- Cull the module list if we are resuming the build from a certain point -->
     <Message Text="Resuming build from module $(BuildFrom)" Condition="'$(BuildFrom)' != ''" />
-    
+
     <FilterModules
       Condition="'$(BuildFrom)' != ''"
       ModulesInBuild="@(ModulesInBuild)"
@@ -56,13 +56,13 @@
       <ModulesInBuild Remove="@(ModulesInBuild)" Condition="'$(BuildFrom)' != ''" />
       <ModulesInBuild Include="@(FilteredModuleList)" Condition="'$(BuildFrom)' != ''" />
     </ItemGroup>
-    
+
     <!-- As we are in a build all we can get all of the dependencies in a batch operation -->
     <Message Text="Getting dependencies for build." />
-    
+
     <Delete Files="$(SolutionRoot)\paket.dependencies" ContinueOnError="true" />
     <Delete Files="$(SolutionRoot)\paket.lock" ContinueOnError="true" />
-    
+
     <GetDependencies
       ProductManifest="$(ProductManifestPath)"
       ModulesRootPath="$(SolutionRoot)"
@@ -74,9 +74,9 @@
     <ItemGroup>
       <ModuleDirectories Include="$([System.IO.Directory]::GetDirectories('$(SolutionRoot)'))"
                          Exclude="$(SolutionRoot)Build.Infrastructure;
-                                  $(SharedDependencyDirectory);                                  
-                                  $(SolutionRoot)Dependencies;                                  
-                                  $(SolutionRoot)ThirdParty;                                  
+                                  $(SharedDependencyDirectory);
+                                  $(SolutionRoot)Dependencies;
+                                  $(SolutionRoot)ThirdParty;
                                   $(SolutionRoot)TestRun" />
     </ItemGroup>
 
@@ -90,24 +90,24 @@
       Target="$(SharedDependencyDirectory)\packages"
       Type="D" />
 
-    <!-- 
+    <!--
         TFS: 122744
         We delete the cmsmsg files here. I don't think this is "correct" as it makes the build system
         aware of what it's building but there is a frustrating interplay here. If you resume the build from a location after the
-        producution of the message file(s) then the build can fail on some application module builds. By delete the msg file from 
+        producution of the message file(s) then the build can fail on some application module builds. By delete the msg file from
         dependency directory it prevents the TextTranslator loading a message file while unit tests are running and then having those tests fail
         as the test are generally written to assume no message file is available and so don't expect to find translated strings.
       -->
     <ItemGroup>
       <MessageFiles Include="$(SharedDependencyDirectory)\cmsmsg*.msg;" />
     </ItemGroup>
-    
+
     <Delete Files="@(MessageFiles)" />
   </Target>
 
 
   <!-- Tranforms inputs to this target file into item groups -->
-  <Target Name="GetAllModuleDependenciesSetup" 
+  <Target Name="GetAllModuleDependenciesSetup"
           BeforeTargets="GetAllModuleDependencies">
 
     <Exec Command="rmdir /q /s $(SharedDependencyDirectory)" />
@@ -122,14 +122,14 @@
       <DeleteList Include="@(ModulesInBuild->'%(FullPath)\Dependencies')" />
       <DeleteList Include="@(ModulesInBuild->'%(FullPath)\packages')" />
     </ItemGroup>
-    
+
     <RemoveDir Directories="%(DeleteList.FullPath)" Condition="Exists('%(DeleteList.FullPath)')"
                ContinueOnError="true">
       <Output TaskParameter="RemovedDirectories" ItemName="RemovedDirectories" />
     </RemoveDir>
 
     <!--<Error Condition="'@(RemovedDirectories)' != ''" Text="The following directories should not be checked in @(RemovedDirectories)" />-->
-    
+
     <MSBuild.Community.Tasks.DeleteTree Directories="$(SharedDependencyDirectory)" Recursive="true" />
     <MSBuild.Community.Tasks.DeleteTree Directories="$(SolutionRoot)\_BuildTemp" Recursive="true" />
 
@@ -138,54 +138,37 @@
     <ItemGroup>
       <Paket Include="$(SolutionRoot)\paket.*"></Paket>
     </ItemGroup>
-    
+
     <Delete Files="@(Paket)" />
-    
+
   </Target>
-  
-  
+
+
   <Target Name="ValidateBranchConfiguration" BeforeTargets="GetAllModuleDependencies">
 
     <ItemGroup>
       <ThirdPartyFiles Include="$(SolutionRoot)ThirdParty\**\bin\*.dll" />
     </ItemGroup>
-
-    <!-- 
-      Validates that we have no duplicated third party assemblies
-      The build and packaging system does not support multiple versions of the same assembly with the same file name.
-    -->
-    <Message Text="Validating dependencies for build." />
-    
-    <DependencyChecker
-      Files="@(ThirdPartyFiles)" />
-
-    <!--
-      Validates that we have no misconfigured build configurations in this branch
-    -->
-    <Message Text="Validating build project files." />
-    <BuildConfigurationCheck
-      ProjectFiles="@(ModulesInBuild->'%(FullPath)\Build\TFSBuild.proj')" />
-    
   </Target>
 
-  <Target Name="CreateParallelBuildProject" 
-          DependsOnTargets="GetAllModuleDependencies" 
+  <Target Name="CreateParallelBuildProject"
+          DependsOnTargets="GetAllModuleDependencies"
           AfterTargets="GetAllModuleDependencies">
-    
+
     <Message Text="Creating parallel build project... "/>
 
     <PropertyGroup>
       <BranchBuildProject Condition="'$(BranchBuildProject)' == ''">$(SolutionRoot)BranchBuild.proj</BranchBuildProject>
     </PropertyGroup>
-    
+
     <Delete Files="$(BranchBuildProject)" ContinueOnError="true" />
-    
+
     <ParallelBuildProjectFactory
       ModulesDirectory="$(SolutionRoot)"
       ProductManifest="$(ProductManifestPath)"
       ModulesInBuild="@(ModulesInBuild)"
       ProjectFile="$(BranchBuildProject)" />
-    
+
     <Error Condition="!Exists('$(BranchBuildProject)')" />
   </Target>
 
@@ -200,8 +183,8 @@
 
 
   <Target Name="BuildAndPackage">
-    <!-- 
-      To invoke this target on the desktop 
+    <!--
+      To invoke this target on the desktop
       msbuild TFSBuild.proj @TFSBuild.rsp /p:DropLocation=\\na.aderant.com\expertsuite\<branch> /nr:false
     -->
 
@@ -258,7 +241,7 @@
 
 
   <Target Name="Package" AfterTargets="BuildAndPackage">
-    <!-- 
+    <!--
       To test via desktop
       msbuild TFSBuild.proj @TFSBuild.rsp /target:ZipProduct /p:LocalExpertBinariesDirectory=C:\Binaries\ /p:ZipFileDirectory=C:\Output\
     -->
@@ -284,7 +267,7 @@
     </PropertyGroup>
 
     <Delete Files="$(ZipFile);$(EliteEnterpriseZipFile)" />
-    
+
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
       Message="Zipping build output"
@@ -312,11 +295,11 @@
                  $(LocalExpertBinariesDirectory)**\System.Data.dll;
                  $(LocalExpertBinariesDirectory)**\System.Drawing*.dll;
                  $(LocalExpertBinariesDirectory)**\System.Windows.Forms*.dll;
-                 $(LocalExpertBinariesDirectory)**\System.Xml*dll*;   
+                 $(LocalExpertBinariesDirectory)**\System.Xml*dll*;
                  $(ExpertSourceDirectory)*Microsoft.TeamFoundation.*dll*;
                  $(LocalExpertBinariesDirectory)**\*UnitTest*;
-                 $(LocalExpertBinariesDirectory)**\TestLicenseRegistration*;           
-                 $(LocalExpertBinariesDirectory)**\*.deploy.cmd;   
+                 $(LocalExpertBinariesDirectory)**\TestLicenseRegistration*;
+                 $(LocalExpertBinariesDirectory)**\*.deploy.cmd;
                  $(LocalExpertBinariesDirectory)**\*.deploy-readme.txt;
                  $(LocalExpertBinariesDirectory)**\*.SetParameters.*;
                  $(LocalExpertBinariesDirectory)**\*.BuildInfo.config;
@@ -350,12 +333,12 @@
         Exclude="@(SharedRoles);@(EliteRoles)"/>
 
       <EliteOverrideFiles Include="$(EliteEnterpriseBinOverrideDirectory)**\*" />
-      
+
       <EliteDocuments Include="$(LocalExpertBinariesDirectory)Elite Documentation\**\*.*"/>
       <Documents Include="$(LocalExpertBinariesDirectory)Documentation\**\*.*"/>
-      
+
       <InquiriesFiles Include="$(ExpertSourceDirectory)Aderant.Inquiries*.dll"/>
-   
+
       <IntegrationTestDependencies Include="$(LocalExpertBinariesDirectory)**\UnitTest.*Helpers.*" />
 
       <ZipSourceFiles
@@ -367,7 +350,7 @@
       <ZipRegistrationServiceFiles
         Include="$(ExpertSourceDirectory)Internal\RegistrationService\*.*" />
 
-      <ZipSourceFiles 
+      <ZipSourceFiles
         Include="@(IntegrationTestDependencies)" />
     </ItemGroup>
 
@@ -471,7 +454,7 @@
 
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
   </Target>
-  
+
   <!--
   ==========================================================================================
   Package the built modules and place in this builds output folder on the drop.
@@ -489,10 +472,10 @@
         TaskParameter="id"
         PropertyName="BuildStepId" />
     </BuildStep>
-    
+
     <PropertyGroup>
       <_GetProductScript Condition="'$(_GetProductScript)' == ''">GetProduct.ps1</_GetProductScript>
-      <_GetProductScript Condition="'$(UseGetProductTests)' == 'true'">GetProductTests.ps1</_GetProductScript>      
+      <_GetProductScript Condition="'$(UseGetProductTests)' == 'true'">GetProductTests.ps1</_GetProductScript>
     </PropertyGroup>
 
     <MakeDir Directories="$(LocalExpertBinariesDirectory)"
@@ -519,7 +502,7 @@
 
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
   </Target>
- 
+
 
   <UsingTask
     TaskName="MergeParameters"
@@ -543,28 +526,28 @@
       <Code>
         <![CDATA[
   List<ITaskItem> items = new List<ITaskItem>(Target);
-  
+
   foreach (var sourceItem in Source) {
       var sourceKey = sourceItem.ItemSpec.Split('=')[0];
-    
+
       bool add = true;
-    
+
       foreach (var item in Target) {
           var itemKey = item.ItemSpec.Split('=')[0];
-      
+
           if (itemKey == sourceKey) {
             Log.LogMessage("ItemGroup already contains key: " + itemKey, null);
             add = false;
             break;
           }
       }
-    
+
       if (add) {
           items.Add(sourceItem);
-      }    
-  } 
-  
-  MergeResult = items.ToArray(); 
+      }
+  }
+
+  MergeResult = items.ToArray();
 ]]>
       </Code>
     </Task>
@@ -572,4 +555,3 @@
 
   <Target Name="MarkBuildStepAsFailed" />
 </Project>
- 

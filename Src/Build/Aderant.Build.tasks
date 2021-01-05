@@ -11,26 +11,24 @@
     <!-- Gets the dependencies for a given module -->
     <UsingTask TaskName="Aderant.Build.Tasks.GetDependencies"                                     AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.MakeSymlink"                                         AssemblyFile="$(BuildAssembly)" />
-    <UsingTask TaskName="Aderant.Build.Tasks.DependencyChecker"                                   AssemblyFile="$(BuildAssembly)" />
-    <UsingTask TaskName="Aderant.Build.Tasks.BuildConfigurationCheck"                             AssemblyFile="$(BuildAssembly)" />
-    <UsingTask TaskName="Aderant.Build.Tasks.FilterModules"                                       AssemblyFile="$(BuildAssembly)" />
+
     <UsingTask TaskName="Aderant.Build.Tasks.ExtractWebModule"                                    AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.ReplaceProjectReferences"                            AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.CompileLess"                                         AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.GetCopyLocalItemsToRemove"                           AssemblyFile="$(BuildAssembly)" />
+
     <UsingTask TaskName="Aderant.Build.Tasks.GenerateBuildPlan"                                   AssemblyFile="$(BuildAssembly)" />
 
-    <!-- Adds SCC information into the pdb files for the symbol server -->
-    <UsingTask TaskName="Aderant.Build.Tasks.SourceIndex"                                         AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.Tasks.dll" />
-
-    <!-- Publishes pdb files to the symbol server -->
-    <UsingTask TaskName="Aderant.Build.Tasks.PublishSymbols"                                      AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.Tasks.dll" />
+    <UsingTask Condition="'$(TFVC_TASK_SUPPORT)' == 'true'"
+               TaskName="Aderant.Build.Tasks.FilterModules"                                       AssemblyFile="$(BuildAssembly)" />
 
     <!-- Creates "fakes" builds in TFS -->
-    <UsingTask TaskName="Aderant.Build.Tasks.PublishBuild"                                        AssemblyFile="$(BuildAssembly)" />
+    <UsingTask Condition="'$(TFVC_TASK_SUPPORT)' == 'true'"
+               TaskName="Aderant.Build.Tasks.PublishBuild"                                        AssemblyFile="$(BuildAssembly)" />
 
     <!-- Closes and finalizes a build -->
-    <UsingTask TaskName="Aderant.Build.Tasks.FinalizeBuild"                                       AssemblyFile="$(BuildAssembly)" />
+    <UsingTask Condition="'$(TFVC_TASK_SUPPORT)' == 'true'"
+               TaskName="Aderant.Build.Tasks.FinalizeBuild"                                       AssemblyFile="$(BuildAssembly)" />
 
     <!-- Converts dotCover XML report to Cobertura XML format -->
     <UsingTask TaskName="Aderant.Build.Tasks.CoberturaReportConverter"                            AssemblyFile="$(BuildAssembly)" />

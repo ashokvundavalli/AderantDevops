@@ -62,10 +62,7 @@
     <Compile Include="WarningProcess\BuildLogParser.cs" />
     <Compile Include="WarningProcess\BuildLogProcessor.cs" />
     <Compile Include="SimpleFileLock.cs" />
-    <Compile Include="SourceIndex.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="PublishSymbols.cs" />
-    <Compile Include="SourceIndexStream.cs" />
     <Compile Include="SymStore.cs" />
     <Compile Include="WarningProcess\WarningComparison.cs" />
     <Compile Include="WarningProcess\WarningEntry.cs" />

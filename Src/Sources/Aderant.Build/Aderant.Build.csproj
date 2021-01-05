@@ -425,9 +425,7 @@
     <Compile Include="Providers\IModuleProvider.cs" />
     <Compile Include="Providers\PathProvider.cs" />
     <Compile Include="SplashScreenText.cs" />
-    <Compile Include="Tasks\BuildConfigurationCheck.cs" />
     <Compile Include="Tasks\GetCopyLocalItemsToRemove.cs" />
-    <Compile Include="Tasks\Legacy\DependencyChecker.cs" />
     <Compile Include="Tasks\ExtractWebModule.cs" />
     <Compile Include="Tasks\Legacy\FilterModules.cs" />
     <Compile Include="Tasks\GetDependencies.cs" />

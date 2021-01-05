@@ -22,7 +22,6 @@
       RunIntegrationTests;
       --><!--RunAutomationTests;--><!--
       PublishModule;
-      IndexSourcesAndPublishSymbols;
       MobileBuild;-->
       PostBuild;
       RunBuildExtensions;

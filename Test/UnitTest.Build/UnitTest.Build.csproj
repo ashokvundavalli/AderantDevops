@@ -108,7 +108,6 @@
     <Compile Include="BucketTests.cs" />
     <Compile Include="BuildLogProcessorTests.cs" />
     <Compile Include="BuildMetadataTests.cs" />
-    <Compile Include="BuildProjectCheckTests.cs" />
     <Compile Include="UriQuirksFixTests.cs" />
     <Compile Include="Commands\GetDependenciesTests.cs" />
     <Compile Include="DependencyAnalyzer\BuildPlanGeneratorTests.cs" />
@@ -212,8 +211,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="SourceIndexStreamTests.cs" />
-    <Compile Include="SourceIndexTests.cs" />
     <Compile Include="Tasks\BuildStateFileTests.cs" />
     <Compile Include="Tasks\ReadAssemblyInfo\ReadAssemblyInfo.cs" />
     <Compile Include="Tasks\DoubleWriteTests.cs" />

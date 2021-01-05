@@ -4,10 +4,10 @@
   ToolsVersion="14.0"
   TreatAsLocalProperty="SolutionRoot;FileVersion;AssemblyVersion;BuildFlavor;BuildNumber">
 
-  <!-- 
+  <!--
     =========================================================================================================
-        Guidelines:            
-            * Retain structure and formatting for easier merge between scripts             
+        Guidelines:
+            * Retain structure and formatting for easier merge between scripts
     =========================================================================================================
   -->
 
@@ -165,7 +165,7 @@ doc.Save(File);
     </Task>
   </UsingTask>
 
-  <!-- 
+  <!--
     ==========================================================================================
         Build Configurations
     ==========================================================================================
@@ -242,7 +242,6 @@ doc.Save(File);
     <CallTarget Targets="RunIntegrationTests" Condition="'$(IsCustomBuild)' != 'true'"/>
     <CallTarget Targets="RunAutomationTests" Condition="'$(IsCustomBuild)' != 'true'"/>
     <CallTarget Targets="PublishModule" />
-    <CallTarget Targets="IndexSourcesAndPublishSymbols" />
     <CallTarget Targets="MobileBuild" Condition="'$(ModuleName.StartsWith(`Mobile`))' == 'true' And '$(PackageMobile)' == 'true'" />
     <CallTarget Targets="PostBuild" />
     <CallTarget Targets="SignInstallers" Condition="'$(SignApplications)' == 'true' And '$(IsCustomBuild)' != 'true'" />
@@ -272,7 +271,7 @@ doc.Save(File);
 
     <!--<PropertyGroup>
       -->
-    <!-- 
+    <!--
           For a module build, append the name of the module.
           If two builds are started at the same time they get the same BuildNumber which breaks the test run as we don't know which build to publish against
       -->
@@ -284,7 +283,7 @@ doc.Save(File);
     <!-- Useful for later comparasion -->
     <!--
       <InputDropLocation>$(DropLocation)</InputDropLocation>
-      
+
       <DropLocation Condition="'$(IsDesktopBuild)' == 'false'">$(DropLocation)\$(ModuleName)\$(AssemblyVersion)\</DropLocation>
     </PropertyGroup>-->
 
@@ -406,10 +405,10 @@ doc.Save(File);
   </Target>
 
 
-  <!-- 
+  <!--
     ==========================================================================================
     T4 Template Transformation
-    ========================================================================================== 
+    ==========================================================================================
   -->
   <Target Name="rmBeforeTransformTemplates">
     <PropertyGroup>
@@ -418,7 +417,7 @@ doc.Save(File);
     </PropertyGroup>
 
     <ItemGroup>
-      <!-- __*.tt is special convention which we ignore. Underscore underscore template are transformed by some other process 
+      <!-- __*.tt is special convention which we ignore. Underscore underscore template are transformed by some other process
            crafted by the developer -->
       <rmT4TextTemplates Condition="('$(ModuleName)' != 'Libraries.SoftwareFactory')"
         Include="$(ModuleSourceDirectory)**\*.tt;
@@ -453,7 +452,7 @@ doc.Save(File);
 
   <!--
     ==========================================================================================
-        Versioning 
+        Versioning
     ==========================================================================================
   -->
   <Target Name="UpdateModuleFileVersion"
@@ -474,7 +473,7 @@ doc.Save(File);
 
   <!--
     ==========================================================================================================================
-        Compile - rmTransformTemplates 
+        Compile - rmTransformTemplates
     ==========================================================================================================================
   -->
   <PropertyGroup>
@@ -551,8 +550,8 @@ doc.Save(File);
       <ModuleProjects Include="$(ModuleSourceDirectory)**\**\*.csproj" />
     </ItemGroup>
 
-    <!-- 
-      Get assembly name from the project file       
+    <!--
+      Get assembly name from the project file
     -->
     <XmlPeek Condition="'@(ModuleProjects)' != ''"
       XmlInputPath="%(ModuleProjects.FullPath)"
@@ -566,8 +565,8 @@ doc.Save(File);
         Include="@(AssemblyName->'$(BinModuleDirectory)%(Identity).dll')" />
     </ItemGroup>
 
-    <!-- 
-      Fricking web projects output to [Module]\Src\[Project]\bin 
+    <!--
+      Fricking web projects output to [Module]\Src\[Project]\bin
       Since we can't do wild cards inside a item function -> we need to fall back to CreateItem here to scan all project bin dirs
       for out output DLL
     -->
@@ -638,7 +637,7 @@ doc.Save(File);
 
   <!--
     ==========================================================================================
-        Zip Source 
+        Zip Source
     ==========================================================================================
   -->
 
@@ -674,7 +673,7 @@ doc.Save(File);
                    $(SolutionDirectoryPath)Build\TestResults\**\*
                    $(SolutionDirectoryPath)BuildTemp\**\*;
                    $(SolutionDirectoryPath)**\obj\**;
-                   $(SolutionDirectoryPath)**\_Resharper*\**; 
+                   $(SolutionDirectoryPath)**\_Resharper*\**;
                    $(SolutionDirectoryPath)**\*.g*.cs;
                    $(SolutionDirectoryPath)**\*.pfx;
                    $(SolutionDirectoryPath)**\*.vssscc;
@@ -830,7 +829,7 @@ doc.Save(File);
 
   <!--
     ==========================================================================================
-        Unit Test 
+        Unit Test
     ==========================================================================================
   -->
   <PropertyGroup>
@@ -864,8 +863,8 @@ doc.Save(File);
 
     <Message Text="Assembly: %(AssemblyList.FileName) [Platform: %(AssemblyList.Platform)]" Condition="'@(AssemblyList)' != ''" />
 
-    <!-- 
-      This section creates a .dll.config for each unit test assembly. The dll.config contains a probing path override 
+    <!--
+      This section creates a .dll.config for each unit test assembly. The dll.config contains a probing path override
       which includes two additional folders "ModuleBin" and "Dependencies". This is so unit tests can find dependencies
       without relying on copy local having deployed assemblies to the test directory.
     -->
@@ -1065,13 +1064,13 @@ doc.Save(File);
                     $(SolutionDirectoryPath)Build\TestResults\**\*
                     $(SolutionDirectoryPath)BuildTemp\**\*;
                     $(SolutionDirectoryPath)**\obj\**;
-                    $(SolutionDirectoryPath)**\_Resharper*\**; 
+                    $(SolutionDirectoryPath)**\_Resharper*\**;
                     $(SolutionDirectoryPath)**\*.g*.cs;
                     $(SolutionDirectoryPath)**\*.pfx;
                     $(SolutionDirectoryPath)**\*.vssscc;
-                    $(SolutionDirectoryPath)**\*.vspscc; 
+                    $(SolutionDirectoryPath)**\*.vspscc;
                     $(SolutionDirectoryPath)**\*.sln.cache;
-                    $(SolutionDirectoryPath)**\*.vsmdi;      
+                    $(SolutionDirectoryPath)**\*.vsmdi;
                     $(SolutionDirectoryPath)**\*.testrunconfig;
                     $(SolutionDirectoryPath)**\*.suo;
                     $(SolutionDirectoryPath)**\*.sln.Debug.vsprops;
@@ -1080,11 +1079,11 @@ doc.Save(File);
                     $(SolutionDirectoryPath)**\_Resharper*\**;
                     $(SolutionDirectoryPath)**\*resharper.user;
                     $(SolutionDirectoryPath)**\*.DotSettings;
-                    $(SolutionDirectoryPath)**\Bin;      
+                    $(SolutionDirectoryPath)**\Bin;
                     $(SolutionDirectoryPath)**\obj\**;
                     $(SolutionDirectoryPath)CommonBuild\**;
                     $(SolutionDirectoryPath)ThirdPartyBuild.txt;
-                    $(SolutionDirectoryPath)**\*.csproj.user;  
+                    $(SolutionDirectoryPath)**\*.csproj.user;
                     $(SolutionDirectoryPath)**\SharedBin\**;
 					          $(SolutionDirectoryPath)Src\**\Web.*\**;">
         <DestinationSubDirectory>Src\</DestinationSubDirectory>
@@ -1249,21 +1248,10 @@ doc.Save(File);
 
   </Target>
 
-  <!--
-    ==========================================================================================
-        Index Sources and Publish Symbols        
-    ==========================================================================================
-  -->
-  <Target Name="IndexSourcesAndPublishSymbols"
-    Condition="'$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'">
-
-    <CallTarget Targets="IndexSourcesAndPublishSymbolsCore" Condition="'@(CompiledAssemblies)' != ''" />
-  </Target>
-
 
   <!--
     ==========================================================================================
-        Copy Build to Drop Location 
+        Copy Build to Drop Location
     ==========================================================================================
   -->
   <Target Name="ReplicateOutputToSharedDependenciesDirectory" Condition="'$(UseSharedDependencyDirectory)' == 'true'">
@@ -1279,11 +1267,11 @@ doc.Save(File);
 
     <!-- Symlink the output of into Bin\Module into the common dependencies directory so the next build can pick them up -->
     <ItemGroup>
-      <!-- 
+      <!--
           TFS: 122744
           We exclude the cmsmsg files here. I don't think this is "correct" as it makes the build system
           aware of what it's building but there is a frustrating interplay through the use of statics and singletons through
-          out the Expert code base that constantly cause quirky issues. By excluding the msg file from dependency replication           
+          out the Expert code base that constantly cause quirky issues. By excluding the msg file from dependency replication
           it prevents TextTranslator loading a message file while unit tests are running and then having those tests fail.
       -->
       <FilesToReplicate Include="$(BinModuleDirectory)**\*"
@@ -1312,7 +1300,7 @@ doc.Save(File);
   <Target Name="CopyToDrop"
     Condition="('$(IsDesktopBuild)'!='true' And '$(IsCustomBuild)' != 'true')">
 
-    <!--We have differing ways of determining the drop location depending on the type of build. 
+    <!--We have differing ways of determining the drop location depending on the type of build.
         The simplest way was to have a condition on whether we are build all modules of a single module.-->
     <PropertyGroup>
       <!--<DropLocation>C:\Temp\</DropLocation>
@@ -1354,7 +1342,7 @@ doc.Save(File);
       YieldDuringToolExecution="$(YieldDuringCopy)" />
 
     <!--At the moment we check for successful builds in the build logs where there are 0 Error(s). The BuildAll only has one build log
-        so if we get this far we can assume the build is successful so we create a dummy BuildLog   
+        so if we get this far we can assume the build is successful so we create a dummy BuildLog
     -->
     <MakeDir Directories="$(ModuleDropLocation)$(FileVersion)"
       Condition="('$(BuildAll)' == 'true' And !Exists('$(ModuleDropLocation)$(FileVersion)'))" />

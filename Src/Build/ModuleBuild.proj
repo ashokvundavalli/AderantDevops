@@ -4,12 +4,12 @@
   DefaultTargets="EndToEndIteration;ModuleBuild"
   TreatAsLocalProperty="FileVersion;AssemblyVersion;BuildFlavor;BuildNumber">
 
-  <!-- 
+  <!--
     =========================================================================================================
-        Team Build Script        
-        
-        Guidelines:            
-            * Retain structure and formatting for easier merge between Team Build project scripts             
+        Team Build Script
+
+        Guidelines:
+            * Retain structure and formatting for easier merge between Team Build project scripts
     =========================================================================================================
   -->
 
@@ -73,27 +73,27 @@
   <Target Name="OnAfterBuild" />
   <Target Name="PostBuild" />
 
-  <!-- 
-    Because we have multiple flavours of build this gets really complicated. 
+  <!--
+    Because we have multiple flavours of build this gets really complicated.
     During a build all we can just import from the solution build folder as it will exist since the sources are fetched up front. This matches the physical layout you see on disk when you check out from TFS.
-    For a CI build we need to use the XAML BuildType folder, which is actually the Build folder just renamed this is how team build bootstraps the build. For a bug 152618 we only considered the 
+    For a CI build we need to use the XAML BuildType folder, which is actually the Build folder just renamed this is how team build bootstraps the build. For a bug 152618 we only considered the
     the build directory and didn't consider the type of build (build all, or CI) which created some interesting side effects such as post build events not running during CI builds.
-  
-    Now pull the entry targets into our context. This lets us call into OnAfterBuild for people who want to customize the workflow 
+
+    Now pull the entry targets into our context. This lets us call into OnAfterBuild for people who want to customize the workflow
   -->
   <Import Project="$(BuildDirectory)\Build*\TFSBuild.proj" Condition="'$(BuildType)' == 'ContinuousIntegration'" />
   <Import Project="$(SolutionDirectoryPath)\Build*\TFSBuild.proj" Condition="'$(BuildType)' != 'ContinuousIntegration'" />
 
-  <!-- 
+  <!--
     Entry point
-    This target is invoked on the build machine by the build agent. It needs to occur after the import of TFSBuild.proj to ensure 
+    This target is invoked on the build machine by the build agent. It needs to occur after the import of TFSBuild.proj to ensure
     we don't run EndToEndIteration defined in that file again
   -->
 
   <PropertyGroup>
-    <!-- 
+    <!--
       We don't need the TeamBuild targets during a build all, as they happen in an outer scope. Setting the dependency chain to empty
-      stops the targets from running 
+      stops the targets from running
     -->
     <EndToEndIterationDependsOn Condition="'$(BuildAll)' == 'true'" />
   </PropertyGroup>
@@ -198,7 +198,7 @@ doc.Save(File);
     </Task>
   </UsingTask>
 
-  <!-- 
+  <!--
     ==========================================================================================
         Build Configurations
     ==========================================================================================
@@ -271,7 +271,6 @@ doc.Save(File);
     <CallTarget Targets="RunTests" />
     <CallTarget Targets="RunIntegrationTests" />
     <CallTarget Targets="PublishModule" />
-    <CallTarget Targets="IndexSourcesAndPublishSymbols" />
     <CallTarget Targets="MobileBuild" Condition="'$(ModuleName.StartsWith(`Mobile`))' == 'true' And '$(PackageMobile)' == 'true'" />
     <CallTarget Targets="SignInstallers" Condition="'$(SignApplications)' == 'true' And '$(IsCustomBuild)' != 'true'" />
     <CallTarget Targets="OnAfterBuild;PostBuild" />
@@ -471,10 +470,10 @@ doc.Save(File);
 
   </Target>
 
-  <!-- 
+  <!--
     ==========================================================================================
     T4 Template Transformation
-    ========================================================================================== 
+    ==========================================================================================
   -->
   <Target Name="rmBeforeTransformTemplates">
     <PropertyGroup>
@@ -483,7 +482,7 @@ doc.Save(File);
     </PropertyGroup>
 
     <ItemGroup>
-      <!-- __*.tt is special convention which we ignore. Underscore underscore template are transformed by some other process 
+      <!-- __*.tt is special convention which we ignore. Underscore underscore template are transformed by some other process
            crafted by the developer -->
       <rmT4TextTemplates Condition="('$(ModuleName)' != 'Libraries.SoftwareFactory')"
         Include="$(ModuleSourceDirectory)**\*.tt;
@@ -518,7 +517,7 @@ doc.Save(File);
 
   <!--
     ==========================================================================================
-        Versioning 
+        Versioning
     ==========================================================================================
   -->
   <Target Name="UpdateModuleFileVersion"
@@ -562,7 +561,7 @@ doc.Save(File);
 
   <!--
     ==========================================================================================================================
-        Compile - rmTransformTemplates 
+        Compile - rmTransformTemplates
     ==========================================================================================================================
   -->
   <PropertyGroup>
@@ -656,8 +655,8 @@ doc.Save(File);
       <ModuleProjects Include="$(ModuleSourceDirectory)**\**\*.csproj" />
     </ItemGroup>
 
-    <!-- 
-      Get assembly name from the project file       
+    <!--
+      Get assembly name from the project file
     -->
     <XmlPeek Condition="'@(ModuleProjects)' != ''"
       XmlInputPath="%(ModuleProjects.FullPath)"
@@ -671,8 +670,8 @@ doc.Save(File);
         Include="@(AssemblyName->'$(BinModuleDirectory)%(Identity).dll')" />
     </ItemGroup>
 
-    <!-- 
-      Fricking web projects output to [Module]\Src\[Project]\bin 
+    <!--
+      Fricking web projects output to [Module]\Src\[Project]\bin
       Since we can't do wild cards inside a item function -> we need to fall back to CreateItem here to scan all project bin dirs
       for out output DLL
     -->
@@ -742,7 +741,7 @@ doc.Save(File);
 
   <!--
     ==========================================================================================
-        Zip Source 
+        Zip Source
     ==========================================================================================
   -->
 
@@ -787,7 +786,7 @@ doc.Save(File);
                    $(SolutionDirectoryPath)Build\TestResults\**\*
                    $(SolutionDirectoryPath)BuildTemp\**\*;
                    $(SolutionDirectoryPath)**\obj\**;
-                   $(SolutionDirectoryPath)**\_Resharper*\**; 
+                   $(SolutionDirectoryPath)**\_Resharper*\**;
                    $(SolutionDirectoryPath)**\*.g*.cs;
                    $(SolutionDirectoryPath)**\*.pfx;
                    $(SolutionDirectoryPath)**\*.vssscc;
@@ -949,7 +948,7 @@ doc.Save(File);
 
   <!--
     ==========================================================================================
-        Unit Test 
+        Unit Test
     ==========================================================================================
   -->
   <PropertyGroup>
@@ -983,8 +982,8 @@ doc.Save(File);
 
     <Message Text="Assembly: %(AssemblyList.FileName) [Platform: %(AssemblyList.Platform)]" Condition="'@(AssemblyList)' != ''" />
 
-    <!-- 
-      This section creates a .dll.config for each unit test assembly. The dll.config contains a probing path override 
+    <!--
+      This section creates a .dll.config for each unit test assembly. The dll.config contains a probing path override
       which includes two additional folders "ModuleBin" and "Dependencies". This is so unit tests can find dependencies
       without relying on copy local having deployed assemblies to the test directory.
     -->
@@ -1210,7 +1209,7 @@ doc.Save(File);
 
   <!--
     ==========================================================================================
-        Zip Sample Module 
+        Zip Sample Module
     ==========================================================================================
   -->
   <Target Name="ZipTemplateModule"
@@ -1243,24 +1242,24 @@ doc.Save(File);
     <ItemGroup>
       <ZipSourceFiles
         Include="$(SolutionDirectoryPath)**;"
-        Exclude="$(BinTestDirectory)**\**;                 
-                 $(BinModuleDirectory)**\**;                
+        Exclude="$(BinTestDirectory)**\**;
+                 $(BinModuleDirectory)**\**;
                  $(ModuleBuildDirectory)**;
-                 $(ModuleSourceDirectory)**\*.csproj.user;        
+                 $(ModuleSourceDirectory)**\*.csproj.user;
                  $(ModuleSourceDirectory)**\obj\**;
-                 $(ModuleSourceDirectory)**\bin\**;      
+                 $(ModuleSourceDirectory)**\bin\**;
                  $(SolutionDirectoryPath)$(ModuleName).sln;
                  $(SolutionDirectoryPath)$(ModuleName).Template.sln;
-                 $(SolutionDirectoryPath)CommonBuild\**;                 
+                 $(SolutionDirectoryPath)CommonBuild\**;
                  $(ModuleSourceDirectory)**\SharedBin\**;
                  $(SolutionDirectoryPath)ThirdParty.*\**;
                  $(SolutionDirectoryPath)Dependencies\**\*;
                  $(SolutionDirectoryPath)Packages\**\*;
                  $(SolutionDirectoryPath)BuildTemp\**;
                  $(SolutionDirectoryPath)**\*.vssscc;
-                 $(SolutionDirectoryPath)**\*.vspscc;        
+                 $(SolutionDirectoryPath)**\*.vspscc;
                  $(SolutionDirectoryPath)**\*.sln.cache;
-                 $(SolutionDirectoryPath)**\*.vsmdi;        
+                 $(SolutionDirectoryPath)**\*.vsmdi;
                  $(SolutionDirectoryPath)**\*.testrunconfig;
                  $(SolutionDirectoryPath)**\*.suo;
                  $(SolutionDirectoryPath)**\*.sln.Debug.vsprops;
@@ -1315,19 +1314,7 @@ doc.Save(File);
 
   <!--
     ==========================================================================================
-        Index Sources and Publish Symbols        
-    ==========================================================================================
-  -->
-  <Target Name="IndexSourcesAndPublishSymbols"
-    Condition="'$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'">
-
-    <CallTarget Targets="IndexSourcesAndPublishSymbolsCore" Condition="'@(CompiledAssemblies)' != ''" />
-  </Target>
-
-
-  <!--
-    ==========================================================================================
-        Copy Build to Drop Location 
+        Copy Build to Drop Location
     ==========================================================================================
   -->
   <Target Name="ReplicateOutputToSharedDependenciesDirectory" Condition="'$(UseSharedDependencyDirectory)' == 'true' And Exists('$(SharedDependencyDirectory)')">
@@ -1342,11 +1329,11 @@ doc.Save(File);
 
     <!-- Symlink the output of into Bin\Module into the common dependencies directory so the next build can pick them up -->
     <ItemGroup>
-      <!-- 
+      <!--
           TFS: 122744
           We exclude the cmsmsg files here. I don't think this is "correct" as it makes the build system
           aware of what it's building but there is a frustrating interplay through the use of statics and singletons through
-          out the Expert code base that constantly cause quirky issues. By excluding the msg file from dependency replication           
+          out the Expert code base that constantly cause quirky issues. By excluding the msg file from dependency replication
           it prevents TextTranslator loading a message file while unit tests are running and then having those tests fail.
       -->
       <FilesToReplicate Include="$(BinModuleDirectory)**\*"
@@ -1375,7 +1362,7 @@ doc.Save(File);
   <Target Name="CopyToDrop"
     Condition="('$(IsDesktopBuild)'!='true' And '$(IsCustomBuild)' != 'true')">
 
-    <!--We have differing ways of determining the drop location depending on the type of build. 
+    <!--We have differing ways of determining the drop location depending on the type of build.
         The simplest way was to have a condition on whether we are build all modules of a single module.-->
     <PropertyGroup>
       <!--<DropLocation>C:\Temp\</DropLocation>
@@ -1427,7 +1414,7 @@ doc.Save(File);
       YieldDuringToolExecution="$(YieldDuringCopy)" />
 
     <!--At the moment we check for successful builds in the build logs where there are 0 Error(s). The BuildAll only has one build log
-        so if we get this far we can assume the build is successfull so we create a dummy BuildLog   
+        so if we get this far we can assume the build is successfull so we create a dummy BuildLog
     -->
     <MakeDir Directories="$(ModuleDropLocation)$(FileVersion)"
       Condition="('$(BuildAll)' == 'true' And !Exists('$(ModuleDropLocation)$(FileVersion)'))" />
@@ -1537,7 +1524,7 @@ doc.Save(File);
     ============================================================
   -->
   <Target Name="CleanTemporaryFileWrites" AfterTargets="Build">
-    <!--<Delete Files="@(_TemporaryBuildFiles)" 
+    <!--<Delete Files="@(_TemporaryBuildFiles)"
             Condition="'@(_TemporaryBuildFiles)' != ''"
             ContinueOnError="true" />-->
   </Target>

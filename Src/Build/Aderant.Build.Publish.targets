@@ -49,16 +49,4 @@
 
   </Target>
 
-  <!--
-    ==========================================================================================
-        Index Sources and Publish Symbols        
-    ==========================================================================================
-  -->
-  <Target Name="IndexSourcesAndPublishSymbols"
-    Condition="'$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'">
-
-    <CallTarget Targets="IndexSourcesAndPublishSymbolsCore" Condition="'@(CompiledAssemblies)' != ''" />
-
-  </Target>
-
 </Project>
