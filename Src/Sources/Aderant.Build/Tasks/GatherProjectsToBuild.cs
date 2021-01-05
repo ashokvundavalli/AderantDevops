@@ -100,7 +100,7 @@ namespace Aderant.Build.Tasks {
 
             List<BucketId> unassignedBuckets;
             if (buildStateMetadata != null) {
-                buildStateMetadata.QueryCacheForBuckets(contextBuildMetadata.GetBuckets(), out unassignedBuckets);
+                buildStateMetadata.QueryCacheForBuckets(contextBuildMetadata.GetBuckets(BucketKind.PreviousCommit), out unassignedBuckets);
 
                 if (ExcludedPaths != null) {
                     var filters = ExcludedPaths.Select(s => s.TrimTrailingSlashes()).ToList();

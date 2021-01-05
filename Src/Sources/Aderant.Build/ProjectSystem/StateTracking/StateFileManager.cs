@@ -28,7 +28,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
             if (buildStateMetadata != null && context.SourceTreeMetadata != null) {
                 if (buildStateMetadata.BuildStateFiles != null) {
-                    IReadOnlyCollection<BucketId> buckets = context.SourceTreeMetadata.GetBuckets();
+                    IReadOnlyCollection<BucketId> buckets = context.SourceTreeMetadata.GetBuckets(BucketKind.PreviousCommit);
 
                     bucketCount = buckets.Count;
 

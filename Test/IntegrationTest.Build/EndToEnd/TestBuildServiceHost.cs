@@ -6,7 +6,6 @@ using System.Linq;
 using System.Threading;
 using Aderant.Build;
 using Aderant.Build.Logging;
-using Aderant.Build.Packaging;
 using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.VersionControl;
@@ -129,7 +128,7 @@ namespace IntegrationTest.Build.EndToEnd {
             artifactService.AllowZeroBuildId = true;
 
             var buildStateMetadata = artifactService
-                .GetBuildStateMetadata(context.SourceTreeMetadata.GetBuckets().Select(s => s.Id).ToArray(),
+                .GetBuildStateMetadata(context.SourceTreeMetadata.GetBuckets(BucketKind.CurrentCommit).Select(s => s.Id).ToArray(),
                     null,
                     context.DropLocationInfo.BuildCacheLocation,
                     null,

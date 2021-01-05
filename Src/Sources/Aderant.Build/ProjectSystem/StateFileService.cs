@@ -118,7 +118,7 @@ namespace Aderant.Build.ProjectSystem {
                                 file.Location = folder;
 
                                 string reason;
-                                if (IsFileTrustworthy(file, options, out reason, out ArtifactCacheValidationReason artifactCacheValidationEnum)) {
+                                if (IsFileTrustworthy(file, options, out reason, out _)) {
                                     logger.Info($"Candidate-> {stateFile}:{reason}");
                                     files.Add(file);
                                 } else {

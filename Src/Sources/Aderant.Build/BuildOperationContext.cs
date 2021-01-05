@@ -526,12 +526,12 @@ namespace Aderant.Build {
         /// <summary>
         /// Gets a bucket for a friendly name.
         /// </summary>
-        /// <param name="tag"></param>
-        /// <returns></returns>
-        public BucketId GetBucket(string tag) {
+        /// <param name="tag">The friendly name of the bucket</param>
+        /// <param name="kind">The bucket kind.</param>
+        public BucketId GetBucket(string tag, BucketKind kind) {
             if (BucketIds != null) {
                 foreach (var bucket in BucketIds) {
-                    if (string.Equals(bucket.Tag, tag, StringComparison.OrdinalIgnoreCase)) {
+                    if (bucket.Kind == kind && string.Equals(bucket.Tag, tag, StringComparison.OrdinalIgnoreCase)) {
                         return bucket;
                     }
                 }
@@ -543,8 +543,8 @@ namespace Aderant.Build {
         /// <summary>
         /// Returns the directory build tree directory identifiers (SHA1).
         /// </summary>
-        public IReadOnlyCollection<BucketId> GetBuckets() {
-            return BucketIds.Where(b => !b.IsRoot).ToList();
+        public IReadOnlyCollection<BucketId> GetBuckets(BucketKind kind) {
+            return BucketIds.Where(b => !b.IsRoot && b.Kind == kind).ToList();
         }
     }
 

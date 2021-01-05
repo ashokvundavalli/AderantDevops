@@ -13,7 +13,7 @@ namespace Aderant.Build.VersionControl {
     [PartCreationPolicy(CreationPolicy.NonShared)]
     internal class GitVersionControlService : IVersionControlService {
 
-        private static readonly string[] Globs = new[] {
+        private static readonly string[] globs = new[] {
             // Common release vehicle naming
             "update/*",
             "patch/*",
@@ -45,25 +45,26 @@ namespace Aderant.Build.VersionControl {
         }
 
         private void PopulateBuckets(HashSet<BucketId> bucketKeys, SourceTreeMetadata info, Repository repository, Commit sourceCommit, Commit destinationCommit, bool includeLocalChanges) {
-            bucketKeys.Add(new BucketId(destinationCommit.Tree.Sha, BucketId.Current));
+            bucketKeys.Add(new BucketId(destinationCommit.Tree.Sha, BucketId.Current, BucketKind.CurrentCommit));
 
-            Dictionary<string, string> changedDirectoryShas = null;
+            var changedDirectoryShas = new Dictionary<string, string>();
             if (sourceCommit != null) {
                 // Collect all changed files between the two commits.
                 GetChanges(includeLocalChanges, repository, sourceCommit, destinationCommit, repository.Info.WorkingDirectory, info);
+
                 var changedFolders = info.Changes.Select(c => PathUtility.GetRootDirectory(c.Path)).Where(c => !string.IsNullOrEmpty(c)).ToHashSet(StringComparer.OrdinalIgnoreCase);
-                changedDirectoryShas = sourceCommit.Tree.Where(t => t.Mode == Mode.Directory && changedFolders.Contains(t.Name))
-                    .ToDictionary(t => t.Name, t => t.Target.Sha, StringComparer.OrdinalIgnoreCase);
+
+                changedDirectoryShas = sourceCommit.Tree.Where(t => t.Mode == Mode.Directory && changedFolders.Contains(t.Name)).ToDictionary(t => t.Name, t => t.Target.Sha, StringComparer.OrdinalIgnoreCase);
             }
 
             foreach (var e in destinationCommit.Tree) {
                 if (e.Mode == Mode.Directory) {
-                    var targetSha = e.Target.Sha;
-                    if (changedDirectoryShas?.ContainsKey(e.Name) ?? false) {
-                        //Change this to use source commit where we have changes.
-                        targetSha = changedDirectoryShas[e.Name];
+                    // Use the source commit first if possible where we have changes as we want to use the previous cache and apply changes on top of it
+                    string targetSha;
+                    if (changedDirectoryShas.TryGetValue(e.Name, out targetSha)) {
+                        bucketKeys.Add(new BucketId(targetSha, e.Name, BucketKind.PreviousCommit));
                     }
-                    bucketKeys.Add(new BucketId(targetSha, e.Name));
+                    bucketKeys.Add(new BucketId(e.Target.Sha, e.Name, BucketKind.CurrentCommit));
                 }
             }
 
@@ -73,7 +74,7 @@ namespace Aderant.Build.VersionControl {
                 info.NewCommitDescription = $"{destinationCommit.Id.Sha}: {destinationCommit.MessageShort}";
 
                 if (!string.Equals(destinationCommit.Tree.Sha, sourceCommit.Tree.Sha)) {
-                    bucketKeys.Add(new BucketId(sourceCommit.Tree.Sha, BucketId.Previous));
+                    bucketKeys.Add(new BucketId(sourceCommit.Tree.Sha, BucketId.Previous, BucketKind.PreviousCommit));
                 }
             }
 
@@ -85,7 +86,7 @@ namespace Aderant.Build.VersionControl {
 
             using (var repository = OpenRepository(repositoryPath)) {
                 Commit sourceCommit = AcquireCommit(repository, commitConfiguration.SourceCommit);
-                
+
                 FindMostLikelyReusableBucket(repository, sourceCommit, out string branch, cancellationToken);
                 info.CommonAncestor = branch;
 
@@ -141,8 +142,7 @@ namespace Aderant.Build.VersionControl {
                 Commit oldCommit;
                 if (string.IsNullOrWhiteSpace(toBranch)) {
                     // Lookup the branch history and find the joint commit and its branch.
-                    string commonAncestor;
-                    oldCommit = FindMostLikelyReusableBucket(repository, newCommit, out commonAncestor, cancellationToken);
+                    oldCommit = FindMostLikelyReusableBucket(repository, newCommit, out string commonAncestor, cancellationToken);
                     info.CommonAncestor = commonAncestor;
                 } else {
                     oldCommit = GetTip(toBranch, repository);
@@ -231,7 +231,7 @@ namespace Aderant.Build.VersionControl {
         private static List<Reference> GetRefsToSearchForCommit(Repository repository) {
             var patterns = new List<string>();
 
-            patterns.AddRange(Globs);
+            patterns.AddRange(globs);
 
             if (repository.Head.TrackedBranch != null) {
                 string name = repository.Head.TrackedBranch.UpstreamBranchCanonicalName;

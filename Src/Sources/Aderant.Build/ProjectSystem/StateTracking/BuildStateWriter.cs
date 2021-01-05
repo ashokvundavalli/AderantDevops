@@ -38,7 +38,6 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         /// <param name="sourceTreeMetadata">A description of the source tree</param>
         /// <param name="buildMetadata">A description of the current build environment</param>
         /// <param name="destinationPath">The path to write the file to</param>
-        /// <param name="rootDirectory"></param>
         public string WriteStateFile(
             BuildStateFile previousBuild,
             BucketId bucket,
@@ -47,11 +46,10 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             IDictionary<string, ICollection<ArtifactManifest>> artifacts,
             SourceTreeMetadata sourceTreeMetadata,
             BuildMetadata buildMetadata,
-            string destinationPath,
-            string rootDirectory) {
+            string destinationPath) {
 
             BuildStateFile newFile;
-            return WriteStateFile(previousBuild, bucket, currentOutputs, trackedInputFiles, artifacts, sourceTreeMetadata, buildMetadata, destinationPath, rootDirectory, out newFile);
+            return WriteStateFile(previousBuild, bucket, currentOutputs, trackedInputFiles, artifacts, sourceTreeMetadata, buildMetadata, destinationPath, out newFile);
         }
 
         internal string WriteStateFile(
@@ -63,12 +61,11 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             SourceTreeMetadata sourceTreeMetadata,
             BuildMetadata buildMetadata,
             string destinationPath,
-            string rootDirectory,
             out BuildStateFile stateFile) {
 
             string treeShaValue = null;
             if (sourceTreeMetadata != null) {
-                var treeSha = sourceTreeMetadata.GetBucket(BucketId.Current);
+                var treeSha = sourceTreeMetadata.GetBucket(BucketId.Current, BucketKind.CurrentCommit);
                 treeShaValue = treeSha.Id;
             }
 
@@ -166,7 +163,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         }
 
         public IEnumerable<BuildArtifact> WriteStateFiles(BuildOperationContext context, IEnumerable<ProjectOutputSnapshot> outputs, IBuildPipelineService service) {
-            IReadOnlyCollection<BucketId> buckets = context.SourceTreeMetadata.GetBuckets();
+            IReadOnlyCollection<BucketId> buckets = context.SourceTreeMetadata.GetBuckets(BucketKind.CurrentCommit);
 
             var files = new List<BuildArtifact>();
 
@@ -224,7 +221,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
             string bucketInstance = Path.Combine(stateFileRoot, DefaultFileName);
 
-            string stateFile = WriteStateFile(previousBuild, bucket, projectOutputSnapshot, trackedInputFiles, artifactCollection, context.SourceTreeMetadata, context.BuildMetadata, bucketInstance, context.BuildRoot);
+            string stateFile = WriteStateFile(previousBuild, bucket, projectOutputSnapshot, trackedInputFiles, artifactCollection, context.SourceTreeMetadata, context.BuildMetadata, bucketInstance);
 
             if (string.IsNullOrWhiteSpace(stateFile)) {
                 return null;
@@ -234,7 +231,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
             return new BuildArtifact(containerName) { // Artifact name must be unique within the build artifacts or TFS will complain.
                 SourcePath = stateFileRoot,
-                Name = containerName, 
+                Name = containerName,
                 Type = VsoBuildArtifactType.FilePath,
                 SendToArtifactCache = sendToArtifactCache
             };

@@ -101,8 +101,7 @@ namespace UnitTest.Build.Tasks {
                 null,
                 null,
                 null,
-                null,
-                "foo");
+                null);
 
             Assert.IsNotNull(text);
         }
@@ -134,8 +133,7 @@ namespace UnitTest.Build.Tasks {
                 null,
                 null,
                 null,
-                null,
-                "foo");
+                null);
 
             Assert.IsNull(text);
         }
@@ -167,8 +165,7 @@ namespace UnitTest.Build.Tasks {
                 new Dictionary<string, ICollection<ArtifactManifest>> { {"Test", new List<ArtifactManifest> { new ArtifactManifest() }} },
                 null,
                 null,
-                null,
-                "foo");
+                null);
 
             Assert.IsNotNull(text);
         }
@@ -210,7 +207,6 @@ namespace UnitTest.Build.Tasks {
                 null,
                 null,
                 null,
-                "foo",
                 out stateFile);
 
             var projectOutputSnapshots = stateFile.Outputs.Values.ToArray();

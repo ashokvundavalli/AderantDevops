@@ -16,7 +16,7 @@ namespace UnitTest.Build {
         [TestMethod]
         public void CreateStagingPathWithBucketId() {
             SourceTreeMetadata metadata = new SourceTreeMetadata {
-                BucketIds = new HashSet<BucketId> { new BucketId("1d98d9296eae891d3d4adb7c884bc2df12504619", "a") }
+                BucketIds = new HashSet<BucketId> { new BucketId("1d98d9296eae891d3d4adb7c884bc2df12504619", "a", BucketKind.CurrentCommit) }
             };
 
             ArtifactStagingPathBuilder artifactStagingPathBuilder = new ArtifactStagingPathBuilder(TestContext.DeploymentDirectory, 0, metadata);

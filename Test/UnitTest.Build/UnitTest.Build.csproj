@@ -105,9 +105,10 @@
     </CodeAnalysisDependentAssemblyPaths>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BucketTests.cs" />
+    <Compile Include="Model\BucketTests.cs" />
     <Compile Include="BuildLogProcessorTests.cs" />
     <Compile Include="BuildMetadataTests.cs" />
+    <Compile Include="Model\SourceTreeMetadataTests.cs" />
     <Compile Include="UriQuirksFixTests.cs" />
     <Compile Include="Commands\GetDependenciesTests.cs" />
     <Compile Include="DependencyAnalyzer\BuildPlanGeneratorTests.cs" />
@@ -364,6 +365,7 @@
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="..\TestDeployment.proj" />
 </Project>

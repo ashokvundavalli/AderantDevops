@@ -19,12 +19,16 @@ namespace Aderant.Build.VersionControl {
         [DataMember]
         private readonly string tag;
 
+        [DataMember]
+        private readonly BucketKind kind;
+
         internal BucketId() {
         }
 
-        public BucketId(string id, string tag) {
+        public BucketId(string id, string tag, BucketKind kind) {
             this.id = id;
             this.tag = tag;
+            this.kind = kind;
         }
 
         public static string Current { get; } = nameof(Current);
@@ -69,6 +73,12 @@ namespace Aderant.Build.VersionControl {
                 }
 
                 return false;
+            }
+        }
+
+        public BucketKind Kind {
+            get {
+                return kind;
             }
         }
 
