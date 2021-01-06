@@ -65,7 +65,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
             string treeShaValue = null;
             if (sourceTreeMetadata != null) {
-                var treeSha = sourceTreeMetadata.GetBucket(BucketId.Current, BucketKind.CurrentCommit);
+                var treeSha = sourceTreeMetadata.GetBucketForCurrentTree(BucketId.Current);
                 treeShaValue = treeSha.Id;
             }
 
@@ -82,11 +82,6 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
             if (currentOutputs == null) {
                 currentOutputs = Enumerable.Empty<ProjectOutputSnapshot>();
-            }
-
-            if (previousBuild != null) {
-                //TODO: Can we get away with the merge in the ArtifactService?
-                //MergeExistingOutputs(previousBuild.BuildId, previousBuild.Outputs, currentOutputs);
             }
 
             // Set build configuration.
@@ -163,7 +158,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         }
 
         public IEnumerable<BuildArtifact> WriteStateFiles(BuildOperationContext context, IEnumerable<ProjectOutputSnapshot> outputs, IBuildPipelineService service) {
-            IReadOnlyCollection<BucketId> buckets = context.SourceTreeMetadata.GetBuckets(BucketKind.CurrentCommit);
+            IReadOnlyCollection<BucketId> buckets = context.SourceTreeMetadata.GetBucketsForCurrentTree();
 
             var files = new List<BuildArtifact>();
 

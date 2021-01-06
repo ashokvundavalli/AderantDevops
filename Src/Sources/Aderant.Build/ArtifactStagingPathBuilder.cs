@@ -22,7 +22,7 @@ namespace Aderant.Build {
         /// Gets a location to store the artifact. If the item is not known the source control system it returns null.
         /// </summary>
         public string CreatePath(string name, out bool sendToArtifactCache) {
-            BucketId bucket = metadata.GetBucket(name, BucketKind.CurrentCommit);
+            BucketId bucket = metadata.GetBucketForCurrentTree(name);
 
             sendToArtifactCache = bucket != null && !string.IsNullOrEmpty(bucket.DirectorySegment);
 

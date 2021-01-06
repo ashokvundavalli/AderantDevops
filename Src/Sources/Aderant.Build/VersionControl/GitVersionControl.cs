@@ -20,19 +20,27 @@ namespace Aderant.Build.VersionControl {
         private readonly string tag;
 
         [DataMember]
-        private readonly BucketKind kind;
+        private readonly BucketVersion version;
 
         internal BucketId() {
         }
 
-        public BucketId(string id, string tag, BucketKind kind) {
+        public BucketId(string id, string tag, BucketVersion version) {
             this.id = id;
             this.tag = tag;
-            this.kind = kind;
+            this.version = version;
         }
 
+        /// <summary>
+        /// The well know name that represents the version of the current source tree.
+        /// </summary>
         public static string Current { get; } = nameof(Current);
+
         public static string ParentsParent { get; } = nameof(ParentsParent);
+
+        /// <summary>
+        /// The well know name that represents the version of the previous source tree.
+        /// </summary>
         public static string Previous { get; } = nameof(Previous);
 
         /// <summary>
@@ -58,7 +66,7 @@ namespace Aderant.Build.VersionControl {
             get { return tag; }
         }
 
-        internal bool IsRoot {
+        internal bool IsWellKnown {
             get {
                 if (this.Tag == Current) {
                     return true;
@@ -76,22 +84,10 @@ namespace Aderant.Build.VersionControl {
             }
         }
 
-        public BucketKind Kind {
+        public BucketVersion Version {
             get {
-                return kind;
+                return version;
             }
-        }
-
-        public bool Equals(BucketId other) {
-            if (ReferenceEquals(null, other)) {
-                return false;
-            }
-
-            if (ReferenceEquals(this, other)) {
-                return true;
-            }
-
-            return string.Equals(id, other.id, StringComparison.OrdinalIgnoreCase) && string.Equals(tag, other.tag, StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>
@@ -114,13 +110,28 @@ namespace Aderant.Build.VersionControl {
             if (obj.GetType() != this.GetType()) {
                 return false;
             }
+            return Equals((BucketId) obj);
+        }
 
-            return Equals((BucketId)obj);
+
+        public bool Equals(BucketId other) {
+            if (ReferenceEquals(null, other)) {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other)) {
+                return true;
+            }
+
+            return string.Equals(id, other.id, StringComparison.OrdinalIgnoreCase) && string.Equals(tag, other.tag, StringComparison.OrdinalIgnoreCase) && version == other.version;
         }
 
         public override int GetHashCode() {
             unchecked {
-                return (StringComparer.OrdinalIgnoreCase.GetHashCode(id) * 397) ^ StringComparer.OrdinalIgnoreCase.GetHashCode(tag);
+                var hashCode = (id != null ? StringComparer.OrdinalIgnoreCase.GetHashCode(id) : 0);
+                hashCode = (hashCode * 397) ^ (tag != null ? StringComparer.OrdinalIgnoreCase.GetHashCode(tag) : 0);
+                hashCode = (hashCode * 397) ^ (int) version;
+                return hashCode;
             }
         }
     }

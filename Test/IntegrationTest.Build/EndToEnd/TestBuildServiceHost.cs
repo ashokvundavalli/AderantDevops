@@ -128,7 +128,7 @@ namespace IntegrationTest.Build.EndToEnd {
             artifactService.AllowZeroBuildId = true;
 
             var buildStateMetadata = artifactService
-                .GetBuildStateMetadata(context.SourceTreeMetadata.GetBuckets(BucketKind.CurrentCommit).Select(s => s.Id).ToArray(),
+                .GetBuildStateMetadata(context.SourceTreeMetadata.GetBucketsForCurrentTree().Select(s => s.Id).ToArray(),
                     null,
                     context.DropLocationInfo.BuildCacheLocation,
                     null,

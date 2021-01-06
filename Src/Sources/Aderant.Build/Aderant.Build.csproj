@@ -105,7 +105,7 @@
   <ItemGroup>
     <Compile Include="ArtifactStagingPathBuilder.cs" />
     <Compile Include="AutoCompletionParser.cs" />
-    <Compile Include="BucketKind.cs" />
+    <Compile Include="BucketVersion.cs" />
     <Compile Include="Build.cs" />
     <Compile Include="Annotations\ReSharperAttributes.cs" />
     <Compile Include="ProjectSystem\ProjectToSolutionMap.cs" />

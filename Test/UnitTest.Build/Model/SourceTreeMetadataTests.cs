@@ -8,15 +8,15 @@ namespace UnitTest.Build.Model {
 
         [TestMethod]
         public void GetBucket_returns_bucket_with_expected_kind() {
-            var id1 = new BucketId("1", "A", BucketKind.CurrentCommit);
-            var id2 = new BucketId("1", "A", BucketKind.PreviousCommit);
+            var id1 = new BucketId("1", "A", BucketVersion.CurrentTree);
+            var id2 = new BucketId("1", "A", BucketVersion.PreviousTree);
 
             var metdata = new SourceTreeMetadata();
             metdata.BucketIds = new BucketId[] { id1, id2 };
 
-            var bucket = metdata.GetBucket("A", BucketKind.PreviousCommit);
+            var bucket = metdata.GetBucketForCurrentTree("A");
 
-            Assert.AreEqual(BucketKind.PreviousCommit, bucket.Kind);
+            Assert.AreEqual(BucketVersion.CurrentTree, bucket.Version);
         }
     }
 }

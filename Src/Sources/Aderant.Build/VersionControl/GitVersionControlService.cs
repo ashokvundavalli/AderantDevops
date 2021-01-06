@@ -44,8 +44,8 @@ namespace Aderant.Build.VersionControl {
             return commit;
         }
 
-        private void PopulateBuckets(HashSet<BucketId> bucketKeys, SourceTreeMetadata info, Repository repository, Commit sourceCommit, Commit destinationCommit, bool includeLocalChanges) {
-            bucketKeys.Add(new BucketId(destinationCommit.Tree.Sha, BucketId.Current, BucketKind.CurrentCommit));
+        private void PopulateBuckets(HashSet<BucketId> buckets, SourceTreeMetadata info, Repository repository, Commit sourceCommit, Commit destinationCommit, bool includeLocalChanges) {
+            buckets.Add(new BucketId(destinationCommit.Tree.Sha, BucketId.Current, BucketVersion.CurrentTree));
 
             var changedDirectoryShas = new Dictionary<string, string>();
             if (sourceCommit != null) {
@@ -62,9 +62,9 @@ namespace Aderant.Build.VersionControl {
                     // Use the source commit first if possible where we have changes as we want to use the previous cache and apply changes on top of it
                     string targetSha;
                     if (changedDirectoryShas.TryGetValue(e.Name, out targetSha)) {
-                        bucketKeys.Add(new BucketId(targetSha, e.Name, BucketKind.PreviousCommit));
+                        buckets.Add(new BucketId(targetSha, e.Name, BucketVersion.PreviousTree));
                     }
-                    bucketKeys.Add(new BucketId(e.Target.Sha, e.Name, BucketKind.CurrentCommit));
+                    buckets.Add(new BucketId(e.Target.Sha, e.Name, BucketVersion.CurrentTree));
                 }
             }
 
@@ -74,11 +74,11 @@ namespace Aderant.Build.VersionControl {
                 info.NewCommitDescription = $"{destinationCommit.Id.Sha}: {destinationCommit.MessageShort}";
 
                 if (!string.Equals(destinationCommit.Tree.Sha, sourceCommit.Tree.Sha)) {
-                    bucketKeys.Add(new BucketId(sourceCommit.Tree.Sha, BucketId.Previous, BucketKind.PreviousCommit));
+                    buckets.Add(new BucketId(sourceCommit.Tree.Sha, BucketId.Previous, BucketVersion.CurrentTree));
                 }
             }
 
-            info.BucketIds = bucketKeys;
+            info.BucketIds = buckets;
         }
 
         public SourceTreeMetadata GetPatchMetadata(string repositoryPath, CommitConfiguration commitConfiguration, CancellationToken cancellationToken = default(CancellationToken)) {
