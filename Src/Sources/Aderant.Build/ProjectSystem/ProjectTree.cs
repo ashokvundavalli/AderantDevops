@@ -5,7 +5,7 @@ using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -15,12 +15,9 @@ using Aderant.Build.Logging;
 using Aderant.Build.Model;
 using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem.SolutionParser;
-using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.Services;
-using Aderant.Build.Tasks.ArtifactHandling;
 using Aderant.Build.Utilities;
 using Aderant.Build.VersionControl.Model;
-using Microsoft.Build.Construction;
 using Microsoft.Build.Evaluation;
 using Newtonsoft.Json;
 
@@ -58,7 +55,7 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         internal ProjectTree(IEnumerable<UnconfiguredProject> unconfiguredProjects)
-            : this((ILogger)null) {
+            : this(NullLogger.Default) {
 
             EnsureUnconfiguredProjects();
 
@@ -190,6 +187,8 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         public DependencyGraph CreateBuildDependencyGraph(BuildDependenciesCollector collector, IBuildPipelineService pipelineService) {
+            //System.Diagnostics.Debugger.Launch();
+
             List<ISourceChange> changes = null;
             if (collector.SourceChanges != null) {
                 changes = collector.SourceChanges.ToList();
@@ -212,6 +211,10 @@ namespace Aderant.Build.ProjectSystem {
                 }
             }
 
+            if (changes != null && changes.Count > 0) {
+                collector.UnreconciledChanges = changes.ToList();
+            }
+
             var graph = CreateBuildDependencyGraphInternal();
             return new DependencyGraph(graph);
         }
@@ -225,25 +228,16 @@ namespace Aderant.Build.ProjectSystem {
 
             await CollectBuildDependencies(collector);
 
-            IReadOnlyCollection<ISourceChange> changes = null;
             if (context.SourceTreeMetadata != null) {
                 if (context.SourceTreeMetadata.Changes != null) {
                     // Feed the file changes in so we can calculate the dirty projects.
-                    changes = collector.SourceChanges = context.SourceTreeMetadata.Changes;
+                    collector.SourceChanges = context.SourceTreeMetadata.Changes;
                 }
             }
 
-            //if (changes != null) {
-            //    // Because developers may have packaged up their projects the solution level or have just relied on the
-            //    // auto packager then there is a risk we will bring files back from the dead in 'DoNotDisableCacheWhenProjectChanged' mode.
-            //    // To prevent zombie files we take the slow path and rebuild the entire tree.
-            //    bool isAnyNonCSharpFileDeleted = changes.Any(s => (s.Status == FileStatus.Deleted || s.Status == FileStatus.Renamed) && !s.FullPath.EndsWith(".cs", StringComparison.OrdinalIgnoreCase));
-            //    if (isAnyNonCSharpFileDeleted) {
-            //        jobFiles.ExtensibilityImposition.BuildCacheOptions = BuildCacheOptions.DisableCacheWhenProjectChanged;
-            //    }
-            //}
-
             DependencyGraph graph = CreateBuildDependencyGraph(collector, pipelineService);
+
+            RemoveStateFiles(context, collector);
 
             using (var exportLifetimeContext = SequencerFactory.CreateExport()) {
                 var sequencer = exportLifetimeContext.Value;
@@ -252,6 +246,30 @@ namespace Aderant.Build.ProjectSystem {
 
                 BuildPlan plan = sequencer.CreatePlan(context, jobFiles, graph);
                 return plan;
+            }
+        }
+
+        /// <summary>
+        /// Removes state files that are for cones with unreconciled changes to ensure that the projects
+        /// in that cone are scheduled to build. We cannot tell what the side effects of not building the projects are
+        /// so its safer to schedule them.
+        /// </summary>
+        private void RemoveStateFiles(BuildOperationContext context, BuildDependenciesCollector collector) {
+            if (context.BuildStateMetadata != null) {
+                if (collector.UnreconciledChanges.Count > 0) {
+                    StringBuilder sb = new StringBuilder();
+
+                    sb.AppendLine("The following changes are not reconciled to a project");
+                    foreach (var file in collector.UnreconciledChanges) {
+                        sb.Append(Constants.LoggingArrow);
+                        sb.AppendLine(file.Path);
+                    }
+
+                    logger.Info(sb.ToString());
+
+                    var roots = collector.UnreconciledChanges.Select(s => PathUtility.GetRootDirectory(s.Path)).Distinct(StringComparer.OrdinalIgnoreCase);
+                    context.BuildStateMetadata.RemoveStateFilesForRoots(roots);
+                }
             }
         }
 

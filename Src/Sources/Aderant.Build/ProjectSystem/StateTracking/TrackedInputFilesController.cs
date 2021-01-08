@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Aderant.Build.Logging;
+using Aderant.Build.Providers;
 using Microsoft.Build.Evaluation;
 using Microsoft.Build.Execution;
 using Microsoft.Build.Framework;
@@ -56,8 +57,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                     var trackedFiles = buildStateFile.TrackedFiles ?? new List<TrackedInputFile>(1);
 
                     if (buildStateFile.PackageHash != null) {
-                        logger.Info("Adding package hash metadata: '{0}' to tracked files.",
-                            buildStateFile.PackageHash);
+                        logger.Info("Adding package hash metadata: '{0}' to tracked files.", buildStateFile.PackageHash);
 
                         trackedFiles.Add(new TrackedMetadataFile(Constants.PaketLock) {
                             Sha1 = buildStateFile.PackageHash
@@ -107,8 +107,12 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
                 if (skipNugetPackageHashCheck) {
                     logger.Info("Package hash check disabled.");
-                    RemoveLockFile(newTable);
-                    RemoveLockFile(oldTable);
+                    var filesToRemove = new List<TrackedInputFile> {new TrackedInputFile {FileName = Constants.PaketLock}};
+                    RemoveFiles(newTable, filesToRemove);
+                    RemoveFiles(oldTable, filesToRemove);
+
+                    var removedTrackedInputFiles = RemoveFilesFromPackagesFolder(newTable);
+                    RemoveFiles(oldTable, removedTrackedInputFiles);
                 }
 
                 List<string> commonKeys;
@@ -117,7 +121,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                 DiffHashtables(newTable, oldTable, out commonKeys, out uniqueKeysInNewTable, out uniqueKeysInOldTable);
 
                 if (uniqueKeysInNewTable.Count > 0 || uniqueKeysInOldTable.Count > 0) {
-                    logger.Info($"Correlated tracked files: UniqueKeysInTable1: {uniqueKeysInNewTable.Count} | UniqueKeysInTable2:{uniqueKeysInOldTable.Count}", null);
+                    logger.Debug($"Correlated tracked files: UniqueKeysInTable1: {uniqueKeysInNewTable.Count} | UniqueKeysInTable2:{uniqueKeysInOldTable.Count}", null);
 
                     foreach (var key in uniqueKeysInNewTable) {
                         TrackedInputFile inputFile = newTable[key];
@@ -131,14 +135,53 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             return true;
         }
 
-        private void RemoveLockFile(Dictionary<string, TrackedInputFile> table) {
-            foreach (var file in table.Keys.ToList()) {
-                var item = table[file];
-                if (string.Equals(item.FileName, Constants.PaketLock, StringComparison.OrdinalIgnoreCase)) {
-                    table.Remove(file);
+        private static void RemoveFiles(Dictionary<string, TrackedInputFile> oldTable, List<TrackedInputFile> removedTrackedInputFiles) {
+            foreach (var file in oldTable.Keys.ToList()) {
+                var item = oldTable[file];
+
+                if (item != null) {
+                    foreach (var fileToRemove in removedTrackedInputFiles) {
+                        if (string.Equals(item.FileName, fileToRemove.FileName, StringComparison.OrdinalIgnoreCase)) {
+                            oldTable.Remove(file);
+                        }
+                    }
                 }
             }
         }
+
+        private static List<TrackedInputFile> RemoveFilesFromPackagesFolder(Dictionary<string, TrackedInputFile> table) {
+            List<TrackedInputFile> removedTrackedFiles = new List<TrackedInputFile>();
+
+            foreach (var file in table.Keys.ToList()) {
+                var item = table[file];
+
+                if (item != null) {
+                    var parts  = item.FullPath.Split(new[] {Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar});
+
+                    foreach (string part in parts) {
+                        if (string.Equals(part, "packages", StringComparison.OrdinalIgnoreCase)) {
+                            table.Remove(file);
+                            removedTrackedFiles.Add(item);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            return removedTrackedFiles;
+        }
+
+        //private static void RemoveLockFile(Dictionary<string, TrackedInputFile> table) {
+        //    foreach (var file in table.Keys.ToList()) {
+        //        var item = table[file];
+
+        //        if (item != null) {
+        //            if (string.Equals(item.FileName, Constants.PaketLock, StringComparison.OrdinalIgnoreCase)) {
+        //                table.Remove(file);
+        //            }
+        //        }
+        //    }
+        //}
 
         private Dictionary<string, TrackedInputFile> CreateDictionaryFromTrackedInputFiles(IEnumerable<TrackedInputFile> trackedInputFiles) {
             Dictionary<string, TrackedInputFile> dictionary = new Dictionary<string, TrackedInputFile>(StringComparer.OrdinalIgnoreCase);

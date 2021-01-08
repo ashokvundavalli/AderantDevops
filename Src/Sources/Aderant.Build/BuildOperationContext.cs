@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Windows.Controls;
+using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.VersionControl;
@@ -516,7 +517,7 @@ namespace Aderant.Build {
 
         public IReadOnlyCollection<BucketId> BucketIds {
             get {
-                var buckets = new List<BucketId>(64);
+                var buckets = new List<BucketId>(ListHelper.DefaultDirectoryListCapacity);
                 if (previousBuckets != null) {
                     buckets.AddRange(previousBuckets);
                 }

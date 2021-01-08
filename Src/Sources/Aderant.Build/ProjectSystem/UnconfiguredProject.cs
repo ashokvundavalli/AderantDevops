@@ -42,7 +42,7 @@ namespace Aderant.Build.ProjectSystem {
         [Import]
         internal ExportFactory<ConfiguredProject> ConfiguredProjectFactory { get; set; }
 
-        public string FullPath { get; private set; }
+        public string FullPath { get; protected set; }
 
         public ProjectCollection ProjectCollection { get; set; }
 
