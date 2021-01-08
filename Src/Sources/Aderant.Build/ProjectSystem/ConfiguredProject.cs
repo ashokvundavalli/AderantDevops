@@ -68,7 +68,7 @@ namespace Aderant.Build.ProjectSystem {
             get { return ServicesImport.Value; }
         }
 
-        public string FullPath { get; protected set; }
+        public string FullPath { get; protected internal set; }
 
         /// <summary>
         /// Gets or sets the solution file which contains this project.
