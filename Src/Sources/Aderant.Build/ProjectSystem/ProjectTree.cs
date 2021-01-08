@@ -237,7 +237,7 @@ namespace Aderant.Build.ProjectSystem {
 
             DependencyGraph graph = CreateBuildDependencyGraph(collector, pipelineService);
 
-            RemoveStateFiles(context, collector);
+            EvictStateFilesForConesWithUnreconciledChanges(context, collector);
 
             using (var exportLifetimeContext = SequencerFactory.CreateExport()) {
                 var sequencer = exportLifetimeContext.Value;
@@ -254,7 +254,7 @@ namespace Aderant.Build.ProjectSystem {
         /// in that cone are scheduled to build. We cannot tell what the side effects of not building the projects are
         /// so its safer to schedule them.
         /// </summary>
-        private void RemoveStateFiles(BuildOperationContext context, BuildDependenciesCollector collector) {
+        private void EvictStateFilesForConesWithUnreconciledChanges(BuildOperationContext context, BuildDependenciesCollector collector) {
             if (context.BuildStateMetadata != null) {
                 if (collector.UnreconciledChanges.Count > 0) {
                     StringBuilder sb = new StringBuilder();
