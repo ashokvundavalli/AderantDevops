@@ -127,7 +127,6 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         public async Task CollectBuildDependencies(BuildDependenciesCollector collector, CancellationToken cancellationToken = default(CancellationToken)) {
-
             // Null checked to allow unit testing where projects are inserted directly
             if (LoadedUnconfiguredProjects != null) {
                 ErrorUtilities.IsNotNull(collector.ProjectConfiguration, nameof(collector.ProjectConfiguration));
@@ -187,8 +186,6 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         public DependencyGraph CreateBuildDependencyGraph(BuildDependenciesCollector collector, IBuildPipelineService pipelineService) {
-            //System.Diagnostics.Debugger.Launch();
-
             List<ISourceChange> changes = null;
             if (collector.SourceChanges != null) {
                 changes = collector.SourceChanges.ToList();

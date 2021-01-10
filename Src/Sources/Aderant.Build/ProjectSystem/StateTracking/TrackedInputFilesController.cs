@@ -171,18 +171,6 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             return removedTrackedFiles;
         }
 
-        //private static void RemoveLockFile(Dictionary<string, TrackedInputFile> table) {
-        //    foreach (var file in table.Keys.ToList()) {
-        //        var item = table[file];
-
-        //        if (item != null) {
-        //            if (string.Equals(item.FileName, Constants.PaketLock, StringComparison.OrdinalIgnoreCase)) {
-        //                table.Remove(file);
-        //            }
-        //        }
-        //    }
-        //}
-
         private Dictionary<string, TrackedInputFile> CreateDictionaryFromTrackedInputFiles(IEnumerable<TrackedInputFile> trackedInputFiles) {
             Dictionary<string, TrackedInputFile> dictionary = new Dictionary<string, TrackedInputFile>(StringComparer.OrdinalIgnoreCase);
 
