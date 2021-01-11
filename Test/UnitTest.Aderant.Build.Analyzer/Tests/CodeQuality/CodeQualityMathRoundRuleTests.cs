@@ -129,5 +129,10 @@ namespace Test {
 
         #endregion Tests
 
+        public CodeQualityMathRoundRuleTests() : base(null) {
+        }
+
+        public CodeQualityMathRoundRuleTests(RuleBase[] injectedRules) : base(injectedRules) {
+        }
     }
 }

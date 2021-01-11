@@ -95,7 +95,7 @@ function Exec-CommandCore([string]$command, [string]$commandArgs, [switch]$useCo
         $startInfo.CreateNoWindow = $true
     }
 
-    $process = New-Object System.Diagnostics.Process
+    $process = [System.Diagnostics.Process]::new()
     $process.StartInfo = $startInfo
     $process.Start() | Out-Null
 

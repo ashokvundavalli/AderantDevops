@@ -44,7 +44,7 @@
       <HintPath>..\..\..\packages\devtools\LibGit2Sharp\lib\net46\LibGit2Sharp.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="paket">
+    <Reference Include="paket, Version=5.249.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\Build\paket.exe</HintPath>
       <Private>True</Private>
     </Reference>

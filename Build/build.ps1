@@ -1,9 +1,13 @@
-# This script is used to bootstrap the compile process for Build.Infrastructure on the server.
-Set-Location -Path ([System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, "..\")))
-[string]$buildScriptsDirectory = [System.IO.Path]::GetFullPath("$PSScriptRoot\..\Src\Build\")
-[string]$paketBootstrapper = [System.IO.Path]::Combine($buildScriptsDirectory, 'paket.bootstrapper.exe')
+Set-StrictMode -Version Latest
 
 [System.Environment]::SetEnvironmentVariable('PAKET_SKIP_RESTORE_TARGETS', 'true', [System.EnvironmentVariableTarget]::Process)
+
+# This script is used to bootstrap the compile process for Build.Infrastructure on the server.
+$workingDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, "..\"))
+Set-Location -Path $workingDirectory
+
+[string]$buildScriptsDirectory = [System.IO.Path]::GetFullPath("$PSScriptRoot\..\Src\Build\")
+[string]$paketBootstrapper = [System.IO.Path]::Combine($buildScriptsDirectory, 'paket.bootstrapper.exe')
 
 # Update Paket bootstrapper.
 [void](Start-Process -FilePath $paketBootstrapper -ArgumentList @('--self') -NoNewWindow -PassThru -Wait)
@@ -14,4 +18,49 @@ Set-Location -Path ([System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSS
 [void](Start-Process -FilePath  $paketBootstrapper -ArgumentList @($paketVersion) -NoNewWindow -PassThru -Wait)
 
 # Run Paket restore.
-[void](Start-Process -FilePath  "$buildScriptsDirectory\paket.exe" -ArgumentList @('restore') -NoNewWindow -PassThru -Wait)
+$psi = [System.Diagnostics.ProcessStartInfo]::new()
+$psi.CreateNoWindow = $true
+$psi.UseShellExecute = $false
+$psi.RedirectStandardOutput = $true
+$psi.RedirectStandardError = $true
+$psi.FileName = "$buildScriptsDirectory\paket.exe"
+$psi.Arguments = @("restore", "--verbose")
+$psi.WorkingDirectory = $workingDirectory
+$process = [System.Diagnostics.Process]::new()
+
+# Adding event handers for stdout and stderr.
+$scripBlock = {
+    if (![String]::IsNullOrEmpty($EventArgs.Data))
+    {
+        Write-Host $EventArgs.Data
+    }
+}
+
+$stdOutEvent = Register-ObjectEvent `
+    -InputObject $process `
+    -Action $scripBlock `
+    -EventName 'OutputDataReceived'
+$stdErrEvent = Register-ObjectEvent `
+    -InputObject $process `
+    -Action $scripBlock `
+    -EventName 'ErrorDataReceived'
+
+$process.StartInfo =  $psi
+
+try {
+    [void]$process.Start()
+
+    $process.BeginOutputReadLine()
+    $process.BeginErrorReadLine()
+
+    while (-not $process.WaitForExit(100)) {
+        # Allow interrupts like CTRL + C by doing a non-blocking wait
+    }
+
+    $process.WaitForExit()
+
+} finally {
+    Unregister-Event -SourceIdentifier $stdOutEvent.Name
+    Unregister-Event -SourceIdentifier $stdErrEvent.Name
+    $process.Dispose()
+}
