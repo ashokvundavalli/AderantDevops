@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using Aderant.Build.Model;
@@ -24,6 +25,11 @@ namespace Aderant.Build.ProjectSystem {
         public IReadOnlyCollection<ISourceChange> SourceChanges { get; set; }
 
         public ExtensibilityImposition ExtensibilityImposition { get; set; }
+
+        /// <summary>
+        /// File changes that are not associated with a project
+        /// </summary>
+        public IReadOnlyCollection<ISourceChange> UnreconciledChanges { get; set; } = Array.Empty<ISourceChange>();
 
         public void AddUnresolvedReferences(IReadOnlyCollection<IUnresolvedReference> references) {
             ErrorUtilities.IsNotNull(references, nameof(references));

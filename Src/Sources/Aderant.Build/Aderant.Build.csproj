@@ -76,7 +76,7 @@
     <Reference Include="System.Net.Http, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <HintPath>$(MSBuildProgramFiles32)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\System.Net.Http.dll</HintPath>
     </Reference>
-    <Reference Include="System.Numerics.Vectors, Version=4.1.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+    <Reference Include="System.Numerics.Vectors, Version=4.1.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\..\..\packages\devtools\System.Numerics.Vectors\lib\net46\System.Numerics.Vectors.dll</HintPath>
     </Reference>
     <Reference Include="System.Runtime.Caching" />
@@ -105,8 +105,10 @@
   <ItemGroup>
     <Compile Include="ArtifactStagingPathBuilder.cs" />
     <Compile Include="AutoCompletionParser.cs" />
+    <Compile Include="BucketVersion.cs" />
     <Compile Include="Build.cs" />
     <Compile Include="Annotations\ReSharperAttributes.cs" />
+    <Compile Include="DependencyAnalyzer\ListHelper.cs" />
     <Compile Include="ProjectSystem\ProjectToSolutionMap.cs" />
     <Compile Include="ProjectSystem\StateFileService.cs" />
     <Compile Include="Packaging\BuildStateQueryOptions.cs" />

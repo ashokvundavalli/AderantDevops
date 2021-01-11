@@ -81,6 +81,14 @@ namespace UnitTest.Build {
 
             Assert.AreEqual("", result);
         }
+
+        [TestMethod]
+        public void GetRootDirectoryTests() {
+            Assert.AreEqual("C:\\", PathUtility.GetRootDirectory("C:\\Source\\Foo"));
+            Assert.AreEqual("Source", PathUtility.GetRootDirectory("Source/Foo/file.txt"));
+            Assert.AreEqual("Source", PathUtility.GetRootDirectory("Source\\Foo\\file.txt"));
+
+        }
     }
 
 }

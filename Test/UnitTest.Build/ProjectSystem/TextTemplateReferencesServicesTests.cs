@@ -21,7 +21,7 @@ namespace UnitTest.Build.ProjectSystem {
             treeMock.Setup(s => s.LoadedConfiguredProjects).Returns(new[] { projectMock.Object });
 
             projectMock.Setup(s => s.GetItems(It.IsAny<string>())).Returns(new List<ProjectItem>());
-            projectMock.Setup(s => s.FullPath).Returns("abc\\def.csproj");
+            projectMock.Object.FullPath = "abc\\def.csproj";
 
             var service = new TextTemplateReferencesServices(fileSystemMock.Object);
             service.ConfiguredProject = projectMock.Object;

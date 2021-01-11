@@ -5,6 +5,7 @@ using Aderant.Build;
 using Aderant.Build.Packaging;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
+using Aderant.Build.VersionControl;
 using Aderant.Build.VersionControl.Model;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ProtoBuf;
@@ -182,6 +183,18 @@ namespace UnitTest.Build {
 
             Assert.IsNotNull(instance);
             Assert.AreEqual("Abc", instance.File);
+        }
+
+        [TestMethod]
+        public void Buckets_are_preserved() {
+            var metadata = new SourceTreeMetadata();
+
+            metadata.BucketIds = new[] {new BucketId("a", "b", BucketVersion.PreviousTree)};
+
+            var instance = RoundTrip(metadata);
+
+            Assert.IsNotNull(instance);
+            Assert.AreEqual(1, instance.BucketIds.Count);
         }
     }
 }

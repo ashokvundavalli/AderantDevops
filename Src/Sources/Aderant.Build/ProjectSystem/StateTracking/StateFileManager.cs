@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Aderant.Build.Logging;
 using Aderant.Build.VersionControl;
 using Aderant.Build.VersionControl.Model;
@@ -34,16 +35,19 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
                     files = buildStateMetadata.QueryCacheForBuckets(buckets, out missingIds);
 
+                    StringBuilder sb = new StringBuilder();
                     foreach (var stateFile in files) {
-                        logger.Debug("Using state file: {0} -> {1} -> {2}:{3}", stateFile.Id, stateFile.BuildId, stateFile.Location, stateFile.BucketId.Tag);
+                        sb.AppendFormat("Using state file: {0} -> {1} -> {2}:{3}", stateFile.Id, stateFile.BuildId, stateFile.Location, stateFile.BucketId.Tag);
+                        sb.AppendLine();
                     }
+                    logger.Info(sb.ToString());
 
                     foreach (var missingId in missingIds) {
                         logger.Info($"No state file: {missingId.Id} -> {missingId.Tag}", null);
                     }
                 }
 
-                logger.Info($"Found {files.Count}/{bucketCount} state files.", null);
+                logger.Info($"Found {files.Count} state files for {bucketCount} buckets.", null);
             }
 
             return files.ToList();

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
 using Aderant.Build.Model;
@@ -143,7 +144,6 @@ namespace IntegrationTest.Build {
                 "Foo"
             );
         }
-
         private static void AssertSequence(IEnumerable<IDependable> sequence, params string[] solutions) {
             AssertSequence(sequence.Select(s => s.Id.Split(':').Last()).ToArray(), solutions);
         }

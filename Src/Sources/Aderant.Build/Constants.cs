@@ -29,6 +29,8 @@ namespace Aderant.Build {
         public static string OfficialNuGetUrl = "https://www.nuget.org/api/v2";
 
         internal static string MainDependencyGroup = "Main";
+
+        internal const string LoggingArrow = "-> ";
     }
 
     public static class WellKnownPaths {

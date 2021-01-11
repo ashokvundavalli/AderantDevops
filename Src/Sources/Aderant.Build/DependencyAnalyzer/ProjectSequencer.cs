@@ -32,7 +32,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// A reasonable starting pint for lists that will hold directory entries. Source trees typically contain many folders
         /// so we wan to have a good default capacity.
         /// </summary>
-        private const int DefaultDirectoryListCapacity = 64;
+        private const int DefaultDirectoryListCapacity = ListHelper.DefaultDirectoryListCapacity;
 
         [ImportingConstructor]
         public ProjectSequencer(ILogger logger, IFileSystem fileSystem) {
@@ -806,7 +806,6 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         private static List<TreePrinter.Node> DescribeChanges(IDependable dependable, bool showPath) {
             ConfiguredProject configuredProject = dependable as ConfiguredProject;
-
             var children = new List<TreePrinter.Node>();
 
             if (configuredProject != null) {
@@ -846,9 +845,14 @@ namespace Aderant.Build.DependencyAnalyzer {
                                     }).ToList()
                                 });
                     }
-
-                    return children;
+                } else {
+                    children.Add(
+                        new TreePrinter.Node {
+                            Name = "Building: false"
+                        });
                 }
+
+                return children;
             }
 
             DirectoryNode node = dependable as DirectoryNode;
@@ -923,7 +927,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 topLevelNodes.Add(topLevelNode);
             }
 
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new StringBuilder(4096);
             TreePrinter.Print(topLevelNodes, message => sb.Append(message));
 
             return sb.ToString();
@@ -934,7 +938,8 @@ namespace Aderant.Build.DependencyAnalyzer {
                 var changes = DescribeChanges(dependable, showPath);
 
                 yield return new TreePrinter.Node {
-                    Name = dependable.Id.Split(':').Last(), Children = changes
+                    Name = dependable.Id.Split(':').Last(),
+                    Children = changes
                 };
             }
         }

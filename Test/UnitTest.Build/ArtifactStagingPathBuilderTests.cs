@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Aderant.Build;
 using Aderant.Build.VersionControl;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Moq;
 
 namespace UnitTest.Build {
     [TestClass]
@@ -16,7 +14,7 @@ namespace UnitTest.Build {
         [TestMethod]
         public void CreateStagingPathWithBucketId() {
             SourceTreeMetadata metadata = new SourceTreeMetadata {
-                BucketIds = new HashSet<BucketId> { new BucketId("1d98d9296eae891d3d4adb7c884bc2df12504619", "a") }
+                BucketIds = new HashSet<BucketId> { new BucketId("1d98d9296eae891d3d4adb7c884bc2df12504619", "a", BucketVersion.CurrentTree) }
             };
 
             ArtifactStagingPathBuilder artifactStagingPathBuilder = new ArtifactStagingPathBuilder(TestContext.DeploymentDirectory, 0, metadata);

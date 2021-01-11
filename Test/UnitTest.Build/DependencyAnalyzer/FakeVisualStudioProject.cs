@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Threading;
+using Aderant.Build;
 using Aderant.Build.Model;
 using Aderant.Build.ProjectSystem;
 using Microsoft.Build.Construction;
 using Microsoft.Build.Evaluation;
+using UnitTest.Build.ProjectSystem;
 
 namespace UnitTest.Build.DependencyAnalyzer {
     internal class FakeVisualStudioProject : IDependable {
@@ -22,6 +24,15 @@ namespace UnitTest.Build.DependencyAnalyzer {
 
         public TestConfiguredProject(IProjectTree tree)
             : base(tree) {
+        }
+
+        public TestConfiguredProject(IProjectTree tree, TestUnconfiguredProject unconfiguredProject, Guid guid1)
+            : base(tree) {
+            ErrorUtilities.IsNotNull(unconfiguredProject, nameof(unconfiguredProject));
+
+            FullPath = unconfiguredProject.FullPath;
+            guid = guid1;
+
         }
 
         public TestConfiguredProject(IProjectTree projectTree, Guid guid)

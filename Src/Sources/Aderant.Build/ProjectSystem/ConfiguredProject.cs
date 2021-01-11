@@ -68,7 +68,7 @@ namespace Aderant.Build.ProjectSystem {
             get { return ServicesImport.Value; }
         }
 
-        public virtual string FullPath { get; private set; }
+        public string FullPath { get; protected internal set; }
 
         /// <summary>
         /// Gets or sets the solution file which contains this project.
@@ -615,7 +615,7 @@ namespace Aderant.Build.ProjectSystem {
             }
 
             // check if this proj contains needed files.
-            List<ProjectItem> items = new List<ProjectItem>(57);
+            List<ProjectItem> items = new List<ProjectItem>(ListHelper.DefaultDirectoryListCapacity);
 
             Project innerProject = InnerProject;
 
@@ -630,10 +630,10 @@ namespace Aderant.Build.ProjectSystem {
                     break;
                 }
 
+                string value = item.GetMetadataValue("FullPath");
+
                 for (int changeNum = changes.Count - 1; changeNum >= 0; changeNum--) {
                     var file = changes[changeNum];
-
-                    string value = item.GetMetadataValue("FullPath");
 
                     if (string.Equals(value, file.FullPath, StringComparison.OrdinalIgnoreCase)) {
                         MarkDirty(BuildReasonTypes.ProjectItemChanged);
@@ -647,14 +647,14 @@ namespace Aderant.Build.ProjectSystem {
                         changes.RemoveAt(changeNum);
                     }
                 }
+            }
 
-                if (dirtyFiles != null) {
-                    dirtyFiles.TrimExcess();
-                }
+            if (dirtyFiles != null) {
+                dirtyFiles.TrimExcess();
             }
 
             if (dirtyFiles == null) {
-                // Sentinel value indicates that that next time we get called that there was no work to do
+                // Sentinel value indicates that next time we get called that there was no work to do
                 dirtyFiles = emptyFileList;
             }
         }

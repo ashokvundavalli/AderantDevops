@@ -37,5 +37,11 @@ namespace Aderant.Build.ProjectSystem {
 
             return assignedBuckets;
         }
+
+        public void RemoveStateFilesForRoots(IEnumerable<string> roots) {
+            var stateFiles = BuildStateFiles.ToList();
+            stateFiles.RemoveAll(stateFile => roots.Contains(stateFile.BucketId.Tag, StringComparer.OrdinalIgnoreCase));
+            BuildStateFiles = stateFiles;
+        }
     }
 }

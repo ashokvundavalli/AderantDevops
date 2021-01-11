@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
+using System.Windows.Controls;
+using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.VersionControl;
@@ -476,7 +478,7 @@ namespace Aderant.Build {
         /// <summary>
         /// Indicates if this is a test project.
         /// </summary>
-        [DataMember]
+        [DataMember(EmitDefaultValue = false)]
         public bool IsTestProject { get; set; }
     }
 
@@ -498,9 +500,14 @@ namespace Aderant.Build {
         public string ProjectFileAbsolutePath { get; set; }
     }
 
-    [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
+    [ProtoContract(ImplicitFields = ImplicitFields.AllFields)]
     [DataContract]
     public sealed class SourceTreeMetadata {
+        [DataMember(EmitDefaultValue = false)]
+        private List<BucketId> currentBuckets;
+
+        [DataMember(EmitDefaultValue = false)]
+        private List<BucketId> previousBuckets;
 
         [DataMember]
         public string Branch { get; set; }
@@ -508,43 +515,73 @@ namespace Aderant.Build {
         [DataMember]
         public string CommonAncestor { get; set; }
 
-        [DataMember]
-        public IReadOnlyCollection<BucketId> BucketIds { get; set; }
+        public IReadOnlyCollection<BucketId> BucketIds {
+            get {
+                var buckets = new List<BucketId>(ListHelper.DefaultDirectoryListCapacity);
+                if (previousBuckets != null) {
+                    buckets.AddRange(previousBuckets);
+                }
+
+                if (currentBuckets != null) {
+                    buckets.AddRange(currentBuckets);
+                }
+                return buckets;
+            }
+            set {
+                if (value != null) {
+                    currentBuckets = new List<BucketId>();
+                    previousBuckets = new List<BucketId>();
+
+                    foreach (BucketId id in value) {
+                        if (id.Version == BucketVersion.CurrentTree) {
+                            currentBuckets.Add(id);
+                        } else {
+                            previousBuckets.Add(id);
+                        }
+                    }
+                }
+            }
+        }
 
         [DataMember]
         public IReadOnlyCollection<SourceChange> Changes { get; set; }
 
-        [DataMember]
+        [DataMember(EmitDefaultValue = false)]
         public string NewCommitDescription { get; set; }
 
-        [DataMember]
+        [DataMember(EmitDefaultValue = false)]
         public string OldCommitDescription { get; set; }
 
-        [DataMember]
+        [DataMember(EmitDefaultValue = false)]
         public string CommonCommit { get; set; }
-
-        /// <summary>
-        /// Gets a bucket for a friendly name.
-        /// </summary>
-        /// <param name="tag"></param>
-        /// <returns></returns>
-        public BucketId GetBucket(string tag) {
-            if (BucketIds != null) {
-                foreach (var bucket in BucketIds) {
-                    if (string.Equals(bucket.Tag, tag, StringComparison.OrdinalIgnoreCase)) {
-                        return bucket;
-                    }
-                }
-            }
-
-            return null;
-        }
 
         /// <summary>
         /// Returns the directory build tree directory identifiers (SHA1).
         /// </summary>
         public IReadOnlyCollection<BucketId> GetBuckets() {
-            return BucketIds.Where(b => !b.IsRoot).ToList();
+            return BucketIds.Where(b => !b.IsWellKnown).ToList();
+        }
+
+        /// <summary>
+        /// Gets a bucket for a friendly name.
+        /// </summary>
+        public BucketId GetBucketForCurrentTree(string tag) {
+            if (currentBuckets != null)
+                foreach (var bucket in currentBuckets) {
+                    if (string.Equals(bucket.Tag, tag, StringComparison.OrdinalIgnoreCase)) {
+                        return bucket;
+                    }
+                }
+
+            return null;
+        }
+
+        public IReadOnlyCollection<BucketId> GetBucketsForCurrentTree() {
+            if (currentBuckets != null) {
+                return currentBuckets.Where(b => !b.IsWellKnown && b.Version == BucketVersion.CurrentTree).ToList();
+            }
+
+            return Array.Empty<BucketId>();
         }
     }
 
@@ -552,43 +589,43 @@ namespace Aderant.Build {
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     public struct BuildSwitches {
 
-        [DataMember]
+        [DataMember(EmitDefaultValue = false)]
         public bool Downstream { get; set; }
 
-        [DataMember]
+        [DataMember(EmitDefaultValue = false)]
         public bool Transitive { get; set; }
 
-        [DataMember]
+        [DataMember(EmitDefaultValue = false)]
         public bool Branch { get; set; }
 
-        [DataMember]
+        [DataMember(EmitDefaultValue = false)]
         public bool Clean { get; set; }
 
-        [DataMember]
+        [DataMember(EmitDefaultValue = false)]
         public bool Release { get; set; }
 
-        [DataMember]
+        [DataMember(EmitDefaultValue = false)]
         public bool Resume { get; set; }
 
-        [DataMember]
+        [DataMember(EmitDefaultValue = false)]
         public bool ChangedFilesOnly { get; set; }
 
-        [DataMember]
+        [DataMember(EmitDefaultValue = false)]
         public bool SkipCompile { get; set; }
 
-        [DataMember]
+        [DataMember(EmitDefaultValue = false)]
         public bool RestrictToProvidedPaths { get; set; }
 
-        [DataMember]
+        [DataMember(EmitDefaultValue = false)]
         public bool ExcludeTestProjects { get; set; }
 
-        [DataMember]
+        [DataMember(EmitDefaultValue = false)]
         public bool SuppressDiagnostics { get; set; }
 
         /// <summary>
         /// Instructs the build to ignore differences in NuGet packages when finding a cached build.
         /// </summary>
-        [DataMember]
+        [DataMember(EmitDefaultValue = false)]
         public bool SkipNugetPackageHashCheck { get; set; }
     }
 }
