@@ -118,7 +118,7 @@ namespace Aderant.Build {
             get { return buildRoot; }
             set {
                 if (!string.IsNullOrEmpty(buildRoot)) {
-                    ErrorUtilities.VerifyThrowArgument(!string.IsNullOrEmpty(value), "BuildRoot cannot be unset", null);
+                    ErrorUtilities.VerifyThrowArgument(!string.IsNullOrEmpty(value), "BuildRoot cannot be unset");
                 }
 
                 buildRoot = value;

@@ -1,38 +1,42 @@
 ﻿using System;
 using System.Collections.Generic;
 using Aderant.Build.PipelineService;
+using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Packaging {
     internal class ArtifactTargetPathAssigner {
 
         private readonly IBuildPipelineService pipelineService;
+        internal static readonly string DestinationSubDirectory = "DestinationSubDirectory";
+
+        internal string PackageTestDirectory = string.Empty;
 
         public ArtifactTargetPathAssigner(IBuildPipelineService pipelineService) {
             this.pipelineService = pipelineService;
         }
 
-        public IDictionary<string, List<BuildArtifact>> Process(bool includeGeneratedArtifacts) {
+        public IDictionary<string, List<(BuildArtifact, ArtifactPackageType)>> Process(bool includeGeneratedArtifacts) {
             BuildArtifact[] associatedArtifacts = pipelineService.GetAssociatedArtifacts();
 
             // Sorted for determinism.
-            var pathMap = new SortedDictionary<string, List<BuildArtifact>>(StringComparer.OrdinalIgnoreCase);
+            var pathMap = new SortedDictionary<string, List<(BuildArtifact, ArtifactPackageType)>>(StringComparer.OrdinalIgnoreCase);
 
             foreach (BuildArtifact artifact in associatedArtifacts) {
                 bool deliverToRoot = true;
 
                 if (artifact.PackageType.Contains(ArtifactPackageType.DevelopmentPackage)) {
-                    AddArtifact(pathMap, "Development", artifact);
+                    AddArtifact(pathMap, "Development", artifact, ArtifactPackageType.DevelopmentPackage);
                     deliverToRoot = false;
                 }
 
                 if (artifact.PackageType.Contains(ArtifactPackageType.TestPackage)) {
-                    AddArtifact(pathMap, "Test", artifact);
+                    AddArtifact(pathMap, PackageTestDirectory, artifact, ArtifactPackageType.TestPackage);
                     deliverToRoot = false;
                 }
 
                 if (artifact.PackageType.Contains(ArtifactPackageType.AutomationPackage)) {
-                    AddArtifact(pathMap, @"Test\Automation", artifact);
+                    AddArtifact(pathMap, @"Test\Automation", artifact, ArtifactPackageType.AutomationPackage);
                     deliverToRoot = false;
                 }
 
@@ -44,10 +48,10 @@ namespace Aderant.Build.Packaging {
                 }
 
                 if (includeGeneratedArtifacts) {
-                    AddArtifact(pathMap, "", artifact);
+                    AddArtifact(pathMap, string.Empty, artifact, ArtifactPackageType.Default);
                 } else {
                     if (!artifact.IsAutomaticallyGenerated) {
-                        AddArtifact(pathMap, "", artifact);
+                        AddArtifact(pathMap, string.Empty, artifact, ArtifactPackageType.Default);
                     }
                 }
             }
@@ -55,23 +59,24 @@ namespace Aderant.Build.Packaging {
             return pathMap;
         }
 
-        private static void AddArtifact(IDictionary<string, List<BuildArtifact>> pathMap, string destinationSubDirectory, BuildArtifact artifact) {
-            List<BuildArtifact> list;
+        private static void AddArtifact(IDictionary<string, List<(BuildArtifact, ArtifactPackageType)>> pathMap, string destinationSubDirectory, BuildArtifact artifact, ArtifactPackageType artifactPackageType) {
+            List<(BuildArtifact, ArtifactPackageType)> list;
             if (!pathMap.TryGetValue(destinationSubDirectory, out list)) {
-                list = new List<BuildArtifact>();
+                list = new List<(BuildArtifact, ArtifactPackageType)>();
                 pathMap[destinationSubDirectory] = list;
             }
 
-            list.Add(artifact);
+            list.Add((artifact, artifactPackageType));
         }
 
-        public IEnumerable<TaskItem> CreateTaskItemsWithTargetPaths(bool includeGeneratedArtifacts) {
+        public IEnumerable<ITaskItem> CreateTaskItemsWithTargetPaths(bool includeGeneratedArtifacts) {
             var map = Process(includeGeneratedArtifacts);
 
             foreach (var item in map) {
                 foreach (var path in item.Value) {
-                    var taskItem = new TaskItem(path.SourcePath);
-                    taskItem.SetMetadata("DestinationSubDirectory", PathUtility.EnsureTrailingSlash(item.Key));
+                    var taskItem = new TaskItem(path.Item1.SourcePath);
+                    taskItem.SetMetadata(DestinationSubDirectory, PathUtility.EnsureTrailingSlash(item.Key));
+                    taskItem.SetMetadata(nameof(ArtifactPackageType), path.Item2.ToString());
 
                     yield return taskItem;
                 }

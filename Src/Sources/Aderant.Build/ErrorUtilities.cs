@@ -24,13 +24,13 @@ namespace Aderant.Build {
         /// <summary>
         /// Blows up if the condition is false.
         /// </summary>
-        internal static void VerifyThrowArgument(bool condition, string errorMessageTemplate, object arg0) {
-            VerifyThrowArgument(condition, null, errorMessageTemplate, arg0);
+        internal static void VerifyThrowArgument(bool condition, string errorMessageTemplate, params object[] args) {
+            VerifyThrowArgument(condition, null, errorMessageTemplate, args);
         }
 
-        internal static void VerifyThrowArgument(bool condition, Exception innerException, string resourceName, object arg0) {
+        internal static void VerifyThrowArgument(bool condition, Exception innerException, string resourceName, params object[] args) {
             if (!condition) {
-                ThrowArgument(innerException, resourceName, arg0);
+                ThrowArgument(innerException, resourceName, args);
             }
         }
 

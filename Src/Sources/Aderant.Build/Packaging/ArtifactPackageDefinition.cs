@@ -23,6 +23,8 @@ namespace Aderant.Build.Packaging {
 
         public ArtifactType ArtifactType { get; set; }
 
+        public bool Publish { get; set; } = true;
+
         public string Id { get; }
 
         public IReadOnlyCollection<IDependable> GetDependencies() {

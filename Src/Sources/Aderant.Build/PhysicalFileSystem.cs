@@ -579,10 +579,8 @@ namespace Aderant.Build {
             // CreateHardLink and CreateSymbolicLink cannot overwrite an existing file or link
             // so we need to delete the existing entry before we create the hard or symbolic link.
             DeleteFile(fileDestination, true);
-
-
-
-            // Check again if the file exists, it does we must be racing with another thread.
+            
+            // Check again if the file exists, if it does we must be racing with another thread.
             var exists = FileExists(fileDestination);
 
             if (!exists) {

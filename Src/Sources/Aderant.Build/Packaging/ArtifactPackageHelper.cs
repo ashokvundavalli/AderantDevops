@@ -27,6 +27,7 @@ namespace Aderant.Build.Packaging {
                 bool isInternalDevelopmentPackage = false;
                 bool isAutomationPackage = false;
                 bool isTestPackage = false;
+                bool publish = true;
                 ArtifactType artifactType = ArtifactType.None;
 
                 foreach (var file in group.Value) {
@@ -36,6 +37,7 @@ namespace Aderant.Build.Packaging {
                     ParseMetadata(file, "IsAutomationPackage", ref isAutomationPackage);
                     ParseMetadata(file, "IsTestPackage", ref isTestPackage);
                     ParseMetadata(file, "ArtifactType", ref artifactType);
+                    ParseMetadata(file, "Publish", ref publish);
 
                     PathSpec pathSpec;
                     if (!includeDirectoryPathsOnly) {
@@ -92,7 +94,8 @@ namespace Aderant.Build.Packaging {
                 var artifact = new ArtifactPackageDefinition(group.Key, pathSpecs) {
                     IsAutomaticallyGenerated = isAutomaticallyGenerated,
                     PackageType = packageType,
-                    ArtifactType = artifactType
+                    ArtifactType = artifactType,
+                    Publish = publish
                 };
 
                 if (artifact.GetFiles().Count > 0) {

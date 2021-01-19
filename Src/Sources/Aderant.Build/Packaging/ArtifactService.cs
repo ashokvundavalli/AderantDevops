@@ -212,8 +212,13 @@ namespace Aderant.Build.Packaging {
         internal BuildArtifact CreateBuildCacheArtifact(string container, IList<PathSpec> copyList, ArtifactPackageDefinition definition, IReadOnlyCollection<PathSpec> files) {
             ErrorUtilities.IsNotNull(pathBuilder, nameof(pathBuilder));
 
-            bool sendToArtifactCache;
-            string basePath = pathBuilder.CreatePath(container, out sendToArtifactCache);
+            bool sendToArtifactCache = definition.Publish;
+
+            string basePath = pathBuilder.CreatePath(container, out bool publishOverride);
+
+            if (publishOverride == false) {
+                sendToArtifactCache = false;
+            }
 
             if (basePath == null) {
                 logger.Info($"No path for {container} was generated. Artifact cache will not be created.");
@@ -452,7 +457,7 @@ namespace Aderant.Build.Packaging {
 
             List<BuildArtifact> artifactsWithStoragePaths = new List<BuildArtifact>();
 
-            // Phase 1 - assumes everything is a prebuilt/cache artifact
+            // Phase 1 - assumes everything is a prebuilt/cache artifact.
             var artifacts = pipelineService.GetAssociatedArtifacts();
             AssignDropLocation(artifactStagingDirectory, dropLocationInfo.BuildCacheLocation, artifacts, buildId);
             foreach (BuildArtifact artifact in artifacts) {
@@ -461,7 +466,7 @@ namespace Aderant.Build.Packaging {
                 }
             }
 
-            // Phase 2 - non-cache artifacts
+            // Phase 2 - non-cache artifacts.
             var builder = new ArtifactDropPathBuilder {
                 PrimaryDropLocation = dropLocationInfo.PrimaryDropLocation,
                 StagingDirectory = artifactStagingDirectory,
@@ -469,7 +474,7 @@ namespace Aderant.Build.Packaging {
             };
 
             foreach (var artifact in additionalArtifacts) {
-                BuildArtifact buildArtifact = CreateArtifact(artifact, artifact.GetRootDirectory(), true);
+                BuildArtifact buildArtifact = CreateArtifact(artifact, artifact.GetRootDirectory(), artifact.Publish);
 
                 if (artifact.ArtifactType == ArtifactType.Branch) {
                     buildArtifact.StoragePath = builder.CreatePath(
@@ -485,7 +490,7 @@ namespace Aderant.Build.Packaging {
 
             var commandBuilder = new VsoCommandBuilder();
 
-            // Ordering is an attempt to make sure we upload files first then the state files
+            // Ordering is an attempt to make sure we upload files first then the state files.
             var instructions = new PublishCommands {
                 ArtifactPaths = artifactsWithStoragePaths
                     .Select(s => PathSpec.Create(s.SourcePath, s.StoragePath))

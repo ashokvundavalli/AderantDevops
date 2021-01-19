@@ -14,6 +14,8 @@ namespace Aderant.Build.Tasks {
     /// </summary>
     public class CheckForDoubleWrites : Task {
 
+        internal static readonly string OriginalItemSpec = "OriginalItemSpec";
+
         [Required]
         public ITaskItem[] FileList { get; set; }
 
@@ -23,9 +25,9 @@ namespace Aderant.Build.Tasks {
             List<PathSpec> paths = new List<PathSpec>(FileList.Length);
 
             foreach (ITaskItem taskItem in FileList) {
-                string metadata = taskItem.GetMetadata("OriginalItemSpec");
+                string metadata = taskItem.GetMetadata(OriginalItemSpec);
 
-                ErrorUtilities.VerifyThrowArgument(metadata.Length != 0, "CheckForDoubleWrites.FileList has task item {0} is missing OriginalItemSpec metadata.", taskItem.ItemSpec);
+                ErrorUtilities.VerifyThrowArgument(metadata.Length != 0, "CheckForDoubleWrites.FileList has task item {0} is missing {1} metadata.", taskItem.ItemSpec, OriginalItemSpec);
 
                 paths.Add(new PathSpec(metadata, taskItem.ItemSpec));
             }

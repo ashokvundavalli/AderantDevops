@@ -20,7 +20,7 @@ namespace UnitTest.Build {
 
         [TestMethod]
         [ExpectedException(typeof(ArgumentException))]
-        public void Root_cannot_be_unsed() {
+        public void Root_cannot_be_unset() {
             var ctx = new BuildOperationContext();
 
             ctx.BuildRoot = "abc";
