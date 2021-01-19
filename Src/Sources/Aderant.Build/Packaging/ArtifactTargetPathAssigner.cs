@@ -10,7 +10,7 @@ namespace Aderant.Build.Packaging {
         private readonly IBuildPipelineService pipelineService;
         internal static readonly string DestinationSubDirectory = "DestinationSubDirectory";
 
-        internal string PackageTestDirectory = string.Empty;
+        internal string BinariesTestDirectory = string.Empty;
 
         public ArtifactTargetPathAssigner(IBuildPipelineService pipelineService) {
             this.pipelineService = pipelineService;
@@ -31,7 +31,7 @@ namespace Aderant.Build.Packaging {
                 }
 
                 if (artifact.PackageType.Contains(ArtifactPackageType.TestPackage)) {
-                    AddArtifact(pathMap, PackageTestDirectory, artifact, ArtifactPackageType.TestPackage);
+                    AddArtifact(pathMap, BinariesTestDirectory, artifact, ArtifactPackageType.TestPackage);
                     deliverToRoot = false;
                 }
 

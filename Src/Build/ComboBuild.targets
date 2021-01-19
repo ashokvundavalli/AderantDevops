@@ -458,14 +458,14 @@
     <PropertyGroup>
       <ProductArchiveFileName Condition="'$(ProductArchiveFileName)' == ''">Binaries.zip</ProductArchiveFileName>
       <ProductArchiveFile>$(ArtifactStagingDirectory)package\$(ProductArchiveFileName)</ProductArchiveFile>
-      <PackageTestDirectory Condition="'$(PackageTestDirectory)' == ''">Test\</PackageTestDirectory>
+      <BinariesTestDirectory Condition="'$(BinariesTestDirectory)' == ''">Test\</BinariesTestDirectory>
     </PropertyGroup>
 
     <MakeDir Directories="$(LocalExpertBinariesDirectory)"
              Condition="!Exists('$(LocalExpertBinariesDirectory)')" />
 
     <GetArtifactPaths IncludeGeneratedArtifacts="true"
-      PackageTestDirectory="$(PackageTestDirectory)">
+      BinariesTestDirectory="$(BinariesTestDirectory)">
       <Output TaskParameter="ArtifactPaths" ItemName="LocalPackagePaths" />
     </GetArtifactPaths>
 

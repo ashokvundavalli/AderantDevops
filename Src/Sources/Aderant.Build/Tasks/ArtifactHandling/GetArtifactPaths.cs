@@ -8,14 +8,14 @@ namespace Aderant.Build.Tasks.ArtifactHandling {
 
         public bool IncludeGeneratedArtifacts { get; set; }
 
-        public string PackageTestDirectory { get; set; }
+        public string BinariesTestDirectory { get; set; }
 
         [Output]
         public ITaskItem[] ArtifactPaths { get; private set; }
 
         public override bool ExecuteTask() {
             var processor = new ArtifactTargetPathAssigner(PipelineService) {
-                PackageTestDirectory = PackageTestDirectory
+                BinariesTestDirectory = BinariesTestDirectory
             };
             ArtifactPaths = processor.CreateTaskItemsWithTargetPaths(IncludeGeneratedArtifacts).ToArray();
 
