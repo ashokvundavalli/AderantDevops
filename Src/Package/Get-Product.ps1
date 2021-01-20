@@ -192,7 +192,7 @@ begin {
         )
 
         process {
-            [System.IO.FileInfo[]]$archives = Get-ChildItem -Path $binariesDirectory -File -Filter '*.zip'
+            [System.IO.FileInfo[]]$archives = Get-ChildItem -Path $binariesDirectory -File -Include "*.zip", "*.7z" -Depth 1
 
             [double]$totalTime = 0
 
@@ -201,7 +201,7 @@ begin {
                 return
             }
 
-            if ($archives.Name.Contains("Binaries.zip")) {
+            if ($archives.Name.Contains('Binaries.')) {
                 [string]$expertSourceDirectory = Join-Path -Path $binariesDirectory -ChildPath 'ExpertSource'
                 [string]$logDirectory = Join-Path -Path $binariesDirectory -ChildPath 'Logs'
 
@@ -216,8 +216,10 @@ begin {
             Write-Information 'To directory:'
             Write-Information "$binariesDirectory`r`n"
 
+            [string]$zipExe = [System.IO.Path]::GetFullPath((Join-Path -Path $PSScriptRoot -ChildPath '\..\Build.Tools\7z.exe'))
+
             foreach ($archive in $archives) {
-                [double]$executionTime = [System.Math]::Round((Measure-Command { [System.IO.Compression.ZipFile]::ExtractToDirectory($archive.FullName, $binariesDirectory) }).TotalSeconds, 2)
+                [double]$executionTime = [System.Math]::Round((Measure-Command { Start-Process -FilePath $zipExe -ArgumentList "x -o$binariesDirectory $($archive.FullName) -r" -Wait -PassThru -NoNewWindow }).TotalSeconds, 2)
                 Write-Host "Extracted archive: '$($archive.Name)' in: $executionTime seconds." -ForegroundColor Cyan
                 $totalTime = $totalTime + $executionTime
             }

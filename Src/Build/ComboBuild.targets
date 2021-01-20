@@ -456,7 +456,7 @@
 
   <Target Name="GetFilesForPackage">
     <PropertyGroup>
-      <ProductArchiveFileName Condition="'$(ProductArchiveFileName)' == ''">Binaries.zip</ProductArchiveFileName>
+      <ProductArchiveFileName Condition="'$(ProductArchiveFileName)' == ''">Binaries.7z</ProductArchiveFileName>
       <ProductArchiveFile>$(ArtifactStagingDirectory)package\$(ProductArchiveFileName)</ProductArchiveFile>
       <BinariesTestDirectory Condition="'$(BinariesTestDirectory)' == ''">Test\</BinariesTestDirectory>
     </PropertyGroup>
@@ -667,7 +667,7 @@ $shortcut.Save()' />
         <ArtifactId>packages</ArtifactId>
         <ArtifactType>Branch</ArtifactType>
       </AdditionalArtifacts>
-      <AdditionalArtifacts Include="$(ArtifactStagingDirectory)ServerImage\ExpertServerImage.zip"
+      <AdditionalArtifacts Include="$(ArtifactStagingDirectory)ServerImage\ExpertServerImage.7z"
          Condition="Exists('$(ArtifactStagingDirectory)ServerImage')">
         <ArtifactId>ServerImage</ArtifactId>
         <ArtifactType>Branch</ArtifactType>
@@ -702,7 +702,7 @@ $shortcut.Save()' />
       <ShowCopyToDropTarget>ShowCopyToDropLog</ShowCopyToDropTarget>
       <ExcludeSubDirectories>$(ArtifactStagingDirectory)ServerImage\ExpertServerImage</ExcludeSubDirectories>
       <CopyToDropCommand>
-        robocopy.exe "%(ArtifactPaths.FullPath)" "%(TargetPath)" %(ArtifactPaths.FileName)%(ArtifactPaths.Extension).zip Binaries.zip ExpertServerImage.zip *.nupkg *.metadata *.sha1 /MT /S /NDL /R:10 /NP /LOG:"$(ArtifactStagingDirectory)CopyToDrop.log" /TEE /XD "$(ExcludeSubDirectories)"
+        robocopy.exe "%(ArtifactPaths.FullPath)" "%(TargetPath)" %(ArtifactPaths.FileName)%(ArtifactPaths.Extension).zip Binaries.7z ExpertServerImage.7z *.nupkg *.metadata *.sha1 /MT /S /NDL /R:10 /NP /LOG:"$(ArtifactStagingDirectory)CopyToDrop.log" /TEE /XD "$(ExcludeSubDirectories)"
         IF %ERRORLEVEL% LEQ 4 EXIT /B 0
       </CopyToDropCommand>
     </PropertyGroup>
@@ -732,7 +732,6 @@ $shortcut.Save()' />
       <LocalExpertBinariesDirectory>$(ArtifactStagingDirectory)</LocalExpertBinariesDirectory>
       <ZipFileDirectory Condition="'$(ZipFileDirectory)' == ''">$(ArtifactStagingDirectory)</ZipFileDirectory>
       <ZipFile>$(ZipFileDirectory)\ExpertBinaries.zip</ZipFile>
-      <EliteEnterpriseZipFile>$(ZipFileDirectory)\ExpertEEIntegrationBinaries.zip</EliteEnterpriseZipFile>
       <LicenseZipFile>$(ZipFileDirectory)\LicenseGenerator.zip</LicenseZipFile>
       <RegistrationZipFile>$(ZipFileDirectory)\RegistrationService.zip</RegistrationZipFile>
       <EliteEnterpriseBinOverrideDirectory>$(LocalExpertBinariesDirectory)\ExpertSource\EEBin</EliteEnterpriseBinOverrideDirectory>

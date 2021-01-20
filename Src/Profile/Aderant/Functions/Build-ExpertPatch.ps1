@@ -4,8 +4,8 @@
 .Description
     Builds a patch for the current branch. Driven from the PatchingManifest.xml.
 .Example
-        Get-ProductZip; Build-ExpertPatch
-    Gets the latest product zip from the build server then builds a patch using those binaries.
+    Get-Product; Build-ExpertPatch
+    Gets the latest product archive from the build server then builds a patch using those binaries.
 .Example
         Get-Product; Build-ExpertPatch
     Gets the latest product from the build server then builds a patch using those binaries.
@@ -23,7 +23,7 @@ function Build-ExpertPatch() {
     )
 
     if (-not $noproduct.IsPresent) {
-        Get-ProductZip
+        Get-Product
     }
 
     [string]$cmd = "xcopy \\dfs.aderant.com\expertsuite\Main\Build.Tools\Current\* /S /Y $($global:ShellContext.PackageScriptsDirectory)"
