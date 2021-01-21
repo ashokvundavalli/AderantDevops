@@ -162,7 +162,7 @@ begin {
 
             Start-Process -FilePath "robocopy.exe" -ArgumentList @($componentPath, $binariesDirectory, "*.*", "/NJH", "/MT", "R:10", "/W:1") -Wait -NoNewWindow
 
-            [System.IO.FileInfo]$filesToValidate = Get-ChildItem -Path $binariesDirectory -File -Filter "*.sha1"
+            [System.IO.FileInfo[]]$filesToValidate = Get-ChildItem -Path $binariesDirectory -File -Filter "*.sha1"
 
             if (-not $null -eq $filesToValidate) {
                 $action = {
