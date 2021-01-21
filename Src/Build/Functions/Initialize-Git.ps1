@@ -79,7 +79,6 @@ function ConfigureGit([Aderant.Build.BuildOperationContext]$context) {
     & git config --global credential.tfs.ap.aderant.com.integrated true
     & git config --global core.autocrlf false
     & git config --global http.emptyAuth true
-    & git config --global credential.authority ntlm
     & git config --global fetch.prune true
 
     if ($context.IsDesktopBuild) {
