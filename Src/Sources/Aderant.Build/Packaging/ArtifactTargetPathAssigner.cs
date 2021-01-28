@@ -10,7 +10,8 @@ namespace Aderant.Build.Packaging {
         private readonly IBuildPipelineService pipelineService;
         internal static readonly string DestinationSubDirectory = "DestinationSubDirectory";
 
-        internal string BinariesTestDirectory = string.Empty;
+        internal string IntegrationTestDirectory = string.Empty;
+        internal string AutomatedTestDirectory = string.Empty;
 
         public ArtifactTargetPathAssigner(IBuildPipelineService pipelineService) {
             this.pipelineService = pipelineService;
@@ -31,12 +32,22 @@ namespace Aderant.Build.Packaging {
                 }
 
                 if (artifact.PackageType.Contains(ArtifactPackageType.TestPackage)) {
-                    AddArtifact(pathMap, BinariesTestDirectory, artifact, ArtifactPackageType.TestPackage);
+                    AddArtifact(pathMap, IntegrationTestDirectory, artifact, ArtifactPackageType.TestPackage);
                     deliverToRoot = false;
                 }
 
                 if (artifact.PackageType.Contains(ArtifactPackageType.AutomationPackage)) {
-                    AddArtifact(pathMap, @"Test\Automation", artifact, ArtifactPackageType.AutomationPackage);
+                    string destination;
+
+                    if (!AutomatedTestDirectory.EndsWith(@"Automation\", StringComparison.OrdinalIgnoreCase)) {
+                        // Ensure artifacts not packaged within the Automation sub-directory are copied to the appropriate location.
+                        destination = artifact.Name.IndexOf("AutomationTest", StringComparison.OrdinalIgnoreCase) == -1 ? string.Concat(AutomatedTestDirectory, @"Automation\") : AutomatedTestDirectory;
+                    } else {
+                        // Default case for backwards compatibility.
+                        destination = AutomatedTestDirectory;
+                    }
+
+                    AddArtifact(pathMap, destination, artifact, ArtifactPackageType.AutomationPackage);
                     deliverToRoot = false;
                 }
 

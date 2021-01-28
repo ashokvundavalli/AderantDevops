@@ -458,14 +458,20 @@
     <PropertyGroup>
       <ProductArchiveFileName Condition="'$(ProductArchiveFileName)' == ''">Binaries.7z</ProductArchiveFileName>
       <ProductArchiveFile>$(ArtifactStagingDirectory)package\$(ProductArchiveFileName)</ProductArchiveFile>
+      <!-- Default paths for backwards compatibility. -->
       <BinariesTestDirectory Condition="'$(BinariesTestDirectory)' == ''">Test\</BinariesTestDirectory>
+      <!-- The subdirectory integration tests will be placed in. -->
+      <IntegrationTestDirectory Condition="'$(IntegrationTestDirectory)' == ''">$(BinariesTestDirectory)</IntegrationTestDirectory>
+      <!-- The subdirectory automated tests will be placed in. -->
+      <AutomatedTestDirectory Condition="'$(AutomatedTestDirectory)' == ''">$(BinariesTestDirectory)Automation\</AutomatedTestDirectory>
     </PropertyGroup>
 
     <MakeDir Directories="$(LocalExpertBinariesDirectory)"
              Condition="!Exists('$(LocalExpertBinariesDirectory)')" />
 
     <GetArtifactPaths IncludeGeneratedArtifacts="true"
-      BinariesTestDirectory="$(BinariesTestDirectory)">
+                      IntegrationTestDirectory="$(IntegrationTestDirectory)"
+                      AutomatedTestDirectory="$(AutomatedTestDirectory)">
       <Output TaskParameter="ArtifactPaths" ItemName="LocalPackagePaths" />
     </GetArtifactPaths>
 

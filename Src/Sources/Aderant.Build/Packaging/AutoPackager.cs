@@ -126,8 +126,17 @@ namespace Aderant.Build.Packaging {
             var uniqueContent = new List<PathSpec>();
 
             foreach (var path in filesFromDefinition) {
-                // Do not package Microsoft assemblies.
-                bool add = !(path.Location != null && Path.GetFileName(path.Location).StartsWith("Microsoft"));
+                if (string.IsNullOrWhiteSpace(path.Location)) {
+                    // Nothing to package.
+                    continue;
+                }
+                
+                if (Path.GetFileName(path.Location).StartsWith("Microsoft")) {
+                    // Do not package Microsoft assemblies.
+                    continue;
+                }
+
+                bool add = true;
 
                 foreach (PathSpec spec in allFiles) {
                     if (path == spec) {
