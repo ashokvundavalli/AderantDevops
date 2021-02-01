@@ -22,7 +22,7 @@ namespace Aderant.Build {
     public class PhysicalFileSystem : IFileSystem2 {
         private static class LinkHelper {
             public static readonly CreateSymlinkLink CreateSymlinkLink = (newFileName, target, flags) => {
-                var result = NativeMethods.CreateSymbolicLink(newFileName, target, 0);
+                bool result = NativeMethods.CreateSymbolicLink(newFileName, target, 0);
                 if (!result) {
                     CheckLastError(newFileName, target);
                 }
@@ -30,7 +30,7 @@ namespace Aderant.Build {
             };
 
             public static readonly CreateSymlinkLink CreateHardlink = (newFileName, target, flags) => {
-                var result = NativeMethods.CreateHardLink(newFileName, target, IntPtr.Zero);
+                bool result = NativeMethods.CreateHardLink(newFileName, target, IntPtr.Zero);
                 if (!result) {
                     CheckLastError(newFileName, target);
                 }

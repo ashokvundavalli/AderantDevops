@@ -616,7 +616,7 @@ $shortcut.Save()' />
       <ExclusionFileSwitch Condition="Exists('$(ExclusionFile)')">-xr@$(ExclusionFile)</ExclusionFileSwitch>
     </PropertyGroup>
 
-    <Exec Command='"$(BuildToolsDirectory)7z.exe" -bb1 a "$(ProductArchiveFile)" "$(LocalExpertBinariesDirectory)*" $(ExclusionFileSwitch)' />
+    <Exec Command='"$(BuildToolsDirectory)7z.exe" -m0=lzma -bb1 a "$(ProductArchiveFile)" "$(LocalExpertBinariesDirectory)*" $(ExclusionFileSwitch)' />
 
     <PropertyGroup>
       <CreateArchiveHashScript>
@@ -808,12 +808,8 @@ $shortcut.Save()' />
     <MakeDir
       Directories="$(ZipFileDirectory)"/>
 
-    <!-- Create ZIP for ExpertSource -->
-    <MSBuild.Community.Tasks.Zip
-      Files="@(ZipSourceFiles)"
-      ZipFileName="$(ZipFile)"
-      WorkingDirectory="$(LocalExpertBinariesDirectory)"
-      ParallelCompression="false" />
+    <!-- Create archive for ExpertSource -->
+    <Exec Command='"$(BuildToolsDirectory)7z.exe" -m0=lzma -bb1 a "$(ZipFile)" "@(ZipSourceFiles)"' />
   </Target>
 
 </Project>
