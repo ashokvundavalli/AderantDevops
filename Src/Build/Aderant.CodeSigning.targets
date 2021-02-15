@@ -1,5 +1,5 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-         ToolsVersion="14.0">
+         ToolsVersion="Latest">
 
   <PropertyGroup>
     <CodeSigningEnabled Condition="'$(CodeSigningEnabled)' == ''">true</CodeSigningEnabled>
@@ -45,6 +45,12 @@
   </Choose>
 
   <Choose>
+    <When Condition="'$(WindowsKits_10)' != ''">
+      <PropertyGroup>
+        <WindowsSdkDir>$(MSBuildProgramFiles32)\Microsoft SDKs\Windows\v10.0A\</WindowsSdkDir>
+        <FxToolsDir>NETFX 4.8 Tools</FxToolsDir>
+      </PropertyGroup>
+    </When>
     <When Condition="'$(WindowsSdkDir_81A)' != ''">
       <PropertyGroup>
         <WindowsSdkDir>$(WindowsSdkDir_81A)</WindowsSdkDir>
