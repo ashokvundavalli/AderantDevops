@@ -57,6 +57,10 @@ namespace Aderant.Build.PipelineService {
             return InvokeServiceAction(() => Contract.GetContext());
         }
 
+        public BuildOperationContext GetContext(QueryOptions options) {
+            return InvokeServiceAction(() => Contract.GetContext(options));
+        }
+
         public void RecordProjectOutputs(ProjectOutputSnapshot snapshot) {
             InvokeServiceAction(() => Contract.RecordProjectOutputs(snapshot));
         }
@@ -130,6 +134,10 @@ namespace Aderant.Build.PipelineService {
         /// </summary>
         public void SetProgress(string currentOperation, string activity, string statusDescription) {
             InvokeServiceAction(() => Contract.SetProgress(currentOperation, activity, statusDescription));
+        }
+
+        public BuildStateFile GetStateFile(string container) {
+            return InvokeServiceAction(() => Contract.GetStateFile(container));
         }
 
         public void TrackInputFileDependencies(string solutionRoot, IReadOnlyCollection<TrackedInputFile> fileDependencies) {

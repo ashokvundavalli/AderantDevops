@@ -319,7 +319,7 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 // A single field declaration may have multiple fields created using declarator syntax.
                 // Example:
                 //      public static int item0 = 0, item1, item2 = 2;
-                // Add each individual declarator-defined field to the collection of fields to evalaute.
+                // Add each individual declarator-defined field to the collection of fields to evaluate.
                 declarations.AddRange(
                     fieldDeclaration
                         .Declaration
@@ -416,7 +416,7 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                     }
 
                     // If the current expression is an assignment expression
-                    //      and the next expression in the list is not some form of disposale or 'Collection Add' expression...
+                    //      and the next expression in the list is not some form of disposal or 'Collection Add' expression...
                     if (orderedExpressions[i + 1].Item2 != ExpressionType.Dispose &&
                         orderedExpressions[i + 1].Item2 != ExpressionType.Using &&
                         orderedExpressions[i + 1].Item2 != ExpressionType.CollectionAdd) {

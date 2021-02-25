@@ -123,9 +123,7 @@
       ContextEndpoint="$(ContextEndpoint)"
       SolutionRoot="$(SolutionRoot)"
       RelativeFrom="$(BinModuleDirectory);$(BinTestDirectory)"
-      ArtifactDefinitions="@(PackageArtifact);@(_PackageArtifact)"
-      AssemblyVersion="$(AssemblyVersion)"
-      FileVersion="$(FileVersion)" />
+      ArtifactDefinitions="@(PackageArtifact);@(_PackageArtifact)" />
 
   </Target>
 

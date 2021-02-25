@@ -6,7 +6,6 @@ using System.Threading.Tasks.Dataflow;
 using Aderant.Build;
 using Aderant.Build.Logging;
 using Aderant.Build.Packaging;
-using Aderant.Build.Packaging.Handlers;
 using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -19,16 +18,16 @@ namespace UnitTest.Build.Packaging {
         public TestContext TestContext { get; set; }
 
         [TestMethod]
-        public void CreateArtifacts() {
+        public void CreateArtifacts_does_not_throw() {
             var bucketMock = new Mock<IBucketPathBuilder>();
             bucketMock.Setup(s => s.GetBucketId(It.IsAny<string>())).Returns("");
 
             var fs = new Mock<IFileSystem>();
             fs.Setup(s => s.FileExists("Baz")).Returns(true);
             MockBulkCopy(fs);
-
-            var artifactService = new ArtifactService(new BuildPipelineServiceImpl(), fs.Object, NullLogger.Default);
-            artifactService.RegisterHandler(new XamlDropHandler("1.0.0.0", "9.9.9.9"));
+            
+            var pipelineService = new Moq.Mock<IBuildPipelineService>();
+            var artifactService = new ArtifactService(pipelineService.Object, fs.Object, NullLogger.Default);
 
             IEnumerable<PathSpec> specs = new List<PathSpec> { new PathSpec("Baz", "") };
 

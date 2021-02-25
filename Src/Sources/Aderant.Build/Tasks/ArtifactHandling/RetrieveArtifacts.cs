@@ -54,7 +54,7 @@ namespace Aderant.Build.Tasks.ArtifactHandling {
                 Log.LogMessage("The following items are in the replication whitelist: " + string.Join(";", whitelist), null);
             }
 
-            service.Resolve(Context, containerKey, SolutionRoot, WorkingDirectory);
+            service.Resolve(containerKey, SolutionRoot, WorkingDirectory);
             ArtifactRestoreSkipped = service.ArtifactRestoreSkipped;
 
             return !Log.HasLoggedErrors;

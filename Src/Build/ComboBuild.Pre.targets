@@ -207,7 +207,6 @@
       BranchConfigFile="$(BranchConfigFile)"
       ModulesRootPath="$(SolutionRoot)"
       ModuleName="$(SolutionRoot)"
-      DropPath="$(XamlBuildDropLocation)"
       EnabledResolvers="@(EnabledResolvers)" />
 
   </Target>

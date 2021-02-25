@@ -126,6 +126,7 @@
     <Compile Include="Packaging\ProductAssembler.cs" />
     <Compile Include="ProjectSystem\StateTracking\TrackedMetadataFile.cs" />
     <Compile Include="DependencyResolver\ResolverSettingsReader.cs" />
+    <Compile Include="PipelineService\QueryOptions.cs" />
     <Compile Include="Tasks\Testing\BuildTestRunParametersXml.cs" />
     <Compile Include="Utilities\PathComparer.cs" />
     <Compile Include="Model\CommitConfiguration.cs" />
@@ -183,7 +184,6 @@
     <Compile Include="Utilities\TreePrinter.cs" />
     <Compile Include="DependencyAnalyzer\AmbiguousNameException.cs" />
     <Compile Include="Packaging\ArtifactDropPathBuilder.cs" />
-    <Compile Include="Packaging\IArtifactProcessContributor.cs" />
     <Compile Include="Packaging\LinkCommands.cs" />
     <Compile Include="PerformanceTimer.cs" />
     <Compile Include="PipelineService\BuildPipelineServiceClient.cs" />
@@ -261,14 +261,12 @@
     <Compile Include="Tasks\ArtifactHandling\CollectArtifactsForPublishing.cs" />
     <Compile Include="Packaging\PathSpec.cs" />
     <Compile Include="Tasks\PrintBanner.cs" />
-    <Compile Include="Packaging\Handlers\PullRequestHandler.cs" />
     <Compile Include="Tasks\ArtifactHandling\RetrieveArtifacts.cs" />
     <Compile Include="Tasks\GetOrPutContextVariable.cs" />
     <Compile Include="ProjectSystem\StateTracking\StateFileBase.cs" />
     <Compile Include="Tasks\RecordProjectOutputs.cs" />
     <Compile Include="Tasks\WaitForDebugger.cs" />
     <Compile Include="Tasks\WriteBuildStateFile.cs" />
-    <Compile Include="Packaging\Handlers\XamlDropHandler.cs" />
     <Compile Include="DependencyAnalyzer\DependencyGraph.cs" />
     <Compile Include="VersionControl\GitVersionControlService.cs" />
     <Compile Include="VersionControl\IVersionControlService.cs" />

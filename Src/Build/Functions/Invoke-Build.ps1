@@ -14,7 +14,6 @@ function ApplyBranchConfig($context, [string]$root) {
         $context.DropLocationInfo.PrimaryDropLocation = $config.BranchConfig.DropLocations.PrimaryDropLocation
         $context.DropLocationInfo.BuildCacheLocation = $config.BranchConfig.DropLocations.BuildCacheLocation
         $context.DropLocationInfo.PullRequestDropLocation = $config.BranchConfig.DropLocations.PullRequestDropLocation
-        $context.DropLocationInfo.XamlBuildDropLocation = $config.BranchConfig.DropLocations.XamlBuildDropLocation
 
         if ($config.BranchConfig.SelectNodes('ArtifactMetadataConfiguration').Count -gt 0 -and $config.BranchConfig.ArtifactMetadataConfiguration.SelectNodes('PackageHashVersionExclusions').Count -gt 0) {
             $context.BuildMetadata.PackageHashVersionExclusions = $config.BranchConfig.ArtifactMetadataConfiguration.PackageHashVersionExclusions.Split(';')
@@ -151,7 +150,6 @@ function CreateToolArgumentString($context, $remainingArgs) {
         $set.Add("/p:PrimaryDropLocation=$($context.DropLocationInfo.PrimaryDropLocation)")
         $set.Add("/p:BuildCacheLocation=$($context.DropLocationInfo.BuildCacheLocation)")
         $set.Add("/p:PullRequestDropLocation=$($context.DropLocationInfo.PullRequestDropLocation)")
-        $set.Add("/p:XamlBuildDropLocation=$($context.DropLocationInfo.XamlBuildDropLocation)")
 
         $set.Add("/p:ProductManifestPath=$($context.ProductManifestPath)")
 

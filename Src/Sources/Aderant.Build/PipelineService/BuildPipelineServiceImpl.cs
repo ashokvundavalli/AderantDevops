@@ -5,7 +5,6 @@ using System.Linq;
 using System.ServiceModel;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Markup;
 using Aderant.Build.Packaging;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
@@ -71,12 +70,37 @@ namespace Aderant.Build.PipelineService {
 
         public BuildOperationContext GetContext() {
             // If null then not called via WCF (perhaps being called by the build host itself)
-            if (OperationContext.Current != null) {
-                OperationContext.Current.OperationCompleted += OnCurrentOnOperationCompleted;
+            OperationContext operationContext = OperationContext.Current;
+            if (operationContext != null) {
+                operationContext.OperationCompleted += OnCurrentOnOperationCompleted;
                 contextLock.EnterReadLock();
             }
 
             return ctx;
+        }
+
+        public BuildOperationContext GetContext(QueryOptions options) {
+            var currentContext = GetContext();
+
+            // Construct a new slim context
+            var newContext = new BuildOperationContext {
+                ArtifactStagingDirectory = currentContext.ArtifactStagingDirectory,
+                BuildRoot = currentContext.BuildRoot,
+                BuildScriptsDirectory = currentContext.BuildScriptsDirectory,
+                Environment = currentContext.Environment,
+                BuildMetadata = currentContext.BuildMetadata,
+                IsDesktopBuild = currentContext.IsDesktopBuild,
+            };
+
+            if (options.IncludeSourceTreeMetadata.GetValueOrDefault()) {
+                newContext.SourceTreeMetadata = currentContext.SourceTreeMetadata;
+            }
+
+            if (options.IncludeStateFiles.GetValueOrDefault()) {
+                newContext.StateFiles = currentContext.StateFiles;
+            }
+
+            return newContext;
         }
 
         private void OnCurrentOnOperationCompleted(object sender, EventArgs args) {
@@ -245,6 +269,13 @@ namespace Aderant.Build.PipelineService {
                         }
                     });
             }
+        }
+
+        public BuildStateFile GetStateFile(string container) {
+            ErrorUtilities.IsNotNull(container, nameof(container));
+
+            var context = GetContext();
+            return context.GetStateFile(container);
         }
 
         /// <summary>

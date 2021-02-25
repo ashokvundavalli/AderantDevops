@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
-using System.Windows.Controls;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
@@ -24,19 +23,19 @@ namespace Aderant.Build {
         [DataMember]
         private BuildMetadata buildMetadata;
 
-        [DataMember]
+        [DataMember(EmitDefaultValue = false)]
         private string buildScriptsDirectory;
 
         [DataMember]
         private BuildStateMetadata buildStateMetadata;
 
-        [DataMember]
+        [DataMember(EmitDefaultValue = false)]
         private string buildSystemDirectory;
 
         [DataMember]
         private DropLocationInfo drops;
 
-        [DataMember]
+        [DataMember(EmitDefaultValue = false)]
         private bool isDesktopBuild;
 
         [DataMember(EmitDefaultValue = false)]
@@ -63,7 +62,7 @@ namespace Aderant.Build {
         [DataMember]
         private ICollection<string> writtenStateFiles;
 
-        [DataMember]
+        [DataMember(EmitDefaultValue = false)]
         private string buildRoot;
 
         public BuildOperationContext() {
@@ -323,7 +322,7 @@ namespace Aderant.Build {
             return null;
         }
 
-        public BuildStateFile GetStateFile(string bucketTag) {
+        internal BuildStateFile GetStateFile(string bucketTag) {
             var files = StateFiles;
             if (files != null)
                 foreach (var file in files) {
@@ -348,9 +347,6 @@ namespace Aderant.Build {
 
         [DataMember]
         public string PullRequestDropLocation { get; set; }
-
-        [DataMember]
-        public string XamlBuildDropLocation { get; set; }
     }
 
     [CollectionDataContract]

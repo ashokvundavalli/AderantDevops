@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Aderant.Build.Packaging;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
+using Aderant.Build.Tasks.ArtifactHandling;
 
 namespace Aderant.Build.PipelineService {
 
@@ -25,6 +26,9 @@ namespace Aderant.Build.PipelineService {
 
         [OperationContract]
         BuildOperationContext GetContext();
+
+        [OperationContract(Name = "GetContextWithOptions")]
+        BuildOperationContext GetContext(QueryOptions options);
 
         /// <remarks>
         /// Not marked as OneWay as torn reads with GetProjectSnapshots have been observed
@@ -82,6 +86,9 @@ namespace Aderant.Build.PipelineService {
         /// <param name="statusDescription">The current status of the operation, e.g., "35 of 50 items Copied." or "95% completed." or "100 files purged.".</param>
         [OperationContract(IsOneWay = true)]
         void SetProgress(string currentOperation, string activity, string statusDescription);
+
+        [OperationContract]
+        BuildStateFile GetStateFile(string container);
     }
 
 

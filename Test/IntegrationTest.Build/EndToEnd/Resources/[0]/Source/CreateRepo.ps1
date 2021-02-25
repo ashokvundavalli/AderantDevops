@@ -3,6 +3,14 @@ Set-StrictMode -Version 'Latest'
 & git init .
 
 [string]$cwd = Get-Location
+
+$gitattributesFile = $cwd + '\.gitattributes'
+
+[System.IO.File]::WriteAllLines($gitattributesFile, '* -text')
+
+& git add '.gitattributes'
+& git commit -m 'Added git attributes'
+
 $file = $cwd + '\.gitignore'
 
 [System.IO.File]::WriteAllLines($file, @'

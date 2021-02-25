@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using Aderant.Build.PipelineService;
+using Aderant.Build.Tasks.ArtifactHandling;
 using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks {
@@ -135,6 +136,13 @@ namespace Aderant.Build.Tasks {
             }
 
             return PipelineService.GetVariable(Scope, VariableName);
+        }
+
+        protected override BuildOperationContext ObtainContext() {
+            var ctx = PipelineService.GetContext(new QueryOptions {
+                IncludeBuildMetadata = false, IncludeSourceTreeMetadata = false, IncludeStateFiles = false
+            });
+            return ctx;
         }
     }
 }

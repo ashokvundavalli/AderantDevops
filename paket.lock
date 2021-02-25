@@ -271,6 +271,8 @@ NUGET
       LibGit2Sharp.NativeBinaries (2.0.306)
     LibGit2Sharp.NativeBinaries (2.0.306)
     MSBuildTasks (1.5.0.235)
+    MSTest.TestAdapter (2.1.2)
+    MSTest.TestFramework (2.1.2)
     System.Numerics.Vectors (4.5)
     System.Runtime.CompilerServices.Unsafe (4.5.3)
     System.Threading.Tasks.Dataflow (4.11.1)
