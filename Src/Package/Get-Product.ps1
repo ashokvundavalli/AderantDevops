@@ -66,6 +66,10 @@ begin {
 					throw 'Refusing to clean a path containing Program Files/Data.'
 				}
 
+				if ($binariesDirectory -in 'C:\AderantExpert', 'C:\AderantExpert\')  {
+					throw 'Refusing to clean AderantExpert folder.'
+				}
+
                 if (Test-Path -Path ([System.IO.Path]::Combine($binariesDirectory, '.git'))) {
                     throw 'Refusing a clean a source controlled directory.'
                 }
