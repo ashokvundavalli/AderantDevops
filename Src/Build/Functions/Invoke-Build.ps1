@@ -604,6 +604,12 @@ function global:Invoke-Build2 {
         [Parameter()]
         [switch]$SkipNugetPackageHashCheck,
 
+        <#
+        Overrides user prompts.
+        #>
+        [Parameter()]
+        [Switch]$Force,
+
         [Parameter(ValueFromRemainingArguments)]
         [string[]]$RemainingArgs
     )
@@ -615,11 +621,20 @@ function global:Invoke-Build2 {
         throw '-Release must be specified when suppressing diagnostics.'
     }
 
-    if ($Clean.IsPresent) {
-        Write-Host "You have specified 'Clean'." -ForegroundColor Yellow
-        Write-Information "Clean should be avoided as it prevents incremental builds which increases build times. If you find yourself needing this often please speak to a build engineer."
+    if ($Clean.IsPresent -and -not $PSCmdlet.MyInvocation.BoundParameters.ContainsKey('Force')) {
+        Write-Warning -Message "You have specified 'Clean'."
+        Write-Information 'Clean should be avoided as it prevents incremental builds which increases build times. If you find yourself needing this often please speak to a build engineer.'
 
-        if (-not($PSCmdlet.ShouldContinue("Continue cleaning", ""))) {
+        if (-not ($PSCmdlet.ShouldContinue("Continue cleaning", [string]::Empty))) {
+            return
+        }
+    }
+
+    if ($NoBuildCache.IsPresent -and -not $PSCmdlet.MyInvocation.BoundParameters.ContainsKey('Force')) {
+        Write-Warning -Message "You have specified 'NoBuildCache'."
+        Write-Information -MessageData 'The build cache should only be disabled under very specific circumstances. Please review the documentation to ensure you are using this command appropriately.'
+
+        if (-not ($PSCmdlet.ShouldContinue('Disable build cache', [string]::Empty))) {
             return
         }
     }
