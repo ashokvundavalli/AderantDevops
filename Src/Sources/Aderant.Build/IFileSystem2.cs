@@ -38,6 +38,8 @@ namespace Aderant.Build {
 
         void MakeFileWritable(string path);
 
+        DateTime GetLastAccessTimeUtc(string path);
+
         void MoveFile(string source, string destination);
 
         void CopyFile(string source, string destination);

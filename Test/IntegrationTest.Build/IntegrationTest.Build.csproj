@@ -138,6 +138,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="EndToEnd\TestBuildServiceHost.cs" />
+    <Compile Include="Packaging\ArtifactServiceTests.cs" />
     <Compile Include="Packaging\Web\WebPackagingTests.cs" />
     <Compile Include="PhysicalFileSystemTests.cs" />
     <Compile Include="ProjectTreeTests.cs" />

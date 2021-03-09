@@ -5,7 +5,7 @@ using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks {
     public sealed class GitVersion : Microsoft.Build.Utilities.Task {
-        private static ConcurrentDictionary<string, GitInfo> gitInfoCache = new ConcurrentDictionary<string, GitInfo>(StringComparer.OrdinalIgnoreCase);
+        private static readonly ConcurrentDictionary<string, GitInfo> gitInfoCache = new ConcurrentDictionary<string, GitInfo>(StringComparer.OrdinalIgnoreCase);
         private GitInfo results;
 
         [Required]

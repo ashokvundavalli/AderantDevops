@@ -117,6 +117,10 @@ namespace Aderant.Build {
             }
         }
 
+        public virtual DateTime GetLastAccessTimeUtc(string path) {
+            return File.GetLastAccessTimeUtc(path);
+        }
+
         public virtual IEnumerable<string> GetFiles(string path, string inclusiveFilter = null, bool recursive = true) {
             path = PathUtility.EnsureTrailingSlash(GetFullPath(path));
             if (string.IsNullOrEmpty(inclusiveFilter)) {

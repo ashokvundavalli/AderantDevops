@@ -327,6 +327,28 @@ namespace Aderant.Build.Packaging {
             return validatedPaths;
         }
 
+        internal readonly DateTime WriteTime = DateTime.UtcNow.AddYears(-1);
+
+        internal void UpdateWriteTimes(IList<PathSpec> fileWrites) {
+            foreach (PathSpec pathSpec in fileWrites) {
+                string file = pathSpec.Destination;
+
+                if (!fileSystem.FileExists(file)) {
+                    continue;
+                }
+
+                logger.Info("Updating file time stamp for file: {0} to: '{1}' -> '{2}'.", file, fileSystem.GetLastAccessTimeUtc(file), WriteTime);
+
+                try {
+                    File.SetCreationTimeUtc(file, WriteTime);
+                    File.SetLastWriteTimeUtc(file, WriteTime);
+                    File.SetLastAccessTimeUtc(file, WriteTime);
+                } catch (Exception ex) {
+                    logger.Error("There has been an error while processing the file {0}. {1}", file, ex.Message);
+                }
+            }
+        }
+
         private void RunResolveOperation(BuildStateFile stateFile, string solutionRoot, string container, List<ArtifactPathSpec> artifactPaths) {
             IEnumerable<Tuple<bool, string>> localArtifactArchives = FetchArtifacts(artifactPaths);
             if (stateFile != null && !localArtifactArchives.Any() && !stateFile.Outputs.IsNullOrEmpty()) {
@@ -344,6 +366,7 @@ namespace Aderant.Build.Packaging {
 
             CopyFiles(filesToRestore, true);
 
+            UpdateWriteTimes(filesToRestore);
         }
 
         private void ExtractArtifactArchives(IEnumerable<string> localArtifactArchives) {
@@ -421,11 +444,11 @@ namespace Aderant.Build.Packaging {
                 return copyOperations;
             }
 
-            var fileRestore = new FileRestore(localArtifactFiles, pipelineService, fileSystem, logger);
-
-            fileRestore.CommonOutputDirectory = CommonOutputDirectory;
-            fileRestore.CommonDependencyDirectory = CommonDependencyDirectory;
-            fileRestore.StagingDirectoryWhitelist = StagingDirectoryWhitelist;
+            var fileRestore = new FileRestore(localArtifactFiles, pipelineService, fileSystem, logger) {
+                CommonOutputDirectory = CommonOutputDirectory,
+                CommonDependencyDirectory = CommonDependencyDirectory,
+                StagingDirectoryWhitelist = StagingDirectoryWhitelist
+            };
 
             return fileRestore.BuildRestoreOperations(solutionRoot, containerKey, stateFile);
         }
