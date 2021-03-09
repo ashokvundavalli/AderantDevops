@@ -673,7 +673,7 @@ $shortcut.Save()' />
         <ArtifactId>packages</ArtifactId>
         <ArtifactType>Branch</ArtifactType>
       </AdditionalArtifacts>
-      <AdditionalArtifacts Include="$(ArtifactStagingDirectory)ServerImage\ExpertServerImage.7z"
+      <AdditionalArtifacts Include="$(ArtifactStagingDirectory)ServerImage\ExpertServerImage.zip"
          Condition="Exists('$(ArtifactStagingDirectory)ServerImage')">
         <ArtifactId>ServerImage</ArtifactId>
         <ArtifactType>Branch</ArtifactType>
@@ -708,7 +708,7 @@ $shortcut.Save()' />
       <ShowCopyToDropTarget>ShowCopyToDropLog</ShowCopyToDropTarget>
       <ExcludeSubDirectories>$(ArtifactStagingDirectory)ServerImage\ExpertServerImage</ExcludeSubDirectories>
       <CopyToDropCommand>
-        robocopy.exe "%(ArtifactPaths.FullPath)" "%(TargetPath)" %(ArtifactPaths.FileName)%(ArtifactPaths.Extension).zip Binaries.7z ExpertServerImage.7z *.nupkg *.metadata *.sha1 /MT /S /NDL /R:10 /NP /LOG:"$(ArtifactStagingDirectory)CopyToDrop.log" /TEE /XD "$(ExcludeSubDirectories)"
+        robocopy.exe "%(ArtifactPaths.FullPath)" "%(TargetPath)" %(ArtifactPaths.FileName)%(ArtifactPaths.Extension).zip Binaries.7z ExpertServerImage.zip *.nupkg *.metadata *.sha1 /MT /S /NDL /R:10 /NP /LOG:"$(ArtifactStagingDirectory)CopyToDrop.log" /TEE /XD "$(ExcludeSubDirectories)"
         IF %ERRORLEVEL% LEQ 4 EXIT /B 0
       </CopyToDropCommand>
     </PropertyGroup>
