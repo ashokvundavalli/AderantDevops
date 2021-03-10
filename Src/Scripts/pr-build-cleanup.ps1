@@ -22,6 +22,8 @@ function DeleteBuild($data) {
     }
 }
 
+Add-Type -AssemblyName System.Web
+
 $skip = 0
 $top = 100
 $branchName = [System.Web.HTTPUtility]::UrlEncode("refs/heads/master")
