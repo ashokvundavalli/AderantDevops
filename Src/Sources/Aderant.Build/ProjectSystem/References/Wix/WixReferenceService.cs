@@ -28,7 +28,7 @@ namespace Aderant.Build.ProjectSystem.References.Wix {
 
         public static string PackageType { get; set; } = "package";
 
-        protected override IUnresolvedAssemblyReference CreateUnresolvedReference(ProjectItem unresolved) {
+        protected override IUnresolvedAssemblyReference CreateUnresolvedReference(ProjectItem unresolved, ConfiguredProject owningProject) {
             var moniker = UnresolvedAssemblyReferenceMoniker.Create(unresolved);
 
             var reference = new UnresolvedWixReference(this, moniker);

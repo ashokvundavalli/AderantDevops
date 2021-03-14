@@ -401,12 +401,18 @@ namespace Aderant.Build.ProjectSystem {
 
         private static bool IsSdkStyleProject(ConfiguredProject configuredProject) {
             string propertyValue = configuredProject.InnerProject.GetPropertyValue("TargetFramework");
-            if (propertyValue.StartsWith("netstandard", StringComparison.OrdinalIgnoreCase)) {
-                return configuredProject.InnerProject.Imports.Any(s => s.SdkResult != null);
+            if (propertyValue.StartsWith("net", StringComparison.OrdinalIgnoreCase)) {
+                var result = configuredProject.InnerProject.Imports.Any(s => s.SdkResult != null);
+                return configuredProject.IsSdkStyeProject = result;
             }
 
             return false;
         }
+
+        /// <summary>
+        /// Gets or sets a value indicating if this is an SDK style project
+        /// </summary>
+        public bool IsSdkStyeProject { get; set; }
 
         protected virtual Lazy<Project> InitializeProject(Lazy<ProjectRootElement> projectElement) {
             var properties = new Dictionary<string, string>(globalProperties);

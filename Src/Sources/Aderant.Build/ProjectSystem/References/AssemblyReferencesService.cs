@@ -35,7 +35,7 @@ namespace Aderant.Build.ProjectSystem.References {
             return null;
         }
 
-        protected override IUnresolvedAssemblyReference CreateUnresolvedReference(ProjectItem unresolved) {
+        protected override IUnresolvedAssemblyReference CreateUnresolvedReference(ProjectItem unresolved, ConfiguredProject owningProject) {
             var moniker = UnresolvedAssemblyReferenceMoniker.Create(unresolved);
 
             var reference = new UnresolvedAssemblyReference(this, moniker);

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Management.Automation;
 using Aderant.Build.Model;
 using Microsoft.Build.Evaluation;
 
@@ -31,7 +32,7 @@ namespace Aderant.Build.ProjectSystem.References {
             foreach (var projectItem in projectItems) {
                 // TargetFramework >= netstandard2.0 brings any many direct assembly references, ignore these by filtering the extension
                 if (!projectItem.EvaluatedInclude.EndsWith(AssemblyReferencesService.DllExtension, StringComparison.OrdinalIgnoreCase)) {
-                    var unresolvedReference = CreateUnresolvedReference(projectItem);
+                    var unresolvedReference = CreateUnresolvedReference(projectItem, ConfiguredProject);
                     references.Add(unresolvedReference);
                 }
             }
@@ -73,6 +74,6 @@ namespace Aderant.Build.ProjectSystem.References {
         /// <returns></returns>
         protected abstract TResolvedReference CreateResolvedReference(IReadOnlyCollection<IUnresolvedReference> references, TUnresolvedReference unresolved, Dictionary<string, string> aliasMap);
 
-        protected abstract TUnresolvedReference CreateUnresolvedReference(ProjectItem unresolved);
+        protected abstract TUnresolvedReference CreateUnresolvedReference(ProjectItem unresolved, ConfiguredProject owningProject);
     }
 }

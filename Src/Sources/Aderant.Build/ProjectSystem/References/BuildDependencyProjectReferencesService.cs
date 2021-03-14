@@ -15,11 +15,15 @@ namespace Aderant.Build.ProjectSystem.References {
     internal class BuildDependencyProjectReferencesService : ResolvableReferencesProviderBase<IUnresolvedBuildDependencyProjectReference, IBuildDependencyProjectReference>, IBuildDependencyProjectReferencesService {
         private readonly ILogger logger;
 
-        static ConcurrentBag<Guid> projectReferenceGuidsInError = new ConcurrentBag<Guid>();
+        static BuildDependencyProjectReferencesService() {
+            ClearProjectReferenceGuidsInError();
+        }
+
+        static ConcurrentDictionary<Guid, byte> projectReferenceGuidsInError;
         private IReadOnlyCollection<ConfiguredProject> projects;
 
         public static void ClearProjectReferenceGuidsInError() {
-            projectReferenceGuidsInError = new ConcurrentBag<Guid>();
+            projectReferenceGuidsInError = new ConcurrentDictionary<Guid, byte>();
         }
 
         [ImportingConstructor]
@@ -34,20 +38,25 @@ namespace Aderant.Build.ProjectSystem.References {
             }
 
             try {
-                ConfiguredProject dependency = projects.SingleOrDefault(project => project.ProjectGuid == unresolved.ProjectGuid);
-                if (dependency != null) {
+                var isSdkStyeProject = ConfiguredProject.IsSdkStyeProject;
 
-                    // Sanity check. Ensure the resolved reference at least looks like the correct project.
-                    if (unresolved.ProjectFileName != dependency.FileName) {
-                        LogMangled(unresolved, dependency);
+                if (!isSdkStyeProject) {
+                    ConfiguredProject dependency = projects.SingleOrDefault(project => project.ProjectGuid == unresolved.ProjectGuid);
+                    if (dependency != null) {
 
-                        // Invalidate the bad reference.
-                        dependency = null;
+                        // Sanity check. Ensure the resolved reference at least looks like the correct project.
+                        if (unresolved.ProjectFileName != dependency.FileName) {
+                            LogMangled(unresolved, dependency);
+
+                            // Invalidate the bad reference.
+                            dependency = null;
+                        }
+
+                        return dependency;
                     }
-                    return dependency;
                 }
 
-                var resolvedReference = LocateReferenceByPath(unresolved, projects);
+                var resolvedReference = LocateReferenceByPath(unresolved, projects, isSdkStyeProject);
                 return resolvedReference;
             } catch (InvalidOperationException) {
                 IEnumerable<ConfiguredProject> configuredProjects = projects.Where(s => s.ProjectGuid == unresolved.ProjectGuid);
@@ -57,14 +66,14 @@ namespace Aderant.Build.ProjectSystem.References {
             }
         }
 
-        private ConfiguredProject LocateReferenceByPath(IUnresolvedBuildDependencyProjectReference unresolved, IReadOnlyCollection<ConfiguredProject> projects) {
+        private ConfiguredProject LocateReferenceByPath(IUnresolvedBuildDependencyProjectReference unresolved, IReadOnlyCollection<ConfiguredProject> projects, bool isSdkStyeProject) {
             string relativePathToOtherProject = unresolved.ProjectPath;
             string directoryOfThisProject = Path.GetDirectoryName(this.ConfiguredProject.FullPath);
             string fullPathToOtherProject = Path.GetFullPath(Path.Combine(directoryOfThisProject, relativePathToOtherProject));
 
             var resolvedReference = projects.SingleOrDefault(s => string.Equals(s.FullPath, fullPathToOtherProject, StringComparison.OrdinalIgnoreCase));
 
-            if (resolvedReference != null) {
+            if (resolvedReference != null && !isSdkStyeProject) {
                 LogMangled(unresolved, resolvedReference);
             }
 
@@ -72,16 +81,16 @@ namespace Aderant.Build.ProjectSystem.References {
         }
 
         private void LogMangled(IUnresolvedBuildDependencyProjectReference unresolved, ConfiguredProject resolvedReference) {
-            if (!projectReferenceGuidsInError.Contains(unresolved.ProjectGuid)) {
+            if (!projectReferenceGuidsInError.ContainsKey(unresolved.ProjectGuid)) {
                 logger.Error($"The ProjectReference GUID {unresolved.ProjectGuid} in {this.ConfiguredProject.FullPath} for {unresolved.ProjectPath} does not match the target project of {resolvedReference.ProjectGuid}. Update the Project element to use the correct GUID to prevent the build from selecting the wrong project.");
-                projectReferenceGuidsInError.Add(unresolved.ProjectGuid);
+                projectReferenceGuidsInError.TryAdd(unresolved.ProjectGuid, 0);
             }
         }
 
-        protected override IUnresolvedBuildDependencyProjectReference CreateUnresolvedReference(ProjectItem projectItem) {
+        protected override IUnresolvedBuildDependencyProjectReference CreateUnresolvedReference(ProjectItem projectItem, ConfiguredProject owningProject) {
             try {
                 var moniker = UnresolvedP2PReferenceMoniker.Create(projectItem);
-                var reference = new UnresolvedBuildDependencyProjectReference(this, moniker);
+                var reference = new UnresolvedBuildDependencyProjectReference(this, moniker, owningProject.IsSdkStyeProject);
                 return reference;
             } catch (FormatException) {
                 logger.Error($"Exception while creating a unresolved reference from {projectItem.Project.FullPath}.");

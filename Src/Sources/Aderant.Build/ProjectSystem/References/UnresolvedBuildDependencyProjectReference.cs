@@ -5,10 +5,13 @@ using System.IO;
 namespace Aderant.Build.ProjectSystem.References {
     [DebuggerDisplay("UnresolvedBuildDependencyProjectReference: {Id}")]
     internal class UnresolvedBuildDependencyProjectReference : UnresolvedReferenceBase<IUnresolvedBuildDependencyProjectReference, IBuildDependencyProjectReference, UnresolvedP2PReferenceMoniker>, IUnresolvedBuildDependencyProjectReference {
+        public bool OwningProjectIsSdkStyeProject { get; }
+
         private string fileName;
 
-        public UnresolvedBuildDependencyProjectReference(BuildDependencyProjectReferencesService service, UnresolvedP2PReferenceMoniker moniker)
+        public UnresolvedBuildDependencyProjectReference(BuildDependencyProjectReferencesService service, UnresolvedP2PReferenceMoniker moniker, bool owningProjectIsSdkStyeProject)
             : base(service, moniker) {
+            OwningProjectIsSdkStyeProject = owningProjectIsSdkStyeProject;
         }
 
         public Guid ProjectGuid {

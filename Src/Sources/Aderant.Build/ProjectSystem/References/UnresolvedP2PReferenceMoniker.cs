@@ -14,16 +14,21 @@ namespace Aderant.Build.ProjectSystem.References {
         public Guid ProjectGuid { get; private set; }
 
         public override string ToString() {
-            return this.ProjectGuid.ToString();
+            return this.ProjectPath;
         }
 
         public static UnresolvedP2PReferenceMoniker Create(ProjectItem projectItem) {
             // Project is the foreign project guid
             string metadataValue = projectItem.GetMetadataValue("Project");
-            Guid projectGuid = Guid.Parse(metadataValue);
+            if (!string.IsNullOrWhiteSpace(metadataValue)) {
+                Guid projectGuid = Guid.Parse(metadataValue);
+
+                // Evaluated include is a project relative path like "..\\ProjectA\\ProjectA.csproj"
+                return new UnresolvedP2PReferenceMoniker(projectItem.EvaluatedInclude, projectGuid);
+            }
 
             // Evaluated include is a project relative path like "..\\ProjectA\\ProjectA.csproj"
-            return new UnresolvedP2PReferenceMoniker(projectItem.EvaluatedInclude, projectGuid);
+            return new UnresolvedP2PReferenceMoniker(projectItem.EvaluatedInclude, Guid.Empty);
         }
     }
 }
