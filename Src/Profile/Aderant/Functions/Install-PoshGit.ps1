@@ -1,4 +1,6 @@
-function CheckModuleVersion() {
+#Requires -Version 5.1
+
+function CheckModuleVersion {
     # Check for PackageManagement 1.0.0.0
     Import-Module PackageManagement
     $packageManagerVerion = (Get-Module PackageManagement).Version
@@ -13,7 +15,7 @@ function CheckModuleVersion() {
     return $true
 }
 
-function global:Install-PoshGit() {
+function global:Install-PoshGit {
     [CmdletBinding()]
     param(
         [Aderant.Build.BuildOperationContext]
@@ -37,31 +39,30 @@ function global:Install-PoshGit() {
         return
     }
 
-    # We need Windows 10 or WMF 5 for Install-Module
-    if ($host.Version.Major -ge 5) {
-        try {
-            if (Test-Path $Env:USERPROFILE\Documents\WindowsPowerShell\Modules\posh-git) {
-                Import-Module posh-git -Global
-                Write-Debug "PoshGit already installed"
-                return
+    try {
+        $modules = Get-Module -Name 'posh-git' -ListAvailable
+
+        if ($null -ne $modules) {
+            [bool]$uninstalled = $false
+
+            foreach ($module in $modules) {
+                # Check if the version of posh-git is recent.
+                if ($module.Version.Major -lt 1) {
+                    Write-Debug -Message 'Updating posh-git PowerShell module to latest version.'
+                    $module | Uninstall-Module -Force
+                    $uninstalled = $true
+                }
             }
 
-            # Optimization, Get-InstalledModule is quite slow so just peek directly
-            if (Test-Path $Env:ProgramFiles\WindowsPowerShell\Modules\posh-git) {
-                Import-Module posh-git -Global
-                Write-Debug "PoshGit already installed"
-                return
+            if ($uninstalled -and -not (Get-Module -Name 'posh-git' -ListAvailable)) {
+                # No usable version of posh-git available.
+                Install-Module -Name 'posh-git' -Scope CurrentUser
             }
-
-            if (-not (Get-InstalledModule posh-git -ErrorAction SilentlyContinue)) {
-                Install-Module posh-git -Scope CurrentUser
-            }
-        } finally {
-            Import-Module posh-git -Global
-            $global:GitPromptSettings.EnableWindowTitle = $false
-            $global:ShellContext.PoshGitAvailable = $null -ne (Get-Module posh-git)
+        } else {
+            Install-Module -Name 'posh-git' -Scope CurrentUser
         }
-    } else {
-        Write-Host "You do not have Windows 10 or PowerShell 5. Windows 10 provides a much improved PowerShell experience." -ForegroundColor Yellow
+    } finally {
+        Import-Module -Name 'posh-git' -Global
+        $global:ShellContext.PoshGitAvailable = $null -ne (Get-Module -Name 'posh-git')
     }
 }
