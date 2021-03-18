@@ -10,6 +10,7 @@ namespace Aderant.Build.Packaging {
         private readonly IBuildPipelineService pipelineService;
         internal static readonly string DestinationSubDirectory = "DestinationSubDirectory";
 
+        internal string BinariesTestDirectory = string.Empty;
         internal string IntegrationTestDirectory = string.Empty;
         internal string AutomatedTestDirectory = string.Empty;
 
@@ -33,6 +34,22 @@ namespace Aderant.Build.Packaging {
 
                 if (artifact.PackageType.Contains(ArtifactPackageType.TestPackage)) {
                     AddArtifact(pathMap, IntegrationTestDirectory, artifact, ArtifactPackageType.TestPackage);
+                    deliverToRoot = false;
+                }
+
+                if (artifact.PackageType.Contains(ArtifactPackageType.StartupPackage)) {
+                    // Ensure artifacts not packaged within the Startup sub-directory are copied to the appropriate location.
+                    string destination = artifact.Name.IndexOf("StartupTest", StringComparison.OrdinalIgnoreCase) == -1 ? string.Concat(BinariesTestDirectory, @"Startup\") : BinariesTestDirectory;
+
+                    AddArtifact(pathMap, destination, artifact, ArtifactPackageType.StartupPackage);
+                    deliverToRoot = false;
+                }
+
+                if (artifact.PackageType.Contains(ArtifactPackageType.CustomizationPackage)) {
+                    // Ensure artifacts not packaged within the Customization sub-directory are copied to the appropriate location.
+                    string destination = artifact.Name.IndexOf("CustomizationTest", StringComparison.OrdinalIgnoreCase) == -1 ? string.Concat(BinariesTestDirectory, @"Customization\") : BinariesTestDirectory;
+
+                    AddArtifact(pathMap, destination, artifact, ArtifactPackageType.CustomizationPackage);
                     deliverToRoot = false;
                 }
 

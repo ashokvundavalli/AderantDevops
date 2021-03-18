@@ -8,6 +8,8 @@ namespace Aderant.Build.Tasks.ArtifactHandling {
 
         public bool IncludeGeneratedArtifacts { get; set; }
 
+        public string BinariesTestDirectory { get; set; }
+
         public string IntegrationTestDirectory { get; set; }
 
         public string AutomatedTestDirectory { get; set; }
@@ -17,6 +19,7 @@ namespace Aderant.Build.Tasks.ArtifactHandling {
 
         public override bool ExecuteTask() {
             var processor = new ArtifactTargetPathAssigner(PipelineService) {
+                BinariesTestDirectory = BinariesTestDirectory,
                 IntegrationTestDirectory = IntegrationTestDirectory,
                 AutomatedTestDirectory = AutomatedTestDirectory
             };

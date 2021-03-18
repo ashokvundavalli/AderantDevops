@@ -27,6 +27,8 @@ namespace Aderant.Build.Packaging {
                 bool isInternalDevelopmentPackage = false;
                 bool isAutomationPackage = false;
                 bool isTestPackage = false;
+                bool isStartupPackage = false;
+                bool isCustomizationPackage = false;
                 bool publish = true;
                 ArtifactType artifactType = ArtifactType.None;
 
@@ -36,6 +38,8 @@ namespace Aderant.Build.Packaging {
                     ParseMetadata(file, "IsInternalDevelopmentPackage", ref isInternalDevelopmentPackage);
                     ParseMetadata(file, "IsAutomationPackage", ref isAutomationPackage);
                     ParseMetadata(file, "IsTestPackage", ref isTestPackage);
+                    ParseMetadata(file, "IsStartupPackage", ref isStartupPackage);
+                    ParseMetadata(file, "IsCustomizationPackage", ref isCustomizationPackage);
                     ParseMetadata(file, "ArtifactType", ref artifactType);
                     ParseMetadata(file, "Publish", ref publish);
 
@@ -85,6 +89,14 @@ namespace Aderant.Build.Packaging {
 
                 if (isAutomationPackage) {
                     packageType.Add(ArtifactPackageType.AutomationPackage);
+                }
+
+                if (isStartupPackage) {
+                    packageType.Add(ArtifactPackageType.StartupPackage);
+                }
+
+                if (isCustomizationPackage) {
+                    packageType.Add(ArtifactPackageType.CustomizationPackage);
                 }
 
                 if (isDeliveringToRoot) {

@@ -105,6 +105,10 @@ namespace Aderant.Build.Packaging {
         [EnumMember]
         DevelopmentPackage,
         [EnumMember]
+        StartupPackage,
+        [EnumMember]
+        CustomizationPackage,
+        [EnumMember]
         AutomationPackage
     }
 }

@@ -470,6 +470,7 @@
              Condition="!Exists('$(LocalExpertBinariesDirectory)')" />
 
     <GetArtifactPaths IncludeGeneratedArtifacts="true"
+                      BinariesTestDirectory="$(BinariesTestDirectory)"
                       IntegrationTestDirectory="$(IntegrationTestDirectory)"
                       AutomatedTestDirectory="$(AutomatedTestDirectory)">
       <Output TaskParameter="ArtifactPaths" ItemName="LocalPackagePaths" />
