@@ -157,9 +157,9 @@ function CopyBlameSequenceFiles {
     process {
         [System.IO.FileInfo[]]$blameSequenceFiles = GetTestBlameSequenceFiles
 
-        Write-Information -MessageData "Total number of blame sequence files: '$($blameSequenceFiles.Length)'."
-
         if ($null -ne $blameSequenceFiles -and $blameSequenceFiles.Length -gt 0) {
+            Write-Information -MessageData "Total number of blame sequence files: '$($blameSequenceFiles.Length)'."
+            
             [void][System.IO.Directory]::CreateDirectory($TestResultFileDrop)
 
             foreach ($blameSequenceFile in $blameSequenceFiles) {
