@@ -134,6 +134,53 @@ function CreateRunSettingsXml() {
     return $sw.ToString()
 }
 
+
+
+function CopyBlameSequenceFiles {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$testResultFileDrop
+    )
+
+    begin {
+        function GetTestBlameSequenceFiles {
+            Write-Debug -Message 'Collecting blame sequence files.'
+            [string]$path = "$WorkingDirectory\TestResults"
+            [void][System.IO.Directory]::CreateDirectory($path)
+
+            $blameSequenceFiles = Get-ChildItem -LiteralPath $path -Filter 'Sequence_*.xml' -File -Depth 1 -ErrorAction 'SilentlyContinue'
+
+            return $blameSequenceFiles
+        }
+    }
+
+    process {
+        [System.IO.FileInfo[]]$blameSequenceFiles = GetTestBlameSequenceFiles
+
+        Write-Information -MessageData "Total number of blame sequence files: '$($blameSequenceFiles.Length)'."
+
+        if ($null -ne $blameSequenceFiles -and $blameSequenceFiles.Length -gt 0) {
+            [void][System.IO.Directory]::CreateDirectory($TestResultFileDrop)
+
+            foreach ($blameSequenceFile in $blameSequenceFiles) {
+                # Hardlinks cannot span drives.
+                [string]$targetFile = Join-Path -Path $TestResultFileDrop -ChildPath ([string]::Concat('Sequence_', [System.IO.Path]::GetRandomFileName(), $blameSequenceFile.Extension))
+
+                if ([string]::Equals([System.IO.Path]::GetFullPath([System.IO.Path]::GetDirectoryName($blameSequenceFile.FullName)), [System.IO.Path]::GetFullPath([System.IO.Path]::GetDirectoryName($targetFile)), [System.StringComparison]::OrdinalIgnoreCase)) {
+                    Write-Information -MessageData "Not copying the blame sequence file from: '$($blameSequenceFile.FullName)' to: '$targetFile' as the directory is the same."
+                    continue
+                }
+
+                Write-Information -MessageData "Moving blame sequence file from: '$($blameSequenceFile.FullName)' to: '$targetFile'."
+                Move-Item -Path $blameSequenceFile.FullName -Destination $targetFile -Force
+            }
+        } else {
+            Write-Debug -Message "No blame sequence files present in directory: '$WorkingDirectory'."
+        }
+    }
+}
+
+
 function GetTestResultFiles {
     Write-Information -MessageData 'Collecting test result files.'
     [string]$path = "$WorkingDirectory\TestResults"
@@ -145,20 +192,12 @@ function GetTestResultFiles {
 }
 
 function CopyTestResultFiles {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$testResultFileDrop
+    )
+
     Write-Information -MessageData 'Copying test result files from test run.'
-
-    if ([string]::IsNullOrWhiteSpace($TestResultFileDrop)) {
-        Write-Information -MessageData 'Test result file drop location was not specified.'
-        if ([string]::IsNullOrWhiteSpace($SolutionRoot)) {
-            Write-Information -MessageData 'Test result file drop location and solution root were not specified so the files will not be copied.'
-            return
-        } else {
-            [string]$BuildSolutionRoot = Split-Path -Path $SolutionRoot -Parent
-            $TestResultFileDrop = Join-Path -Path $BuildSolutionRoot -ChildPath 'TestResults'
-        }
-    }
-
-    Write-Information -MessageData "Test result file drop location is: '$TestResultFileDrop'."
 
     [System.IO.FileInfo[]]$trx = GetTestResultFiles
 
@@ -176,7 +215,7 @@ function CopyTestResultFiles {
                 continue
             }
 
-            Write-Information -MessageData "Copying test result file from: '$($result.FullName)' to: '$targetFile'."
+            Write-Information -MessageData "Moving test result file from: '$($result.FullName)' to: '$targetFile'."
             Move-Item -Path $result.FullName -Destination $targetFile -Force
         }
     } else {
@@ -193,7 +232,7 @@ function ShowTestRunReport() {
     }
 
     if ($beforeRunTrxFiles) {
-        $newTrxFile = $afterRunTrxFiles.FullName | Where-Object {!($beforeRunTrxFiles.FullName -contains $_)}
+        $newTrxFile = $afterRunTrxFiles.FullName | Where-Object { -not ($beforeRunTrxFiles.FullName -contains $_) }
     } else {
         $newTrxFile = $afterRunTrxFiles.FullName
     }
@@ -245,6 +284,8 @@ try {
         $startInfo.Arguments += " /TestAdapterPath:$TestAdapterPath"
     }
 
+    $startInfo.Arguments += ' /Blame'
+
     Write-Information "Starting runner: $($startInfo.FileName) $($startInfo.Arguments)"
 
     $exitcode = $exec.Invoke($startInfo)
@@ -252,8 +293,23 @@ try {
     Write-Information -MessageData "Exit code from test run was: '$exitcode'."
 } finally {
     if (-not $IsDesktopBuild) {
-        # Copy test result files
-        CopyTestResultFiles
+        if ([string]::IsNullOrWhiteSpace($TestResultFileDrop)) {
+            Write-Information -MessageData 'Test result file drop location was not specified.'
+            if ([string]::IsNullOrWhiteSpace($SolutionRoot)) {
+                Write-Information -MessageData 'Test result file drop location and solution root were not specified so the files will not be copied.'
+            } else {
+                [string]$BuildSolutionRoot = Split-Path -Path $SolutionRoot -Parent
+                $TestResultFileDrop = Join-Path -Path $BuildSolutionRoot -ChildPath 'TestResults'
+            }
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($TestResultFileDrop)) {
+            Write-Information -MessageData "Test result file drop location is: '$TestResultFileDrop'."
+
+            # Copy test result files.
+            CopyTestResultFiles -testResultFileDrop $TestResultFileDrop
+            CopyBlameSequenceFiles -testResultFileDrop $TestResultFileDrop
+        }
     }
 
     if ($exitcode -eq 0) {
