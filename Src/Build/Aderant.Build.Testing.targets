@@ -299,18 +299,7 @@ $(AdditionalVariables)
 
     <CallTarget Targets="RemoveFiles;" />
 
-    <OnError ExecuteTargets="RemoveFiles;ShowTestFailureHelp;UploadBlameSequenceFiles;" />
-
-  </Target>
-
-
-  <Target Name="UploadBlameSequenceFiles" Condition="'$(IsDesktopBuild)' == 'false'">
-
-    <ItemGroup>
-      <BlameFiles Include="$(TestResultFileDrop)\Sequence_*.xml" />
-    </ItemGroup>
-    
-    <Message Condition="'%(BlameFiles.Identity)' != ''" Text="##vso[artifact.upload containerfolder=blame;artifactname=%(BlameFiles.FileName);]%(BlameFiles.Identity)" />
+    <OnError ExecuteTargets="RemoveFiles;ShowTestFailureHelp;" />
 
   </Target>
 

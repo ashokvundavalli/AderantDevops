@@ -59,7 +59,7 @@ namespace Aderant.Build.Tasks.PowerShell {
                 script = new Script(ScriptFile, true);
             }
 
-            ErrorUtilities.VerifyThrowArgument(script != null, $"{nameof(ScriptBlock)} is not specified.");
+            ErrorUtilities.VerifyThrowArgument(script != null, $"{nameof(ScriptBlock)} is not specified");
 
             try {
                 BuildEngine3.Yield();
