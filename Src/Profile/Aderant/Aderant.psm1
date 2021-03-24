@@ -31,13 +31,13 @@ foreach ($directory in $imports) {
     }
 }
 
-$script:ShellContext = $null
+$global:ShellContext = $null
 
 function Initialize-Module {
     . "$PSScriptRoot\ShellContext.ps1"
 
-    $script:ShellContext = [ShellContext]::new()
-    $MyInvocation.MyCommand.Module.PrivateData.ShellContext = $script:ShellContext
+    $global:ShellContext = [ShellContext]::new()
+    $MyInvocation.MyCommand.Module.PrivateData.ShellContext = $global:ShellContext
 
     [string]$formatDataFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, '..\..\Build\Functions\Formats\SourceTreeMetadata.format.ps1xml'))
 
@@ -50,7 +50,7 @@ function Initialize-Module {
 
 Initialize-Module
 
-[string]$ShellContext.BranchName = [string]::Empty
+[string]$global:ShellContext.BranchName = [string]::Empty
 [string]$script:BranchLocalDirectory = [string]::Empty
 [string]$global:BranchServerDirectory = [string]::Empty
 [string]$global:BranchModulesDirectory = [string]::Empty
@@ -152,24 +152,24 @@ function Set-DefaultPaths {
     Write-Debug 'Setting information from your defaults.'
 
     $script:BranchLocalDirectory = (GetDefaultValue -propertyName 'DevBranchFolder')
-    $ShellContext.BranchBinariesDirectory = 'C:\AderantExpert\Binaries'
-    $ShellContext.BranchLocalDirectory = $script:BranchLocalDirectory
+    $global:ShellContext.BranchBinariesDirectory = 'C:\AderantExpert\Binaries'
+    $global:ShellContext.BranchLocalDirectory = $script:BranchLocalDirectory
 
-    if ($ShellContext.IsTfvcModuleEnabled) {
-        $ShellContext.BranchModulesDirectory = (Join-Path -Path $script:BranchLocalDirectory -ChildPath "\Modules")
+    if ($global:ShellContext.IsTfvcModuleEnabled) {
+        $global:ShellContext.BranchModulesDirectory = (Join-Path -Path $script:BranchLocalDirectory -ChildPath "\Modules")
     } else {
-        $ShellContext.BranchModulesDirectory = $script:BranchLocalDirectory
+        $global:ShellContext.BranchModulesDirectory = $script:BranchLocalDirectory
     }
 }
 
 function Set-ExpertSourcePath {
     <#
-    Set-ExpertSourcePath is called on startup.  It sets $ShellContext.BranchExpertVersion
+    Set-ExpertSourcePath is called on startup.  It sets $global:ShellContext.BranchExpertVersion
     Pre-8.0 environments still use the old folder structure where everything was in the binaries folder, so BranchExpertSourceDirectory is set
     according to the setting in the ExpertManifest.xml file.
     #>
-    if (Test-Path $ShellContext.ProductManifestPath) {
-        [xml]$manifest = Get-Content $ShellContext.ProductManifestPath
+    if (Test-Path $global:ShellContext.ProductManifestPath) {
+        [xml]$manifest = Get-Content $global:ShellContext.ProductManifestPath
         [string]$branchExpertVersion = $manifest.ProductManifest.ExpertVersion
 
         if ($branchExpertVersion.StartsWith("8")) {
@@ -179,7 +179,7 @@ function Set-ExpertSourcePath {
                 [System.IO.Directory]::CreateDirectory($global:BranchExpertSourceDirectory) | Out-Null
             }
         } else {
-            $global:BranchExpertSourceDirectory = $ShellContext.BranchBinariesDirectory
+            $global:BranchExpertSourceDirectory = $global:ShellContext.BranchBinariesDirectory
         }
     }
 }
@@ -211,16 +211,16 @@ function Set-ExpertVariables {
     [string]$script:installPath = Find-InstallLocation -programName 'Expert Deployment Manager'
 
     if ($script:installPath) {
-        $script:ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentEngine -Value { Join-Path -Path $script:installPath -ChildPath 'DeploymentEngine.exe' }
-        $script:ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentManager -Value { Join-Path -Path $script:installPath -ChildPath 'DeploymentManager.exe' }
+        $global:ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentEngine -Value { Join-Path -Path $script:installPath -ChildPath 'DeploymentEngine.exe' }
+        $global:ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentManager -Value { Join-Path -Path $script:installPath -ChildPath 'DeploymentManager.exe' }
     } else {
         $pathToDeploymentEngine = 'C:\AderantExpert\Install\DeploymentEngine.exe'
         $pathToDeploymentManager = 'C:\AderantExpert\Install\DeploymentManager.exe'
 
-        $script:ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentEngine -Value { $pathToDeploymentEngine }
-        $script:ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentManager -Value { $pathToDeploymentManager }
+        $global:ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentEngine -Value { $pathToDeploymentEngine }
+        $global:ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentManager -Value { $pathToDeploymentManager }
 
-        if (-not (Test-Path $script:ShellContext.DeploymentManager)) {
+        if (-not (Test-Path $global:ShellContext.DeploymentManager)) {
             Write-Warning "Please ensure that DeploymentManager.exe is located at: $($pathToDeploymentManager)"
         }
     }
@@ -246,56 +246,55 @@ function global:Set-CurrentModule {
 
         if ($null -ne $script:loadedModuleFeatures) {
             foreach ($currentModuleFeature in $script:loadedModuleFeatures) {
-                if (Get-Module -All | Where-Object -Property Name -eq $currentModuleFeature.Name) {
+                if (Get-Module -Name $currentModuleFeature.Name) {
                     Remove-Module $currentModuleFeature
                 }
             }
             $script:loadedModuleFeatures = $null
         }
 
-        $ShellContext.IsGitRepository = $true
+        $global:ShellContext.IsGitRepository = $true
 
         if ([System.IO.Path]::IsPathRooted($name)) {
-            $script:ShellContext.CurrentModulePath = $name
-            $script:ShellContext.CurrentModuleName = ([System.IO.DirectoryInfo]::new($script:ShellContext.CurrentModulePath)).Name
-            Write-Debug "CurrentModuleName set to: $($script:ShellContext.CurrentModuleName)"
+            $global:ShellContext.CurrentModulePath = $name
+            $global:ShellContext.CurrentModuleName = ([System.IO.DirectoryInfo]::new($global:ShellContext.CurrentModulePath)).Name
+            Write-Debug "CurrentModuleName set to: $($global:ShellContext.CurrentModuleName)"
 
             Write-Debug "Setting repository: $name"
 
-            if (-not (Get-Module -Name 'Git' -All)) {
-                Import-Module "$PSScriptRoot\Git.psd1" -Global
-            }
+            Set-Location $global:ShellContext.CurrentModulePath
+            Get-BuildConfigFilePaths -startingDirectory $global:ShellContext.CurrentModulePath -setPathAsGlobalVariable $true | Out-Null
 
-            Set-Location $ShellContext.CurrentModulePath
-            Get-BuildConfigFilePaths -startingDirectory $ShellContext.CurrentModulePath -setPathAsGlobalVariable $true | Out-Null
+            if ((IsGitRepository $global:ShellContext.CurrentModulePath) -or (IsGitRepository ([System.IO.DirectoryInfo]::new($global:ShellContext.CurrentModulePath).Parent.FullName))) {
+                if (-not (Get-Module -Name 'Git')) {
+                    Import-Module "$PSScriptRoot\Git.psd1"
+                }
 
-            if ((IsGitRepository $ShellContext.CurrentModulePath) -or (IsGitRepository ([System.IO.DirectoryInfo]::new($ShellContext.CurrentModulePath).Parent.FullName))) {
-                ImportFeatureModules $ShellContext.CurrentModulePath
-                Enable-GitPrompt
+                ImportFeatureModules $global:ShellContext.CurrentModulePath
             } else {
-                $ShellContext.IsGitRepository = $false
+                $global:ShellContext.IsGitRepository = $false
             }
 
         } else {
-            $ShellContext.CurrentModuleName = $name
+            $global:ShellContext.CurrentModuleName = $name
 
-            Write-Debug "Current module [$ShellContext:CurrentModuleName]"
-            $ShellContext.CurrentModulePath = Join-Path -Path $ShellContext.BranchModulesDirectory -ChildPath $ShellContext.CurrentModuleName
+            Write-Debug "Current module [$global:ShellContext:CurrentModuleName]"
+            $global:ShellContext.CurrentModulePath = Join-Path -Path $global:ShellContext.BranchModulesDirectory -ChildPath $global:ShellContext.CurrentModuleName
 
-            Set-Location $ShellContext.CurrentModulePath
+            Set-Location $global:ShellContext.CurrentModulePath
 
-            $ShellContext.IsGitRepository = $false
+            $global:ShellContext.IsGitRepository = $false
         }
 
-        if ((Test-Path $ShellContext.CurrentModulePath) -eq $false) {
-            Write-Warning "the module [$($ShellContext.CurrentModuleName)] does not exist, please check the spelling."
-            $ShellContext.CurrentModuleName = ""
-            $ShellContext.CurrentModulePath = ""
+        if ((Test-Path $global:ShellContext.CurrentModulePath) -eq $false) {
+            Write-Warning "the module [$($global:ShellContext.CurrentModuleName)] does not exist, please check the spelling."
+            $global:ShellContext.CurrentModuleName = ""
+            $global:ShellContext.CurrentModulePath = ""
             return
         }
 
-        Write-Debug "Current module path [$($ShellContext.CurrentModulePath)]"
-        $ShellContext.CurrentModuleBuildPath = Join-Path -Path $ShellContext.CurrentModulePath -ChildPath "Build"
+        Write-Debug "Current module path [$($global:ShellContext.CurrentModulePath)]"
+        $global:ShellContext.CurrentModuleBuildPath = Join-Path -Path $global:ShellContext.CurrentModulePath -ChildPath "Build"
     }
 }
 
@@ -417,7 +416,7 @@ function Install-LatestVisualStudioExtension {
 
 function Install-LatestVisualStudioExtensionImpl($installDetails, [switch]$local) {
     begin {
-        function Output-VSIXLog {
+        function OutputVSIXLog {
             $errorsOccurred = $false
             $lastLogFile = Get-ChildItem $env:TEMP | Where-Object { $_.Name.StartsWith("VSIX") } | Sort-Object LastWriteTime | Select-Object -last 1
         
@@ -444,15 +443,15 @@ function Install-LatestVisualStudioExtensionImpl($installDetails, [switch]$local
         # Take VSIX out of local source directory
         if ($local) {
             Write-Host "Attempting to install $($info.ProductManifestName) from local source directory."
-            $vsixFile = [System.IO.Path]::Combine($ShellContext.BranchServerDirectory, $info.ExtensionFile)
+            $vsixFile = [System.IO.Path]::Combine($global:ShellContext.BranchServerDirectory, $info.ExtensionFile)
         } else { # Take VSIX from drop folder
             Write-Host "Attempting to install $($info.ProductManifestName) from drop folder."
             $localInstallDirectory = [System.IO.Path]::Combine($script:BranchLocalDirectory, $info.ProductManifestName + ".Install")
 
-            [xml]$manifest = Get-Content $ShellContext.ProductManifestPath
+            [xml]$manifest = Get-Content $global:ShellContext.ProductManifestPath
             [System.Xml.XmlNode]$module = $manifest.ProductManifest.Modules.SelectNodes("Module") | Where-Object { $_.Name.Contains($info.ProductManifestName)}
 
-            $dropPathVSIX = (GetPathToBinaries $module $ShellContext.BranchServerDirectory)
+            $dropPathVSIX = (GetPathToBinaries $module $global:ShellContext.BranchServerDirectory)
 
             if (-not (Test-Path $localInstallDirectory)) {
                 New-Item $localInstallDirectory -ItemType directory
@@ -472,7 +471,7 @@ function Install-LatestVisualStudioExtensionImpl($installDetails, [switch]$local
             Write-Host "VSIX updated on $lastWriteTime"
             Write-Host "Installing $($info.ProductManifestPathName). Please wait..."
             Start-Process -FilePath $vsix -ArgumentList "/quiet $vsixFile" -Wait -PassThru | Out-Null
-            $errorsOccurred = Output-VSIXLog
+            $errorsOccurred = OutputVSIXLog
 
             if (-not $errorsOccurred) {
                 Write-Host "Updated $($info.ProductManifestPathName). Restart Visual Studio for the changes to take effect."
@@ -504,8 +503,8 @@ function Set-Environment {
             Add-GitCommandIntercept
         }
 
-        $ShellContext.PackageScriptsDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($ShellContext.BuildScriptsDirectory, '..\Package'))
-        $ShellContext.ProductManifestPath = Join-Path -Path $ShellContext.BranchModulesDirectory -ChildPath "\Build\ExpertManifest.xml"
+        $global:ShellContext.PackageScriptsDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($global:ShellContext.BuildScriptsDirectory, '..\Package'))
+        $global:ShellContext.ProductManifestPath = Join-Path -Path $global:ShellContext.BranchModulesDirectory -ChildPath "\Build\ExpertManifest.xml"
 
         Set-ExpertSourcePath
         Set-ExpertVariables
@@ -518,7 +517,7 @@ function Set-VisualStudioVersion {
         Param($path)
             $file = [System.IO.Path]::Combine($path, "vsvars.ps1")
             . $file
-    } -ArgumentList $ShellContext.BuildScriptsDirectory
+    } -ArgumentList $global:ShellContext.BuildScriptsDirectory
 
    $null = Register-ObjectEvent $job -EventName StateChanged -Action {
        if ($EventArgs.JobStateInfo.State -ne [System.Management.Automation.JobState]::Completed) {
@@ -581,7 +580,7 @@ function global:Open-ModuleSolution {
         [string]$devenv = 'devenv'
 
         function Get-CurrentModule {
-            return Get-ExpertModule -ModuleName $ShellContext.CurrentModuleName
+            return Get-ExpertModule -ModuleName $global:ShellContext.CurrentModuleName
         }
     }
 
@@ -589,7 +588,7 @@ function global:Open-ModuleSolution {
         $prevModule = $null
 
         if (($getDependencies) -and -not [string]::IsNullOrEmpty($ModuleName)) {
-            if (-not [string]::IsNullOrEmpty($ShellContext.CurrentModuleName)) {
+            if (-not [string]::IsNullOrEmpty($global:ShellContext.CurrentModuleName)) {
                 $prevModule = Get-CurrentModule
             }
 
@@ -603,9 +602,9 @@ function global:Open-ModuleSolution {
             $expertSuiteRootPath = Join-Path $script:BranchLocalDirectory "ExpertSuite\$ModuleName"
             $nonExpertSuiteRootPath = Join-Path $script:BranchLocalDirectory "$ModuleName"
         } else {
-            $ModuleName = $ShellContext.CurrentModuleName
-            $expertSuiteRootPath = $ShellContext.CurrentModulePath
-            $nonExpertSuiteRootPath = $ShellContext.CurrentModulePath
+            $ModuleName = $global:ShellContext.CurrentModuleName
+            $expertSuiteRootPath = $global:ShellContext.CurrentModulePath
+            $nonExpertSuiteRootPath = $global:ShellContext.CurrentModulePath
         }
 
         if ([string]::IsNullOrWhiteSpace($ModuleName)) {
@@ -725,7 +724,7 @@ function Add-ModuleExpansionParameter {
 
         # Evaluate Modules
         try {
-            $parser.GetModuleMatches($wordToComplete, $ShellContext.CurrentModulePath, $ShellContext.BranchModulesDirectory, $ShellContext.ProductManifestPath) | Get-Unique | ForEach-Object {
+            $parser.GetModuleMatches($wordToComplete, $global:ShellContext.CurrentModulePath, $global:ShellContext.BranchModulesDirectory, $global:ShellContext.ProductManifestPath) | Get-Unique | ForEach-Object {
                     [System.Management.Automation.CompletionResult]::new($_)
             }
 
@@ -782,7 +781,7 @@ nuget Aderant.Build.Analyzer
 '@
 
         Set-Content -Path "$p\paket.dependencies" $c
-        & $ShellContext.PackagingTool update --verbose
+        & $global:ShellContext.PackagingTool update --verbose
     } finally {
         Pop-Location
     }
@@ -832,7 +831,6 @@ Export-ModuleMember -variable BranchBinariesDirectory
 Export-ModuleMember -variable BranchName
 Export-ModuleMember -variable BranchModulesDirectory
 Export-ModuleMember -variable ProductManifestPath
-Export-ModuleMember -Variable $script:ShellContext
 
 Set-Environment -Initialize
 
