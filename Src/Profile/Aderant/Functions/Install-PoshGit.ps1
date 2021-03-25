@@ -1,3 +1,4 @@
+#Requires -RunAsAdministrator
 #Requires -Version 5.1
 
 function global:Install-PoshGit {
@@ -80,6 +81,7 @@ function global:Install-PoshGit {
             }
         } finally {
             Import-Module -Name 'posh-git'
+            $global:GitPromptSettings.EnableWindowTitle = "PowerShell $($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor) - "
             $global:ShellContext.PoshGitAvailable = $null -ne (Get-Module -Name 'posh-git')
         }
     }
