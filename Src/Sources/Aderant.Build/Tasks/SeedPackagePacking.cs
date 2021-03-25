@@ -316,6 +316,9 @@ namespace Aderant.Build.Tasks {
             var securityPolicies = new List<string>();
             var smartForms = new List<string>();
             var smartFormV3S = new List<string>();
+            var inquiries = new List<string>();
+            var dashboards = new List<string>();
+            var constraints = new List<string>();
 
             var entryList = new List<string>();
 
@@ -430,6 +433,28 @@ namespace Aderant.Build.Tasks {
                             smartFormV3S.Add("form://" + seedDocument.Descendants("SmartFormModel").Attributes("Path").FirstOrDefault()?.Value);
                         }
                     }
+
+                    if (seedName.Contains("\\Inquiries\\")) {
+                        var inquiryPath = seedDocument.Descendants("inquiry").Attributes("path").FirstOrDefault()?.Value;
+                        if (!string.IsNullOrEmpty(inquiryPath)) {
+                            inquiries.Add("inquiry://" + inquiryPath);
+                        }
+                    }
+
+                    if (seedName.Contains("\\Dashboards\\")) {
+                        var dashboardPath = seedDocument.Descendants("dashboard").Attributes("path").FirstOrDefault()?.Value;
+                        if (!string.IsNullOrEmpty(dashboardPath)) {
+                            dashboards.Add("dashboard://" + dashboardPath);
+                        }
+                    }
+
+                    if (seedName.Contains("\\Constraints\\")) {
+                        var constraintPath = seedDocument.Descendants("queryConstraint").Attributes("name").FirstOrDefault()?.Value;
+                        if (!string.IsNullOrEmpty(constraintPath)) {
+                            constraints.Add("query-constraint://" + constraintPath);
+                        }
+                    }
+
                 }
             }
 
@@ -485,6 +510,24 @@ namespace Aderant.Build.Tasks {
                 foreach (var smartFormV3 in smartFormV3S) {
                     if (string.Equals(smartFormV3, HttpUtility.UrlDecode(entry), StringComparison.OrdinalIgnoreCase)) {
                         smartFormV3S = smartFormV3S.Where(a => a != smartFormV3).ToList();
+                        entryList = entryList.Where(e => e != entry).ToList();
+                    }
+                }
+                foreach (var inquiry in inquiries) {
+                    if (string.Equals(inquiry, HttpUtility.UrlDecode(entry), StringComparison.OrdinalIgnoreCase)) {
+                        inquiries = inquiries.Where(a => a != inquiry).ToList();
+                        entryList = entryList.Where(e => e != entry).ToList();
+                    }
+                }
+                foreach (var dashboard in dashboards) {
+                    if (string.Equals(dashboard, HttpUtility.UrlDecode(entry), StringComparison.OrdinalIgnoreCase)) {
+                        dashboards = dashboards.Where(a => a != dashboard).ToList();
+                        entryList = entryList.Where(e => e != entry).ToList();
+                    }
+                }
+                foreach (var constraint in constraints) {
+                    if (string.Equals(constraint, HttpUtility.UrlDecode(entry), StringComparison.OrdinalIgnoreCase)) {
+                        constraints = constraints.Where(a => a != constraint).ToList();
                         entryList = entryList.Where(e => e != entry).ToList();
                     }
                 }
