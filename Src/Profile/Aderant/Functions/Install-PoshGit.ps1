@@ -80,7 +80,7 @@ function global:Install-PoshGit {
                 Install-Module -Name 'posh-git' -RequiredVersion $Version.ToString() -Scope CurrentUser -Force
             }
         } finally {
-            Import-Module -Name 'posh-git'
+            Import-Module -Name 'posh-git' -Global
             $global:GitPromptSettings.EnableWindowTitle = "PowerShell $($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor) - "
             $global:ShellContext.PoshGitAvailable = $null -ne (Get-Module -Name 'posh-git')
         }
