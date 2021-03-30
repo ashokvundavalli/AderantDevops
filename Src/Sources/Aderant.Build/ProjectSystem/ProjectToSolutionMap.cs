@@ -58,6 +58,10 @@ namespace Aderant.Build.ProjectSystem {
                     if (!projectsByGuid.ContainsKey(projectGuid)) {
                         projectsByGuid[projectGuid] = wrapper;
                     } else {
+                        // Shared projects maybe referenced by many solutions so this is not an error.
+                        if (projectAbsolutePath.EndsWith(".shproj", StringComparison.OrdinalIgnoreCase)) {
+                            return;
+                        }
                         throw new DuplicateGuidException(projectGuid, $"The project GUID {projectGuid} is already being tracked.");
                     }
                 }
