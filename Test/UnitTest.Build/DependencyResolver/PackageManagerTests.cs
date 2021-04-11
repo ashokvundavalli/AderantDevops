@@ -100,29 +100,6 @@ nuget Gotta.Have.It 4.20 ci";
 
 
         [TestMethod]
-        public void DatabaseSourceAddition() {
-            var fs = new Mock<IFileSystem2>();
-            fs.Setup(s => s.Root).Returns(GetTestDirectoryPath());
-            string[] packageManagerLines;
-
-            var request = new ResolverRequest(NullLogger.Default);
-            request.AddModule("C:\\Abc");
-            request.AddModule("C:\\Def");
-
-            using (var packageManager = CreatePackageManager(fs, new WellKnownPackageSources.NonAzureHostedSources())) {
-                packageManager.Add(
-                    new[] {
-                        DependencyRequirement.Create("Aderant.Database.Backup", "Main"),
-                    },
-                    request);
-
-                packageManagerLines = packageManager.Lines;
-            }
-
-            Assert.AreEqual($"source {Constants.DatabasePackageUri}", packageManagerLines[0]);
-        }
-
-        [TestMethod]
         public void When_a_single_module_is_in_the_build_official_nuget_source_allowed() {
             string lines = @"
 source https://www.nuget.org/api/v2

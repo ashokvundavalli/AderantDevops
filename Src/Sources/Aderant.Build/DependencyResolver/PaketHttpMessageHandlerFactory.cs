@@ -75,9 +75,16 @@ namespace Aderant.Build.DependencyResolver {
             }
 
             var uri = new Uri(args.Item1);
-            if (string.Equals(uri.Host, "expertpackages.azurewebsites.net", StringComparison.OrdinalIgnoreCase)) {
-
+            if (string.Equals(uri.Host, "expertpackages-test.azurewebsites.net", StringComparison.OrdinalIgnoreCase)) {
                 return new CertificateAuthenticationHandler();
+            }
+
+            try {
+                if (string.Equals(uri.Host, new Uri(Constants.PackageServerUrlV3).Host, StringComparison.OrdinalIgnoreCase)) {
+                    return new CertificateAuthenticationHandler();
+                }
+            } catch (System.UriFormatException) {
+                // Perhaps a custom junk URL was used for testing, ignore it since the request will fail anyway
             }
 
 #if DEBUG

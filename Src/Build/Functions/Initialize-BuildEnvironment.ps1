@@ -523,6 +523,8 @@ try {
     LoadVstsTaskLibrary
     EnsureClientCertificateAvailable
 
+    [System.Net.ServicePointManager]::DefaultConnectionLimit = 16
+
     # Endpoints are unavailable in the event Initialize-BuildEnvironment is not loaded from the BuildPipeline process.
     $skipEndpointCheck = (Get-Variable -Name 'skipEndpointCheck' -Scope 'Global' -ErrorAction 'SilentlyContinue')
     if ($null -eq $skipEndpointCheck -or -not $skipEndpointCheck) {

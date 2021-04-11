@@ -1,34 +1,33 @@
 ﻿using System;
 using System.IO;
+using Aderant.Build.DependencyResolver;
 using Aderant.Build.DependencyResolver.Resolvers;
 
 namespace Aderant.Build {
     public static class Constants {
         static Constants() {
+            PackageServerUrlV3 = WellKnownPackageSources.AzureHostedSources.Sources[0].Url;
+
             NupkgResolver.Initialize();
         }
 
         /// <summary>
         /// The build infrastructure directory
         /// </summary>
-        public static string BuildInfrastructureDirectory = "Build.Infrastructure";
+        public static readonly string BuildInfrastructureDirectory = "Build.Infrastructure";
 
         // Do not change this to a compile reference as there is a complex interplay between paket.exe and this assembly
-        public static string PaketDependencies = "paket.dependencies";
+        public static readonly string PaketDependencies = "paket.dependencies";
 
-        public static string PaketLock = "paket.lock";
+        public static readonly string PaketLock = "paket.lock";
 
-        public static string PackageServerUrlV3 = "https://expertpackages.azurewebsites.net/v3/index.json";
+        public static readonly string PackageServerUrlV3;
 
-        public static string PackageRepositoryUri = @"\\svfp311\PackageRepository\";
+        public static readonly string OfficialNuGetUrlV3 = "https://api.nuget.org/v3/index.json";
 
-        public static string DatabasePackageUri = @"\\dfs.aderant.com\packages\ExpertDatabase";
+        public static readonly string OfficialNuGetUrl = "https://www.nuget.org/api/v2";
 
-        public static string OfficialNuGetUrlV3 = "https://api.nuget.org/v3/index.json";
-
-        public static string OfficialNuGetUrl = "https://www.nuget.org/api/v2";
-
-        internal static string MainDependencyGroup = "Main";
+        internal static readonly string MainDependencyGroup = "Main";
 
         internal const string LoggingArrow = "-> ";
     }

@@ -26,46 +26,32 @@ namespace Aderant.Build.DependencyResolver {
 
     internal class WellKnownPackageSources : IWellKnownSources {
 
-        internal static readonly string LegacySwitch = "DISABLE_AZURE_NUGET";
-
         /// <summary>
         /// Gets the default implementation of the NuGet sources known the system.
-        /// Supports overrides via environment variables.
         /// </summary>
         internal static IWellKnownSources Default { get; } = new WellKnownPackageSources();
 
         public IReadOnlyList<PackageSource> GetSources() {
-            // Escape hatch to fall back to the legacy sources.
-            string variable = Environment.GetEnvironmentVariable(LegacySwitch);
-
-            if (string.IsNullOrEmpty(variable)) {
-                return AzureHostedSources.Sources;
+            if (AzureHostedSources.hasOverride) {
+                return Array.Empty<PackageSource>();
             }
 
-            return NonAzureHostedSources.Sources;
-        }
-
-        /// <summary>
-        /// Encapsulates the internally hosted package source information.
-        /// </summary>
-        internal class NonAzureHostedSources : IWellKnownSources {
-            static NonAzureHostedSources() {
-                Sources = new List<PackageSource> {
-                    new PackageSource("DatabasePackages", Constants.DatabasePackageUri),
-                };
-            }
-
-            internal static IReadOnlyList<PackageSource> Sources { get; }
-
-            public IReadOnlyList<PackageSource> GetSources() {
-                return Sources;
-            }
+            return AzureHostedSources.Sources;
         }
 
         internal class AzureHostedSources : IWellKnownSources {
+            internal static bool hasOverride;
+
             static AzureHostedSources() {
+                string url = Environment.GetEnvironmentVariable("EXPERT_PACKAGES_URL"); ;
+                if (string.IsNullOrEmpty(url)) {
+                    url = "https://expertpackages.azurewebsites.net/v3/index.json";
+                } else {
+                    hasOverride = true;
+                }
+
                 Sources = new List<PackageSource> {
-                    new PackageSource("ExpertPackagesOnAzure", Constants.PackageServerUrlV3)
+                    new PackageSource("PackagesOnAzure", url)
                 };
             }
 

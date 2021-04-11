@@ -64,7 +64,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\packages\Moq\lib\net45\Moq.dll</HintPath>
     </Reference>
-    <Reference Include="paket, Version=5.249.1.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="paket, Version=5.257.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\Src\Build\paket.exe</HintPath>
     </Reference>
     <Reference Include="protobuf-net, Version=2.3.0.0, Culture=neutral, PublicKeyToken=257b51d87d2e4d67, processorArchitecture=MSIL">
@@ -188,7 +188,6 @@
     <Compile Include="ModuleDependencyResolverTests.cs" />
     <Compile Include="IndendedFileParserTests.cs" />
     <Compile Include="DependencyResolver\PackageManagerTests.cs" />
-    <Compile Include="PackageProcessorTests.cs" />
     <Compile Include="Packaging\ArtifactPackageTests.cs" />
     <Compile Include="Serialization\ObjectModelSerializationTests.cs" />
     <Compile Include="Packaging\PathSpecTests.cs" />

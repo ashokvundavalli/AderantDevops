@@ -51,6 +51,16 @@ namespace Aderant.Build.DependencyResolver {
                     sb.AppendLine();
                 }
 
+                if (group.Options.Settings != null) {
+                    if (group.Options.Settings.StorageConfig != null) {
+                        if (group.Options.Settings.StorageConfig.Value != null) {
+                            if (group.Options.Settings.StorageConfig.Value.IsNoPackagesFolder) {
+                                sb.AppendLine("storage: none");
+                            }
+                        }
+                    }
+                }
+
                 foreach (var packageRequirement in group.Packages) {
                     if (packageRequirement.Sources.HeadOrDefault.IsNuGetV2 || packageRequirement.Sources.HeadOrDefault.IsNuGetV3) {
                         var preReleaseString = string.Empty;

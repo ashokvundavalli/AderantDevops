@@ -178,12 +178,12 @@ namespace Aderant.Build.DependencyResolver {
 
             bool validatePackageConstraints = resolverRequest != null && resolverRequest.ValidatePackageConstraints;
 
+            // Indicates if the system is resolving for a single directory or multiple directories.
+            bool isUsingMultipleInputFiles = resolverRequest != null && resolverRequest.Modules.Count() > 1;
+
             AddModules(requirements, validatePackageConstraints, ref dependenciesFile);
 
             FileSystem.MakeFileWritable(dependenciesFile.FileName);
-
-            // Indicates if the system is resolving for a single directory or multiple directories.
-            bool isUsingMultipleInputFiles = resolverRequest != null && resolverRequest.Modules.Count() > 1;
 
             var groups = dependenciesFile.Groups;
 
@@ -194,7 +194,7 @@ namespace Aderant.Build.DependencyResolver {
 
                 bool isMainGroup = string.Equals(group.Name.Name, Constants.MainDependencyGroup, StringComparison.OrdinalIgnoreCase);
 
-                var sources = CreateSources(groupEntry, group, isMainGroup, isUsingMultipleInputFiles);
+                var sources = CreateSources(group, isMainGroup, isUsingMultipleInputFiles);
                 var options = CreateInstallOptions(requirements, groupEntry, group, isMainGroup);
 
                 var requiredRemoteFiles = requirements.Where(s => string.Equals(s.Group, group.Name.Name, StringComparison.OrdinalIgnoreCase)).OfType<RemoteFile>().ToList();
@@ -237,10 +237,8 @@ namespace Aderant.Build.DependencyResolver {
             Lines = dependenciesFile.Lines;
         }
 
-        private FSharpList<PackageSources.PackageSource> CreateSources(KeyValuePair<Domain.GroupName, DependenciesGroup> groupEntry, DependenciesGroup group, bool isMainGroup, bool isUsingMultipleInputFiles) {
+        private FSharpList<PackageSources.PackageSource> CreateSources(DependenciesGroup group, bool isMainGroup, bool isUsingMultipleInputFiles) {
             IReadOnlyList<PackageSource> packageSources = wellKnownSources.GetSources();
-
-            bool addDatabasePackageUrl = ShouldAddDatabasePackageUrl(groupEntry, packageSources);
 
             FSharpList<PackageSources.PackageSource> sources = group.Sources;
 
@@ -253,10 +251,6 @@ namespace Aderant.Build.DependencyResolver {
                 if (group.Sources.Any(s => Equals(s.NuGetType, PackageSources.KnownNuGetSources.OfficialNuGetGallery))) {
                     sources = AddSource(Constants.OfficialNuGetUrlV3, sources);
                 }
-            }
-
-            if (addDatabasePackageUrl) {
-                sources = AddSource(Constants.DatabasePackageUri, sources);
             }
 
             // Upgrade any V2 to V3 sources
@@ -293,20 +287,6 @@ namespace Aderant.Build.DependencyResolver {
             }
 
             return options;
-        }
-
-        private bool ShouldAddDatabasePackageUrl(KeyValuePair<Domain.GroupName, DependenciesGroup> groupEntry, IReadOnlyList<PackageSource> packageSources) {
-            // Only fallback to adding the database source if we are not using Azure hosted packages
-            // This was needed as the private NuGet server could not handle the size of the database packages, but the Azure service can.
-            if (packageSources.Any(s => string.Equals(s.Url, Constants.DatabasePackageUri, StringComparison.OrdinalIgnoreCase))) {
-                foreach (var item in groupEntry.Value.Packages) {
-                    if (string.Equals(item.Name.Name, "Aderant.Database.Backup", StringComparison.OrdinalIgnoreCase)) {
-                        return true;
-                    }
-                }
-            }
-
-            return false;
         }
 
         private FSharpList<PackageSources.PackageSource> RemoveSource(FSharpList<PackageSources.PackageSource> sources, params string[] urls) {
@@ -383,8 +363,14 @@ namespace Aderant.Build.DependencyResolver {
                             }
                         }
                     }
+
+                    // If a group has only one package then Remove() will remove the group and
+                    // we loose the group settings so we need to take a copy first
+                    var packageGroup = file.GetGroup(groupName);
+                    InstallOptions options = packageGroup.Options;
+
                     file = file.Remove(groupName, packageName);
-                    file = file.Add(groupName, packageName, version, installSettings);
+                    file = file.Add(groupName, packageName, version, options.Settings);
                 }
             }
         }
