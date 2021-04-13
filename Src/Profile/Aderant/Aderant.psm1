@@ -768,25 +768,6 @@ function Add-BranchExpansionParameter([string]$CommandName, [string]$ParameterNa
     $global:expertTabBranchExpansions += $objNewExpansion
 }
 
-function Test-ExpertPackageFeed {
-    $p = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), [System.IO.Path]::GetRandomFileName())
-    [void](New-Item -Path $p -ItemType 'Directory')
-
-    try {
-        Push-Location $p
-
-    $c = @'
-source https://expertpackages.azurewebsites.net/v3/index.json
-nuget Aderant.Build.Analyzer
-'@
-
-        Set-Content -Path "$p\paket.dependencies" $c
-        & $global:ShellContext.PackagingTool update --verbose
-    } finally {
-        Pop-Location
-    }
-}
-
 # Add module auto completion scenarios
 Add-ModuleExpansionParameter -CommandName "Set-CurrentModule" -ParameterName "name"
 Add-ModuleExpansionParameter -CommandName "Branch-Module" -ParameterName "moduleName"
