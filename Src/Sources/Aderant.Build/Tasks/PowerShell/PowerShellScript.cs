@@ -242,21 +242,24 @@ namespace Aderant.Build.Tasks.PowerShell {
         private static void AttachLogger(TaskLoggingHelper log, PowerShellPipelineExecutor pipelineExecutor) {
             pipelineExecutor.DataReady += (sender, objects) => {
                 foreach (var o in objects) {
-                    log.LogMessage(MessageImportance.Normal, o.ToString());
+                    log.LogMessage(MessageImportance.Normal, TransformMessage(o));
                 }
             };
-
             pipelineExecutor.ErrorReady += (sender, objects) => {
                 foreach (var o in objects) {
-                    log.LogError(o.ToString());
+                    log.LogError(TransformMessage(o));
                 }
             };
 
-            pipelineExecutor.Debug += (sender, message) => { log.LogMessage(MessageImportance.Low, message.ToString()); };
-            pipelineExecutor.Verbose += (sender, message) => { log.LogMessage(MessageImportance.Low, message.ToString()); };
+            pipelineExecutor.Debug += (sender, message) => { log.LogMessage(MessageImportance.Low, TransformMessage(message)); };
+            pipelineExecutor.Verbose += (sender, message) => { log.LogMessage(MessageImportance.Low, TransformMessage(message)); };
+            pipelineExecutor.Warning += (sender, message) => { log.LogWarning(TransformMessage(message)); };
+            pipelineExecutor.Info += (sender, message) => { log.LogMessage(TransformMessage(message)); };
+        }
 
-            pipelineExecutor.Warning += (sender, message) => { log.LogWarning(message.ToString()); };
-            pipelineExecutor.Info += (sender, message) => { log.LogMessage(message.ToString()); };
+        internal static string TransformMessage<T>(T input) where T : class {
+            // If the result of .ToString() on the input object is null, the PowerShell TaskLoggingHelper will throw an ArgumentNullException when logging the message.
+            return input.ToString() ?? string.Empty;
         }
 
         internal virtual IBuildPipelineService GetProxy() {
