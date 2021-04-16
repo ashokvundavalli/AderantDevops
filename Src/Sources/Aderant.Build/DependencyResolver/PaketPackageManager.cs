@@ -230,7 +230,9 @@ namespace Aderant.Build.DependencyResolver {
             dependenciesFile = new DependenciesFile(
                 dependenciesFile.FileName,
                 map,
-                result.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None));
+                result.Split(new[] {
+                    "\r\n", "\r", "\n"
+                }, StringSplitOptions.None));
 
             dependenciesFile.Save();
 
@@ -403,11 +405,11 @@ namespace Aderant.Build.DependencyResolver {
             DoOperationAndHandleCredentialFailure(
                 () => {
                     if (!HasLockFile()) {
-                        new UpdateAction(dependencies, force).Run(cancellationToken);
+                        new UpdateAction(dependencies, force).Run(this, cancellationToken);
                         return;
                     }
 
-                    new RestoreAction(dependencies, force).Run(cancellationToken);
+                    new RestoreAction(dependencies, force).Run(this, cancellationToken);
                 });
         }
 
@@ -423,7 +425,7 @@ namespace Aderant.Build.DependencyResolver {
 
         public void Update(bool force, CancellationToken cancellationToken = default(CancellationToken)) {
             DoOperationAndHandleCredentialFailure(
-                () => { new UpdateAction(dependencies, force).Run(cancellationToken); });
+                () => { new UpdateAction(dependencies, force).Run(this, cancellationToken); });
         }
 
         public DependencyGroup GetDependencies() {
@@ -528,7 +530,9 @@ namespace Aderant.Build.DependencyResolver {
 
         internal class RemoteFileMapper {
             public static RemoteFile Map(ModuleResolver.UnresolvedSource remoteFile, string groupName) {
-                return Map(new[] { remoteFile }, groupName).FirstOrDefault();
+                return Map(new[] {
+                    remoteFile
+                }, groupName).FirstOrDefault();
             }
 
             public static IEnumerable<RemoteFile> Map(IEnumerable<ModuleResolver.UnresolvedSource> remoteFiles, string groupName) {
@@ -551,6 +555,36 @@ namespace Aderant.Build.DependencyResolver {
                 }
 
                 return uri;
+            }
+        }
+
+        /// <summary>
+        /// Attempts the action attempting to handle corrupt packages
+        /// </summary>
+        internal void DoOperationWithCorruptPackageHandling(Action action) {
+            try {
+                action();
+            } catch (Exception ex) when (ex.InnerException is InvalidDataException) {
+                if (ex.InnerException.Source == "System.IO.Compression") {
+                    if (ex.InnerException.TargetSite.Name == "ReadEndOfCentralDirectory") {
+
+                        logger.Warning("Package corruption detected: ", ex.Message);
+
+                        var localRootForTempData = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                        string nugetDirectory = Path.Combine(localRootForTempData, ".nuget", "packages");
+                        if (Directory.Exists(nugetDirectory)) {
+                            try {
+                                Directory.Delete(nugetDirectory, true);
+                            } catch (IOException) {
+                                // Ignore "the directory is not empty"
+                            }
+                        }
+
+                        logger.Warning("Retrying dependency fetch...");
+                        // And try again
+                        action();
+                    }
+                }
             }
         }
     }
