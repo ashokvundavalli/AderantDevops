@@ -30,11 +30,13 @@ namespace IntegrationTest.Build.VersionControl {
         }
 
         protected static string RunPowerShellInIsolatedDirectory(TestContext context, string script) {
-            return PowerShellHelper.RunCommand(script, context, null);
+            var powerShellHelper = new PowerShellHelper();
+            return powerShellHelper.RunCommand(script, context, null);
         }
 
         protected static string RunPowerShellInDirectory(TestContext testContext, string script, string repositoryPath) {
-            return PowerShellHelper.RunCommand(script, testContext, repositoryPath);
+            var powerShellHelper = new PowerShellHelper();
+            return powerShellHelper.RunCommand(script, testContext, repositoryPath);
         }
     }
 }

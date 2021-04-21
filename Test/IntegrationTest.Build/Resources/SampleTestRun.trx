@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<TestRun id="ed5efce2-5562-4e62-b10f-915145c8485d" name="ji.paik@WSAKL001263 2020-11-10 12:35:59" runUser="ADERANT_AP\ji.paik" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <TestSettings id="4351a89a-2f09-405f-9c12-df51a91ba47f">
+    <Execution>
+      <TestTypeSpecific />
+      <AgentRule name="Execution Agents">
+      </AgentRule>
+    </Execution>
+    <Deployment runDeploymentRoot="ji.paik_WSAKL001263 2020-11-10 12_35_59" />
+    <Properties />
+  </TestSettings>
+  <Times creation="2020-11-10T12:35:59.1650687+13:00" queuing="2020-11-10T12:35:59.1650687+13:00" start="2020-11-10T12:35:59.1650687+13:00" finish="2020-11-10T12:35:59.1650687+13:00" />
+  <ResultSummary outcome="Inconclusive" isPartialRun="true">
+    <Counters total="106" executed="106" passed="106" error="0" failed="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <RunInfos>
+      <RunInfo computerName="WSAKL001263" outcome="Inconclusive" timestamp="2020-11-10T12:35:59.5720686+13:00">
+        <Text>The test run is a partial run, it was created from subset of results of the original run. The test run does not contain diagnostics messages and may not contain all results from the original run.</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+  <TestDefinitions>
+    <UnitTest name="GetRecurringInvoicesReadyForGenerationOnlyReturnsGeneratableRecurringInvoices" storage="c:\temp\tfsbuildservice$_svbld317 2020-11-10 11_10_31\out\unittest.accountspayable.rules.dll" id="57dd74e4-424c-afbd-963d-d73aa98487e0">
+      <Execution id="0098b7c3-2023-42ba-8cbd-92af9682363a" />
+      <TestMethod codeBase="C:\B\517\1\s\AccountsPayable\Bin\Test\UnitTest.AccountsPayable.Rules.dll" adapterTypeName="executor://mstestadapter/v1" className="UnitTest.AccountsPayable.Rules.Activities.GenerateRecurringInvoicesTests" name="ElevenSecondTest" />
+      <TestMethod codeBase="C:\B\517\1\s\AccountsPayable\Bin\Test\UnitTest.AccountsPayable.Rules.dll" adapterTypeName="executor://mstestadapter/v1" className="UnitTest.AccountsPayable.Rules.Activities.GenerateRecurringInvoicesTests" name="NineSecondTest" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <TestEntries>
+    <TestEntry testId="57dd74e4-424c-afbd-963d-d73aa98487e0" executionId="0098b7c3-2023-42ba-8cbd-92af9682363a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d">
+    </TestEntry>
+    <TestEntry testId="57dd74e4-424c-afbd-963d-d73aa98487af" executionId="0098b7c3-2023-42ba-8cbd-92af9682363a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d">
+    </TestEntry>
+  </TestEntries>
+  <Results>
+    <UnitTestResult executionId="0098b7c3-2023-42ba-8cbd-92af9682363a" testId="57dd74e4-424c-afbd-963d-d73aa98487e0" testName="ElevenSecondTest" computerName="SVBLD317" duration="00:00:04.0000000" startTime="2020-11-10T11:07:28.7969630+13:00" endTime="2020-11-10T11:07:41.5571390+13:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="SVBLD317\0098b7c3-2023-42ba-8cbd-92af9682363a" dataRowInfo="">
+    </UnitTestResult>
+    <UnitTestResult executionId="0098b7c3-2023-42ba-8cbd-92af9682363a" testId="57dd74e4-424c-afbd-963d-d73aa98487af" testName="NineSecondTest" computerName="SVBLD317" duration="00:00:06.0000000" startTime="2020-11-10T11:07:28.7969630+13:00" endTime="2020-11-10T11:07:41.5571390+13:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="SVBLD317\0098b7c3-2023-42ba-8cbd-92af9682363a" dataRowInfo="">
+    </UnitTestResult>
+  </Results>
+</TestRun>

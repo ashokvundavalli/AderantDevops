@@ -5,17 +5,19 @@ namespace IntegrationTest.Build.EndToEnd {
 
         protected abstract string DeploymentItemsDirectory { get; }
 
+        private readonly PowerShellHelper powerShellHelper = new PowerShellHelper();
+
         protected void CleanWorkingDirectory() {
-            PowerShellHelper.RunCommand("& git clean -fdx", TestContext, DeploymentItemsDirectory);
+            powerShellHelper.RunCommand("& git clean -fdx", TestContext, DeploymentItemsDirectory);
         }
 
         protected void CommitChanges() {
-            PowerShellHelper.RunCommand("& git add .", TestContext, DeploymentItemsDirectory);
-            PowerShellHelper.RunCommand("& git commit -m \"Add\"", TestContext, DeploymentItemsDirectory);
+            powerShellHelper.RunCommand("& git add .", TestContext, DeploymentItemsDirectory);
+            powerShellHelper.RunCommand("& git commit -m \"Add\"", TestContext, DeploymentItemsDirectory);
         }
 
         protected void AddFilesToNewGitRepository() {
-            PowerShellHelper.RunCommand(Resources.CreateRepo, TestContext, DeploymentItemsDirectory);
+            powerShellHelper.RunCommand(Resources.CreateRepo, TestContext, DeploymentItemsDirectory);
         }
 
     }

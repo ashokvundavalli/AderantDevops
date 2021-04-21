@@ -1,16 +1,40 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Management.Automation;
 using System.Text;
 using System.Threading;
 using Aderant.Build;
+using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build.Helpers {
-    internal class PowerShellHelper {
 
-        public static string RunCommand(string command, TestContext context, string directory = null) {
+    internal class MessageLocator{
+        public MessageLocator(string searchText, Type logLevel) {
+            SearchText = searchText;
+            LogLevel = logLevel;
+        }
+
+        internal string SearchText;
+        internal Type LogLevel;
+        internal bool FoundResult;
+    }
+
+    internal class PowerShellHelper {
+        private readonly IList<MessageLocator> messagesToSearchLogFor;
+
+        internal PowerShellHelper() : this(new List<MessageLocator>(0)) {
+        }
+
+        internal PowerShellHelper(IList<MessageLocator> messagesToSearchLogFor) {
+            this.messagesToSearchLogFor = messagesToSearchLogFor;
+        }
+
+        internal bool FoundAllMessages => messagesToSearchLogFor.All(m => m.FoundResult);
+
+        internal string RunCommand(string command, TestContext context, string directory = null) {
             if (directory == null) {
                 directory = Path.Combine(context.DeploymentDirectory, "[" + DateTime.UtcNow.ToFileTimeUtc() + "]");
             }
@@ -50,10 +74,10 @@ namespace IntegrationTest.Build.Helpers {
                 }
             };
 
-            EventHandler<InformationRecord> info = (sender, objects) => { context.WriteLine(objects.ToString()); };
-            EventHandler<VerboseRecord> verbose = (sender, objects) => { context.WriteLine(objects.ToString()); };
-            EventHandler<WarningRecord> warning = (sender, objects) => { context.WriteLine(objects.ToString()); };
-            EventHandler<DebugRecord> debug = (sender, objects) => { context.WriteLine(objects.ToString()); };
+            EventHandler<InformationRecord> info = (sender, objects) => { context.WriteLine(SearchForMessagesInLogLine(objects)); };
+            EventHandler<VerboseRecord> verbose = (sender, objects) => { context.WriteLine(SearchForMessagesInLogLine(objects)); };
+            EventHandler<WarningRecord> warning = (sender, objects) => { context.WriteLine(SearchForMessagesInLogLine(objects)); };
+            EventHandler<DebugRecord> debug = (sender, objects) => { context.WriteLine(SearchForMessagesInLogLine(objects)); };
 
             executor.DataReady += dataReady;
             executor.ErrorReady += errorReady;
@@ -86,6 +110,26 @@ namespace IntegrationTest.Build.Helpers {
 
         private static string MakeSafeForWriteLine(object psObject) {
             return psObject.ToString().Replace("{", "{{").Replace("}", "}}");
+        }
+
+        private string SearchForMessagesInLogLine<T>(T logLine) where T : class {
+            if (logLine == null) {
+                return string.Empty;
+            }
+
+            string currentLogLine = logLine.ToString();
+
+            // Filters the logs for messages that have not been found of this log level
+            // and sets their FoundResult property as true when found.
+            messagesToSearchLogFor
+                .Where(m => m.LogLevel == logLine.GetType() && !m.FoundResult)
+                .ForEach(m => {
+                    if (currentLogLine.IndexOf(m.SearchText, StringComparison.OrdinalIgnoreCase) != -1) {
+                        m.FoundResult = true;
+                    }
+                });
+
+            return currentLogLine;
         }
     }
 }
