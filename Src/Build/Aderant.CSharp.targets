@@ -370,7 +370,7 @@
 
   </Target>
 
-  <Target Name="ReplicateOutputs" AfterTargets="AfterBuild" Condition="'$(AlternativeOutputDirectory)' != ''">
+  <Target Name="ReplicateOutputs" AfterTargets="AfterBuild" Condition="'$(AlternativeOutputDirectory)' != '' And '$(DisableReplicateOutputs)' != 'True'">
 
     <Delete Files="@(IntermediateAssembly->'$(AlternativeOutputDirectory)%(Filename)%(Extension)')"
             ContinueOnError="true" />
