@@ -179,17 +179,22 @@ begin{
         [xml]$xmlTrx = Get-Content -path $file
 
         # Select all the test results that exceed the max duration
-        $xmlTrx.TestRun.Results.UnitTestResult | 
-        Where-Object {
-            if (-not (HasProperty $_ $durationPropertyName)) {
-                $duration = [TimeSpan]::Zero
-            } else {
-                $duration = ($_.duration -as [TimeSpan])
-            }
-    
-            if ($null -ne ($duration)) {
-                $myDuration = New-TimeSpan -Seconds $maxTestDuration
-                $duration.TotalSeconds -gt $myDuration.TotalSeconds
+        $hasResults = ($xmlTrx.TestRun.PSObject.Properties.Name -contains 'Results' -and 
+                            $xmlTrx.TestRun.Results.PSObject.Properties.Name -contains 'UnitTestResult')
+
+        if ($hasResults) {
+            $xmlTrx.TestRun.Results.UnitTestResult | 
+            Where-Object {
+                if (-not (HasProperty $_ $durationPropertyName)) {
+                    $duration = [TimeSpan]::Zero
+                } else {
+                    $duration = ($_.duration -as [TimeSpan])
+                }
+        
+                if ($null -ne ($duration)) {
+                    $myDuration = New-TimeSpan -Seconds $maxTestDuration
+                    $duration.TotalSeconds -gt $myDuration.TotalSeconds
+                }
             }
         }
     }
