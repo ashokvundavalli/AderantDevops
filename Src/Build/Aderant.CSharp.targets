@@ -6,14 +6,14 @@
   <Import Project="Aderant.Build.Common.targets" Condition="'$(PrepareBuildEnvironmentTargetImported)' == ''" />
 
   <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+
     <WebContentProject Condition="'$(WebContentProject)' == ''">$(BuildScriptsDirectory)Aderant.wpp.Content.proj</WebContentProject>
 
     <!--This property is defined in Microsoft.Web.Publishing.targets-->
     <OnAfterPackageUsingManifest>$(OnAfterPackageUsingManifest);ReplicateOutputs</OnAfterPackageUsingManifest>
 
     <SignApplications Condition="'$(SignApplications)' == '' And Exists('$(MSBuildThisFileDirectory)\Aderant.CodeSigning.targets')">true</SignApplications>
-
-    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
 
     <!--No doc file, then suppress the no documentation warning-->
     <NoWarn Condition="'$(DocumentationFile)' == ''">$(NoWarn);1591;1570;1572;1573;1574</NoWarn>
@@ -148,7 +148,7 @@
       <RootFolder>$(SolutionPath)</RootFolder>
       <RootFolder Condition="'$(RootFolder)' == ''">$(SolutionRoot)</RootFolder>
       <RootFolder Condition="'$(RootFolder)' == ''">$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', 'dir.proj'))</RootFolder>
-      <RootFolder Condition="'$(RootFolder)' == ''">$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', 'Paket.Dependencies'))</RootFolder>
+      <RootFolder Condition="'$(RootFolder)' == ''">$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', 'paket.dependencies'))</RootFolder>
 
       <CopyLocalDependenciesWhenParentReferenceInGac>false</CopyLocalDependenciesWhenParentReferenceInGac>
       <DoNotCopyLocalIfInGac>true</DoNotCopyLocalIfInGac>
@@ -169,11 +169,9 @@
       .dll;
       .exe
     </AllowedReferenceAssemblyFileExtensions>
-
-
     <!--
         These are the extensions that reference resolution will consider when looking for files related
-        to resolved references. Here we ignore pdb and xml for test projets to avoid pulling in that baggage.
+        to resolved references. Here we ignore pdb and xml for test projects to avoid pulling in that baggage.
         A dummy name is provided to fool the ResolveAssemblyReference task.
       -->
     <AllowedReferenceRelatedFileExtensions Condition=" $(ProjectTypeGuids.Contains('3AC096D0-A1C2-E12C-1390-A8335801FDAB')) == 'true' ">
@@ -181,8 +179,8 @@
     </AllowedReferenceRelatedFileExtensions>
   </PropertyGroup>
 
+
   <Target Name="SetAssemblySearchPaths"
-          BeforeTargets="GetReferenceAssemblyPaths;BeforeResolveReferences"
           DependsOnTargets="AssignPropertiesForCustomSearchPaths;CollectNugetPackagePaths">
 
     <!--
@@ -213,6 +211,13 @@
       <_Pia2010>$(ProgramFiles32)\Microsoft Visual Studio 14.0\Visual Studio Tools for Office\PIA\Office14\</_Pia2010>
     </PropertyGroup>
 
+    <ItemGroup>
+      <AssemblySearchDirectories Condition="'$(ReferencePath)' != ''" Include="$(ReferencePath)" />
+      <!--Adding additional dependencies searching locations. -->
+      <AssemblySearchDirectories Condition="'$(ExpertSourceDirectory)' != ''" Include="$(ExpertSourceDirectory)" />
+      <AssemblySearchDirectories Condition="'$(ExpertSourceDirectory)' != ''" Include="$(ExpertSourceDirectory)StoredProcedures" />
+    </ItemGroup>
+
     <PropertyGroup>
       <!-- Create the assembly search paths property. This defines where\how references are resolved.
            This path order places our search paths first.
@@ -221,7 +226,6 @@
         $(AlternativeOutputDirectory);
         $(AlternativeOutputDirectory)StoredProcedures;
         $(AssemblySearchPaths);
-        $(ReferencePath);
         $(RootFolder)\Dependencies\;
         @(AssemblySearchDirectories);
         $(_WIXLib);
@@ -232,12 +236,8 @@
         $(_VS2017InstallDirectory)Professional\$(_PublicAssembliesSuffix);
       </AssemblySearchPaths>
 
-    </PropertyGroup>
-
-
-    <!--Adding additional dependencies searching locations. -->
-    <PropertyGroup>
-      <AssemblySearchPaths Condition="'$(ExpertSourceDirectory)' != ''">$(ExpertSourceDirectory);$(ExpertSourceDirectory)StoredProcedures;$(AssemblySearchPaths);</AssemblySearchPaths>
+      <!--Prevent hunting into legacy registry assembly folders https://stackoverflow.com/questions/50638711/msbuild-is-replacing-newtonsoft-json-dll-with-an-older-version -->
+      <AssemblySearchPaths>$(AssemblySearchPaths.Replace('{AssemblyFolders}', '').Split(';'))</AssemblySearchPaths>
     </PropertyGroup>
 
     <!-- Check if any project references need to be fixed. -->
