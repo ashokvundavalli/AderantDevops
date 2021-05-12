@@ -4,6 +4,7 @@
          TreatAsLocalProperty="SolutionRoot">
 
   <Import Project="Aderant.Build.Common.targets" Condition="'$(AderantCommonTargetsImported)' != 'true'" />
+  <Import Project="$(ParametersFile)" Condition="Exists($(ParametersFile))" />
 
   <PropertyGroup>
     <RunTestsDependsOn>
@@ -67,7 +68,7 @@
 
     <!-- Collect all assemblies to use as test dependencies -->
     <ItemGroup>
-      <AllStagedDlls Include="$(ArtifactStagingDirectory)out\**\*.dll" />
+      <AllStagedDlls Include="$(ArtifactStagingDirectory)out\**\*.dll" Exclude="@(ExcludedTestResolutionFiles)"/>
       <AllDirectoriesWithDlls Include="@(AllStagedDlls->'%(RootDir)%(Directory)'->Distinct())"/>
     </ItemGroup>
 

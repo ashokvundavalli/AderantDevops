@@ -105,6 +105,7 @@
       <ImpactedTestAssemblies>@(ImpactedTestAssemblies)</ImpactedTestAssemblies>
 
       <TestProperties>
+        ParametersFile=$(ParametersFile);
         TestPattern=UnitTest;
         ImpactedTestAssemblies=$(ImpactedTestAssemblies);
         ArtifactStagingDirectory=$(ArtifactStagingDirectory);
