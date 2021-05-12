@@ -20,6 +20,7 @@
     <WarningsNotAsErrors Condition="'$(DocumentationFile)' == ''">$(WarningsNotAsErrors);1591;1570;1572;1573;1574</WarningsNotAsErrors>
   </PropertyGroup>
 
+
   <Import Project="Aderant.CodeSigning.targets" Condition="'$(SignApplications)' == 'true'" />
 
   <!--
@@ -129,7 +130,15 @@
 
     <ItemGroup Condition="'$(_PackageDirectoriesHasValue)' != 'true'">
       <_AllFiles Include="$(RootFolder)\packages\**\lib\**\*.dll"/>
-      <_PackageDirectories Include="@(_AllFiles->'%(RootDir)%(Directory)'->Distinct())"/>
+
+      <NugetPackageFoldersToIgnore Include="MonoAndroid10;MonoTouch10;win8;wp8;wpa81;uap;Xamarin;monoandroid90;xamarinios10;xamarinmac20" />
+      <NugetPackageFoldersToIgnore Include="de-DE;es-ES;fr-FR;it-IT;ja-JP;ko-KR;pt-BR;ru-RU;zh-CN;zh-TW;zh-Hans;zh-Hant" />
+      <NugetPackageFoldersToIgnore Include="cs;de;es;fr;it;ja;ko;pl;ru;tr;sl4" />
+
+      <!-- Trim the path separator off so %(Filename) resolves -->
+      <_PackageDirectories Include="@(_AllFiles->'%(RootDir)%(Directory)'->TrimEnd('\')->Distinct())" />
+
+      <_PackageDirectories Remove="@(_PackageDirectories)" Condition="'%(Filename)' == '@(NugetPackageFoldersToIgnore->'%(Filename)')'" />
     </ItemGroup>
 
     <StringCache Condition="'$(_PackageDirectoriesHasValue)' != 'true'"
