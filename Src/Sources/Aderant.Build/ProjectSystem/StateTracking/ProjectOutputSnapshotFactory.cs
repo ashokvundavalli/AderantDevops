@@ -147,7 +147,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                     .ToArray();
             }
 
-            return new string[] { };
+            return Array.Empty<string>();
         }
 
         private bool IsTestProject() {

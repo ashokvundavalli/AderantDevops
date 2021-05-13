@@ -11,8 +11,6 @@
     <RootNamespace>Aderant.Build</RootNamespace>
     <AssemblyName>Aderant.Build</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
     <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -25,7 +23,6 @@
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>full</DebugType>
@@ -41,7 +38,7 @@
   <Import Project="..\References.props" />
   <ItemGroup>
     <Reference Include="LibGit2Sharp, Version=0.26.0.0, Culture=neutral, PublicKeyToken=7cbde695407f0333, processorArchitecture=MSIL">
-      <HintPath>..\..\..\packages\devtools\LibGit2Sharp\lib\net46\LibGit2Sharp.dll</HintPath>
+      <HintPath>..\..\..\packages\LibGit2Sharp\lib\net46\LibGit2Sharp.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="paket, Version=5.257.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -76,17 +73,11 @@
     <Reference Include="System.Net.Http, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <HintPath>$(MSBuildProgramFiles32)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\System.Net.Http.dll</HintPath>
     </Reference>
-    <Reference Include="System.Numerics.Vectors, Version=4.1.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\..\..\packages\devtools\System.Numerics.Vectors\lib\net46\System.Numerics.Vectors.dll</HintPath>
-    </Reference>
     <Reference Include="System.Runtime.Caching" />
-    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=4.0.4.1, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\..\..\packages\devtools\System.Runtime.CompilerServices.Unsafe\lib\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
-    </Reference>
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.Threading.Tasks.Dataflow, Version=4.6.5.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\..\..\packages\devtools\System.Threading.Tasks.Dataflow\lib\net461\System.Threading.Tasks.Dataflow.dll</HintPath>
+      <HintPath>..\..\..\packages\System.Threading.Tasks.Dataflow\lib\net461\System.Threading.Tasks.Dataflow.dll</HintPath>
     </Reference>
     <Reference Include="System.Web" />
     <Reference Include="System.Xaml">
@@ -103,6 +94,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\..\Build\Functions\InProcessJobs.cs">
+      <Link>InProcessJobs.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Build\Functions\VisualStudioConfiguration.cs">
+      <Link>VisualStudioConfiguration.cs</Link>
+    </Compile>
     <Compile Include="ArtifactStagingPathBuilder.cs" />
     <Compile Include="AutoCompletionParser.cs" />
     <Compile Include="BucketVersion.cs" />
@@ -127,7 +124,9 @@
     <Compile Include="ProjectSystem\StateTracking\TrackedMetadataFile.cs" />
     <Compile Include="DependencyResolver\ResolverSettingsReader.cs" />
     <Compile Include="PipelineService\QueryOptions.cs" />
+    <Compile Include="Tasks\GetCurrentProcessId.cs" />
     <Compile Include="Tasks\Testing\BuildTestRunParametersXml.cs" />
+    <Compile Include="Tasks\TextTemplating\TextTemplatingAssemblyResolver.cs" />
     <Compile Include="Utilities\PathComparer.cs" />
     <Compile Include="Model\CommitConfiguration.cs" />
     <Compile Include="ProjectSystem\BuildReasonExtensions.cs" />
@@ -158,7 +157,7 @@
     <Compile Include="Tasks\GeneratePaketDependencies.cs" />
     <Compile Include="Tasks\HappyCat.cs" />
     <Compile Include="Tasks\SourceTransformationTask.cs" />
-    <Compile Include="Tasks\TextTemplatingPathResolver.cs" />
+    <Compile Include="Tasks\TextTemplating\TextTemplatingPathResolver.cs" />
     <Compile Include="Utilities\EnumerableExtensions.cs" />
     <Compile Include="Utilities\Graph.cs" />
     <Compile Include="Utilities\Multigraph.cs" />
@@ -457,13 +456,9 @@
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
-    <None Include="libgit2.props">
-      <SubType>Designer</SubType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Scripts\_readme.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Import Project="libgit2.props" />
+  <Import Project="..\..\..\libgit2.props" />
+  <Import Project="..\..\..\MSBuildTasks.props" />
 </Project>

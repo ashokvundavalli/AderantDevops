@@ -249,7 +249,13 @@ namespace Willys.LsaSecurity
             if (-not $skipDownload) {
                 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
                 [string]$agentArchive = "$scriptsDirectory\vsts-agent.zip"
+
+                $pref = $ProgressPreference
+                $ProgressPreference  = 'SilentlyContinue'
+
                 Invoke-WebRequest "https://vstsagentpackage.azureedge.net/agent/2.141.2/vsts-agent-win-x64-2.141.2.zip" -OutFile $agentArchive -UseBasicParsing
+
+                $ProgressPreference = $pref
             }
 
             Import-Module ServerManager

@@ -1,7 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-         DefaultTargets="EndToEnd"
-         ToolsVersion="14.0">
+         DefaultTargets="EndToEnd">
 
   <Import Project="Aderant.Build.Common.targets" Condition="'$(AderantCommonTargetsImported)' != 'true'" />
   <Import Project="Aderant.Build.Publish.targets" />
@@ -18,11 +17,6 @@
     <EndToEndDependsOn>
       ValidateRequiredProperties;
       RefreshVersionVariables;
-      <!--RunTests;
-      RunIntegrationTests;
-      --><!--RunAutomationTests;--><!--
-      PublishModule;
-      MobileBuild;-->
       PostBuild;
       RunBuildExtensions;
       SignInstallers;

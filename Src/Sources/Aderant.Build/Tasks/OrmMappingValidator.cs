@@ -2,13 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace Aderant.Build.Tasks {
     public class OrmMappingValidator : Microsoft.Build.Utilities.Task {
-        private static System.Text.RegularExpressions.Regex match = new Regex("(?i)(OrmMappingDefinition)");
         private static Guid unitTestProjectType = Guid.Parse("3AC096D0-A1C2-E12C-1390-A8335801FDAB");
 
         public ITaskItem[] Content { get; set; }
@@ -75,8 +71,8 @@ namespace Aderant.Build.Tasks {
                         continue;
                     }
 
-                    if (match.IsMatch(fullPath)) {
-                        Log.LogError("{0} is not a valid ORM mapping file. The correct extension is .hbm.xml. Also ensure the.cs file is not checked in.", fullPath);
+                    if (FileNameOfItemStartsWithOrmMapping(item)) {
+                        Log.LogError("{0} is not a valid ORM mapping file. The correct extension is .hbm.xml. Also ensure the .cs file is not committed.", fullPath);
                         return false;
                     }
                 }
@@ -88,7 +84,7 @@ namespace Aderant.Build.Tasks {
         private void ValidateEmbeddedResources(ITaskItem[] embeddedResources, List<ITaskItem> items) {
             if (embeddedResources != null) {
                 foreach (var item in embeddedResources) {
-                    if (match.IsMatch(item.ItemSpec)) {
+                    if (FileNameOfItemStartsWithOrmMapping(item)) {
                         return;
                     }
                 }
@@ -98,10 +94,14 @@ namespace Aderant.Build.Tasks {
             Log.LogError("The following mapping templates are defined: {0} but there is not a matching file set to Embedded Resource in the project. This is almost certainly an error. Set the type of the file to Embedded Resource so it can be loaded by NHibernate.", mappingFiles);
         }
 
-        private void GatherInputs(ITaskItem[] input, List<ITaskItem> collector) {
+        private static bool FileNameOfItemStartsWithOrmMapping(ITaskItem item) {
+            return item.GetMetadata("FileName").StartsWith("OrmMappingDefinition", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static void GatherInputs(ITaskItem[] input, List<ITaskItem> collector) {
             if (input != null) {
                 foreach (var item in input) {
-                    if (match.IsMatch(item.ItemSpec)) {
+                    if (FileNameOfItemStartsWithOrmMapping(item)) {
                         collector.Add(item);
                     }
                 }

@@ -2,7 +2,7 @@
          ToolsVersion="Current">
 
   <Target Name="EndToEnd">
-    <MSBuild Projects="ComboBuild.targets"
+    <MSBuild Projects="Build\ComboBuild.targets"
              Targets="BuildAndPackage" />
   </Target>
 

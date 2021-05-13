@@ -242,7 +242,7 @@
         $(_VS2017InstallDirectory)Enterprise\$(_VSSDKSuffix);
         $(_VS2017InstallDirectory)Enterprise\$(_PublicAssembliesSuffix);
         $(_VS2017InstallDirectory)Professional\$(_VSSDKSuffix);
-        $(_VS2017InstallDirectory)Professional\$(_PublicAssembliesSuffix);
+        $(_VS2017InstallDirectory)Professional\$(_PublicAssembliesSuffix)
       </AssemblySearchPaths>
 
       <!--Prevent hunting into legacy registry assembly folders https://stackoverflow.com/questions/50638711/msbuild-is-replacing-newtonsoft-json-dll-with-an-older-version -->
@@ -278,6 +278,7 @@
           Condition="'$(IsCustomBuild)' != 'true' And '$(AssemblyName)' != 'Aderant.Framework.SoftwareFactory.Domain'">
 
     <Aderant.Build.Tasks.OrmMappingValidator
+      Condition="'$(DisableOrmMappingValidator)' != 'true'"
       Content="@(Content)"
       Compile="@(Compile)"
       None="@(None)"
@@ -437,7 +438,6 @@
       <RelativePackagesDirectory>$([MSBuild]::MakeRelative($(MSBuildProjectDirectory), '..\..\packages'))</RelativePackagesDirectory>
       <RelativePackagesDirectory Condition="!Exists('$(RelativePackagesDirectory)')"></RelativePackagesDirectory>
     </PropertyGroup>
-
 
     <RecordProjectOutputs
 	    Condition="'$(IsCustomBuild)' != 'true'"

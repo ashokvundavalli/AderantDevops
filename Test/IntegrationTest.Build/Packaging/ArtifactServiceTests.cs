@@ -10,22 +10,19 @@ namespace IntegrationTest.Build.Packaging {
     [TestClass]
     public class ArtifactServiceTests {
 
-        public TestContext TestContext { get; set; }
-
         [TestMethod]
-        [DeploymentItem(@"Resources", "Resources")]
         public void UpdateFile() {
-            string fileDirectory = Path.Combine(TestContext.DeploymentDirectory, "Resources", "BinFiles", "Customization"); // Nested Folder
+            var tempFileName = Path.GetTempFileName();
 
             ArtifactService artifactService = new ArtifactService(null, new PhysicalFileSystem(), new NullLogger());
 
-            IList<PathSpec> files = Directory.GetFiles(fileDirectory, "*", SearchOption.AllDirectories).Select(x => new PathSpec(x, x)).ToList();
+            var writes = new[] {
+                new PathSpec(tempFileName, tempFileName)
+            };
+            artifactService.UpdateWriteTimes(writes);
 
-            artifactService.UpdateWriteTimes(files);
-
-            foreach (PathSpec pathSpec in files) {
+            foreach (PathSpec pathSpec in writes) {
                 // Select the time for the file.
-                Assert.AreEqual(artifactService.WriteTime.Year, File.GetLastAccessTimeUtc(pathSpec.Destination).Year);
                 Assert.AreEqual(artifactService.WriteTime.Year, File.GetCreationTimeUtc(pathSpec.Destination).Year);
                 Assert.AreEqual(artifactService.WriteTime.Year, File.GetLastWriteTimeUtc(pathSpec.Destination).Year);
             }

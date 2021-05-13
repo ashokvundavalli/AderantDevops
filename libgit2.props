@@ -5,7 +5,7 @@
   namespace declared so full .NET build engines freak out. Once again, we must roll our own solutions by implementing the bare minimum deployment steps-->
   <PropertyGroup>
     <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
-    <LibGit2SharpNativeBinaries>(MSBuildThisFileDirectory)\..\..\..\..\packages\devtools\LibGit2Sharp.NativeBinaries\</LibGit2SharpNativeBinaries>
+    <LibGit2SharpNativeBinaries>$(MSBuildThisFileDirectory)\packages\LibGit2Sharp.NativeBinaries\</LibGit2SharpNativeBinaries>
   </PropertyGroup>
 
   <Import Project="$(LibGit2SharpNativeBinaries)Build\net46\LibGit2Sharp.NativeBinaries.props" />

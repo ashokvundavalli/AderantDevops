@@ -65,6 +65,12 @@ namespace Aderant.Build {
         [DataMember(EmitDefaultValue = false)]
         private string buildRoot;
 
+        [DataMember]
+        private string[] include;
+
+        [DataMember]
+        private string[] exclude;
+
         public BuildOperationContext() {
             Environment = "";
             PipelineName = "";
@@ -85,8 +91,7 @@ namespace Aderant.Build {
             }
         }
 
-        [DataMember]
-        private string[] include;
+
         /// <summary>
         /// Includes solutions and projects found under these paths into the build tree.
         /// </summary>
@@ -99,14 +104,12 @@ namespace Aderant.Build {
             }
         }
 
-        [DataMember]
-        private string[] exclude;
         /// <summary>
         /// Excludes solutions and projects found under these paths from build tree.
         /// </summary>
         public string[] Exclude {
             get {
-                return exclude ?? new string[] { };
+                return exclude ?? Array.Empty<string>();
             }
             set {
                 this.exclude = value;
@@ -506,6 +509,9 @@ namespace Aderant.Build {
         private List<BucketId> previousBuckets;
 
         [DataMember]
+        private List<SourceChange> changes;
+
+        [DataMember]
         public string Branch { get; set; }
 
         [DataMember]
@@ -539,8 +545,11 @@ namespace Aderant.Build {
             }
         }
 
-        [DataMember]
-        public IReadOnlyCollection<SourceChange> Changes { get; set; }
+
+        public IReadOnlyCollection<SourceChange> Changes {
+            get { return changes; }
+            set { changes = new List<SourceChange>(value); }
+        }
 
         [DataMember(EmitDefaultValue = false)]
         public string NewCommitDescription { get; set; }
@@ -562,12 +571,13 @@ namespace Aderant.Build {
         /// Gets a bucket for a friendly name.
         /// </summary>
         public BucketId GetBucketForCurrentTree(string tag) {
-            if (currentBuckets != null)
+            if (currentBuckets != null) {
                 foreach (var bucket in currentBuckets) {
                     if (string.Equals(bucket.Tag, tag, StringComparison.OrdinalIgnoreCase)) {
                         return bucket;
                     }
                 }
+            }
 
             return null;
         }

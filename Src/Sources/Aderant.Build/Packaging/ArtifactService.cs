@@ -330,6 +330,8 @@ namespace Aderant.Build.Packaging {
         internal readonly DateTime WriteTime = DateTime.UtcNow.AddYears(-1);
 
         internal void UpdateWriteTimes(IList<PathSpec> fileWrites) {
+            StringBuilder sb = new StringBuilder();
+
             foreach (PathSpec pathSpec in fileWrites) {
                 string file = pathSpec.Destination;
 
@@ -337,16 +339,17 @@ namespace Aderant.Build.Packaging {
                     continue;
                 }
 
-                logger.Info("Updating file time stamp for file: {0} to: '{1}' -> '{2}'.", file, fileSystem.GetLastAccessTimeUtc(file), WriteTime);
+                sb.AppendFormat("Updating file time stamp for file: {0} to: '{1}' -> '{2}'.", file, fileSystem.GetLastAccessTimeUtc(file), WriteTime);
 
                 try {
                     File.SetCreationTimeUtc(file, WriteTime);
                     File.SetLastWriteTimeUtc(file, WriteTime);
-                    File.SetLastAccessTimeUtc(file, WriteTime);
                 } catch (Exception ex) {
                     logger.Error("There has been an error while processing the file {0}. {1}", file, ex.Message);
                 }
             }
+
+            logger.Debug(sb.ToString());
         }
 
         private void RunResolveOperation(BuildStateFile stateFile, string solutionRoot, string container, List<ArtifactPathSpec> artifactPaths) {

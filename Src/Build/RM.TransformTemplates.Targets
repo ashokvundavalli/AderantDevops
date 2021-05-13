@@ -23,6 +23,7 @@
   </Target>
 
 
+
   <PropertyGroup>
     <TransformTaskDirectory Condition="'$(ExpertSourceDirectory)' == ''">$(SolutionDirectoryPath)Dependencies\</TransformTaskDirectory>
     <TransformTaskDirectory Condition="'$(ExpertSourceDirectory)' != ''">$(ExpertSourceDirectory)</TransformTaskDirectory>
@@ -185,130 +186,6 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
 
   </Target>
 
-
-  <Target Name="FindVisualStudio">
-    <PropertyGroup Condition="'$(IsVisualStudio2019OrHigher)' == 'true'">
-      <_VSPaths>$([Microsoft.Build.Utilities.ToolLocationHelper]::GetFoldersInVSInstallsAsString('', '', ''))</_VSPaths>
-      <_VSPaths>$([MSBuild]::Unescape($(_VSPaths)))</_VSPaths>
-    </PropertyGroup>
-
-    <ItemGroup>
-      <_InstalledToolVersion Include="$(_VSPaths)" />
-    </ItemGroup>
-  </Target>
-
-
-  <Target Name="FindInstalledToolVersions" DependsOnTargets="FindVisualStudio" Returns="@(InstalledToolVersion)">
-    <ItemGroup>
-      <_InstalledToolVersion Include="$([Microsoft.Build.Utilities.ToolLocationHelper]::GetPathToBuildTools('16.0'))" />
-      <_InstalledToolVersion Include="$([Microsoft.Build.Utilities.ToolLocationHelper]::GetPathToBuildTools('15.0'))" />
-      <_InstalledToolVersion Include="$([Microsoft.Build.Utilities.ToolLocationHelper]::GetPathToBuildTools('14.0'))" />
-      <_InstalledToolVersion Include="$([Microsoft.Build.Utilities.ToolLocationHelper]::GetPathToBuildTools('12.0'))" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <InstalledToolVersion Include="@(_InstalledToolVersion->Distinct())" />
-    </ItemGroup>
-  </Target>
-
-
-  <Target Name="TextTransformFindReferencePaths" DependsOnTargets="FindInstalledToolVersions" Returns="@(rmT4AssemblyReferencePaths);@(TextTemplatingBuildTasks);@(DslDirectiveProcessors)">
-    <PropertyGroup>
-      <VSSDKPath Condition="'$(VSSDK120Install)' != ''">$(VSSDK120Install)</VSSDKPath>
-      <VSSDKPath Condition="'$(VSSDK140Install)' != ''">$(VSSDK140Install)</VSSDKPath>
-    </PropertyGroup>
-
-    <PropertyGroup>
-      <ProgramFiles32>$(MSBuildProgramFiles32)</ProgramFiles32>
-    </PropertyGroup>
-
-    <ItemGroup>
-      <_VisualStudioVersion Include="2019">
-        <Edition>Enterprise</Edition>
-      </_VisualStudioVersion>
-
-      <_VisualStudioVersion Include="2019">
-        <Edition>Professional</Edition>
-      </_VisualStudioVersion>
-
-      <_VisualStudioVersion Include="2017">
-        <Edition>Enterprise</Edition>
-      </_VisualStudioVersion>
-
-      <_VisualStudioVersion Include="2017">
-        <Edition>Professional</Edition>
-      </_VisualStudioVersion>
-    </ItemGroup>
-
-    <ItemGroup>
-      <VisualStudioDslAssemblies Include="$(VSSDKPath)VisualStudioIntegration\Common\Assemblies\v4.0\Microsoft.VisualStudio.Modeling.Sdk.*.dll" />
-      <VisualStudioDslAssemblies Include="$(ProgramFiles32)\Microsoft Visual Studio\%(_VisualStudioVersion.Identity)\%(_VisualStudioVersion.Edition)\VSSDK\VisualStudioIntegration\Common\Assemblies\v4.0\Microsoft.VisualStudio.Modeling.Sdk.*.dll" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <VSSDKPaths Include="@(VisualStudioDslAssemblies->DirectoryName()->Distinct())" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <DslDirectiveProcessors Include="%(VSSDKPaths.FullPath)\Microsoft.VisualStudio.Modeling.Sdk.DslDefinition.*.dll">
-        <IsDslDirectiveProcessor>true</IsDslDirectiveProcessor>
-      </DslDirectiveProcessors>
-    </ItemGroup>
-
-    <ItemGroup>
-      <PublicAssemblies Include="$([System.IO.Directory]::GetDirectories('$(ProgramFiles32)\Microsoft Visual Studio', 'PublicAssemblies', System.IO.SearchOption.AllDirectories))" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <PrivateAssemblies Include="$([System.IO.Directory]::GetDirectories('$(ProgramFiles32)\Microsoft Visual Studio', 'PrivateAssemblies', System.IO.SearchOption.AllDirectories))" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <RoslynAssemblies Include="%(InstalledToolVersion.Identity)\Roslyn\Microsoft.CodeAnalysis.dll" />
-      <RoslynAssemblies Include="%(InstalledToolVersion.Identity)\Roslyn\Microsoft.CodeAnalysis.CSharp.dll" />
-      <RoslynAssemblies Include="%(InstalledToolVersion.Identity)\Microsoft.CodeAnalysis.dll" />
-      <RoslynAssemblies Include="%(InstalledToolVersion.Identity)\Microsoft.CodeAnalysis.CSharp.dll" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <RoslynPaths Include="@(RoslynAssemblies->DirectoryName()->Distinct())" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <rmT4AssemblyReferencePaths Include="$(rmT4AssemblyReferencePaths);@(VSSDKPaths);@(RoslynPaths);@(PublicAssemblies);@(PrivateAssemblies);@(VisualStudioDslAssemblies)" />
-    </ItemGroup>
-
-    <PropertyGroup>
-      <TextTemplatingSegment>Microsoft\VisualStudio\*\TextTemplating\Microsoft.TextTemplating.Build.Tasks.dll</TextTemplatingSegment>
-    </PropertyGroup>
-
-    <ItemGroup>
-      <_TextTemplatingBuildTasks Include="%(InstalledToolVersion.Identity)\..\..\$(TextTemplatingSegment)">
-        <IsTaskAssembly>true</IsTaskAssembly>
-      </_TextTemplatingBuildTasks>
-
-      <_TextTemplatingBuildTasks Include="%(InstalledToolVersion.Identity)\MSBuild\$(TextTemplatingSegment)">
-        <IsTaskAssembly>true</IsTaskAssembly>
-      </_TextTemplatingBuildTasks>
-
-      <!-- InstalledToolVersion will not contain 2017 if 2019 is installed so we need to include fallbacks -->
-      <_TextTemplatingBuildTasks Include="$(ProgramFiles32)\Microsoft Visual Studio\%(_VisualStudioVersion.Identity)\%(_VisualStudioVersion.Edition)\MSBuild\$(TextTemplatingSegment)">
-        <IsTaskAssembly>true</IsTaskAssembly>
-      </_TextTemplatingBuildTasks>
-    </ItemGroup>
-
-    <ItemGroup>
-      <TextTemplatingBuildTasks Include="@(_TextTemplatingBuildTasks->Distinct())" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <VisualStudioDslAssemblies Include="$(ProgramFiles32)\Microsoft Visual Studio\%(_VisualStudioVersion.Identity)\%(_VisualStudioVersion.Edition)\VSSDK\VisualStudioIntegration\Common\Assemblies\v4.0\Microsoft.VisualStudio.Modeling.Sdk.*.dll" />
-    </ItemGroup>
-
-  </Target>
-
-
-
   <!--
     *************************************************************************************************************
     rmT4AssemblyReferencePaths
@@ -316,8 +193,7 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
   -->
   <Target Name="rmT4AssemblyReferencePaths">
 
-    <TextTemplatingPathResolver
-      IsVisualStudio2019OrHigher="$(IsVisualStudio2019OrHigher)">
+    <TextTemplatingPathResolver>
       <Output TaskParameter="ReferencePaths" PropertyName="_rmT4AssemblyReferencePaths" />
       <Output TaskParameter="AssemblyReferences" ItemName="rmT4AssemblyReferences" />
       <Output TaskParameter="TextTemplatingBuildTaskPaths" ItemName="TextTemplatingBuildTasks" />
@@ -344,37 +220,27 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
     </PropertyGroup>
 
     <PropertyGroup>
-      <rmSoftwareFactoryCommonDll>$(SoftwareFactoryPath)Aderant.Framework.SoftwareFactory.Common.dll</rmSoftwareFactoryCommonDll>
-    </PropertyGroup>
-
-    <Microsoft.Build.Tasks.GetAssemblyIdentity
-      Condition="Exists('$(rmSoftwareFactoryCommonDll)')"
-      AssemblyFiles="$(rmSoftwareFactoryCommonDll)">
-      <Output
-        TaskParameter="Assemblies"
-        ItemName="rmSoftwareFactoryCommonDllIdentity"/>
-    </Microsoft.Build.Tasks.GetAssemblyIdentity>
-
-    <PropertyGroup Condition="'@(rmSoftwareFactoryCommonDllIdentity)' != ''">
-      <rmSoftwareFactoryVersion>%(rmSoftwareFactoryCommonDllIdentity.Version)</rmSoftwareFactoryVersion>
+      <DomainDslProcessorFile>$(SoftwareFactoryPath)Aderant.Framework.SoftwareFactory.Domain.dll</DomainDslProcessorFile>
+      <ServiceDslProcessorFile>$(SoftwareFactoryPath)Aderant.Framework.SoftwareFactory.Service.dll</ServiceDslProcessorFile>
     </PropertyGroup>
 
     <ItemGroup>
-      <rmT4DslDirectiveProcessors Include="DslDirectiveProcessor">
+      <rmT4DslDirectiveProcessors Include="DslDirectiveProcessor"
+                                  Condition="Exists('%(DslDirectiveProcessors.FullPath)')">
         <Class>Microsoft.VisualStudio.Modeling.DslDefinition.DslDirectiveProcessor</Class>
         <CodeBase>%(DslDirectiveProcessors.FullPath)</CodeBase>
       </rmT4DslDirectiveProcessors>
 
-      <rmT4DslDirectiveProcessors Condition="'$(rmSoftwareFactoryVersion)' != ''"
+      <rmT4DslDirectiveProcessors Condition="Exists('$(DomainDslProcessorFile)')"
                                   Include="DomainModelDslDirectiveProcessor">
         <Class>Aderant.Framework.SoftwareFactory.Domain.DomainModelDslDirectiveProcessor</Class>
-        <CodeBase>$(SoftwareFactoryPath)Aderant.Framework.SoftwareFactory.Domain.dll</CodeBase>
+        <CodeBase>$(DomainDslProcessorFile)</CodeBase>
       </rmT4DslDirectiveProcessors>
 
-      <rmT4DslDirectiveProcessors Condition="'$(rmSoftwareFactoryVersion)' != ''"
+      <rmT4DslDirectiveProcessors Condition="Exists('$(ServiceDslProcessorFile)')"
                                   Include="ServiceDslDirectiveProcessor">
         <Class>Aderant.Framework.SoftwareFactory.Service.ServiceDslDirectiveProcessor</Class>
-        <CodeBase>$(SoftwareFactoryPath)Aderant.Framework.SoftwareFactory.Service.dll</CodeBase>
+        <CodeBase>$(ServiceDslProcessorFile)</CodeBase>
       </rmT4DslDirectiveProcessors>
     </ItemGroup>
 

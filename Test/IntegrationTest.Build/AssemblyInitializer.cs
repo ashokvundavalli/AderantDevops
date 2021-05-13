@@ -6,19 +6,15 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace IntegrationTest.Build {
 
     [TestClass]
-    [DeploymentItem(MSBuildIntegrationTestBase.TestDeployment)]
-    public class AssemblyInitializer {
-
-        public TestContext TestContext { get; set; }
+    public class AssemblyInitializer : MSBuildIntegrationTestBase {
+        private static bool assemblyInitializeFailed;
 
         [AssemblyInitialize]
         public static void AssemblyInitialize(TestContext context) {
             Environment.CurrentDirectory = context.DeploymentDirectory;
 
             var nativeAssemblyDirectories = new[] {
-                Path.Combine(context.DeploymentDirectory, "lib", "win32"),
-                Path.Combine(context.DeploymentDirectory, MSBuildIntegrationTestBase.TestDeployment, "lib", "win32"),
-
+                Path.Combine(context.DeploymentDirectory, "Build.Tools", "lib", "win32"),
             };
 
             foreach (var directory in nativeAssemblyDirectories) {
@@ -30,22 +26,25 @@ namespace IntegrationTest.Build {
                         throw new FileNotFoundException("Native library not found: " + nativeLibrary, nativeLibrary);
                     }
                     return;
+                } else {
+                    context.WriteLine($"Directory {directory} does not exist.");
                 }
             }
+
+            assemblyInitializeFailed  = true;
+
+            // Dump out the test deployment directory on failure
+            context.WriteLine("Could not find the native git binaries. The contents of the deployment directory is...");
+            Directory.EnumerateDirectories(context.DeploymentDirectory, "*", SearchOption.AllDirectories).ToList().ForEach(s => context.WriteLine(s));
         }
 
-        [TestMethod]
-        public void List_files()
-        {
-            Directory.EnumerateDirectories(TestContext.DeploymentDirectory).ToList().ForEach(s => TestContext.WriteLine(s));
-
-            Directory.EnumerateDirectories(Path.Combine(TestContext.DeploymentDirectory, "TestDeployment")).ToList().ForEach(s => TestContext.WriteLine(s));
-            TestContext.WriteLine("zzzz");
-            Directory.EnumerateDirectories(Path.Combine(TestContext.DeploymentDirectory)).ToList().ForEach(s => TestContext.WriteLine(s));
-        }
 
         [TestMethod]
         public void Native_library_path_exists() {
+            AssemblyInitialize(TestContext);
+
+            Assert.IsFalse(assemblyInitializeFailed, "Assembly Initialize failed");
+
             Assert.IsTrue(Directory.Exists(LibGit2Sharp.GlobalSettings.NativeLibraryPath));
         }
     }

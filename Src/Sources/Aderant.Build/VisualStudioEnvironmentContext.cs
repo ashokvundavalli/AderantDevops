@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Reflection;
-using System.Threading;
 
 namespace Aderant.Build {
     public class VisualStudioEnvironmentContext {
@@ -42,6 +41,7 @@ namespace Aderant.Build {
 
             return null;
         }
+
         public static void SetupContext() {
             AppDomain.CurrentDomain.AssemblyResolve -= handler;
             AppDomain.CurrentDomain.AssemblyResolve += handler;

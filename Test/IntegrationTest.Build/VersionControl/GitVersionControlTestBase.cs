@@ -6,6 +6,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace IntegrationTest.Build.VersionControl {
     [TestClass]
     [DeploymentItem(MSBuildIntegrationTestBase.TestDeployment)]
+    [DeploymentItem(@"..\..\..\Src\Build.Tools\", "Build.Tools")] // Deploy the native libgit binaries
     public abstract class GitVersionControlTestBase {
 
         public virtual TestContext TestContext { get; set; }
@@ -25,6 +26,8 @@ namespace IntegrationTest.Build.VersionControl {
                 var path = Path.Combine(TestContext.DeploymentDirectory, "[" + DateTime.UtcNow.ToFileTimeUtc() + "]");
                 RepositoryPath = RunPowerShellInDirectory(TestContext, Script, path);
             }
+
+            RunPowerShellInIsolatedDirectory(TestContext, "& git config --global core.autocrlf false");
 
             Assert.IsNotNull(RepositoryPath);
         }

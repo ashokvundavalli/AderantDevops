@@ -6,14 +6,8 @@ using IntegrationTest.Build.Helpers;
 
 namespace IntegrationTest.Build {
     [TestClass]
-    [DeploymentItem(@"TestDeployment\Testing\SlowTestReporter.ps1")]
     [DeploymentItem(@"Resources\SampleTestRun.trx", "SlowTestReporter")]
-    public class SlowTestReporterTests {
-
-        /// <summary>
-        /// The testing context containing all sorts of testing goodies.
-        /// </summary>
-        public TestContext TestContext { get; set; }
+    public class SlowTestReporterTests : MSBuildIntegrationTestBase {
 
         [TestMethod]
         [Description("Checks that the SlowTestReporter runs and finds the expected line on the trx resource.")]
@@ -21,11 +15,11 @@ namespace IntegrationTest.Build {
             // Arrange
             var messageToSearchFor = new MessageLocator("One test found that exceeded the maximum test duration", typeof(InformationRecord));
             var powerShellHelper = new PowerShellHelper(new List<MessageLocator>{messageToSearchFor});
-            var scriptPath = Path.Combine(TestContext.DeploymentDirectory, "SlowTestReporter.ps1");
+            var scriptPath = Path.Combine(TestContext.DeploymentDirectory, "Build", "Testing", "SlowTestReporter.ps1");
             var sampleTestRunDir = Path.Combine(TestContext.DeploymentDirectory, "SlowTestReporter");
 
             // Act
-            powerShellHelper.RunCommand($@"& '{scriptPath}' -path '{sampleTestRunDir}'"
+            powerShellHelper.RunCommand($"& '{scriptPath}' -path '{sampleTestRunDir}'"
                 , TestContext
                 , TestContext.DeploymentDirectory);
 

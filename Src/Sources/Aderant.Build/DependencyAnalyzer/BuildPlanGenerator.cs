@@ -98,7 +98,6 @@ namespace Aderant.Build.DependencyAnalyzer {
                 build.Add(
                     new MSBuildTask {
                         BuildInParallel = "$(BuildInParallel)",
-                        StopOnFirstFailure = true,
                         Projects = orchestrationFiles.GroupExecutionFile,
                         Properties = new PropertyList(new Dictionary<string, string>()) {
                             { "BuildPlanFile", "$(MSBuildThisFileFullPath)" },

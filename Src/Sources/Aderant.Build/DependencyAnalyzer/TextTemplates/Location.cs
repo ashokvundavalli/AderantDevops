@@ -30,7 +30,24 @@ namespace Aderant.Build.DependencyAnalyzer.TextTemplates {
         }
 
         public bool Equals(Location other) {
-            return other.Line == Line && other.Column == Column && other.FileName == FileName;
+            return other.Line == Line && other.Column == Column && string.Equals(other.FileName, FileName, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public override bool Equals(object obj) {
+            if (obj is Location location) {
+                return Equals(location);
+            }
+
+            return false;
+        }
+
+        public override int GetHashCode() {
+            unchecked {
+                var hashCode = Line;
+                hashCode = (hashCode * 397) ^ Column;
+                hashCode = (hashCode * 397) ^ (FileName != null ? StringComparer.OrdinalIgnoreCase.GetHashCode(FileName) : 0);
+                return hashCode;
+            }
         }
     }
 }

@@ -12,119 +12,6 @@ if (([System.Management.Automation.PSTypeName]'InProcess.InMemoryJob').Type) {
     return
 }
 
-# https://community.idera.com/database-tools/powershell/powertips/b/tips/posts/a-better-and-faster-start-job
-$code = @'
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Management.Automation;
-using System.Management.Automation.Runspaces;
-
-namespace InProcess {
-    public class InMemoryJob: System.Management.Automation.Job {
-
-        public InMemoryJob(ScriptBlock scriptBlock, string name) {
-            _PowerShell = PowerShell.Create().AddScript(scriptBlock.ToString());
-            SetUpStreams(name);
-        }
-
-        public InMemoryJob(PowerShell PowerShell, string name) {
-            _PowerShell = PowerShell;
-            SetUpStreams(name);
-        }
-
-        private void SetUpStreams(string name) {
-            _PowerShell.Streams.Verbose = this.Verbose;
-            _PowerShell.Streams.Error = this.Error;
-            _PowerShell.Streams.Debug = this.Debug;
-            _PowerShell.Streams.Warning = this.Warning;
-            _PowerShell.Runspace.AvailabilityChanged += new EventHandler<RunspaceAvailabilityEventArgs>(Runspace_AvailabilityChanged);
-
-            int id = System.Threading.Interlocked.Add(ref InMemoryJobNumber, 1);
-
-            if (!string.IsNullOrEmpty(name)) {
-                this.Name = name;
-            } else {
-                this.Name = "InProcessJob" + id;
-            }
-        }
-
-        void Runspace_AvailabilityChanged(object sender, RunspaceAvailabilityEventArgs e) {
-            if (e.RunspaceAvailability == RunspaceAvailability.Available) {
-                this.SetJobState(JobState.Completed);
-            }
-        }
-
-        PowerShell _PowerShell;
-        static int InMemoryJobNumber = 0;
-
-        public override bool HasMoreData {
-            get {
-                return (Output.Count > 0);
-            }
-        }
-
-        public override string Location {
-            get {
-                return "In Process";
-            }
-        }
-
-        public override string StatusMessage {
-            get {
-                return "A new status message";
-            }
-        }
-
-        protected override void Dispose(bool disposing) {
-            if (disposing) {
-                if (!isDisposed) {
-                    isDisposed = true;
-                    try {
-                        if (!IsFinishedState(JobStateInfo.State)) {
-                            StopJob();
-                        }
-                        foreach(Job job in ChildJobs) {
-                            job.Dispose();
-                        }
-                    } finally {
-                        base.Dispose(disposing);
-                    }
-                }
-            }
-        }
-
-        private bool isDisposed = false;
-
-        internal bool IsFinishedState(JobState state) {
-            return (state == JobState.Completed || state == JobState.Failed || state == JobState.Stopped);
-        }
-
-        public override void StopJob() {
-            _PowerShell.Stop();
-            _PowerShell.EndInvoke(_asyncResult);
-            SetJobState(JobState.Stopped);
-        }
-
-        public void Start() {
-            _asyncResult = _PowerShell.BeginInvoke < PSObject,
-            PSObject > (null, Output);
-            SetJobState(JobState.Running);
-        }
-
-        IAsyncResult _asyncResult;
-
-        public void WaitJob() {
-            _asyncResult.AsyncWaitHandle.WaitOne();
-        }
-
-        public void WaitJob(TimeSpan timeout) {
-            _asyncResult.AsyncWaitHandle.WaitOne(timeout);
-        }
-    }
-}
-'@
-
 {
     param (
         [string]$ThisFileFullPath
@@ -132,7 +19,7 @@ namespace InProcess {
     $directory = [System.IO.Path]::GetDirectoryName($ThisFileFullPath)
     $file = [System.IO.Path]::GetFileNameWithoutExtension($ThisFileFullPath)
 
-    $file = "$directory\$file.dll"
+    $file = [System.IO.Path]::Combine($directory, $file + ".dll")
 
     $options = [System.IO.FileOptions]::DeleteOnClose
     $share = [System.IO.FileShare]::Read -bor [System.IO.FileShare]::Delete
@@ -146,7 +33,7 @@ namespace InProcess {
 
         try {
             if (-not (Test-Path $AssemblyPath)) {
-                Add-Type -TypeDefinition $Code -OutputAssembly "$AssemblyPath"
+                Add-Type -Path $Code -OutputAssembly "$AssemblyPath"
                 return $true
             }
         } catch [System.UnauthorizedAccessException] {
@@ -156,7 +43,7 @@ namespace InProcess {
              # are closed.
         }
 
-        Add-Type -TypeDefinition $Code
+        Add-Type -Path $Code
         return $false
     }
 
@@ -178,7 +65,7 @@ namespace InProcess {
         Write-Debug "Failed to open MMF: $mapName"
 
         try {
-            $compiled = Compile $file $code
+            $compiled = Compile -AssemblyPath $file -Code ([System.IO.Path]::Combine($PSScriptRoot, "InProcessJobs.cs"))
         } catch [System.Exception] {
             $useMemoryMappedFile = $false
         }

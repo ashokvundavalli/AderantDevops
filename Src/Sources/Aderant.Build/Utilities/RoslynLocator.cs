@@ -24,6 +24,11 @@ namespace Aderant.Build.Utilities {
 
         public RoslynLocator(string pathToBuildTools) {
             this.pathToBuildTools = pathToBuildTools;
+
+            if (pathToBuildTools.IndexOf(Path.DirectorySeparatorChar + "amd64", StringComparison.OrdinalIgnoreCase) >= 0 ) {
+                // We are amd64 - set the actual root to the x86 root. We'll append \Roslyn in Resolve
+                this.pathToBuildTools = Path.GetFullPath(Path.Combine(pathToBuildTools, ".." + Path.DirectorySeparatorChar));
+            }
         }
 
         private Assembly Resolve(object sender, ResolveEventArgs args) {

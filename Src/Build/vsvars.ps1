@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
     Allows PowerShell to work like the Visual Studio developer console by placing interesting
-    executables onto the current PATH and setting key environment varibles.
+    executables onto the current PATH and setting key environment variables.
 .PARAMETER IsBuildAgent
     Specifies that this script is running in the context of the build agent.
 #>
@@ -16,7 +16,9 @@ function LoadEnvVariables([string]$environmentVariableName, [string]$vsYear, [st
     if ([string]::IsNullOrEmpty($vsPath) -and ![string]::IsNullOrEmpty($environmentVariableName)) {
         $vsPath = [Environment]::GetEnvironmentVariable($environmentVariableName)
     } else {
-        $vsPath = FindVisualStudioPath $vsYear
+        . Resolve-MSBuild
+        CompileVisualStudioLocationHelper
+        $vsPath = ([VisualStudioConfiguration.VisualStudioLocationHelper]::GetInstances() | Where-Object { $_.Name.Contains($vsYear) }  | Select-Object -First 1).Path
     }
 
     if (-not [string]::IsNullOrEmpty($vsPath)) {
@@ -26,14 +28,19 @@ function LoadEnvVariables([string]$environmentVariableName, [string]$vsYear, [st
         # Disable telemetry when running VsDevCmd.bat
         [System.Environment]::SetEnvironmentVariable('VSCMD_SKIP_SENDTELEMETRY', '1', [System.EnvironmentVariableTarget]::Process)
 
-        $variablesFromScript = cmd /c "`"$vsPath\VsDevCmd.bat`"&set"
+        $variablesFromScript = cmd /c "`"$vsPath\Common7\Tools\VsDevCmd.bat`"&set"
 
         $variablesFromScript.ForEach({
+            Write-Debug $_
+
             $v = $_.Split("=")
             if ($v.Count -gt 1) {
                 $vars.Add($v[0], $v[1])
             }
         })
+
+        # We remove the version as the build engine uses this when trying to resolve things from the MSBuild extension path
+        $vars.Remove("VisualStudioVersion")
 
         $globalEnvironmentVariables.GetEnumerator().ForEach({
             if ($vars.ContainsKey($_.Key) -and ($_.Key -ne "Path")) {
@@ -53,41 +60,6 @@ function LoadEnvVariables([string]$environmentVariableName, [string]$vsYear, [st
         return $true
     }
     return $false
-}
-
-function FindVisualStudioPath {
-    [CmdletBinding()]
-    [OutputType([String])]
-    param(
-        [string]$Version
-    )
-    $pathsToTry = @($Version)
-
-    $programFiles = ${env:ProgramFiles(x86)}
-
-    $items = @(
-        foreach ($folder in $pathsToTry) {
-            Get-Item -ErrorAction SilentlyContinue @(
-                "$programFiles\Microsoft Visual Studio\$folder\*\Common7\Tools\VsDevCmd.bat"
-            )
-        }
-    )
-
-    if ($items.Count -ge 1) {
-        $byVersion = {[System.Version]$_.VersionInfo.FileVersionRaw}
-        $byProduct = {
-            switch -Wildcard ($_.FullName) {
-                *\Enterprise\* {4}
-                *\Professional\* {3}
-                *\Community\* {2}
-                *\BuildTools\* {1}
-                default {0}
-            }
-        }
-        $items = $items | Sort-Object $byVersion, $byProduct
-
-        return [System.IO.Path]::GetDirectoryName($items[-1].FullName)
-    }
 }
 
 if (LoadEnvVariables $null "2019") {

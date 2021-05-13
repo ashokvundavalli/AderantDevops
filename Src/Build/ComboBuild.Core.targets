@@ -1,7 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-         DefaultTargets="DispatchToInnerBuild"
-         ToolsVersion="14.0">
+         DefaultTargets="DispatchToInnerBuild">
 
   <Import Project="$(BuildPlanFile)" />
   <Import Project="Aderant.Build.Common.targets" Condition="'$(AderantCommonTargetsImported)' != 'true'" />
@@ -46,20 +45,17 @@
       Activity="$(LogId)"
       StatusDescription="$(BuildGroupId) / $(TotalNumberOfBuildGroups) [$(PadLeft) $(HappyCat) $(PadRight) $(Icecream)]" />
 
-    <ItemGroup>
-      <ProjectsInGroupFinal Include="@(ProjectsInGroup)" Condition="'$(switch-skip-compile)' == 'true' And '%(ProjectsInGroup.IsProjectFile)' != 'true'" />
-      <ProjectsInGroupFinal Include="@(ProjectsInGroup)" Condition="'$(switch-skip-compile)' != 'true'" />
-    </ItemGroup>
-
     <Warning Text="Skipping compile!" Condition="'$(switch-skip-compile)' == 'true'" />
 
     <Message Text="##vso[task.logdetail id=$(LogId);name=Group $(BuildGroupId) of $(TotalNumberOfBuildGroups);type=build;state=InProgress;progress=0]Build group $(BuildGroupId) started"
              Condition="'$(IsDesktopBuild)' != 'true'" />
 
-    <MSBuild Projects="@(ProjectsInGroupFinal)"
-             StopOnFirstFailure="true"
-             Targets="%(ProjectsInGroupFinal.Targets)"
+    <TextTemplatingAssemblyResolver />
+
+    <MSBuild Projects="@(ProjectsInGroup)"
+             Targets="%(ProjectsInGroup.Targets)"
              UnloadProjectsOnCompletion="true"
+             RemoveProperties="TotalNumberOfBuildGroups;AgentPool;BuildGroupId;ProjectInstanceId"
              BuildInParallel="$(BuildInParallel)">
     </MSBuild>
 
@@ -93,35 +89,25 @@
 
   <Target Name="CreateProjectGroup">
     <ItemGroup>
-      <_ProjectsInGroup Include="@(ProjectsToBuild->WithMetadataValue('BuildGroupId', '$(BuildGroupId)'))" />
+      <ProjectGroupWithoutGlobals Include="@(ProjectsToBuild->WithMetadataValue('BuildGroupId', '$(BuildGroupId)'))" />
     </ItemGroup>
 
     <!-- Properties available to both projects files and orchestration participants -->
     <PropertyGroup>
-      <!--
-        ShouldUnsetParentConfigurationAndPlatform
-        Simulates building a solution and controls whether the Configuration and Platform metadata will be unset, allowing the
-        child project to build in its default configuration / platform if the one specified from the solution file doesn't actually exist in the project.
-        This is a janky hack and should be removed but removing will trigger trigger a missing configuration/platform error for many projects in the tree
-      -->
       <PropertiesCommonToAllProjects>
-        ShouldUnsetParentConfigurationAndPlatform=true;
         BuildProjectReferences=false;
-
         BuildToolsDirectory=$(BuildToolsDirectory);
         BuildScriptsDirectory=$(BuildScriptsDirectory);
-
         CustomAfterMicrosoftCSharpTargets=$(CustomAfterMicrosoftCSharpTargets);
         CustomAfterMicrosoftCommonTargets=$(CustomAfterMicrosoftCommonTargets);
         CustomAfterWixTargets=$(CustomAfterWixTargets);
-
         AlternativeOutputDirectory=$(SharedDependencyDirectory);
         ArtifactStagingDirectory=$(ArtifactStagingDirectory);
         RunCodeAnalysisOnThisProject=false;
         _GitDir=$(_GitDir);
         IsBuildCacheEnabled=$(IsBuildCacheEnabled);
         TemporaryDirectoryKey=$(TemporaryDirectoryKey);
-        Deterministic=true;
+        Deterministic=true
       </PropertiesCommonToAllProjects>
     </PropertyGroup>
 
@@ -141,49 +127,60 @@
   </Target>
 
 
-  <Target Name="AssignProjectProperties" Inputs="%(_ProjectsInGroup.ProjectInstanceId)" Outputs="%(Identity)._" DependsOnTargets="CreateProjectGroup">
+  <Target Name="AssignProjectProperties" Inputs="%(ProjectGroupWithoutGlobals.ProjectInstanceId)" Outputs="%(Identity)._" DependsOnTargets="CreateProjectGroup">
     <!--Parse the scalar property list into an item group-->
     <CreateItem Include="_"
-                AdditionalMetadata="%(_ProjectsInGroup.AdditionalProperties)"
+                AdditionalMetadata="%(ProjectGroupWithoutGlobals.AdditionalProperties)"
                 PreserveExistingMetadata="true">
-      <Output TaskParameter="Include" ItemName="_ProjectProperties" />
+      <Output TaskParameter="Include" ItemName="AdditionalPropertiesForProject" />
     </CreateItem>
 
-    <!-- Extract the solution root value -->
+    <!-- Extract a few key values e.g solution root value -->
     <PropertyGroup>
-      <_SolutionRoot>%(_ProjectProperties.SolutionRoot)</_SolutionRoot>
+      <ProjectSolutionRoot>%(AdditionalPropertiesForProject.SolutionRoot)</ProjectSolutionRoot>
+    </PropertyGroup>
+
+    <PropertyGroup>
+      <ResolveAssemblyReferencesStateFile Condition="'$(DisableRarCache)'!='true' and '$(ResolveAssemblyReferencesStateFile)' == ''">$(IntermediateOutputPath)$(MSBuildProjectFile)AssemblyReference.cache</ResolveAssemblyReferencesStateFile>
     </PropertyGroup>
 
     <ItemGroup>
-      <_ProjectsInGroup>
+      <ProjectGroupWithoutGlobals>
+        <Properties>%(ProjectGroupWithoutGlobals.Properties);$(PropertiesCommonToAllProjects)</Properties>
+        <!-- Include global (non-project specific) properties -->
         <AdditionalProperties>
-          $(PropertiesCommonToAllProjects);           <!-- Include global (non-project specific) properties -->
-          %(_ProjectsInGroup.AdditionalProperties);   <!-- Include the original properties list -->
-          SolutionRoot=$(_SolutionRoot);              <!-- Merge in build system properties that hang off SolutionRoot -->
-          BinModuleDirectory=$(_SolutionRoot)\Bin\Module\;
-          BinTestDirectory=$(_SolutionRoot)\Bin\Test\;
-          ModuleSourceDirectory=$(_SolutionRoot)\Src\;
-          ModuleTestDirectory=$(_SolutionRoot)\Test\;
-          ModuleBuildDirectory=$(_SolutionRoot)\Build\;
-          VariableScopeId=$(_SolutionRoot)
+          %(AdditionalProperties); <!-- Include the original properties list -->
+          SolutionRoot=$(ProjectSolutionRoot); <!-- Merge in build system properties that hang off SolutionRoot -->
+          BinModuleDirectory=$(ProjectSolutionRoot)\Bin\Module\;
+          BinTestDirectory=$(ProjectSolutionRoot)\Bin\Test\;
+          ModuleSourceDirectory=$(ProjectSolutionRoot)\Src\;
+          ModuleTestDirectory=$(ProjectSolutionRoot)\Test\;
+          ModuleBuildDirectory=$(ProjectSolutionRoot)\Build\;
+          VariableScopeId=$(ProjectSolutionRoot)
         </AdditionalProperties>
 
         <!-- If it's a build system project default to the EndToEnd target -->
         <Targets Condition="'%(IsProjectFile)' != 'true'">EndToEnd</Targets>
-      </_ProjectsInGroup>
+      </ProjectGroupWithoutGlobals>
     </ItemGroup>
 
     <ItemGroup>
-      <_ProjectsInGroup Condition="'%(IsProjectFile)' == 'true'">
-        <AdditionalProperties>
-          %(AdditionalProperties);
-          $(WixProperties)
-        </AdditionalProperties>
-      </_ProjectsInGroup>
+      <ProjectGroupWithoutGlobals Condition="'%(IsProjectFile)' == 'true'">
+        <Properties>%(ProjectGroupWithoutGlobals.Properties);$(WixProperties)</Properties>
+      </ProjectGroupWithoutGlobals>
     </ItemGroup>
 
+    <!-- Expand AdditionalProperties into separate metadata items -->
+    <CreateItem Include="@(ProjectGroupWithoutGlobals)"
+                AdditionalMetadata="@(ProjectGroupWithoutGlobals->Metadata('AdditionalProperties'));"
+                PreserveExistingMetadata="true">
+      <Output TaskParameter="Include" ItemName="ProjectsInGroupExpanded" />
+    </CreateItem>
+
     <ItemGroup>
-      <ProjectsInGroup Include="@(_ProjectsInGroup)" />
+      <ProjectsInGroup Include="@(ProjectsInGroupExpanded)"
+                       Condition="('$(switch-skip-compile)' == 'true' And '%(IsProjectFile)' != 'true') or '$(switch-skip-compile)' != 'true'"
+                       KeepMetadata="AdditionalProperties;Properties;BuildGroupId;RunUserTargets" />
     </ItemGroup>
 
   </Target>
@@ -193,7 +190,7 @@
 
     <Message Text="Setting resume point to group $(BuildGroupId)" />
 
-    <Message Text="##vso[task.logdetail id=$(LogId);progress=100;state=Completed;Result=Failed]Build group $(BuildGroupId) failed. @(_ProjectsInGroup)"
+    <Message Text="##vso[task.logdetail id=$(LogId);progress=100;state=Completed;Result=Failed]Build group $(BuildGroupId) failed. @(ProjectsInGroup)"
              Condition="'$(IsDesktopBuild)' != 'true'" />
 
     <XmlPoke XmlInputPath="$(BuildPlanFile)"

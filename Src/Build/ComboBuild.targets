@@ -1,6 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-         ToolsVersion="Current"
          DefaultTargets="BuildAndPackage"
          InitialTargets="SetPropertiesFromContext;"
          TreatAsLocalProperty="SolutionRoot;BuildFlavor">
@@ -748,7 +747,7 @@ $shortcut.Save()' />
     Zip output
     ==========================================================================================
   -->
-  <Target Name="ZipProduct" BeforeTargets="Package" Condition="'$(NoMSBuildCommunityTasks)' != 'true'">
+  <Target Name="ZipProduct" BeforeTargets="Package">
 
     <PropertyGroup>
       <LocalExpertBinariesDirectory>$(ArtifactStagingDirectory)</LocalExpertBinariesDirectory>

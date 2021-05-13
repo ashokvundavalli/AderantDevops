@@ -34,8 +34,6 @@
 
         public string Targets { get; set; }
 
-        public bool StopOnFirstFailure { get; set; }
-
         public string ProjectToolsVersion { get; set; }
 
         public override void Accept(BuildElementVisitor visitor) {

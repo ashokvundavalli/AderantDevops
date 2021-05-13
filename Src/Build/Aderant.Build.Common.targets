@@ -58,7 +58,7 @@
   </PropertyGroup>
 
   <Import Project="Aderant.Build.tasks"/>
-  <Import Project="$(MSBuildCommunityTasksPath)MSBuild.Community.Tasks.Targets" Condition="'$(NoMSBuildCommunityTasks)' != 'true'" />
+  <Import Project="$(MSBuildCommunityTasksPath)MSBuild.Community.Tasks.Targets" Condition="Exists('$(MSBuildCommunityTasksPath)MSBuild.Community.Tasks.Targets')" />
   <Import Project="Aderant.Build.Versioning.targets" />
 
 
@@ -146,7 +146,7 @@
              Text="!!! We had to shim the The WiX Toolset to use the global install as WiX was not found under $(MSBuildExtensionsPath32). Please install the WiX extension for Visual Studio to resolve this. $(ToDownload)" />
 
     <MSBuild.Community.Tasks.Prompt
-      Condition=" '$(NoMSBuildCommunityTasks)' != 'true' And '$(IsDesktopBuild)' == 'true' And '$(UseWixShim)' == 'true' And '$(project-set)' != 'minimal'" />
+      Condition=" '$(BUILD_BUILDID)' == '' And '$(IsDesktopBuild)' == 'true' And '$(UseWixShim)' == 'true' And '$(project-set)' != 'minimal'" />
   </Target>
 
 

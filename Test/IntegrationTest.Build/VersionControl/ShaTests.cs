@@ -26,6 +26,7 @@ namespace IntegrationTest.Build.VersionControl {
         [TestMethod]
         public void Per_directory_bucket_sha_is_stable() {
             var createScript = @"
+& git config --list --show-origin
 
 [string]$cwd = (Get-Location)
 
@@ -48,8 +49,8 @@ Add-Content -LiteralPath $dir2 -Value '456' -Force
             var metadata = vc.GetMetadata(repositoryPath, "", "");
 
             const string dir2Sha = "53d9f188d4c8cb79c6b98bc56e5c629def625ca1";
-            Assert.AreEqual("12ea309af9a27ee662c636f4b82246f8619b3bee", metadata.GetBucketForCurrentTree("Dir1").Id);
-            Assert.AreEqual(dir2Sha, metadata.GetBucketForCurrentTree("Dir2").Id);
+            Assert.AreEqual("12ea309af9a27ee662c636f4b82246f8619b3bee", metadata.GetBucketForCurrentTree("Dir1").Id, "Phase 1: Dir1 - Commit is not correct");
+            Assert.AreEqual(dir2Sha, metadata.GetBucketForCurrentTree("Dir2").Id, "Phase 1: Dir2 - Commit is not correct");
 
             var updateScript = @"
 [string]$cwd = (Get-Location)

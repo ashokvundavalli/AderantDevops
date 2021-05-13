@@ -58,7 +58,7 @@ namespace IntegrationTest.Build.EndToEnd {
                 testContext.WriteLine("Creating test host: " + endpoint);
 
                 properties = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                    { "BuildScriptsDirectory", testContext.DeploymentDirectory + "\\" },
+                    { "BuildScriptsDirectory", Path.Combine(testContext.DeploymentDirectory, "Build") + "\\" },
                     { "CompileBuildSystem", bool.FalseString },
                     { "ProductManifestPath", Path.Combine(deploymentItemsDirectory, "ExpertManifest.xml") },
                     { "SolutionRoot", deploymentItemsDirectory },
@@ -106,7 +106,7 @@ namespace IntegrationTest.Build.EndToEnd {
             var ctx = new BuildOperationContext();
             ctx.BuildRoot = props["SolutionRoot"];
             ctx.BuildScriptsDirectory = props["BuildScriptsDirectory"];
-            ctx.BuildSystemDirectory = Path.Combine(testContext.DeploymentDirectory, @"..\..\");
+            ctx.BuildSystemDirectory = Path.Combine(testContext.DeploymentDirectory);
 
             ctx.DropLocationInfo.PrimaryDropLocation = Path.Combine(testContext.DeploymentDirectory, testContext.TestName, "_drop");
             ctx.DropLocationInfo.BuildCacheLocation = Path.Combine(testContext.DeploymentDirectory, testContext.TestName, "_cache");
@@ -134,7 +134,7 @@ namespace IntegrationTest.Build.EndToEnd {
                     null,
                     CancellationToken.None);
 
-            Assert.AreNotEqual(0, buildStateMetadata.BuildStateFiles.Count);
+            Assert.AreNotEqual(0, buildStateMetadata.BuildStateFiles.Count, "There should be a state file.");
 
             context.BuildStateMetadata = buildStateMetadata;
 

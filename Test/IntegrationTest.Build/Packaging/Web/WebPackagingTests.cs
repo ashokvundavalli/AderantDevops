@@ -6,7 +6,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build.Packaging.Web {
     [TestClass]
-    [DeploymentItem("Web.Site1", "Web.Site1")]
+    [DeploymentItem("Packaging\\Web.Site1", "Web.Site1")]
     public class WebPackagingTests : MSBuildIntegrationTestBase {
 
         [TestMethod]

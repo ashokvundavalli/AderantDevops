@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+  </PropertyGroup>
+
   <Choose>
     <When Condition="'$(MSBuildToolsVersion)' &gt; 15.0">
       <PropertyGroup>
@@ -19,20 +23,6 @@
     </When>
   </Choose>
 
-  <Target Name="_ShowToolVersionInfo">
-    <!--<Warning
-      Text="MSBuildToolsVersion: $(MSBuildToolsVersion)
-    MSBuildAssemblyVersion: $(MSBuildAssemblyVersion)
-    MSBuildToolsPath: $(MSBuildToolsPath)
-    VisualStudioVersion: $(VisualStudioVersion)" />-->
-  </Target>
-
-  <PropertyGroup>
-    <!-- VS cannot handle newline characters in this string -->
-    <!-- <ReferencePath> -->
-    <!-- $(ReferencePath);C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin;C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\MSBuild\15.0\Bin;C:\Program Files (x86)\MSBuild\14.0\Bin; -->
-    <!-- </ReferencePath> -->
-  </PropertyGroup>
 
   <PropertyGroup Condition="'$(IncludeTeamFoundationReferences)' != 'false'">
     <TeamFoundationReferencePath>$(VS140COMNTOOLS)..\IDE\CommonExtensions\Microsoft\TeamFoundation\Team Explorer</TeamFoundationReferencePath>

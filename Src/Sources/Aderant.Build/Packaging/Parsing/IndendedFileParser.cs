@@ -58,7 +58,7 @@ namespace Aderant.Build.Packaging.Parsing {
 
         public Section this[string key] {
             get {
-                var foundSection = sections.FirstOrDefault(section => section.Key == key);
+                var foundSection = sections.FirstOrDefault(section => string.Equals(section.Key, key, StringComparison.OrdinalIgnoreCase));
                 if (foundSection != null) {
                     return foundSection;
                 }

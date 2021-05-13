@@ -1,23 +1,12 @@
 references: strict
 framework: net48
 source https://api.nuget.org/v3/index.json
-nuget WindowsAPICodePack-Core
-nuget Microsoft.WindowsAPICodePack-Shell
-nuget Moq
-nuget System.Threading.Tasks.Extensions 4.3.0
+nuget LibGit2Sharp
+nuget MSBuildTasks = 1.5.0.235
+nuget System.Threading.Tasks.Dataflow = 4.11.1
+nuget System.Runtime.CompilerServices.Unsafe = 4.5.3
+nuget System.Numerics.Vectors = 4.5.0
 nuget Newtonsoft.Json ~> 10.0.0
-nuget Microsoft.TeamFoundationServer.ExtendedClient
-nuget Microsoft.VisualStudio.Services.Client
-nuget Microsoft.TeamFoundationServer.Client
-nuget Microsoft.Net.Http 2.2.22
-nuget WindowsAzure.Storage
-nuget Microsoft.Azure.ConfigurationManager
-nuget Microsoft.Azure.KeyVault.Core
-nuget Microsoft.AspNet.WebApi.WebHost
-nuget Microsoft.AspNet.WebHooks.Common
-nuget Microsoft.AspNet.WebHooks.Receivers
-nuget Microsoft.AspNet.WebHooks.Receivers.Generic
-nuget Microsoft.AspNet.WebHooks.Receivers.VSTS
 
 group Analyzer
 framework:  net48
@@ -40,10 +29,13 @@ group DevTools
 source https://api.nuget.org/v3/index.json
 references: strict
 framework: net48
-nuget LibGit2Sharp
-nuget MSBuildTasks = 1.5.0.235
-nuget System.Threading.Tasks.Dataflow = 4.11.1
-nuget System.Runtime.CompilerServices.Unsafe = 4.5.3
-nuget System.Numerics.Vectors = 4.5.0
 nuget MSTest.TestAdapter >= 2.1
 nuget MSTest.TestFramework >= 2.1
+nuget Microsoft.TeamFoundationServer.ExtendedClient
+nuget Microsoft.VisualStudio.Services.Client
+nuget Microsoft.TeamFoundationServer.Client
+nuget WindowsAPICodePack-Core
+nuget Microsoft.WindowsAPICodePack-Shell
+nuget Moq
+nuget Microsoft.Net.Http 2.2.22
+nuget System.Threading.Tasks.Extensions 4.3.0

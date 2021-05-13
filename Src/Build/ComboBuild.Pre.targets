@@ -1,7 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
          DefaultTargets="EndToEnd"
-         ToolsVersion="Current"
          TreatAsLocalProperty="SolutionDirectoryPath;T4TransformEnabled">
 
   <Import Project="Aderant.Build.Common.targets" Condition="'$(AderantCommonTargetsImported)' != 'true'" />
@@ -69,51 +68,6 @@
   <PropertyGroup>
     <CleanBin>$([MSBuild]::ValueOrDefault('$(switch-clean)', 'false'))</CleanBin>
   </PropertyGroup>
-
-  <!--
-    Configures the environment to run text templates
-  -->
-  <Target Name="rmBeforeTransformTemplates">
-
-    <PropertyGroup>
-      <rmT4AssemblyReferencePaths>$(rmT4AssemblyReferencePaths);$(SolutionDirectoryPath)Dependencies\</rmT4AssemblyReferencePaths>
-    </PropertyGroup>
-
-    <ItemGroup>
-      <!-- __*.tt is special convention which we ignore. Underscore underscore template are transformed by some other process
-           crafted by the developer -->
-      <rmT4TextTemplates Condition="('$(ModuleName)' != 'Libraries.SoftwareFactory')"
-        Include="$(ModuleSourceDirectory)**\*.tt;
-                 $(ModuleTestDirectory)**\*.tt;"
-        Exclude="$(ModuleSourceDirectory)**\__*.tt;
-                 $(ModuleSourceDirectory)**\PackageTmp\**\*.tt
-                 $(ModuleSourceDirectory)**\obj\**\*.tt;
-                 $(ModuleTestDirectory)**\__*.tt;
-                 $(ModuleTestDirectory)**\obj\**\*.tt">
-        <Generator>TextTemplatingFileGenerator</Generator>
-      </rmT4TextTemplates>
-    </ItemGroup>
-
-    <ItemGroup>
-      <TemplateExclude Include="$(ModuleSourceDirectory)**\Aderant.Framework.SmartForm.Dsl\**\*.tt" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <rmT4TextTemplates Remove="@(TemplateExclude)" />
-    </ItemGroup>
-
-    <Message Text="IsDesktopBuild: $(IsDesktopBuild)" />
-    <Message Text="SolutionDirectoryPath: $(SolutionDirectoryPath)" />
-    <Message Text="ModuleSourceDirectory: $(ModuleSourceDirectory)" />
-    <Message Text="ModuleTestDirectory: $(ModuleTestDirectory)" />
-
-    <Message Text="" />
-    <Message Text="DSLDirectiveLoadMethod: $(DSLDirectiveLoadMethod)" />
-    <Message Text="AderantBuildClientTasksV100Lib-1_0_0_0: $(AderantBuildClientTasksV100Lib-1_0_0_0)" />
-    <Message Text="rmT4AssemblyReferencePaths: $(rmT4AssemblyReferencePaths)" />
-    <Message Text="rmT4TextTemplates: @(rmT4TextTemplates)" />
-
-  </Target>
 
 
   <Target Name="_BeforeBuild">

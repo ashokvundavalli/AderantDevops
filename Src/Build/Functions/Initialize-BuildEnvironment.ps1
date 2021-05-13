@@ -68,12 +68,12 @@ function BuildProjects {
         [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$commit
     )
 
-    [string]$msbuildPath = . "$PSScriptRoot\Resolve-MSBuild.ps1" -Version '*' -Bitness 'x86'
+    [string]$msbuildPath = . "$PSScriptRoot\Resolve-MSBuild.ps1" -Version '*' -Bitness 'x64'
 
-    [void][System.Reflection.Assembly]::LoadFrom("$msbuildPath\Microsoft.Build.dll")
-    [void][System.Reflection.Assembly]::LoadFrom("$msbuildPath\Microsoft.Build.Engine.dll")
-    [void][System.Reflection.Assembly]::LoadFrom("$msbuildPath\Microsoft.Build.Tasks.Core.dll")
-    [void][System.Reflection.Assembly]::LoadFrom("$msbuildPath\Microsoft.Build.Utilities.Core.dll")
+    [void][System.Reflection.Assembly]::LoadFrom([System.IO.Path]::Combine($msbuildPath, "Microsoft.Build.dll"))
+    [void][System.Reflection.Assembly]::LoadFrom([System.IO.Path]::Combine($msbuildPath, "Microsoft.Build.Engine.dll"))
+    [void][System.Reflection.Assembly]::LoadFrom([System.IO.Path]::Combine($msbuildPath, "Microsoft.Build.Tasks.Core.dll"))
+    [void][System.Reflection.Assembly]::LoadFrom([System.IO.Path]::Combine($msbuildPath, "Microsoft.Build.Utilities.Core.dll"))
 
     $info = [System.IO.FileInfo]::new($mainAssembly)
 
@@ -293,7 +293,7 @@ function RefreshSource {
 }
 
 function LoadLibGit2Sharp([string]$buildToolsDirectory) {
-    [void][System.Reflection.Assembly]::LoadFrom("$buildToolsDirectory\LibGit2Sharp.dll")
+    [void][System.Reflection.Assembly]::LoadFrom([System.IO.Path]::Combine($buildToolsDirectory, "LibGit2Sharp.dll"))
 }
 
 function DownloadPaket([string]$commit) {
@@ -301,7 +301,7 @@ function DownloadPaket([string]$commit) {
 
     if (Test-Path $bootstrapper) {
         $paketExecutable = [System.IO.Path]::Combine($BuildScriptsDirectory, "paket.exe")
-        $packageDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($script:repositoryRoot, "packages\devtools"))
+        $packageDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($script:repositoryRoot, "packages"))
 
         $value = GetAlternativeStreamValue $paketExecutable $buildCommitStreamName
 
@@ -314,13 +314,13 @@ function DownloadPaket([string]$commit) {
             return
         }
 
-        [string]$paketVersion = Get-Content -Path ([System.IO.Path]::Combine($script:repositoryRoot, "Build\paket.version"))
+        [string]$paketVersion = Get-Content -Path ([System.IO.Path]::Combine($script:repositoryRoot, "Build", "paket.version"))
 
         $action = {
             # Download the paket dependency tool
             Start-Process -FilePath $bootstrapper -ArgumentList $paketVersion -NoNewWindow -PassThru -Wait
             [void](New-Item -Path $packageDirectory -ItemType 'Directory' -Force)
-            Start-Process -FilePath $paketExecutable -ArgumentList @("restore", "--group", "DevTools") -NoNewWindow -PassThru -Wait -WorkingDirectory $script:repositoryRoot
+            Start-Process -FilePath $paketExecutable -ArgumentList @("restore", "--group", "main") -NoNewWindow -PassThru -Wait -WorkingDirectory $script:repositoryRoot
         }
 
         [void](RunActionExclusive $action ("PAKET_UPDATE_LOCK_" + $BuildScriptsDirectory))
@@ -328,33 +328,6 @@ function DownloadPaket([string]$commit) {
 
     } else {
         throw "FATAL: $bootstrapper does not exist."
-    }
-}
-
-function UpdateMsBuildTasks {
-    [string]$mSBuildTasksPath = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($script:repositoryRoot, "packages\devtools\MSBuildTasks\tools"))
-
-    if ([System.IO.Directory]::Exists($mSBuildTasksPath)) {
-        [System.IO.FileInfo[]]$files = Get-ChildItem -Path $mSBuildTasksPath -Filter 'MSBuild.Community.Tasks.*' -File
-
-        [string]$mSBuildTasksDestination = [System.IO.Path]::GetFullPath("$PSScriptRoot\..\Tasks\MSBuild.Community.Tasks\")
-
-        if (-not [System.IO.Directory]::Exists($mSBuildTasksDestination)) {
-            [void](New-Item -Path $mSBuildTasksDestination -ItemType 'Directory' -Force)
-        }
-
-        foreach ($file in $files) {
-            [string]$location = $file.FullName
-            [string]$destination = [System.IO.Path]::Combine($mSBuildTasksDestination, $file.Name)
-
-            [ScriptBlock]$copyAction = {
-                if (-not [System.IO.File]::Exists($destination)) {
-                    Copy-Item -Path $location -Destination $destination -Force
-                }
-            }
-            $copyAction = $copyAction.GetNewClosure()
-            DoActionIfNeeded -action $copyAction -File $location
-        }
     }
 }
 
@@ -512,10 +485,7 @@ try {
 
     SetTimeouts
     DownloadPaket $commit
-    UpdateMsBuildTasks
     BuildProjects -mainAssembly $mainAssembly -forceCompile $isUsingProfile -commit $commit
-    LoadAssembly -assemblyPath "$assemblyPathRoot\System.Numerics.Vectors.dll"
-    LoadAssembly -assemblyPath "$assemblyPathRoot\System.Runtime.CompilerServices.Unsafe.dll"
     LoadAssembly -assemblyPath "$assemblyPathRoot\System.Threading.Tasks.Dataflow.dll"
     LoadAssembly -assemblyPath "$assemblyPathRoot\protobuf-net.dll"
     EnsureModuleLoaded

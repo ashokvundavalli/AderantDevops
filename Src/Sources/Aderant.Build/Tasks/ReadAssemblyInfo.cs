@@ -19,7 +19,7 @@ namespace Aderant.Build.Tasks {
         private TaskItem assemblyInformationalVersion;
         private TaskItem assemblyVersion;
 
-        public ReadAssemblyInfo() {            
+        public ReadAssemblyInfo() {
             if (parseTextMethod == null) {
                 InitializeParseTextMethod();
             }
@@ -63,7 +63,7 @@ namespace Aderant.Build.Tasks {
                     return true;
                 }
 
-                Log.LogMessage(MessageImportance.Low, $"Reading attributes for {assemblyInfoFile} from cache.", null);
+                Log.LogMessage(MessageImportance.Low, "Reading attributes for {0} from cache.", assemblyInfoFile);
                 assemblyVersion = attributes.Item1;
                 assemblyInformationalVersion = attributes.Item2;
                 assemblyFileVersion = attributes.Item3;
@@ -112,7 +112,7 @@ namespace Aderant.Build.Tasks {
             }
         }
 
-        private void InitializeParseTextMethod() {
+        private static void InitializeParseTextMethod() {
             string pathToBuildTools = ToolLocationHelper.GetPathToBuildTools(ToolLocationHelper.CurrentToolsVersion);
             var locator = new RoslynLocator(pathToBuildTools);
 

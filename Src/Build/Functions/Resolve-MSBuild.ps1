@@ -1,3 +1,8 @@
+<#
+.Synopsis
+       Finds the specified or latest MSBuild.
+#>
+
 [OutputType([string])]
 [CmdletBinding()]
 param(
@@ -16,10 +21,19 @@ function Get-MSBuildPath {
     )
 
     if ($Bitness -eq 'x86') {
-        return "MSBuild\$Version\Bin\MSBuild.exe"
+        return [System.IO.Path]::Combine("MSBuild", $Version, "Bin", "MSBuild.exe")
     } else {
-        return "MSBuild\$Version\Bin\amd64\MSBuild.exe"
+        return [System.IO.Path]::Combine("MSBuild", $Version, "Bin", "amd64", "MSBuild.exe")
     }
+}
+
+function CompileVisualStudioLocationHelper {
+    if (([System.Management.Automation.PSTypeName]'VisualStudioConfiguration.VisualStudioLocationHelper').Type) {
+        # The type is already defined so bail out
+        return
+    }
+
+    Add-Type -Path ([System.IO.Path]::Combine($PSScriptRoot, "VisualStudioConfiguration.cs"))
 }
 
 function FindBuildEnginePath {
@@ -29,24 +43,31 @@ function FindBuildEnginePath {
         [string]$Version,
         [string]$Bitness
     )
-    $pathsToTry = @("2019", "2017")
 
-    $programFiles = ${env:ProgramFiles(x86)}
+    CompileVisualStudioLocationHelper
 
-    $items = @(
-        foreach ($folder in $pathsToTry) {
-            Get-Item -ErrorAction SilentlyContinue @(
-                "$programFiles\Microsoft Visual Studio\$folder\*\$(Get-MSBuildPath Current $Bitness)"
-                "$programFiles\Microsoft Visual Studio\$folder\*\$(Get-MSBuildPath $Version $Bitness)"
-                "$programFiles\$(Get-MSBuildPath $($Version) $Bitness)"
-            )
-        }
-    )
+    $studios = [VisualStudioConfiguration.VisualStudioLocationHelper]::GetInstances()
+
+    if ($Version -ne "*") {
+        $studios = $studios | Where-Object { $_.Version.Major.ToString() -eq ([Version]$Version).Major }
+    }
+
+    $items = @{}
+    $items[''] = $null # Dummy value so we can treat scalar results the same as many results
+
+    $studio = $null
+
+    foreach ($studio in $studios) {
+        $items[$studio] = (Get-Item -ErrorAction Ignore @(
+            "$($studio.Path)\$(Get-MSBuildPath Current $Bitness)",
+            "$($studio.Path)\$(Get-MSBuildPath $Version $Bitness)"
+        )) | Sort-Object -Unique
+    }
 
     if ($items.Count -ge 2) {
-        $byVersion = {[System.Version]$_.VersionInfo.FileVersionRaw}
+        $byVersion = {[System.Version]$_.Key.Version}
         $byProduct = {
-            switch -Wildcard ($_.FullName) {
+            switch -Wildcard ($_.Key.Name) {
                 *\Enterprise\* {4}
                 *\Professional\* {3}
                 *\Community\* {2}
@@ -54,10 +75,10 @@ function FindBuildEnginePath {
                 default {0}
             }
         }
-        $items = $items | Sort-Object $byVersion, $byProduct
+        $items = $items.GetEnumerator() | Where-Object { '' -ne $_.Key } | Sort-Object $byVersion, $byProduct | Select-Object -Last 1
     }
 
-    [System.IO.Path]::GetDirectoryName($items[-1].FullName)
+    return [System.IO.Path]::GetDirectoryName($items.Value)
 }
 
 function Get-MSBuildOldVersion($Version, $Bitness) {
@@ -73,10 +94,6 @@ function Get-MSBuildOldVersion($Version, $Bitness) {
 }
 
 try {
-    if ([string]::IsNullOrEmpty($Version)) {
-        return
-    }
-
     $ErrorActionPreference = 'Stop'
 
     $v16 = [Version]'16.0'
@@ -85,7 +102,7 @@ try {
     if ([string]::IsNullOrEmpty($Version)) {
         $Version = '*'
     }
-    
+
     $vRequired = if ($Version -eq '*') {
         $vMax
     } else {

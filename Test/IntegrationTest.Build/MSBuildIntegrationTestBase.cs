@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using Microsoft.Build.Evaluation;
 using Microsoft.Build.Execution;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Logging;
 using Microsoft.Build.Utilities;
+using Microsoft.VisualStudio.Setup.Configuration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build {
@@ -16,13 +16,15 @@ namespace IntegrationTest.Build {
     [DeploymentItem(Tasks, Tasks)]
     [DeploymentItem(EndToEnd, EndToEnd)]
     [DeploymentItem(Packaging, Packaging)]
+    [DeploymentItem(@"..\..\..\Src\Build.Tools\", "Build.Tools")] // Deploy the native libgit binaries
+    [DeploymentItem(@"..\..\..\Src\Build\Tasks\", "Build\\Tasks")]
     public abstract class MSBuildIntegrationTestBase {
 
         public const string TargetsFile = "IntegrationTest.targets";
         public const string Tasks = "Tasks\\";
         public const string EndToEnd = "EndToEnd\\";
         public const string Packaging = "Packaging\\";
-        public const string TestDeployment = "TestDeployment\\";
+        internal const string TestDeployment = "TestDeployment\\";
 
         public TestContext TestContext { get; set; }
 
@@ -48,13 +50,14 @@ namespace IntegrationTest.Build {
             Assert.IsTrue(Directory.Exists(Path.Combine(TestContext.DeploymentDirectory, nameof(Packaging))));
 
             Dictionary<string, string> globalProperties = new Dictionary<string, string>(properties, StringComparer.OrdinalIgnoreCase) {
-                { "BuildToolsDirectory", TestContext.DeploymentDirectory },
-                { "NoMSBuildCommunityTasks", bool.TrueString },
+                { "BuildToolsDirectory", Path.Combine(TestContext.DeploymentDirectory, "Build.Tools") },
                 { "BUILD_REPOSITORY_NAME", "Build.Infrastructure" }
             };
 
-            Environment.SetEnvironmentVariable("MSBUILDTARGETOUTPUTLOGGING", "1", EnvironmentVariableTarget.Process);
-            Environment.SetEnvironmentVariable("MSBUILDLOGTASKINPUTS", "1", EnvironmentVariableTarget.Process);
+            if (LoggerVerbosity > LoggerVerbosity.Normal) {
+                Environment.SetEnvironmentVariable("MSBUILDTARGETOUTPUTLOGGING", "1", EnvironmentVariableTarget.Process);
+                Environment.SetEnvironmentVariable("MSBUILDLOGTASKINPUTS", "1", EnvironmentVariableTarget.Process);
+            }
 
             using (ProjectCollection collection = new ProjectCollection(globalProperties)) {
                 collection.UnregisterAllLoggers();
@@ -66,7 +69,7 @@ namespace IntegrationTest.Build {
                 string logFile = $"LogFile={Path.Combine(TestContext.TestResultsDirectory, TestContext.TestName + ".binlog")}";
 
                 collection.RegisterLogger(new BinaryLogger() {
-                    Verbosity = LoggerVerbosity.Diagnostic,
+                    Verbosity = LoggerVerbosity,
                     CollectProjectImports = BinaryLogger.ProjectImportsCollectionMode.None,
                     Parameters = logFile
                 });

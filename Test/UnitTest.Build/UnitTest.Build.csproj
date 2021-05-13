@@ -36,18 +36,18 @@
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
+  <PropertyGroup>
+    <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
+  </PropertyGroup>
   <Import Project="..\..\Src\Sources\References.props" />
   <ItemGroup>
     <Reference Include="Castle.Core">
-      <HintPath>..\..\packages\Castle.Core\lib\net45\Castle.Core.dll</HintPath>
+      <HintPath>..\..\packages\DevTools\Castle.Core\lib\net45\Castle.Core.dll</HintPath>
     </Reference>
     <Reference Include="LibGit2Sharp, Version=0.26.0.0, Culture=neutral, PublicKeyToken=7cbde695407f0333, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\devtools\LibGit2Sharp\lib\net46\LibGit2Sharp.dll</HintPath>
+      <HintPath>..\..\packages\LibGit2Sharp\lib\net46\LibGit2Sharp.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Build.Utilities.v4.0, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <Aliases>Utilities_v4_0</Aliases>
-      <Private>True</Private>
-    </Reference>
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="Microsoft.VisualStudio.TestPlatform.MSTest.TestAdapter">
       <HintPath>..\..\packages\devtools\MSTest.TestAdapter\build\_common\Microsoft.VisualStudio.TestPlatform.MSTest.TestAdapter.dll</HintPath>
     </Reference>
@@ -60,9 +60,12 @@
     <Reference Include="Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions">
       <HintPath>..\..\packages\devtools\MSTest.TestFramework\lib\netstandard1.0\Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions.dll</HintPath>
     </Reference>
-    <Reference Include="Moq, Version=4.8.0.0, Culture=neutral, PublicKeyToken=69f491c39445e920, processorArchitecture=MSIL">
+    <Reference Include="Moq, Version=4.10.0.0, Culture=neutral, PublicKeyToken=69f491c39445e920, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\devtools\Moq\lib\net45\Moq.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\packages\Moq\lib\net45\Moq.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Newtonsoft.Json\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="paket, Version=5.257.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\Src\Build\paket.exe</HintPath>
@@ -74,22 +77,17 @@
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Core" />
     <Reference Include="System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
     </Reference>
     <Reference Include="Microsoft.PowerShell.Commands.Utility, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35">
-      <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
     </Reference>
     <Reference Include="System.Numerics" />
-    <Reference Include="System.Numerics.Vectors, Version=4.1.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\devtools\System.Numerics.Vectors\lib\portable-net45+win8+wp8+wpa81\System.Numerics.Vectors.dll</HintPath>
-    </Reference>
     <Reference Include="System.Threading.Tasks.Dataflow, Version=4.6.5.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\devtools\System.Threading.Tasks.Dataflow\lib\net461\System.Threading.Tasks.Dataflow.dll</HintPath>
+      <HintPath>..\..\packages\System.Threading.Tasks.Dataflow\lib\net461\System.Threading.Tasks.Dataflow.dll</HintPath>
     </Reference>
     <Reference Include="System.Threading.Tasks.Extensions">
-      <HintPath>..\..\packages\System.Threading.Tasks.Extensions\lib\portable-net45+win8+wp8+wpa81\System.Threading.Tasks.Extensions.dll</HintPath>
+      <HintPath>..\..\packages\devtools\System.Threading.Tasks.Extensions\lib\portable-net45+win8+wp8+wpa81\System.Threading.Tasks.Extensions.dll</HintPath>
     </Reference>
     <Reference Include="System.Xml">
       <Private>True</Private>
@@ -98,16 +96,13 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Castle.Core">
-      <HintPath>..\..\packages\Castle.Core\lib\net45\Castle.Core.dll</HintPath>
+      <HintPath>..\..\packages\DevTools\Castle.Core\lib\net45\Castle.Core.dll</HintPath>
       <Private>True</Private>
       <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
-    <Reference Include="Moq">
-      <HintPath>..\..\packages\Moq\lib\net45\Moq.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="VisualStudioLocationHelperTests.cs" />
     <Compile Include="Model\BucketTests.cs" />
     <Compile Include="BuildLogProcessorTests.cs" />
     <Compile Include="BuildMetadataTests.cs" />

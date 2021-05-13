@@ -156,7 +156,7 @@ function Exec-Console([string]$command, [string]$commandArgs, [HashTable]$variab
     Exec-CommandCore -command $command -commandArgs $commandArgs -useConsole:$true -variables:$variables -parentProcess:$parentProcess
 }
 
-function Run-MSBuild([string]$projectFilePath, [string]$buildArgs = "", [string]$logFileName = "", [bool]$isDesktopBuild = $true) {
+function Run-MSBuild([string]$projectFilePath, [string]$buildArgs = "", [string]$logFileName = "", [bool]$isDesktopBuild = $true, [string]$msBuildVersion) {
 
     try {
         $type = [Type]::GetType("System.Management.Automation.PsUtils, System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35")
@@ -217,9 +217,9 @@ function Run-MSBuild([string]$projectFilePath, [string]$buildArgs = "", [string]
         $buildArgs = "$buildArgs /p:WaitForDebugger=true"
     }
 
-    $path = Resolve-MSBuild "*" "x86"
+    $msBuildDirectory = Resolve-MSBuild -Version $msBuildVersion -Bitness "x86"
 
-    $tool = "$path\MSBuild.exe"
+    $tool = [System.IO.Path]::Combine($msBuildDirectory, "MSBuild.exe")
 
     if ($logFileName) {
         $supportsBinaryLogger = ((Get-Item $tool).VersionInfo.FileMajorPart -gt 14)
@@ -238,9 +238,6 @@ function Run-MSBuild([string]$projectFilePath, [string]$buildArgs = "", [string]
         if (Test-Path -Path $logFileName) {
             if ([System.Environment]::UserInteractive) {
                 Write-Host "Build log written to: $logFileName"
-            } else {
-                # Binlogs for full builds can be 1+ GB
-                #Write-Host "##vso[task.uploadfile]$logFileName"
             }
         }
 

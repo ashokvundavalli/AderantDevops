@@ -107,8 +107,7 @@ namespace Aderant.Build.MSBuild {
             XElement element = new XElement(
                 Xmlns + "MSBuild",
                 new XAttribute("Projects", msBuildTask.Projects ?? string.Empty),
-                new XAttribute("BuildInParallel", msBuildTask.BuildInParallel),
-                new XAttribute("StopOnFirstFailure", msBuildTask.StopOnFirstFailure.ToString()));
+                new XAttribute("BuildInParallel", msBuildTask.BuildInParallel));
 
             if (!string.IsNullOrEmpty(msBuildTask.ProjectToolsVersion)) {
                 element.Add(new XAttribute("ToolsVersion", msBuildTask.ProjectToolsVersion));

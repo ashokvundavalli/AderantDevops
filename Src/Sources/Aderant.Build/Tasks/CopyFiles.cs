@@ -65,7 +65,7 @@ namespace Aderant.Build.Tasks {
 
         public override bool Execute() {
             if (SourceFiles == null || SourceFiles.Length == 0) {
-                DestinationFiles = new ITaskItem[0];
+                DestinationFiles = Array.Empty<ITaskItem>();
                 return true;
             }
 
@@ -120,7 +120,7 @@ namespace Aderant.Build.Tasks {
                         unescapedString = Path.Combine(DestinationFolder.ItemSpec, Path.GetFileName(SourceFiles[i].ItemSpec));
                     } catch (ArgumentException ex) {
                         Log.LogError("Unable to copy file \"{0}\" to \"{1}\". {2}", SourceFiles[i].ItemSpec, DestinationFolder.ItemSpec, ex.Message);
-                        DestinationFiles = new ITaskItem[0];
+                        DestinationFiles = Array.Empty<ITaskItem>();
                         return false;
                     }
 

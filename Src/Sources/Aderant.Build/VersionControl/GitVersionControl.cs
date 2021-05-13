@@ -68,15 +68,15 @@ namespace Aderant.Build.VersionControl {
 
         internal bool IsWellKnown {
             get {
-                if (this.Tag == Current) {
+                if (string.Equals(this.Tag, Current, StringComparison.Ordinal)) {
                     return true;
                 }
 
-                if (this.Tag == Previous) {
+                if (string.Equals(this.Tag, Previous, StringComparison.Ordinal)) {
                     return true;
                 }
 
-                if (this.Tag == ParentsParent) {
+                if (string.Equals(this.Tag, ParentsParent, StringComparison.Ordinal)) {
                     return true;
                 }
 

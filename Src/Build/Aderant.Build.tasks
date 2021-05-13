@@ -87,10 +87,11 @@
     <UsingTask TaskName="Aderant.Build.Tasks.OrmMappingValidator"                                 AssemblyFile="$(BuildAssembly)"
                Condition="'$(IsCustomBuild)' != 'true'" />
 
-    <UsingTask TaskName="Aderant.Build.Tasks.TextTemplatingPathResolver"                          AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.TextTemplating.TextTemplatingPathResolver"           AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.TextTemplating.TextTemplatingAssemblyResolver"       AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.HappyCat"                                            AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.SourceTransformationTask"                            AssemblyFile="$(BuildAssembly)" />
-
+    <UsingTask TaskName="Aderant.Build.Tasks.GetCurrentProcessId"                                 AssemblyFile="$(BuildAssembly)" />
 
   <PropertyGroup>
     <TargetTaskFactory Condition="'$(TargetTaskFactory)' == ''">RoslynCodeTaskFactory</TargetTaskFactory>

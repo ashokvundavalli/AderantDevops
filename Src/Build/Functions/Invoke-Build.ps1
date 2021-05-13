@@ -5,9 +5,18 @@ $environmentConfigured = $false
 [string]$indent1 = "  "
 [string]$indent2 = "        "
 
-function ApplyBranchConfig($context, [string]$root) {
+$script:BuildContext = $null
+
+function ApplyBranchConfig {
+    param(
+        [Parameter(Mandatory=$true)]$context,
+        [Parameter()][ValidateNotNullOrEmpty()][string]$root,
+        [Parameter()][ref]$msBuildVersion
+    )
+
     $result = Get-BuildConfigFilePaths $root
 
+    $config = $null
     if (-not [string]::IsNullOrWhiteSpace($result.BranchConfigFile)) {
         [xml]$config = Get-Content -Raw -LiteralPath ($result.BranchConfigFile)
 
@@ -17,6 +26,29 @@ function ApplyBranchConfig($context, [string]$root) {
 
         if ($config.BranchConfig.SelectNodes('ArtifactMetadataConfiguration').Count -gt 0 -and $config.BranchConfig.ArtifactMetadataConfiguration.SelectNodes('PackageHashVersionExclusions').Count -gt 0) {
             $context.BuildMetadata.PackageHashVersionExclusions = $config.BranchConfig.ArtifactMetadataConfiguration.PackageHashVersionExclusions.Split(';')
+        }
+    }
+
+    # Set the primary build engine version to use, using an environment variable as the override and selecting the
+    # user provided value as the fall back
+    $targetMSBuildVersion = $null
+    $targetVersionHierarchy = @()
+    if ($null -ne $msBuildVersion) {
+        $targetMSBuildVersion = $msBuildVersion.Value
+    }
+
+    $targetVersionHierarchy += ([System.Environment]::GetEnvironmentVariable("TargetMSBuildVersion"))
+
+    if ($null -ne $config) {
+        $targetVersionHierarchy += $config.SelectSingleNode('/BranchConfig/VisualStudioConfiguration/TargetMSBuildVersion') | Select-Object -ExpandProperty InnerText -First 1
+    }
+
+    $targetVersionHierarchy += $targetMSBuildVersion
+
+    foreach ($value in $targetVersionHierarchy) {
+        if (-not ([string]::IsNullOrWhiteSpace($targetMSBuildVersion))) {
+            $msBuildVersion.Value = $value
+            break
         }
     }
 
@@ -604,6 +636,9 @@ function global:Invoke-Build2 {
         [Parameter()]
         [switch]$SkipNugetPackageHashCheck,
 
+        [ValidateSet("", "*", "15.0", "16.0")]
+        [string]$MSBuildVersion = "*",
+
         <#
         Overrides user prompts.
         #>
@@ -639,7 +674,8 @@ function global:Invoke-Build2 {
         }
     }
 
-    [Aderant.Build.BuildOperationContext]$context = Get-BuildContext -CreateIfNeeded
+    $context = Get-BuildContext -CreateIfNeeded
+    $script:BuildContext = $context
 
     if ($null -eq $context) {
         throw 'Fatal error. Failed to create context.'
@@ -671,8 +707,7 @@ function global:Invoke-Build2 {
     }
 
     GetSourceTreeMetadata -context $context -repositoryPath $root -sourceCommit $SourceCommit
-
-    ApplyBranchConfig -context $context -root $root
+    ApplyBranchConfig -context $context -root $root -msBuildVersion ([ref]$MSBuildVersion)
 
     $standalone = [string]::IsNullOrWhiteSpace($context.DropLocationInfo.PrimaryDropLocation)
 
@@ -685,7 +720,7 @@ function global:Invoke-Build2 {
     PrepareEnvironment $context.BuildScriptsDirectory $context.BuildMetadata.BuildId -gt 0
 
     $context.StartedAt = [DateTime]::UtcNow
-    $context.LogFile = "$root\build.log"
+    $context.LogFile = [System.IO.Path]::Combine($root, "build.log")
 
     $succeeded = $false
     $contextService = $null
@@ -700,7 +735,7 @@ function global:Invoke-Build2 {
         Write-Debug "Service running on uri: $($contextService.ServerUri)"
         $contextService.CurrentContext = $context
 
-        $args = CreateToolArgumentString $context $RemainingArgs
+        $toolArgs = CreateToolArgumentString $context $RemainingArgs
 
         # When WhatIf specified just determine what would be built
         if ($PSCmdLet.MyInvocation.BoundParameters.ContainsKey("WhatIf")) {
@@ -708,8 +743,7 @@ function global:Invoke-Build2 {
         }
 
         $global:LASTEXITCODE = 0
-
-        Run-MSBuild "$($context.BuildScriptsDirectory)ComboBuild.targets" "/target:$($Target) /p:ContextEndpoint=$contextEndpoint /p:SKIP_BUILD_SYSTEM_COMPILE=true $args" -logFileName $context.LogFile -IsDesktopBuild $context.IsDesktopBuild
+        Run-MSBuild "$($context.BuildScriptsDirectory)ComboBuild.targets" "/target:$($Target) /p:ContextEndpoint=$contextEndpoint /p:SKIP_BUILD_SYSTEM_COMPILE=true $toolArgs" -logFileName $context.LogFile -IsDesktopBuild $context.IsDesktopBuild -MSBuildVersion $MSBuildVersion
 
         $succeeded = $true
 

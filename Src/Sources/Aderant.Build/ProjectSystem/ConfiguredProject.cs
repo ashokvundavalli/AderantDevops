@@ -55,6 +55,8 @@ namespace Aderant.Build.ProjectSystem {
 
         private List<IResolvedDependency> textTemplateDependencies;
         private Memoizer<ConfiguredProject, bool> skipCopyBuildProduct;
+        private Memoizer<ConfiguredProject, string> id;
+        private string fullPath;
 
         [ImportingConstructor]
         public ConfiguredProject(IProjectTree tree) {
@@ -68,7 +70,15 @@ namespace Aderant.Build.ProjectSystem {
             get { return ServicesImport.Value; }
         }
 
-        public string FullPath { get; protected internal set; }
+        public string FullPath {
+            get {
+                return fullPath;
+            }
+            protected internal set {
+                id = null;
+                fullPath = value;
+            }
+        }
 
         /// <summary>
         /// Gets or sets the solution file which contains this project.
@@ -115,7 +125,7 @@ namespace Aderant.Build.ProjectSystem {
                     return extractTypeGuids.Evaluate(this);
                 }
 
-                return new Guid[0];
+                return Array.Empty<Guid>();
             }
             set { extractTypeGuids = new Memoizer<ConfiguredProject, IReadOnlyList<Guid>>(cfg => value); }
         }
@@ -265,7 +275,11 @@ namespace Aderant.Build.ProjectSystem {
         public override string Id {
             get {
                 if (FullPath != null) {
-                    return FullPath + ":" + GetAssemblyName();
+                    if (id == null) {
+                        id = new Memoizer<ConfiguredProject, string>(cfg => cfg.FullPath + ":" + GetAssemblyName());
+                    }
+
+                    return id.Evaluate(this);
                 }
 
                 return GetAssemblyName();
@@ -368,7 +382,7 @@ namespace Aderant.Build.ProjectSystem {
                         return guidList;
                     }
 
-                    return new Guid[0];
+                    return Array.Empty<Guid>();
                 });
 
             projectGuid = new Memoizer<ConfiguredProject, Guid>(
@@ -564,7 +578,7 @@ namespace Aderant.Build.ProjectSystem {
             var aliasMap = collector.ExtensibilityImposition?.AliasMap;
 
             if (services.ProjectReferences != null) {
-                var results = services.ProjectReferences.GetResolvedReferences(collector.UnresolvedReferences, null);
+                var results = services.ProjectReferences.GetResolvedReferences(collector.UnresolvedReferences, aliasMap);
                 if (results != null) {
                     foreach (var reference in results) {
                         AddResolvedDependency(reference.ExistingUnresolvedItem, reference.ResolvedReference);

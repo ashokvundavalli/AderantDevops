@@ -385,7 +385,7 @@ function Install-LatestVisualStudioExtension {
         [ValidateSet('SDK.Database', 'Libraries.SoftwareFactory')]
         [string]$module,
         [switch]$local
-    ) 
+    )
 
     $installDetails = $null
 
@@ -419,7 +419,7 @@ function Install-LatestVisualStudioExtensionImpl($installDetails, [switch]$local
         function OutputVSIXLog {
             $errorsOccurred = $false
             $lastLogFile = Get-ChildItem $env:TEMP | Where-Object { $_.Name.StartsWith("VSIX") } | Sort-Object LastWriteTime | Select-Object -last 1
-        
+
             if ($null -ne $lastLogFile) {
                 $logFileContent = Get-Content $lastLogFile.FullName
                 foreach ($line in $logFileContent) {
