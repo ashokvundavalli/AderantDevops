@@ -311,7 +311,7 @@ function DownloadPaket([string]$commit) {
 
         if ($value -eq $commit) {
             Write-Debug "Skipping paket update because '$value' == '$commit'"
-            return
+            #return
         }
 
         [string]$paketVersion = Get-Content -Path ([System.IO.Path]::Combine($script:repositoryRoot, "Build", "paket.version"))
