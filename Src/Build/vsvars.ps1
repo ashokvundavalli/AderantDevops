@@ -9,10 +9,7 @@ param(
     [switch]$IsBuildAgent
 )
 
-begin {
-    . Resolve-MSBuild
-    CompileVisualStudioLocationHelper
-}
+
 
 ##
 ## Sets environment variables used to interop with the Visual Studio Developer Command Prompt
@@ -21,6 +18,8 @@ function LoadEnvVariables([string]$environmentVariableName, [string]$vsYear, [st
     if ([string]::IsNullOrEmpty($vsPath) -and ![string]::IsNullOrEmpty($environmentVariableName)) {
         $vsPath = [Environment]::GetEnvironmentVariable($environmentVariableName)
     } else {
+       . Resolve-MSBuild
+        CompileVisualStudioLocationHelper
         $instance = ([VisualStudioConfiguration.VisualStudioLocationHelper]::GetInstances() | Where-Object { $_.Name.Contains($vsYear) }  | Select-Object -First 1)
         if ($null -eq $instance) {
             return
