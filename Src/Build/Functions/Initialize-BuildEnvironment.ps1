@@ -28,7 +28,7 @@ function GetAlternativeStreamValue {
         [string]$StreamName
     )
 
-    return Get-Content -Path $File -Stream $StreamName -ErrorAction "SilentlyContinue"
+    return Get-Content -Path $File -Stream $StreamName -ErrorAction Ignore
 }
 
 function SetAlternativeStreamValue {
@@ -260,8 +260,6 @@ function RefreshSource {
        [string]$Branch
     )
 
-    [System.Enum]$originalDebugPreference = $DebugPreference
-
     if (-not $script:isUsingProfile) {
         $DebugPreference = 'Continue'
     }
@@ -287,8 +285,6 @@ function RefreshSource {
         $updated = $false
     }
 
-    $DebugPreference = $originalDebugPreference
-
     return [PsCustomObject]@{ Updated = $updated; Version = $updatedVersion }
 }
 
@@ -303,29 +299,35 @@ function DownloadPaket([string]$commit) {
         $paketExecutable = [System.IO.Path]::Combine($BuildScriptsDirectory, "paket.exe")
         $packageDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($script:repositoryRoot, "packages"))
 
-        $value = GetAlternativeStreamValue $paketExecutable $buildCommitStreamName
-
         if (-not [System.IO.Directory]::Exists($packageDirectory)) {
             $value = [string]::Empty
         }
 
-        if ($value -eq $commit) {
-            Write-Debug "Skipping paket update because '$value' == '$commit'"
-            #return
+        $upToDateFiles = @(
+            [System.IO.Path]::Combine($script:repositoryRoot, "Build", "paket.version"),
+            [System.IO.Path]::Combine($script:repositoryRoot, "paket.lock")
+        )
+
+        $outOfDate = $false
+        foreach ($file in $upToDateFiles) {
+            $value = GetAlternativeStreamValue $file $buildCommitStreamName
+            if ($value -ne $commit -and $outOfDate -ne $true) {
+                $outOfDate = $true
+            }
+            SetAlternativeStreamValue $file $buildCommitStreamName $commit
         }
 
-        [string]$paketVersion = Get-Content -Path ([System.IO.Path]::Combine($script:repositoryRoot, "Build", "paket.version"))
+        if ($outOfDate) {
+            [string]$paketVersion = Get-Content -Path $upToDateFiles[0]
+            $action = {
+                # Download the paket dependency tool
+                Start-Process -FilePath $bootstrapper -ArgumentList $paketVersion -NoNewWindow -PassThru -Wait
+                [void](New-Item -Path $packageDirectory -ItemType 'Directory' -Force)
+                Start-Process -FilePath $paketExecutable -ArgumentList @("restore", "--group", "main") -NoNewWindow -PassThru -Wait -WorkingDirectory $script:repositoryRoot
+            }
 
-        $action = {
-            # Download the paket dependency tool
-            Start-Process -FilePath $bootstrapper -ArgumentList $paketVersion -NoNewWindow -PassThru -Wait
-            [void](New-Item -Path $packageDirectory -ItemType 'Directory' -Force)
-            Start-Process -FilePath $paketExecutable -ArgumentList @("restore", "--group", "main") -NoNewWindow -PassThru -Wait -WorkingDirectory $script:repositoryRoot
+            [void](RunActionExclusive $action ("PAKET_UPDATE_LOCK_" + $BuildScriptsDirectory))
         }
-
-        [void](RunActionExclusive $action ("PAKET_UPDATE_LOCK_" + $BuildScriptsDirectory))
-        SetAlternativeStreamValue $paketExecutable $buildCommitStreamName $commit
-
     } else {
         throw "FATAL: $bootstrapper does not exist."
     }
@@ -486,8 +488,8 @@ try {
     SetTimeouts
     DownloadPaket $commit
     BuildProjects -mainAssembly $mainAssembly -forceCompile $isUsingProfile -commit $commit
-    LoadAssembly -assemblyPath "$assemblyPathRoot\System.Threading.Tasks.Dataflow.dll"
-    LoadAssembly -assemblyPath "$assemblyPathRoot\protobuf-net.dll"
+    LoadAssembly -assemblyPath ([System.IO.Path]::Combine($assemblyPathRoot, "System.Threading.Tasks.Dataflow.dll"))
+    LoadAssembly -assemblyPath ([System.IO.Path]::Combine($assemblyPathRoot, "protobuf-net.dll"))
     EnsureModuleLoaded
     LoadLibGit2Sharp $assemblyPathRoot
     LoadVstsTaskLibrary
@@ -496,7 +498,7 @@ try {
     [System.Net.ServicePointManager]::DefaultConnectionLimit = 16
 
     # Endpoints are unavailable in the event Initialize-BuildEnvironment is not loaded from the BuildPipeline process.
-    $skipEndpointCheck = (Get-Variable -Name 'skipEndpointCheck' -Scope 'Global' -ErrorAction 'SilentlyContinue')
+    $skipEndpointCheck = (Get-Variable -Name 'skipEndpointCheck' -Scope 'Global' -ErrorAction SilentlyContinue)
     if ($null -eq $skipEndpointCheck -or -not $skipEndpointCheck) {
         EnsureServiceEndpointsAvailable
     } else {
