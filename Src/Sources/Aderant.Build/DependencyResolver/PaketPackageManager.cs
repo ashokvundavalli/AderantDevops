@@ -568,17 +568,11 @@ namespace Aderant.Build.DependencyResolver {
                 if (ex.InnerException.Source == "System.IO.Compression") {
                     if (ex.InnerException.TargetSite.Name == "ReadEndOfCentralDirectory") {
 
-                        logger.Warning("Package corruption detected: ", ex.Message);
+                        logger.Warning("Package corruption detected: {0}", ex.Message);
 
-                        var localRootForTempData = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                        string nugetDirectory = Path.Combine(localRootForTempData, ".nuget", "packages");
-                        if (Directory.Exists(nugetDirectory)) {
-                            try {
-                                Directory.Delete(nugetDirectory, true);
-                            } catch (IOException) {
-                                // Ignore "the directory is not empty"
-                            }
-                        }
+                        logger.Info("Clearing NuGet cache.");
+
+                        Paket.Dependencies.ClearCache(clearLocalCache: true);
 
                         logger.Warning("Retrying dependency fetch...");
                         // And try again
