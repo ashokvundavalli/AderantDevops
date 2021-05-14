@@ -106,6 +106,8 @@ function BuildProjects {
     $projectPath = [System.IO.Path]::Combine($BuildScriptsDirectory, "Aderant.Build.Common.targets")
 
     & "$msbuildPath\MSBuild.exe" $projectPath "/t:$target" "/p:project-set=minimal" "/p:BuildScriptsDirectory=$BuildScriptsDirectory" "/nr:false"
+    SetAlternativeStreamValue $info.FullName $buildCommitStreamName $commit
+
 }
 
 function LoadAssembly {
