@@ -76,14 +76,15 @@ begin{
     Set-StrictMode -Version 'Latest'
     $ErrorActionPreference = 'Stop'
 
-    function GetTrxFilesFromDir() {
+    function GetTrxFilesFromDir {
         param (
             [string]
             $path
         )
         # Exit if the given path is invalid
         if (-not (Test-Path $path)) {
-            Write-Error -MessageData "The directory or file '$path' does not exist."
+            Write-Warning -Message "The directory or file '$path' does not exist."
+            exit 0
         }
     
         if (Test-Path -path $path -PathType Leaf) {
@@ -116,7 +117,7 @@ begin{
     }
     
     # Returns false if object is null or the object does not have the property.
-    function HasProperty() {
+    function HasProperty {
         param (
             [Object]
             $object,
@@ -163,7 +164,7 @@ begin{
         }
     }
     
-    function GetSlowTests() {
+    function GetSlowTests {
         [CmdletBinding()]
         param (
             [string]
@@ -199,7 +200,7 @@ begin{
         }
     }
     
-    function GetOutputFilePath() {
+    function GetOutputFilePath {
         param (
             [string[]]
             $trxFileDir
@@ -269,7 +270,7 @@ begin{
         }
     }
     
-    function PrintFortune() {
+    function PrintFortune {
         [string[]]$fortunes = @(
             "You smell nice today"
             "I like the way you move"
