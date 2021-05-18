@@ -29,28 +29,30 @@ function ApplyBranchConfig {
         }
     }
 
-    # Set the primary build engine version to use, using an environment variable as the override and selecting the
-    # user provided value as the fall back
-    $targetMSBuildVersion = $null
-    $targetVersionHierarchy = @()
-    if ($null -ne $msBuildVersion) {
-        $targetMSBuildVersion = $msBuildVersion.Value
-    }
+    # Set the primary build engine version to use, using an environment variable as the override, followed by the user-provided value, and finally the value specified in the branch config file.
+    # Defaults to Latest if no override is set.
+    $targetVersionHierarchy = [System.Collections.Generic.List[string]]::new()
 
-    $targetVersionHierarchy += ([System.Environment]::GetEnvironmentVariable("TargetMSBuildVersion"))
-
+    $targetVersionHierarchy.Add([System.Environment]::GetEnvironmentVariable('TargetMSBuildVersion'))
+    $targetVersionHierarchy.Add($msBuildVersion.Value)
     if ($null -ne $config) {
-        $targetVersionHierarchy += $config.SelectSingleNode('/BranchConfig/VisualStudioConfiguration/TargetMSBuildVersion') | Select-Object -ExpandProperty InnerText -First 1
+        $targetVersionHierarchy.Add(($config.SelectSingleNode('/BranchConfig/VisualStudioConfiguration/TargetMSBuildVersion') | Select-Object -ExpandProperty InnerText -First 1))
     }
-
-    $targetVersionHierarchy += $targetMSBuildVersion
 
     foreach ($value in $targetVersionHierarchy) {
-        if (-not ([string]::IsNullOrWhiteSpace($targetMSBuildVersion))) {
+        if (-not ([string]::IsNullOrWhiteSpace($value))) {
             $msBuildVersion.Value = $value
+
             break
         }
     }
+
+    if ([string]::IsNullOrWhiteSpace($msBuildVersion.Value)) {
+        # Default MSBuild version to latest if it has not been set.
+        $msBuildVersion.Value = '*'
+    }
+
+    Write-Information -MessageData "MSBuild version set to: '$($msBuildVersion.Value)'."
 
     if (-not [string]::IsNullOrWhiteSpace($result.ProductManifestFile)) {
         $context.ProductManifestPath = $result.ProductManifestFile
@@ -636,8 +638,8 @@ function global:Invoke-Build2 {
         [Parameter()]
         [switch]$SkipNugetPackageHashCheck,
 
-        [ValidateSet("", "*", "15.0", "16.0")]
-        [string]$MSBuildVersion = "*",
+        [ValidateSet('*', '15.0', '16.0')]
+        [string]$MSBuildVersion,
 
         <#
         Overrides user prompts.
