@@ -344,26 +344,6 @@ namespace Willys.LsaSecurity
 
     <#
     ============================================================
-    Clean up agent Task
-    ============================================================
-    #>
-    Invoke-Command -Session $session -ScriptBlock {
-        $STTrigger = New-ScheduledTaskTrigger -AtStartup
-        [string]$STName = "Cleanup Agent Host"
-
-        Unregister-ScheduledTask -TaskName $STName -Confirm:$false -ErrorAction SilentlyContinue
-
-        #Action to run as
-        $STAction = New-ScheduledTaskAction -Execute "$Env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoLogo -Sta -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File $scriptsDirectory\Build.Infrastructure\Src\Scripts\cleanup-agent-host.ps1" -WorkingDirectory $scriptsDirectory
-        $STSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -Compatibility Win8
-
-        #Register the new scheduled task
-        Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger -User $credentials.UserName -Password $credentials.GetNetworkCredential().Password -Settings $STSettings -RunLevel Highest -Force
-    } -ArgumentList $scriptsDirectory, $credentials
-
-
-    <#
-    ============================================================
     Reboot Task
     ============================================================
     #>
