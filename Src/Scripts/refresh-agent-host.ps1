@@ -3,6 +3,7 @@ Performs any jobs needed to update/refresh or fix drift on a agent host
 #>
 
 $InformationPreference = 'Continue'
+$VerbosePreference = 'Continue'
 
 Start-Transcript -Path ".\RefreshAgentHostLog.txt" -Force
 
