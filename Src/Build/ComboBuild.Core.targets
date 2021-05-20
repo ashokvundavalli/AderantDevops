@@ -52,10 +52,38 @@
 
     <TextTemplatingAssemblyResolver />
 
+    <PropertyGroup>
+      <PropertiesToRemove>
+        TotalNumberOfBuildGroups;
+        AgentPool;
+        BuildGroupId;
+        ProjectInstanceId
+        ExpertDevBranchFolder;
+        ForceRestoreDatabase;
+        TFSPowerToolDir;
+        GIT_REDIRECT_STDERR;
+        PAKET_REQUEST_TIMEOUT
+        PAKET_RESPONSE_STREAM_TIMEOUT;
+        PAKET_SKIP_RESTORE_TARGETS ;
+        PAKET_STREAMREADWRITE_TIMEOUT;
+        SKIP_BUILD_SYSTEM_COMPILE
+      </PropertiesToRemove>
+    </PropertyGroup>
+
+    <!--
+      netstandard projectes require project.assets.json to exist. This is created by msbuild /t:restore
+      Restore cannot be used during a build due to these WONT FIX items
+      https://github.com/dotnet/msbuild/issues/2811
+      https://github.com/dotnet/msbuild/issues/3000
+      To work around this we shell out to another build instance for any Sdk style projects to perform the restore - this will be slow.
+      Once this stops scaling this will need to move this to a higher level to perform a single restore for all SDK projets in the graph.
+    -->
+    <Exec Condition="'%(ProjectsInGroup.IsSdkStyeProject)' == 'true'" Command="dotnet restore %(ProjectsInGroup.Identity)" />
+
     <MSBuild Projects="@(ProjectsInGroup)"
              Targets="%(ProjectsInGroup.Targets)"
              UnloadProjectsOnCompletion="true"
-             RemoveProperties="TotalNumberOfBuildGroups;AgentPool;BuildGroupId;ProjectInstanceId"
+             RemoveProperties="$(PropertiesToRemove)"
              BuildInParallel="$(BuildInParallel)">
     </MSBuild>
 
@@ -141,7 +169,7 @@
     </PropertyGroup>
 
     <PropertyGroup>
-      <ResolveAssemblyReferencesStateFile Condition="'$(DisableRarCache)'!='true' and '$(ResolveAssemblyReferencesStateFile)' == ''">$(IntermediateOutputPath)$(MSBuildProjectFile)AssemblyReference.cache</ResolveAssemblyReferencesStateFile>
+      <ProjectTargets Condition="'$(switch-clean)' == 'true'">Clean</ProjectTargets>
     </PropertyGroup>
 
     <ItemGroup>
@@ -161,6 +189,8 @@
 
         <!-- If it's a build system project default to the EndToEnd target -->
         <Targets Condition="'%(IsProjectFile)' != 'true'">EndToEnd</Targets>
+        <!-- Otherwise, restore and then build -->
+        <Targets Condition="'%(IsProjectFile)' == 'true'">$(ProjectTargets)</Targets>
       </ProjectGroupWithoutGlobals>
     </ItemGroup>
 
@@ -172,7 +202,7 @@
 
     <!-- Expand AdditionalProperties into separate metadata items -->
     <CreateItem Include="@(ProjectGroupWithoutGlobals)"
-                AdditionalMetadata="@(ProjectGroupWithoutGlobals->Metadata('AdditionalProperties'));"
+                AdditionalMetadata="@(ProjectGroupWithoutGlobals->Metadata('AdditionalProperties'))"
                 PreserveExistingMetadata="true">
       <Output TaskParameter="Include" ItemName="ProjectsInGroupExpanded" />
     </CreateItem>
@@ -180,7 +210,7 @@
     <ItemGroup>
       <ProjectsInGroup Include="@(ProjectsInGroupExpanded)"
                        Condition="('$(switch-skip-compile)' == 'true' And '%(IsProjectFile)' != 'true') or '$(switch-skip-compile)' != 'true'"
-                       KeepMetadata="AdditionalProperties;Properties;BuildGroupId;RunUserTargets" />
+                       KeepMetadata="AdditionalProperties;Properties;BuildGroupId;RunUserTargets;Targets;IsProjectFile;IsSdkStyeProject" />
     </ItemGroup>
 
   </Target>

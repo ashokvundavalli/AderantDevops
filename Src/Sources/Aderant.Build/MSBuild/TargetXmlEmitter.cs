@@ -180,10 +180,10 @@ namespace Aderant.Build.MSBuild {
                     Xmlns + "Target",
                     new XAttribute("Name", target.Name),
                     target.Condition != null ? new XAttribute("Condition", target.Condition) : null,
-                    target.Returns != null ? new XAttribute("Returns", string.Join(";", target.Returns.Select(name => $"@({name})"))) : null,
-                    target.DependsOnTargets.Count > 0 ? new XAttribute("DependsOnTargets", string.Join(";", target.DependsOnTargets.Select(d => d.Name))) : null,
-                    target.BeforeTargets.Count > 0 ? new XAttribute("BeforeTargets", string.Join(";", target.BeforeTargets.Select(d => d.Name))) : null,
-                    target.AfterTargets.Count > 0 ? new XAttribute("AfterTargets", string.Join(";", target.AfterTargets.Select(d => d.Name))) : null));
+                    target.Returns != null ? new XAttribute("Returns", string.Join(PropertyList.Separator, target.Returns.Select(name => $"@({name})"))) : null,
+                    target.DependsOnTargets.Count > 0 ? new XAttribute("DependsOnTargets", PropertyList.CreatePropertyListString(target.DependsOnTargets.Select(d => d.Name))) : null,
+                    target.BeforeTargets.Count > 0 ? new XAttribute("BeforeTargets", PropertyList.CreatePropertyListString(target.BeforeTargets.Select(d => d.Name))) : null,
+                    target.AfterTargets.Count > 0 ? new XAttribute("AfterTargets", PropertyList.CreatePropertyListString(target.AfterTargets.Select(d => d.Name))) : null));
 
             foreach (MSBuildProjectElement childElement in target.Elements) {
                 childElement.Accept(this);
@@ -199,7 +199,7 @@ namespace Aderant.Build.MSBuild {
         }
 
         public override void Visit(CallTarget callTarget) {
-            Add(new XElement(Xmlns + "CallTarget", new XAttribute("Targets", string.Join(";", callTarget.Targets))));
+            Add(new XElement(Xmlns + "CallTarget", new XAttribute("Targets", string.Join(PropertyList.Separator, callTarget.Targets))));
         }
 
         /// <summary>

@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 
 namespace Aderant.Build.MSBuild {
+    /// <summary>
+    /// Represents an MSBuild property list (a semi-colon separated list of properties)
+    /// </summary>
     internal class PropertyList : Dictionary<string, string> {
-        private static readonly string joinString = "; " + Environment.NewLine;
+        private static readonly string joinString = Separator + Environment.NewLine;
 
         public PropertyList(IDictionary<string, string> dictionary) : base(dictionary, StringComparer.OrdinalIgnoreCase) {
         }
@@ -12,16 +15,23 @@ namespace Aderant.Build.MSBuild {
         public PropertyList() : base(StringComparer.OrdinalIgnoreCase) {
         }
 
-        public override string ToString() {
-            return string.Join(joinString, this.Select(x => string.Concat(x.Key, "=", x.Value.Replace(";", "%3B"))));
-        }
+        internal const string Separator = ";";
 
-        private static string Join(IList<string> items) {
+        private static string Join(IEnumerable<string> items) {
             return string.Join(joinString, items.Select(str => str));
         }
 
-        public static string CreatePropertyString(params string[] props) {
+        public static string CreatePropertyListString(params string[] props) {
             return Join(props);
+        }
+
+        public static string CreatePropertyListString(IEnumerable<string> select) {
+            return Join(select);
+        }
+
+        public override string ToString() {
+            var combinedString = string.Join(joinString, this.Select(x => string.Concat(x.Key, "=", x.Value.Replace(";", "%3B"))));
+            return combinedString;
         }
 
         public bool TryRemove(string key) {

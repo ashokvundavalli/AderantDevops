@@ -8,12 +8,10 @@
     <DeployTargetExists Condition="Exists('$(DeploymentTargets)Aderant.Build.DeployCI.targets')">true</DeployTargetExists>
   </PropertyGroup>
 
-  <Import Project="$(ParametersFile)" Condition="Exists($(ParametersFile))" />
-
   <Import Project="Aderant.Build.Testing.targets" />
   <Import Project="$(DeploymentTargets)Aderant.Build.ServerImage.targets" Condition="'$(ServerImageTargetExists)' == 'true'" />
   <Import Project="$(DeploymentTargets)Aderant.Build.DeployCI.targets" Condition="'$(DeployTargetExists)' == 'true'" />
-  
+
   <PropertyGroup>
     <!-- Allows environment variables to override RSP parameters -->
     <_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">$([System.Environment]::GetEnvironmentVariable('RunIntegrationTests'))</_RunIntegrationTests>
@@ -29,7 +27,7 @@
 
   </PropertyGroup>
 
-  
+
   <Target Name="RunIntegrationTestsCore" DependsOnTargets="RunIntegrationTests">
   </Target>
 

@@ -237,6 +237,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 ["IsWebProject"] = visualStudioProject.IsWebProject.ToString(),
                 // Indicates this file is not part of the build system
                 ["IsProjectFile"] = bool.TrueString,
+                ["IsSdkStyeProject"] = visualStudioProject.IsSdkStyeProject.ToString(),
             };
 
             if (imposition != null && imposition.CreateHardLinksForCopyLocal) {
