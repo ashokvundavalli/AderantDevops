@@ -1,7 +1,7 @@
 $powerShell = "$Env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
 $principal = New-ScheduledTaskPrincipal -UserID tfsbuildservice$ -LogonType Password -RunLevel Highest
 
-{
+& {
     <#
     ============================================================
     Cleanup space Task
@@ -20,7 +20,7 @@ $principal = New-ScheduledTaskPrincipal -UserID tfsbuildservice$ -LogonType Pass
     Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger -Principal $principal -Settings $STSettings -Verbose -Force
 }
 
-{
+& {
     <#
     ============================================================
     Cleanup NuGet Task
