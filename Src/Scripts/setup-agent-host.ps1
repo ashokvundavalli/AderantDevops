@@ -10,6 +10,10 @@ param(
 )
 
 begin {
+    $InformationPreference = "Continue"
+
+    $ErrorActionPreference = "Stop"
+
     Set-StrictMode -Version Latest
 
     if ($agentsToProvision -lt 1) {
@@ -40,7 +44,6 @@ begin {
 process {
     Start-Transcript -Path "$env:SystemDrive\Scripts\SetupAgentHostLog.txt" -Force
 
-    $ErrorActionPreference = "Stop"
     [string]$AgentRootDirectory = "C:\Agents"
 
     if ([string]::IsNullOrWhiteSpace($agentArchive)) {
@@ -193,7 +196,9 @@ process {
     }
 
     function SetupScheduledTasks {
-        & ([System.IO.Path]::Combine($PSScriptRoot, "scheduled-tasks.ps1"))
+        Write-Information "SetupScheduledTasks"
+        $scrptToRun =([System.IO.Path]::Combine($PSScriptRoot, "scheduled-tasks.ps1"))
+        . $scrptToRun
     }
 
     function StopUnneededServices() {
