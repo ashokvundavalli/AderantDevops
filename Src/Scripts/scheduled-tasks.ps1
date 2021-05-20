@@ -7,7 +7,7 @@ $principal = New-ScheduledTaskPrincipal -UserID tfsbuildservice$ -LogonType Pass
     Cleanup space Task
     ============================================================
     #>
-    $STTrigger = New-ScheduledTaskTrigger AtStartup
+    $STTrigger = New-ScheduledTaskTrigger -AtStartup
     [string]$STName = "Reclaim Space"
 
     Unregister-ScheduledTask -TaskName $STName -Confirm:$false -Verbose -ErrorAction SilentlyContinue
@@ -26,7 +26,7 @@ $principal = New-ScheduledTaskPrincipal -UserID tfsbuildservice$ -LogonType Pass
     Cleanup NuGet Task
     ============================================================
     #>
-    $STTrigger = New-ScheduledTaskTrigger AtStartup
+    $STTrigger = New-ScheduledTaskTrigger -AtStartup
     [string]$STName = "Remove NuGet Cache"
 
     Unregister-ScheduledTask -TaskName $STName -Confirm:$false -Verbose -ErrorAction SilentlyContinue
