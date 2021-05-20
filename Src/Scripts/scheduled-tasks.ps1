@@ -48,7 +48,7 @@ $principal = New-ScheduledTaskPrincipal -UserID tfsbuildservice$ -LogonType Pass
 
     Unregister-ScheduledTask -TaskName $STName -Confirm:$false -Verbose -ErrorAction SilentlyContinue
 
-    $STAction = New-ScheduledTaskAction -Execute $powerShell -Argument "-NoLogo -Sta -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File $PSScriptRoot\cleanup-agent-host.ps1" -WorkingDirectory $scriptsDirectory
+    $STAction = New-ScheduledTaskAction -Execute $powerShell -Argument "-NoLogo -Sta -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File $PSScriptRoot\cleanup-agent-host.ps1" -WorkingDirectory $PSScriptRoot
     $STSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -Compatibility Win8
 
     Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger -Principal $principal -Settings $STSettings -RunLevel Highest -Verbose -Force
