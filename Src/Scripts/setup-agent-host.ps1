@@ -152,9 +152,6 @@ process {
             "devenv.exe",
             "git.exe",
             "lc.exe",
-            "JetBrains.Profiler.Windows.PdbServer.exe",
-            "JetBrains.ReSharper.TaskRunner.CLR45.x64.exe",
-            "JetBrains.ETW.Collector.Host.exe",
             "Microsoft.Alm.Shared.Remoting.RemoteContainer.dll",
             "Microsoft.VsHub.Server.HttpHost.exe",
             "Microsoft.Alm.Shared.RemoteContainer.dll",
@@ -175,18 +172,13 @@ process {
             "vstest.discoveryengine.x86.exe",
             "vstest.executionengine.exe",
             "vstest.executionengine.x86.exe",
-
             "node.exe",
             "tsc.exe",
-
-            "FxCopCmd.exe",
             "dbprepare.exe",
             "DeploymentEngine.exe",
             "DeploymentManager.exe",
             "Expert.Help.sfx"
             "PackageManagerConsole.exe",
-
-            "ffmpeg.exe",
             "Agent.Listener.exe",
             "AgentService.exe",
             "robocopy.exe"
@@ -198,6 +190,10 @@ process {
         } catch {
             Write-Verbose $Error[0].Exception
         }
+    }
+
+    function SetupScheduledTasks {
+        . ([System.IO.Path]::Combine($PSScriptRoot, "scheduled-tasks.ps1"))
     }
 
     function StopUnneededServices() {
@@ -255,6 +251,7 @@ process {
     }
 
     OptimizeBuildEnvironment
+    SetupScheduledTasks
 
     for ($i = 0; $i -lt $agentsToProvision; $i++) {
         ProvisionAgent

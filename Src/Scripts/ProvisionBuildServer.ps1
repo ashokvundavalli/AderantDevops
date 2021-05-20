@@ -434,48 +434,6 @@ namespace Willys.LsaSecurity
         }
     } -ArgumentList $scriptsDirectory, $credentials
 
-    <#
-    ============================================================
-    Cleanup space Task
-    ============================================================
-    #>
-    Invoke-Command -Session $session -ScriptBlock {
-        $interval = New-TimeSpan -Minutes 5
-        $STTrigger = New-ScheduledTaskTrigger -Once -At (Get-Date).Date -RepetitionInterval $interval
-        [string]$STName = "Reclaim Space"
-
-        Unregister-ScheduledTask -TaskName $STName -Confirm:$false -ErrorAction SilentlyContinue
-
-        # Action to run as
-        $STAction = New-ScheduledTaskAction -Execute "$Env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoLogo -Sta -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File $scriptsDirectory\Build.Infrastructure\Src\Scripts\make-free-space-vnext.ps1" -WorkingDirectory $scriptsDirectory
-        $STSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -Compatibility Win8
-
-        $principal = New-ScheduledTaskPrincipal -UserID tfsbuildservice$ -LogonType Password -RunLevel Highest
-        # Register the new scheduled task
-        Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger –Principal $principal -Settings $STSettings -Force
-    } -ArgumentList $scriptsDirectory
-
-    <#
-    ============================================================
-    Cleanup NuGet Task
-    ============================================================
-    #>
-    Invoke-Command -Session $session -ScriptBlock {
-        $interval = New-TimeSpan -Hours 2
-        $STTrigger = New-ScheduledTaskTrigger -Once -At (Get-Date).Date -RepetitionInterval $interval
-        [string]$STName = "Remove NuGet Cache"
-
-        Unregister-ScheduledTask -TaskName $STName -Confirm:$false -ErrorAction SilentlyContinue
-
-        # Action to run as
-        $STAction = New-ScheduledTaskAction -Execute "$Env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoLogo -Sta -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File $scriptsDirectory\Build.Infrastructure\Src\Scripts\make-free-space-vnext.ps1 -strategy nuget" -WorkingDirectory $scriptsDirectory
-        $STSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -Compatibility Win8
-
-        $principal = New-ScheduledTaskPrincipal -UserID tfsbuildservice$ -LogonType Password -RunLevel Highest
-        # Register the new scheduled task
-        Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger –Principal $principal -Settings $STSettings -Force
-    } -ArgumentList $scriptsDirectory
-
 
     Invoke-Command -Session $session -ScriptBlock {
         Remove-Item "$scriptsDirectory\Build.Infrastructure" -Force -Recurse -ErrorAction 'SilentlyContinue'
