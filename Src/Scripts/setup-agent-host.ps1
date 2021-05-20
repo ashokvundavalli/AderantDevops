@@ -193,7 +193,7 @@ process {
     }
 
     function SetupScheduledTasks {
-        . ([System.IO.Path]::Combine($PSScriptRoot, "scheduled-tasks.ps1"))
+        & ([System.IO.Path]::Combine($PSScriptRoot, "scheduled-tasks.ps1"))
     }
 
     function StopUnneededServices() {
