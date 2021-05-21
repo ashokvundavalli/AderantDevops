@@ -170,6 +170,11 @@
 
     <PropertyGroup>
       <ProjectTargets Condition="'$(switch-clean)' == 'true'">Clean</ProjectTargets>
+
+      <!-- Performance optimization - assume the lock file is in the top level. This is done so each project doesn't need to
+           use GetPathOfFileAbove unless it has too
+       -->
+      <_PaketLockFile>$(ProjectSolutionRoot)\paket.lock</_PaketLockFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -192,11 +197,13 @@
         <!-- Otherwise, restore and then build -->
         <Targets Condition="'%(IsProjectFile)' == 'true'">$(ProjectTargets)</Targets>
       </ProjectGroupWithoutGlobals>
-    </ItemGroup>
 
-    <ItemGroup>
+      <ProjectGroupWithoutGlobals Condition="'%(IsProjectFile)' != 'true' And Exists($(_PaketLockFile))">
+        <AdditionalProperties Condition="Exists('$(ProjectSolutionRoot)\paket.lock')">%(AdditionalProperties);_PaketLockFile=$(_PaketLockFile)</AdditionalProperties>
+      </ProjectGroupWithoutGlobals>
+
       <ProjectGroupWithoutGlobals Condition="'%(IsProjectFile)' == 'true'">
-        <Properties>%(ProjectGroupWithoutGlobals.Properties);$(WixProperties)</Properties>
+        <Properties>%(Properties);$(WixProperties)</Properties>
       </ProjectGroupWithoutGlobals>
     </ItemGroup>
 

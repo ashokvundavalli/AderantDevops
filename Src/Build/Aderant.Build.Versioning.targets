@@ -43,10 +43,6 @@
       <_HasGitDir Condition="'$(_HasGitDir)' == ''">false</_HasGitDir>
       <_HasGitDir Condition="Exists($(_GitDir))">true</_HasGitDir>
 
-      <!-- Slurp in the paket.lock data as well -->
-      <_PaketLockFile>$([System.IO.Path]::Combine($(SolutionDirectoryPath), 'paket.lock'))</_PaketLockFile>
-      <_PaketLockText Condition="Exists($(_PaketLockFile))">$([System.IO.File]::ReadAllText($(_PaketLockFile)))</_PaketLockText>
-
       <IsIntegrationTest Condition="$(MSBuildProjectName.StartsWith('IntegrationTest')) And !($(MSBuildProjectName.EndsWith('Helper')) Or $(MSBuildProjectName.EndsWith('Helpers')))">true</IsIntegrationTest>
       <IsIntegrationTest Condition="'$(IsIntegrationTest)' == ''">false</IsIntegrationTest>
 
@@ -89,11 +85,6 @@
         <_Parameter2>$(BUILD_REPOSITORY_URI)</_Parameter2>
       </_AssemblyAttributes>
 
-      <_AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(_PaketLockText)' != ''">
-        <_Parameter1>Build.PaketLock</_Parameter1>
-        <_Parameter2>$(_PaketLockText)</_Parameter2>
-      </_AssemblyAttributes>
-
       <_AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(BuildFlavor)' != ''">
         <_Parameter1>Build.Flavor</_Parameter1>
         <_Parameter2>$(BuildFlavor)</_Parameter2>
@@ -109,6 +100,18 @@
         <_Parameter2>$(CICategory)</_Parameter2>
       </_AssemblyAttributes>
     </ItemGroup>
+
+    <!-- Outer project will supply a default value - if absent we need this project to look itself -->
+    <PropertyGroup Condition="'$(_PaketLockFile)' == ''">
+      <_PaketLockFile>$([MSBuild]::GetPathOfFileAbove('paket.lock'))</_PaketLockFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Condition="'$(_PaketLockFile)' != ''" Include="$(_PaketLockFile)">
+        <LogicalName>paket.lock</LogicalName>
+      </EmbeddedResource>
+    </ItemGroup>
+
   </Target>
 
 
@@ -185,7 +188,6 @@
 
 
   <Target Name="FindCommonAssemblyInfo">
-
     <!-- Find CommonAssemblyInfo.cs in the "Compile" Items. Remove it from "Compile" Items because we will use a modified version instead. -->
     <ItemGroup>
       <CommonAssemblyInfoFile Include="@(Compile)" Condition="%(Filename) == 'CommonAssemblyInfo' And %(Extension) == '.cs'" />
@@ -239,7 +241,8 @@
 
   <Target Name="ReadVersionInfo" DependsOnTargets="FindCommonAssemblyInfo">
 
-    <ReadAssemblyInfo AssemblyInfoFiles="@(CommonAssemblyInfoFile)">
+    <ReadAssemblyInfo
+      AssemblyInfoFiles="@(CommonAssemblyInfoFile)">
       <Output ItemName="CommonAssemblyInformationalVersion" TaskParameter="AssemblyInformationalVersion" />
       <Output ItemName="CommonAssemblyVersion"              TaskParameter="AssemblyVersion" />
       <Output ItemName="CommonAssemblyFileVersion"          TaskParameter="AssemblyFileVersion" />
