@@ -26,6 +26,11 @@ if ($lastPart -ne $prefix) {
     $tags += $lastPart
 }
 
+$pullRequestId = $Env:SYSTEM_PULLREQUEST_PULLREQUESTID
+if (-not ([string]::IsNullOrWhiteSpace($pullRequestId))) {
+    $tags += "pr-$pullRequestId"
+}
+
 foreach ($tag in $tags) {
     Write-Information "##vso[build.addbuildtag]$tag"
 }
