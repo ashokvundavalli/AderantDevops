@@ -47,8 +47,10 @@ begin {
                 }
             })
 
-            # We remove the version as the build engine uses this when trying to resolve things from the MSBuild extension path
-            $vars.Remove("VisualStudioVersion")
+            # We remove the version as the build engine uses this when trying to resolve things from the MSBuild extension path.
+            $vars.Remove('VisualStudioVersion')
+            # Having the VsSDKInstall variable configured prevents the Microsoft FindSDKInstallation target from executing.
+            $vars.Remove('VsSDKInstall')
 
             $globalEnvironmentVariables.GetEnumerator().ForEach({
                 if ($vars.ContainsKey($_.Key) -and ($_.Key -ne "Path")) {
