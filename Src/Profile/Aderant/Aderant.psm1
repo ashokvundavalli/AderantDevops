@@ -300,19 +300,18 @@ function global:Set-CurrentModule {
 
 function IsGitRepository {
     [CmdletBinding()]
+    [OutputType([bool])]
     param (
         [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$path
     )
 
-    process {
-        $path = (Resolve-Path -Path $path).Path
+    [string]$path = (Resolve-Path -Path $path).Path
 
-        if ([System.IO.path]::GetPathRoot($path) -eq $path) {
-            return $false
-        }
-
-        return @(Get-ChildItem -Path $path -Filter ".git" -Recurse -Depth 1 -Attributes Hidden -Directory).Length -gt 0
+    if ([System.IO.path]::GetPathRoot($path) -eq $path) {
+        return $false
     }
+
+    return @(Get-ChildItem -Path $path -Filter ".git" -Recurse -Depth 1 -Attributes 'Hidden' -Directory).Length -gt 0
 }
 
 function ImportFeatureModules([string]$path) {
@@ -550,129 +549,6 @@ function global:SetDefaultValue {
     [Environment]::SetEnvironmentVariable("Expert$propertyName", $defaultValue, "User")
 }
 
-function global:Open-ModuleSolution {
-    <#
-    .Synopsis
-        Opens the solution for a module in the current branch
-    .Description
-        Opens a module's main solution in visual studio
-    .PARAMETER ModuleName
-        The name of the module
-    .PARAMETER getDependencies
-        This will get the latest dependencies for the selected module before opening it up in visual studio.
-    .PARAMETER getLatest
-        This will get the latest source code for the selected module before opening it up in visual studio.
-    .EXAMPLE
-            Open-ModuleSolution Libraries.Presentation
-        Will open the Libraries.Presentation solution in visual studio
-
-    #>
-    [CmdletBinding()]
-    [Alias('vs')]
-    param (
-        [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$ModuleName,
-        [switch]$getDependencies,
-        [switch]$getLatest,
-        [switch]$code
-    )
-
-    begin {
-        [string]$devenv = 'devenv'
-
-        function Get-CurrentModule {
-            return Get-ExpertModule -ModuleName $global:ShellContext.CurrentModuleName
-        }
-    }
-
-    process {
-        $prevModule = $null
-
-        if (($getDependencies) -and -not [string]::IsNullOrEmpty($ModuleName)) {
-            if (-not [string]::IsNullOrEmpty($global:ShellContext.CurrentModuleName)) {
-                $prevModule = Get-CurrentModule
-            }
-
-            Set-CurrentModule $ModuleName
-        }
-
-        [string]$expertSuiteRootPath = [string]::Empty
-        [string]$nonExpertSuiteRootPath = [string]::Empty
-
-        if (-not [string]::IsNullOrWhiteSpace($ModuleName)) {
-            $expertSuiteRootPath = Join-Path $script:BranchLocalDirectory "ExpertSuite\$ModuleName"
-            $nonExpertSuiteRootPath = Join-Path $script:BranchLocalDirectory "$ModuleName"
-        } else {
-            $ModuleName = $global:ShellContext.CurrentModuleName
-            $expertSuiteRootPath = $global:ShellContext.CurrentModulePath
-            $nonExpertSuiteRootPath = $global:ShellContext.CurrentModulePath
-        }
-
-        if ([string]::IsNullOrWhiteSpace($ModuleName)) {
-            Write-Warning "No module specified."
-            return
-        }
-
-        if ($getDependencies) {
-            Write-Host "Getting Dependencies for module: $ModuleName"
-            Get-Dependencies
-        }
-
-        if ($getLatest) {
-            Write-Host "Getting latest source for module: $ModuleName"
-            Get-Latest -ModuleName $ModuleName;
-        }
-
-        Write-Host "Opening solution for module: $ModuleName"
-        $expertSuiteModuleSolutionPath = Join-Path $expertSuiteRootPath "$ModuleName.sln"
-        $devenvPath = [string]::Empty
-        $codePath = [string]::Empty
-
-        if (Test-Path $expertSuiteModuleSolutionPath) {
-            $devenvPath = $expertSuiteModuleSolutionPath
-            $codePath = $expertSuiteRootPath
-        } else {
-            $nonExpertSuiteModuleSolutionPath = Join-Path $nonExpertSuiteRootPath "$ModuleName.sln"
-            if (Test-Path $nonExpertSuiteModuleSolutionPath) {
-                $devenvPath = $nonExpertSuiteModuleSolutionPath
-                $codePath = $nonExpertSuiteRootPath
-            }
-        }
-
-        if (-not [string]::IsNullOrWhiteSpace($devenvPath)) {
-            if ($code) {
-                if (Get-Command code -errorAction SilentlyContinue) {
-                    Invoke-Expression "code $codePath"
-                } else {
-                    Write-Host "VS Code could not be found (code)"
-                }
-            } else {
-                Invoke-Expression "& '$devenv' $devenvPath"
-            }
-        } else {
-            [System.IO.FileSystemInfo[]]$candidates = (Get-ChildItem -Filter *.sln -file  | Where-Object {$_.Name -NotMatch ".custom.sln"})
-            if ($null -ne $candidates -and $candidates.Count -gt 0) {
-                $expertSuiteModuleSolutionPath = Join-Path $expertSuiteRootPath $candidates[0]
-                $codePath = $candidates[0].DirectoryName
-                if ($code) {
-                    if (Get-Command code -errorAction SilentlyContinue) {
-                        Invoke-Expression "code $codePath"
-                    } else {
-                        Write-Host "VS Code could not be found (code)"
-                    }
-                } else {
-                    Invoke-Expression "& '$devenv' $expertSuiteModuleSolutionPath"
-                }
-            } else {
-                "There is no solution file at $expertSuiteModuleSolutionPath"
-            }
-        }
-
-        if (($null -ne $prevModule) -and (Get-CurrentModule -ne $prevModule)) {
-            Set-CurrentModule $prevModule
-        }
-    }
-}
-
 function TabExpansion([string] $line, [string] $lastword) {
     if (-not $lastword.Contains(";")) {
         $aliases = Get-Alias
@@ -781,7 +657,6 @@ Add-ModuleExpansionParameter -CommandName "Get-ExpertModuleDependsOn" -Parameter
 Add-ModuleExpansionParameter -CommandName "Get-DownstreamExpertModules" -ParameterName "ModuleName"
 Add-ModuleExpansionParameter -CommandName "Get-ExpertModule" -ParameterName "ModuleName"
 Add-ModuleExpansionParameter -CommandName "Get-ExpertModules" -ParameterName "ModuleNames"
-Add-ModuleExpansionParameter –CommandName "Open-ModuleSolution" –ParameterName "ModuleName"
 Add-ModuleExpansionParameter –CommandName "Start-Redeployment" –ParameterName "CopyBinariesFrom"
 Add-ModuleExpansionParameter -CommandName "Copy-BinToEnvironment" -ParameterName "ModuleNames"
 Add-ModuleExpansionParameter -CommandName "CleanupIISCache" -ParameterName "moduleNames"
