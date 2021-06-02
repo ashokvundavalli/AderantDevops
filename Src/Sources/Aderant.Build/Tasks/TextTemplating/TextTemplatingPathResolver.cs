@@ -66,6 +66,12 @@ namespace Aderant.Build.Tasks.TextTemplating {
             IList<VisualStudioInstance> invalid;
             var visualStudioInstances = VisualStudioLocationHelper.GetInstances(out invalid);
 
+            string vs2015Install = Environment.GetEnvironmentVariable("VSSDK140Install");
+
+            if (!string.IsNullOrWhiteSpace(vs2015Install)) {
+                visualStudioInstances.Add(new VisualStudioInstance("Visual Studio 2015", Path.GetDirectoryName(vs2015Install.TrimEnd(Path.DirectorySeparatorChar)), new Version(14, 0)));
+            }
+
             LogInvalidInstanceFound(invalid);
 
             var pathToVisualStudioIntegration = Path.Combine("VSSDK", "VisualStudioIntegration", "Common", "Assemblies", "v4.0");
@@ -100,16 +106,6 @@ namespace Aderant.Build.Tasks.TextTemplating {
                 var root = ToolLocationHelper.GetPathToBuildTools(instance.Version.Major.ToString(CultureInfo.InvariantCulture));
                 if (!string.IsNullOrEmpty(root)) {
                     Add(visualStudioPathInfo.ReferencePaths, Path.Combine(root, "Roslyn"), false);
-                }
-            }
-
-            var paths = new[] {
-                Environment.GetEnvironmentVariable("VSSDK140Install")
-            };
-
-            foreach (var path in paths) {
-                if (!string.IsNullOrEmpty(path)) {
-                    Add(visualStudioPathInfo.ReferencePaths, Path.Combine(path, pathToVisualStudioIntegration), false);
                 }
             }
         }
