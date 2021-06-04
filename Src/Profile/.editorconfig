@@ -1,15 +1,19 @@
+root = true
 # EditorConfig is awesome:http://EditorConfig.org
 # docs https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference
 # editor https://marketplace.visualstudio.com/items?itemName=EditorConfigTeam.EditorConfig
 # this file copied mostly from the roslyn one https://github.com/dotnet/roslyn/blob/master/.editorconfig
 
 # top-most EditorConfig file
-root = true
 
 # Don't use tabs for indentation.
 [*]
 trim_trailing_whitespace = true
 indent_style = space
+
+# ReSharper properties
+resharper_xml_indent_size = 2
+resharper_xml_tab_width = 2
 # (Please don't specify an indent_size here; that has too many unintended consequences.)
 
 # Code files
@@ -82,3 +86,8 @@ csharp_new_line_before_catch = false
 csharp_new_line_before_finally = false
 csharp_new_line_before_members_in_object_initializers = false
 csharp_new_line_before_members_in_anonymous_types = false
+
+[*.{appxmanifest,axaml,axml,build,config,csproj,dbml,discomap,dtd,jsproj,lsproj,njsproj,nuspec,paml,proj,props,resw,resx,StyleCop,targets,tasks,vbproj,xaml,xamlx,xml,xoml,xsd}]
+indent_style = space
+indent_size = 2
+tab_width = 2
