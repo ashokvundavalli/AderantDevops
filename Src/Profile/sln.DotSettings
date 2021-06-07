@@ -6,4 +6,5 @@
 	<s:Boolean x:Key="/Default/Environment/InjectedLayers/InjectedLayerCustomization/=FileB28C26B69CE2E14EAD52E933B9D299FF/@KeyIndexDefined">True</s:Boolean>
 	<s:Double x:Key="/Default/Environment/InjectedLayers/InjectedLayerCustomization/=FileB28C26B69CE2E14EAD52E933B9D299FF/RelativePriority/@EntryValue">2</s:Double>
 	<s:Boolean x:Key="/Default/Environment/SettingsMigration/IsMigratorApplied/=JetBrains_002EReSharper_002EPsi_002ECSharp_002ECodeStyle_002ESettingsUpgrade_002EMigrateBlankLinesAroundFieldToBlankLinesAroundProperty/@EntryIndexedValue">True</s:Boolean>
+    <s:Boolean x:Key="/Default/UserDictionary/Words/=Aderant/@EntryIndexedValue">True</s:Boolean></wpf:ResourceDictionary>
 </wpf:ResourceDictionary>

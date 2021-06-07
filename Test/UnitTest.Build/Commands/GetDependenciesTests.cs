@@ -17,9 +17,16 @@ namespace UnitTest.Build.Commands {
 
             string destinationDirectory = Path.Combine(TestContext.DeploymentDirectory, Path.GetRandomFileName());
 
-            getDependencies.CopyReSharperSettings(File.ReadAllText(Path.Combine(TestContext.DeploymentDirectory, GetDependencies.ResharperSettings)), destinationDirectory, TestContext.DeploymentDirectory);
+            Directory.CreateDirectory(destinationDirectory);
 
-            string destinationFile = Path.Combine(destinationDirectory, GetDependencies.ResharperSettings);
+            string solutionFile = Path.Combine(destinationDirectory, string.Concat(Path.GetRandomFileName(), ".sln"));
+
+            using (File.Create(solutionFile)) {
+            }
+
+            getDependencies.CopyReSharperSettings(File.ReadAllText(Path.Combine(TestContext.DeploymentDirectory, GetDependencies.ReSharperSettings)), destinationDirectory, TestContext.DeploymentDirectory);
+
+            string destinationFile = Path.Combine(destinationDirectory, GetDependencies.GetReSharperSettingsFileName(solutionFile));
 
             Assert.IsTrue(File.Exists(destinationFile));
 

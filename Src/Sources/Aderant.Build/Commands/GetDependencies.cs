@@ -25,7 +25,7 @@ namespace Aderant.Build.Commands {
 
         internal static readonly string EditorConfig = ".editorconfig";
         internal static readonly string MSTestV2CommonProject = "MSTest_V2_Common.proj";
-        internal static readonly string ResharperSettings = "sln.DotSettings";
+        internal static readonly string ReSharperSettings = "sln.DotSettings";
         internal static readonly string AbsolutePathToken = "[ABSOLUTEPATH]";
         internal static readonly string RelativePathToken = "[RELATIVEPATH]";
 
@@ -113,7 +113,7 @@ namespace Aderant.Build.Commands {
 
             string profileDirectory = Path.Combine(buildScriptsDirectory, "..\\Profile");
 
-            string reSharperSettingsFile = Path.Combine(profileDirectory, ResharperSettings);
+            string reSharperSettingsFile = Path.Combine(profileDirectory, ReSharperSettings);
             string content = fileSystem.ReadAllText(reSharperSettingsFile);
 
             List<Action<string>> actions = new List<Action<string>> {
@@ -146,20 +146,38 @@ namespace Aderant.Build.Commands {
             }
         }
 
+        private IList<string> GetSolutionFilesInDirectory(string path) {
+            return !fileSystem.DirectoryExists(path) ? new List<string>(0) : fileSystem.GetFiles(path, "*.sln", false).ToList();
+        }
+
+        internal static string GetReSharperSettingsFileName(string solution) {
+            return string.Concat(Path.GetFileNameWithoutExtension(solution), ".", ReSharperSettings);
+        }
+
         internal void CopyReSharperSettings(string content, string destination, string buildScriptsDirectory) {
             if (IsReservedDirectory(destination)) {
                 return;
             }
 
+            var solutions = GetSolutionFilesInDirectory(destination);
+
+            if (!solutions.Any()) {
+                return;
+            }
+
             // Update the [ABSOLUTEPATH] and [RELATIVEPATH] tokens.
-            string repositoryDirectory = Path.GetFullPath(Path.Combine(buildScriptsDirectory, @"..\..\.."));
+            string repositoryDirectory = Path.GetFullPath(Path.Combine(buildScriptsDirectory, $"..{Path.DirectorySeparatorChar}..{Path.DirectorySeparatorChar}.."));
             content = content.Replace(AbsolutePathToken, repositoryDirectory);
             content = content.Replace(RelativePathToken, PathUtility.MakeRelative(destination, repositoryDirectory));
 
-            string destinationFile = Path.Combine(destination, ResharperSettings);
-            Logger.Info("Writing ReSharper settings file to: '{0}'.", destinationFile);
+            foreach (string solution in solutions) {
+                string fileName = GetReSharperSettingsFileName(solution);
 
-            fileSystem.WriteAllText(destinationFile, content);
+                string destinationFile = Path.Combine(destination, fileName);
+                Logger.Info("Writing ReSharper settings file to: '{0}'.", destinationFile);
+
+                fileSystem.WriteAllText(destinationFile, content);
+            }
         }
     }
 }
