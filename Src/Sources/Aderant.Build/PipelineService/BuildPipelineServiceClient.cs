@@ -38,122 +38,122 @@ namespace Aderant.Build.PipelineService {
         }
 
         public void AssociateArtifacts(IEnumerable<BuildArtifact> artifacts) {
-            InvokeServiceAction(() => Contract.AssociateArtifacts(artifacts));
+            InvokeServiceAction((service, a) => service.AssociateArtifacts(a), artifacts);
         }
 
         public BuildArtifact[] GetAssociatedArtifacts() {
-            return InvokeServiceAction(() => Contract.GetAssociatedArtifacts());
+            return InvokeServiceAction((service, _) => service.GetAssociatedArtifacts(), (object)null);
         }
 
         public void Publish(BuildOperationContext context) {
-            InvokeServiceAction(() => Contract.Publish(context));
+            InvokeServiceAction((service, a) => service.Publish(a), context);
         }
 
         public Task PublishAsync(BuildOperationContext context) {
-            return InvokeServiceAction(() => Contract.PublishAsync(context));
+            return InvokeServiceAction((service, a) => service.PublishAsync(a), context);
         }
 
         public BuildOperationContext GetContext() {
-            return InvokeServiceAction(() => Contract.GetContext());
+            return InvokeServiceAction((service, a) => service.GetContext(), (object)null);
         }
 
         public BuildOperationContext GetContext(QueryOptions options) {
-            return InvokeServiceAction(() => Contract.GetContext(options));
+            return InvokeServiceAction((service, a) => service.GetContext(a), options);
         }
 
         public void RecordProjectOutputs(ProjectOutputSnapshot snapshot) {
-            InvokeServiceAction(() => Contract.RecordProjectOutputs(snapshot));
+            InvokeServiceAction((service, a) => service.RecordProjectOutputs(a), snapshot);
         }
 
         public void RecordImpactedProjects(IEnumerable<string> impactedProjects) {
-            InvokeServiceAction(() => Contract.RecordImpactedProjects(impactedProjects));
+            InvokeServiceAction((service, a) => service.RecordImpactedProjects(a), impactedProjects);
         }
 
         public void RecordRelatedFiles(Dictionary<string, List<string>> relatedFiles) {
-            InvokeServiceAction(() => Contract.RecordRelatedFiles(relatedFiles));
+            InvokeServiceAction((service, a) => service.RecordRelatedFiles(a), relatedFiles);
         }
 
         public Task RecordRelatedFilesAsync(Dictionary<string, List<string>> relatedFiles) {
-            return InvokeServiceAction(() => Contract.RecordRelatedFilesAsync(relatedFiles));
+            return InvokeServiceAction((service, a) => service.RecordRelatedFilesAsync(a), relatedFiles);
         }
 
         public IEnumerable<ProjectOutputSnapshot> GetProjectOutputs(string container) {
-            return InvokeServiceAction(() => Contract.GetProjectOutputs(container));
+            return InvokeServiceAction((service, a) => service.GetProjectOutputs(a), container);
         }
 
         public IEnumerable<string> GetImpactedProjects() {
-            return InvokeServiceAction(() => Contract.GetImpactedProjects());
+            return InvokeServiceAction((service, a) => service.GetImpactedProjects(), (object)null);
         }
 
         public Dictionary<string, List<string>> GetRelatedFiles() {
-            return InvokeServiceAction(() => Contract.GetRelatedFiles());
+            return InvokeServiceAction((service, a) => service.GetRelatedFiles(), (object)null);
         }
 
         public IEnumerable<ProjectOutputSnapshot> GetProjectSnapshots() {
-            return InvokeServiceAction(() => Contract.GetProjectSnapshots());
+            return InvokeServiceAction((service, a) => service.GetProjectSnapshots(), (object)null);
         }
 
         public void RecordArtifacts(string container, IEnumerable<ArtifactManifest> manifests) {
-            InvokeServiceAction(() => Contract.RecordArtifacts(container, manifests));
+            InvokeServiceAction((service, a) => service.RecordArtifacts(a.Item1, a.Item2), ValueTuple.Create(container, manifests));
         }
 
         public void PutVariable(string scope, string variableName, string value) {
-            InvokeServiceAction(() => Contract.PutVariable(scope, variableName, value));
+            InvokeServiceAction((service, a) => service.PutVariable(a.Item1, a.Item2, a.Item3), ValueTuple.Create(scope, variableName, value));
         }
 
         public string GetVariable(string scope, string variableName) {
-            return InvokeServiceAction(() => Contract.GetVariable(scope, variableName));
+            return InvokeServiceAction((service, a) => service.GetVariable(a.Item1, a.Item2), ValueTuple.Create(scope, variableName));
         }
 
         public void TrackProject(OnDiskProjectInfo onDiskProject) {
-            InvokeServiceAction(() => Contract.TrackProject(onDiskProject));
+            InvokeServiceAction((service, a) => service.TrackProject(a), onDiskProject);
         }
 
         public IEnumerable<OnDiskProjectInfo> GetTrackedProjects() {
-            return InvokeServiceAction(() => Contract.GetTrackedProjects());
+            return InvokeServiceAction((service, a) => service.GetTrackedProjects(), (object)null);
         }
 
         public IEnumerable<OnDiskProjectInfo> GetTrackedProjects(IEnumerable<Guid> ids) {
-            return InvokeServiceAction(() => Contract.GetTrackedProjects(ids));
+            return InvokeServiceAction((service, a) => service.GetTrackedProjects(a), ids);
         }
 
         public IEnumerable<ArtifactManifest> GetArtifactsForContainer(string container) {
-            return InvokeServiceAction(() => Contract.GetArtifactsForContainer(container));
+            return InvokeServiceAction((service, a) => service.GetArtifactsForContainer(a), container);
         }
 
         public object[] Ping() {
-            return InvokeServiceAction(() => Contract.Ping());
+            return InvokeServiceAction((service, a) => service.Ping(), (object)null);
         }
 
         public void SetStatus(string status, string reason) {
-            InvokeServiceAction(() => Contract.SetStatus(status, reason));
+            InvokeServiceAction((service, a) => service.SetStatus(a.Item1, a.Item2), ValueTuple.Create(status, reason));
         }
 
         /// <summary>
         /// Notifies listeners of build progress.
         /// </summary>
         public void SetProgress(string currentOperation, string activity, string statusDescription) {
-            InvokeServiceAction(() => Contract.SetProgress(currentOperation, activity, statusDescription));
+            InvokeServiceAction((service, a) => service.SetProgress(a.Item1, a.Item2, a.Item3), ValueTuple.Create(currentOperation, activity, statusDescription));
         }
 
         public BuildStateFile GetStateFile(string container) {
-            return InvokeServiceAction(() => Contract.GetStateFile(container));
+            return InvokeServiceAction((service, a) => service.GetStateFile(a), container);
         }
 
         public void TrackInputFileDependencies(string solutionRoot, IReadOnlyCollection<TrackedInputFile> fileDependencies) {
-            InvokeServiceAction(() => Contract.TrackInputFileDependencies(solutionRoot, fileDependencies));
+            InvokeServiceAction((service, a) => service.TrackInputFileDependencies(a.Item1, a.Item2), ValueTuple.Create(solutionRoot, fileDependencies));
         }
 
         public IReadOnlyCollection<TrackedInputFile> ClaimTrackedInputFiles(string tag) {
-            return InvokeServiceAction(() => Contract.ClaimTrackedInputFiles(tag));
+            return InvokeServiceAction((service, a) => service.ClaimTrackedInputFiles(a), tag);
         }
 
         public void AddBuildDirectoryContributor(BuildDirectoryContribution buildDirectoryContribution) {
-            InvokeServiceAction(() => Contract.AddBuildDirectoryContributor(buildDirectoryContribution));
+            InvokeServiceAction((service, a) => service.AddBuildDirectoryContributor(a), buildDirectoryContribution);
         }
 
         public IReadOnlyCollection<BuildDirectoryContribution> GetContributors() {
-            return InvokeServiceAction(() => Contract.GetContributors());
+            return InvokeServiceAction((service, a) => service.GetContributors(), (object)null);
         }
 
         public void Dispose() {
@@ -195,14 +195,14 @@ namespace Aderant.Build.PipelineService {
             return client;
         }
 
-        private T InvokeServiceAction<T>(Func<T> action) {
+        private TOutput InvokeServiceAction<TInput, TOutput>(Func<IBuildPipelineService, TInput, TOutput> action, TInput input) {
             EnsureInitialized();
 
             BuildPipelineServiceProxy proxy = InnerProxy;
 
             if (proxy != null && proxy.State == CommunicationState.Opened) {
                 try {
-                    return action();
+                    return action(proxy.ChannelContract, input);
                 } catch (FaultException ex) {
                     throw ExceptionConverter.ConvertException(ex);
                 }
@@ -211,13 +211,13 @@ namespace Aderant.Build.PipelineService {
             throw new CommunicationException("Proxy is communication state is invalid");
         }
 
-        private void InvokeServiceAction(Action action) {
+        private void InvokeServiceAction<T>(Action<IBuildPipelineService, T> action, T data) {
             EnsureInitialized();
 
             BuildPipelineServiceProxy proxy = InnerProxy;
             if (proxy != null && proxy.State == CommunicationState.Opened) {
                 try {
-                    action();
+                    action(proxy.ChannelContract, data);
                     return;
                 } catch (FaultException ex) {
                     throw ExceptionConverter.ConvertException(ex);

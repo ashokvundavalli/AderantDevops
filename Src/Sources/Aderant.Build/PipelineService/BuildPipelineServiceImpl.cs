@@ -262,12 +262,13 @@ namespace Aderant.Build.PipelineService {
 
         public void SetProgress(string currentOperation, string activity, string statusDescription) {
             if (consoleAdapter != null) {
-                Task.Run(
-                    () => {
-                        if (consoleAdapter != null) {
-                            consoleAdapter.RaiseProgressChanged(currentOperation, activity, statusDescription);
+                Task.Factory.StartNew(
+                    o => {
+                        var (item1, item2, item3, item4) = (Tuple<IConsoleAdapter, string, string, string>) o;
+                        if (item1 != null) {
+                            item1.RaiseProgressChanged(item2, item3, item4);
                         }
-                    });
+                    }, Tuple.Create(consoleAdapter, currentOperation, activity, statusDescription), CancellationToken.None, TaskCreationOptions.DenyChildAttach, TaskScheduler.Default);
             }
         }
 

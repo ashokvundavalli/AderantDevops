@@ -36,6 +36,9 @@ namespace Aderant.Build.PipelineService {
         [OperationContract]
         void RecordProjectOutputs(ProjectOutputSnapshot snapshot);
 
+        /// <summary>
+        /// Records the directories of the projects that this build impacts into the build service.
+        /// </summary>
         [OperationContract(IsOneWay = true)]
         void RecordImpactedProjects(IEnumerable<string> impactedProjects);
 
@@ -54,6 +57,10 @@ namespace Aderant.Build.PipelineService {
         [OperationContract]
         IEnumerable<ProjectOutputSnapshot> GetProjectOutputs(string container);
 
+        /// <summary>
+        /// Gives
+        /// </summary>
+        /// <returns></returns>
         [OperationContract]
         IEnumerable<string> GetImpactedProjects();
 

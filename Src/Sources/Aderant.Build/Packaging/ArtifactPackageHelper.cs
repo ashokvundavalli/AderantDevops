@@ -78,14 +78,14 @@ namespace Aderant.Build.Packaging {
 
                 HashSet<ArtifactPackageType> packageType = new HashSet<ArtifactPackageType>();
                 packageType.Add(ArtifactPackageType.Default);
-                
+
                 if (isInternalDevelopmentPackage) {
                     packageType.Add(ArtifactPackageType.DevelopmentPackage);
                 }
 
                 if (isTestPackage || group.Key.IndexOf("IntegrationTest", StringComparison.OrdinalIgnoreCase) >= 0 || group.Key.EndsWith(".tests", StringComparison.OrdinalIgnoreCase)) {
                     packageType.Add(ArtifactPackageType.TestPackage);
-                } 
+                }
 
                 if (isAutomationPackage) {
                     packageType.Add(ArtifactPackageType.AutomationPackage);
@@ -167,10 +167,14 @@ namespace Aderant.Build.Packaging {
             }
         }
 
+        private static readonly char[] split = new[] {
+            '|'
+        };
+
         internal static void ParseMetadata(ITaskItem file, string metadataName, ref ArtifactType value) {
             string metadata = file.GetMetadata(metadataName);
             if (!string.IsNullOrWhiteSpace(metadata)) {
-                string[] parts = metadata.Split('|');
+                string[] parts = metadata.Split(split);
 
                 ArtifactType output;
                 foreach (var part in parts) {
