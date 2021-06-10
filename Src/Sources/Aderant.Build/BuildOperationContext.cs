@@ -327,12 +327,13 @@ namespace Aderant.Build {
 
         internal BuildStateFile GetStateFile(string bucketTag) {
             var files = StateFiles;
-            if (files != null)
+            if (files != null) {
                 foreach (var file in files) {
                     if (string.Equals(file.BucketId.Tag, bucketTag, StringComparison.OrdinalIgnoreCase)) {
                         return file;
                     }
                 }
+            }
 
             return null;
         }

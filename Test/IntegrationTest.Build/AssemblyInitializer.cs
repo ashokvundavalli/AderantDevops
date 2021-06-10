@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using Aderant.Build;
+using Aderant.Build.DependencyAnalyzer;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build {
@@ -11,6 +13,8 @@ namespace IntegrationTest.Build {
 
         [AssemblyInitialize]
         public static void AssemblyInitialize(TestContext context) {
+            ProjectSequencer.GiveTimeToReviewTree = false;
+
             Environment.CurrentDirectory = context.DeploymentDirectory;
 
             var nativeAssemblyDirectories = new[] {

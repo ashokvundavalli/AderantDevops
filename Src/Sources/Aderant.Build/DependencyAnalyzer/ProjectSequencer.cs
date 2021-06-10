@@ -21,9 +21,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         private readonly IFileSystem fileSystem;
         private readonly ILogger logger;
         private DirectoryNodeFactory directoryNodeFactory;
-        private bool isDesktopBuild;
-
-        private BuildCachePackageChecker packageChecker;
+        internal BuildCachePackageChecker PackageChecker;
         private List<BuildStateFile> stateFiles;
         private TrackedInputFilesController trackedInputFilesCheck;
         private Dictionary<string, InputFilesDependencyAnalysisResult> trackedInputs = new Dictionary<string, InputFilesDependencyAnalysisResult>(StringComparer.OrdinalIgnoreCase);
@@ -55,30 +53,26 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// </summary>
         public string MetaprojectXml { get; set; }
 
-        public BuildPlan CreatePlan(BuildOperationContext context, OrchestrationFiles files, DependencyGraph graph, bool considerStateFiles = true) {
-            isDesktopBuild = context.IsDesktopBuild;
-
-            bool isBuildCacheEnabled = true;
-
+        public BuildPlan CreatePlan(BuildOperationContext context, OrchestrationFiles files, DependencyGraph graph, bool considerStateFiles) {
             if (context.StateFiles == null) {
                 var manager = new StateFileController();
                 stateFiles = manager.GetApplicableStateFiles(logger, context);
-
-                if (stateFiles != null && stateFiles.Count > 0) {
-                    context.StateFiles = stateFiles;
-                }
-
-                isBuildCacheEnabled = StateFileController.SetIsBuildCacheEnabled(stateFiles, context);
             } else {
-                StateFileController.SetIsBuildCacheEnabled(stateFiles, context);
+                stateFiles = context.StateFiles;
             }
 
             var projectGraph = new ProjectDependencyGraph(graph);
 
-            Sequence(context.Switches, considerStateFiles, files.MakeFiles, projectGraph, context.BuildMetadata);
+            List<BuildStateFile> buildStateFiles = Sequence(context.Switches, considerStateFiles, files.MakeFiles, projectGraph, context.BuildMetadata);
+
+            if (buildStateFiles.Any()) {
+                // Configure state files based on filtered output.
+                context.StateFiles = buildStateFiles;
+            }
+
+            var isBuildCacheEnabled = StateFileController.SetIsBuildCacheEnabled(buildStateFiles, context);
 
             var projectsInDependencyOrder = projectGraph.GetDependencyOrder();
-
 
             List<string> directoriesInBuild = new List<string>(DefaultDirectoryListCapacity);
             TrackProjects(projectsInDependencyOrder, isBuildCacheEnabled, directoriesInBuild);
@@ -106,7 +100,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             var planGenerator = new BuildPlanGenerator(fileSystem);
             planGenerator.MetaprojectXml = MetaprojectXml;
-            var project = planGenerator.GenerateProject(groups, files, isDesktopBuild, null);
+            var project = planGenerator.GenerateProject(groups, files, context.IsDesktopBuild, null);
 
             return new BuildPlan(project) {
                 DirectoriesInBuild = directoriesInBuild,
@@ -119,10 +113,18 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             WriteBuildTree(fileSystem, context.BuildRoot, treeText);
 
-            if (isDesktopBuild && !string.Equals(AppDomain.CurrentDomain.FriendlyName, "UnitTestAdapter: Running test")) {
-                Thread.Sleep(2000);
+            WaitForUserToReviewTree(context);
+        }
+
+        private static void WaitForUserToReviewTree(BuildOperationContext context) {
+            if (GiveTimeToReviewTree) {
+                if (context.IsDesktopBuild) {
+                    Thread.Sleep(2000);
+                }
             }
         }
+
+        internal static bool GiveTimeToReviewTree { get; set; } = true;
 
         private void LogPrebuiltStatus(IReadOnlyList<IDependable> filteredProjects) {
             foreach (var project in filteredProjects.OfType<DirectoryNode>().Distinct()) {
@@ -298,7 +300,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        public void Sequence(BuildSwitches switches, bool considerStateFiles, IReadOnlyCollection<string> makeFiles, ProjectDependencyGraph graph, BuildMetadata buildMetadata) {
+        public List<BuildStateFile> Sequence(BuildSwitches switches, bool considerStateFiles, IReadOnlyCollection<string> makeFiles, ProjectDependencyGraph graph, BuildMetadata buildMetadata) {
             var projects = graph.Projects;
 
             if (switches.ChangedFilesOnly) {
@@ -313,8 +315,10 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             var grouping = graph.ProjectsBySolutionRoot;
 
+            List<BuildStateFile> buildStateFiles = new List<BuildStateFile>(64);
+
             foreach (var group in grouping) {
-                string solutionDirectoryName = PathUtility.GetFileName(group.Key ?? "");
+                string solutionDirectoryName = PathUtility.GetFileName(group.Key ?? string.Empty);
 
                 DirectoryNode startNode;
                 DirectoryNode endNode;
@@ -364,7 +368,14 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                     if (!switches.ChangedFilesOnly) {
                         if (considerStateFiles) {
-                            ApplyStateFile(selectedStateFiles, solutionDirectoryName, project, switches.SkipNugetPackageHashCheck, ref hasLoggedUpToDate, buildMetadata);
+                            BuildStateFile stateFile = ApplyStateFile(selectedStateFiles, solutionDirectoryName, project, switches.SkipNugetPackageHashCheck, ref hasLoggedUpToDate, buildMetadata);
+
+                            if (stateFile != null) {
+                                // Add the new file if it isn't already in the list
+                                if (!buildStateFiles.Contains(stateFile)) {
+                                    buildStateFiles.Add(stateFile);
+                                }
+                            }
 
                             if (project.IsDirty) {
                                 startNode.IsBuildingAnyProjects = true;
@@ -375,6 +386,8 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             graph.ComputeReverseReferencesMap();
+
+            return buildStateFiles;
         }
 
         private static void DisableBuildCache(IReadOnlyCollection<ConfiguredProject> projects) {
@@ -503,7 +516,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// If the outputs look sane and safe then the project is removed from the build tree and the cached outputs are
         /// substituted in.
         /// </summary>
-        internal void ApplyStateFile(BuildStateFile[] selectedStateFiles, string stateFileKey, ConfiguredProject project, bool skipNugetPackageHashCheck, ref bool hasLoggedUpToDate, BuildMetadata buildMetadata) {
+        internal BuildStateFile ApplyStateFile(BuildStateFile[] selectedStateFiles, string stateFileKey, ConfiguredProject project, bool skipNugetPackageHashCheck, ref bool hasLoggedUpToDate, BuildMetadata buildMetadata) {
             string solutionRoot = project.SolutionRoot;
             InputFilesDependencyAnalysisResult result = BeginTrackingInputFiles(selectedStateFiles, solutionRoot, skipNugetPackageHashCheck, buildMetadata);
 
@@ -512,7 +525,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             if (!upToDate && hasTrackedFiles) {
                 MarkDirty(project, BuildReasonTypes.InputsChanged, string.Empty);
-                return;
+                return null;
             }
 
             if (upToDate && hasTrackedFiles && !hasLoggedUpToDate) {
@@ -524,11 +537,11 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             // See if we can skip this project because we can re-use the previous outputs
             if (stateFile != null) {
-                if (this.packageChecker == null) {
-                    this.packageChecker = new BuildCachePackageChecker(logger);
+                if (this.PackageChecker == null) {
+                    this.PackageChecker = new BuildCachePackageChecker(logger);
                 }
 
-                packageChecker.Artifacts = null;
+                PackageChecker.Artifacts = null;
 
                 bool artifactsExist = false;
 
@@ -544,7 +557,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 string projectFullPath = project.FullPath;
 
                 if (artifactsExist && stateFile.Outputs != null) {
-                    packageChecker.Artifacts = artifacts;
+                    PackageChecker.Artifacts = artifacts;
 
                     foreach (var projectInTree in stateFile.Outputs) {
                         // Combine the original directory and the relative path to the project. This is done to get a unique path segment.
@@ -554,13 +567,13 @@ namespace Aderant.Build.DependencyAnalyzer {
                         if (projectFullPath.IndexOf(projectPath, StringComparison.OrdinalIgnoreCase) >= 0) {
                             // The selected build cache contained this project, next check the inputs/outputs
 
-                            bool artifactContainsProject = packageChecker.DoesArtifactContainProjectItem(project);
+                            bool artifactContainsProject = PackageChecker.DoesArtifactContainProjectItem(project);
                             if (artifactContainsProject) {
-                                return;
+                                return stateFile;
                             }
 
                             MarkDirty(project, BuildReasonTypes.OutputNotFoundInCachedBuild, (string) null);
-                            return;
+                            return null;
                         }
                     }
 
@@ -573,7 +586,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
 
                 MarkDirty(project, BuildReasonTypes.ProjectOutputNotFound, (string) null);
-                return;
+                return null;
             }
 
             BuildReasonTypes type = BuildReasonTypes.CachedBuildNotFound;
@@ -591,6 +604,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             MarkDirty(project, type, (string) null);
+            return null;
         }
 
         private TrackedMetadataFile AcquirePaketLockMetadata(string directory, string[] packageHashVersionExclusions) {
@@ -617,6 +631,10 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         internal BuildStateFile[] FilterStateFiles(BuildStateFile[] selectedStateFiles, string packageHash) {
+            if (string.IsNullOrWhiteSpace(packageHash)) {
+                return selectedStateFiles;
+            }
+
             // Prefer artifacts where the package hash matches.
             var result = selectedStateFiles?.Where(x => string.Equals(x.PackageHash, packageHash)).ToArray();
 
@@ -633,27 +651,24 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (!trackedInputs.ContainsKey(solutionRoot)) {
                 trackedInputFilesCheck.SkipNuGetPackageHashCheck = skipNugetPackageHashCheck;
 
-                TrackedMetadataFile paketLockMetadata = AcquirePaketLockMetadata(solutionRoot, buildMetadata?.PackageHashVersionExclusions);
-
                 List<TrackedMetadataFile> trackedMetadataFiles = new List<TrackedMetadataFile>();
+                BuildStateFile[] buildStateFiles = selectedStateFiles;
 
-                if (paketLockMetadata != null) {
-                    logger.Debug("Adding package hash metadata: '{0}' to tracked files.", paketLockMetadata.PackageHash);
-                    trackedMetadataFiles.Add(paketLockMetadata);
-                }
-
-                BuildStateFile[] stateFiles;
                 if (!skipNugetPackageHashCheck) {
-                    stateFiles = FilterStateFiles(selectedStateFiles, paketLockMetadata?.PackageHash);
-                } else {
-                    stateFiles = selectedStateFiles;
+                    TrackedMetadataFile paketLockMetadata = AcquirePaketLockMetadata(solutionRoot, buildMetadata?.PackageHashVersionExclusions);
+
+                    if (paketLockMetadata != null) {
+                        logger.Debug("Adding package hash metadata: '{0}' to tracked files.", paketLockMetadata.PackageHash);
+                        trackedMetadataFiles.Add(paketLockMetadata);
+                        buildStateFiles = FilterStateFiles(selectedStateFiles, paketLockMetadata.PackageHash);
+                    }
                 }
 
                 logger.Info("Assessing state files for directory: '{0}'.", solutionRoot);
 
                 List<TrackedInputFile> filesToTrack = trackedInputFilesCheck.GetFilesToTrack(solutionRoot);
 
-                InputFilesDependencyAnalysisResult inputFilesAnalysisResult = trackedInputFilesCheck.PerformDependencyAnalysis(stateFiles, filesToTrack, trackedMetadataFiles);
+                InputFilesDependencyAnalysisResult inputFilesAnalysisResult = trackedInputFilesCheck.PerformDependencyAnalysis(buildStateFiles, filesToTrack, trackedMetadataFiles);
 
                 trackedInputs.Add(solutionRoot, inputFilesAnalysisResult);
 

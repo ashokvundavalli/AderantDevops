@@ -37,9 +37,10 @@ namespace Aderant.Build.Tasks.ArtifactHandling {
         public bool ArtifactRestoreSkipped { get; set; }
 
         public override bool ExecuteTask() {
-            var service = new ArtifactService(PipelineService, new PhysicalFileSystem(), Logger);
-            service.CommonOutputDirectory = CommonOutputDirectory;
-            service.CommonDependencyDirectory = CommonDependencyDirectory;
+            var service = new ArtifactService(PipelineService, new PhysicalFileSystem(), Logger) {
+                CommonOutputDirectory = CommonOutputDirectory,
+                CommonDependencyDirectory = CommonDependencyDirectory
+            };
 
             string containerKey = Path.GetFileName(SolutionRoot);
 

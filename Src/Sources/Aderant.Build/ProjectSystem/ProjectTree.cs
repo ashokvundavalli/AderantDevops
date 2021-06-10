@@ -241,7 +241,7 @@ namespace Aderant.Build.ProjectSystem {
                 sequencer.PipelineService = pipelineService;
                 sequencer.MetaprojectXml = this.MetaprojectXml;
 
-                BuildPlan plan = sequencer.CreatePlan(context, jobFiles, graph);
+                BuildPlan plan = sequencer.CreatePlan(context, jobFiles, graph, true);
                 return plan;
             }
         }
@@ -502,6 +502,6 @@ namespace Aderant.Build.ProjectSystem {
         /// <param name="files">The extensibility files used to influence the build.</param>
         /// <param name="graph">The projects in the build.</param>
         /// <param name="considerStateFiles">Should the plan use data from the build cache when producing the plan.</param>
-        BuildPlan CreatePlan(BuildOperationContext context, OrchestrationFiles files, DependencyGraph graph, bool considerStateFiles = true);
+        BuildPlan CreatePlan(BuildOperationContext context, OrchestrationFiles files, DependencyGraph graph, bool considerStateFiles);
     }
 }

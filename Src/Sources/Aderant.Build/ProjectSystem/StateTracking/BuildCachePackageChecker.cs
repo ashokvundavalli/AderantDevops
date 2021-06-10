@@ -13,7 +13,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
         public ICollection<ArtifactManifest> Artifacts { get; set; }
 
-        public bool DoesArtifactContainProjectItem(ConfiguredProject project) {
+        public virtual bool DoesArtifactContainProjectItem(ConfiguredProject project) {
             ErrorUtilities.IsNotNull(Artifacts, nameof(Artifacts));
 
             // Packaged files such as workflows and web projects produce both an assembly an a package

@@ -63,7 +63,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                         });
                     }
 
-                    if (filesToTrack.Count != trackedFiles.Count) {
+                    if (filesToTrack?.Count != trackedFiles.Count) {
                         logger.Info("Tracked file count does not match.");
 
                         continue;

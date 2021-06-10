@@ -1,8 +1,8 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Xml.Linq;
 using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
@@ -12,9 +12,11 @@ using Aderant.Build.Model;
 using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
+using Aderant.Build.VersionControl;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using UnitTest.Build.StateTracking;
+using Task = System.Threading.Tasks.Task;
 
 namespace UnitTest.Build.DependencyAnalyzer {
 
@@ -353,7 +355,9 @@ namespace UnitTest.Build.DependencyAnalyzer {
                 IsDirty = false,
                 IsWebProject = false,
                 IncludeInBuild = true,
-                SolutionFile = d1.Directory + "\\Solution.sln"
+                SolutionFile = Path.Combine(d1.DirectoryName, "Solution.sln"),
+                FullPath = Path.Combine(d1.Directory, "P1.csproj"),
+                DirectoryNode = d1
             };
 
             var d2 = new DirectoryNode("Dir2", @"C:\Dir2", false);
@@ -362,24 +366,46 @@ namespace UnitTest.Build.DependencyAnalyzer {
                 IsDirty = true,
                 IsWebProject = false,
                 IncludeInBuild = true,
-                SolutionFile = d2.Directory + "\\Solution.sln"
+                SolutionFile = Path.Combine(d2.Directory, "Solution.sln"),
+                FullPath = Path.Combine(d2.Directory, "P2.csproj"),
+                DirectoryNode = d2
             };
             p2.MarkDirtyAndSetReason(BuildReasonTypes.DependencyChanged);
             p2.AddResolvedDependency(null, p1);
 
             var graph = new ProjectDependencyGraph(d1, p1, d2, p2);
 
+            var projectOutputs1 = new ConcurrentDictionary<string, ProjectOutputSnapshot>();
+            projectOutputs1.TryAdd("P1.csproj", new ProjectOutputSnapshot {
+                FilesWritten = new string[] { "P1" },
+                ProjectFile = "P1.csproj",
+                Directory = d1.DirectoryName
+            });
+
             var ctx = new BuildOperationContext {
-                BuildRoot = "",
+                BuildRoot = string.Empty,
                 Switches = new BuildSwitches {
                     Downstream = true
                 },
                 BuildMetadata = new BuildMetadata(),
-                StateFiles = new List<BuildStateFile> { new BuildStateFile() }
+                StateFiles = new List<BuildStateFile> {
+                    new BuildStateFile {
+                        BucketId = new BucketId(d1.DirectoryName, d1.DirectoryName, BucketVersion.CurrentTree),
+                        Artifacts = new ArtifactCollection {
+                            { d1.DirectoryName, new List<ArtifactManifest>(1) { new ArtifactManifest() } }
+                        },
+                        Outputs = projectOutputs1
+                    }
+                }
             };
 
-            var sequencer = new ProjectSequencer(NullLogger.Default, new Mock<IFileSystem2>().Object);
-            sequencer.CreatePlan(ctx, new OrchestrationFiles(), graph, false);
+            var packageCheckerMock = new Mock<BuildCachePackageChecker>(NullLogger.Default);
+            packageCheckerMock.Setup(x => x.DoesArtifactContainProjectItem(It.IsAny<ConfiguredProject>())).Returns(true);
+
+            var sequencer = new ProjectSequencer(NullLogger.Default, new Mock<IFileSystem2>().Object) {
+                PackageChecker = packageCheckerMock.Object
+            };
+            sequencer.CreatePlan(ctx, new OrchestrationFiles(), graph, true);
 
             string[] items = p2.GetDependencies().Select(s => s.Id).ToArray();
             Assert.AreEqual(3, items.Length);
@@ -408,10 +434,17 @@ namespace UnitTest.Build.DependencyAnalyzer {
             p2.AddResolvedDependency(null, d1);
 
             var graph = new ProjectDependencyGraph(p1, p2, d1);
-            var files = new OrchestrationFiles();
-            files.ExtensibilityImposition.BuildCacheOptions = BuildCacheOptions.DisableCacheWhenProjectChanged;
+            var files = new OrchestrationFiles {
+                ExtensibilityImposition = { BuildCacheOptions = BuildCacheOptions.DisableCacheWhenProjectChanged }
+            };
 
-            var sequencer = new ProjectSequencer(NullLogger.Default, new Mock<IFileSystem2>().Object);
+            var packageCheckerMock = new Mock<BuildCachePackageChecker>(NullLogger.Default);
+            packageCheckerMock.Setup(x => x.DoesArtifactContainProjectItem(It.IsAny<ConfiguredProject>())).Returns(true);
+
+            var sequencer = new ProjectSequencer(NullLogger.Default, new Mock<IFileSystem2>().Object) {
+                PackageChecker = packageCheckerMock.Object
+            };
+
             sequencer.CreatePlan(tree.CreateContext(), files, graph, false);
 
             Assert.IsTrue(p2.RequiresBuilding());
@@ -428,28 +461,62 @@ namespace UnitTest.Build.DependencyAnalyzer {
             p1.SolutionFile = Path.Combine(d1.Directory, "Solution.sln");
             p1.IsDirty = true;
             p1.MarkDirtyAndSetReason(BuildReasonTypes.ProjectItemChanged);
+            p1.FullPath = Path.Combine(d1.Directory, "P1", "P1.csproj");
 
             // A project not scheduled to build
             var p2 = tree.CreateProject("P2");
             p2.SolutionFile = Path.Combine(d1.Directory, "Solution.sln");
             p2.IsDirty = false;
+            p2.FullPath = Path.Combine(d1.Directory, "P2", "P2.csproj");
+            // p2.DirectoryNode = d1;
 
             p1.AddResolvedDependency(null, d1);
             p2.AddResolvedDependency(null, d1);
 
             var graph = new ProjectDependencyGraph(p1, p2, d1);
-            var files = new OrchestrationFiles();
-            files.ExtensibilityImposition.BuildCacheOptions = BuildCacheOptions.DoNotDisableCacheWhenProjectChanged;
+            var files = new OrchestrationFiles {
+                ExtensibilityImposition = {BuildCacheOptions = BuildCacheOptions.DoNotDisableCacheWhenProjectChanged}
+            };
 
-            var sequencer = new ProjectSequencer(NullLogger.Default, new Mock<IFileSystem2>().Object);
-            sequencer.CreatePlan(tree.CreateContext(), files, graph, false);
+            var projectOutputs1 = new ConcurrentDictionary<string, ProjectOutputSnapshot>();
+            projectOutputs1.TryAdd("P2", new ProjectOutputSnapshot {
+                FilesWritten = new string[] { "P2" },
+                ProjectFile = @"P2\P2.csproj",
+                Directory = d1.DirectoryName
+            });
+
+            var context = new BuildOperationContext {
+                BuildRoot = string.Empty,
+                Switches = new BuildSwitches {
+                    Downstream = true
+                },
+                BuildMetadata = new BuildMetadata(),
+                StateFiles = new List<BuildStateFile> {
+                    new BuildStateFile {
+                        BucketId = new BucketId("P2", d1.DirectoryName, BucketVersion.CurrentTree),
+                        Artifacts = new ArtifactCollection {
+                            { d1.DirectoryName, new List<ArtifactManifest>(1) { new ArtifactManifest() } }
+                        },
+                        Outputs = projectOutputs1
+                    }
+                }
+            };
+
+            var packageCheckerMock = new Mock<BuildCachePackageChecker>(NullLogger.Default);
+            packageCheckerMock.Setup(x => x.DoesArtifactContainProjectItem(It.IsAny<ConfiguredProject>())).Returns(true);
+
+            var sequencer = new ProjectSequencer(NullLogger.Default, new Mock<IFileSystem2>().Object) {
+                PackageChecker = packageCheckerMock.Object
+            };
+
+            sequencer.CreatePlan(context, files, graph, true);
 
             Assert.IsFalse(p2.RequiresBuilding());
         }
 
         [TestMethod]
         public void FilterStateFiles() {
-            var projectSequencer = new ProjectSequencer(new NullLogger(), null);
+            var projectSequencer = new ProjectSequencer(NullLogger.Default, null);
 
             const string packageHash = "BBED1D49615C071DAAAD48AD1FC057E1112148D0";
 
@@ -472,7 +539,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
 
         [TestMethod]
         public void FilterStateFilesNoPackageHashMatch() {
-            var projectSequencer = new ProjectSequencer(new NullLogger(), null);
+            var projectSequencer = new ProjectSequencer(NullLogger.Default, null);
 
             const string packageHash = "BBED1D49615C071DAAAD48AD1FC057E1112148D0";
 
@@ -490,6 +557,102 @@ namespace UnitTest.Build.DependencyAnalyzer {
             Assert.IsNotNull(files);
             Assert.AreNotEqual(packageHash, files[0].PackageHash);
             Assert.AreEqual(chosenGuid, files[0].Id);
+        }
+
+        [TestMethod]
+        public void SequencerFiltersBuildStateFilesAppropriately() {
+            var p1 = new TestConfiguredProject(null) {
+                outputAssembly = "TestProject1.dll",
+                IncludeInBuild = true,
+                DirectoryNode = new DirectoryNode("A", "Test1", false),
+                SolutionFile = @"C:\Source\Test1\Test1.sln",
+                FullPath = @"C:\Source\Test1\Src\TestProject1.csproj"
+            };
+
+            var p2 = new TestConfiguredProject(null) {
+                outputAssembly = "TestProject2.dll",
+                IncludeInBuild = true,
+                ProjectTypeGuids = new[] { WellKnownProjectTypeGuids.TestProject },
+                DirectoryNode = new DirectoryNode("B", "Test1", false),
+                SolutionFile = @"C:\Source\Test2\Test2.sln",
+                FullPath = @"C:\Source\Test2\Src\TestProject2.csproj"
+            };
+
+            var projectOutputs1 = new ConcurrentDictionary<string, ProjectOutputSnapshot>();
+            projectOutputs1.TryAdd("TestProject1.csproj", new ProjectOutputSnapshot {
+                Directory = @"Test1\Src",
+                FilesWritten = new string[] { "TestProject1.dll" },
+                ProjectFile = "TestProject1.csproj"
+            });
+
+            var projectOutputs2 = new ConcurrentDictionary<string, ProjectOutputSnapshot>();
+            projectOutputs2.TryAdd("TestProject2.csproj", new ProjectOutputSnapshot {
+                Directory = @"Test2\Src",
+                FilesWritten = new string[] { "TestProject2.dll" },
+                ProjectFile = "TestProject2.csproj"
+            });
+
+            var context = new BuildOperationContext {
+                BuildRoot = string.Empty,
+                Switches = new BuildSwitches {
+                    Downstream = true
+                },
+                BuildMetadata = new BuildMetadata(),
+                StateFiles = new List<BuildStateFile> {
+                    new BuildStateFile {
+                        BucketId = new BucketId("A", "Test1", BucketVersion.CurrentTree),
+                        Artifacts = new ArtifactCollection {
+                            { "Test1", new List<ArtifactManifest>(1) {
+                                new ArtifactManifest {
+                                    Id = "TestProject1"
+                                }
+                            } }
+                        },
+                        Outputs = projectOutputs1
+                    },
+                    new BuildStateFile {
+                        BucketId = new BucketId("A", "Test1", BucketVersion.CurrentTree),
+                        Artifacts = new ArtifactCollection {
+                            { "Test1", new List<ArtifactManifest>(0) }
+                        },
+                        Outputs = projectOutputs1
+                    },
+                    new BuildStateFile {
+                        BucketId = new BucketId("A", "Test1", BucketVersion.PreviousTree),
+                        Artifacts = new ArtifactCollection {
+                            { "Test2", new List<ArtifactManifest>(0) }
+                        },
+                        Outputs = projectOutputs2
+                    },
+                    new BuildStateFile {
+                        BucketId = new BucketId("B", "Test2", BucketVersion.CurrentTree),
+                        Artifacts = new ArtifactCollection {
+                            { "Test2", new List<ArtifactManifest>(0) }
+                        },
+                        Outputs = projectOutputs2
+                    },
+                    new BuildStateFile {
+                        BucketId = new BucketId("B", "Test2", BucketVersion.PreviousTree)
+                    }
+                }
+            };
+
+            var fileSystemMock = new Mock<PhysicalFileSystem>();
+            fileSystemMock.Setup(x => x.FileExists(It.IsAny<string>())).Returns(false);
+
+            var packageCheckerMock = new Mock<BuildCachePackageChecker>(NullLogger.Default);
+            packageCheckerMock.Setup(x => x.DoesArtifactContainProjectItem(It.IsAny<ConfiguredProject>())).Returns(true);
+
+            var graph = new ProjectDependencyGraph(p1, p2);
+            var sequencer = new ProjectSequencer(NullLogger.Default, fileSystemMock.Object) {
+                PackageChecker = packageCheckerMock.Object
+            };
+            sequencer.CreatePlan(context, new OrchestrationFiles(), graph, true);
+
+            Assert.IsNotNull(context.StateFiles);
+            Assert.AreEqual(bool.TrueString, context.Variables["IsBuildCacheEnabled"]);
+
+            Assert.AreEqual(2, context.StateFiles.Count);
         }
     }
 
