@@ -162,40 +162,31 @@ namespace Aderant.Build.DependencyResolver {
             return generatedGroups;
         }
 
-        internal static string HashLockFile(string lockFilePath, IFileSystem fileSystem, string[] packageHashVersionExclusions) {
-            LockFile lockFile = LoadLockFile(lockFilePath, fileSystem);
-
-            return HashLockFile(lockFile, packageHashVersionExclusions);
-        }
-
         internal static string HashLockFile(LockFile lockFile, string[] packageHashVersionExclusions) {
             var groupedResolutionToHash = lockFile.GetGroupedResolution();
 
-            StringBuilder content = new StringBuilder();
+            using (var stream = new MemoryStream()) {
+                using (var writer = new StreamWriter(stream)) {
+                    foreach (var item in groupedResolutionToHash) {
+                        // if names match, blank the version
+                        string version;
+                        if (packageHashVersionExclusions != null && packageHashVersionExclusions.Any(x => string.Equals(item.Key.Item2.Name, x, StringComparison.OrdinalIgnoreCase))) {
+                            version = string.Empty;
+                        } else {
+                            version = item.Value.Version.AsString;
+                        }
 
-            foreach (var item in groupedResolutionToHash) {
-                // if names match, blank the version
-                string version;
-                if (packageHashVersionExclusions != null && packageHashVersionExclusions.Any(x => string.Equals(item.Key.Item2.Name, x, StringComparison.OrdinalIgnoreCase))) {
-                    version = string.Empty;
-                } else {
-                    version = item.Value.Version.AsString;
+                        writer.Write(item.Key.Item1.Name.ToUpperInvariant());
+                        writer.Write(item.Key.Item2.Name.ToUpperInvariant());
+                        writer.Write(version.ToUpperInvariant());
+                    }
+
+                    writer.Flush();
+
+                    stream.Position = 0;
+                    return stream.ComputeSha1Hash();
                 }
-
-                content.AppendFormat("{0}{1}{2}", item.Key.Item1.Name, item.Key.Item2.Name, version);
             }
-
-            using (Stream stream = content.ToString().ToUpperInvariant().ToStream()) {
-                return stream.ComputeSha1Hash();
-            }
-        }
-
-        internal static bool PackageHashMatch(string hash1, string hash2) {
-            if (hash1 == null && hash2 == null) {
-                return false;
-            }
-
-            return string.Equals(hash1, hash2);
         }
     }
 }

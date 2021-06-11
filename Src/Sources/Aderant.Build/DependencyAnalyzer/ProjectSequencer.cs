@@ -639,7 +639,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             // Prefer artifacts where the package hash matches.
-            var result = selectedStateFiles?.Where(x => string.Equals(x.PackageHash, packageHash)).ToArray();
+            var result = selectedStateFiles?.Where(x => string.Equals(x.PackageHash, packageHash, StringComparison.OrdinalIgnoreCase)).ToArray();
 
             if (result != null && result.Any()) {
                 logger.Info("Filtered out build state files which do not match package hash: '{0}'.", packageHash);
