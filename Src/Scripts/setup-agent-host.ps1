@@ -148,7 +148,8 @@ process {
             Import-Module Defender
 
             $processes = @(
-            "7z.exe",
+            "7za.exe",
+            "7zr.exe",
             "7zip.exe",
             "csc.exe",
             "csi.exe",
@@ -168,7 +169,7 @@ process {
             "testhost.exe",
             "testhost.x86.exe",
             "testhostw.exe",
-            "VBCSCCompiler.exe",
+            "VBCSCompiler.exe",
             "aspnet_compiler.exe",
             "vstest.console.exe",
             "vstest.discoveryengine.exe",

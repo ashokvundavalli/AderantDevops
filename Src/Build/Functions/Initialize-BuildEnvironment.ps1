@@ -297,11 +297,13 @@ function LoadLibGit2Sharp([string]$buildToolsDirectory) {
 function DownloadPaket([string]$commit) {
     $bootstrapper = "$BuildScriptsDirectory\paket.bootstrapper.exe"
 
-    if (Test-Path $bootstrapper) {
+    if (Test-Path -Path $bootstrapper) {
         $paketExecutable = [System.IO.Path]::Combine($BuildScriptsDirectory, "paket.exe")
         $packageDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($script:repositoryRoot, "packages"))
 
-        if (-not [System.IO.Directory]::Exists($packageDirectory)) {
+        [bool]$packageDirectoryExists = [System.IO.Directory]::Exists($packageDirectory)
+
+        if (-not $packageDirectoryExists) {
             $value = [string]::Empty
         }
 
@@ -311,6 +313,7 @@ function DownloadPaket([string]$commit) {
         )
 
         $outOfDate = $false
+
         foreach ($file in $upToDateFiles) {
             $value = GetAlternativeStreamValue $file $buildCommitStreamName
             if ($value -ne $commit -and $outOfDate -ne $true) {
@@ -319,7 +322,7 @@ function DownloadPaket([string]$commit) {
             SetAlternativeStreamValue $file $buildCommitStreamName $commit
         }
 
-        if ($outOfDate) {
+        if ($outOfDate -or -not $packageDirectoryExists) {
             [string]$paketVersion = Get-Content -Path $upToDateFiles[0]
             $action = {
                 # Download the paket dependency tool

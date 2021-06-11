@@ -1,12 +1,10 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build {
-
     [TestClass]
     public class AssemblyInitializer : MSBuildIntegrationTestBase {
         private static bool assemblyInitializeFailed;
@@ -35,18 +33,15 @@ namespace IntegrationTest.Build {
                 }
             }
 
-            assemblyInitializeFailed  = true;
+            assemblyInitializeFailed = true;
 
             // Dump out the test deployment directory on failure
             context.WriteLine("Could not find the native git binaries. The contents of the deployment directory is...");
             Directory.EnumerateDirectories(context.DeploymentDirectory, "*", SearchOption.AllDirectories).ToList().ForEach(s => context.WriteLine(s));
         }
 
-
         [TestMethod]
         public void Native_library_path_exists() {
-            AssemblyInitialize(TestContext);
-
             Assert.IsFalse(assemblyInitializeFailed, "Assembly Initialize failed");
 
             Assert.IsTrue(Directory.Exists(LibGit2Sharp.GlobalSettings.NativeLibraryPath));

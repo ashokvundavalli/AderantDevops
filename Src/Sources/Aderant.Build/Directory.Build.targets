@@ -1,0 +1,24 @@
+<Project>
+
+  <Target Name="ResolvePathTo7Zip">
+    <PropertyGroup>
+      <RepositoryRoot>$(MSBuildThisFileDirectory)..\..\..\</RepositoryRoot>
+      <_7ZipArchive>$(RepositoryRoot)paket-files\www.7-zip.org\7z1900-extra.7z</_7ZipArchive>
+      <_7ZipOutputFile>$(MSBuildThisFileDirectory)$(OutputPath)7za.exe</_7ZipOutputFile>
+    </PropertyGroup>
+  </Target>
+
+  <Target Name="Extract7Zip"
+          BeforeTargets="Build"
+          DependsOnTargets="ResolvePathTo7Zip"
+          Inputs="$(_7ZipArchive)"
+          Outputs="$(_7ZipOutputFile)">
+
+    <Exec Command="powershell.exe -NoProfile -File $(MSBuildThisFileDirectory)Extract-7Zip.ps1 $(MSBuildThisFileDirectory)$(OutputPath) $(MSBuildThisFileDirectory)..\..\..\"
+          WorkingDirectory="$(BuildScriptsDirectory)..\..\" />
+
+    <Touch Files="$(_7ZipOutputFile)" />
+
+  </Target>
+
+</Project>

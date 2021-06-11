@@ -365,7 +365,7 @@
                       Lines="@(ZipSourceFiles->'%(RelativePath)')"
                       Overwrite="true" />
 
-    <Exec Command='"$(BuildToolsDirectory)7z.exe" -bb a "$(ZipFile)" @$(FilesToZipList)'
+    <Exec Command='"$(BuildToolsDirectory)7za.exe" -bb a "$(ZipFile)" @$(FilesToZipList)'
           WorkingDirectory="$(LocalExpertBinariesDirectory)" />
 
     <Delete Files="$(FilesToZipList)" />
@@ -409,7 +409,7 @@
                       Lines="@(ZipEliteEnterpriseSourceFiles->'%(RelativePath)')"
                       Overwrite="true" />
 
-    <Exec Command='"$(BuildToolsDirectory)7z.exe" -bb a "$(EliteEnterpriseZipFile)" @$(FilesToZipList)'
+    <Exec Command='"$(BuildToolsDirectory)7za.exe" -bb a "$(EliteEnterpriseZipFile)" @$(FilesToZipList)'
           WorkingDirectory="$(LocalExpertBinariesDirectory)" />
 
     <!-- Create ZIP for LicenseGenerator -->

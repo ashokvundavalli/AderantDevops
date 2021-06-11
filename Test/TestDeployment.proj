@@ -6,13 +6,18 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <IncludePattern>
-      <!--
+    <!--
         As we want just the folder name in our item group link, we add a wild card to the end of the folders so we can use RecursiveDir to get the folder name
         If we don't do this RecursiveDir would return foo\bar\ rather than just bar\
       -->
-      $(MSBuildProjectDirectory)\..\..\Src\Build\**\*; 
+    <IncludePattern>
+      $(MSBuildProjectDirectory)\..\..\Src\Build\**\*;
     </IncludePattern>
+
+    <BuildToolsIncludePattern>
+      $(MSBuildProjectDirectory)\..\..\Src\Build.Tools\7*;
+    </BuildToolsIncludePattern>
+
     <ExcludePattern>
       **\obj\**\*;
       **\LessCompiler\**;
@@ -27,6 +32,12 @@
     <Content Include="$(IncludePattern)" Exclude="$(ExcludePattern)">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>TestDeployment\Build\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <Visible>true</Visible>
+    </Content>
+
+    <Content Include="$(BuildToolsIncludePattern)" Exclude="$(ExcludePattern)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>TestDeployment\Build.Tools\%(RecursiveDir)%(Filename)%(Extension)</Link>
       <Visible>true</Visible>
     </Content>
   </ItemGroup>

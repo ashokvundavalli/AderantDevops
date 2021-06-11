@@ -270,3 +270,4 @@ ModelManifest.xml
 **/*/ps_modules/VstsTaskSdk/*
 /UnitTestProject1
 /Src/Build/Functions/Microsoft.VisualStudio.Setup.Configuration.Interop.dll
+/paket-files/www.7-zip.org

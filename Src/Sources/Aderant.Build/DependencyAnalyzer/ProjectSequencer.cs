@@ -124,6 +124,9 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
+        /// <summary>
+        /// Instructs the sequencer to not pause when dumping the build tree to the current logger.
+        /// </summary>
         internal static bool GiveTimeToReviewTree { get; set; } = true;
 
         private void LogPrebuiltStatus(IReadOnlyList<IDependable> filteredProjects) {

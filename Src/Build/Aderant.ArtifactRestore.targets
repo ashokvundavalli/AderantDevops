@@ -8,7 +8,7 @@
 
   <!-- Defines a set of targets for customizing the artifact restore process -->
   <Import Project="$(DirPropFile)" Condition="'$(DirPropFile)' != ''" />
-  
+
   <ItemGroup Condition="'$(RestorePackagedFilesFromBuildCacheZips)' == 'true'">
     <BuildCacheZipFilesToRestore Include="$(CommonOutputDirectory)\Web.*.zip;$(CommonOutputDirectory)\Aderant.*.Api.zip">
       <ArchivePathToExtract>Content/PackageTmp</ArchivePathToExtract>
@@ -52,8 +52,9 @@
       Target="%(BuildCacheZipFilesToRestore.Destination)"
       Type="J" />
 
-    <Exec Command='"$(BuildToolsDirectory)7z.exe" x "$(_ZipFullPath)" $(_ArchivePathToExtract) -aos -bd -bb -o$(ModuleBuildTempDirectory)'
+    <Exec Command='"$(BuildToolsDirectory)7za.exe" x "$(_ZipFullPath)" $(_ArchivePathToExtract) -aos -bd -bb -o$(ModuleBuildTempDirectory)'
           WorkingDirectory="$(SolutionRoot)"
+          IgnoreStandardErrorWarningFormat="true"
           YieldDuringToolExecution="true" />
 
     <RemoveDir Directories="$(ModuleBuildTempDirectory)$(_ArchivePathToExtract)" />

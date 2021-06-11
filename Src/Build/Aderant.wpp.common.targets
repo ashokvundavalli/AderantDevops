@@ -335,6 +335,7 @@
 
     <Exec Condition="'@(CustomTSConfigs)' != ''"
           Command="&quot;$(MSBuildProgramFiles32)\Microsoft SDKs\TypeScript\$(TypeScriptToolsVersion)\tsc.exe&quot; --project %(CustomTSConfigs.FullPath)"
+          IgnoreStandardErrorWarningFormat="true"
           YieldDuringToolExecution="true" />
   </Target>
 

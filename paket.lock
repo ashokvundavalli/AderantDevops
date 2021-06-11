@@ -10,7 +10,10 @@ NUGET
     System.Numerics.Vectors (4.5)
     System.Runtime.CompilerServices.Unsafe (4.5.3)
     System.Threading.Tasks.Dataflow (4.11.1)
-
+HTTP
+  remote: https://www.7-zip.org
+    7z1900-extra.7z (/a/7z1900-extra.7z)
+    7zr.exe (/a/7zr.exe)
 GROUP Analyzer
 REFERENCES: STRICT
 RESTRICTION: == net48

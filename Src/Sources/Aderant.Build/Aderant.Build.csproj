@@ -449,6 +449,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="debug.ps1" />
+    <None Include="Directory.Build.targets" />
+    <None Include="Extract-7Zip.ps1" />
     <None Include="Resources\Nuspec.template" />
     <None Include="Scripts\persist-build.bat" />
     <None Include="Scripts\persist-build.ps1" />

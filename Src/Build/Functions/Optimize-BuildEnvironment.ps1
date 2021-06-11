@@ -3,7 +3,8 @@ function Optimize-BuildEnvironment {
         Import-Module 'Defender'
 
         [string[]]$processes = @(
-            "7z.exe",
+            "7za.exe",
+            "7zr.exe",
             "7zip.exe",
             "csc.exe",
             "csi.exe",

@@ -220,7 +220,7 @@ begin {
             Write-Information 'To directory:'
             Write-Information "$binariesDirectory`r`n"
 
-            [string]$zipExe = [System.IO.Path]::GetFullPath((Join-Path -Path $PSScriptRoot -ChildPath '\..\Build.Tools\7z.exe'))
+            [string]$zipExe = [System.IO.Path]::GetFullPath((Join-Path -Path $PSScriptRoot -ChildPath '\..\Build.Tools\7za.exe'))
 
             foreach ($archive in $archives) {
                 [double]$executionTime = [System.Math]::Round((Measure-Command { Start-Process -FilePath $zipExe -ArgumentList "x -o$binariesDirectory $($archive.FullName) -r" -Wait -PassThru -NoNewWindow }).TotalSeconds, 2)
