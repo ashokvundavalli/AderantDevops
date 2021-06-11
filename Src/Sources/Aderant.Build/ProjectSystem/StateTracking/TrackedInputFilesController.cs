@@ -13,8 +13,10 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         private readonly ILogger logger;
         private readonly IFileSystem fileSystem;
 
-        public TrackedInputFilesController()
-            : this(new PhysicalFileSystem(), NullLogger.Default) {
+        /// <summary>
+        /// Constructor for testing.
+        /// </summary>
+        internal TrackedInputFilesController() : this(new PhysicalFileSystem(), NullLogger.Default) {
         }
 
         public TrackedInputFilesController(IFileSystem system, ILogger logger) {
@@ -30,7 +32,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         public bool SkipNuGetPackageHashCheck { get; set; }
 
         public InputFilesDependencyAnalysisResult PerformDependencyAnalysis(BuildStateFile[] buildStateFiles, List<TrackedInputFile> filesToTrack, IList<TrackedMetadataFile> trackedMetadataFiles) {
-            InputFilesDependencyAnalysisResult result = new InputFilesDependencyAnalysisResult();
+            var result = new InputFilesDependencyAnalysisResult();
 
             bool trackPackageHash;
 
@@ -53,25 +55,29 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                 foreach (BuildStateFile buildStateFile in buildStateFiles.OrderBy(x => x.TrackPackageHash)) {
                     logger.Info("Assessing state file: '{0}'.", buildStateFile.Id);
 
-                    var trackedFiles = buildStateFile.TrackedFiles ?? new List<TrackedInputFile>(1);
+                    ICollection<TrackedInputFile> cachedTrackedInputFiles = buildStateFile.TrackedFiles != null
+                        ? new List<TrackedInputFile>(buildStateFile.TrackedFiles)
+                        : new List<TrackedInputFile>(1);
 
                     if (buildStateFile.PackageHash != null) {
                         logger.Info("Adding package hash metadata: '{0}' to tracked files.", buildStateFile.PackageHash);
 
-                        trackedFiles.Add(new TrackedMetadataFile(Constants.PaketLock) {
+                        cachedTrackedInputFiles.Add(new TrackedMetadataFile(Constants.PaketLock) {
                             Sha1 = buildStateFile.PackageHash
                         });
                     }
 
-                    if (filesToTrack?.Count != trackedFiles.Count) {
+                    if (filesToTrack?.Count != cachedTrackedInputFiles.Count) {
                         logger.Info("Tracked file count does not match.");
 
                         continue;
                     }
 
-                    bool skipNuGetPackageHashCheck = SkipNuGetPackageHashCheck || !trackPackageHash && !buildStateFile.TrackPackageHash;
+                    bool skipNuGetPackageHashCheck = SkipNuGetPackageHashCheck ||
+                                                     !trackPackageHash && !buildStateFile.TrackPackageHash;
 
-                    if (filesToTrack.Count == 0 || CorrelateInputs(filesToTrack.AsReadOnly(), trackedFiles, skipNuGetPackageHashCheck)) {
+                    if (filesToTrack.Count == 0 || CorrelateInputs(buildStateFile.Id.ToString(), filesToTrack.AsReadOnly(), cachedTrackedInputFiles,
+                        skipNuGetPackageHashCheck)) {
                         logger.Info("Found acceptable match.");
 
                         result.IsUpToDate = true;
@@ -93,6 +99,11 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
             result.IsUpToDate = false;
             return result;
+        }
+
+        private bool CorrelateInputs(string buildStateFileId, ICollection<TrackedInputFile> trackedInputFiles, ICollection<TrackedInputFile> existingTrackedFiles, bool skipNugetPackageHashCheck) {
+            logger.Info("Correlating inputs for build state file: '{0}'.", buildStateFileId);
+            return CorrelateInputs(trackedInputFiles, existingTrackedFiles, skipNugetPackageHashCheck);
         }
 
         internal bool CorrelateInputs(ICollection<TrackedInputFile> trackedInputFiles, ICollection<TrackedInputFile> existingTrackedFiles, bool skipNugetPackageHashCheck) {
@@ -117,14 +128,19 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                 List<string> commonKeys;
                 List<string> uniqueKeysInNewTable;
                 List<string> uniqueKeysInOldTable;
-                DiffHashtables(newTable, oldTable, out commonKeys, out uniqueKeysInNewTable, out uniqueKeysInOldTable);
+                DiffHashTables(newTable, oldTable, out commonKeys, out uniqueKeysInNewTable, out uniqueKeysInOldTable);
 
                 if (uniqueKeysInNewTable.Count > 0 || uniqueKeysInOldTable.Count > 0) {
                     logger.Debug($"Correlated tracked files: UniqueKeysInTable1: {uniqueKeysInNewTable.Count} | UniqueKeysInTable2:{uniqueKeysInOldTable.Count}", null);
 
-                    foreach (var key in uniqueKeysInNewTable) {
+                    foreach (string key in uniqueKeysInNewTable) {
                         TrackedInputFile inputFile = newTable[key];
-                        logger.Info($"File is detected as modified or new: {inputFile.FileName}", null);
+
+                        if (oldTable.ContainsKey(key)) {
+                            logger.Info("File is detected as modified: '{0}'. Existing file hash: '{0}', cached file hash: '{1}'", inputFile.FileName, inputFile.Sha1, oldTable[key].Sha1);
+                        } else {
+                            logger.Info("File is detected as new: '{0}'.", inputFile.FileName);
+                        }
                     }
 
                     return false;
@@ -195,7 +211,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             return dictionary;
         }
 
-        private static void DiffHashtables<T, V>(IDictionary<T, V> table1, IDictionary<T, V> table2, out List<T> commonKeys, out List<T> uniqueKeysInTable1, out List<T> uniqueKeysInTable2) where T : class, IEquatable<T> where V : class {
+        private static void DiffHashTables<T, V>(IDictionary<T, V> table1, IDictionary<T, V> table2, out List<T> commonKeys, out List<T> uniqueKeysInTable1, out List<T> uniqueKeysInTable2) where T : class, IEquatable<T> where V : class {
             commonKeys = new List<T>();
             uniqueKeysInTable1 = new List<T>();
             uniqueKeysInTable2 = new List<T>();
@@ -225,7 +241,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             List<TrackedInputFile> trackedInputFiles = new List<TrackedInputFile>();
 
             if (fileSystem.FileExists(directoryPropertiesFile)) {
-                logger.Info($"Using file: {directoryPropertiesFile} to get tracked inputs from", null);
+                logger.Info("Using file: '{0}' to get tracked inputs from", directoryPropertiesFile);
 
                 return trackedInputFiles.Concat(GetFilesToTrack(directoryPropertiesFile, directory)).ToList();
             }
@@ -327,14 +343,6 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
     }
 
     internal class InputFilesDependencyAnalysisResult {
-
-        public InputFilesDependencyAnalysisResult() {
-        }
-
-        public InputFilesDependencyAnalysisResult(bool isUpToDate, IReadOnlyCollection<TrackedInputFile> trackedInputFiles) {
-            IsUpToDate = isUpToDate;
-            TrackedFiles = trackedInputFiles;
-        }
 
         /// <summary>
         /// Gets a value that indicates if the inputs are up to date.
