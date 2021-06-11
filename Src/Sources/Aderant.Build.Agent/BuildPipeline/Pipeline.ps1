@@ -104,7 +104,7 @@ if ($repository -eq "default" -or -not $CustomSource) {
         if ($CustomSource.StartsWith("http")) {
             CloneRepo -repo $CustomSource -version $version
         } else {
-            # e.g \\wsakl001092\c$\Source\Build.Infrastructure
+            # e.g \\machine\c$\Source\Build.Infrastructure
             Write-Host "Copying from path $CustomSource"
             Copy-Item $CustomSource $buildFolder -Recurse
         }
@@ -122,4 +122,4 @@ Write-Host ("##vso[task.setvariable variable=EXPERT_BUILD_DIRECTORY;]$buildInfra
 
 Set-StrictMode -Off
 
-& $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $Env:BUILD_SOURCESDIRECTORY
+& $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $Env:BUILD_SOURCESDIRECTORY
