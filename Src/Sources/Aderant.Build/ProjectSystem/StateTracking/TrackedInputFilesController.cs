@@ -101,19 +101,19 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             return result;
         }
 
-        private bool CorrelateInputs(string buildStateFileId, ICollection<TrackedInputFile> trackedInputFiles, ICollection<TrackedInputFile> existingTrackedFiles, bool skipNugetPackageHashCheck) {
+        private bool CorrelateInputs(string buildStateFileId, ICollection<TrackedInputFile> trackedInputFiles, ICollection<TrackedInputFile> cachedTrackedInputFiles, bool skipNugetPackageHashCheck) {
             logger.Info("Correlating inputs for build state file: '{0}'.", buildStateFileId);
-            return CorrelateInputs(trackedInputFiles, existingTrackedFiles, skipNugetPackageHashCheck);
+            return CorrelateInputs(trackedInputFiles, cachedTrackedInputFiles, skipNugetPackageHashCheck);
         }
 
-        internal bool CorrelateInputs(ICollection<TrackedInputFile> trackedInputFiles, ICollection<TrackedInputFile> existingTrackedFiles, bool skipNugetPackageHashCheck) {
+        internal bool CorrelateInputs(ICollection<TrackedInputFile> trackedInputFiles, ICollection<TrackedInputFile> cachedTrackedInputFiles, bool skipNugetPackageHashCheck) {
             // Attempts to correlate inputs
             // Note: two item vector transforms may not be able to be correlated, even if they reference the same item vector, because
             // depending on the transform expression, there might be no relation between the results of the transforms
 
-            if (existingTrackedFiles != null && existingTrackedFiles.Any()) {
+            if (cachedTrackedInputFiles != null && cachedTrackedInputFiles.Any()) {
                 Dictionary<string, TrackedInputFile> newTable = CreateDictionaryFromTrackedInputFiles(trackedInputFiles);
-                Dictionary<string, TrackedInputFile> oldTable = CreateDictionaryFromTrackedInputFiles(existingTrackedFiles);
+                Dictionary<string, TrackedInputFile> oldTable = CreateDictionaryFromTrackedInputFiles(cachedTrackedInputFiles);
 
                 if (skipNugetPackageHashCheck) {
                     logger.Info("Package hash check disabled.");
@@ -136,8 +136,10 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                     foreach (string key in uniqueKeysInNewTable) {
                         TrackedInputFile inputFile = newTable[key];
 
-                        if (oldTable.ContainsKey(key)) {
-                            logger.Info("File is detected as modified: '{0}'. Existing file hash: '{0}', cached file hash: '{1}'", inputFile.FileName, inputFile.Sha1, oldTable[key].Sha1);
+                        TrackedInputFile cachedFile = oldTable.FirstOrDefault(x => string.Equals(inputFile.FileName, x.Value.FileName)).Value;
+
+                        if (cachedFile != null) {
+                            logger.Info("File is detected as modified: '{0}'. Existing file hash: '{1}', cached file hash: '{2}'", inputFile.FileName, inputFile.Sha1, cachedFile.Sha1);
                         } else {
                             logger.Info("File is detected as new: '{0}'.", inputFile.FileName);
                         }
