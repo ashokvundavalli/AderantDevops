@@ -78,7 +78,11 @@ function FindBuildEnginePath {
         $items = $items.GetEnumerator() | Where-Object { '' -ne $_.Key } | Sort-Object $byVersion, $byProduct | Select-Object -Last 1
     }
 
-    return [System.IO.Path]::GetDirectoryName($items.Value)
+    if ($null -eq $items -or -not $items.PSObject.Properties.Name.Contains('Value')) {
+        return $null
+    }
+
+    return $items.Value.DirectoryName
 }
 
 function Get-MSBuildOldVersion($Version, $Bitness) {
