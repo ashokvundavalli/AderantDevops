@@ -23,10 +23,12 @@ function Optimize-BuildEnvironment {
             "ServiceHub.Host.Node.x86.exe",
             "ServiceHub.RoslynCodeAnalysisService32.exe",
             "ServiceHub.VSDetouredHost.exe",
-            "TE.ProcessHost.Managed.exe",
+
             "testhost.exe",
             "testhost.x86.exe",
-            "testhostw.exe",
+            "testhost.net48.exe",
+            "testhost.net48.x86.exe"
+
             "VBCSCompiler.exe",
             "aspnet_compiler.exe",
             "vstest.console.exe",
@@ -70,7 +72,7 @@ function Optimize-BuildEnvironment {
         # Take ownership of mutex
         $mutex = [System.Threading.Mutex]::OpenExisting("DefenderOptimizationMutex")
 
-        # Prevent
+        # Prevent GC
         [System.AppDomain]::CurrentDomain.SetData("DefenderOptimizationMutex", $mutex)
 
         if (-not $mutex.WaitOne(100)) {

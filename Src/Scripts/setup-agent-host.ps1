@@ -142,60 +142,6 @@ process {
         . $PSScriptRoot\configure-git-for-agent-host.ps1
     }
 
-    function OptimizeBuildEnvironment {
-        # TODO: merge with "Optimize-Environment"
-        try {
-            Import-Module Defender
-
-            $processes = @(
-            "7za.exe",
-            "7zr.exe",
-            "7zip.exe",
-            "csc.exe",
-            "csi.exe",
-            "devenv.exe",
-            "git.exe",
-            "lc.exe",
-            "Microsoft.Alm.Shared.Remoting.RemoteContainer.dll",
-            "Microsoft.VsHub.Server.HttpHost.exe",
-            "Microsoft.Alm.Shared.RemoteContainer.dll",
-            "MSBuild.exe",
-            "PowerShell.exe",
-            "ServiceHub.Host.CLR.x86.exe",
-            "ServiceHub.Host.Node.x86.exe",
-            "ServiceHub.RoslynCodeAnalysisService32.exe",
-            "ServiceHub.VSDetouredHost.exe",
-            "TE.ProcessHost.Managed.exe",
-            "testhost.exe",
-            "testhost.x86.exe",
-            "testhostw.exe",
-            "VBCSCompiler.exe",
-            "aspnet_compiler.exe",
-            "vstest.console.exe",
-            "vstest.discoveryengine.exe",
-            "vstest.discoveryengine.x86.exe",
-            "vstest.executionengine.exe",
-            "vstest.executionengine.x86.exe",
-            "node.exe",
-            "tsc.exe",
-            "dbprepare.exe",
-            "DeploymentEngine.exe",
-            "DeploymentManager.exe",
-            "Expert.Help.sfx"
-            "PackageManagerConsole.exe",
-            "Agent.Listener.exe",
-            "AgentService.exe",
-            "robocopy.exe"
-            )
-
-            foreach ($proc in $processes) {
-                Add-MpPreference -ExclusionProcess $proc
-            }
-        } catch {
-            Write-Verbose $Error[0].Exception
-        }
-    }
-
     function SetupScheduledTasks {
         Write-Information "SetupScheduledTasks"
         $scrptToRun =([System.IO.Path]::Combine($PSScriptRoot, "scheduled-tasks.ps1"))
@@ -256,7 +202,6 @@ process {
         RemoveAllAgents
     }
 
-    OptimizeBuildEnvironment
     SetupScheduledTasks
 
     for ($i = 0; $i -lt $agentsToProvision; $i++) {
