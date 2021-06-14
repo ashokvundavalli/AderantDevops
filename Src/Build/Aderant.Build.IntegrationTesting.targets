@@ -33,17 +33,10 @@
 
 
   <Target Name="RunIntegrationTests"
-    DependsOnTargets="$(RunIntegrationTestsDependsOn)"
+    DependsOnTargets="$(RunIntegrationTestsDependsOn);RunTestsCore"
     Condition="'$(_RunIntegrationTests)' == 'true'">
 
-    <PropertyGroup>
-      <TestPattern>IntegrationTest</TestPattern>
-    </PropertyGroup>
-
-    <!-- Invoke the RunTests target from Aderant.Build.Testing.targets -->
-    <CallTarget Targets="RunTestsCore" />
-
-    <OnError ExecuteTargets="LightsOff;ShowTestFailureHelp" Condition="'$(DeployTargetExists)' == 'true'"/>
+    <OnError ExecuteTargets="LightsOff" Condition="'$(DeployTargetExists)' == 'true'"/>
 
   </Target>
 

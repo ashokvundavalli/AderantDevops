@@ -161,8 +161,7 @@
       <TestResultFileDrop Condition="'$(TestResultFileDrop)' == ''">$(BUILD_SOURCESDIRECTORY)\TestResults</TestResultFileDrop>
     </PropertyGroup>
 
-    <Exec Command="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command &quot;&amp; &apos;$(MSBuildThisFileDirectory)Testing\SlowTestReporter.ps1&apos; -Path &apos;$(TestResultFileDrop)&apos; -MaxTestDuration $(MaxTestDuration)&quot;"
-          IgnoreStandardErrorWarningFormat="true" />
+    <PowerShellScript ScriptBlock=". $(MSBuildThisFileDirectory)Testing\SlowTestReporter.ps1 -Path $(TestResultFileDrop) -MaxTestDuration $(MaxTestDuration)" />
 
     <Message Condition="'$(IsDesktopBuild)' == 'false' And Exists('$(TestResultFileDrop)\SlowTestReport.csv')" Text="##vso[artifact.upload artifactname=SlowTestReport]$(TestResultFileDrop)\SlowTestReport.csv" />
 

@@ -3,6 +3,8 @@
   <RunConfiguration>
     <MaxCpuCount>4</MaxCpuCount>
     <TestSessionTimeout>1200000</TestSessionTimeout>
+    <TestAdaptersPaths>
+    </TestAdaptersPaths>
   </RunConfiguration>
   <!-- MSTest adapter -->
   <MSTest>

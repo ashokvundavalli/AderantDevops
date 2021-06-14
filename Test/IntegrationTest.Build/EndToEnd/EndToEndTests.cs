@@ -89,7 +89,7 @@ namespace IntegrationTest.Build.EndToEnd {
 
                 var propertyValue = RunTestTargetAndGetOutputs(buildService);
 
-                Assert.AreEqual(Resources.my_custom_runsettings, File.ReadAllText(propertyValue));
+                Assert.AreEqual(Resources.my_custom_runsettings, propertyValue);
             }
         }
 
@@ -109,13 +109,13 @@ namespace IntegrationTest.Build.EndToEnd {
 
                 var propertyValue = RunTestTargetAndGetOutputs(buildService);
 
-                Assert.AreEqual(Resources.Expected_run_settings, File.ReadAllText(propertyValue));
+                Assert.AreEqual(Resources.Expected_run_settings, propertyValue);
             }
         }
 
         private string RunTestTargetAndGetOutputs(TestBuildServiceHost buildService) {
             RunTarget("CollectProjectsInBuild", buildService.Properties);
-            var propertyValue = base.Result.ProjectStateAfterBuild.GetPropertyValue("RunSettingsFile");
+            var propertyValue = base.Result.ProjectStateAfterBuild.GetPropertyValue("RunSettingsFileXml");
 
             Assert.IsNotNull(propertyValue);
             return propertyValue;

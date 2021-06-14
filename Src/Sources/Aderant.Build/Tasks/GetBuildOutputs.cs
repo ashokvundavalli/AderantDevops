@@ -41,6 +41,7 @@ namespace Aderant.Build.Tasks {
             SolutionRoots = projects
                 .Select(s => s.SolutionRoot)
                 .Distinct(PathUtility.PathComparer)
+                .OrderBy(s => s, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
 
             return true;
