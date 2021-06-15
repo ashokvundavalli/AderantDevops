@@ -140,7 +140,6 @@
         RunTestsInParallel=false;
         RunTestsForSolutionRootInParallel=false;
         RunTests=$(RunTests);
-        RunIntegrationTests=$(RunIntegrationTests);
       </TestProperties>
 
       <TestProperties Condition="'$(BUILD_SOURCESDIRECTORY)' != ''">
@@ -162,7 +161,8 @@
       <TestResultFileDrop Condition="'$(TestResultFileDrop)' == ''">$(BUILD_SOURCESDIRECTORY)\TestResults</TestResultFileDrop>
     </PropertyGroup>
 
-    <PowerShellScript ScriptBlock=". $(MSBuildThisFileDirectory)Testing\SlowTestReporter.ps1 -Path $(TestResultFileDrop) -MaxTestDuration $(MaxTestDuration)" />
+    <Exec Command="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command &quot;&amp; &apos;$(MSBuildThisFileDirectory)Testing\SlowTestReporter.ps1&apos; -Path &apos;$(TestResultFileDrop)&apos; -MaxTestDuration $(MaxTestDuration)&quot;"
+          IgnoreStandardErrorWarningFormat="true" />
 
     <Message Condition="'$(IsDesktopBuild)' == 'false' And Exists('$(TestResultFileDrop)\SlowTestReport.csv')" Text="##vso[artifact.upload artifactname=SlowTestReport]$(TestResultFileDrop)\SlowTestReport.csv" />
 

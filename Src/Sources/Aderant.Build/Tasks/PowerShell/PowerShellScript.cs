@@ -288,7 +288,7 @@ namespace Aderant.Build.Tasks.PowerShell {
         private static bool taskCancelled;
 
         public ProcessRunner(Exec execTask, CancellationToken ctsToken) {
-            using (ctsToken.Register((o) => TryCancelTask((Exec) o), execTask)) {
+            using (var registration = ctsToken.Register(() => TryCancelTask(execTask))) {
                 StartProcess = command => {
                     var cancelEventHandler = new ConsoleCancelEventHandler((sender, args) => { TryCancelTask(execTask); });
 
@@ -312,6 +312,7 @@ namespace Aderant.Build.Tasks.PowerShell {
                         return execTask.ExitCode;
                     } finally {
                         Console.CancelKeyPress -= cancelEventHandler;
+                        registration.Dispose();
                     }
                 };
             }

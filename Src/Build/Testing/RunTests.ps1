@@ -38,7 +38,7 @@ param(
   [string[]]$TestAssemblies,
 
   [Parameter(Mandatory=$false)]
-  [string[]]$TestAdapterPaths,
+  [string]$TestAdapterPath,
 
   [Parameter(Mandatory=$false)]
   [int]$TestSessionTimeout = 1200000,
@@ -54,7 +54,7 @@ $ErrorActionPreference = "Stop"
 function AddSearchDirectory($element, [string]$path, [bool]$includeSubDirectories, [bool]$prepend) {
     $directoryElement = $script:settingsDocument.CreateElement("Directory")
     $directoryElement.SetAttribute("path", $path.TrimEnd('\'))
-    $directoryElement.SetAttribute("includeSubDirectories", $includeSubDirectories.ToString())
+    $directoryElement.SetAttribute("includeSubDirectories", "$includeSubDirectories")
 
     if ($prepend) {
         [void]$element.PrependChild($directoryElement)
@@ -96,16 +96,16 @@ function CreateRunSettingsXml() {
     $script:settingsDocument = EnsureRunSettingsHasRequiredNodes
     $assemblyResolution = $settingsDocument.RunSettings.MSTest.AssemblyResolution
 
-    if ($SolutionRoot) {
-        # We want the test runner resolver to bind content produced by the solution build
-        # for the most reliable test run as there could be matching by older assemblies in the other directories
-        AddSearchDirectory $assemblyResolution ([System.IO.Path]::Combine($SolutionRoot, "Bin", "Module")) -includeSubDirectories:$true -prepend:$true
-    }
-
     if ($script:ReferencePaths) {
         foreach ($path in $script:ReferencePaths) {
             AddSearchDirectory $assemblyResolution $path -includeSubDirectories:$false -prepend:$false
         }
+    }
+
+    if ($SolutionRoot) {
+        # We want the test runner resolver to bind content produced by the solution build
+        # for the most reliable test run as there could be matching by older assemblies in the other directories
+        AddSearchDirectory $assemblyResolution ([System.IO.Path]::Combine($SolutionRoot, "Bin", "Module")) -includeSubDirectories:$true -prepend:$true
     }
 
     # VS SDK
@@ -116,10 +116,6 @@ function CreateRunSettingsXml() {
 
     if ($script:RunInParallel -eq $false) {
         $settingsDocument.RunSettings.RunConfiguration.MaxCpuCount = '1'
-    }
-
-    if ($null -ne $TestAdapterPaths) {
-        $settingsDocument.RunSettings.RunConfiguration.TestAdaptersPaths = [string]::Join(";", $TestAdapterPaths)
     }
 
     $timeout = $settingsDocument.RunSettings.RunConfiguration.TestSessionTimeout
@@ -245,6 +241,10 @@ try {
 
 	$startInfo.Arguments += " /Settings:$RunSettingsFile"
 
+    if (-not [string]::IsNullOrWhiteSpace($TestAdapterPath)) {
+        $startInfo.Arguments += " /TestAdapterPath:$TestAdapterPath"
+    }
+
     Write-Information "Starting runner: $($startInfo.FileName) $($startInfo.Arguments)"
 
     $exitcode = $exec.Invoke($startInfo)
@@ -254,6 +254,16 @@ try {
     if (-not $IsDesktopBuild) {
         # Copy test result files
         CopyTestResultFiles
+    }
+
+    if ($exitcode -eq 0) {
+        try {
+            if ([System.IO.Directory]::Exists($TestAdapterPath)) {
+                Remove-Item -Path $TestAdapterPath -Force
+            }
+        } catch {
+            Write-Debug "Failed to delete temporary directory to test adapter $TestAdapterPath"
+        }
     }
 
     if ($exitcode -ne 0) {
