@@ -337,15 +337,6 @@ namespace Aderant.Build {
 
             return null;
         }
-
-        internal IList<BuildStateFile> GetAllStateFiles(string bucketTag)  {
-            var files = StateFiles;
-            if (files != null) {
-                return files.Where(file => string.Equals(file.BucketId.Tag, bucketTag, StringComparison.OrdinalIgnoreCase)).ToList();
-            }
-
-            return null;
-        }
     }
 
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]

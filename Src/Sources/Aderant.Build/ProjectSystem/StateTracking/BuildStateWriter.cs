@@ -174,11 +174,6 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
                 BuildStateFile previousBuild = context.GetStateFile(tag);
 
-                var allFiles = context.GetAllStateFiles(tag);
-                if (allFiles != null && previousBuild != null) {
-                    logger.Info("Selected state file {0} to use as basis. [{1}] are also available.", previousBuild.Id, string.Join(",", allFiles.Select(s => s.Id)));
-                }
-
                 var artifactManifests = service.GetArtifactsForContainer(tag);
 
                 var trackedInputFiles = service.ClaimTrackedInputFiles(tag);

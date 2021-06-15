@@ -132,13 +132,6 @@
       <_AllFiles Include="$(RootFolder)\packages\**\lib\**\*.dll"
                  Exclude="$(RootFolder)\packages\**\lib\**\Newtonsoft*.dll" />
 
-      <NugetPackageFoldersToIgnore Include="MonoAndroid10;MonoTouch10;win8;wp8;wpa81;uap;Xamarin;monoandroid90;xamarinios10;xamarinmac20" />
-      <NugetPackageFoldersToIgnore Include="de-DE;es-ES;fr-FR;it-IT;ja-JP;ko-KR;pt-BR;ru-RU;zh-CN;zh-TW;zh-Hans;zh-Hant" />
-      <NugetPackageFoldersToIgnore Include="cs;de;es;fr;it;ja;ko;pl;ru;tr;sl4" />
-
-      <!-- Never automatically include net20 as its simply too old - if you want this add a hint path -->
-      <NugetPackageFoldersToIgnore Include="net20" />
-
       <!-- Trim the path separator off so %(Filename) resolves -->
       <_PackageDirectories Include="@(_AllFiles->'%(RootDir)%(Directory)'->TrimEnd('\')->Distinct())" />
 
