@@ -140,6 +140,7 @@
         RunTestsInParallel=false;
         RunTestsForSolutionRootInParallel=false;
         RunTests=$(RunTests);
+        RunIntegrationTests=$(RunIntegrationTests);
       </TestProperties>
 
       <TestProperties Condition="'$(BUILD_SOURCESDIRECTORY)' != ''">
