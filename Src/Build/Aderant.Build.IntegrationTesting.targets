@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="Current">
-  <!-- External targets: GetServerImageDependencies, RunTests
-     External variables: ArtifactStagingDirectory, BuildToolsDirectory, ExpertSourceDirectory, SolutionRoot, ImageWorkingDirectory, ImageToolingDirectory, DeploymentEngine, SharedDependencyDirectory, ImpactedTestProjects, ParametersFile, RunTests -->
+  <!--
+    External targets: GetServerImageDependencies, RunTests
+    External variables: ArtifactStagingDirectory, BuildToolsDirectory, ExpertSourceDirectory, SolutionRoot, ImageWorkingDirectory, ImageToolingDirectory, TestPattern, DeploymentEngine, SharedDependencyDirectory, ImpactedTestProjects, ParametersFile, RunTests
+  -->
   <PropertyGroup>
     <DeploymentTargets>$(SharedDependencyDirectory)\packages\Aderant.Deployment.Internal\lib\Targets\</DeploymentTargets>
     <ServerImageTargetExists Condition="Exists('$(DeploymentTargets)Aderant.Build.ServerImage.targets')">true</ServerImageTargetExists>
@@ -33,8 +35,11 @@
 
 
   <Target Name="RunIntegrationTests"
-    DependsOnTargets="$(RunIntegrationTestsDependsOn);RunTestsCore"
+    DependsOnTargets="$(RunIntegrationTestsDependsOn)"
     Condition="'$(_RunIntegrationTests)' == 'true'">
+    
+    <!-- Invoke the RunTests target from Aderant.Build.Testing.targets -->
+    <CallTarget Targets="RunTestsCore" />
 
     <OnError ExecuteTargets="LightsOff" Condition="'$(DeployTargetExists)' == 'true'"/>
 
