@@ -127,6 +127,8 @@
   <Target Name="RunIntegrationTests" DependsOnTargets="CreatePlan" Condition="'$(RunTests)' != 'false'" >
 
     <PropertyGroup>
+      <IntegrationTestFileNamePattern>IntegrationTest</IntegrationTestFileNamePattern>
+      <HasImpactedIntegrationTests Condition="@(ImpactedTestAssemblies->'%(Filename)'->StartsWith('$(IntegrationTestFileNamePattern)')->Count()) &gt; 0">true</HasImpactedIntegrationTests>
       <ImpactedTestAssemblies>@(ImpactedTestAssemblies)</ImpactedTestAssemblies>
 
       <TestProperties>
@@ -134,7 +136,7 @@
         SolutionRoot=$(SolutionRoot);
         ArtifactStagingDirectory=$(ArtifactStagingDirectory);
         SharedDependencyDirectory=$(SharedDependencyDirectory);
-        TestPattern=IntegrationTest;
+        TestPattern=$(IntegrationTestFileNamePattern);
         ImpactedTestAssemblies=$(ImpactedTestAssemblies);
         ExpertSourceDirectory=$(ExpertSourceDirectory);
         RunTestsInParallel=false;
@@ -146,9 +148,11 @@
         $(TestProperties);
         TestResultFileDrop=$(BUILD_SOURCESDIRECTORY)\TestResults
       </TestProperties>
+
     </PropertyGroup>
 
-    <MSBuild Projects="Aderant.Build.IntegrationTesting.targets"
+    <MSBuild Condition="'$(HasImpactedIntegrationTests)' == 'true'"
+             Projects="Aderant.Build.IntegrationTesting.targets"
              Targets="RunIntegrationTestsCore"
              Properties="$(TestProperties)" />
 
