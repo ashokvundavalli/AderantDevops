@@ -81,7 +81,7 @@
       </_AssemblyAttributes>
 
       <_AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(BUILD_REPOSITORY_URI)' != ''">
-        <_Parameter1>Build.RepositoiryUri</_Parameter1>
+        <_Parameter1>Build.RepositoryUri</_Parameter1>
         <_Parameter2>$(BUILD_REPOSITORY_URI)</_Parameter2>
       </_AssemblyAttributes>
 
