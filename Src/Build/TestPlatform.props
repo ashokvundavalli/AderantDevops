@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <PackagesPath>$(MSBuildThisFileDirectory)..\packages\development</PackagesPath>
+  </PropertyGroup>
+
+  <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />
+
+  <Choose>
+    <When Condition=" '$(TargetFrameworkIdentifier)' == '.NETFramework' And '$(TargetFrameworkVersion)' == 'v4.8' ">
+      <PropertyGroup>
+        <TargetTestPlatform>net45</TargetTestPlatform>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(TargetFramework)' == 'netstandard2.0' ">
+      <PropertyGroup>
+        <TargetTestPlatform>netcoreapp1.0</TargetTestPlatform>
+      </PropertyGroup>
+    </When>
+    <Otherwise />
+  </Choose>
+
+  <Import Project="$(PackagesPath)\MSTest.TestAdapter\build\$(TargetTestPlatform)\MSTest.TestAdapter.props" Condition="'$(TargetTestPlatform)' != '' And Exists('$(PackagesPath)\MSTest.TestAdapter\build\$(TargetTestPlatform)\MSTest.TestAdapter.props')" />
+
+  <ItemGroup Condition="'$(TargetTestPlatform)' != ''">
+    <Reference Include="Microsoft.VisualStudio.TestPlatform.TestFramework, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>$(PackagesPath)\MSTest.TestFramework\lib\$(TargetTestPlatform)\Microsoft.VisualStudio.TestPlatform.TestFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>$(PackagesPath)\MSTest.TestFramework\lib\$(TargetTestPlatform)\Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.TestPlatform.AdapterUtilities, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>$(PackagesPath)\Microsoft.TestPlatform.AdapterUtilities\lib\$(TargetTestPlatform)\Microsoft.TestPlatform.AdapterUtilities.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(TargetTestPlatform)' == ''" Text="Project file: '$(MSBuildThisFile)' does not have a valid target framework configured." />
+  
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Ensure MSTest.TestAdapter and MSTest.TestFramework are present in the Development group of the paket.dependencies file and use Paket restore to download them. For more information, see https://fsprojects.github.io/Paket/paket-restore.html. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('$(PackagesPath)\MSTest.TestAdapter\build\$(TargetTestPlatform)\MSTest.TestAdapter.props')"
+           Text="$([System.String]::Format('$(ErrorText)', '$(PackagesPath)\MSTest.TestAdapter\build\$(TargetTestPlatform)\MSTest.TestAdapter.props'))" />
+  </Target>
+
+
+</Project>

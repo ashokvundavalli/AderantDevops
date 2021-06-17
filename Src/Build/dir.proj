@@ -46,25 +46,6 @@
     <TSLintBreakBuildOnError>true</TSLintBreakBuildOnError>
   </PropertyGroup>
 
-  <!--
-    Debugging
-    msbuild Web.Foundation.csproj /target:_DirDebug
-  -->
-  <Target Name="_DirDebug">
-    <Message Text="
-MSBuildProjectDirectory:  $(MSBuildProjectDirectory)
-PackagesDirectory:        $(PackagesDirectory)
-DependenciesDirectory:    $(DependenciesDirectory)
-IsWeb:                    $(IsWeb)
-IsMobile:                 $(IsMobile)
-IsWebOrMobile:            $(IsWebOrMobile)
-WebDependencyVersion:     $(WebDependencyVersion)
-WppCommonTargetsImported: $(WppCommonTargetsImported)
-WppV3TargetsImported:     $(WppV3TargetsImported)
-WebPublishPipelineCustomizeTargetFile: $(WebPublishPipelineCustomizeTargetFile)
-"/>
+  <Import Condition="'$(ImportMicrosoftTestAdapter)' == 'true'" Project="$(MSBuildThisFileDirectory)Build\TestPlatform.props" />
 
-    <Message Text="@(AllDependencyContent)" />
-
-  </Target>
 </Project>

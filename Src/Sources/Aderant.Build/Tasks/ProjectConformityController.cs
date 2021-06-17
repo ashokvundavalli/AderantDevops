@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.Build.Construction;
@@ -12,7 +13,15 @@ namespace Aderant.Build.Tasks {
 
             foreach (var import in imports) {
                 if (import.Project.IndexOf("CommonBuildProject", StringComparison.OrdinalIgnoreCase) >= 0) {
-                    return;
+                    // TODO: We can replace CommonBuildProject with Directory.Build.props
+                    // Double check that no one removed the declaration of CommonBuildProject
+                    ICollection<ProjectPropertyElement> projectPropertyElements = element.Properties;
+
+                    foreach (var prop in projectPropertyElements) {
+                        if (prop.Name == "CommonBuildProject") {
+                            return;
+                        }
+                    }
                 }
 
                 if (import.Project.IndexOf("Microsoft.CSharp.targets", StringComparison.OrdinalIgnoreCase) >= 0) {

@@ -186,8 +186,11 @@
       <BuildExtensionFiles Include="$(MSBuildThisFileDirectory)Aderant.wpp.common.targets">
         <Destination>Build\wpp</Destination>
       </BuildExtensionFiles>
-      <BuildExtensionFiles Include="$(MSBuildThisFileDirectory)\MSTest_V2_Common.proj">
+      <BuildExtensionFiles Include="$(MSBuildThisFileDirectory)MSTest_V2_Common.proj">
         <Destination>Test</Destination>
+      </BuildExtensionFiles>
+      <BuildExtensionFiles Include="$(MSBuildThisFileDirectory)TestPlatform.props">
+        <Destination>Build</Destination>
       </BuildExtensionFiles>
     </ItemGroup>
 
