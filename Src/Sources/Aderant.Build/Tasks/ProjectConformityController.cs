@@ -9,36 +9,30 @@ namespace Aderant.Build.Tasks {
         public void AddDirProjectIfNecessary(ProjectRootElement element, string projectLocation) {
             var imports = element.Imports.ToList();
 
-            ProjectImportElement csharpImport = null;
+            ProjectImportElement csharpImport = imports.FirstOrDefault(x => x.Project.IndexOf("Microsoft.CSharp.targets", StringComparison.OrdinalIgnoreCase) >= 0);
 
-            foreach (var import in imports) {
-                if (import.Project.IndexOf("CommonBuildProject", StringComparison.OrdinalIgnoreCase) >= 0) {
-                    // TODO: We can replace CommonBuildProject with Directory.Build.props
-                    // Double check that no one removed the declaration of CommonBuildProject
-                    ICollection<ProjectPropertyElement> projectPropertyElements = element.Properties;
-
-                    foreach (var prop in projectPropertyElements) {
-                        if (prop.Name == "CommonBuildProject") {
-                            return;
-                        }
-                    }
-                }
-
-                if (import.Project.IndexOf("Microsoft.CSharp.targets", StringComparison.OrdinalIgnoreCase) >= 0) {
-                    csharpImport = import;
-                }
+            if (csharpImport == null) {
+                return;
             }
 
-            if (csharpImport != null) {
-                element.AddProperty("CommonBuildProject", "$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), 'dir.proj'))");
+            bool elementsUpdated = false;
 
+            // TODO: We can replace CommonBuildProject with Directory.Build.props
+
+            if (!imports.Any(x => x.Project.IndexOf("CommonBuildProject", StringComparison.OrdinalIgnoreCase) >= 0)) {
                 ProjectImportElement importElement = element.CreateImportElement(@"$(CommonBuildProject)\dir.proj");
                 importElement.Condition = "$(CommonBuildProject) != ''";
                 element.InsertAfterChild(importElement, csharpImport);
+                elementsUpdated = true;
+            }
 
-                if (!string.IsNullOrEmpty(projectLocation)) {
-                    element.Save(projectLocation, Encoding.UTF8);
-                }
+            if (!element.Properties.Any(x => string.Equals("CommonBuildProject", x.Name))) {
+                element.AddProperty("CommonBuildProject", "$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), 'dir.proj'))");
+                elementsUpdated = true;
+            }
+
+            if (elementsUpdated && !string.IsNullOrEmpty(projectLocation)) {
+                element.Save(projectLocation, Encoding.UTF8);
             }
         }
     }

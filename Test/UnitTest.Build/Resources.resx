@@ -244,4 +244,35 @@ NUGET
   remote: https://expertpackages.azurewebsites.net/v3/index.json
     Aderant.Build.Analyzer (3.1.1)</value>
   </data>
+  <data name="CSharpProjectWithCommonBuildProjectImport" xml:space="preserve">
+    <value>&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003"&gt;
+  &lt;Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" /&gt;
+  &lt;Import Project="$(CommonBuildProject)\dir.proj" Condition="$(CommonBuildProject) != ''" /&gt;
+&lt;/Project&gt;</value>
+  </data>
+  <data name="CSharpProjectWithCommonBuildProjectProperty" xml:space="preserve">
+    <value>&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003"&gt;
+  &lt;PropertyGroup&gt;
+    &lt;CommonBuildProject&gt;$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), 'dir.proj'))&lt;/CommonBuildProject&gt;
+  &lt;/PropertyGroup&gt;
+  &lt;Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" /&gt;
+&lt;/Project&gt;</value>
+  </data>
+  <data name="ProjectWithNoCSharpImport" xml:space="preserve">
+    <value>&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003"&gt;
+&lt;/Project&gt;</value>
+  </data>
+  <data name="CSharpProjectWithCommonBuildProjectExpectedResult" xml:space="preserve">
+    <value>&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003"&gt;
+  &lt;PropertyGroup&gt;
+    &lt;CommonBuildProject&gt;$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), 'dir.proj'))&lt;/CommonBuildProject&gt;
+  &lt;/PropertyGroup&gt;
+  &lt;Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" /&gt;
+  &lt;Import Project="$(CommonBuildProject)\dir.proj" Condition="$(CommonBuildProject) != ''" /&gt;
+&lt;/Project&gt;</value>
+  </data>
 </root>

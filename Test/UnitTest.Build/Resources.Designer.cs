@@ -83,6 +83,50 @@ namespace UnitTest.Build {
         
         /// <summary>
         ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+        ///&lt;Project ToolsVersion=&quot;15.0&quot; DefaultTargets=&quot;Build&quot; xmlns=&quot;http://schemas.microsoft.com/developer/msbuild/2003&quot;&gt;
+        ///  &lt;PropertyGroup&gt;
+        ///    &lt;CommonBuildProject&gt;$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), &apos;dir.proj&apos;))&lt;/CommonBuildProject&gt;
+        ///  &lt;/PropertyGroup&gt;
+        ///  &lt;Import Project=&quot;$(MSBuildToolsPath)\Microsoft.CSharp.targets&quot; /&gt;
+        ///  &lt;Import Project=&quot;$(CommonBuildProject)\dir.proj&quot; Condition=&quot;$(CommonBuildProject) != &apos;&apos;&quot; /&gt;
+        ///&lt;/Project&gt;.
+        /// </summary>
+        internal static string CSharpProjectWithCommonBuildProjectExpectedResult {
+            get {
+                return ResourceManager.GetString("CSharpProjectWithCommonBuildProjectExpectedResult", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+        ///&lt;Project ToolsVersion=&quot;15.0&quot; DefaultTargets=&quot;Build&quot; xmlns=&quot;http://schemas.microsoft.com/developer/msbuild/2003&quot;&gt;
+        ///  &lt;Import Project=&quot;$(MSBuildToolsPath)\Microsoft.CSharp.targets&quot; /&gt;
+        ///  &lt;Import Project=&quot;$(CommonBuildProject)\dir.proj&quot; Condition=&quot;$(CommonBuildProject) != &apos;&apos;&quot; /&gt;
+        ///&lt;/Project&gt;.
+        /// </summary>
+        internal static string CSharpProjectWithCommonBuildProjectImport {
+            get {
+                return ResourceManager.GetString("CSharpProjectWithCommonBuildProjectImport", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+        ///&lt;Project ToolsVersion=&quot;15.0&quot; DefaultTargets=&quot;Build&quot; xmlns=&quot;http://schemas.microsoft.com/developer/msbuild/2003&quot;&gt;
+        ///  &lt;PropertyGroup&gt;
+        ///    &lt;CommonBuildProject&gt;$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), &apos;dir.proj&apos;))&lt;/CommonBuildProject&gt;
+        ///  &lt;/PropertyGroup&gt;
+        ///  &lt;Import Project=&quot;$(MSBuildToolsPath)\Microsoft.CSharp.targets&quot; /&gt;
+        ///&lt;/Project&gt;.
+        /// </summary>
+        internal static string CSharpProjectWithCommonBuildProjectProperty {
+            get {
+                return ResourceManager.GetString("CSharpProjectWithCommonBuildProjectProperty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
         ///&lt;Project ToolsVersion=&quot;12.0&quot; DefaultTargets=&quot;Build&quot; xmlns=&quot;http://schemas.microsoft.com/developer/msbuild/2003&quot;&gt;
         ///  &lt;Import Project=&quot;$(MSBuildToolsPath)\Microsoft.CSharp.targets&quot; /&gt;
         ///  &lt;PropertyGroup Condition=&quot; &apos;$(Configuration)|$(Platform)&apos; == &apos;Debug|AnyCPU&apos; &quot;&gt;
@@ -166,6 +210,17 @@ namespace UnitTest.Build {
         internal static string ProjectFileText1 {
             get {
                 return ResourceManager.GetString("ProjectFileText1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+        ///&lt;Project ToolsVersion=&quot;15.0&quot; DefaultTargets=&quot;Build&quot; xmlns=&quot;http://schemas.microsoft.com/developer/msbuild/2003&quot;&gt;
+        ///&lt;/Project&gt;.
+        /// </summary>
+        internal static string ProjectWithNoCSharpImport {
+            get {
+                return ResourceManager.GetString("ProjectWithNoCSharpImport", resourceCulture);
             }
         }
         
