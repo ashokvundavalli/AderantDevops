@@ -1,6 +1,14 @@
 ﻿Set-StrictMode -Version "Latest"
 $InformationPreference = 'Continue'
 
+$script:tags = @()
+
+function AddTag([string]$prefix, [string]$tagValue) {
+    if (-not ([string]::IsNullOrWhiteSpace($tagValue))) {
+        $script:tags += $prefix + $tagValue
+    }
+}
+
 #refs/heads/update/82SP1EX0002
 $branch = $Env:BUILD_SOURCEBRANCH
 if ([string]::IsNullOrWhiteSpace($branch)) {
@@ -12,25 +20,21 @@ $segments = $branch.Split('/')
 
 $prefix = $segments[0]
 
-$tags = @()
-
 $wellKnownBranches = @("master", "update", "patch", "release")
 foreach ($wellKnownBranch in $wellKnownBranches) {
     if ($prefix -eq $wellKnownBranch) {
-        $tags += $prefix
+        AddTag "" $prefix
     }
 }
 
 $lastPart = $segments[$segments.Count-1]
 if ($lastPart -ne $prefix) {
-    $tags += $lastPart
+    AddTag "" $lastPart
 }
 
-$pullRequestId = $Env:SYSTEM_PULLREQUEST_PULLREQUESTID
-if (-not ([string]::IsNullOrWhiteSpace($pullRequestId))) {
-    $tags += "pr-$pullRequestId"
-}
+AddTag "pr-" $Env:SYSTEM_PULLREQUEST_PULLREQUESTID
+AddTag "" $Env:BUILD_REQUESTEDFOR
 
-foreach ($tag in $tags) {
+foreach ($tag in $script:tags) {
     Write-Information "##vso[build.addbuildtag]$tag"
 }
