@@ -51,12 +51,12 @@ namespace UnitTest.Build {
 
             var definition = controller.CreateBuildDefinition(new ExpertBuildConfiguration("Dev\\MyBranch") {
                 ModuleName = "Foo",
-                DropLocation = @"\\na.aderant.com\ExpertSuite\"
+                DropLocation = @"\\aderant.com\ExpertSuite\"
             });
 
             Assert.IsNotNull(definition);
             Assert.AreEqual(ContinuousIntegrationType.Individual, definition.ContinuousIntegrationType);
-            Assert.AreEqual(@"\\na.aderant.com\ExpertSuite", definition.DefaultDropLocation);
+            Assert.AreEqual(@"\\aderant.com\ExpertSuite", definition.DefaultDropLocation);
             Assert.IsNotNull(definition.BuildController);
         }
 
@@ -70,14 +70,14 @@ namespace UnitTest.Build {
 
             ExpertBuildConfiguration buildConfiguration = new ExpertBuildConfiguration("Dev\\MyBranch") {
                 ModuleName = "Foo",
-                DropLocation = @"\\na.aderant.com\ExpertSuite\"
+                DropLocation = @"\\aderant.com\ExpertSuite\"
             };
 
             var definition = controller.CreateBuildDefinition(buildConfiguration);
 
             ExpertBuildDetail detail = new ExpertBuildDetail("99.99.99.99", "1.0.0.0", buildConfiguration);
 
-            Assert.AreEqual(@"\\na.aderant.com\ExpertSuite\Dev\MyBranch\Foo\99.99.99.99\1.0.0.0", detail.DropLocation);
+            Assert.AreEqual(@"\\aderant.com\ExpertSuite\Dev\MyBranch\Foo\99.99.99.99\1.0.0.0", detail.DropLocation);
         }
     }
 

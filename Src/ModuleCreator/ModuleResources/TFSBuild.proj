@@ -15,7 +15,7 @@
     <!--Server build for a module-->
     <Import
       Condition="('$(BuildAll)'!='true') And ('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      Project="\\na.aderant.com\expertsuite\$(BranchName)\Build.Infrastructure\Src\Build\ModuleBuild.proj" />
+      Project="\\aderant.com\expertsuite\$(BranchName)\Build.Infrastructure\Src\Build\ModuleBuild.proj" />
 
     <!--Custom build for a module-->
     <Import

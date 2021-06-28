@@ -31,7 +31,7 @@ $bs = $tpc.GetService([Microsoft.TeamFoundation.Build.Client.IBuildServer])
 #
 #$uniqueBuilds = $buildNumbers | select -Unique
 
-$modules = gci -Path \\na.aderant.com\ExpertSuite\Main\ | ?{ $_.PSIsContainer }
+$modules = gci -Path "\\aderant.com\ExpertSuite\Main\" | ?{ $_.PSIsContainer }
 
 foreach ($module in $modules) {
     $build = gci -Path $module.FullName -Filter 1.8.0.0

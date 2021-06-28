@@ -34,24 +34,24 @@ namespace UnitTest.Build {
         public void Branch_is_removed_drop_drop_if_needed() {
             ExpertBuildConfiguration buildConfiguration = new ExpertBuildConfiguration("Dev\\MyBranch") {
                 ModuleName = "Foo",
-                DropLocation = @"\\na.aderant.com\ExpertSuite\Dev\MyBranch"
+                DropLocation = @"\\aderant.com\ExpertSuite\Dev\MyBranch"
             };
 
             ExpertBuildDetail detail = new ExpertBuildDetail("99.99.99.99", "1.0.0.0", buildConfiguration);
 
-            Assert.AreEqual(@"\\na.aderant.com\ExpertSuite\Dev\MyBranch\Foo\99.99.99.99\1.0.0.0", detail.DropLocation);
+            Assert.AreEqual(@"\\aderant.com\ExpertSuite\Dev\MyBranch\Foo\99.99.99.99\1.0.0.0", detail.DropLocation);
         }
 
         [TestMethod]
         public void Main_branch_is_removed_drop_drop_if_needed() {
             ExpertBuildConfiguration buildConfiguration = new ExpertBuildConfiguration("Main") {
                 ModuleName = "Foo",
-                DropLocation = @"\\na.aderant.com\ExpertSuite\Main"
+                DropLocation = @"\\aderant.com\ExpertSuite\Main"
             };
 
             ExpertBuildDetail detail = new ExpertBuildDetail("99.99.99.99", "1.0.0.0", buildConfiguration);
 
-            Assert.AreEqual(@"\\na.aderant.com\ExpertSuite\Main\Foo\99.99.99.99\1.0.0.0", detail.DropLocation);
+            Assert.AreEqual(@"\\aderant.com\ExpertSuite\Main\Foo\99.99.99.99\1.0.0.0", detail.DropLocation);
         }
     }
 }

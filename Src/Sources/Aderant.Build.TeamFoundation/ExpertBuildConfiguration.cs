@@ -78,7 +78,7 @@ namespace Aderant.Build {
         }
 
         /// <summary>
-        /// Builds the drop location for module eg \\na.aderant.com\ExpertSuite\[branch]\[module]
+        /// Builds the drop location for module eg \\aderant.com\ExpertSuite\[branch]\[module]
         /// </summary>
         /// <returns></returns>
         /// <exception cref="System.ArgumentNullException">No DropLocation specified</exception>

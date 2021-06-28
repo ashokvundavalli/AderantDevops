@@ -22,14 +22,14 @@ namespace UnitTest.Build {
 
         [TestMethod]
         public void GetBranch_canonicalizes_branch_name_unc() {
-            string branch = PathHelper.GetBranch(@"\\na.aderant.com\ExpertSuite\Dev\Framework");
+            string branch = PathHelper.GetBranch(@"\\aderant.com\ExpertSuite\Dev\Framework");
 
             Assert.AreEqual(@"Dev\Framework", branch);
         }
 
         [TestMethod]
         public void Automation_branch_full_unc() {
-            string branch = PathHelper.GetBranch(@"\\na.aderant.com\packages\Infrastructure\Automation\UIAutomation\UIAutomation.Framework\5.3.1.0\5.3.5568.49992\Bin\Module");
+            string branch = PathHelper.GetBranch(@"\\aderant.com\packages\Infrastructure\Automation\UIAutomation\UIAutomation.Framework\5.3.1.0\5.3.5568.49992\Bin\Module");
 
             Assert.AreEqual(@"Automation\UIAutomation", branch, true);
         }

@@ -130,7 +130,7 @@
           Project="..\..\Build.Infrastructure\Src\Build\ModuleBuild.proj"/&gt;
   &lt;!--Server build for a module--&gt;
   &lt;Import Condition="('$(BuildAll)'!='true') And ('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-          Project="\\na.aderant.com\expertsuite\main\Build.Infrastructure\Src\Build\ModuleBuild.proj"/&gt;
+          Project="\\aderant.com\expertsuite\main\Build.Infrastructure\Src\Build\ModuleBuild.proj"/&gt;
   &lt;!--Desktop build for a module--&gt;
   &lt;Import Condition="('$(BuildAll)'!='true') And ('$(IsDesktopBuild)'=='true') And ('$(IsCustomBuild)'!='true')"
           Project="..\..\Build.Infrastructure\Src\Build\ModuleBuild.proj"/&gt;

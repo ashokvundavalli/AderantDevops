@@ -185,7 +185,7 @@
   <Target Name="BuildAndPackage">
     <!--
       To invoke this target on the desktop
-      msbuild TFSBuild.proj @TFSBuild.rsp /p:DropLocation=\\na.aderant.com\expertsuite\<branch> /nr:false
+      msbuild TFSBuild.proj @TFSBuild.rsp /p:DropLocation=\\aderant.com\expertsuite\<branch> /nr:false
     -->
 
     <Message Text="==========================================" Importance="High" />

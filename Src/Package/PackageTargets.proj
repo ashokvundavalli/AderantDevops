@@ -5,9 +5,9 @@
 
   <!-- This is a custom version which resolves an ArgumentOutOfRangeException -->
   <UsingTask TaskName="RidoTasks.trx2html" AssemblyFile="$(PackageScriptsDirectory)\Build\Tasks\RidoTasks.dll" />
-  <UsingTask TaskName="SqlFileExecution" AssemblyFile="\\na.aderant.com\ExpertSuite\$(BranchName)\Build.Infrastructure\Src\Build.Tools\Aderant.Build.dll" />
-  <UsingTask TaskName="ConsolePackageImporter" AssemblyFile="\\na.aderant.com\ExpertSuite\$(BranchName)\Build.Infrastructure\Src\Build.Tools\Aderant.Build.dll" />
-  <Import Project="\\na.aderant.com\expertsuite\$(BranchName)\Build.Infrastructure\Src\Build\Aderant.Build.Common.targets" /> <!-- The build process has not yet copied these files to disk so using network share. -->
+  <UsingTask TaskName="SqlFileExecution" AssemblyFile="\\aderant.com\ExpertSuite\$(BranchName)\Build.Infrastructure\Src\Build.Tools\Aderant.Build.dll" />
+  <UsingTask TaskName="ConsolePackageImporter" AssemblyFile="\\aderant.com\ExpertSuite\$(BranchName)\Build.Infrastructure\Src\Build.Tools\Aderant.Build.dll" />
+  <Import Project="\\aderant.com\expertsuite\$(BranchName)\Build.Infrastructure\Src\Build\Aderant.Build.Common.targets" /> <!-- The build process has not yet copied these files to disk so using network share. -->
   <!-- 
     =========================================================================================================
         Team Build Script                                            
@@ -510,7 +510,7 @@
         <TestAssemblyDirectory>$([System.IO.Path]::GetFullPath('$(ExpertTestsDirectory)\ExpertSource'))</TestAssemblyDirectory>
       </PropertyGroup>
     
-      <Exec Command='"Powershell" "-NoProfile" "$(BuildScriptsDirectory)\Load-UITestDependencies.ps1" -UiFrameworkDirectory "\\na.aderant.com\packages\Infrastructure\Automation\UIAutomation\UIAutomation.Framework\5.3.1.0" -TargetDirectory $(TestAssemblyDirectory) -BuildScriptsDirectory $(BuildScriptsDirectory)' />
+      <Exec Command='"Powershell" "-NoProfile" "$(BuildScriptsDirectory)\Load-UITestDependencies.ps1" -UiFrameworkDirectory "\\aderant.com\packages\Infrastructure\Automation\UIAutomation\UIAutomation.Framework\5.3.1.0" -TargetDirectory $(TestAssemblyDirectory) -BuildScriptsDirectory $(BuildScriptsDirectory)' />
   </Target>
 
 
