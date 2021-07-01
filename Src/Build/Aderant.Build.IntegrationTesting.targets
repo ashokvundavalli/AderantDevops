@@ -10,7 +10,7 @@
     <DeployTargetExists Condition="Exists('$(DeploymentTargets)Aderant.Build.DeployCI.targets')">true</DeployTargetExists>
   </PropertyGroup>
 
-  <Import Project="$(ParametersFile)" Condition="'$(ParametersFile)' != ''" />
+  <Import Project="$(ParametersFile)" Condition="'$(ParametersFile)' != '' And Exists('$(ParametersFile)')" />
   <Import Project="Aderant.Build.Testing.targets" />
   <Import Project="$(DeploymentTargets)Aderant.Build.ServerImage.targets" Condition="'$(ServerImageTargetExists)' == 'true'" />
   <Import Project="$(DeploymentTargets)Aderant.Build.DeployCI.targets" Condition="'$(DeployTargetExists)' == 'true'" />
