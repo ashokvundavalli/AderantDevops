@@ -1,33 +1,52 @@
 <#
-.Synopsis
+.SYNOPSIS
     Acquire build artifacts from the specified drop location.
-.Description
-    Copy the build artifacts from the specified drop location to the specified binaries directory, and exctract any archives retrieved.
-.Example
-    Get-Product -binariesDirectory C:\TFS\ExpertSuite\<branch name>\Binaries -$dropRoot \\dfs.aderant.com\ExpertSuite -branch <branch name>
-.Example
-    Get-Product -binariesDirectory C:\TFS\ExpertSuite\<branch name>\Binaries -$dropRoot \\dfs.aderant.com\ExpertSuite -pullRequestId 19159
-.Parameter binariesDirectory
-    The directory you want the binaries to be copied too
-.Parameter dropRoot
+.DESCRIPTION
+    Copy the build artifacts from the specified drop location to the specified binaries directory, and extract any archives retrieved.
+.PARAMETER BinariesDirectory
+    The directory to copy and extract the binaries to.
+.PARAMETER DropRoot
     The path drop location that the binaries will be fetched from
-.Parameter branch
+.PARAMETER Branch
     The branch to retrieve build artifacts from.
-.Parameter pullRequestId
+.PARAMETER PullRequestId
     The pull request id to retrieve build artifacts from.
-.Parameter buildNumber
+.PARAMETER BuildNumber
     The build id to retrieve build artifacts from.
-.Parameter components
-    The list of components to retrieve from the drop location. Defaults to 'Product'.
+.PARAMETER Components
+    The list of components to retrieve from the drop location. Available options include: 'product', 'packages' and 'update'.
+.EXAMPLE
+    Get-Product -BinariesDirectory C:\AderantExpert\Binaries -DropRoot \\dfs.aderant.com\expert-ci\ -Branch MyBranch -Components @('product')
+.EXAMPLE
+    Get-Product -BinariesDirectory C:\AderantExpert\Binaries -DropRoot \\dfs.aderant.com\expert-ci\ -PullRequestId 19159 -Components @('product')
+.EXAMPLE
+    Get-Product -BinariesDirectory C:\AderantExpert\Binaries -DropRoot \\dfs.aderant.com\expert-ci\ -BuildNumber 123456 -Components @('product')
 #>
 [CmdletBinding(SupportsShouldProcess=$true)]
 param(
-    [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$binariesDirectory,
-    [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$dropRoot,
-    [Parameter(Mandatory=$false, ParameterSetName = "Branch")][ValidateNotNullOrEmpty()][string]$branch,
-    [Parameter(Mandatory=$false, ParameterSetName = "PullRequest")][Alias("pull")][ValidateNotNullOrEmpty()][int]$pullRequestId,
-    [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][int]$buildNumber,
-    [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][ValidateSet("Product", "Test")][string[]]$components
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [string]$BinariesDirectory,
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [string]$DropRoot,
+
+    [Parameter(Mandatory=$false, ParameterSetName = 'Branch')]
+    [ValidateNotNullOrEmpty()]
+    [string]$Branch,
+
+    [Parameter(Mandatory=$false, ParameterSetName = 'PullRequest')]
+    [Alias('pr')]
+    [int]$PullRequestId,
+
+    [Parameter(Mandatory=$false, ParameterSetName = 'BuildNumber')]
+    [int]$BuildNumber,
+
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [ValidateSet('product', 'packages', 'update')]
+    [string[]]$Components
 )
 
 begin {
@@ -38,7 +57,7 @@ begin {
     Write-Information "Running '$($MyInvocation.MyCommand.Name.Replace(`".ps1`", `"`"))' with the following parameters:"
 
     foreach ($parameter in $MyInvocation.MyCommand.Parameters) {
-       Write-Information (Get-Variable -Name $Parameter.Values.Name -ErrorAction SilentlyContinue | Out-String)
+       Write-Information (Get-Variable -Name $Parameter.Values.Name -ErrorAction 'SilentlyContinue' | Out-String)
     }
 
     function Clear-Environment {
@@ -66,7 +85,7 @@ begin {
 					throw 'Refusing to clean a path containing Program Files/Data.'
 				}
 
-				if ($binariesDirectory -in 'C:\AderantExpert', 'C:\AderantExpert\')  {
+				if ($binariesDirectory.TrimEnd([System.IO.Path]::DirectorySeparatorChar) -in "$Env:SystemDrive\AderantExpert") {
 					throw 'Refusing to clean AderantExpert folder.'
 				}
 
@@ -75,7 +94,7 @@ begin {
                 }
 
                 Write-Information "Clearing directory: $($binariesDirectory)"
-                Remove-Item $binariesDirectory\* -Recurse -Force -Exclude $exclusions
+                Remove-Item -Path "$binariesDirectory\*" -Recurse -Force -Exclude $exclusions
             }
         }
     }
@@ -120,7 +139,7 @@ begin {
             }
 
             if ($errors) {
-                exit 1
+                Write-Error -Message "Errors occurred while attempting to validate SHA1 file hashes. Please check warnings for more details."
             }
         }
     }
@@ -143,7 +162,6 @@ begin {
 
         if (-not (Test-Path -Path $dropRoot)) {
             Write-Error "Drop path: '$droproot' does not exist."
-            exit 1
         }
 
         if ($clearBinariesDirectory.IsPresent) {
@@ -161,7 +179,6 @@ begin {
 
             if (-not (Test-Path $componentPath)) {
                 Write-Error "Directory: '$componentPath' does not exist."
-                exit 1
             }
 
             Start-Process -FilePath "robocopy.exe" -ArgumentList @($componentPath, $binariesDirectory, "*.*", "/NJH", "/MT", "R:10", "/W:1") -Wait -NoNewWindow
@@ -250,40 +267,57 @@ process {
 
             if (-not (Test-Path -Path $branchDropRoot)) {
                 Write-Error "Failed to retrieve binaries for branch: '$branch'`r`n at directory: '$branchDropRoot'."
-                exit 1
             }
 
-            if (!$buildNumber) {
-                # Get the most recent build number if build number has not been specified by the user
-                [int[]]$buildNumbers = Get-ChildItem -Path $branchDropRoot -Directory | Select-Object -ExpandProperty Name | Where-Object { $_ -match "^[\d\.]+$" }
-                $buildNumber = $buildNumbers | Sort-Object -Descending | Select-Object -First 1
-            }
+            # Get the most recent build number for the specified branch.
+            [int[]]$buildNumbers = Get-ChildItem -Path $branchDropRoot -Directory | Select-Object -ExpandProperty Name | Where-Object { $_ -match '^[\d\.]+$' }
+            [int]$buildNumber = $buildNumbers | Sort-Object -Descending | Select-Object -First 1
 
-            if (-not $PSCmdlet.ShouldProcess('Build number')) {
+            if (-not $PSCmdlet.ShouldProcess($branch, 'check build number')) {
                 Write-Information "The latest successful Build Number for branch: $branch is: $buildNumber."
                 return $buildNumber
-                exit 0
             }
 
             [string]$build = Join-Path $branchDropRoot -ChildPath $buildNumber
 
-            Write-Information "Selected build: $build"
-
-            $totalTime = Copy-Binaries -dropRoot $build -binariesDirectory $binariesDirectory -components $components -clearBinariesDirectory
-        }
-        'PullRequest' {
-            [string]$pullRequestDropRoot = Join-Path -Path $dropRoot -ChildPath "pulls\$pullRequestId"
-
-            if (-not (Test-Path -Path $pullRequestDropRoot)) {
-                Write-Error "Failed to retrieve binaries for pull request: '$pullRequestId'`r`n at directory: '$pullRequestDropRoot'."
-                exit 1
+            if (-not (Test-Path -Path $build)) {
+                Write-Error "Build at path: '$build' does not exist."
             }
 
-            $totalTime = (Copy-Binaries -dropRoot $pullRequestDropRoot -binariesDirectory $binariesDirectory -components $components -clearBinariesDirectory)
+            Write-Information -MessageData "Selected build: $build"
+
+            $totalTime = Copy-Binaries -dropRoot $build -binariesDirectory $binariesDirectory -components $components -clearBinariesDirectory
+
+            break
+        }
+        'PullRequest' {
+            [string]$pullRequest = Join-Path -Path $dropRoot -ChildPath "pulls\$pullRequestId"
+
+            if (-not (Test-Path -Path $pullRequest)) {
+                Write-Error "Failed to retrieve binaries for pull request: '$pullRequestId'`r`n at directory: '$pullRequestDropRoot'."
+            }
+
+            $totalTime = Copy-Binaries -dropRoot $pullRequest -binariesDirectory $binariesDirectory -components $components -clearBinariesDirectory
+
+            break
+        }
+        'BuildNumber' {
+            [string]$searchPath = Join-Path -Path $dropRoot -ChildPath 'product\refs\heads'
+           
+            # Try to find a build which matches the specified build number.
+            [System.IO.DirectoryInfo]$build = Get-ChildItem -Path $searchPath -Filter $buildNumber -Directory -Recurse -Depth 2
+
+            if ($null -ne $build) {
+                Write-Information "Found build: $buildNumber at directory: '$($build.FullName)'."
+                $totalTime = Copy-Binaries -dropRoot $build.FullName -binariesDirectory $binariesDirectory -components $components -clearBinariesDirectory
+            } else {
+                Write-Error "Failed to retrieve binaries for build: '$buildNumber'. Could not find a directory containing binaries."
+            }
+
+            break
         }
     }
 
     $totalTime = $totalTime + (ExtractArchives -binariesDirectory $binariesDirectory)
-    Write-Host "`r`nProduct retrieved in $totalTime seconds.`r`n" -ForegroundColor Cyan
-    exit 0
+    Write-Host "`r`nProduct retrieved in $totalTime seconds.`r`n" -ForegroundColor 'Cyan'
 }

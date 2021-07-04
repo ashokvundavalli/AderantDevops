@@ -1,62 +1,157 @@
 function global:Get-Product {
     <#
-    .Synopsis
-        Runs a GetProduct for the current branch
-    .Description
-        Uses the expertmanifest from the local Build.Infrastructure\Src\Package directory.
-        This will always return the pdb's.
-        The binaries will be loaded into your branch binaries directory. e.g. <your_branch_source>\Binaries
-    .PARAMETER onlyUpdated
-        Switch to indicate that only updated modules should get pulled in.
-    .PARAMETER createBackup
+    .SYNOPSIS
+        Retrieves binaries from the drop location.
+    .DESCRIPTION
+        Retrieves binaries from the drop location and unzips them to the binaries directory.
+    .PARAMETER Branch
+        The branch to retrieve build artifacts for. Defaults to 'master'.
+    .PARAMETER PullRequestId
+        [ALIAS]: pr
+        The pull request id to retrieve build artifacts for.
+    .PARAMETER BuildNumber
+        [ALIAS]: Build, bn
+        The build id to retrieve build artifacts for.
+    .PARAMETER BinariesDirectory
+        The location to unzip the retrieved binaries to. By default this is: C:\AderantExpert\Binaries.
+    .PARAMETER Components
+        The list of components to retrieve from the drop location. Available options include: 'product', 'packages' and 'update'.
+    .PARAMETER CreateBackup
         Switch to create a backup of the Binaries folder (named BinariesBackup in the same folder) after successfully retrieving the product.
         This is intended to be used by developers who call Copy-BinariesFromCurrentModules (cb) or Copy-BinToEnvironment and want to have a backup with the original files from the Get-Product call.
-    .PARAMETER pullRequestId
-        Mixes the output of a pull request build into the product
-    .PARAMETER buildNumber
-        Mixes the output of build into the product using buildNumber
+    .PARAMETER BuildNumberCheck
+        Retrives the latest build number for the specified branch.
     .EXAMPLE
-        Get-Product -createBackup
+        
+    Get-Product
+
+    Parameterless calls to `Get-Product` retrieve the most recent successful build of master.
+
+    .EXAMPLE
+
+    Get-Product -Branch MyBranch
+
+    Downloads the binaries associated with the given branch.
+
+    .EXAMPLE
+
+    Get-Product -PullRequestId 19159
+    - OR -
+
+    PS C:\>Get-Product -pr 19159
+
+    Downloads the binaries associated with the given pull request.
+
+    .EXAMPLE
+
+    Get-Product -BuildNumber 123456
+    - OR -
+
+    PS C:\>Get-Product -Build 123456
+
+    - OR -
+
+    PS C:\>Get-Product -bn 123456
+
+    Downloads the binaries associated with the given build number.
+
+    .EXAMPLE
+
+    Get-Product -BuildNumberCheck
+
+    Running 'Get-Product' with the following parameters:
+    Name                           Value
+    ----                           -----
+    BinariesDirectory              C:\AderantExpert\Binaries
+    DropRoot                       \\dfs.aderant.com\expert-ci
+    Branch                         master
+    PullRequestId                  0
+    BuildNumber                    0
+    Components                     {product}
+
+
+
+    What if: Performing the operation "check build number" on target "master".
+    The latest successful Build Number for branch: master is: 1149793.
+    1149793
+
+    PS C:\>Get-Product -branch update/82SP2ex0006 -BuildNumberCheck
+
+    Name                           Value
+    ----                           -----
+    BinariesDirectory              C:\AderantExpert\Binaries
+    DropRoot                       \\dfs.aderant.com\expert-ci
+    Branch                         update/82SP2ex0006
+    PullRequestId                  0
+    BuildNumber                    0
+    Components                     {product}
+
+
+
+    What if: Performing the operation "check build number" on target "update/82SP2ex0006".
+    The latest successful Build Number for branch: update/82SP2ex0006 is: 1149596.
+    1149596
+
+    The first call is retrieving the last successful build id on the master branch. The second call is retrieving the last succesful build id on a specified branch.
     #>
-    [CmdletBinding(DefaultParameterSetName='master')]
+    [CmdletBinding(DefaultParameterSetName='Branch')]
     param (
-        [Parameter(Mandatory=$false, ParameterSetName = "Branch", Position = 0)][ValidateNotNullOrEmpty()][string]$branch,
-        [Parameter(Mandatory=$false, ParameterSetName = "PullRequest")][Alias('pr')][ValidateNotNullOrEmpty()][int]$pullRequestId,
-        [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][int]$buildNumber,
-        [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$binariesDirectory,
-        [string[]]$components = @('Product'),
-        [switch]$createBackup,
-        [switch]$buildNumberCheck
+        [Parameter(Mandatory=$false, ParameterSetName = 'Branch', Position = 0)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Branch = 'master',
+
+        [Parameter(Mandatory=$false, ParameterSetName = 'PullRequest')]
+        [Alias('pr')]
+        [int]$PullRequestId,
+
+        [Parameter(Mandatory=$false, ParameterSetName = 'BuildNumber')]
+        [Alias('Build', 'bn')]
+        [int]$BuildNumber,
+
+        [Parameter(Mandatory=$false)]
+        [ValidateNotNullOrEmpty()]
+        [string]$binariesDirectory = "$Env:SystemDrive\AderantExpert\Binaries",
+
+        [Parameter(Mandatory=$false)]
+        [ValidateNotNullOrEmpty()]
+        [ValidateSet('product', 'packages', 'update')]
+        [string[]]$Components = @('product'),
+
+        [switch]$CreateBackup,
+
+        [switch]$BuildNumberCheck
     )
 
-    [string]$getProduct = Join-Path -Path $global:ShellContext.PackageScriptsDirectory -ChildPath 'Get-Product.ps1'
-    [string]$dropRoot = '\\dfs.aderant.com\expert-ci'
-
-    if ([string]::IsNullOrWhiteSpace($binariesDirectory)) {
-        $binariesDirectory = "$Env:SystemDrive\AderantExpert\Binaries"
+    begin {
+        [string]$getProduct = Join-Path -Path $global:ShellContext.PackageScriptsDirectory -ChildPath 'Get-Product.ps1'
+        [string]$dropRoot = '\\dfs.aderant.com\expert-ci'
     }
 
-    if ([string]::IsNullOrWhiteSpace($branch)) {
-        $branch = $PSCmdlet.ParameterSetName
-    }
+    process {
+        switch ($PSCmdlet.ParameterSetName) {
+            'Branch' {
+                & $getProduct -BinariesDirectory $binariesDirectory -DropRoot $dropRoot -Branch $branch -Components $components -WhatIf:$($buildNumberCheck.IsPresent)
+                break
+            }
+            'PullRequest' {
+                & $getProduct -BinariesDirectory $binariesDirectory -DropRoot $dropRoot -PullRequestId $pullRequestId -Components $components -WhatIf:$($buildNumberCheck.IsPresent)
+                break
+            }
+            'BuildNumber' {
+                & $getProduct -BinariesDirectory $binariesDirectory -DropRoot $dropRoot -BuildNumber $buildNumber -Components $components -WhatIf:$($buildNumberCheck.IsPresent)
+                break
+            }
+        }
 
-    switch ($PSCmdlet.ParameterSetName) {
-        'PullRequest' {
-            & $getProduct -binariesDirectory $binariesDirectory -dropRoot $dropRoot -pullRequestId $pullRequestId -components $components -WhatIf:$($buildNumberCheck.IsPresent)
+        if (-not $buildNumberCheck.IsPresent -and $createBackup.IsPresent) {
+            Write-Host "Creating backup of Binaries folder."
+            $backupPath = $global:ShellContext.BranchLocalDirectory + "\BinariesBackup"
+            if (-not (Test-Path $backupPath)) {
+                New-Item -ItemType Directory -Path $backupPath
+            }
+            Invoke-Expression "robocopy.exe $binariesDirectory $backupPath /MIR /SEC /TEE /R:2 /XD $binariesDirectory\ExpertSource\Customization" | Out-Null
+            Write-Host "Backup complete."
         }
-        default {
-            & $getProduct -binariesDirectory $binariesDirectory -dropRoot $dropRoot -branch $branch -buildNumber $buildNumber -components $components -WhatIf:$($buildNumberCheck.IsPresent)
-        }
-    }
-
-    if (-not $buildNumberCheck.IsPresent -and $createBackup.IsPresent) {
-        Write-Host "Creating backup of Binaries folder."
-        $backupPath = $global:ShellContext.BranchLocalDirectory + "\BinariesBackup"
-        if (-not (Test-Path $backupPath)) {
-            New-Item -ItemType Directory -Path $backupPath
-        }
-        Invoke-Expression "robocopy.exe $binariesDirectory $backupPath /MIR /SEC /TEE /R:2 /XD $binariesDirectory\ExpertSource\Customization" | Out-Null
-        Write-Host "Backup complete."
     }
 }
 
@@ -90,13 +185,13 @@ function global:Get-ProductBuild {
         If specified the Build version will be copied to the clipboard.
     #>
     [CmdletBinding()]
-    [Alias("gpb")]
+    [Alias('gpb')]
     param(
         [switch]$copyToClipboard
     )
 
     $binariesDirectory = "$Env:SystemDrive\AderantExpert\Binaries"
-    $buildVersionFile = Get-ChildItem -Path $binariesDirectory -Filter Expert_Build_*.url
+    $buildVersionFile = Get-ChildItem -Path $binariesDirectory -Filter 'Expert_Build_*.url'
 
     if ($buildVersionFile) {
         $buildVersionFilePath = Join-Path -Path $binariesDirectory -ChildPath $buildVersionFile
@@ -107,7 +202,6 @@ function global:Get-ProductBuild {
             Add-Type -AssemblyName "System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
             [System.Windows.Forms.Clipboard]::SetText($buildVersionFile)
         }
-
     } else {
         Write-Error "No url containing build information is present in: $($binariesDirectory) "
     }
