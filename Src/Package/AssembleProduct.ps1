@@ -389,6 +389,16 @@ process {
 
     attrib.exe -r $binariesDirectory /d
 
+    #region Post-process
+    [string]$manifestDirectory = [System.IO.Path]::GetDirectoryName($productManifestPath)
+    [string]$postProcessScript = Join-Path -Path $manifestDirectory -ChildPath 'AssembleProduct.ps1'
+
+    if (Test-Path -Path $postProcessScript) {
+        Write-Information -MessageData "Executing script: '$postProcessScript'."
+        & $postProcessScript -BinariesDirectory $binariesDirectory
+    }
+    #endregion
+
     Get-ChildItem -Path $binariesDirectory -Depth 0 -File | Where-Object { -not ($_.Name.EndsWith(".msi") -or ($_.BaseName.Contains("ClassicBuildNumbers"))) } | Remove-Item -Force -Exclude "environment.xml","DropFolderBuildNumbers.txt"
 
     Write-Information -MessageData "Product $($productManifest.ProductManifest.Name) retrieved."
