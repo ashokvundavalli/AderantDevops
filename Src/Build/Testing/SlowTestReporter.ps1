@@ -1,5 +1,7 @@
 <#
 .SYNOPSIS
+    Searches test result files in a given location for tests which exceed a given timeout.
+.DESCRIPTION
     Recursively investigates folders for test result (trx) files
     and determines if any of them are running slowly.
 
@@ -57,7 +59,6 @@
     those and report all tests that exceed the given max test duration of 2
     seconds.
 #>
-
 [CmdletBinding()]
 param (
     [Parameter(Mandatory=$true)]
@@ -71,96 +72,86 @@ param (
     [Uint32]
     $maxTestDuration = 5
 )
-begin{
-    $InformationPreference = 'Continue'
+
+begin {
     Set-StrictMode -Version 'Latest'
+    $InformationPreference = 'Continue'
     $ErrorActionPreference = 'Stop'
 
     function GetTrxFilesFromDir {
+        [CmdletBinding()]
+        [OutputType([string[]])]
         param (
             [string]
-            $path
+            $path,
+            
+            [UInt32]
+            $searchDepth
         )
-        # Exit if the given path is invalid
-        if (-not (Test-Path $path)) {
-            Write-Warning -Message "The directory or file '$path' does not exist."
-            exit 0
-        }
-    
-        if (Test-Path -path $path -PathType Leaf) {
-            # If the specified path is a file, do not perform a recursive search.
-            $trxFiles = Get-ChildItem $path
-        } else {
-            # Find trx files located in $path recursively
-            if ($depth -gt 0) {
-                $trxFiles = (Get-ChildItem -Filter *.trx -Path $path -Depth $depth)
-            } else {
-                $trxFiles = (Get-ChildItem -Filter *.trx -Path $path -Recurse)
+
+        process {
+            Write-Debug $MyInvocation.MyCommand
+            if (-not (Test-Path $path)) {
+                Write-Error -Message "The directory or file '$path' does not exist."
             }
-        }
-    
-        # Exit script if no trx files found.
-        if ($null -eq $trxFiles) {
-            Write-Warning "No TRX files found in '$path'"
-            Write-Warning "Exiting..."
-            break
-        }
-    
-        $trxFileNames = $trxFiles.FullName
-    
-        Write-Information -MessageData "The following test files were found:"
-        Write-Information -MessageData "$([string]::new('-', 36))"
-        $trxFileNames | ForEach-Object { Write-Information -MessageData $_ }
-        Write-Information -MessageData $([Environment]::NewLine)
         
-        $trxFileNames
-    }
-    
-    # Returns false if object is null or the object does not have the property.
-    function HasProperty {
-        param (
-            [Object]
-            $object,
-    
-            [string]
-            $propertyName
-        )
-    
-        $hasProperty = $false
-        if ($null -ne $object) {
-            $hasProperty = $propertyName -in $object.PSobject.Properties.Name
+            # Determine the strategy for finding test result files.
+            if (Test-Path -path $path -PathType Leaf) {
+                $trxFiles = Get-ChildItem $path
+            } else {
+                $trxFiles = Get-ChildItem -Filter *.trx -Path $path -Depth $depth
+            }
+        
+            # Exit script if no trx files found.
+            if ($null -eq $trxFiles) {
+                Write-Error "No .trx files found at path: '$path'."
+            }
+        
+            $trxFileNames = $trxFiles.FullName
+        
+            Write-Information -MessageData 'The following test result files were found:'
+            Write-Information -MessageData "$([string]::new('-', 36))"
+            $trxFileNames | ForEach-Object { Write-Information -MessageData $_ }
+
+            return $trxFileNames
         }
-    
-        return $hasProperty
     }
-    
+   
     function GenerateTrxResult{
+        [CmdletBinding()]
+        [OutputType([System.Collections.Generic.List[PSCustomObject]])]
         param (
-            [Parameter(ValueFromPipeline=$true)]
-            [System.Collections.Generic.List[string]]
+            [Parameter(ValueFromPipeline=$true)][string[]]
             $testResultFiles,
-    
+
             [Int]
             $maxTestDuration
         )
+
         process {
+            Write-Debug $MyInvocation.MyCommand
+            [System.Collections.Generic.List[PSCustomObject]]$slowTests = [System.Collections.Generic.List[PSCustomObject]]::new()
+
             foreach ($file in $testResultFiles) {
                 # Skip line if a file cannot be found
                 if (-not (Test-Path $file)) {
-                    Write-Warning "Unable to find requested file: '$file'"
+                    Write-Warning "Unable to find requested file: '$file'."
                     continue
                 }
-        
+
                 # Pipe the interesting information
-                GetSlowTests $file $maxTestDuration | ForEach-Object {
-                    [PSCustomObject] @{
-                        TestName=($_.testName);
-                        Duration=($_.duration);
-                        Outcome=($_.outcome);
-                        Location=($file)
-                    }
+                GetSlowTests -file $file -maxTestDuration $maxTestDuration | ForEach-Object {
+                    $slowTests.Add(
+                        [PSCustomObject]@{
+                            TestName = $_.testName;
+                            Duration = $_.duration;
+                            Outcome = $_.outcome;
+                            Location = $file;
+                        })
                 }
             }
+
+            return $slowTests
         }
     }
     
@@ -169,51 +160,51 @@ begin{
         param (
             [string]
             $file,
-    
+
             [int]
             $maxTestDuration
         )
 
-        [string]$durationPropertyName = 'duration'
-    
-        # Convert trx into xml for processing
-        [xml]$xmlTrx = Get-Content -path $file
+        process {
+            Write-Debug $MyInvocation.MyCommand
+            [xml]$xmlTrx = Get-Content -path $file
 
-        # Select all the test results that exceed the max duration
-        $hasResults = ($xmlTrx.TestRun.PSObject.Properties.Name -contains 'Results' -and 
-                            $xmlTrx.TestRun.Results.PSObject.Properties.Name -contains 'UnitTestResult')
-
-        if ($hasResults) {
-            $xmlTrx.TestRun.Results.UnitTestResult | 
-            Where-Object {
-                if (-not (HasProperty $_ $durationPropertyName)) {
-                    $duration = [TimeSpan]::Zero
-                } else {
-                    $duration = ($_.duration -as [TimeSpan])
-                }
-        
-                if ($null -ne ($duration)) {
-                    $myDuration = New-TimeSpan -Seconds $maxTestDuration
-                    $duration.TotalSeconds -gt $myDuration.TotalSeconds
-                }
+            # Select all the test results that exceed the max duration
+            $hasResults = ($xmlTrx.TestRun.PSObject.Properties.Name -contains 'Results' -and $xmlTrx.TestRun.Results.PSObject.Properties.Name -contains 'UnitTestResult')
+            if ($hasResults) {
+                return $xmlTrx.TestRun.Results.UnitTestResult | 
+                    Where-Object {
+                        if (-not ('duration' -in $_.PSObject.Properties.Name)) {
+                            $duration = [TimeSpan]::Zero
+                        } else {
+                            $duration = ($_.duration -as [TimeSpan])
+                        }
+                
+                        if ($null -ne $duration) {
+                            $myDuration = New-TimeSpan -Seconds $maxTestDuration
+                            $duration.TotalSeconds -gt $myDuration.TotalSeconds
+                        }
+                    }
             }
         }
     }
     
-    function GetOutputFilePath {
+    function GetOutputDir {
         param (
-            [string[]]
-            $trxFileDir
+            [string]
+            $trxFilePath
         )
-    
-        # Determine if the passed in $path is a file or directory.
-        # Gets the underlying directory if file.
-        if (Test-Path -path $trxFileDir -PathType Leaf) {
-            $trxFileDir = Split-Path $trxFileDir
+
+        process {
+            Write-Debug $MyInvocation.MyCommand
+            
+            if (Test-Path -path $trxFilePath -PathType Leaf) {
+                $trxFilePath = Split-Path -Path $trxFilePath -Parent
+            }
+        
+            # Generate our file path to output to.
+            return Join-Path -Path $trxFilePath -ChildPath 'SlowTestReport.csv'
         }
-    
-        # Create our file to output
-        Join-Path $trxFileDir -ChildPath "SlowTestReport.csv"
     }
     
     function ReportResults {
@@ -229,74 +220,80 @@ begin{
         )
 
         process {
+            Write-Debug $MyInvocation.MyCommand
             if ($null -eq $slowTests -or $slowTests.Count -eq 0) {
                 Write-Information -MessageData "No slow tests found! $([Environment]::NewLine)"
-                PrintMessages $slowTests $outFile $maxTestDuration
+                PrintMessages -slowTests $slowTests.Count -maxTestDuration $maxTestDuration
                 return
             }
+
             $slowTests | Export-Csv -Path $outFile -NoTypeInformation
-            PrintMessages $slowTests $outFile $maxTestDuration
+            Write-Information -MessageData "Results written to: $outFile$([Environment]::NewLine)"
+            Write-Output ($slowTests | Format-Table | Out-String)
+
+            PrintMessages -slowTests $slowTests.Count -maxTestDuration $maxTestDuration
         }
     }
     
     function PrintMessages {
         param (
-            [System.Collections.Generic.List[PSCustomObject]]
+            [int]
             $slowTests,
-    
-            [string]
-            $outFile,
-    
+            
             [int]
             $maxTestDuration
         )
-        try {
-            $slowTests | Format-Table
 
-            $count = 0
-            if ($null -ne $slowTests) {$count = $slowTests.Count}
-        
-            switch ($count) {
-                0 { Write-Information -MessageData "No tests slower than ($maxTestDuration) seconds were found." }
-                1 { Write-Information -MessageData ("One test found that exceeded the maximum " +
-                                                    "test duration of ($maxTestDuration) seconds.") }
-                Default { Write-Information -MessageData ("$( $slowTests.Count ) tests found that exceeded the " +
-                                                            "maximum test duration of ($maxTestDuration) seconds.") }
+        begin {
+            function PrintFortune {
+                [string[]]$fortunes = @(
+                    "You smell nice today",
+                    "I like the way you move",
+                    "Ahh, that's the stuff",
+                    "My life for Auir",
+                    "Metamorphosis completed",
+                    "Racoons, they are dancing on the head of a pin with the angels. They are laughing",
+                    "Only you <PERSON_NAME_HERE> could solve <PROBLEM_DESCRIPTION_HERE>",
+                    "Do you always make this look so easy?",
+                    "Excellent mouthfeel",
+                    "I'm so glad you're here today",
+                    "Looks like it's back to the before-fore times",
+                    "Your sound card works perfectly",
+                    "Good news everyone!",
+                    "Everything is exactly how you left it",
+                    "    The thing with engineers from DevOps
+            Is it's quite easy to set them off.
+            If you wanna make 'em mad,
+            Or even just sad,
+            Post a build failure and don't post the logs!")
+                Write-Information -MessageData ((Get-Random -InputObject $fortunes) + ([Environment]::NewLine))
             }
-            Write-Information -MessageData "Results written to: $outFile $([Environment]::NewLine)"
-        } finally {
-            # Very important. Do not remove as the file breaks.
-            PrintFortune
+        }
+
+        process {
+            Write-Debug $MyInvocation.MyCommand
+            try {
+                switch ($slowTests) {
+                    0 {
+                        Write-Information -MessageData "No tests slower than ($maxTestDuration) seconds were found."
+                    }
+                    1 {
+                        Write-Information -MessageData "One test found that exceeded the maximum test duration of ($maxTestDuration) seconds."
+                    }
+                    default {
+                        Write-Information -MessageData "$slowTests tests found that exceeded the maximum test duration of ($maxTestDuration) seconds."
+                    }
+                }
+            } finally {
+                # Very important. Do not remove as the file breaks.
+                PrintFortune
+            }
         }
     }
-    
-    function PrintFortune {
-        [string[]]$fortunes = @(
-            "You smell nice today"
-            "I like the way you move"
-            "Ahh, that's the stuff"
-            "My life for Auir"
-            "Metamorphosis completed"
-            "Racoons, they are dancing on the head of a pin with the angels. They are laughing"
-            "Only you <PERSON_NAME_HERE> could solve <PROBLEM_DESCRIPTION_HERE>"
-            "Do you always make this look so easy?"
-            "Excellent mouthfeel"
-            "I'm so glad you're here today"
-            "Looks like it's back to the before-fore times"
-            "Your sound card works perfectly"
-            "Good news everyone!"
-            "Everything is exactly how you left it"
-            "    The thing with engineers from DevOps
-    Is it's quite easy to set them off.
-    If you wanna make 'em mad,
-    Or even just sad,
-    Post a build failure and don't post the logs!")
-        Write-Information -MessageData (
-            (Get-Random -InputObject $fortunes) + ([Environment]::NewLine))
-    }
 }
+
 process {
-    $outputFilePath = GetOutputFilePath $path
-    $slowTests = GetTrxFilesFromDir -Path $path | GenerateTrxResult -MaxTestDuration $maxTestDuration
+    $slowTests = GetTrxFilesFromDir -Path $path -searchDepth $depth | GenerateTrxResult -MaxTestDuration $maxTestDuration
+    [string]$outputFilePath = GetOutputDir -trxFilePath $path
     ReportResults -SlowTests $slowTests -OutFile $outputFilePath -MaxTestDuration $maxTestDuration
 }
