@@ -223,7 +223,7 @@ begin {
             Write-Debug $MyInvocation.MyCommand
             if ($null -eq $slowTests -or $slowTests.Count -eq 0) {
                 Write-Information -MessageData "No slow tests found! $([Environment]::NewLine)"
-                PrintMessages -slowTests $slowTests.Count -maxTestDuration $maxTestDuration
+                PrintMessages -slowTests 0 -maxTestDuration $maxTestDuration
                 return
             }
 
