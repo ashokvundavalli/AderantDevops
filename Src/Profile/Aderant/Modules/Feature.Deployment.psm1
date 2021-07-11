@@ -17,12 +17,12 @@ function global:Start-DeploymentManager {
 
     begin {
         $InformationPreference = 'Continue'
+        $ErrorActionPreference = 'Stop'
     }
 
     process {
         if (-not (Test-Path -Path $deploymentManager)) {
-            Write-Warning "Please ensure that DeploymentManager.exe is located at: '$deploymentManager'."
-            return
+            Write-Error "DeploymentManager.exe not located at: '$deploymentManager'."
         }
 
         Write-Information -MessageData 'Starting Deployment Manager...'
@@ -116,48 +116,54 @@ function global:Start-DeploymentEngine {
 
 function global:Install-DeploymentManager {
     <#
-    .Synopsis
-        Installs DeploymentManager.msi from the current branch binaries directory.
-    .Description
-        Installs Deployment Manager from the .msi located in the current branch.
+    .SYNOPSIS
+        Calls the InstallDeploymentManager.ps1 script to install Deployment Manager.
+    .DESCRIPTION
+        Calls the InstallDeploymentManager.ps1 script to install Deployment Manager.
+    .PARAMETER BinariesDirectory
+        The Expert binaries directory which contains the InstallDeploymentManager.ps1 script.
     .EXAMPLE
-        Install-DeploymentManager
-            Installs Deployment Manager from the current branch binaries directory.
+        Install-DeploymentManager -BinariesDirectory 'C:\AderantExpert\Binaries\'
+            Calls the InstallDeploymentManager.ps1 script located at C:\AderantExpert\Binaries\AutomatedDeployment to install Deployment Manager.
     #>
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$binariesDirectory
+        [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$BinariesDirectory = "$Env:SystemDrive\AderantExpert\Binaries"
     )
 
-    if ([string]::IsNullOrWhiteSpace($binariesDirectory)) {
-        $binariesDirectory = "$Env:SystemDrive\AderantExpert\Binaries"
-    }
+    [string]$installDeploymentManagerScript = Join-Path -Path $BinariesDirectory -ChildPath 'AutomatedDeployment\InstallDeploymentManager.ps1'
 
-    $pathToInstallScript = [System.IO.Path]::Combine($binariesDirectory, 'AutomatedDeployment\InstallDeploymentManager.ps1')
-    & $pathToInstallScript -deploymentManagerMsiDirectory $binariesDirectory
+    if (Test-Path -Path $installDeploymentManagerScript) {
+        & $installDeploymentManagerScript -DeploymentManagerMsi (Join-Path -Path $BinariesDirectory -ChildPath 'DeploymentManager.msi')
+    } else {
+        Write-Error "Unable to locate Deployment Manager install script at path: '$installDeploymentManagerScript'."
+    }
 }
 
 function global:Uninstall-DeploymentManager {
     <#
-    .Synopsis
-        Uninstalls DeploymentManager.msi from the current branch binaries directory.
-    .Description
-        Uninstalls Deployment Manager from the .msi located in the current branch.
+    .SYNOPSIS
+        Calls the UninstallDeploymentManager.ps1 script to uninstall Deployment Manager.
+    .DESCRIPTION
+        Calls the UninstallDeploymentManager.ps1 script to uninstall Deployment Manager.
+    .PARAMETER BinariesDirectory
+        The Expert binaries directory which contains the UninstallDeploymentManager.ps1 script.
     .EXAMPLE
-        Uninstall-DeploymentManager
-            Uninstalls Deployment Manager using the .msi in the current branch binaries directory.
+        Uninstall-DeploymentManager -BinariesDirectory 'C:\AderantExpert\Binaries\'
+            Calls the UninstallDeploymentManager.ps1 script located at C:\AderantExpert\Binaries\AutomatedDeployment to uninstall Deployment Manager.
     #>
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$binariesDirectory
+        [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$BinariesDirectory = "$Env:SystemDrive\AderantExpert\Binaries"
     )
 
-    if ([string]::IsNullOrWhiteSpace($binariesDirectory)) {
-        $binariesDirectory = "$Env:SystemDrive\AderantExpert\Binaries"
-    }
+    [string]$uninstallDeploymentManagerScript = Join-Path -Path $BinariesDirectory -ChildPath 'AutomatedDeployment\UninstallDeploymentManager.ps1'
 
-    $pathToUninstallScript = [System.IO.Path]::Combine($binariesDirectory, 'AutomatedDeployment\UninstallDeploymentManager.ps1')
-    & $pathToUninstallScript -deploymentManagerMsiDirectory $binariesDirectory
+    if (Test-Path -Path $uninstallDeploymentManagerScript) {
+        & $uninstallDeploymentManagerScript
+    } else {
+        Write-Error "Unable to locate Deployment Manager uninstall script at path: '$uninstallDeploymentManagerScript'."
+    }
 }
 
 function Get-EnvironmentFromXml([string]$xpath) {
