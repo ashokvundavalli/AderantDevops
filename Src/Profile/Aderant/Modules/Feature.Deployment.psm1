@@ -42,74 +42,78 @@ function global:Start-DeploymentEngine {
         Run DeploymentEngine for your current branch
     .Description
         Starts DeploymentEngine.exe with the specified command.
-    .PARAMETER command
+    .PARAMETER Command
         The action you want the deployment engine to take.
-    .PARAMETER serverName
-        The name of the database server.
-    .PARAMETER databaseName
+    .PARAMETER ServerInstance
+        The database server\instance the database is on.
+    .PARAMETER Database
         The name of the database containing the environment manifest.
-    .PARAMETER skipPackageImports
+    .PARAMETER SkipPackageImports
         Flag to skip package imports.
-    .PARAMETER skipHelpDeployment
+    .PARAMETER SkipHelpDeployment
         Flag to skip deployment of Help.
+    .PARAMETER BinariesDirectory
+        The binaries directory against which you will run Deployment Engine.
     .EXAMPLE
-        DeploymentEngine -action Deploy -serverName MyServer01 -databaseName MyMain
-        DeploymentEngine -action Remove -serverName MyServer01 -databaseName MyMain
-        DeploymentEngine -action ExportEnvironmentManifest -serverName MyServer01 -databaseName MyMain
-        DeploymentEngine -action ImportEnvironmentManifest -serverName MyServer01 -databaseName MyMain
+        Start-DeploymentEngine -Command Deploy -ServerInstance MyServer01 -Database ExpertDB
+        
+        Deploys Expert using the database ExpertDB on the server MyServer01, using the default binaries location
+        
+    .EXAMPLE
+        Start-DeploymentEngine -Command Remove -ServerInstance MyServer01 -Database ExpertDB
+        
+        Removes the Expert deployment associated with the database ExpertDB on the server MyServer01
+        
+    .EXAMPLE
+        Start-DeploymentEngine -Command ExportEnvironmentManifest -ServerInstance MyServer01 -Database ExpertDB
+        
+        Exports the Expert Environment Manifest from the database ExpertDB on the server MyServer01 to the default binaries location
+        
+    .EXAMPLE
+        Start-DeploymentEngine -Command ImportEnvironmentManifest -ServerInstance MyServer01 -Database ExpertDB -BinariesDirectory "C:\EnvironmentXmlDirectory"
+        
+        Imports the Expert Environment Manifest found at "C:\EnvironmentXmlDirectory" into the database ExpertDB on the Server MyServer01
     #>
     [CmdletBinding()]
     [Alias("de")]
     param (
-        [Parameter(Mandatory = $true)][ValidateSet("Deploy", "Remove", "ExportEnvironmentManifest", "ImportEnvironmentManifest", "EnableFilestream", "DeploySilent", "RemoveSilent")][string]$command,
-        [Parameter(Mandatory = $false)][ValidateNotNullOrEmpty()][string]$serverName,
-        [Parameter(Mandatory = $false)][ValidateNotNullOrEmpty()][string]$databaseName,
-        [switch]$skipPackageImports,
-        [switch]$skipHelpDeployment,
-        [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$binariesDirectory
+        [Parameter(Mandatory = $true)][ValidateSet("Deploy", "Remove", "ExportEnvironmentManifest", "ImportEnvironmentManifest", "EnableFilestream", "DeploySilent", "RemoveSilent")][string]$Command,
+        [Parameter(Mandatory = $false)][ValidateNotNullOrEmpty()][string]$ServerInstance,
+        [Parameter(Mandatory = $false)][ValidateNotNullOrEmpty()][string]$Database,
+        [switch]$SkipPackageImports,
+        [switch]$SkipHelpDeployment,
+        [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$BinariesDirectory
     )
 
     process {
-        if (-not (Test-Path $global:ShellContext.DeploymentEngine)) {
-            Write-Error "Couldn't locate the DeploymentEngine.exe, please place it at $($global:ShellContext.DeploymentEngine)"
-        }
-
         if ([string]::IsNullOrWhiteSpace($binariesDirectory)) {
             $binariesDirectory = "$Env:SystemDrive\AderantExpert\Binaries"
         }
 
         $environmentXml = [System.IO.Path]::Combine($binariesDirectory, "environment.xml")
         $pathToDeploymentEngineScript = Join-Path -Path $binariesDirectory -ChildPath "AutomatedDeployment\DeploymentEngine.ps1"
+        . $pathToDeploymentEngineScript
 
-        if ([string]::IsNullOrWhiteSpace($serverName)) {
-            $serverName = Get-DatabaseServer
+        if ([string]::IsNullOrWhiteSpace($ServerInstance)) {
+            $ServerInstance = Get-DatabaseServer
         }
 
-        if ([string]::IsNullOrWhiteSpace($databaseName)) {
-            $databaseName = Get-Database
+        if ([string]::IsNullOrWhiteSpace($Database)) {
+            $Database = Get-Database
         }
 
-        switch ($true) {
-            ($skipPackageImports.IsPresent -and $skipHelpDeployment.IsPresent) {
-                . $pathToDeploymentEngineScript -command $command -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $global:ShellContext.DeploymentEngine -skipPackageImports -skipHelpDeployment
-                break
-            }
-            $skipPackageImports.IsPresent {
-                . $pathToDeploymentEngineScript -command $command -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $global:ShellContext.DeploymentEngine -skipPackageImports
-                break
-            }
-            $skipHelpDeployment.IsPresent {
-                . $pathToDeploymentEngineScript -command $command -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $global:ShellContext.DeploymentEngine -skipHelpDeployment
-                break
-            }
-            default {
-                . $pathToDeploymentEngineScript -command $command -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $global:ShellContext.DeploymentEngine
-                break
-            }
+        $Arguments = @{
+            ServerInstance = $ServerInstance
+            Database = $Database
+            EnvironmentManifest = $environmentXml
+            SkipPackageImports = $SkipPackageImports.IsPresent
+            SkipHelpDeployment = $SkipHelpDeployment.IsPresent
         }
+      
+        Invoke-DeploymentEngine -Command $Command @Arguments
 
-        if (($command -eq "Deploy" -or $command -eq "Remove") -and $LASTEXITCODE -eq 0) {
-            . $pathToDeploymentEngineScript -command "ExportEnvironmentManifest"  -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $global:ShellContext.DeploymentEngine
+        if ($Command -eq "Deploy" -or $Command -eq "Remove") {
+            Invoke-DeploymentEngine -Command "ExportEnvironmentManifest" @Arguments
         }
     }
 }

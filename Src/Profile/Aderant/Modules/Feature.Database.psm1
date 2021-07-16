@@ -83,7 +83,7 @@ function global:Restore-ExpertDatabase {
 
                 $environmentXml.Save($environmentManifest)
 
-                Start-DeploymentEngine -command ImportEnvironmentManifest -serverName $serverInstance -databaseName $database
+                Start-DeploymentEngine -Command ImportEnvironmentManifest -ServerInstance $serverInstance -Database $database
             } else {
                 Write-Warning "No environment manifest found to import at: $($environmentManifest)"
             }
