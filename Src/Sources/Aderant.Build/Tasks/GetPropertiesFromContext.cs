@@ -66,7 +66,7 @@ namespace Aderant.Build.Tasks {
             SetFlavor(context);
 
             if (!string.IsNullOrWhiteSpace(BranchConfigFile)) {
-                ReadBranchConfigFile(BranchConfigFile, new PhysicalFileSystem());
+                ReadBranchConfigFile(BranchConfigFile, new PhysicalFileSystem(Logger));
             }
 
             if (!string.IsNullOrWhiteSpace(ArtifactStagingDirectory)) {

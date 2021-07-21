@@ -6,8 +6,7 @@ namespace Aderant.Build {
         private const int NumberOfRetries = 3;
         private const int DelayOnRetry = 1000;
 
-        public RetryingPhysicalFileSystem()
-            : base() {
+        public RetryingPhysicalFileSystem() : base() {
         }
 
         public override void CopyDirectory(string source, string destination) {

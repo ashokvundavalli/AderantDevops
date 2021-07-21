@@ -37,7 +37,7 @@ namespace Aderant.Build.Tasks.ArtifactHandling {
         public bool ArtifactRestoreSkipped { get; set; }
 
         public override bool ExecuteTask() {
-            var service = new ArtifactService(PipelineService, new PhysicalFileSystem(), Logger) {
+            var service = new ArtifactService(PipelineService, new PhysicalFileSystem(Logger), Logger) {
                 CommonOutputDirectory = CommonOutputDirectory,
                 CommonDependencyDirectory = CommonDependencyDirectory
             };

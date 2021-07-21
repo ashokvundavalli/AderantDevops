@@ -6,12 +6,13 @@ using System.IO.Compression;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Aderant.Build.IO;
 using Aderant.Build.Logging;
 using Aderant.Build.Packaging;
 using Aderant.Build.Utilities;
+using Microsoft.Build.Utilities;
+using Task = System.Threading.Tasks.Task;
 
 namespace Aderant.Build {
 
@@ -45,7 +46,7 @@ namespace Aderant.Build {
             }
         }
 
-        private ILogger logger;
+        private readonly ILogger logger;
 
         [ImportingConstructor]
         public PhysicalFileSystem() {
@@ -57,6 +58,9 @@ namespace Aderant.Build {
         /// <param name="root">The root directory</param>
         public PhysicalFileSystem(string root)
             : this(root, null) {
+        }
+
+        public PhysicalFileSystem(ILogger logger) : this(null, logger) {
         }
 
         public PhysicalFileSystem(string root, ILogger logger) {
@@ -493,22 +497,28 @@ namespace Aderant.Build {
 
             // If copying subdirectories, copy them and their contents to new location.
             if (recursive) {
-                foreach (DirectoryInfo subdir in dirs) {
-                    string temppath = Path.Combine(destination, subdir.Name);
-                    CopyDirectoryInternal(subdir.FullName, temppath, recursive);
+                foreach (DirectoryInfo subDir in dirs) {
+                    string tempPath = Path.Combine(destination, subDir.Name);
+                    CopyDirectoryInternal(subDir.FullName, tempPath, true);
                 }
             }
         }
 
         private void ExtractToDirectory(string zipArchive, string destinationDirectoryName, bool overwrite) {
+            if (string.IsNullOrWhiteSpace(zipArchive)) {
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(zipArchive));
+            }
+            if (string.IsNullOrWhiteSpace(destinationDirectoryName)) {
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(destinationDirectoryName));
+            }
+
             if (!overwrite) {
                 ZipFile.ExtractToDirectory(zipArchive, destinationDirectoryName);
                 return;
             }
 
             using (ZipArchive archive = new ZipArchive(File.OpenRead(zipArchive), ZipArchiveMode.Read)) {
-                Dictionary<string, byte> directoriesKnownToExist =
-                    new Dictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
+                Dictionary<string, byte> directoriesKnownToExist = new Dictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
 
                 foreach (ZipArchiveEntry file in archive.Entries) {
                     string completeFileName = Path.Combine(destinationDirectoryName, file.FullName);
@@ -528,8 +538,13 @@ namespace Aderant.Build {
                     }
 
                     using (FileStream fileStream = File.Create(completeFileName)) {
-                        using (Stream stream = file.Open()) {
-                            stream.CopyTo(fileStream);
+                        try {
+                            using (Stream stream = file.Open()) {
+                                stream.CopyTo(fileStream);
+                            }
+                        } catch {
+                            logger?.Error("Unable to successfully extract archive: '{0}'.", zipArchive);
+                            throw;
                         }
                     }
                 }

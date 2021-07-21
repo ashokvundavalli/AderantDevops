@@ -20,8 +20,7 @@ namespace Aderant.Build.Packaging {
         private List<ArtifactPackageDefinition> autoPackages;
         private ArtifactStagingPathBuilder pathBuilder;
 
-        public ArtifactService(ILogger logger)
-            : this(null, new PhysicalFileSystem(null, logger), logger) {
+        internal ArtifactService(ILogger logger) : this(null, new PhysicalFileSystem(logger), logger) {
         }
 
         public ArtifactService(IBuildPipelineService pipelineService, IFileSystem fileSystem, ILogger logger) {
