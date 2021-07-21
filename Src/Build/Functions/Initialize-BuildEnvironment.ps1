@@ -495,6 +495,11 @@ try {
     BuildProjects -mainAssembly $mainAssembly -forceCompile $isUsingProfile -commit $commit
     LoadAssembly -assemblyPath ([System.IO.Path]::Combine($assemblyPathRoot, "System.Threading.Tasks.Dataflow.dll"))
     LoadAssembly -assemblyPath ([System.IO.Path]::Combine($assemblyPathRoot, "protobuf-net.dll"))
+
+    # Required for Get-BuildDependencyTree
+    LoadAssembly -assemblyPath ([System.IO.Path]::Combine($assemblyPathRoot, "System.Runtime.CompilerServices.Unsafe.dll"))
+    LoadAssembly -assemblyPath ([System.IO.Path]::Combine($assemblyPathRoot, "paket.exe"))
+
     EnsureModuleLoaded
     LoadLibGit2Sharp $assemblyPathRoot
     LoadVstsTaskLibrary

@@ -230,6 +230,7 @@ namespace VisualStudioConfiguration {
                         var studioInstance = new VisualStudioInstance(
                             instance.GetDisplayName(),
                             instance.GetInstallationPath(),
+                            instance.GetInstanceId(),
                             version);
 
 
@@ -284,6 +285,8 @@ namespace VisualStudioConfiguration {
     /// Wrapper class to represent an installed instance of Visual Studio.
     /// </summary>
     public sealed class VisualStudioInstance {
+        private readonly string instanceId;
+
         /// <summary>
         /// Version of the Visual Studio Instance
         /// </summary>
@@ -299,7 +302,8 @@ namespace VisualStudioConfiguration {
         /// </summary>
         public string Name { get; private set; }
 
-        internal VisualStudioInstance(string name, string path, Version version) {
+        internal VisualStudioInstance(string name, string path, string instanceId, Version version) {
+            this.instanceId = instanceId;
             Name = name;
             Path = path;
             Version = version;

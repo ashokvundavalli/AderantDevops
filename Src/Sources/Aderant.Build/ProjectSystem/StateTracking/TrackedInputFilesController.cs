@@ -31,6 +31,13 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         /// </summary>
         public bool SkipNuGetPackageHashCheck { get; set; }
 
+
+        /// <summary>
+        /// Computes the up to date check result.
+        /// </summary>
+        /// <param name="buildStateFiles">A collection of build cache info.</param>
+        /// <param name="filesToTrack">The current on disk files that should be checked for staleness</param>
+        /// <param name="trackedMetadataFiles"></param>
         public InputFilesDependencyAnalysisResult PerformDependencyAnalysis(BuildStateFile[] buildStateFiles, List<TrackedInputFile> filesToTrack, IList<TrackedMetadataFile> trackedMetadataFiles) {
             var result = new InputFilesDependencyAnalysisResult();
 
@@ -52,14 +59,12 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             result.TrackedFiles = filesToTrack?.AsReadOnly();
 
             if (buildStateFiles != null && buildStateFiles.Length > 0) {
-                foreach (BuildStateFile buildStateFile in buildStateFiles.OrderBy(x => x.TrackPackageHash)) {
+                foreach (BuildStateFile buildStateFile in buildStateFiles) {
                     logger.Info("Assessing state file: '{0}'.", buildStateFile.Id);
 
-                    ICollection<TrackedInputFile> cachedTrackedInputFiles = buildStateFile.TrackedFiles != null
-                        ? new List<TrackedInputFile>(buildStateFile.TrackedFiles)
-                        : new List<TrackedInputFile>(1);
+                    ICollection<TrackedInputFile> cachedTrackedInputFiles = buildStateFile.TrackedFiles != null ? new List<TrackedInputFile>(buildStateFile.TrackedFiles) : new List<TrackedInputFile>(1);
 
-                    if (buildStateFile.PackageHash != null) {
+                    if (buildStateFile.PackageHash != null && !SkipNuGetPackageHashCheck) {
                         logger.Info("Adding package hash metadata: '{0}' to tracked files.", buildStateFile.PackageHash);
 
                         cachedTrackedInputFiles.Add(new TrackedMetadataFile(Constants.PaketLock) {
@@ -69,15 +74,12 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
                     if (filesToTrack?.Count != cachedTrackedInputFiles.Count) {
                         logger.Info("Tracked file count does not match.");
-
                         continue;
                     }
 
-                    bool skipNuGetPackageHashCheck = SkipNuGetPackageHashCheck ||
-                                                     !trackPackageHash && !buildStateFile.TrackPackageHash;
+                    bool skipNuGetPackageHashCheck = SkipNuGetPackageHashCheck || !trackPackageHash && !buildStateFile.TrackPackageHash;
 
-                    if (filesToTrack.Count == 0 || CorrelateInputs(buildStateFile.Id.ToString(), filesToTrack.AsReadOnly(), cachedTrackedInputFiles,
-                        skipNuGetPackageHashCheck)) {
+                    if (filesToTrack.Count == 0 || CorrelateInputs(buildStateFile.Id.ToString(), filesToTrack.AsReadOnly(), cachedTrackedInputFiles, skipNuGetPackageHashCheck)) {
                         logger.Info("Found acceptable match.");
 
                         result.IsUpToDate = true;
@@ -312,6 +314,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
         internal class LoggerAdapter : Microsoft.Build.Framework.ILogger {
             private readonly ILogger logger;
+            private IEventSource source;
 
             public LoggerAdapter(ILogger logger) {
                 this.logger = logger;
@@ -319,6 +322,8 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             }
 
             public void Initialize(IEventSource eventSource) {
+                source = eventSource;
+
                 eventSource.MessageRaised += OnMessageRaised;
                 eventSource.ErrorRaised += OnErrorRaised;
                 eventSource.WarningRaised += OnWarningRaised;
@@ -337,6 +342,9 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             }
 
             public void Shutdown() {
+                source.MessageRaised -= OnMessageRaised;
+                source.ErrorRaised -= OnErrorRaised;
+                source.WarningRaised -= OnWarningRaised;
             }
 
             public LoggerVerbosity Verbosity { get; set; }

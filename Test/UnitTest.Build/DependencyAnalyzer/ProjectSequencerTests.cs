@@ -13,6 +13,7 @@ using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.VersionControl;
+using Microsoft.TeamFoundation.Framework.Client.Catalog.Objects;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using UnitTest.Build.StateTracking;
@@ -512,6 +513,46 @@ namespace UnitTest.Build.DependencyAnalyzer {
             sequencer.CreatePlan(context, files, graph, true);
 
             Assert.IsFalse(p2.RequiresBuilding());
+        }
+
+        [TestMethod]
+        public void When_all_projects_in_cone_dirty_artifact_download_is_disabled() {
+            var tree = new ProjectTreeBuilder();
+
+            var d1 = tree.CreateDirectory("D1", true);
+            var d2 = tree.CreateDirectory("D2", true);
+
+            var p1 = tree.CreateProject("P1");
+            p1.SolutionFile = Path.Combine(d1.Directory, "Solution.sln");
+            p1.IsDirty = true;
+            p1.MarkDirtyAndSetReason(BuildReasonTypes.ProjectItemChanged);
+            p1.FullPath = Path.Combine(d1.Directory, "P1", "P1.csproj");
+            p1.DirectoryNode = d1;
+
+            // A project scheduled to build via upstream change
+            var p2 = tree.CreateProject("P2");
+            p2.SolutionFile = Path.Combine(d2.Directory, "Solution.sln");
+            p2.IsDirty = true;
+            p2.MarkDirtyAndSetReason(BuildReasonTypes.InputsChanged);
+            p2.FullPath = Path.Combine(d2.Directory, "P2", "P2.csproj");
+            p2.DirectoryNode = d2;
+
+            p1.AddResolvedDependency(null, d1);
+            p2.AddResolvedDependency(null, d2);
+            p2.AddResolvedDependency(null, p1);
+
+            var graph = new ProjectDependencyGraph(p1, p2, d1, d2);
+
+            var sequencer = new ProjectSequencer(NullLogger.Default, new Mock<IFileSystem2>().Object) {
+                PackageChecker = new Mock<BuildCachePackageChecker>(NullLogger.Default).Object
+            };
+
+            Assert.IsFalse(d2.RetrievePrebuilts.HasValue);
+
+            sequencer.SecondPassAnalysis(graph.Nodes.ToList(), graph, BuildCacheOptions.DoNotDisableCacheWhenProjectChanged);
+
+            Assert.IsFalse(d1.RetrievePrebuilts);
+            Assert.IsFalse(d2.RetrievePrebuilts);
         }
 
         [TestMethod]

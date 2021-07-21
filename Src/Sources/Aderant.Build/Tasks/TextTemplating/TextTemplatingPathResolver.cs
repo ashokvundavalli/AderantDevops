@@ -69,7 +69,7 @@ namespace Aderant.Build.Tasks.TextTemplating {
             string vs2015Install = Environment.GetEnvironmentVariable("VSSDK140Install");
 
             if (!string.IsNullOrWhiteSpace(vs2015Install)) {
-                visualStudioInstances.Add(new VisualStudioInstance("Visual Studio 2015", Path.GetDirectoryName(vs2015Install.TrimEnd(Path.DirectorySeparatorChar)), new Version(14, 0)));
+                visualStudioInstances.Add(new VisualStudioInstance("Visual Studio 2015", Path.GetDirectoryName(vs2015Install.TrimEnd(Path.DirectorySeparatorChar)), string.Empty, new Version(14, 0)));
             }
 
             LogInvalidInstanceFound(invalid);

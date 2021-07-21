@@ -130,7 +130,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         internal static bool GiveTimeToReviewTree { get; set; } = true;
 
         private void LogPrebuiltStatus(IReadOnlyList<IDependable> filteredProjects) {
-            foreach (var project in filteredProjects.OfType<DirectoryNode>().Distinct()) {
+            foreach (var project in filteredProjects.OfType<DirectoryNode>()) {
                 if (!project.IsPostTargets) {
                     logger.Info($"{project.DirectoryName} retrieve prebuilts: {(project.RetrievePrebuilts.HasValue ? project.RetrievePrebuilts.Value.ToString() : "?")}", null);
                 }
@@ -171,15 +171,16 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// If the directory has been marked as out-of-date then we need to propagate that state to all child projects to bring
         /// them back into the tree.
         /// Here we check for this and add the projects back in if the directory which owns them is invalidated.
-        /// TODO: This should be handled as part of <see cref="GetProjectsBuildList" />
         /// </summary>
-        internal IReadOnlyList<IDependable> SecondPassAnalysis(IReadOnlyList<IDependable> filteredProjects, ProjectDependencyGraph projectGraph, BuildCacheOptions option) {
+        internal IReadOnlyList<IDependable> SecondPassAnalysis(IReadOnlyList<IDependable> filteredProjects, ProjectDependencyGraph projectGraph, BuildCacheOptions cacheOptions) {
             var graph = new ProjectDependencyGraph();
 
-            bool disableBuildCache = option == BuildCacheOptions.DisableCacheWhenProjectChanged;
+            bool disableBuildCache = cacheOptions == BuildCacheOptions.DisableCacheWhenProjectChanged;
 
             if (disableBuildCache) {
                 DisableBuildCache(projectGraph.Projects);
+            } else {
+                TurnOffArtifactDownloadIfNeeded(projectGraph);
             }
 
             foreach (var project in projectGraph.Projects) {
@@ -228,6 +229,35 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }).ToList();
         }
 
+        /// <summary>
+        /// Optimization. If a cone has all children being built and was added as a downstream dependency then we can disable artifact download
+        /// </summary>
+        private static void TurnOffArtifactDownloadIfNeeded(ProjectDependencyGraph projectGraph) {
+            var projectsBySolutionRoot = projectGraph.ProjectsBySolutionRoot;
+
+            foreach (var grouping in projectsBySolutionRoot) {
+                bool allDirty = true;
+                DirectoryNode directoryNode = null;
+
+                foreach (var project in grouping) {
+                    if (directoryNode == null) {
+                        directoryNode = project.DirectoryNode;
+                    }
+
+                    if (project.BuildReason == null) {
+                        allDirty = false;
+                        break;
+                    }
+                }
+
+                if (allDirty) {
+                    if (directoryNode != null) {
+                        directoryNode.RetrievePrebuilts = false;
+                    }
+                }
+            }
+        }
+
         private static void AddDependencyOnCacheDownload(ProjectDependencyGraph projectGraph, ConfiguredProject project) {
             if (project.BuildReason != null /* Project is selected to build */) {
                 IReadOnlyCollection<IDependable> dependencies = project.GetDependencies();
@@ -268,9 +298,9 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         internal static void WriteBuildTree(IFileSystem fileSystem, string destination, string treeText) {
-            string treeFile = Path.Combine(destination, "BuildTree.txt");
+            if (destination != null && fileSystem != null) {
+                string treeFile = Path.Combine(destination, "BuildTree.txt");
 
-            if (fileSystem != null) {
                 if (fileSystem.FileExists(treeFile)) {
                     fileSystem.DeleteFile(treeFile);
                 }
@@ -279,7 +309,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        private void MarkWebProjectsDirty(ProjectDependencyGraph graph) {
+        private static void MarkWebProjectsDirty(ProjectDependencyGraph graph) {
             // Web projects always need to be built as they have paths that reference content that needs to be deployed
             // during the build.
             // E.g script tags require that a file exists on disk. It's more reliable to have
@@ -436,9 +466,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                         var directoryAboveMakeFile = makeFile.Replace(WellKnownPaths.EntryPointFilePath, string.Empty, StringComparison.OrdinalIgnoreCase).TrimTrailingSlashes();
                         string nodeName = PathUtility.GetFileName(directoryAboveMakeFile);
 
-                        DirectoryNode startNode;
-                        DirectoryNode endNode;
-                        AddDirectoryNodes(graph, nodeName, directoryAboveMakeFile, out startNode, out endNode);
+                        AddDirectoryNodes(graph, nodeName, directoryAboveMakeFile, out var startNode, out var endNode);
 
                         startNodes.Add(startNode);
                         endNodes.Add(endNode);
@@ -616,8 +644,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 string paketLockFile = Path.Combine(directory, Constants.PaketLock);
 
                 if (fileSystem.FileExists(paketLockFile)) {
-                    PaketLockOperations paketLockOperations =
-                        new PaketLockOperations(paketLockFile, fileSystem.ReadAllLines(paketLockFile));
+                    PaketLockOperations paketLockOperations = new PaketLockOperations(paketLockFile, fileSystem.ReadAllLines(paketLockFile));
 
                     string packageHash = PaketLockOperations.HashLockFile(paketLockOperations.LockFileContent, packageHashVersionExclusions);
 
@@ -625,12 +652,19 @@ namespace Aderant.Build.DependencyAnalyzer {
                         PackageHash = packageHash,
                         PackageGroups = paketLockOperations.GetPackageInfo(),
                         Sha1 = packageHash,
-                        TrackPackageHash = packageHashVersionExclusions != null && packageHashVersionExclusions.Length > 0
+                        TrackPackageHash = IsPackageHashTrackingEnabled(packageHashVersionExclusions)
                     };
                 }
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Returns a value indicating if the lock file should be tracked implicitly
+        /// </summary>
+        private static bool IsPackageHashTrackingEnabled(string[] packageHashVersionExclusions) {
+            return packageHashVersionExclusions != null && packageHashVersionExclusions.Length > 0;
         }
 
         internal BuildStateFile[] FilterStateFiles(BuildStateFile[] selectedStateFiles, string packageHash) {
@@ -657,11 +691,11 @@ namespace Aderant.Build.DependencyAnalyzer {
                 List<TrackedMetadataFile> trackedMetadataFiles = new List<TrackedMetadataFile>();
                 BuildStateFile[] buildStateFiles = selectedStateFiles;
 
+
                 if (!skipNugetPackageHashCheck) {
                     TrackedMetadataFile paketLockMetadata = AcquirePaketLockMetadata(solutionRoot, buildMetadata?.PackageHashVersionExclusions);
-
                     if (paketLockMetadata != null) {
-                        logger.Debug("Adding package hash metadata: '{0}' to tracked files.", paketLockMetadata.PackageHash);
+
                         trackedMetadataFiles.Add(paketLockMetadata);
                         buildStateFiles = FilterStateFiles(selectedStateFiles, paketLockMetadata.PackageHash);
                     }

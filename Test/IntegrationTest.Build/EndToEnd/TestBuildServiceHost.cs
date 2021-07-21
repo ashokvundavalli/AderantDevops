@@ -106,7 +106,7 @@ namespace IntegrationTest.Build.EndToEnd {
             var ctx = new BuildOperationContext();
             ctx.BuildRoot = props["SolutionRoot"];
             ctx.BuildScriptsDirectory = props["BuildScriptsDirectory"];
-            ctx.BuildSystemDirectory = Path.Combine(testContext.DeploymentDirectory);
+            ctx.BuildSystemDirectory = testContext.DeploymentDirectory;
 
             ctx.DropLocationInfo.PrimaryDropLocation = Path.Combine(testContext.DeploymentDirectory, testContext.TestName, "_drop");
             ctx.DropLocationInfo.BuildCacheLocation = Path.Combine(testContext.DeploymentDirectory, testContext.TestName, "_cache");

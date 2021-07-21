@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -6,6 +7,7 @@ using System.Linq;
 using System.Runtime.Caching;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Aderant.Build.Logging;
 using Aderant.Build.Packaging;
 using Aderant.Build.ProjectSystem.StateTracking;
@@ -76,7 +78,7 @@ namespace Aderant.Build.ProjectSystem {
                     return metadata;
                 }
 
-                var files = new List<BuildStateFile>();
+                var files = new ConcurrentQueue<BuildStateFile>();
 
                 foreach (var bucketId in bucketIds) {
                     token.ThrowIfCancellationRequested();
@@ -90,48 +92,61 @@ namespace Aderant.Build.ProjectSystem {
 
                         // Limit scanning to an arbitrary number of builds so we don't spend too
                         // long thrashing the network.
-                        // TODO: This needs improvements, we should only publish changed objects to the cache
-                        foreach (var folder in folders.Take(5)) {
-                            token.ThrowIfCancellationRequested();
-
-                            // We have to nest the state file directory as TFS won't allow duplicate artifact names
-                            // For a single build we may produce 1 or more state files and so each one needs a unique artifact name
-                            var stateFile = Path.Combine(folder, BuildStateWriter.CreateContainerName(bucketId), BuildStateWriter.DefaultFileName);
-
-                            if (fileSystem.FileExists(stateFile)) {
-                                if (!fileSystem.GetDirectories(folder, false).Any()) {
-                                    // If there are no directories then the state file could be
-                                    // a garbage collected build in which case we should ignore it.
-                                    continue;
+                        Parallel.ForEach(folders.Take(5), () => (BuildStateFile) null, (folder, state, stateFile) => {
+                                if (state.ShouldExitCurrentIteration) {
+                                    state.Stop();
+                                    return null;
                                 }
 
-                                BuildStateFile file;
-                                using (Stream stream = fileSystem.OpenFile(stateFile)) {
-                                    file = StateFileBase.DeserializeCache<BuildStateFile>(stream);
+                                // We have to nest the state file directory as TFS won't allow duplicate artifact names
+                                // For a single build we may produce 1 or more state files and so each one needs a unique artifact name
+                                var stateFilePath = Path.Combine(folder, BuildStateWriter.CreateContainerName(bucketId), BuildStateWriter.DefaultFileName);
+
+                                if (fileSystem.FileExists(stateFilePath)) {
+                                    if (!fileSystem.GetDirectories(folder, false).Any()) {
+                                        // If there are no directories then the state file could be
+                                        // a garbage collected build in which case we should ignore it.
+                                        return null;
+                                    }
+
+                                    BuildStateFile file;
+                                    using (Stream stream = fileSystem.OpenFile(stateFilePath)) {
+                                        file = StateFileBase.DeserializeCache<BuildStateFile>(stream);
+                                    }
+
+                                    if (file == null) {
+                                        logger.Info($"Unable to deserialize file: '{stateFilePath}'.");
+                                        return null;
+                                    }
+
+                                    file.Location = folder;
+
+                                    if (IsFileTrustworthy(file, options, out var reason, out _)) {
+                                        logger.Info($"Candidate-> {stateFilePath}:{reason}");
+                                        return file;
+                                    } else {
+                                        logger.Info($"Rejected-> {stateFilePath}:{reason}");
+                                    }
                                 }
 
-                                if (file == null) {
-                                    logger.Info($"Unable to deserialize file: '{stateFile}'.");
-                                    continue;
+                                return null;
+                            }, file => {
+                                if (file != null) {
+                                    files.Enqueue(file);
                                 }
-
-                                file.Location = folder;
-
-                                string reason;
-                                if (IsFileTrustworthy(file, options, out reason, out _)) {
-                                    logger.Info($"Candidate-> {stateFile}:{reason}");
-                                    files.Add(file);
-                                } else {
-                                    logger.Info($"Rejected-> {stateFile}:{reason}");
-                                }
-                            }
-                        }
+                            });
                     } else {
                         logger.Info("No prebuilt artifacts at: " + bucketPath);
                     }
                 }
 
-                metadata.BuildStateFiles = files;
+                metadata.BuildStateFiles = files.OrderByDescending(s => {
+                    if (int.TryParse(s.BuildId, out var result)) {
+                        return result;
+                    }
+
+                    return 0;
+                }).ToList();
 
                 return metadata;
             }
