@@ -498,7 +498,7 @@ try {
 
     # Required for Get-BuildDependencyTree
     LoadAssembly -assemblyPath ([System.IO.Path]::Combine($assemblyPathRoot, "System.Runtime.CompilerServices.Unsafe.dll"))
-    LoadAssembly -assemblyPath ([System.IO.Path]::Combine($assemblyPathRoot, "paket.exe"))
+    #LoadAssembly -assemblyPath ([System.IO.Path]::Combine($assemblyPathRoot, "paket.exe"))
 
     EnsureModuleLoaded
     LoadLibGit2Sharp $assemblyPathRoot
