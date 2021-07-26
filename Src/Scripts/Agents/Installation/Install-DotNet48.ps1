@@ -44,7 +44,7 @@ process {
 
     try {
         $installerArgs = @('/q', '/norestart')
-        $process = Start-Process -FilePath $dotNet48Installer -installerArgs $installerArgs -PassThru -NoNewWindow -Wait
+        $process = Start-Process -FilePath $dotNet48Installer -ArgumentList $installerArgs -PassThru -NoNewWindow -Wait
         if ($process.ExitCode -ne 0) {
             Write-Error "Dot net installer exited with code: $($process.ExitCode)"
         } else {
