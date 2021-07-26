@@ -28,6 +28,7 @@ begin {
 
 process {
     Write-Information -MessageData "Downloading VS test agent."
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     Invoke-WebRequest -Uri $VsSkuURL -OutFile $filePath
 
     Write-Information -MessageData "Installing $VsSku."
