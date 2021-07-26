@@ -1,5 +1,6 @@
-$powerShell = "$Env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
-$principal = New-ScheduledTaskPrincipal -UserID tfsbuildservice$ -LogonType Password -RunLevel Highest
+[string]$powerShell = "$Env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
+[string]$userName = 'ADERANT_AP\tfsbuildservice$'
+$principal = New-ScheduledTaskPrincipal -UserID $userName -LogonType Password -RunLevel Highest
 
 & {
     <#
@@ -13,7 +14,7 @@ $principal = New-ScheduledTaskPrincipal -UserID tfsbuildservice$ -LogonType Pass
     Unregister-ScheduledTask -TaskName $STName -Confirm:$false -Verbose -ErrorAction SilentlyContinue
 
     # Action to run as
-    $STAction = New-ScheduledTaskAction -Execute $powerShell -Argument "-NoLogo -Sta -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File $PSScriptRoot\make-free-space-vnext.ps1" -WorkingDirectory $PSScriptRoot
+    $STAction = New-ScheduledTaskAction -Execute $powerShell -Argument "-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File $PSScriptRoot\make-free-space-vnext.ps1" -WorkingDirectory $PSScriptRoot
     $STSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -Compatibility Win8
 
     # Register the new scheduled task
@@ -31,7 +32,7 @@ $principal = New-ScheduledTaskPrincipal -UserID tfsbuildservice$ -LogonType Pass
 
     Unregister-ScheduledTask -TaskName $STName -Confirm:$false -Verbose -ErrorAction SilentlyContinue
 
-    $STAction = New-ScheduledTaskAction -Execute $powerShell -Argument "-NoLogo -Sta -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File $PSScriptRoot\make-free-space-vnext.ps1 -strategy nuget" -WorkingDirectory $PSScriptRoot
+    $STAction = New-ScheduledTaskAction -Execute $powerShell -Argument "-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File $PSScriptRoot\make-free-space-vnext.ps1 -strategy nuget" -WorkingDirectory $PSScriptRoot
     $STSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -Compatibility Win8
 
     Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger -Principal $principal -Settings $STSettings -Verbose -Force
@@ -48,8 +49,11 @@ $principal = New-ScheduledTaskPrincipal -UserID tfsbuildservice$ -LogonType Pass
 
     Unregister-ScheduledTask -TaskName $STName -Confirm:$false -Verbose -ErrorAction SilentlyContinue
 
-    $STAction = New-ScheduledTaskAction -Execute $powerShell -Argument "-NoLogo -Sta -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File $PSScriptRoot\cleanup-agent-host.ps1" -WorkingDirectory $PSScriptRoot
+    $STAction = New-ScheduledTaskAction -Execute $powerShell -Argument "-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File $PSScriptRoot\cleanup-agent-host.ps1" -WorkingDirectory $PSScriptRoot
     $STSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -Compatibility Win8
 
     Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger -Principal $principal -Settings $STSettings -Verbose -Force
 }
+
+# Configure Security Task
+& "$PSScriptRoot\Agents\Maintenance\New-ScheduledTask.ps1" -Name 'Configure Security' -Trigger (New-ScheduledTaskTrigger -AtStartup) -Parameters "-Command `". $PSScriptRoot\Agents\Maintenance\Security.ps1;Set-SecurityPermissions;Revoke-SecurityPermissions;`" -TranscriptName `"ConfigureSecurity`"" -User $userName

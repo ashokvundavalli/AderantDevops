@@ -57,7 +57,7 @@ function RemoveFolder([string]$removeTarget) {
     }
 }
 
-Start-Transcript -Path '.\CleanupAgentHostLog.txt' -Force
+Start-Transcript -Path "$Env:SystemDrive\Scripts\CleanupAgentHostLog.txt" -Force
 
 try {
     Set-Location $root

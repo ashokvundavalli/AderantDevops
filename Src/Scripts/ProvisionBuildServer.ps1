@@ -3,6 +3,7 @@ param (
     [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$server,
     [Parameter(Mandatory=$false)][string]$agentPool,
     [Parameter(Mandatory=$false)][PSCredential]$credentials,
+    [switch]$testAgent,
     [switch]$skipAgentDownload,
     [switch]$restart
 )
@@ -210,6 +211,9 @@ namespace Willys.LsaSecurity
     }
 
     $session = New-PSSession -ComputerName $server -Credential $credentials -ErrorAction Stop
+    if ($null -eq $session) {
+        Write-Error "Could not estable a connection with '$server'. Check the server is running and that credentials are correct."
+    }
 
     $setupScriptBlock = {
         param (
@@ -262,24 +266,24 @@ namespace Willys.LsaSecurity
 
             try {
                 if (-not (Get-WindowsFeature | Where-Object { $_.Name -eq 'Hyper-V' }).InstallState -eq 'Installed') {
-                    Enable-WindowsOptionalFeature -Online -FeatureName:Microsoft-Hyper-V -All
+                    Enable-WindowsOptionalFeature -Online -FeatureName 'Microsoft-Hyper-V' -All -NoRestart
                 }
             } catch {
-                Write-Warning $Error[0] | Format-List -Force
+                Write-Warning -Message ($Error[0] | Format-List -Force)
             }
 
             # Install docker and start the service
             try {
                 if (-not (Get-WindowsFeature | Where-Object { $_.Name -eq 'Containers' }).InstallState -eq 'Installed') {
-                    Enable-WindowsOptionalFeature -Online -FeatureName 'Containers'
+                    Enable-WindowsOptionalFeature -Online -FeatureName 'Containers' -NoRestart
                 }
 
                 Install-PackageProvider -Name 'NuGet' -MinimumVersion '2.8.5.201' -Force
                 Install-Module -Name 'DockerMsftProvider' -Repository 'PSGallery' -Force
                 Install-Package -Name 'docker' -ProviderName 'DockerMsftProvider' -Force
-                Start-Service Docker
+                Start-Service -Name 'Docker'
             } catch {
-                Write-Warning $Error[0] | Format-List -Force
+                Write-Warning -Message ($Error[0] | Format-List -Force)
             }
 
             Start-Process -FilePath "$([System.Runtime.InteropServices.RuntimeEnvironment]::GetRuntimeDirectory())Aspnet_regiis.exe" -ArgumentList '-ga ADERANT_AP\tfsbuildservice$'
@@ -319,27 +323,34 @@ namespace Willys.LsaSecurity
         param (
             [string]$scriptsDirectory,
             $credentials,
-            [string]$agentPool
+            [string]$agentPool,
+            [bool]$testAgent
         )
 
         if (-not [string]::IsNullOrWhiteSpace($agentPool)) {
-            Write-Host "Setting agent pool: $agentPool"
+            Write-Information -MessageData "Setting agent pool: $agentPool"
             [Environment]::SetEnvironmentVariable('AgentPool', $agentPool, 'Machine')
         }
 
         $STTrigger = New-ScheduledTaskTrigger -AtStartup
         [string]$STName = "Setup Agent Host"
 
-        Unregister-ScheduledTask -TaskName $STName -Confirm:$false -ErrorAction SilentlyContinue
+        Unregister-ScheduledTask -TaskName $STName -Confirm:$false -ErrorAction 'SilentlyContinue'
+
+        [string]$command = "-NoLogo -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -File $scriptsDirectory\Build.Infrastructure\Src\Scripts\setup-agent-host.ps1"
+
+        if ($testAgent) {
+            $command += " -serviceAccount $($credentials.UserName) -serviceAccountPassword $($credentials.GetNetworkCredential().Password) -enableAutoLogon"
+        }
 
         #Action to run as
-        $STAction = New-ScheduledTaskAction -Execute "$Env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoLogo -Sta -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File $scriptsDirectory\Build.Infrastructure\Src\Scripts\setup-agent-host.ps1" -WorkingDirectory $scriptsDirectory
+        $STAction = New-ScheduledTaskAction -Execute "$Env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument $command -WorkingDirectory $scriptsDirectory
         #Configure when to stop the task and how long it can run for. In this example it does not stop on idle and uses the maximum possible duration by setting a timelimit of 0
         $STSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -Compatibility Win8
 
         #Register the new scheduled task
         Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger -User $credentials.UserName -Password $credentials.GetNetworkCredential().Password -Settings $STSettings -RunLevel Highest -Force
-    } -ArgumentList $scriptsDirectory, $credentials, $agentPool
+    } -ArgumentList $scriptsDirectory, $credentials, $agentPool, $testAgent.IsPresent
 
 
     <#
@@ -354,7 +365,7 @@ namespace Willys.LsaSecurity
         Unregister-ScheduledTask -TaskName $STName -Confirm:$false -ErrorAction SilentlyContinue
 
         #Action to run as
-        $STAction = New-ScheduledTaskAction -Execute "$Env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoLogo -Sta -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File $scriptsDirectory\Build.Infrastructure\Src\Scripts\restart-agent-host.ps1" -WorkingDirectory $scriptsDirectory
+        $STAction = New-ScheduledTaskAction -Execute "$Env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoLogo -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -File $scriptsDirectory\Build.Infrastructure\Src\Scripts\restart-agent-host.ps1" -WorkingDirectory $scriptsDirectory
         $STSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -Compatibility Win8
 
         $principal = New-ScheduledTaskPrincipal -UserID tfsbuildservice$ -LogonType Password -RunLevel Highest
@@ -376,7 +387,7 @@ namespace Willys.LsaSecurity
         Unregister-ScheduledTask -TaskName $STName -Confirm:$false -ErrorAction SilentlyContinue
 
         #Action to run as
-        $STAction = New-ScheduledTaskAction -Execute "$Env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoLogo -Sta -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File $scriptsDirectory\Build.Infrastructure\Src\Scripts\refresh-agent-host.ps1" -WorkingDirectory $scriptsDirectory
+        $STAction = New-ScheduledTaskAction -Execute "$Env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoLogo -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -File $scriptsDirectory\Build.Infrastructure\Src\Scripts\refresh-agent-host.ps1" -WorkingDirectory $scriptsDirectory
         $STSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -Compatibility Win8
 
         $principal = New-ScheduledTaskPrincipal -UserID tfsbuildservice$ -LogonType Password -RunLevel Highest
@@ -391,12 +402,12 @@ namespace Willys.LsaSecurity
     ============================================================
     #>
     Invoke-Command -Session $session -ScriptBlock {
-        [string]$docker = "$env:ProgramFiles\Docker\Docker\Docker for Windows.exe"
+        [string]$docker = "$Env:ProgramFiles\Docker\Docker\Docker for Windows.exe"
 
-        if (Test-Path $docker) {
+        if (Test-Path -Path $docker) {
             if ((Get-WmiObject -Class Win32_Service -Filter "Name='docker'") -eq $null) {
-                Write-Host "Registering Docker service"
-                & "$env:ProgramFiles\Docker\Docker\resources\dockerd.exe" --register-service
+                Write-Information -MessageData "Registering Docker service"
+                & "$Env:ProgramFiles\Docker\Docker\resources\dockerd.exe" --register-service
             }
 
             $interval = New-TimeSpan -Minutes 1
@@ -415,14 +426,83 @@ namespace Willys.LsaSecurity
     } -ArgumentList $scriptsDirectory, $credentials
 
 
-    Invoke-Command -Session $session -ScriptBlock {
-        Remove-Item "$scriptsDirectory\Build.Infrastructure" -Force -Recurse -ErrorAction 'SilentlyContinue'
-        & git clone "https://tfs.aderant.com/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure" "$scriptsDirectory\Build.Infrastructure" -q
-    } -ArgumentList $scriptsDirectory, $credentials
+    <#
+    ============================================================
+    Clone Build Infrastructure
+    ============================================================
+    #>
+    Write-Information -MessageData "Cloning build infrastructure to: $scriptsDirectory\Build.Infrastructure"
+    [ScriptBlock]$cloneBuildInfrastructure = [scriptblock]::Create(@"
+# Setting up git to skip credential check for this session.
+[System.Environment]::SetEnvironmentVariable('GIT_REDIRECT_STDERR', '2>&1', [System.EnvironmentVariableTarget]::Process);
+
+`$namespaces = @('tfs', 'tfs.ap.aderant.com', 'tfs.aderant.com');
+foreach (`$namespace in `$namespaces) {
+    git.exe config --global credential.`$namespace.interactive never;
+    git.exe config --global credential.`$namespace.integrated true;
+};
+
+git.exe config --global http.emptyAuth true;
+git.exe config --global credential.authority ntlm;
+
+# Clear out existing build infrastructure
+Remove-Item "$scriptsDirectory\Build.Infrastructure" -Force -Recurse -ErrorAction 'SilentlyContinue';
+
+# Clone down new build infrastructure
+# Must use http link as https throws exceptions when attempting to connect through a remote shell session.
+git.exe clone "http://tfs:8080/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure" "$scriptsDirectory\Build.Infrastructure" -q;
+"@)
+
+    Invoke-Command -Session $session -ScriptBlock $cloneBuildInfrastructure
+
+    if ($testAgent.IsPresent) {
+        <#
+        ============================================================
+        Install .Net Framework 4.8
+        ============================================================
+        #>
+        [string]$installationDir = "$scriptsDirectory\Build.Infrastructure\Src\Scripts\Agents\Installation\"
+        Write-Verbose -Message "Installation directory set to: $installationDir"
+
+        Write-Information -MessageData "Invoking .Net48 installation script."
+        Invoke-Command -Session $session -ScriptBlock {
+            param (
+                [string]$installationDir
+            )
+
+            [string]$installScript = Join-Path -Path $installationDir -ChildPath "Install-DotNet48.ps1";
+            if (Test-Path ($installScript)) {
+                & $installScript
+            } else {
+                throw "Failed to install .NET Framework 4.8, installation script missing from: $installScript"
+            };
+        } -ArgumentList $installationDir
 
 
+        <#
+        ============================================================
+        Install VS2019 Test Agent
+        ============================================================
+        #>
+        Write-Information -MessageData 'Invoking VS2019 Test Agent installation.'
+        Invoke-Command -Session $session -ScriptBlock {
+            param (
+                [string]$installationDir
+            )
+
+            [string]$installScript = Join-Path -Path $InstallationDir -ChildPath "Install-VS2019Sku.ps1";
+            if (Test-Path -Path $installScript) {
+                & $installScript -VsSku 'vs_TestAgent.exe'
+            } else {
+                throw "Failed to install VS2019 Test Agent, installation script missing from: $installScript"
+            };
+        } -ArgumentList $installationDir
+    }
+
+    
+    # Restart the build agent
     if ($restart.IsPresent) {
-        Write-Host "Restarting build agent: $($server)"
+        Write-Host "Restarting build agent: $server"
         shutdown.exe /r /f /t 0 /m \\$server /d P:4:1
     }
 }
