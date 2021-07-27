@@ -11,6 +11,7 @@ param (
 begin {
     Set-StrictMode -Version 'Latest'
     $InformationPreference = 'Continue'
+    $ProgressPreference = 'SilentlyContinue'
 }
 
 process {
@@ -269,7 +270,7 @@ namespace Willys.LsaSecurity
                     Enable-WindowsOptionalFeature -Online -FeatureName 'Microsoft-Hyper-V' -All -NoRestart
                 }
             } catch {
-                Write-Warning -Message ($Error[0] | Format-List -Force)
+                Write-Warning -Message ($Error[0] | Format-List -Force | Out-String)
             }
 
             # Install docker and start the service
@@ -283,7 +284,7 @@ namespace Willys.LsaSecurity
                 Install-Package -Name 'docker' -ProviderName 'DockerMsftProvider' -Force
                 Start-Service -Name 'Docker'
             } catch {
-                Write-Warning -Message ($Error[0] | Format-List -Force)
+                Write-Warning -Message ($Error[0] | Format-List -Force | Out-String)
             }
 
             Start-Process -FilePath "$([System.Runtime.InteropServices.RuntimeEnvironment]::GetRuntimeDirectory())Aspnet_regiis.exe" -ArgumentList '-ga ADERANT_AP\tfsbuildservice$'
