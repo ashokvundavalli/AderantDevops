@@ -4,10 +4,24 @@ $InformationPreference = 'Continue'
 
 Start-Transcript -Path "$Env:SystemDrive\Scripts\IISCleanupLog.txt" -Force
 
-try {
-    Import-Module WebAdministration
-    Import-Module ApplicationServer
+if (-not (Get-Module -Name 'IISAdministration' -ListAvailable)) {
+    Install-Module -Name 'IISAdministration' -AllowClobber -Force
+}
 
+if (-not (Get-Module -Name 'IISAdministration')) {
+    Import-Module -Name 'IISAdministration'
+}
+
+if (-not (Get-Module -Name 'ApplicationServer' -ListAvailable)) {
+    Write-Warning -Message 'AppFabric ApplicationServer module is not installed.'
+    return
+}
+
+if (-not (Get-Module -Name 'ApplicationServer')) {
+    Import-Module -Name 'ApplicationServer'
+}
+
+try {
     $expertWebApplications = Get-ASApplication -SiteName 'Default Web Site'
 
     foreach ($webApp in $expertWebApplications) {
@@ -22,7 +36,7 @@ try {
         }
     }
 
-    if ($null -ne $env:AgentPool -and $Env:AgentPool -eq 'Test') {
+    if ($null -ne $Env:AgentPool -and $Env:AgentPool -eq 'Test') {
         try {
             # Attempt to start app pools.
             Start-WebAppPool -Name Expert*
