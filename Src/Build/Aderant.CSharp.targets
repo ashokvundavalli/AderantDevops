@@ -77,7 +77,7 @@
     <Error Condition="'$(_VersionText)' == ''" Text="The build was unable to find AssemblyInformationalVersion attribute or determine the current value of this attribute. Check that CommonAssemblyInfo.cs is linked to this project." />
 
     <Aderant.Build.Tasks.UpdateSplashScreenImage
-     Condition="'@(OriginalSplashScreen)' != '' And '$(ExpertProductName)' != ''"
+     Condition="'@(OriginalSplashScreen->Count())' != '0' And '$(ExpertProductName)' != ''"
 
      TrackerLogDirectory="$(IntermediateOutputPath)"
      Sources="@(OriginalSplashScreen)"
@@ -453,6 +453,37 @@
   <PropertyGroup Condition="'$(IsDesktopBuild)' == 'false' And '$(CreateHardLinksForCopyLocal)' != ''">
     <CreateHardLinksForCopyLocalIfPossible>$(CreateHardLinksForCopyLocal)</CreateHardLinksForCopyLocalIfPossible>
   </PropertyGroup>
+
+  <Target BeforeTargets="MarkupCompilePass1" Name="BeforeMarkupCompilePass1">
+
+    <PropertyGroup>
+      <AlwaysCompileMarkupFilesInSeparateDomain>false</AlwaysCompileMarkupFilesInSeparateDomain>
+      <AlwaysCompileMarkupFilesInSeparateDomain Condition="'@(ReferencePath->AnyHaveMetadataValue('FusionName', 'DevComponents.WpfRibbon, Version=7.9.0.11, Culture=neutral, PublicKeyToken=2037e151916410e7'))' == 'true'">true</AlwaysCompileMarkupFilesInSeparateDomain>
+    </PropertyGroup>
+
+  </Target>
+
+  <Target AfterTargets="MarkupCompilePass1" Name="AfterMarkupCompilePass1">
+    <PropertyGroup>
+      <AlwaysCompileMarkupFilesInSeparateDomain>true</AlwaysCompileMarkupFilesInSeparateDomain>
+    </PropertyGroup>
+  </Target>
+
+  <Target BeforeTargets="MarkupCompilePass2" Name="BeforeMarkupCompilePass2">
+
+    <PropertyGroup>
+      <AlwaysCompileMarkupFilesInSeparateDomain>false</AlwaysCompileMarkupFilesInSeparateDomain>
+      <AlwaysCompileMarkupFilesInSeparateDomain Condition="'@(ReferencePath->AnyHaveMetadataValue('FusionName', 'DevComponents.WpfRibbon, Version=7.9.0.11, Culture=neutral, PublicKeyToken=2037e151916410e7'))' == 'true'">true</AlwaysCompileMarkupFilesInSeparateDomain>
+    </PropertyGroup>
+
+  </Target>
+
+  <Target AfterTargets="MarkupCompilePass2" Name="AfterMarkupCompilePass2">
+    <PropertyGroup>
+      <AlwaysCompileMarkupFilesInSeparateDomain>true</AlwaysCompileMarkupFilesInSeparateDomain>
+    </PropertyGroup>
+  </Target>
+
 
   <Import Project="Aderant.CSharp.overrides.targets" Condition="'$(CreateHardLinksForCopyLocalIfPossible)' == 'true'" />
 

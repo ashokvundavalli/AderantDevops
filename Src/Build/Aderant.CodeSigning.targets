@@ -142,7 +142,7 @@
       <SignServer>%(TimestampUrls.Identity)</SignServer>
     </PropertyGroup>
 
-    <Exec Condition="'@(FilesToSign)' != '' And '$([System.String]::IsInterned($(AlreadySignedKey)))' == ''"
+    <Exec Condition="'@(FilesToSign->Count())' != '0' And '$([System.String]::IsInterned($(AlreadySignedKey)))' == ''"
           ContinueOnError="true"
           IgnoreStandardErrorWarningFormat="true"
           YieldDuringToolExecution="true"
@@ -173,7 +173,7 @@
   <Target Name="SignInstallers"
           Condition="'$(CodeSigningEnabled)' == 'true' And '$(SignApplications)' == 'true' And '$(IsCustomBuild)' != 'true'"
           DependsOnTargets="FindInstallersToSign">
-    <CallTarget Targets="SignInstallersCore" Condition="'@(Installers)' != ''" />
+    <CallTarget Targets="SignInstallersCore" Condition="'@(Installers->Count())' != '0'" />
   </Target>
 
 
@@ -183,7 +183,7 @@
 
 
   <Target Name="AssignInstallerVersionInfo">
-    <Message Text="Signing installer: %(Installers.Filename)%(Installers.Extension)" Condition="'@(Installers)' != ''" />
+    <Message Text="Signing installer: %(Installers.Filename)%(Installers.Extension)" Condition="'@(Installers->Count())' != '0'" />
 
     <Aderant.Build.Tasks.GetFileVersionInfo
       Files="@(Installers)">
@@ -205,7 +205,7 @@
     </PropertyGroup>
 
     <Exec
-      Condition="'@(Installers)' != '' And '$([System.String]::IsInterned($(InstallerSignedKey)))' == ''"
+      Condition="'@(Installers->Count())' != '0' And '$([System.String]::IsInterned($(InstallerSignedKey)))' == ''"
       ContinueOnError="true"
       IgnoreStandardErrorWarningFormat="true"
       YieldDuringToolExecution="true"

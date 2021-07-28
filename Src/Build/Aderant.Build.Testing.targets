@@ -165,7 +165,7 @@
   </Target>
 
 
-  <Target Name="CollectAssemblyPlatforms" Condition="'@(TestAssemblyDirectories)' != ''">
+  <Target Name="CollectAssemblyPlatforms" Condition="'@(TestAssemblyDirectories->Count())' != '0'">
     <Error Condition="$(TestRunInstanceId) == ''" Text="TestRunInstanceId is undefined" />
 
     <Message Text="Looking for test assemblies in these directories:" />
@@ -212,7 +212,7 @@
 
     <PropertyGroup>
       <UsingCustomRunSettings>false</UsingCustomRunSettings>
-      <RunSettingsFile Condition="'$(UseCustomRunSettings)' == 'True' And '@(_CustomRunSettingFiles)' != ''">@(_CustomRunSettingFiles)</RunSettingsFile>
+      <RunSettingsFile Condition="'$(UseCustomRunSettings)' == 'True' And '@(_CustomRunSettingFiles->Count())' != '0'">@(_CustomRunSettingFiles)</RunSettingsFile>
 
       <UsingCustomRunSettings Condition="'$(RunSettingsFile)' != ''">true</UsingCustomRunSettings>
       <RunSettingsFile Condition="'$(RunSettingsFile)' == '' Or !Exists('$(RunSettingsFile)')">$(MSBuildThisFileDirectory)Testing\default.runsettings</RunSettingsFile>
@@ -224,7 +224,7 @@
       <Output TaskParameter="DestinationFiles" PropertyName="RunSettingsFile" />
     </Copy>
 
-    <XmlPoke Condition="'@(RunSettings)' != ''"
+    <XmlPoke Condition="'@(RunSettings->Count())' != '0'"
              XmlInputPath="$(RunSettingsFile)"
              Query="%(RunSettings.Identity)"
              Value="%(RunSettings.Value)" />

@@ -17,8 +17,8 @@
   </ItemGroup>
 
   <Target Name="ExtractBuildCachePackages">
-    <CallTarget Targets="RestoreContent" Condition="'@(BuildCacheZipFilesToRestore)' != ''" />
-  </Target>
+    <CallTarget Targets="RestoreContent" Condition="'@(BuildCacheZipFilesToRestore->Count())' != '0'" />
+  </Target>  
 
   <PropertyGroup>
     <ContentRestoreProcessDependsOn>

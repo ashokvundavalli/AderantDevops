@@ -263,7 +263,7 @@
   </ItemGroup>
 
 
-  <Target Name="CollectWorkflowContent" Condition="'@(TemplateSolutionFiles)' != ''">
+  <Target Name="CollectWorkflowContent" Condition="'@(TemplateSolutionFiles->Count())' != '0'">
     <PropertyGroup>
       <SourceFilesToCopyForWorflowTransform>$(SolutionDirectoryPath)Src\</SourceFilesToCopyForWorflowTransform>
     </PropertyGroup>
