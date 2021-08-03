@@ -40,8 +40,6 @@ $machineWideDirectories = @(
     "C:\Windows\Temp",
     "C:\UIAutomation",
 
-    "C:\CMS.NET",
-
     ([System.Runtime.InteropServices.RuntimeEnvironment]::GetRuntimeDirectory() + "Temporary ASP.NET Files"),
 
     "$Env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\Temporary ASP.NET Files"
