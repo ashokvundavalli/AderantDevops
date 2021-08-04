@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Aderant.Build.Utilities {
@@ -40,8 +41,23 @@ namespace Aderant.Build.Utilities {
         }
 
         public static string[] ToStringArray(this string str) {
-            return new[] { str };
+            return new[] {str};
+        }
+
+        /// <summary>
+        /// Generate a deterministic GUID based off the provided path.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        internal static Guid NewGuidFromPath(this string path) {
+            if (string.IsNullOrWhiteSpace(path)) {
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(path));
+            }
+
+            using (MD5 md5 = MD5.Create()) {
+                byte[] hash = md5.ComputeHash(Encoding.Default.GetBytes(path.ToUpperInvariant()));
+                return new Guid(hash);
+            }
         }
     }
-
 }

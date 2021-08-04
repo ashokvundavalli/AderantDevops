@@ -73,7 +73,7 @@ namespace Aderant.Build.ProjectSystem.References {
 
             var resolvedReference = projects.SingleOrDefault(s => string.Equals(s.FullPath, fullPathToOtherProject, StringComparison.OrdinalIgnoreCase));
 
-            if (resolvedReference != null && !isSdkStyeProject) {
+            if (resolvedReference != null && !isSdkStyeProject & !resolvedReference.IsSdkStyeProject) {
                 LogMangled(unresolved, resolvedReference);
             }
 

@@ -4,6 +4,8 @@ using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyAnalyzer.Model;
@@ -390,7 +392,8 @@ namespace Aderant.Build.ProjectSystem {
                     var propertyElement = arg.InnerProject.GetPropertyValue("ProjectGuid");
                     if (propertyElement != null) {
                         if (string.IsNullOrWhiteSpace(propertyElement) && IsSdkStyleProject(arg)) {
-                            return Guid.Empty;
+                            // Generate a deterministic GUID based off the full path of the Microsoft.NET.Sdk project.
+                            return arg.FullPath.NewGuidFromPath();
                         }
 
                         try {

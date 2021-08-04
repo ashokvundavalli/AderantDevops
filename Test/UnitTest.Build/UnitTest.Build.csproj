@@ -103,6 +103,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInitializer.cs" />
+    <Compile Include="Utilities\StringExtensionsTests.cs" />
     <Compile Include="VisualStudioLocationHelperTests.cs" />
     <Compile Include="Model\BucketTests.cs" />
     <Compile Include="BuildLogProcessorTests.cs" />

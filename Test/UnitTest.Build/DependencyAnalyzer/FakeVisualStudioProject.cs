@@ -19,15 +19,14 @@ namespace UnitTest.Build.DependencyAnalyzer {
     }
 
     internal class TestConfiguredProject : ConfiguredProject {
-        private readonly Guid guid = Guid.NewGuid();
+        private readonly Guid guid;
         internal string outputAssembly;
 
-        public TestConfiguredProject(IProjectTree tree)
-            : base(tree) {
+        public TestConfiguredProject(IProjectTree projectTree) : base(projectTree) {
+            this.guid = Guid.NewGuid();
         }
 
-        public TestConfiguredProject(IProjectTree tree, TestUnconfiguredProject unconfiguredProject, Guid guid1)
-            : base(tree) {
+        public TestConfiguredProject(IProjectTree projectTree, TestUnconfiguredProject unconfiguredProject, Guid guid1) : base(projectTree) {
             ErrorUtilities.IsNotNull(unconfiguredProject, nameof(unconfiguredProject));
 
             FullPath = unconfiguredProject.FullPath;
@@ -35,8 +34,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
 
         }
 
-        public TestConfiguredProject(IProjectTree projectTree, Guid guid)
-            : base(projectTree) {
+        public TestConfiguredProject(IProjectTree projectTree, Guid guid) : base(projectTree) {
             this.guid = guid;
         }
 

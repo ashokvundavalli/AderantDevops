@@ -13,9 +13,9 @@ using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.VersionControl;
-using Microsoft.TeamFoundation.Framework.Client.Catalog.Objects;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using UnitTest.Build.Helpers;
 using UnitTest.Build.StateTracking;
 using Task = System.Threading.Tasks.Task;
 
@@ -695,10 +695,43 @@ namespace UnitTest.Build.DependencyAnalyzer {
 
             Assert.AreEqual(2, context.StateFiles.Count);
         }
+
+        [TestMethod]
+        [ExpectedException(typeof(DuplicateGuidException))]
+        public void DuplicateGuidValidationTest() {
+            ProjectTreeBuilder projectTreeBuilder = new ProjectTreeBuilder();
+
+            Guid guid = Guid.NewGuid();
+
+            ConfiguredProject projectA = projectTreeBuilder.CreateProjectWithGuid("a", guid);
+            ConfiguredProject projectB = projectTreeBuilder.CreateProjectWithGuid("b", guid);
+
+            ProjectTree projectTree = new ProjectTree(new TextContextLogger(this.TestContext));
+
+            projectTree.AddConfiguredProject(projectA);
+            projectTree.AddConfiguredProject(projectB);
+        }
+
+        [TestMethod]
+        public void GuidValidationSdkStyleProjectTest() {
+            ProjectTreeBuilder projectTreeBuilder = new ProjectTreeBuilder();
+
+            ConfiguredProject projectA = projectTreeBuilder.CreateProject("a");
+            projectA.IsSdkStyeProject = true;
+            ConfiguredProject projectB = projectTreeBuilder.CreateProject("b");
+            projectB.IsSdkStyeProject = true;
+
+            ProjectTree projectTree = new ProjectTree(new TextContextLogger(this.TestContext));
+
+            projectTree.AddConfiguredProject(projectA);
+            projectTree.AddConfiguredProject(projectB);
+
+            Assert.AreEqual(2, projectTree.LoadedConfiguredProjects.Count);
+        }
     }
 
     internal class ProjectTreeBuilder {
-        IProjectTree tree = new Mock<IProjectTree>().Object;
+        readonly IProjectTree tree = new Mock<IProjectTree>().Object;
 
         public BuildOperationContext CreateContext() {
             return new BuildOperationContext {
@@ -711,12 +744,21 @@ namespace UnitTest.Build.DependencyAnalyzer {
             };
         }
 
+        public ConfiguredProject CreateProjectWithGuid(string name, Guid guid) {
+            return new TestConfiguredProject(tree, guid) {
+                outputAssembly = name,
+                IsDirty = false,
+                IsWebProject = false,
+                IncludeInBuild = true
+            };
+        }
+
         public ConfiguredProject CreateProject(string name) {
             return new TestConfiguredProject(tree) {
                 outputAssembly = name,
                 IsDirty = false,
                 IsWebProject = false,
-                IncludeInBuild = true,
+                IncludeInBuild = true
             };
         }
 

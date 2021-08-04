@@ -272,6 +272,7 @@ namespace Aderant.Build.ProjectSystem {
 
         public void AddConfiguredProject(ConfiguredProject configuredProject) {
             if (configuredProject.IncludeInBuild) {
+                // Check for duplicate GUIDs amongst existing projects.
                 ConfiguredProject existing;
                 if (loadedConfiguredProjects.TryGetValue(configuredProject.ProjectGuid, out existing)) {
                     throw new DuplicateGuidException(configuredProject.ProjectGuid, $"The project GUID {configuredProject.ProjectGuid} in file {configuredProject.FullPath} has already been assigned to {existing.FullPath}. Duplicate GUIDs are not supported.");
