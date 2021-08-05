@@ -8,9 +8,9 @@ param (
 
     # Paramaters to pass to the script.
     [Parameter(Mandatory=$false, Position=1, ParameterSetName='Script')]
-    [ValidateNotNull()]
-    [Hashtable]
-    $Parameters = @{},
+    [ValidateNotNullOrEmpty()]
+    [string]
+    $Parameters,
 
     # The PowerShell command to invoke.
     [Parameter(Mandatory=$true, Position=2, ParameterSetName='Command')]
@@ -19,7 +19,7 @@ param (
     $Command,
 
     # The name of the transcript to produce if a command is being invoked.
-    [Parameter(Mandatory=$true, Position=3, ParameterSetName='Command')]
+    [Parameter(Mandatory=$false, Position=3)]
     [ValidateNotNullOrEmpty()]
     [string]
     $TranscriptName
@@ -83,10 +83,19 @@ process {
                 exit -1
             }
 
-            [string]$name = [System.IO.Path]::GetFileNameWithoutExtension($Script)
+            if (-not [string]::IsNullOrWhiteSpace($TranscriptName)) {
+                [string]$name = $TranscriptName
+            } else {
+                [string]$name = [System.IO.Path]::GetFileNameWithoutExtension($Script)
+            }
             break
         }
         'Command' {
+            if ([string]::IsNullOrWhiteSpace($TranscriptName)) {
+                Write-Error 'A transcript name must be provided for commands.'
+                exit -1
+            }
+
             [string]$name = $TranscriptName
             
             break
@@ -101,7 +110,13 @@ process {
         switch ($PSCmdlet.ParameterSetName) {
             'Script' {
                 Write-Information -MessageData "Invoking PowerShell script: '$Script'."
-                & $Script @Parameters
+
+				if (-not [string]::IsNullOrWhiteSpace($Parameters)) {
+					Write-Information -MessageData "Parameters: $Parameters"
+					Invoke-Expression -Command "$Script $Parameters"
+				} else {
+					& $Script
+				}
 
                 break
             }

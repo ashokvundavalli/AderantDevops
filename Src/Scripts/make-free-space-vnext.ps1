@@ -17,8 +17,6 @@ begin {
     $ErrorActionPreference = 'Continue'
     $InformationPreference = 'Continue'
 
-    Start-Transcript -Path "$Env:SystemDrive\Scripts\MakeFreeSpaceLog.txt" -Force
-
     # If disk space is less than $percentageAtWhichToPanic, no folders younger than this will be deleted.
     [int]$failsafeHoursBack = -3
     # At this percentage the $panicHoursBack hours is used to find old folders
@@ -67,7 +65,7 @@ begin {
             $hours = Get-HoursAgoToDelete $drive
             $limit = (Get-Date).AddHours($hours)
             $folder = $drive + ":\b\"
-            if (-not $PSCmdlet.ShouldProcess("Result")) {
+            if ((Test-Path -Path $folder) -and -not $PSCmdlet.ShouldProcess("Result")) {
                 Get-ChildItem $folder -Recurse -Depth 0 -ErrorAction SilentlyContinue | Where-Object { $_.Name -Match "^\d{1,4}$"} | Where-Object {$_.LastWriteTime -lt $limit } | Remove-Item -Recurse -WhatIf -Force
                 Write-Information "Deleting files under $folder"
             } else {
@@ -137,8 +135,4 @@ process {
             RemoveNuGetPackages -days $olderThan -WhatIf:$testing.IsPresent
         }
     }
-}
-
-end {
-    Stop-Transcript
 }

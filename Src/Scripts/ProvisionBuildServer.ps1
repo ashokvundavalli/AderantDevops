@@ -333,7 +333,7 @@ namespace Willys.LsaSecurity
             [Environment]::SetEnvironmentVariable('AgentPool', $agentPool, 'Machine')
         }
 
-        $STTrigger = New-ScheduledTaskTrigger -AtStartup
+        $STTrigger = New-ScheduledTaskTrigger -AtStartup -RandomDelay ([TimeSpan]::FromMinutes(1))
         [string]$STName = "Setup Agent Host"
 
         Unregister-ScheduledTask -TaskName $STName -Confirm:$false -ErrorAction 'SilentlyContinue'
