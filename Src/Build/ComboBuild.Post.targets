@@ -29,7 +29,8 @@
       $(PackageArtifactsDependsOn);
       CreateDefaultArtifacts;
       CreateWebArtifacts;
-      PackageArtifacts
+      CreateApiArtifacts;
+      PackageArtifacts;
     </PackageArtifactsDependsOn>
   </PropertyGroup>
 
@@ -92,6 +93,22 @@
 
       <_PackageArtifact Include="$(SolutionRoot)\Src\Web*\bin\*Web*.dll;" Exclude="$(SolutionRoot)\Src\Web*\bin\Web.SMB.dll;">
         <ArtifactId>$(ModuleName).default.web</ArtifactId>
+        <Generated>true</Generated>
+        <ArtifactType>Prebuilt</ArtifactType>
+        <IsTestPackage>true</IsTestPackage>
+      </_PackageArtifact>
+
+    </ItemGroup>
+
+  </Target>
+
+
+  <Target Name="CreateApiArtifacts">
+
+    <ItemGroup>
+
+      <_PackageArtifact Include="$(SolutionRoot)\Src\*Api\bin\*Api.dll;">
+        <ArtifactId>$(ModuleName).default.api</ArtifactId>
         <Generated>true</Generated>
         <ArtifactType>Prebuilt</ArtifactType>
         <IsTestPackage>true</IsTestPackage>
