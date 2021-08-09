@@ -134,7 +134,9 @@ namespace Aderant.Build.DependencyResolver {
                 if (cert.HasPrivateKey) {
                     var name = cert.GetNameInfo(X509NameType.SimpleName, true);
                     if (name != null && name.IndexOf("Aderant", StringComparison.OrdinalIgnoreCase) >= 0) {
-                        yield return cert;
+                        if (cert.Subject.IndexOf(Environment.UserName.Replace(".", " "), StringComparison.OrdinalIgnoreCase) != -1) {
+                            yield return cert;
+                        }
                     }
                 }
             }
