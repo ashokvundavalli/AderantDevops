@@ -1,4 +1,10 @@
-﻿Set-StrictMode -Version 'Latest'
+﻿#Requires -RunAsAdministrator
+
+Set-StrictMode -Version Latest
+
+$InformationPreference = Continue
+$ErrorActionPreference = Continue
+$ProgressPreference = SilentlyContinue
 
 $root = $PSScriptRoot
 if (-not $root) {
@@ -35,14 +41,11 @@ $userProfileFolders = @(
 )
 
 $machineWideDirectories = @(
-    $env:TEMP,
+    $Env:TEMP,
     "C:\Temp",
     "C:\Windows\Temp",
     "C:\UIAutomation",
-
-    ([System.Runtime.InteropServices.RuntimeEnvironment]::GetRuntimeDirectory() + "Temporary ASP.NET Files"),
-
-    "$Env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\Temporary ASP.NET Files"
+    (Join-Path -Path ([System.Runtime.InteropServices.RuntimeEnvironment]::GetRuntimeDirectory()) -ChildPath 'Temporary ASP.NET Files')
 )
 
 function RemoveFolder([string]$removeTarget) {
@@ -99,12 +102,22 @@ try {
             }
         }
 
-        # Clean up databases
+        # Clean up databases.
         if ($null -eq $Env:AgentPool -or $Env:AgentPool.Equals('Default') -or $Env:AgentPool.Equals('Database')) {
-            Import-Module SqlServer
-            Set-Location sqlserver:\
-            Set-Location sql\localhost\default\databases
-            Get-ChildItem | ForEach-Object { $_.DropBackupHistory(); $_.Drop() }
+            if (-not (Get-Module -Name 'SqlServer' -ListAvailable)) {
+                # Install the Microsoft SqlServer module if it is not installed.
+                Install-Module -Name 'SqlServer' -Scope AllUsers -AllowClobber -Force
+            }
+
+            if (-not (Get-Module -Name 'SqlServer')) {
+                # Import the Microsoft SqlServer module.
+                Import-Module -Name 'SqlServer'
+            }
+
+            Get-ChildItem -Path 'SQLSERVER:\sql\localhost\default\databases' | ForEach-Object {
+                $_.DropBackupHistory()
+                $_.Drop()
+            }
         }
     }
 } finally {
