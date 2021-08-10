@@ -228,6 +228,8 @@ namespace Aderant.Build.DependencyResolver {
             var uniquePaths = directories.Distinct(StringComparer.OrdinalIgnoreCase);
 
             var scanner = new DirectoryScanner(fileSystem, logger);
+            scanner.ExcludeFilterPatterns = new[] { ".git", ".vs" };
+            scanner.IgnoreMissingDirectories = true;
 
             var contributors = new ConcurrentBag<string>();
 

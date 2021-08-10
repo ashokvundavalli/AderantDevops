@@ -35,13 +35,18 @@ namespace Aderant.Build.IO {
         }
 
         /// <summary>
+        /// Instructs the scanner to check for directory existence before traversal.
+        /// </summary>
+        public bool IgnoreMissingDirectories { get; set; }
+
+        /// <summary>
         /// Finds files with the pattern(s) specified under the given directory.
         /// Does not follow symlinks.
         /// </summary>
         /// <param name="root">The starting directory</param>
         /// <param name="extensions">The path segment to look for</param>
         /// <param name="maxDepth">The depth of the search with -1 being unbounded</param>
-        public IEnumerable<string> TraverseDirectoriesAndFindFiles(string root, IList<string> extensions, int maxDepth = -1) {
+        public IEnumerable<string> TraverseDirectoriesAndFindFiles(string root, ICollection<string> extensions, int maxDepth = -1) {
             ConcurrentBag<string> files = new ConcurrentBag<string>();
 
             TraverseDirectoriesAndFindFilesInternal(root, extensions.ToList(), files, maxDepth, 0);
@@ -129,6 +134,10 @@ namespace Aderant.Build.IO {
 
                     if (!skip) {
                         skip = physicalFileSystem.IsSymlink(directory);
+                    }
+
+                    if (IgnoreMissingDirectories && !physicalFileSystem.DirectoryExists(directory)) {
+                        skip = true;
                     }
 
                     if (skip) {
