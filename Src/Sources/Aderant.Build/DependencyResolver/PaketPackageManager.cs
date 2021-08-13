@@ -189,11 +189,6 @@ namespace Aderant.Build.DependencyResolver {
 
             var groupList = new List<DependenciesGroup>();
 
-            if (string.Equals(System.Environment.GetEnvironmentVariable("SYSTEM_PULLREQUEST_PULLREQUESTID"), "38800", StringComparison.Ordinal)) {
-                System.Diagnostics.Debugger.Launch();
-            }
-
-
             foreach (var groupEntry in groups.OrderByDescending(g => g.Key.Name == "Main")) {
                 var group = dependenciesFile.GetGroup(groupEntry.Key);
 
