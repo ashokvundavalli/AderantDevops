@@ -251,23 +251,24 @@ namespace Aderant.Build.DependencyResolver {
 
             // We created this file so remove the default NuGet sources
             if (createdNew && isMainGroup) {
-                sources = RemoveSource(sources, Constants.OfficialNuGetUrlV3, Constants.OfficialNuGetUrl);
+                sources = RemoveSource(sources, Constants.OfficialNuGetUrl);
+                sources = AddSource(sources, Constants.OfficialNuGetUrlV3);
             }
 
             if (isMainGroup && !isUsingMultipleInputFiles) {
                 if (group.Sources.Any(s => Equals(s.NuGetType, PackageSources.KnownNuGetSources.OfficialNuGetGallery))) {
-                    sources = AddSource(Constants.OfficialNuGetUrlV3, sources);
+                    sources = AddSource(sources, Constants.OfficialNuGetUrlV3);
                 }
             }
 
             // Upgrade any V2 to V3 sources
             if (sources.Any(s => Equals(s.NuGetType, PackageSources.KnownNuGetSources.OfficialNuGetGallery) && s.IsNuGetV2)) {
                 sources = RemoveSource(sources, Constants.OfficialNuGetUrl);
-                sources = AddSource(Constants.OfficialNuGetUrlV3, sources);
+                sources = AddSource(sources, Constants.OfficialNuGetUrlV3);
             }
 
             foreach (var source in packageSources) {
-                sources = AddSource(source.Url, sources);
+                sources = AddSource(sources, source.Url);
             }
 
             return sources;
@@ -296,7 +297,7 @@ namespace Aderant.Build.DependencyResolver {
             return options;
         }
 
-        private FSharpList<PackageSources.PackageSource> RemoveSource(FSharpList<PackageSources.PackageSource> sources, params string[] urls) {
+        private static FSharpList<PackageSources.PackageSource> RemoveSource(FSharpList<PackageSources.PackageSource> sources, params string[] urls) {
             foreach (var url in urls) {
                 sources = ListModule.Except(sources.Where(s => string.Equals(s.Url, url, StringComparison.OrdinalIgnoreCase)), sources);
             }
@@ -304,7 +305,7 @@ namespace Aderant.Build.DependencyResolver {
             return sources;
         }
 
-        private static FSharpList<PackageSources.PackageSource> AddSource(string source, FSharpList<PackageSources.PackageSource> sources) {
+        private static FSharpList<PackageSources.PackageSource> AddSource(FSharpList<PackageSources.PackageSource> sources, string source) {
             if (sources.All(s => !string.Equals(s.Url, source, StringComparison.OrdinalIgnoreCase))) {
                 sources = FSharpList<PackageSources.PackageSource>.Cons(PackageSources.PackageSource.NuGetV3Source(source), sources);
             }
@@ -312,7 +313,7 @@ namespace Aderant.Build.DependencyResolver {
             return sources;
         }
 
-        private void AddModules(IEnumerable<IDependencyRequirement> requirements, bool validatePackageConstraints, ref DependenciesFile file) {
+        private static void AddModules(IEnumerable<IDependencyRequirement> requirements, bool validatePackageConstraints, ref DependenciesFile file) {
             var installSettings = Requirements.InstallSettings.Default;
 
             foreach (var requirement in requirements.OrderBy(m => m.Name, StringComparer.OrdinalIgnoreCase)) {
