@@ -189,7 +189,7 @@ namespace Aderant.Build.DependencyResolver {
 
             var groupList = new List<DependenciesGroup>();
 
-            foreach (var groupEntry in groups) {
+            foreach (var groupEntry in groups.OrderByDescending(g => g.Key.Name == "Main")) {
                 var group = dependenciesFile.GetGroup(groupEntry.Key);
 
                 bool isMainGroup = string.Equals(group.Name.Name, Constants.MainDependencyGroup, StringComparison.OrdinalIgnoreCase);
