@@ -60,6 +60,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 project.Add(new ItemGroup("SdkProjects", configuredProjects.Select(s => s.FullPath)));
 
                 var target = new Target("PackageRestore");
+                target.Condition = "'@(SdkProjects->Count())' != '0'";
                 target.Add(new ExecElement { Command = "dotnet restore %(SdkProjects.Identity)" });
 
                 project.Add(target);
