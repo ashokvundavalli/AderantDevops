@@ -160,7 +160,8 @@ namespace Aderant.Build.Tasks {
                 CloseOutput = true,
                 NewLineOnAttributes = true,
                 IndentChars = "  ",
-                Indent = true
+                Indent = true,
+                NewLineHandling = NewLineHandling.None
             };
 
             using (var writer = XmlWriter.Create(Path.Combine(context.BuildRoot, BuildPlan), settings)) {

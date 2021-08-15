@@ -238,10 +238,11 @@ namespace Aderant.Build.ProjectSystem {
 
             using (var exportLifetimeContext = SequencerFactory.CreateExport()) {
                 var sequencer = exportLifetimeContext.Value;
+
                 sequencer.PipelineService = pipelineService;
                 sequencer.MetaprojectXml = this.MetaprojectXml;
 
-                BuildPlan plan = sequencer.CreatePlan(context, jobFiles, graph, true);
+                BuildPlan plan = sequencer.CreatePlan(context, jobFiles, graph, true, this);
                 return plan;
             }
         }
@@ -503,6 +504,7 @@ namespace Aderant.Build.ProjectSystem {
         /// <param name="files">The extensibility files used to influence the build.</param>
         /// <param name="graph">The projects in the build.</param>
         /// <param name="considerStateFiles">Should the plan use data from the build cache when producing the plan.</param>
-        BuildPlan CreatePlan(BuildOperationContext context, OrchestrationFiles files, DependencyGraph graph, bool considerStateFiles);
+        /// <param name="SdkProjects"></param>
+        BuildPlan CreatePlan(BuildOperationContext context, OrchestrationFiles files, DependencyGraph graph, bool considerStateFiles, IProjectTree SdkProjects);
     }
 }

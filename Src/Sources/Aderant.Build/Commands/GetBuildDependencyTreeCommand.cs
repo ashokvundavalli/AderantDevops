@@ -80,7 +80,7 @@ namespace Aderant.Build.Commands {
                 SkipNugetPackageHashCheck = SkipNugetPackageHashCheck.ToBool()
             };
 
-            var buildPlan = fs.CreatePlan(context, new OrchestrationFiles(), projectDependencyGraph, true);
+            var buildPlan = fs.CreatePlan(context, new OrchestrationFiles(), projectDependencyGraph, true, projectTree);
             var groups = projectDependencyGraph.GetBuildGroups();
 
             string treeText = ProjectSequencer.PrintBuildTree(groups, ShowPath.IsPresent);

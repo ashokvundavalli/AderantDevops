@@ -123,7 +123,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
 
             var graph = new ProjectDependencyGraph(p1, p2);
             var sequencer = new ProjectSequencer(NullLogger.Default, null);
-            sequencer.CreatePlan(ctx, new OrchestrationFiles(), graph, false);
+            sequencer.CreatePlan(ctx, new OrchestrationFiles(), graph, false, null);
 
             Assert.IsNotNull(p2.DirectoryNode.RetrievePrebuilts);
             Assert.IsFalse(p2.DirectoryNode.RetrievePrebuilts.Value);
@@ -158,7 +158,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
             };
 
             var sequencer = new ProjectSequencer(NullLogger.Default, null);
-            sequencer.CreatePlan(ctx, new OrchestrationFiles(), graph, false);
+            sequencer.CreatePlan(ctx, new OrchestrationFiles(), graph, false, null);
 
             Assert.IsTrue(p2.IsDirty, "This project should be included in the build as the test project is being built.");
         }
@@ -406,7 +406,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
             var sequencer = new ProjectSequencer(NullLogger.Default, new Mock<IFileSystem2>().Object) {
                 PackageChecker = packageCheckerMock.Object
             };
-            sequencer.CreatePlan(ctx, new OrchestrationFiles(), graph, true);
+            sequencer.CreatePlan(ctx, new OrchestrationFiles(), graph, true, null);
 
             string[] items = p2.GetDependencies().Select(s => s.Id).ToArray();
             Assert.AreEqual(3, items.Length);
@@ -446,7 +446,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
                 PackageChecker = packageCheckerMock.Object
             };
 
-            sequencer.CreatePlan(tree.CreateContext(), files, graph, false);
+            sequencer.CreatePlan(tree.CreateContext(), files, graph, false, null);
 
             Assert.IsTrue(p2.RequiresBuilding());
         }
@@ -510,7 +510,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
                 PackageChecker = packageCheckerMock.Object
             };
 
-            sequencer.CreatePlan(context, files, graph, true);
+            sequencer.CreatePlan(context, files, graph, true, null);
 
             Assert.IsFalse(p2.RequiresBuilding());
         }
@@ -688,7 +688,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
             var sequencer = new ProjectSequencer(NullLogger.Default, fileSystemMock.Object) {
                 PackageChecker = packageCheckerMock.Object
             };
-            sequencer.CreatePlan(context, new OrchestrationFiles(), graph, true);
+            sequencer.CreatePlan(context, new OrchestrationFiles(), graph, true, null);
 
             Assert.IsNotNull(context.StateFiles);
             Assert.AreEqual(bool.TrueString, context.Variables["IsBuildCacheEnabled"]);

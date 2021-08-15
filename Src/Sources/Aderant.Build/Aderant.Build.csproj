@@ -417,7 +417,6 @@
     <Compile Include="Logging\ILogger.cs" />
     <Compile Include="Logging\PowerShellLogger.cs" />
     <Compile Include="MSBuild\TargetXmlEmitter.cs" />
-    <Compile Include="MSBuild\BuildStep.cs" />
     <Compile Include="MSBuild\Element.cs" />
     <Compile Include="MSBuild\ItemGroup.cs" />
     <Compile Include="MSBuild\Message.cs" />

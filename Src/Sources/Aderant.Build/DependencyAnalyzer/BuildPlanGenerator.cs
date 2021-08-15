@@ -1,18 +1,20 @@
-﻿using System;
+﻿using Aderant.Build.DependencyAnalyzer.Model;
+using Aderant.Build.Model;
+using Aderant.Build.MSBuild;
+using Aderant.Build.ProjectSystem;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using Aderant.Build.DependencyAnalyzer.Model;
-using Aderant.Build.Model;
-using Aderant.Build.MSBuild;
-using Aderant.Build.ProjectSystem;
+using System.Text;
 
 namespace Aderant.Build.DependencyAnalyzer {
     /// <summary>
     /// Represents a dynamic MSBuild project which will build a set of projects in dependency order and in parallel
     /// </summary>
     internal class BuildPlanGenerator {
+
         private const string PropertiesKey = "Properties";
         private const string BuildGroupId = "BuildGroupId";
 
@@ -28,18 +30,44 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         private bool IsDesktopBuild { get; set; }
 
+        /// <summary>
+        /// The XML blob that represents all solutions within the tree.
+        /// </summary>
         public string MetaprojectXml { get; set; }
+
 
         public event EventHandler<ItemGroupItemMaterializedEventArgs> ItemGroupItemMaterialized;
 
-        public Project GenerateProject(IReadOnlyList<IReadOnlyList<IDependable>> projectGroups, OrchestrationFiles orchestrationFiles, bool desktopBuild, string buildFrom = null) {
-	        IsDesktopBuild = desktopBuild;
-	        CaptureCommandLine();
+        /// <summary>
+        /// Creates the build plan meta project.
+        /// </summary>
+        public Project GenerateProject(IReadOnlyList<IReadOnlyList<IDependable>> projectGroups, OrchestrationFiles orchestrationFiles, bool desktopBuild, IProjectTree projectTree = null, string buildFrom = null) {
+            IsDesktopBuild = desktopBuild;
+            CaptureCommandLine();
 
             Project project = new Project();
 
+            if (projectTree != null) {
+                // Write out all SDK projects so we can invoke dotnet restore on them
+                // netstandard projects require project.assets.json to exist.This is created by msbuild / t:restore
+                // Restore cannot be used during a build due to these WONT FIX items
+                // https://github.com/dotnet/msbuild/issues/2811
+                // https://github.com/dotnet/msbuild/issues/3000
+                // To work around this we shell out to another build instance for any Sdk style projects to perform the restore - this will be slow.
+                // Once this stops scaling this will need to move this to a higher level to perform a single restore for all SDK projects in the graph.
+                var configuredProjects = projectTree.LoadedConfiguredProjects.Where(s => s.IsSdkStyeProject).ToList();
+
+                project.Add(new ItemGroup("SdkProjects", configuredProjects.Select(s => s.FullPath)));
+
+                var target = new Target("PackageRestore");
+                target.Add(new ExecElement { Command = "dotnet restore %(SdkProjects.Identity)" });
+
+                project.Add(target);
+            }
+
             // Create a list of call targets for each build
             Target afterCompile = new Target("AfterCompile");
+            afterCompile.DependsOnTargets.Add(new Target("PackageRestore"));
 
             bool buildFromHere = string.IsNullOrEmpty(buildFrom);
 
@@ -174,7 +202,6 @@ namespace Aderant.Build.DependencyAnalyzer {
                 foreach (var configuredProjects in projectsByOutputPath) {
                     if (configuredProjects.Count() > 1) {
                         foreach (var configuredProject in configuredProjects) {
-
                             if (!configuredProject.IsTestProject && !configuredProject.IsOfficeProject) {
                                 configuredProject.UseCommonOutputDirectory = true;
                             }
@@ -271,7 +298,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         private ItemGroupItem SetDirectoryProperties(int buildGroup, PropertyList propertiesForProjectInstance, DirectoryNode node, string beforeProjectFile, string afterProjectFile, Guid projectInstanceId) {
-
             string solutionDirectoryPath = node.Directory;
 
             PropertyList properties;
@@ -407,6 +433,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         protected virtual void OnItemGroupItemMaterialized(ItemGroupItemMaterializedEventArgs e) {
             ItemGroupItemMaterialized?.Invoke(this, e);
         }
+
     }
 
     internal class ItemGroupItemMaterializedEventArgs {
@@ -418,5 +445,6 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         public ItemGroupItem ItemGroupItem { get; }
         public PropertyList Properties { get; }
+
     }
 }

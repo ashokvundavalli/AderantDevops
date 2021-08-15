@@ -3,6 +3,7 @@ using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
 using Aderant.Build.MSBuild;
+using Microsoft.Build.Definition;
 using Project = Microsoft.Build.Evaluation.Project;
 
 namespace Aderant.Build.DependencyAnalyzer {
@@ -23,19 +24,15 @@ namespace Aderant.Build.DependencyAnalyzer {
                         "This target defines the end point of the project, each build level will be called from 0 .. n before this executes"));
             }
 
-            var project = CreateRealProject(projectDocument);
+            ValidateProject(projectDocument);
 
-            using (var writer = new StringWriter()) {
-                project.Save(writer);
-                return XElement.Parse(writer.ToString());
-            }
+            return projectDocument;
         }
 
-        private Project CreateRealProject(XElement projectDocument) {
+        private static void ValidateProject(XElement projectDocument) {
             // Pass the generated XML to MSBuild for validation
             using (XmlReader reader = projectDocument.CreateReader()) {
-                Project project = new Project(reader);
-                return project;
+                Project.FromXmlReader(reader, new ProjectOptions() { });
             }
         }
     }

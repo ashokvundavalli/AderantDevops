@@ -53,7 +53,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// </summary>
         public string MetaprojectXml { get; set; }
 
-        public BuildPlan CreatePlan(BuildOperationContext context, OrchestrationFiles files, DependencyGraph graph, bool considerStateFiles) {
+        public BuildPlan CreatePlan(BuildOperationContext context, OrchestrationFiles files, DependencyGraph graph, bool considerStateFiles, IProjectTree projectTree) {
             if (context.StateFiles == null) {
                 var manager = new StateFileController();
                 stateFiles = manager.GetApplicableStateFiles(logger, context);
@@ -100,7 +100,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             var planGenerator = new BuildPlanGenerator(fileSystem);
             planGenerator.MetaprojectXml = MetaprojectXml;
-            var project = planGenerator.GenerateProject(groups, files, context.IsDesktopBuild, null);
+            var project = planGenerator.GenerateProject(groups, files, context.IsDesktopBuild, projectTree, null);
 
             return new BuildPlan(project) {
                 DirectoriesInBuild = directoriesInBuild,
@@ -607,11 +607,6 @@ namespace Aderant.Build.DependencyAnalyzer {
                             return null;
                         }
                     }
-
-                    // Output assembly is missing - check if this is allowed
-                    //if (project.SkipCopyBuildProduct) {
-                    //    return;
-                    //}
                 } else {
                     logger.Info($"No artifacts exist for '{stateFileKey}' or there are no project outputs.", null);
                 }

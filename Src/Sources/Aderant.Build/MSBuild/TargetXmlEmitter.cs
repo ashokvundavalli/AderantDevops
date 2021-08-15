@@ -29,7 +29,7 @@ namespace Aderant.Build.MSBuild {
             get { return ToolLocationHelper.CurrentToolsVersion; }
         }
 
-        private XElement CreateRoot(Project project) {
+        private static XElement CreateRoot(Project project) {
             return new XElement(
                 Xmlns + "Project",
                 new XAttribute("ToolsVersion", ToolLocationHelper.CurrentToolsVersion),
@@ -124,30 +124,6 @@ namespace Aderant.Build.MSBuild {
             Add(element);
         }
 
-        public override void Visit(BuildStep buildStep) {
-            if (buildStep.OutputBuildStepId) {
-                Add(
-                    new XElement(
-                        Xmlns + "BuildStep",
-                        new XAttribute("Condition", "('$(IsDesktopBuild)'!='true')"),
-                        new XAttribute("Message", buildStep.Message),
-                        new XAttribute("TeamFoundationServerUrl", "$(TeamFoundationServerUrl)"),
-                        new XAttribute("BuildUri", "$(BuildURI)"),
-                        new XElement(Xmlns + "Output", new XAttribute("TaskParameter", "id"), new XAttribute("PropertyName", "BuildStepId"))));
-            }
-
-            if (buildStep.IsSucceededStep) {
-                Add(
-                    new XElement(
-                        Xmlns + "BuildStep",
-                        new XAttribute("Condition", "('$(IsDesktopBuild)'!='true')"),
-                        new XAttribute("TeamFoundationServerUrl", "$(TeamFoundationServerUrl)"),
-                        new XAttribute("BuildUri", "$(BuildURI)"),
-                        new XAttribute("Id", "$(BuildStepId)"),
-                        new XAttribute("Status", "Succeeded")));
-            }
-        }
-
         public override void Visit(Target target) {
             if (visited.Contains(target.Name)) {
                 return;
@@ -200,6 +176,10 @@ namespace Aderant.Build.MSBuild {
 
         public override void Visit(CallTarget callTarget) {
             Add(new XElement(Xmlns + "CallTarget", new XAttribute("Targets", string.Join(PropertyList.Separator, callTarget.Targets))));
+        }
+
+        public override void Visit(ExecElement element) {
+            Add(new XElement(Xmlns + "Exec", new XAttribute("Command", element.Command)));
         }
 
         /// <summary>

@@ -70,16 +70,6 @@
       </PropertiesToRemove>
     </PropertyGroup>
 
-    <!--
-      netstandard projectes require project.assets.json to exist. This is created by msbuild /t:restore
-      Restore cannot be used during a build due to these WONT FIX items
-      https://github.com/dotnet/msbuild/issues/2811
-      https://github.com/dotnet/msbuild/issues/3000
-      To work around this we shell out to another build instance for any Sdk style projects to perform the restore - this will be slow.
-      Once this stops scaling this will need to move this to a higher level to perform a single restore for all SDK projets in the graph.
-    -->
-    <Exec Condition="'%(ProjectsInGroup.IsSdkStyeProject)' == 'true'" Command="dotnet restore %(ProjectsInGroup.Identity)" />
-
     <MSBuild Projects="@(ProjectsInGroup)"
              Targets="%(ProjectsInGroup.Targets)"
              UnloadProjectsOnCompletion="true"

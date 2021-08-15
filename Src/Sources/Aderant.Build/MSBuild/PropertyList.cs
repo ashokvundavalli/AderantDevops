@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Web.UI;
 
 namespace Aderant.Build.MSBuild {
     /// <summary>
     /// Represents an MSBuild property list (a semi-colon separated list of properties)
     /// </summary>
     internal class PropertyList : Dictionary<string, string> {
+
         private static readonly string joinString = Separator + Environment.NewLine;
 
         public PropertyList(IDictionary<string, string> dictionary) : base(dictionary, StringComparer.OrdinalIgnoreCase) {
@@ -30,7 +32,13 @@ namespace Aderant.Build.MSBuild {
         }
 
         public override string ToString() {
-            var combinedString = string.Join(joinString, this.Select(x => string.Concat(x.Key, "=", x.Value.Replace(";", "%3B"))));
+            var combinedString = string.Join(joinString, this.Select(x => {
+                if (x.Value.Contains(Separator)) {
+                    return string.Concat(x.Key, "=", x.Value.Replace(Separator, "%3B"));
+                } else {
+                    return string.Concat(x.Key, "=", x.Value);
+                }
+            }));
             return combinedString;
         }
 
@@ -41,5 +49,6 @@ namespace Aderant.Build.MSBuild {
 
             return false;
         }
+
     }
 }
