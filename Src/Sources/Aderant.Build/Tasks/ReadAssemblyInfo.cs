@@ -11,13 +11,13 @@ using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
     public class ReadAssemblyInfo : Task {
-        private static ConcurrentDictionary<string, Tuple<TaskItem, TaskItem, TaskItem>> infoCache = new ConcurrentDictionary<string, Tuple<TaskItem, TaskItem, TaskItem>>(StringComparer.OrdinalIgnoreCase);
+        private static readonly ConcurrentDictionary<string, Tuple<ITaskItem, ITaskItem, ITaskItem>> infoCache = new ConcurrentDictionary<string, Tuple<ITaskItem, ITaskItem, ITaskItem>>(StringComparer.OrdinalIgnoreCase);
 
         private static MethodInfo parseTextMethod;
 
-        private TaskItem assemblyFileVersion;
-        private TaskItem assemblyInformationalVersion;
-        private TaskItem assemblyVersion;
+        private ITaskItem assemblyFileVersion;
+        private ITaskItem assemblyInformationalVersion;
+        private ITaskItem assemblyVersion;
 
         public ReadAssemblyInfo() {
             if (parseTextMethod == null) {
@@ -29,17 +29,17 @@ namespace Aderant.Build.Tasks {
         public ITaskItem[] AssemblyInfoFiles { get; set; }
 
         [Output]
-        public TaskItem AssemblyVersion {
+        public ITaskItem AssemblyVersion {
             get { return assemblyVersion; }
         }
 
         [Output]
-        public TaskItem AssemblyInformationalVersion {
+        public ITaskItem AssemblyInformationalVersion {
             get { return assemblyInformationalVersion; }
         }
 
         [Output]
-        public TaskItem AssemblyFileVersion {
+        public ITaskItem AssemblyFileVersion {
             get { return assemblyFileVersion; }
         }
 
@@ -50,14 +50,13 @@ namespace Aderant.Build.Tasks {
             }
 
             if (AssemblyInfoFiles.Length > 1) {
-                Log.LogError("More than 1 file provided: " + String.Join(",", AssemblyInfoFiles.Select(s => s.ItemSpec)), null);
+                Log.LogError("More than 1 file provided: " + string.Join(",", AssemblyInfoFiles.Select(s => s.ItemSpec)), null);
                 return false;
             }
 
             string assemblyInfoFile = AssemblyInfoFiles[0].GetMetadata("FullPath");
 
-            Tuple<TaskItem, TaskItem, TaskItem> attributes;
-            if (infoCache.TryGetValue(assemblyInfoFile, out attributes)) {
+            if (infoCache.TryGetValue(assemblyInfoFile, out var attributes)) {
                 if (attributes == null) {
                     // No file sentinel found
                     return true;
@@ -80,7 +79,7 @@ namespace Aderant.Build.Tasks {
                 var text = reader.ReadToEnd();
                 ParseCSharpCode(text);
 
-                infoCache[assemblyInfoFile] = Tuple.Create(AssemblyVersion, AssemblyInformationalVersion, AssemblyFileVersion);
+                infoCache[assemblyInfoFile] = Tuple.Create(assemblyVersion, assemblyInformationalVersion, assemblyFileVersion);
             }
 
             return !Log.HasLoggedErrors;
@@ -107,6 +106,10 @@ namespace Aderant.Build.Tasks {
                         ParseAttribute("AssemblyInformationalVersion", identifier, attribute, ref assemblyInformationalVersion);
                         ParseAttribute("AssemblyVersion", identifier, attribute, ref assemblyVersion);
                         ParseAttribute("AssemblyFileVersion", identifier, attribute, ref assemblyFileVersion);
+
+                        if (assemblyInformationalVersion != null && assemblyVersion != null && assemblyFileVersion != null) {
+                            return;
+                        }
                     }
                 }
             }
@@ -141,14 +144,14 @@ namespace Aderant.Build.Tasks {
             }
         }
 
-        private static void SetMetadata(TaskItem taskItem, Version version) {
+        private static void SetMetadata(ITaskItem taskItem, Version version) {
             taskItem.SetMetadata(nameof(version.Major), version.Major.ToString());
             taskItem.SetMetadata(nameof(version.Minor), version.Minor.ToString());
             taskItem.SetMetadata(nameof(version.Build), version.Build.ToString());
             taskItem.SetMetadata(nameof(version.Revision), version.Revision.ToString());
         }
 
-        private static void ParseAttribute(string attributeName, dynamic identifier, dynamic attribute, ref TaskItem field) {
+        private static void ParseAttribute(string attributeName, dynamic identifier, dynamic attribute, ref ITaskItem field) {
             if (field != null) {
                 return;
             }
@@ -159,8 +162,7 @@ namespace Aderant.Build.Tasks {
                 var rawText = listArgument.Expression.GetText().ToString();
                 if (!string.IsNullOrWhiteSpace(rawText)) {
                     rawText = rawText.Replace("\"", "");
-                    Version version;
-                    if (Version.TryParse(rawText, out version)) {
+                    if (Version.TryParse(rawText, out Version version)) {
                         field = new TaskItem(version.ToString());
                         SetMetadata(field, version);
                     }

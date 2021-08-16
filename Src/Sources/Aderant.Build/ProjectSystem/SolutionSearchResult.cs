@@ -75,7 +75,7 @@ namespace Aderant.Build.ProjectSystem {
 
         public IReadOnlyDictionary<string, ProjectConfigurationInSolutionWrapper> ProjectConfigurations { get; internal set; }
 
-        private IReadOnlyDictionary<string, ProjectConfigurationInSolutionWrapper> Wrap(IReadOnlyDictionary<string, ProjectConfigurationInSolution> source) {
+        private static IReadOnlyDictionary<string, ProjectConfigurationInSolutionWrapper> Wrap(IReadOnlyDictionary<string, ProjectConfigurationInSolution> source) {
             var dictionary = new Dictionary<string, ProjectConfigurationInSolutionWrapper>();
 
             foreach (var key in source.Keys) {

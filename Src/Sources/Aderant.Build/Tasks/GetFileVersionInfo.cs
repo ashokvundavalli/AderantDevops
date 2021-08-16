@@ -40,7 +40,7 @@ namespace Aderant.Build.Tasks {
             return !Log.HasLoggedErrors;
         }
 
-        private string GetProductName(string fullPath) {
+        private static string GetProductName(string fullPath) {
             dynamic view = null;
             dynamic database = null;
 

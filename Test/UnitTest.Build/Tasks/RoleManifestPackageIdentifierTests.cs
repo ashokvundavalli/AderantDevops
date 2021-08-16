@@ -3,6 +3,7 @@ using Aderant.Build.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.IO;
 using System;
+using System.Xml.Linq;
 
 namespace UnitTest.Build.Tasks {
     [TestClass]
@@ -13,9 +14,9 @@ namespace UnitTest.Build.Tasks {
 
         [TestMethod]
         public void DetectDuplicateRoleFiles() {
-            List<RoleManifest> roleManifests = new List<RoleManifest>(2) {
-                new RoleManifest("a", string.Empty),
-                new RoleManifest("a", string.Empty)
+            var roleManifests = new [] {
+                new RoleManifest("a", new XDocument()),
+                new RoleManifest("a", new XDocument())
             };
 
             Assert.IsTrue(RoleManifestPackageIdentifier.DuplicateRoleFilesPresent(roleManifests, null));
@@ -23,9 +24,9 @@ namespace UnitTest.Build.Tasks {
 
         [TestMethod]
         public void DetectDuplicateRoleFilesNoDuplicates() {
-            List<RoleManifest> roleManifests = new List<RoleManifest>(2) {
-                new RoleManifest("a", string.Empty),
-                new RoleManifest("b", string.Empty)
+            var roleManifests = new [] {
+                new RoleManifest("a", new XDocument()),
+                new RoleManifest("b", new XDocument())
             };
 
             Assert.IsFalse(RoleManifestPackageIdentifier.DuplicateRoleFilesPresent(roleManifests, null));
@@ -50,14 +51,14 @@ namespace UnitTest.Build.Tasks {
         }
 
         [TestMethod]
-        public void DetectExistingRoleManifestDirectory() { 
+        public void DetectExistingRoleManifestDirectory() {
             string existingPath = Path.Combine(TestContext.DeploymentDirectory, @"Tasks\Roles");
 
             string[] manifestSearchDirectories = new string[] {
-                existingPath 
+                existingPath
             };
 
-            RoleManifest[] roleManifests = RoleManifestPackageIdentifier.LocateRoleManifests(manifestSearchDirectories);
+            var roleManifests = RoleManifestPackageIdentifier.LocateRoleManifests(manifestSearchDirectories);
             Assert.IsNotNull(roleManifests);
         }
     }
