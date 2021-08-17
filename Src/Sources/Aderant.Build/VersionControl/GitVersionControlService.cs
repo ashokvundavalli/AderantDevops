@@ -26,7 +26,7 @@ namespace Aderant.Build.VersionControl {
             "master"
         };
 
-        internal static Commit GetCurrentCommit(Repository repository, string branch) {
+        internal Commit GetCurrentCommit(Repository repository, string branch) {
             if (string.IsNullOrWhiteSpace(branch)) {
                 throw new ArgumentException("Value cannot be null or whitespace.", nameof(branch));
             }
@@ -170,7 +170,7 @@ namespace Aderant.Build.VersionControl {
             info.Changes = changes;
         }
 
-        private static void AddLocalChanges(string workingDirectory, List<SourceChange> changes, RepositoryStatus status) {
+        private void AddLocalChanges(string workingDirectory, List<SourceChange> changes, RepositoryStatus status) {
             var localChanges = status.Added.Select(s => new SourceChange(workingDirectory, s.FilePath, FileStatus.Added))
                 .Concat(status.RenamedInWorkDir.Select(s => new SourceChange(workingDirectory, s.FilePath, FileStatus.Renamed)))
                 .Concat(status.Modified.Select(s => new SourceChange(workingDirectory, s.FilePath, FileStatus.Modified)))
@@ -188,7 +188,7 @@ namespace Aderant.Build.VersionControl {
         /// The joint point where the commit is also reachable from somewhere else. The first branch name is returned in
         /// the out parameter branchCanonicalName.
         /// </returns>
-        private static Commit FindMostLikelyReusableBucket(Repository repository, Commit currentTree, out string commonBranch, CancellationToken cancellationToken) {
+        private Commit FindMostLikelyReusableBucket(Repository repository, Commit currentTree, out string commonBranch, CancellationToken cancellationToken) {
             var refs = GetRefsToSearchForCommit(repository);
 
             // Which is the "first" and which is the "second" parent of a merge?

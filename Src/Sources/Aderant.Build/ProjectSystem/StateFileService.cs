@@ -152,7 +152,7 @@ namespace Aderant.Build.ProjectSystem {
             }
         }
 
-        internal static string GetReasonMessage(ArtifactCacheValidationReason reason) {
+        internal string GetReasonMessage(ArtifactCacheValidationReason reason) {
             switch (reason) {
                 case ArtifactCacheValidationReason.Candidate:
                     return "Viable candidate.";

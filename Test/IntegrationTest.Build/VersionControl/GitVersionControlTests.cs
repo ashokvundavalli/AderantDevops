@@ -51,7 +51,7 @@ namespace IntegrationTest.Build.VersionControl {
             RunPowerShellInDirectory(TestContext, Resources.GenerateCommits, RepositoryPath);
 
             using (Repository repository = new Repository(RepositoryPath)) {
-                var commit = GitVersionControlService.GetCurrentCommit(repository, "conundrum");
+                var commit = vc.GetCurrentCommit(repository, "conundrum");
 
                 var sourceCommit = commit.Parents.FirstOrDefault().Sha;                
                 var range = vc.GetPatchMetadata(RepositoryPath, new CommitConfiguration(sourceCommit));

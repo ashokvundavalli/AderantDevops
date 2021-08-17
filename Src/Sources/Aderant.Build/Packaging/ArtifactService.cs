@@ -166,13 +166,14 @@ namespace Aderant.Build.Packaging {
             var previousBuild = stateFile;
 
             if (previousBuild != null) {
-                OutputMerger.Merge(container, previousBuild, snapshots);
+                var merger = new OutputMerger();
+                merger.Merge(container, previousBuild, snapshots);
             }
 
             return snapshots;
         }
 
-        internal static void CheckForDuplicates(string artifactId, IReadOnlyCollection<PathSpec> files) {
+        internal void CheckForDuplicates(string artifactId, IReadOnlyCollection<PathSpec> files) {
             var duplicates = files
                 .GroupBy(i => i.Destination, StringComparer.OrdinalIgnoreCase)
                 .Where(g => g.Count() > 1);
@@ -513,7 +514,7 @@ namespace Aderant.Build.Packaging {
             return instructions;
         }
 
-        internal static void AssignDropLocation(string artifactStagingDirectory, string destinationRootPath, IEnumerable<BuildArtifact> artifacts, int buildId) {
+        internal void AssignDropLocation(string artifactStagingDirectory, string destinationRootPath, IEnumerable<BuildArtifact> artifacts, int buildId) {
             ErrorUtilities.IsNotNull(artifactStagingDirectory, nameof(artifactStagingDirectory));
             ErrorUtilities.IsNotNull(destinationRootPath, nameof(destinationRootPath));
 
@@ -552,7 +553,7 @@ namespace Aderant.Build.Packaging {
     }
 
     internal class OutputMerger {
-        public static void Merge(string container, BuildStateFile previousBuild, List<ProjectOutputSnapshot> snapshots) {
+        public void Merge(string container, BuildStateFile previousBuild, List<ProjectOutputSnapshot> snapshots) {
             var previousSnapshot = new ProjectTreeOutputSnapshot(previousBuild.Outputs);
             var previousProjects = previousSnapshot.GetProjectsForTag(container);
 

@@ -11,7 +11,6 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using System.Xml;
 using Aderant.Build.DependencyAnalyzer;
-using Aderant.Build.IO;
 using Aderant.Build.Logging;
 using Aderant.Build.Model;
 using Aderant.Build.PipelineService;
@@ -403,10 +402,7 @@ namespace Aderant.Build.ProjectSystem {
         internal void FindRelatedFiles(string projectPath, IBuildPipelineService pipelineService) {
             var projectDir = Path.GetDirectoryName(projectPath);
 
-            var scanner = new DirectoryScanner(Services.FileSystem, logger);
-            scanner.ExcludeFilterPatterns = new[] { "\\obj\\", "\\SharedBin" };
-            var manifests = scanner.TraverseDirectoriesAndFindFiles(projectDir, new List<string> { "*RelatedFiles.json" });
-
+            var manifests = Directory.GetFiles(projectDir, "*RelatedFiles.json", SearchOption.AllDirectories);
             foreach (var manifest in manifests) {
                 var text = Services.FileSystem.ReadAllText(manifest);
                 var relatedFiles = JsonConvert.DeserializeObject<RelatedFilesManifest>(text).RelatedFiles;
@@ -446,7 +442,7 @@ namespace Aderant.Build.ProjectSystem {
         }
 
 
-        private static SolutionFileParser InitializeSolutionParser() {
+        private SolutionFileParser InitializeSolutionParser() {
             var parser = new SolutionFileParser();
             return parser;
         }

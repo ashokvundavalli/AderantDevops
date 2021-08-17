@@ -242,7 +242,7 @@ namespace Aderant.Build.Tasks {
             return false;
         }
 
-        private static bool ShouldAnalyze(Dictionary<ITaskItem, string> analyzedAssemblies, string hash, ITaskItem item) {
+        private bool ShouldAnalyze(Dictionary<ITaskItem, string> analyzedAssemblies, string hash, ITaskItem item) {
             // We have already seen this assembly based on it's file name. Loading it again will probably cause a FileLoadException as
             // the CLR will not allow the loading of identical assemblies from two different locations in to the same domain.
             // This issue can arise where a project has copy local turned on and we end up with the build process finding the same output assembly under multiple

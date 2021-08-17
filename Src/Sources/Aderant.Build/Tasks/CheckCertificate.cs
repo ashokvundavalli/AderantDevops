@@ -62,7 +62,7 @@ namespace Aderant.Build.Tasks {
             return !Log.HasLoggedErrors;
         }
 
-        private static X509Store GetUserStore(OpenFlags readOnly) {
+        private X509Store GetUserStore(OpenFlags readOnly) {
             X509Store userStore = new X509Store(StoreName.My, StoreLocation.CurrentUser);
             userStore.Open(readOnly);
 

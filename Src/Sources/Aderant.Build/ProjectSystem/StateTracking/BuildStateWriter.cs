@@ -131,7 +131,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             return destinationPath;
         }
 
-        private static void RemoveTransitiveBaggage(IDictionary<string, ProjectOutputSnapshot> stateFileOutputs) {
+        private void RemoveTransitiveBaggage(IDictionary<string, ProjectOutputSnapshot> stateFileOutputs) {
             // Gather up all unique dir+output pairs
             foreach (var projects in stateFileOutputs.Values
                 .Where(g => g.IsTestProject)

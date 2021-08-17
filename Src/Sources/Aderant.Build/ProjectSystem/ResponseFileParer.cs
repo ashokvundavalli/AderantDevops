@@ -28,7 +28,7 @@ namespace Aderant.Build.ProjectSystem {
             return null;
         }
 
-        private static PropertyList ParseRspContent(string[] responseFileContent) {
+        private PropertyList ParseRspContent(string[] responseFileContent) {
             PropertyList propertyList = new PropertyList();
 
             if (responseFileContent == null || responseFileContent.Length == 0) {

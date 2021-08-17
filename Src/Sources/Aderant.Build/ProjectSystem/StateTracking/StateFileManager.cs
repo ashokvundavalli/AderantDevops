@@ -17,7 +17,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             return files;
         }
 
-        private static List<BuildStateFile> GetBuildStateFiles(ILogger logger, BuildOperationContext context) {
+        private List<BuildStateFile> GetBuildStateFiles(ILogger logger, BuildOperationContext context) {
             List<BucketId> missingIds;
 
             IList<BuildStateFile> files = new List<BuildStateFile>();
@@ -53,7 +53,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             return files.ToList();
         }
 
-        private static void EvictNotExistentProjects(List<BuildStateFile> stateFiles, SourceTreeMetadata sourceTreeMetadata) {
+        private void EvictNotExistentProjects(List<BuildStateFile> stateFiles, SourceTreeMetadata sourceTreeMetadata) {
             if (sourceTreeMetadata == null) {
                 return;
             }

@@ -65,6 +65,7 @@
     <!--
       This task can return a previously generated file to keep incremental builds working.
     -->
+
     <PropertyGroup>
       <_VersionText Condition="'$(_VersionText)' == '' And '@(CommonAssemblyInformationalVersion)' != ''">%(CommonAssemblyInformationalVersion.Major).%(CommonAssemblyInformationalVersion.Minor)</_VersionText>
       <_VersionText Condition="'$(_VersionText)' == '' And '@(CommonAssemblyFileVersion)' != ''" >%(CommonAssemblyFileVersion.Major).%(CommonAssemblyFileVersion.Minor)</_VersionText>
