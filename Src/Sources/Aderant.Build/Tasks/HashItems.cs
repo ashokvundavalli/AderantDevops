@@ -1,5 +1,9 @@
-﻿using System.Security.Cryptography;
+﻿using System;
+using System.Globalization;
+using System.Security.Cryptography;
 using System.Text;
+using System.Web.Hosting;
+using Aderant.Build.Utilities;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
@@ -10,46 +14,31 @@ namespace Aderant.Build.Tasks {
     /// Currently uses SHA1. Not intended as a cryptographic security measure, only uniqueness between build executions.
     /// </remarks>
     /// </summary>
-    public class HashItems : Task {
-        private const string ItemSeparatorCharacter = "\u2028";
+    public class HashItems : Microsoft.Build.Tasks.Hash {
 
-        /// <summary>
-        /// Items from which to generate a hash.
-        /// </summary>
-        [Required]
-        public ITaskItem[] ItemsToHash { get; set; }
+        private static readonly TaskItem processId;
 
-        /// <summary>
-        /// Hash of the ItemsToHash ItemSpec.
-        /// </summary>
+        static HashItems() {
+            processId = new TaskItem(NativeMethods.GetCurrentProcessId().ToString(CultureInfo.InvariantCulture));
+        }
+
         [Output]
-        public string HashResult { get; set; }
+        public bool IncludeProcessId { get; set; }
 
         /// <summary>
         /// Execute the task.
         /// </summary>
         public override bool Execute() {
-            if (ItemsToHash != null && ItemsToHash.Length > 0) {
-                StringBuilder hashInput = new StringBuilder();
+            if (IncludeProcessId && ItemsToHash != null && ItemsToHash.Length > 0) {
+                var newItems = new ITaskItem[ItemsToHash.Length + 1];
 
-                foreach (var item in ItemsToHash) {
-                    hashInput.Append(item.ItemSpec);
-                    hashInput.Append(ItemSeparatorCharacter);
-                }
+                Array.Copy(ItemsToHash, newItems, ItemsToHash.Length);
+                newItems[newItems.Length-1] = processId;
 
-                using (var sha1 = SHA1.Create()) {
-                    var hash = sha1.ComputeHash(Encoding.UTF8.GetBytes(hashInput.ToString()));
-                    var hashResult = new StringBuilder(hash.Length * 2);
-
-                    foreach (byte b in hash) {
-                        hashResult.Append(b.ToString("x2"));
-                    }
-
-                    HashResult = hashResult.ToString();
-                }
+                ItemsToHash = newItems;
             }
 
-            return true;
+            return base.Execute();
         }
     }
 }

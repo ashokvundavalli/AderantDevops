@@ -124,7 +124,7 @@ namespace Aderant.Build.Tasks.TextTemplating {
             return "v" + instance.Version.Major.ToString(CultureInfo.InvariantCulture) + ".0";
         }
 
-        private bool Add(SynchronizedCollection<string> collection, string path, bool isFile) {
+        private static bool Add(SynchronizedCollection<string> collection, string path, bool isFile) {
             if (isFile && !File.Exists(path)) {
                 return false;
             }

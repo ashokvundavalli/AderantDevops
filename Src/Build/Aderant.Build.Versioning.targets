@@ -1,18 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-         ToolsVersion="14.0">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-  <PropertyGroup>
-    <DefaultLanguageSourceExtension Condition="'$(DefaultLanguageSourceExtension)' == ''">.cs</DefaultLanguageSourceExtension>
-    <Language Condition="'$(Language)' == ''">CS</Language>
-  </PropertyGroup>
+  <!--
+  There are at least 3 AssemblyInfo.cs files involved.
+  1) \<Temp>\CommonAssemblyInfoFile.cs    = A clone of CommonAssemblyInfoFile.cs with the copyright date modified (subject to race condition)
+  2) \<Temp>\CommonAssemblyInfoFile.g.cs  = Repository metadata file (git version etc) (subject to race condition)
+  3) \obj\AssemblyInfo.gs.cs              = A settings that apply to an individual project
+  -->
 
   <PropertyGroup>
     <SetVersionAttributesDependsOn Condition="'$(IsCustomBuild)' != 'true' And '$(ProjectGuid)' != ''">
       $(SetVersionAttributesDependsOn);
-      ReadVersionInfo;
-      GenerateAssemblyInfo;
-      AssemblyInfoUpdateCopyright;
+      UpdateCommonAssemblyInfo;
     </SetVersionAttributesDependsOn>
   </PropertyGroup>
 
@@ -27,22 +26,16 @@
 
 
   <PropertyGroup>
-    <CreateGeneratedAssemblyInfoInputsCacheFileDependsOn>
-      GatherAssemblyAttributes;
-      FindRoleFiles
-    </CreateGeneratedAssemblyInfoInputsCacheFileDependsOn>
+    <CreateGeneratedAssemblyInfoInputsDependsOn>
+      GatherCommonAssemblyAttributes;
+      GatherProjectAssemblyAttributes;
+      FindRoleFiles;
+    </CreateGeneratedAssemblyInfoInputsDependsOn>
   </PropertyGroup>
 
 
-  <Target Name="GatherAssemblyAttributes">
-
+  <Target Name="GatherProjectAssemblyAttributes">
     <PropertyGroup>
-      <!-- Path.Combine to try handle trailing/non-trailing slashes -->
-      <_GitDir Condition="'$(_GitDir)' == ''">$([System.IO.Path]::Combine($(SolutionDirectoryPath), '.git'))</_GitDir>
-
-      <_HasGitDir Condition="'$(_HasGitDir)' == ''">false</_HasGitDir>
-      <_HasGitDir Condition="Exists($(_GitDir))">true</_HasGitDir>
-
       <IsIntegrationTest Condition="$(MSBuildProjectName.StartsWith('IntegrationTest')) And !($(MSBuildProjectName.EndsWith('Helper')) Or $(MSBuildProjectName.EndsWith('Helpers')))">true</IsIntegrationTest>
       <IsIntegrationTest Condition="'$(IsIntegrationTest)' == ''">false</IsIntegrationTest>
 
@@ -50,6 +43,41 @@
       <IsIntegrationTestHelper Condition="'$(IsIntegrationTestHelper)' == ''">false</IsIntegrationTestHelper>
 
       <CIEnabled Condition="'$(IsIntegrationTest)' == 'true' And '$(CIEnabled)' == ''">false</CIEnabled>
+    </PropertyGroup>
+
+    <!-- Outer project will supply a default value - if absent we need this project to look itself -->
+    <PropertyGroup Condition="'$(_PaketLockFile)' == ''">
+      <_PaketLockFile>$([MSBuild]::GetPathOfFileAbove('paket.lock'))</_PaketLockFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Condition="'$(_PaketLockFile)' != ''" Include="$(_PaketLockFile)">
+        <LogicalName>paket.lock</LogicalName>
+      </EmbeddedResource>
+    </ItemGroup>
+
+    <ItemGroup>
+      <_ProjectAssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(IsIntegrationTest)' == 'true'">
+        <_Parameter1>CIEnabled</_Parameter1>
+        <_Parameter2>$(CIEnabled)</_Parameter2>
+      </_ProjectAssemblyAttributes>
+
+      <_ProjectAssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(IsIntegrationTest)' == 'true' And '$(CICategory)' != ''">
+        <_Parameter1>CICategory</_Parameter1>
+        <_Parameter2>$(CICategory)</_Parameter2>
+      </_ProjectAssemblyAttributes>
+    </ItemGroup>
+  </Target>
+
+
+  <Target Name="GatherCommonAssemblyAttributes">
+
+    <PropertyGroup>
+      <!-- Path.Combine to try handle trailing/non-trailing slashes -->
+      <_GitDir Condition="'$(_GitDir)' == ''">$([System.IO.Path]::Combine($(SolutionDirectoryPath), '.git'))</_GitDir>
+
+      <_HasGitDir Condition="'$(_HasGitDir)' == ''">false</_HasGitDir>
+      <_HasGitDir Condition="Exists($(_GitDir))">true</_HasGitDir>
     </PropertyGroup>
 
     <GitVersion
@@ -89,34 +117,13 @@
         <_Parameter1>Build.Flavor</_Parameter1>
         <_Parameter2>$(BuildFlavor)</_Parameter2>
       </_AssemblyAttributes>
-
-      <_AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(IsIntegrationTest)' == 'true'">
-        <_Parameter1>CIEnabled</_Parameter1>
-        <_Parameter2>$(CIEnabled)</_Parameter2>
-      </_AssemblyAttributes>
-
-      <_AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(IsIntegrationTest)' == 'true' And '$(CICategory)' != ''">
-        <_Parameter1>CICategory</_Parameter1>
-        <_Parameter2>$(CICategory)</_Parameter2>
-      </_AssemblyAttributes>
-    </ItemGroup>
-
-    <!-- Outer project will supply a default value - if absent we need this project to look itself -->
-    <PropertyGroup Condition="'$(_PaketLockFile)' == ''">
-      <_PaketLockFile>$([MSBuild]::GetPathOfFileAbove('paket.lock'))</_PaketLockFile>
-    </PropertyGroup>
-
-    <ItemGroup>
-      <EmbeddedResource Condition="'$(_PaketLockFile)' != ''" Include="$(_PaketLockFile)">
-        <LogicalName>paket.lock</LogicalName>
-      </EmbeddedResource>
     </ItemGroup>
 
   </Target>
 
 
-  <Target Name="FindRoleFiles">
-    <RoleManifestPackageIdentifier Condition="'$(IsIntegrationTest)' == 'true' Or '$(IsIntegrationTestHelper)' == 'true'"
+  <Target Name="FindRoleFiles" Condition="'$(IsIntegrationTest)' == 'true' Or '$(IsIntegrationTestHelper)' == 'true'">
+    <RoleManifestPackageIdentifier
       ManifestSearchDirectories="@(ManifestSearchDirectories)"
       DependentRoles="@(DependentRoles)"
       PackageBlacklist="@(PackageBlacklist)" >
@@ -124,130 +131,129 @@
     </RoleManifestPackageIdentifier>
 
     <ItemGroup>
-      <_AssemblyAttributes Condition="'$(IsIntegrationTest)' == 'true' Or '$(IsIntegrationTestHelper)' == 'true'" Include="@(DependentPackages)" />
+      <_AssemblyAttributes Include="@(DependentPackages)" />
     </ItemGroup>
-  </Target>
-
-
-  <!--
-    To allow version changes to be respected on incremental builds (e.g. through CLI parameters),
-    create a hash of all assembly attributes so that the cache file will change with the calculated
-    assembly attribute values and MS Build will then execute CoreGenerateAssembly to generate a new file.
-  -->
-  <Target Name="CreateGeneratedAssemblyInfoInputsCacheFile"
-          DependsOnTargets="$(CreateGeneratedAssemblyInfoInputsCacheFileDependsOn)">
-
-    <PropertyGroup>
-      <GeneratedAssemblyInfoInputsCacheFile>$(IntermediateOutputPath)Versioning.AssemblyInfoInputs.cache</GeneratedAssemblyInfoInputsCacheFile>
-      <GeneratedAssemblyInfoFile Condition="'$(GeneratedAssemblyInfoFile)' == ''">$(IntermediateOutputPath)AssemblyInfo.g.cs</GeneratedAssemblyInfoFile>
-    </PropertyGroup>
-
-    <Aderant.Build.Tasks.HashItems ItemsToHash="@(_AssemblyAttributes->'%(Identity)%(_Parameter2)')">
-      <Output TaskParameter="HashResult" PropertyName="__AssemblyAttributesHash" />
-    </Aderant.Build.Tasks.HashItems>
-
-    <Aderant.Build.Tasks.WriteLinesToFile
-      Lines="$(__AssemblyAttributesHash)"
-      File="$(GeneratedAssemblyInfoInputsCacheFile)"
-      Overwrite="true"
-      WriteOnlyWhenDifferent="true" />
-
-    <ItemGroup>
-      <FileWrites Include="$(GeneratedAssemblyInfoInputsCacheFile)" />
-    </ItemGroup>
-
   </Target>
 
 
   <PropertyGroup>
     <GenerateAssemblyInfoDependsOn>
       $(GenerateAssemblyInfoDependsOn);
-      CoreGenerateAssemblyInfo
+      UpdateAssemblyInfoFile;
     </GenerateAssemblyInfoDependsOn>
   </PropertyGroup>
 
 
-  <Target Name="GenerateAssemblyInfo"
-          DependsOnTargets="$(GenerateAssemblyInfoDependsOn)" />
+  <Target Name="UpdateCommonAssemblyInfo" DependsOnTargets="$(GenerateAssemblyInfoDependsOn)" />
 
-
-  <Target Name="CoreGenerateAssemblyInfo"
-          DependsOnTargets="CreateGeneratedAssemblyInfoInputsCacheFile"
-          Inputs="$(GeneratedAssemblyInfoInputsCacheFile)"
-          Outputs="$(GeneratedAssemblyInfoFile)">
-
-    <Error Condition="'@(_AssemblyAttributes)' == ''"        Text="No assembly attributes specified" />
-    <Error Condition="'$(GeneratedAssemblyInfoFile)' == ''"  Text="GeneratedAssemblyInfoFile is undefined" />
-
-    <WriteCodeFragment AssemblyAttributes="@(_AssemblyAttributes)"
-                       Language="CS"
-                       OutputFile="$(GeneratedAssemblyInfoFile)">
-    </WriteCodeFragment>
-
-  </Target>
-
-
-  <Target Name="FindCommonAssemblyInfo">
+  <!--
+    Clone a copy of CommonAssemblyInfo.cs once, and then share that between all projects using the same original CommonAssemblyInfo.cs
+  -->
+  <Target Name="CloneCommonAssemblyInfoFile"
+          BeforeTargets="UpdateAssemblyInfoFile"
+          DependsOnTargets="$(CreateGeneratedAssemblyInfoInputsDependsOn)">
     <!-- Find CommonAssemblyInfo.cs in the "Compile" Items. Remove it from "Compile" Items because we will use a modified version instead. -->
     <ItemGroup>
       <CommonAssemblyInfoFile Include="@(Compile)" Condition="%(Filename) == 'CommonAssemblyInfo' And %(Extension) == '.cs'" />
       <!-- Now remove the original element -->
-      <Compile Remove="@(CommonAssemblyInfoFile)" Condition="'@(CommonAssemblyInfoFile->Count())' != '0'" />
+      <Compile Remove="@(CommonAssemblyInfoFile)" />
     </ItemGroup>
 
     <PropertyGroup>
-      <NewCommonAssemblyInfoFile>$(IntermediateOutputPath)CommonAssemblyInfo.cs</NewCommonAssemblyInfoFile>
+      <BasePath>$([System.IO.Path]::GetTempPath())</BasePath>
     </PropertyGroup>
 
-    <!-- Include the modified CommonAssemblyInfo.cs file in "Compile" items (instead of the original). -->
+    <Aderant.Build.Tasks.HashItems ItemsToHash="%(CommonAssemblyInfoFile.FullPath)"
+                                   IncludeProcessId="true">
+      <Output TaskParameter="HashResult" PropertyName="_CommonAssemblyInfoFilePathHash" />
+    </Aderant.Build.Tasks.HashItems>
+
+    <Aderant.Build.Tasks.HashItems ItemsToHash="@(_AssemblyAttributes->'%(Identity)%(_Parameter2)')"
+                                   IncludeProcessId="true">
+      <Output TaskParameter="HashResult" PropertyName="_CommonAssemblyAttributesPathHash" />
+    </Aderant.Build.Tasks.HashItems>
+
+    <CombinePath BasePath="$(BasePath)"
+                 Paths="$(_CommonAssemblyInfoFilePathHash)" >
+      <Output TaskParameter="CombinedPaths" PropertyName="CommonAssemblyInfoCloneFile" />
+    </CombinePath>
+
+    <CombinePath BasePath="$(BasePath)"
+                 Paths="$(_CommonAssemblyAttributesPathHash)" >
+      <Output TaskParameter="CombinedPaths" PropertyName="CommonAssemblyInfoAttributesFile" />
+    </CombinePath>
+
+    <PropertyGroup>
+      <CommonAssemblyInfoCloneFile>$(CommonAssemblyInfoCloneFile).cs</CommonAssemblyInfoCloneFile>
+      <CommonAssemblyInfoAttributesFile>$(CommonAssemblyInfoAttributesFile).g.cs</CommonAssemblyInfoAttributesFile>
+    </PropertyGroup>
+  </Target>
+
+
+  <!--  Emit the target attributes as a code
+        fragment into a temporary source file for the compiler.-->
+  <Target Name="WriteCommonAssemblyInfoAttributesFile"
+          AfterTargets="CloneCommonAssemblyInfoFile">
+    <WriteCodeFragment Condition="!Exists('$(CommonAssemblyInfoAttributesFile)')"
+                       AssemblyAttributes="@(_AssemblyAttributes)"
+                       Language="CS"
+                       OutputFile="$(CommonAssemblyInfoAttributesFile)" />
+  </Target>
+
+
+  <Target Name="UpdateCopyright"
+          AfterTargets="CloneCommonAssemblyInfoFile"
+          Condition="'@(CommonAssemblyInfoFile->Count())' != '0'"
+          Inputs="$(MSBuildThisFileFullPath);@(CommonAssemblyInfoFile)"
+          Outputs="$(CommonAssemblyInfoCloneFile)">
+
+    <Copy SourceFiles="@(CommonAssemblyInfoFile)"
+          DestinationFiles="$(CommonAssemblyInfoCloneFile)"
+          OverwriteReadOnlyFiles="true"
+          Retries="$(CopyRetryCount)"
+          RetryDelayMilliseconds="$(CopyRetryDelayMilliseconds)" />
+
+    <!-- Update copyright, $1, $2 and $4 are capture groups -->
+    <MSBuild.Community.Tasks.FileUpdate
+      Encoding="utf-8-without-bom"
+      Files="$(CommonAssemblyInfoCloneFile)"
+      IgnoreCase="true"
+      Multiline="true"
+      Singleline="false"
+      Regex="(.*?AssemblyCopyright)(.*?\d{4})(\s*-\s*\d{4})?(.*)"
+      ReplacementText="$1$2-$([System.DateTime]::Now.Year)$4" />
+
     <ItemGroup>
-      <Compile Include="$(NewCommonAssemblyInfoFile)" Condition="'@(CommonAssemblyInfoFile->Count())' != '0'" />
+      <CommonAssemblyInfoCloneFiles Include="$(CommonAssemblyInfoCloneFile)" />
     </ItemGroup>
 
   </Target>
 
 
   <!--
-      Creates modified version of CommonAssemblyInfo.cs without touching the original file so we don't upset
-      incremental builds
+      Clones CommonAssemblyInfo.cs so we don't upset incremental builds
   -->
-  <Target Name="AssemblyInfoUpdateCopyright"
-          DependsOnTargets="FindCommonAssemblyInfo"
-          Inputs="@(CommonAssemblyInfoFile)"
-          Outputs="$(NewCommonAssemblyInfoFile)">
-
-    <Copy SourceFiles="@(CommonAssemblyInfoFile)"
-          DestinationFiles="$(NewCommonAssemblyInfoFile)"
-          OverwriteReadOnlyFiles="true" />
-
-    <!-- Update copyright, $1, $2 and $4 are capture groups -->
-    <MSBuild.Community.Tasks.FileUpdate
-      Condition="'@(CommonAssemblyInfoFile->Count())' != '0'"
-      Encoding="utf-8-without-bom"
-      Files="$(NewCommonAssemblyInfoFile)"
-      IgnoreCase="true"
-      Multiline="true"
-      Singleline="false"
-      Regex="(.*?AssemblyCopyright)(.*?\d{4})(\s*-\s*\d{4})?(.*)"
-      ReplacementText="$1$2-$([System.DateTime]::Now.Year)$4">
-    </MSBuild.Community.Tasks.FileUpdate>
-
+  <Target Name="UpdateAssemblyInfoFile">
+    <!-- Include the cloned CommonAssemblyInfo.cs files in "Compile" items (instead of the original). -->
     <ItemGroup>
-      <FileWrites Include="$(NewCommonAssemblyInfoFile)" />
+      <Compile Include="@(CommonAssemblyInfoCloneFiles)" />
+      <Compile Include="$(CommonAssemblyInfoAttributesFile)" />
     </ItemGroup>
-
+    <!-- Do not put in FileWrites:
+         These are a files that are shared between projects in %temp%, and cleaning it would create a race between projects during rebuild -->
   </Target>
 
 
-  <Target Name="ReadVersionInfo" DependsOnTargets="FindCommonAssemblyInfo">
+  <Target Name="ReadVersionInfo" AfterTargets="CloneCommonAssemblyInfoFile">
 
     <ReadAssemblyInfo
       AssemblyInfoFiles="@(CommonAssemblyInfoFile)">
-      <Output ItemName="CommonAssemblyInformationalVersion" TaskParameter="AssemblyInformationalVersion" />
-      <Output ItemName="CommonAssemblyVersion"              TaskParameter="AssemblyVersion" />
-      <Output ItemName="CommonAssemblyFileVersion"          TaskParameter="AssemblyFileVersion" />
+      <Output TaskParameter="AssemblyInformationalVersion" ItemName="CommonAssemblyInformationalVersion" />
+      <Output TaskParameter="AssemblyVersion"              ItemName="CommonAssemblyVersion" />
+      <Output TaskParameter="AssemblyFileVersion"          ItemName="CommonAssemblyFileVersion" />
     </ReadAssemblyInfo>
 
   </Target>
+
 
 </Project>

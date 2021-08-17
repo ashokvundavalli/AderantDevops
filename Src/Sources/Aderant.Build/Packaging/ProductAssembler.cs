@@ -220,11 +220,7 @@ namespace Aderant.Build.Packaging {
 
                     logger.Info("Running post-process script: '{0}'", script);
 
-                    var directories = context.ResolvePackageRelativeDestinationDirectories(module);
-
-                    foreach (string directory in directories) {
-                        powerShell.RunScript(command, new Dictionary<string, object>(1) { { "Package", packageDirectory } }, directory);
-                    }
+                    powerShell.RunScript(command, new Dictionary<string, object>(1) { { "Package", packageDirectory } }, context.ResolvePackageRelativeDirectory(module));
                 }
 
                 foreach (string packageDir in nupkgEntries) {

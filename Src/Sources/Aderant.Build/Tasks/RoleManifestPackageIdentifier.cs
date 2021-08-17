@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Microsoft.Build.Framework;
@@ -11,6 +12,12 @@ using Microsoft.Build.Utilities;
 namespace Aderant.Build.Tasks {
     public class RoleManifestPackageIdentifier : Task {
 
+
+        private static readonly ConcurrentDictionary<string, List<RoleManifest>> fileContentPerDirectory = new ConcurrentDictionary<string, List<RoleManifest>>();
+
+        private static readonly ConcurrentDictionary<string, RoleManifest> roleManifests = new ConcurrentDictionary<string, RoleManifest>(StringComparer.OrdinalIgnoreCase);
+
+
         [Required]
         public string[] DependentRoles { get; set; }
 
@@ -18,41 +25,40 @@ namespace Aderant.Build.Tasks {
         public string[] ManifestSearchDirectories { get; set; }
 
         [Output]
-        public ITaskItem2[] DependentPackages { get; set; }
+        public ITaskItem[] DependentPackages { get; set; }
 
-        public string[] PackageBlacklist { get; set; } = new string[] { };
+        public string[] PackageBlacklist { get; set; } = Array.Empty<string>();
 
-        internal static ConcurrentDictionary<string, RoleManifest> RoleManifests { get; set; } = new ConcurrentDictionary<string, RoleManifest>(StringComparer.OrdinalIgnoreCase);
 
         public override bool Execute() {
             if (DependentRoles == null || DependentRoles.Length == 0) {
                 return !Log.HasLoggedErrors;
             }
 
-            RoleManifest[] locatedRoles = LocateRoleManifests(ManifestSearchDirectories);
+            var locatedRoles = LocateRoleManifests(ManifestSearchDirectories);
             foreach (RoleManifest role in locatedRoles) {
-                RoleManifests.TryAdd(role.Name, role);
+                roleManifests.TryAdd(role.Name, role);
             }
 
-            if (RoleManifests.Count == 0) {
+            if (roleManifests.Count == 0) {
                 Log.LogError("Unable to locate dependent role manifest files.");
                 return !Log.HasLoggedErrors;
             }
 
-            DuplicateRoleFilesPresent(RoleManifests.Values.ToArray(), Log);
+            DuplicateRoleFilesPresent(roleManifests.Values.ToArray(), Log);
 
-            List<string> dependentPackages = new List<string>();
-            HashSet<string> processedPackages = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var dependentPackages = new List<string>();
+            var processedPackages = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (string role in DependentRoles) {
-                RoleManifest roleManifest = RoleManifests.Select(x => x.Value).FirstOrDefault(x => x.FilePath.EndsWith($"{role}.role.xml", StringComparison.OrdinalIgnoreCase));
+                var roleManifest = roleManifests.Select(x => x.Value).FirstOrDefault(x => x.FilePath.EndsWith($"{role}.role.xml", StringComparison.OrdinalIgnoreCase));
 
                 if (roleManifest == null) {
                     Log.LogError("Unable to locate role: '{0}'. As a result, the integration test assemblies will not contain valid role dependencies.", role);
                     continue;
                 }
 
-                foreach (string dependentPackage in roleManifest.PackageDependencies) {
+                foreach (string dependentPackage in roleManifest.GetPackageDependencyTree(roleManifests.Values)) {
                     if (processedPackages.Add(dependentPackage)) {
                         dependentPackages.Add(dependentPackage);
                     }
@@ -64,10 +70,10 @@ namespace Aderant.Build.Tasks {
                 dependentPackages.Remove(package);
             }
 
-            List<ITaskItem2> taskItems = new List<ITaskItem2>(dependentPackages.Count);
+            List<ITaskItem> taskItems = new List<ITaskItem>(dependentPackages.Count);
 
             foreach (string package in dependentPackages) {
-                ITaskItem2 taskItem = new TaskItem("System.Reflection.AssemblyMetadataAttribute");
+                ITaskItem taskItem = new TaskItem("System.Reflection.AssemblyMetadataAttribute");
                 taskItem.SetMetadata("_Parameter1", "PackageRequirement");
                 taskItem.SetMetadata("_Parameter2", package);
                 taskItems.Add(taskItem);
@@ -78,7 +84,9 @@ namespace Aderant.Build.Tasks {
             return !Log.HasLoggedErrors;
         }
 
-        internal static RoleManifest[] LocateRoleManifests(string[] directories) {
+
+
+        internal static List<RoleManifest> LocateRoleManifests(string[] directories) {
             if (directories == null) {
                 throw new ArgumentException("Value cannot be null.", nameof(directories));
             }
@@ -86,28 +94,36 @@ namespace Aderant.Build.Tasks {
                 throw new ArgumentException("Array must contain elements.", nameof(directories));
             }
 
-            List<RoleManifest> roleManifests = new List<RoleManifest>();
-            Regex regex = new Regex(@"\.role$", RegexOptions.IgnoreCase);
+            List<RoleManifest> aggregate = new List<RoleManifest>();
 
             foreach (string directory in directories) {
                 string searchDirectory = Path.GetFullPath(directory);
 
-                if (!Directory.Exists(searchDirectory)) {
-                    throw new DirectoryNotFoundException($"Directory not found: '{searchDirectory}'.");
+                if (!fileContentPerDirectory.TryGetValue(searchDirectory, out var roleManifests)) {
+                    roleManifests = new List<RoleManifest>();
+
+                    if (!Directory.Exists(searchDirectory)) {
+                        throw new DirectoryNotFoundException($"Directory not found: '{searchDirectory}'.");
+                    }
+
+                    string[] files = Directory.GetFiles(searchDirectory, "*.role.xml", SearchOption.TopDirectoryOnly);
+
+                    foreach (string file in files) {
+                        XDocument roleDocument = XDocument.Load(file, LoadOptions.SetLineInfo | LoadOptions.SetBaseUri);
+                        roleManifests.Add(new RoleManifest(file, roleDocument));
+                    }
+
+                    fileContentPerDirectory.TryAdd(searchDirectory, roleManifests);
                 }
 
-                string[] files = Directory.GetFiles(searchDirectory, "*.role.xml", SearchOption.TopDirectoryOnly);
-
-                foreach (string file in files) {
-                    roleManifests.Add(new RoleManifest(regex.Replace(Path.GetFileNameWithoutExtension(file), string.Empty), file));
-                }
+                aggregate.AddRange(roleManifests);
             }
 
-            return roleManifests.ToArray();
+            return aggregate;
         }
 
-        internal static bool DuplicateRoleFilesPresent(IList<RoleManifest> roleManifests, TaskLoggingHelper logger) {
-            IEnumerable<IGrouping<string, RoleManifest>> groups = roleManifests.GroupBy(x => x.Name);
+        internal static bool DuplicateRoleFilesPresent(RoleManifest[] roleManifests, TaskLoggingHelper logger) {
+            IEnumerable<IGrouping<string, RoleManifest>> groups = roleManifests.GroupBy(x => x.Name, StringComparer.OrdinalIgnoreCase);
             bool duplicates = false;
 
             foreach (IGrouping<string, RoleManifest> group in groups) {
@@ -125,26 +141,30 @@ namespace Aderant.Build.Tasks {
     }
 
     internal class RoleManifest {
+        private static readonly Regex nameRegex = new Regex(@"\.role$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        private static readonly Regex regex = new Regex(@"\.zip$", RegexOptions.IgnoreCase);
+
+        private readonly XDocument roleDocument;
+
+        public string FilePath { get; }
+
         internal string Name { get; }
-        internal string FilePath { get; }
-        private string[] packageDependencies;
 
-        // An array of package file name(s) which were extracted from the role file dependency tree.
-        internal string[] PackageDependencies => packageDependencies ?? (packageDependencies = GetPackageDependencyTree());
+        internal RoleManifest(string filePath, XDocument roleDocument) {
+            ErrorUtilities.IsNotNull(filePath, nameof(filePath));
+            ErrorUtilities.IsNotNull(roleDocument, nameof(roleDocument));
 
-        internal RoleManifest(string name, string filePath) {
-            Name = name;
             FilePath = filePath;
+            Name = nameRegex.Replace(Path.GetFileNameWithoutExtension(filePath), string.Empty);
+            this.roleDocument = roleDocument;
         }
 
         /// <summary>
         /// This method will create a package dependency tree.
         /// The output will be a string array of package names.
         /// </summary>
-        /// <returns></returns>
-        private string[] GetPackageDependencyTree() {
-            XDocument roleDocument = XDocument.Load(FilePath, LoadOptions.SetLineInfo | LoadOptions.SetBaseUri);
-
+        public string[] GetPackageDependencyTree(ICollection<RoleManifest> roleManifests) {
             List<string> orderedPackages = new List<string>();
 
             // Examine the packages node in the role file(s) and extract the package file name.
@@ -154,16 +174,16 @@ namespace Aderant.Build.Tasks {
             dependentRoles.UnionWith(GetValues(roleDocument, "dependencies", "type"));
 
             List<RoleManifest> roles = new List<RoleManifest>(dependentRoles.Count);
-            roles.AddRange(RoleManifestPackageIdentifier.RoleManifests.Values.Where(x => dependentRoles.Any(y => string.Equals(y, x.Name, StringComparison.OrdinalIgnoreCase))));
+            roles.AddRange(roleManifests.Where(x => dependentRoles.Any(y => string.Equals(y, x.Name, StringComparison.OrdinalIgnoreCase))));
 
             foreach (RoleManifest role in roles) {
-                foreach (string package in role.PackageDependencies) {
+                foreach (string package in role.GetPackageDependencyTree(roleManifests)) {
                     if (packages.Add(package)) {
                         orderedPackages.Add(package);
                     }
                 }
 
-                packages.UnionWith(role.PackageDependencies);
+                packages.UnionWith(role.GetPackageDependencyTree(roleManifests));
             }
 
             foreach (string package in GetValues(roleDocument, "packages", "filename")) {
@@ -175,7 +195,7 @@ namespace Aderant.Build.Tasks {
             return orderedPackages.ToArray();
         }
 
-        private string[] GetValues(XDocument roleDocument, string nodeName, string attributeName) {
+        private static string[] GetValues(XDocument roleDocument, string nodeName, string attributeName) {
             HashSet<string> packages = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             XElement node = roleDocument.Descendants(nodeName).SingleOrDefault();
 
@@ -183,7 +203,7 @@ namespace Aderant.Build.Tasks {
                 foreach (var dependencyDescendant in node.Descendants()) {
                     XAttribute fileName = dependencyDescendant.Attribute(attributeName);
                     if (fileName != null) {
-                        Regex regex = new Regex(@"\.zip$", RegexOptions.IgnoreCase);
+
                         packages.Add(regex.Replace(fileName.Value, string.Empty));
                     }
                 }

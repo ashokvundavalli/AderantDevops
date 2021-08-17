@@ -128,7 +128,6 @@
     <Compile Include="ProjectSystem\StateTracking\TrackedMetadataFile.cs" />
     <Compile Include="DependencyResolver\ResolverSettingsReader.cs" />
     <Compile Include="PipelineService\QueryOptions.cs" />
-    <Compile Include="Tasks\GetCurrentProcessId.cs" />
     <Compile Include="Tasks\Testing\BuildTestRunParametersXml.cs" />
     <Compile Include="Tasks\TextTemplating\TextTemplatingAssemblyResolver.cs" />
     <Compile Include="Utilities\PathComparer.cs" />

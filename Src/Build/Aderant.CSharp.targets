@@ -53,10 +53,10 @@
       <SplashScreen Remove="@(OriginalSplashScreen)" />
     </ItemGroup>
 
-    <GetProductName AssemblyInfo="@(AssemblyInfo)">
-      <Output PropertyName="ExpertProductName"
-              TaskParameter="ProductName" />
-    </GetProductName>
+    <ReadAssemblyInfo AssemblyInfoFiles="@(AssemblyInfo)"
+                      Condition="'@(OriginalSplashScreen->Count())' != '0'">
+      <Output TaskParameter="ProductName" PropertyName="ProductName" />
+    </ReadAssemblyInfo>
 
     <PropertyGroup>
       <OutputSplashScreen>@(OriginalSplashScreen->'$(IntermediateOutputPath)%(RelativeDir)%(Filename)%(Extension)')</OutputSplashScreen>
@@ -65,19 +65,18 @@
     <!--
       This task can return a previously generated file to keep incremental builds working.
     -->
-
     <PropertyGroup>
       <_VersionText Condition="'$(_VersionText)' == '' And '@(CommonAssemblyInformationalVersion)' != ''">%(CommonAssemblyInformationalVersion.Major).%(CommonAssemblyInformationalVersion.Minor)</_VersionText>
       <_VersionText Condition="'$(_VersionText)' == '' And '@(CommonAssemblyFileVersion)' != ''" >%(CommonAssemblyFileVersion.Major).%(CommonAssemblyFileVersion.Minor)</_VersionText>
       <_VersionText Condition="'$(_VersionText)' == '1.8' Or '$(_VersionText)' == ''">8.1</_VersionText>
       <SplashScreenVersion>Version $(_VersionText)</SplashScreenVersion>
-      <SplashScreenText>$(ExpertProductName)</SplashScreenText>
+      <SplashScreenText>$(ProductName)</SplashScreenText>
     </PropertyGroup>
 
     <Error Condition="'$(_VersionText)' == ''" Text="The build was unable to find AssemblyInformationalVersion attribute or determine the current value of this attribute. Check that CommonAssemblyInfo.cs is linked to this project." />
 
     <Aderant.Build.Tasks.UpdateSplashScreenImage
-     Condition="'@(OriginalSplashScreen->Count())' != '0' And '$(ExpertProductName)' != ''"
+     Condition="'@(OriginalSplashScreen->Count())' != '0' And '$(ProductName)' != ''"
 
      TrackerLogDirectory="$(IntermediateOutputPath)"
      Sources="@(OriginalSplashScreen)"
@@ -90,7 +89,7 @@
      Style="$(SplashScreenStyle)">
     </Aderant.Build.Tasks.UpdateSplashScreenImage>
 
-    <Message Text="Product Name: $(ExpertProductName)" Condition="' $(ExpertProductName)' != ''" />
+    <Message Text="Product Name: $(ProductName)" Condition="' $(ProductName)' != ''" />
     <Message Text="Splash screen style: $(SplashScreenStyle)" Condition="' $(SplashScreenStyle)' != ''" />
     <Message Text="Path to splash screen: $(OutputSplashScreen)" Condition="' $(OutputSplashScreen)' != ''" />
 

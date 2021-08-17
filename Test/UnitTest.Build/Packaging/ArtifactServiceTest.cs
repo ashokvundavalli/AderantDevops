@@ -25,7 +25,7 @@ namespace UnitTest.Build.Packaging {
             var fs = new Mock<IFileSystem>();
             fs.Setup(s => s.FileExists("Baz")).Returns(true);
             MockBulkCopy(fs);
-            
+
             var pipelineService = new Moq.Mock<IBuildPipelineService>();
             var artifactService = new ArtifactService(pipelineService.Object, fs.Object, NullLogger.Default);
 
@@ -56,8 +56,7 @@ namespace UnitTest.Build.Packaging {
         [TestMethod]
         [ExpectedException(typeof(InvalidOperationException))]
         public void Double_writes_in_artifacts_are_detected() {
-            var artifactService = new ArtifactService(NullLogger.Default);
-            artifactService.CheckForDuplicates(
+            ArtifactService.CheckForDuplicates(
                 "Foo",
                 new[] {
                     new PathSpec(@"ABC\Z.dll", "Z.dll"),

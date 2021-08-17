@@ -99,7 +99,7 @@ namespace Aderant.Build.Tasks.PowerShell {
             }
         }
 
-        private CommandParameterCollection ConvertArguments(ITaskItem[] scriptArguments) {
+        private static CommandParameterCollection ConvertArguments(ITaskItem[] scriptArguments) {
             if (scriptArguments == null) {
                 return null;
             }

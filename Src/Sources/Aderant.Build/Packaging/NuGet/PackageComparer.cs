@@ -124,10 +124,7 @@ namespace Aderant.Build.Packaging.NuGet {
                 string hashValue;
 
                 using (Stream stream = fileSystem.OpenFile(file)) {
-                    using (var sha1 = new SHA1Managed()) {
-                        byte[] hash = sha1.ComputeHash(stream);
-                        hashValue = BitConverter.ToString(hash);
-                    }
+                    hashValue = stream.ComputeSha1Hash();
                 }
 
                 hashes[file] = hashValue;

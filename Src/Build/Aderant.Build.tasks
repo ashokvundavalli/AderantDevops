@@ -91,12 +91,11 @@
     <UsingTask TaskName="Aderant.Build.Tasks.TextTemplating.TextTemplatingAssemblyResolver"       AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.HappyCat"                                            AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.SourceTransformationTask"                            AssemblyFile="$(BuildAssembly)" />
-    <UsingTask TaskName="Aderant.Build.Tasks.GetCurrentProcessId"                                 AssemblyFile="$(BuildAssembly)" />
 
-  <PropertyGroup>
-    <TargetTaskFactory Condition="'$(TargetTaskFactory)' == ''">RoslynCodeTaskFactory</TargetTaskFactory>
-    <TargetTaskFactory Condition="'$(IsVisualStudio2019OrHigher)' != 'true'">CodeTaskFactory</TargetTaskFactory>
-  </PropertyGroup>
+    <PropertyGroup>
+      <TargetTaskFactory Condition="'$(TargetTaskFactory)' == ''">RoslynCodeTaskFactory</TargetTaskFactory>
+      <TargetTaskFactory Condition="'$(IsVisualStudio2019OrHigher)' != 'true'">CodeTaskFactory</TargetTaskFactory>
+    </PropertyGroup>
 
     <UsingTask
       Condition="$(CodeTaskFactoryAssembly) != ''"
@@ -118,40 +117,6 @@
         </Code>
       </Task>
     </UsingTask>
-
-    <UsingTask TaskName="GetProductName"
-      TaskFactory="CodeTaskFactory"
-      AssemblyFile="$(CodeTaskFactoryAssembly)">
-      <ParameterGroup>
-        <AssemblyInfo ParameterType="Microsoft.Build.Framework.ITaskItem" Required="true" />
-        <ProductName Output="true"/>
-      </ParameterGroup>
-      <Task>
-        <Reference Include="System.Core" />
-        <Using Namespace="System" />
-        <Using Namespace="System.IO" />
-        <Using Namespace="System.Text.RegularExpressions" />
-        <Using Namespace="Microsoft.Build.Framework" />
-        <Using Namespace="Microsoft.Build.Utilities" />
-        <Code Type="Fragment" Language="cs">
-          <![CDATA[
-  var fullPath = AssemblyInfo.GetMetadata("FullPath");
-  string text = System.IO.File.ReadAllText(fullPath);
-
-  var assemblyTitleExpression = new Regex(@"(AssemblyProduct|AssemblyTitle|AssemblyProductAttribute|AssemblyTitleAttribute)\((.*?)\)");
-  GroupCollection match = assemblyTitleExpression.Match(text).Groups;
-  string value = match[match.Count - 1].Value;
-
-  if (!string.IsNullOrEmpty(value)) {
-      // Product names for the splash screen don't have Expert in the name, unless you want to run Expert ExpertTime :)
-      ProductName = value.Replace("\"", string.Empty);
-      return true;
-  }
-        ]]>
-        </Code>
-      </Task>
-    </UsingTask>
-
 
     <UsingTask
     TaskName="XDocumentPoke"

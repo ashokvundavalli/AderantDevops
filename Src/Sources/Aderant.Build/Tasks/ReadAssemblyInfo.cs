@@ -2,22 +2,30 @@
 using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Threading;
 using Aderant.Build.Utilities;
+using Microsoft.Build.BuildEngine;
+using Microsoft.Build.Evaluation;
+using Microsoft.Build.Execution;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
     public class ReadAssemblyInfo : Task {
-        private static ConcurrentDictionary<string, Tuple<TaskItem, TaskItem, TaskItem>> infoCache = new ConcurrentDictionary<string, Tuple<TaskItem, TaskItem, TaskItem>>(StringComparer.OrdinalIgnoreCase);
 
-        private static MethodInfo parseTextMethod;
+        private static readonly ConcurrentDictionary<(string, int), ITaskItem> infoCache = new ConcurrentDictionary<(string, int), ITaskItem>();
 
-        private TaskItem assemblyFileVersion;
-        private TaskItem assemblyInformationalVersion;
-        private TaskItem assemblyVersion;
+        private static Func<string, object> parseTextMethod;
+
+        private object assemblyProductTitle;
+        private object assemblyProductAttribute;
+        private object assemblyFileVersionAttribute;
+        private object assemblyVersionAttribute;
+        private object assemblyInformationalVersionAttribute;
+        private string assemblyInfoFile;
 
         public ReadAssemblyInfo() {
             if (parseTextMethod == null) {
@@ -28,19 +36,36 @@ namespace Aderant.Build.Tasks {
         [Required]
         public ITaskItem[] AssemblyInfoFiles { get; set; }
 
+
         [Output]
-        public TaskItem AssemblyVersion {
-            get { return assemblyVersion; }
+        public ITaskItem AssemblyVersion {
+            get {
+                return ParseAttributeArgumentList(assemblyVersionAttribute, 1);
+            }
         }
 
         [Output]
-        public TaskItem AssemblyInformationalVersion {
-            get { return assemblyInformationalVersion; }
+        public ITaskItem AssemblyInformationalVersion {
+            get {
+                return ParseAttributeArgumentList(assemblyInformationalVersionAttribute, 2);
+            }
         }
 
         [Output]
-        public TaskItem AssemblyFileVersion {
-            get { return assemblyFileVersion; }
+        public ITaskItem AssemblyFileVersion {
+            get {
+                return ParseAttributeArgumentList(assemblyFileVersionAttribute, 3);
+            }
+        }
+
+        [Output]
+        public ITaskItem ProductName {
+            get {
+                if (assemblyProductAttribute != null) {
+                    return ParseAttributeArgumentList(assemblyProductAttribute, 4, false);
+                }
+                return ParseAttributeArgumentList(assemblyProductTitle, 4, false);
+            }
         }
 
         public override bool Execute() {
@@ -50,47 +75,41 @@ namespace Aderant.Build.Tasks {
             }
 
             if (AssemblyInfoFiles.Length > 1) {
-                Log.LogError("More than 1 file provided: " + String.Join(",", AssemblyInfoFiles.Select(s => s.ItemSpec)), null);
+                Log.LogError("More than 1 file provided: " + string.Join(",", AssemblyInfoFiles.Select(s => s.ItemSpec)), null);
                 return false;
             }
 
-            string assemblyInfoFile = AssemblyInfoFiles[0].GetMetadata("FullPath");
+            assemblyInfoFile = AssemblyInfoFiles[0].GetMetadata("FullPath");
 
-            Tuple<TaskItem, TaskItem, TaskItem> attributes;
-            if (infoCache.TryGetValue(assemblyInfoFile, out attributes)) {
-                if (attributes == null) {
-                    // No file sentinel found
-                    return true;
-                }
+            var sentinel = (assemblyInfoFile, 0);
 
-                Log.LogMessage(MessageImportance.Low, "Reading attributes for {0} from cache.", assemblyInfoFile);
-                assemblyVersion = attributes.Item1;
-                assemblyInformationalVersion = attributes.Item2;
-                assemblyFileVersion = attributes.Item3;
+            if (infoCache.TryGetValue(sentinel, out _)) {
+                // Sentinel found - parsing will happen when properties are accessed
                 return true;
             }
 
+            ReadFile(assemblyInfoFile);
 
-            if (!File.Exists(assemblyInfoFile)) {
-                infoCache.TryAdd(assemblyInfoFile, null);
-                return true;
-            }
-
-            using (var reader = new StreamReader(assemblyInfoFile)) {
-                var text = reader.ReadToEnd();
-                ParseCSharpCode(text);
-
-                infoCache[assemblyInfoFile] = Tuple.Create(AssemblyVersion, AssemblyInformationalVersion, AssemblyFileVersion);
-            }
+            // Add sentinel marking the file as seen
+            infoCache.TryAdd(sentinel, null);
 
             return !Log.HasLoggedErrors;
         }
 
+        private void ReadFile(string file) {
+            if (File.Exists(file)) {
+                using (var reader = new StreamReader(file)) {
+                    var text = reader.ReadToEnd();
+                    ParseCSharpCode(text);
+                }
+            }
+        }
+
         internal void ParseCSharpCode(string text) {
-            dynamic tree = parseTextMethod.Invoke(null, new object[] { text, null, "", null, CancellationToken.None });
+            dynamic tree = parseTextMethod.Invoke(text);
             var root = tree.GetRoot();
 
-            var attributeLists = root.DescendantNodes();
+            var attributeLists = root.AttributeLists;
             foreach (var p in attributeLists) {
                 if (p.GetType().Name != "AttributeListSyntax") {
                     continue;
@@ -104,10 +123,40 @@ namespace Aderant.Build.Tasks {
                     var identifier = attribute.Name;
 
                     if (identifier != null) {
-                        ParseAttribute("AssemblyInformationalVersion", identifier, attribute, ref assemblyInformationalVersion);
-                        ParseAttribute("AssemblyVersion", identifier, attribute, ref assemblyVersion);
-                        ParseAttribute("AssemblyFileVersion", identifier, attribute, ref assemblyFileVersion);
+                        HandleAttribute(identifier, attribute);
                     }
+                }
+            }
+        }
+
+        private void HandleAttribute(dynamic identifier, dynamic attribute) {
+            var attributeName = (string)identifier.Identifier.Text;
+
+            switch (attributeName) {
+                case "AssemblyInformationalAttribute":
+                case "AssemblyInformationalVersion": {
+                    assemblyInformationalVersionAttribute = attribute;
+                    break;
+                }
+                case "AssemblyVersionAttribute":
+                case "AssemblyVersion": {
+                    assemblyVersionAttribute = attribute;
+                    break;
+                }
+                case "AssemblyFileVersionAttribute":
+                case "AssemblyFileVersion": {
+                    assemblyFileVersionAttribute = attribute;
+                    break;
+                }
+                case "AssemblyProduct":
+                case "AssemblyProductAttribute": {
+                    assemblyProductAttribute = attribute;
+                    break;
+                }
+                case "AssemblyTitle":
+                case "AssemblyTitleAttribute": {
+                    assemblyProductTitle = attribute;
+                    break;
                 }
             }
         }
@@ -133,39 +182,68 @@ namespace Aderant.Build.Tasks {
                         parameters[2].ParameterType == typeof(string) &&
                         parameters[3].ParameterType == typeof(Encoding) &&
                         parameters[4].ParameterType == typeof(CancellationToken)) {
-                        parseTextMethod = method;
+                        var textParam = Expression.Parameter(typeof(string), "text");
+
+                        var call = Expression.Call(method,
+                            textParam,
+                            Expression.Constant(null, parameters[1].ParameterType),
+                            Expression.Constant(null, parameters[2].ParameterType),
+                            Expression.Constant(null, parameters[3].ParameterType),
+                            Expression.Constant(CancellationToken.None, typeof(CancellationToken)));
+
+                        var lambda = Expression.Lambda<Func<string, object>>(call, textParam);
+                        var compile = lambda.Compile();
+
+                        parseTextMethod = compile;
                         return;
                     }
-
                 }
             }
         }
 
-        private static void SetMetadata(TaskItem taskItem, Version version) {
+        private static void SetMetadata(ITaskItem taskItem, Version version) {
             taskItem.SetMetadata(nameof(version.Major), version.Major.ToString());
             taskItem.SetMetadata(nameof(version.Minor), version.Minor.ToString());
             taskItem.SetMetadata(nameof(version.Build), version.Build.ToString());
             taskItem.SetMetadata(nameof(version.Revision), version.Revision.ToString());
         }
 
-        private static void ParseAttribute(string attributeName, dynamic identifier, dynamic attribute, ref TaskItem field) {
-            if (field != null) {
-                return;
+        private ITaskItem ParseAttributeArgumentList(dynamic attribute, int i, bool parseVersion = true) {
+            if (attribute == null) {
+                return null;
             }
 
-            if (identifier.Identifier.Text.IndexOf(attributeName, StringComparison.Ordinal) >= 0) {
-                var listArgument = attribute.ArgumentList.Arguments[0];
-
-                var rawText = listArgument.Expression.GetText().ToString();
-                if (!string.IsNullOrWhiteSpace(rawText)) {
-                    rawText = rawText.Replace("\"", "");
-                    Version version;
-                    if (Version.TryParse(rawText, out version)) {
-                        field = new TaskItem(version.ToString());
-                        SetMetadata(field, version);
-                    }
-                }
+            if (infoCache.TryGetValue((assemblyInfoFile, i), out var result)) {
+                return result;
             }
+
+            return ReadAttributeArgumentList(attribute, i, parseVersion);
         }
+
+        private ITaskItem ReadAttributeArgumentList(dynamic attribute, int i, bool parseVersion) {
+            var listArgument = attribute.ArgumentList.Arguments[0];
+
+            var rawText = listArgument.Expression.GetText().ToString();
+
+            if (!string.IsNullOrWhiteSpace(rawText)) {
+                rawText = rawText.Replace("\"", "");
+
+                ITaskItem result = null;
+                if (parseVersion) {
+                    if (Version.TryParse(rawText, out Version version)) {
+                        result = new TaskItem(version.ToString());
+                        SetMetadata(result, version);
+                    }
+                } else {
+                    result = new TaskItem(rawText);
+                }
+
+                infoCache.TryAdd((assemblyInfoFile, i), result);
+                return result;
+            }
+
+            return null;
+        }
+
     }
 }

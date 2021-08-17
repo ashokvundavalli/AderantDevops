@@ -4,6 +4,7 @@ using System.Text;
 
 namespace Aderant.Build.Utilities {
     internal static class StringExtensions {
+
         /// <summary>
         /// Case insensitive version of String.Replace().
         /// </summary>
@@ -41,14 +42,12 @@ namespace Aderant.Build.Utilities {
         }
 
         public static string[] ToStringArray(this string str) {
-            return new[] {str};
+            return new[] { str };
         }
 
         /// <summary>
-        /// Generate a deterministic GUID based off the provided path.
+        /// Generates a deterministic GUID based off the provided path.
         /// </summary>
-        /// <param name="path"></param>
-        /// <returns></returns>
         internal static Guid NewGuidFromPath(this string path) {
             if (string.IsNullOrWhiteSpace(path)) {
                 throw new ArgumentException("Value cannot be null or whitespace.", nameof(path));
@@ -57,6 +56,22 @@ namespace Aderant.Build.Utilities {
             using (MD5 md5 = MD5.Create()) {
                 byte[] hash = md5.ComputeHash(Encoding.Default.GetBytes(path.ToUpperInvariant()));
                 return new Guid(hash);
+            }
+        }
+
+        /// <summary>
+        /// Generates a a SHA-1 hash of the input
+        /// </summary>
+        public static string ComputeSha1Hash(this string hashInput) {
+            using (var sha1 = SHA1.Create()) {
+                var hash = sha1.ComputeHash(Encoding.UTF8.GetBytes(hashInput.ToString()));
+                var hashResult = new StringBuilder(hash.Length * 2);
+
+                foreach (byte b in hash) {
+                    hashResult.Append(b.ToString("x2"));
+                }
+
+                return hashResult.ToString();
             }
         }
     }
