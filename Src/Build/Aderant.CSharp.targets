@@ -4,6 +4,8 @@
          TreatAsLocalProperty="UseCommonOutputDirectory">
 
   <Import Project="Aderant.Build.Common.targets" Condition="'$(PrepareBuildEnvironmentTargetImported)' == ''" />
+  <Import Project="Aderant.CodeSigning.targets" Condition="'$(SignApplications)' == 'true'" />
+
 
   <PropertyGroup>
     <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
@@ -21,14 +23,8 @@
   </PropertyGroup>
 
 
-  <Import Project="Aderant.CodeSigning.targets" Condition="'$(SignApplications)' == 'true'" />
-
-  <!--
-    Updates the product splash screen without touching the original file
-  -->
-  <Target Name="CommonBuildUpdateSplashscreen"
-          Condition="'$(IsCustomBuild)' != 'true' And '$(OutputType)' == 'WinExe' And $(PackageId.EndsWith('.Api', StringComparison.OrdinalIgnoreCase)) != 'true'"
-          AfterTargets="SetVersionAttributes">
+  <Target Name="FindSplashScreenFile"
+          Condition="'$(IsCustomBuild)' != 'true' And '$(OutputType)' == 'WinExe' And $(PackageId.EndsWith('.Api', StringComparison.OrdinalIgnoreCase)) != 'true'">
     <!--
       This needs to run before BeforeResolveReferences target otherwise changes Resources item group
       is not reflected through out the in memory project
@@ -46,28 +42,40 @@
         <IsSplashScreen>true</IsSplashScreen>
       </OriginalSplashScreen>
 
-      <AssemblyInfo Include="@(Compile)" Condition="%(Filename) == 'AssemblyInfo' And %(Extension) == '.cs'" />
+      <AssemblyInfoFile Include="@(Compile)" Condition="%(Filename) == 'AssemblyInfo' And %(Extension) == '.cs'" />
 
       <!-- Remove the original splash screen resource node -->
       <Resource Remove="@(OriginalSplashScreen)" />
       <SplashScreen Remove="@(OriginalSplashScreen)" />
     </ItemGroup>
 
-    <ReadAssemblyInfo AssemblyInfoFiles="@(AssemblyInfo)"
-                      Condition="'@(OriginalSplashScreen->Count())' != '0'">
-      <Output TaskParameter="ProductName" PropertyName="ProductName" />
-    </ReadAssemblyInfo>
+  </Target>
+
+
+  <Target Name="GetSplashScreenInfoCore"
+          Condition="'@(OriginalSplashScreen->Count())' != '0'"
+          AfterTargets="FindSplashScreenFile">
+
+    <Error Condition="'@(CommonAssemblyInfoFile->Count())' == '0'" Text="CommonAssemblyInfo.cs must be provided when a splash screen resource is present." />
 
     <PropertyGroup>
       <OutputSplashScreen>@(OriginalSplashScreen->'$(IntermediateOutputPath)%(RelativeDir)%(Filename)%(Extension)')</OutputSplashScreen>
     </PropertyGroup>
 
-    <!--
-      This task can return a previously generated file to keep incremental builds working.
-    -->
+    <Aderant.Build.Tasks.ReadAssemblyInfo AssemblyInfoFiles="@(AssemblyInfoFile)"
+                                          UseResultsCache="false">
+      <Output TaskParameter="ProductName"    PropertyName="ProductName" />
+      <Output TaskParameter="ProductVersion" ItemName="VersionFromAssemblyInfoAttribute" />
+    </Aderant.Build.Tasks.ReadAssemblyInfo>
+
+    <!-- No version declared by the project - fall back to the top level file -->
+    <Aderant.Build.Tasks.ReadAssemblyInfo Condition="'@(VersionFromAssemblyInfoAttribute->Count())' == '0'"
+                                          AssemblyInfoFiles="@(CommonAssemblyInfoFile)">
+      <Output TaskParameter="ProductVersion" ItemName="VersionFromAssemblyInfoAttribute" />
+    </Aderant.Build.Tasks.ReadAssemblyInfo>
+
     <PropertyGroup>
-      <_VersionText Condition="'$(_VersionText)' == '' And '@(CommonAssemblyInformationalVersion)' != ''">%(CommonAssemblyInformationalVersion.Major).%(CommonAssemblyInformationalVersion.Minor)</_VersionText>
-      <_VersionText Condition="'$(_VersionText)' == '' And '@(CommonAssemblyFileVersion)' != ''" >%(CommonAssemblyFileVersion.Major).%(CommonAssemblyFileVersion.Minor)</_VersionText>
+      <_VersionText Condition="'$(_VersionText)' == '' And '@(VersionFromAssemblyInfoAttribute)' != ''">%(VersionFromAssemblyInfoAttribute.Major).%(VersionFromAssemblyInfoAttribute.Minor)</_VersionText>
       <_VersionText Condition="'$(_VersionText)' == '1.8' Or '$(_VersionText)' == ''">8.1</_VersionText>
       <SplashScreenVersion>Version $(_VersionText)</SplashScreenVersion>
       <SplashScreenText>$(ProductName)</SplashScreenText>
@@ -75,29 +83,42 @@
 
     <Error Condition="'$(_VersionText)' == ''" Text="The build was unable to find AssemblyInformationalVersion attribute or determine the current value of this attribute. Check that CommonAssemblyInfo.cs is linked to this project." />
 
+    <!-- Add the returned modified node from the update task into the in memory project -->
+    <ItemGroup>
+      <Resource Include="$(OutputSplashScreen)" Condition="'%(OriginalSplashScreen.IsResource)' == 'true'" />
+      <SplashScreen Include="$(OutputSplashScreen)" Condition="'%(OriginalSplashScreen.IsSplashScreen)' == 'true'" />
+    </ItemGroup>
+
+  </Target>
+
+
+  <Target Name="GetSplashScreenInfo"
+          AfterTargets="SetVersionAttributes"
+          DependsOnTargets="FindSplashScreenFile;GetSplashScreenInfoCore">
+  </Target>
+
+
+  <!--
+    Updates the product splash screen without touching the original file
+  -->
+  <Target Name="CommonBuildUpdateSplashscreen"
+          Condition="'@(OriginalSplashScreen->Count())' != '0' And '$(ProductName)' != ''"
+          AfterTargets="GetSplashScreenInfo"
+          Inputs="@(OriginalSplashScreen);@(AssemblyInfoFile)"
+          Outputs="$(OutputSplashScreen)">
+
     <Aderant.Build.Tasks.UpdateSplashScreenImage
-     Condition="'@(OriginalSplashScreen->Count())' != '0' And '$(ProductName)' != ''"
-
-     TrackerLogDirectory="$(IntermediateOutputPath)"
-     Sources="@(OriginalSplashScreen)"
-     OutputFile="$(OutputSplashScreen)"
-     TrackFileAccess="true"
-     MinimalRebuildFromTracking="true"
-
-     Text="$(SplashScreenText)"
-     Version="$(SplashScreenVersion)"
-     Style="$(SplashScreenStyle)">
+      Sources="@(OriginalSplashScreen)"
+      OutputFile="$(OutputSplashScreen)"
+      Text="$(SplashScreenText)"
+      Version="$(SplashScreenVersion)"
+      Style="$(SplashScreenStyle)">
     </Aderant.Build.Tasks.UpdateSplashScreenImage>
 
     <Message Text="Product Name: $(ProductName)" Condition="' $(ProductName)' != ''" />
     <Message Text="Splash screen style: $(SplashScreenStyle)" Condition="' $(SplashScreenStyle)' != ''" />
     <Message Text="Path to splash screen: $(OutputSplashScreen)" Condition="' $(OutputSplashScreen)' != ''" />
 
-    <!-- Add the returned modified node from the update task into the in memory project -->
-    <ItemGroup>
-      <Resource Include="$(OutputSplashScreen)" Condition="'%(OriginalSplashScreen.IsResource)' == 'true'" />
-      <SplashScreen Include="$(OutputSplashScreen)" Condition="'%(OriginalSplashScreen.IsSplashScreen)' == 'true'" />
-    </ItemGroup>
   </Target>
 
 
@@ -108,13 +129,9 @@
     </GetReferenceAssemblyPathsDependsOn>
   </PropertyGroup>
 
-  <!-- Code to handle project references in Customization build. Aderant.Build.dll is packed into BuildScripts.zip in Framework build. -->
-  <UsingTask TaskName="SmartReference" Condition="'$(IsCustomBuild)' == 'true'"
-             AssemblyFile="$(BuildScriptsDirectory)\Build.Tools\Aderant.Build.dll" />
-
 
   <Target Name="CollectNugetPackagePaths"
-	        Condition="'$(IsCustomBuild)' != 'true'">
+          Condition="'$(IsCustomBuild)' != 'true'">
     <Error Condition="'$(RootFolder)' == ''" Text="RootFolder is undefined" />
 
     <PropertyGroup>
@@ -122,10 +139,10 @@
     </PropertyGroup>
 
     <!-- Perf optimization: Cache the paths so we don't constantly go back to disk to re-discover the same information -->
-    <StringCache Key="$(NugetPackageCacheKey)">
+    <Aderant.Build.Tasks.StringCache Key="$(NugetPackageCacheKey)">
       <Output TaskParameter="Value" PropertyName="_PackageDirectoriesAsSingleItem" />
       <Output TaskParameter="HasValueForKey" PropertyName="_PackageDirectoriesHasValue" />
-    </StringCache>
+    </Aderant.Build.Tasks.StringCache>
 
     <ItemGroup Condition="'$(_PackageDirectoriesHasValue)' != 'true'">
       <_AllFiles Include="$(RootFolder)\packages\**\lib\**\*.dll"
@@ -137,12 +154,12 @@
       <_PackageDirectories Remove="@(_PackageDirectories)" Condition="'%(Filename)' == '@(NugetPackageFoldersToIgnore->'%(Filename)')'" />
     </ItemGroup>
 
-    <StringCache Condition="'$(_PackageDirectoriesHasValue)' != 'true'"
-                 Key="$(NugetPackageCacheKey)"
-                 Value="@(_PackageDirectories)">
+    <Aderant.Build.Tasks.StringCache Condition="'$(_PackageDirectoriesHasValue)' != 'true'"
+                                     Key="$(NugetPackageCacheKey)"
+                                     Value="@(_PackageDirectories)">
       <!--Always output the value to avoid cache miss the first time-->
       <Output TaskParameter="Value" PropertyName="_PackageDirectoriesAsSingleItem" />
-    </StringCache>
+    </Aderant.Build.Tasks.StringCache>
 
   </Target>
 
@@ -435,7 +452,7 @@
       <RelativePackagesDirectory Condition="!Exists('$(RelativePackagesDirectory)')"></RelativePackagesDirectory>
     </PropertyGroup>
 
-    <RecordProjectOutputs
+    <Aderant.Build.Tasks.RecordProjectOutputs
 	    Condition="'$(IsCustomBuild)' != 'true'"
       ContextEndpoint="$(ContextEndpoint)"
       SolutionRoot="$(SolutionRoot)"

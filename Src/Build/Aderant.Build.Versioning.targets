@@ -2,10 +2,9 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <!--
-  There are at least 3 AssemblyInfo.cs files involved.
+  There are at least 2 AssemblyInfo.cs files involved.
   1) \<Temp>\CommonAssemblyInfoFile.cs    = A clone of CommonAssemblyInfoFile.cs with the copyright date modified (subject to race condition)
   2) \<Temp>\CommonAssemblyInfoFile.g.cs  = Repository metadata file (git version etc)
-  3) \obj\AssemblyInfo.gs.cs              = A settings that apply to an individual project
   -->
 
   <PropertyGroup>
@@ -57,15 +56,15 @@
     </ItemGroup>
 
     <ItemGroup>
-      <_ProjectAssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(IsIntegrationTest)' == 'true'">
+      <_AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(IsIntegrationTest)' == 'true'">
         <_Parameter1>CIEnabled</_Parameter1>
         <_Parameter2>$(CIEnabled)</_Parameter2>
-      </_ProjectAssemblyAttributes>
+      </_AssemblyAttributes>
 
-      <_ProjectAssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(IsIntegrationTest)' == 'true' And '$(CICategory)' != ''">
+      <_AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(IsIntegrationTest)' == 'true' And '$(CICategory)' != ''">
         <_Parameter1>CICategory</_Parameter1>
         <_Parameter2>$(CICategory)</_Parameter2>
-      </_ProjectAssemblyAttributes>
+      </_AssemblyAttributes>
     </ItemGroup>
   </Target>
 
@@ -135,7 +134,6 @@
     </ItemGroup>
   </Target>
 
-
   <PropertyGroup>
     <GenerateAssemblyInfoDependsOn>
       $(GenerateAssemblyInfoDependsOn);
@@ -162,19 +160,18 @@
 
 
     <Aderant.Build.Tasks.HashItems ItemsToHash="%(CommonAssemblyInfoFile.FullPath)"
-                                   IncludeProcessId="true">
+                                   IncludeCurrentDirectory="true">
       <Output TaskParameter="HashResult" PropertyName="_CommonAssemblyInfoFilePathHash" />
-      <Output TaskParameter="ProcessId" PropertyName="_ProcessId" />
     </Aderant.Build.Tasks.HashItems>
 
     <Aderant.Build.Tasks.HashItems ItemsToHash="@(_AssemblyAttributes->'%(Identity)%(_Parameter2)')"
-                                   IncludeProcessId="true">
+                                   IncludeCurrentDirectory="true">
       <Output TaskParameter="HashResult" PropertyName="_CommonAssemblyAttributesPathHash" />
     </Aderant.Build.Tasks.HashItems>
 
 
     <PropertyGroup>
-      <BasePath>$([System.IO.Path]::GetTempPath())MSBuild\$(_ProcessId)</BasePath>
+      <BasePath>$([System.IO.Path]::GetTempPath())MSBuild\</BasePath>
     </PropertyGroup>
 
 
@@ -219,7 +216,8 @@
           DestinationFiles="$(CommonAssemblyInfoCloneFile)"
           OverwriteReadOnlyFiles="true"
           Retries="$(CopyRetryCount)"
-          RetryDelayMilliseconds="$(CopyRetryDelayMilliseconds)" />
+          RetryDelayMilliseconds="$(CopyRetryDelayMilliseconds)"
+          SkipUnchangedFiles="true" />
 
     <!-- Update copyright, $1, $2 and $4 are capture groups -->
     <MSBuild.Community.Tasks.FileUpdate
@@ -250,18 +248,5 @@
     <!-- Do not put in FileWrites:
          These are a files that are shared between projects in %temp%, and cleaning it would create a race between projects during rebuild -->
   </Target>
-
-
-  <Target Name="ReadVersionInfo" AfterTargets="CloneCommonAssemblyInfoFile">
-
-    <ReadAssemblyInfo
-      AssemblyInfoFiles="@(CommonAssemblyInfoFile)">
-      <Output TaskParameter="AssemblyInformationalVersion" ItemName="CommonAssemblyInformationalVersion" />
-      <Output TaskParameter="AssemblyVersion"              ItemName="CommonAssemblyVersion" />
-      <Output TaskParameter="AssemblyFileVersion"          ItemName="CommonAssemblyFileVersion" />
-    </ReadAssemblyInfo>
-
-  </Target>
-
 
 </Project>

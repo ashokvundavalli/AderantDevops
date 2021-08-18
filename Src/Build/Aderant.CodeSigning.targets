@@ -11,7 +11,7 @@
     <!-- Sign Tool -->
     <WindowsKits_81 Condition="'$(WindowsKits_81)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows Kits\Installed Roots@KitsRoot81)</WindowsKits_81>
     <WindowsKits_81 Condition="'$(WindowsKits_81)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Kits\Installed Roots@KitsRoot81)</WindowsKits_81>
-    
+
     <WindowsKits_10 Condition="'$(WindowsKits_10)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows Kits\Installed Roots@KitsRoot10)</WindowsKits_10>
     <WindowsKits_10 Condition="'$(WindowsKits_10)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Kits\Installed Roots@KitsRoot10)</WindowsKits_10>
 
@@ -185,8 +185,7 @@
   <Target Name="AssignInstallerVersionInfo">
     <Message Text="Signing installer: %(Installers.Filename)%(Installers.Extension)" Condition="'@(Installers->Count())' != '0'" />
 
-    <Aderant.Build.Tasks.GetFileVersionInfo
-      Files="@(Installers)">
+    <Aderant.Build.Tasks.GetFileVersionInfo Files="@(Installers)">
       <Output TaskParameter="FilesWithInfo" ItemName="InstallerFilesWithInfo" />
     </Aderant.Build.Tasks.GetFileVersionInfo>
 

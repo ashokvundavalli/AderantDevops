@@ -57,16 +57,16 @@
         TotalNumberOfBuildGroups;
         AgentPool;
         BuildGroupId;
-        ProjectInstanceId
+        ProjectInstanceId;
         ExpertDevBranchFolder;
         ForceRestoreDatabase;
         TFSPowerToolDir;
         GIT_REDIRECT_STDERR;
-        PAKET_REQUEST_TIMEOUT
+        PAKET_REQUEST_TIMEOUT;
         PAKET_RESPONSE_STREAM_TIMEOUT;
         PAKET_SKIP_RESTORE_TARGETS ;
         PAKET_STREAMREADWRITE_TIMEOUT;
-        SKIP_BUILD_SYSTEM_COMPILE
+        SKIP_BUILD_SYSTEM_COMPILE;
       </PropertiesToRemove>
     </PropertyGroup>
 
@@ -188,8 +188,8 @@
         <Targets Condition="'%(IsProjectFile)' == 'true'">$(ProjectTargets)</Targets>
       </ProjectGroupWithoutGlobals>
 
-      <ProjectGroupWithoutGlobals Condition="'%(IsProjectFile)' != 'true' And Exists($(_PaketLockFile))">
-        <AdditionalProperties Condition="Exists('$(ProjectSolutionRoot)\paket.lock')">%(AdditionalProperties);_PaketLockFile=$(_PaketLockFile)</AdditionalProperties>
+      <ProjectGroupWithoutGlobals Condition="Exists('$(_PaketLockFile)')">
+        <AdditionalProperties>%(AdditionalProperties);_PaketLockFile=$(_PaketLockFile)</AdditionalProperties>
       </ProjectGroupWithoutGlobals>
 
       <ProjectGroupWithoutGlobals Condition="'%(IsProjectFile)' == 'true'">

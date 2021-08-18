@@ -37,7 +37,7 @@
       BindTransformTask;
     </rmTransformTemplatesWorkerDependsOn>
 
-    <TransformTask Condition="'$(TransformTask)' == ''">$(TEMP)\$(TemporaryDirectoryKey)\TransformTask.dll</TransformTask>
+    <TransformTask Condition="'$(TransformTask)' == ''">$(TEMP)\MSBuild\$(TemporaryDirectoryKey)\TransformTask.dll</TransformTask>
   </PropertyGroup>
 
 

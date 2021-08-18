@@ -4,6 +4,7 @@ using Aderant.Build.MSBuild;
 using Aderant.Build.ProjectSystem;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -247,14 +248,13 @@ namespace Aderant.Build.DependencyAnalyzer {
             return null;
         }
 
-        private ItemGroupItem SetConfiguredProjectProperties(int buildGroup, PropertyList propertiesForProjectInstance, ConfiguredProject visualStudioProject, ExtensibilityImposition imposition, Guid projectInstanceId) {
-            propertiesForProjectInstance = AddSolutionConfigurationProperties(visualStudioProject, propertiesForProjectInstance);
-            propertiesForProjectInstance["ProjectInstanceId"] = projectInstanceId.ToString("D");
+        private ItemGroupItem SetConfiguredProjectProperties(int buildGroup, PropertyList additionalProperties, ConfiguredProject visualStudioProject, ExtensibilityImposition imposition, Guid projectInstanceId) {
+            additionalProperties = AddSolutionConfigurationProperties(visualStudioProject, additionalProperties);
 
-            if (solutionPropertyLists.ContainsKey(propertiesForProjectInstance["SolutionRoot"])) {
-                foreach (KeyValuePair<string, string> keyValuePair in solutionPropertyLists[propertiesForProjectInstance["SolutionRoot"]]) {
-                    if (!propertiesForProjectInstance.ContainsKey(keyValuePair.Key)) {
-                        propertiesForProjectInstance.Add(keyValuePair.Key, keyValuePair.Value);
+            if (solutionPropertyLists.ContainsKey(additionalProperties["SolutionRoot"])) {
+                foreach (KeyValuePair<string, string> keyValuePair in solutionPropertyLists[additionalProperties["SolutionRoot"]]) {
+                    if (!additionalProperties.ContainsKey(keyValuePair.Key)) {
+                        additionalProperties.Add(keyValuePair.Key, keyValuePair.Value);
                     }
                 }
             }
@@ -269,7 +269,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             };
 
             if (imposition != null && imposition.CreateHardLinksForCopyLocal) {
-                propertiesForProjectInstance["CreateHardLinksForCopyLocal"] = bool.TrueString;
+                additionalProperties["CreateHardLinksForCopyLocal"] = bool.TrueString;
             }
 
             if (visualStudioProject.BuildConfiguration != null) {
@@ -282,35 +282,36 @@ namespace Aderant.Build.DependencyAnalyzer {
                 project["Targets"] = "Rebuild";
             }
 
-            AddProjectOutputToUpdatePackage(propertiesForProjectInstance, visualStudioProject);
+            AddProjectOutputToUpdatePackage(additionalProperties, visualStudioProject);
 
             TrackProjectItems(project, visualStudioProject);
 
             if (project["IsWebProject"] == bool.TrueString) {
-                if (!propertiesForProjectInstance.ContainsKey("WebPublishPipelineCustomizeTargetFile")) {
-                    propertiesForProjectInstance.Add("WebPublishPipelineCustomizeTargetFile", "$(BuildScriptsDirectory)Aderant.wpp.targets");
+                if (!additionalProperties.ContainsKey("WebPublishPipelineCustomizeTargetFile")) {
+                    additionalProperties.Add("WebPublishPipelineCustomizeTargetFile", "$(BuildScriptsDirectory)Aderant.wpp.targets");
                 }
             }
 
-            OnItemGroupItemMaterialized(new ItemGroupItemMaterializedEventArgs(project, propertiesForProjectInstance));
+            OnItemGroupItemMaterialized(new ItemGroupItemMaterializedEventArgs(project, additionalProperties));
 
-            project["AdditionalProperties"] = propertiesForProjectInstance.ToString();
+            ErrorUtilities.VerifyThrowArgument(!project.ContainsKey("AdditionalProperties"), "AdditionalProperties is already present");
+            project["AdditionalProperties"] = additionalProperties.ToString();
             return project;
         }
 
         private ItemGroupItem SetDirectoryProperties(int buildGroup, PropertyList propertiesForProjectInstance, DirectoryNode node, string beforeProjectFile, string afterProjectFile, Guid projectInstanceId) {
             string solutionDirectoryPath = node.Directory;
 
-            PropertyList properties;
+            PropertyList additionalProperties;
             if (solutionPropertyLists.ContainsKey(solutionDirectoryPath)) {
-                properties = solutionPropertyLists[solutionDirectoryPath];
+                additionalProperties = solutionPropertyLists[solutionDirectoryPath];
             } else {
-                properties = AddBuildProperties(propertiesForProjectInstance, fileSystem, solutionDirectoryPath);
-                solutionPropertyLists.Add(solutionDirectoryPath, properties);
+                additionalProperties = AddBuildProperties(propertiesForProjectInstance, fileSystem, solutionDirectoryPath);
+                solutionPropertyLists.Add(solutionDirectoryPath, additionalProperties);
             }
 
-            if (!properties.ContainsKey("SolutionRoot")) {
-                properties.Add("SolutionRoot", solutionDirectoryPath);
+            if (!additionalProperties.ContainsKey("SolutionRoot")) {
+                additionalProperties.Add("SolutionRoot", solutionDirectoryPath);
             }
 
             ItemGroupItem item = new ItemGroupItem(node.IsPostTargets ? afterProjectFile : beforeProjectFile) {
@@ -325,26 +326,25 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             if (node.RetrievePrebuilts != null) {
                 if (!node.RetrievePrebuilts.Value) {
-                    properties["RetrievePrebuilts"] = bool.FalseString;
+                    additionalProperties["RetrievePrebuilts"] = bool.FalseString;
                 }
             }
 
             // Perf optimization, we can disable T4 if we haven't seen any projects under this solution path
             // Don't do this on desktop to simplify things for developers
             if (!IsDesktopBuild && !node.IsPostTargets && !node.IsBuildingAnyProjects) {
-                properties["T4TransformEnabled"] = bool.FalseString;
+                additionalProperties["T4TransformEnabled"] = bool.FalseString;
             }
 
-            if (!properties.ContainsKey("IsBuildingAnyProjects")) {
-                properties.Add("IsBuildingAnyProjects", node.IsBuildingAnyProjects ? bool.TrueString : bool.FalseString);
+            if (!additionalProperties.ContainsKey("IsBuildingAnyProjects")) {
+                additionalProperties.Add("IsBuildingAnyProjects", node.IsBuildingAnyProjects ? bool.TrueString : bool.FalseString);
             }
 
-            properties["ProjectInstanceId"] = projectInstanceId.ToString("D");
-            properties["RunUserTargets"] = node.AddedByDependencyAnalysis ? bool.FalseString : bool.TrueString;
+            additionalProperties["RunUserTargets"] = node.AddedByDependencyAnalysis ? bool.FalseString : bool.TrueString;
 
-            OnItemGroupItemMaterialized(new ItemGroupItemMaterializedEventArgs(item, properties));
+            OnItemGroupItemMaterialized(new ItemGroupItemMaterializedEventArgs(item, additionalProperties));
 
-            item["AdditionalProperties"] = properties.ToString();
+            item["AdditionalProperties"] = additionalProperties.ToString();
             return item;
         }
 

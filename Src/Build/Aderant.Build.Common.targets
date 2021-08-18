@@ -150,42 +150,6 @@
   </Target>
 
 
-
-  <!--
-    ==========================================================================================
-        Version Numbers
-    ==========================================================================================
-  -->
-  <Target Name="SetBuildNumbers"
-          Condition="('$(IsDesktopBuild)' != 'true' Or '$(IsCustomBuild)' == 'true')">
-
-    <PropertyGroup>
-      <VersionMajor Condition="'$(VersionMajor)' == ''">1</VersionMajor>
-      <VersionMinor Condition="'$(VersionMinor)' == ''">8</VersionMinor>
-      <VersionBuild Condition="'$(VersionBuild)' == ''">0</VersionBuild>
-      <VersionRevision Condition="'$(VersionRevision)' == ''">0</VersionRevision>
-    </PropertyGroup>
-
-    <Version
-      BuildType="Automatic"
-      RevisionType="Automatic"
-      Major="$(VersionMajor)"
-      Minor="$(VersionMinor)" >
-      <Output TaskParameter="Major" PropertyName="Major" />
-      <Output TaskParameter="Minor" PropertyName="Minor" />
-      <Output TaskParameter="Build" PropertyName="Build" />
-      <Output TaskParameter="Revision" PropertyName="Revision" />
-    </Version>
-
-    <PropertyGroup>
-      <FileVersion>$(Major).$(Minor).$(Build).$(Revision)</FileVersion>
-      <AssemblyVersion>$(VersionMajor).$(VersionMinor).$(VersionBuild).$(VersionRevision)</AssemblyVersion>
-    </PropertyGroup>
-
-    <Message Text="AssemblyVersion = $(AssemblyVersion)" />
-    <Message Text="FileVersion = $(FileVersion)" />
-  </Target>
-
   <!--
     ==========================================================================================
         MarkBuildStepAsFailed

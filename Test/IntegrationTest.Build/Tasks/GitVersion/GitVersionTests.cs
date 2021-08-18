@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.Hosting;
 using System.Runtime.InteropServices;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -16,8 +15,8 @@ namespace IntegrationTest.Build.Tasks.GitVersion {
 
             TestContext.WriteLine("NativeLibraryPath: '{0}'.", nativeLibraryPath);
 
-            Assembly assembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(x => string.Equals(x.FullName, "LibGit2Sharp, Version=0.26.0.0, Culture=neutral, PublicKeyToken=7cbde695407f0333"));
-            
+            Assembly assembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(x => string.Equals(x.FullName, "LibGit2Sharp, Version=0.27.0.0, Culture=neutral, PublicKeyToken=7cbde695407f0333"));
+
             Assert.IsNotNull(assembly);
 
             Type type = assembly.GetType("LibGit2Sharp.Core.NativeMethods");

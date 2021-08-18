@@ -49,8 +49,6 @@
   <Target Name="RefreshVersionVariables">
 
     <ItemGroup>
-      <_Variables Include="FileVersion" />
-      <_Variables Include="AssemblyVersion" />
       <_Variables Include="ModuleName" />
     </ItemGroup>
 
@@ -60,8 +58,6 @@
       VariableName="%(_Variables.Identity)">
       <Output TaskParameter="Value" PropertyName="%(_Variables.Identity)" />
     </GetOrPutContextVariable>
-
-    <Error Text="$(VariableScopeId): FileVersion is undefined" Condition="'$(FileVersion)' == '' And '$(IsDesktopBuild)' != 'true'" />
 
   </Target>
 

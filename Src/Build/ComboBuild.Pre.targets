@@ -208,14 +208,62 @@
         Versioning
     ==========================================================================================
   -->
-  <Target Name="UpdateCommonAssemblyInfo"
-          Condition="'$(IsDesktopBuild)' == 'false'"
-          DependsOnTargets="SetBuildNumbers">
+
+  <Target Name="SetBuildNumbers"
+          BeforeTargets="UpdateCommonAssemblyInfoCore"
+          Condition="('$(IsDesktopBuild)' != 'true' Or '$(IsCustomBuild)' == 'true')">
+
+    <PropertyGroup>
+      <VersionMajor Condition="'$(VersionMajor)' == ''">1</VersionMajor>
+      <VersionMinor Condition="'$(VersionMinor)' == ''">8</VersionMinor>
+      <VersionBuild Condition="'$(VersionBuild)' == ''">0</VersionBuild>
+      <VersionRevision Condition="'$(VersionRevision)' == ''">0</VersionRevision>
+    </PropertyGroup>
+
+    <!-- %25: to escape %
+         cd:  commit date
+         Using git directly as LibGit2Sharp is very slow for this operation (3 seconds vs 100 ms) -->
+    <Exec Command='git log -n 1 --pretty=format:%%25cd --date=iso-strict "$(SolutionRoot)"'
+          ConsoleToMSBuild="true"
+          StandardOutputImportance="Normal"
+          WorkingDirectory="$(SolutionRoot)">
+      <Output TaskParameter="ConsoleOutput" PropertyName="SolutionRootLastRevision" />
+    </Exec>
+
+    <PropertyGroup>
+      <!--Horrific hack until I can figure out why Tracker.exe leaves itself attached and calls Console.WriteLine with 'Response file not found'
+      2021-07-23T16:54:49+12:00Tracker.exe: Response file C:\Users\tfsbuildservice%24\AppData\Local\Temp\tmp6540759e4313488699e930b76742eb7d.rsp not found.;Tracker.exe: Response file C:\Users\tfsbuildservice%24\AppData\Local\Temp\tmp6540759e4313488699e930b76742eb7d.rsp not found.;Tracker.exe: Response file C:\Users\tfsbuildservice%24\AppData\Local\Temp\tmp6540759e4313488699e930b76742eb7d.rsp not found.;Tracker.exe: Response file C:\Users\tfsbuildservice%24\AppData\Local\Temp\tmp6540759e4313488699e930b76742eb7d.rsp not found.;Tracker.exe: Response file C:\Users\tfsbuildservice%24\AppData\Local\Temp\tmp6540759e4313488699e930b76742eb7d.rsp not found.
+      -->
+      <SolutionRootLastRevision>$(SolutionRootLastRevision.Substring(0, 25))</SolutionRootLastRevision>
+    </PropertyGroup>
+
+    <Version
+      BuildType="Automatic"
+      RevisionType="Automatic"
+      Major="$(VersionMajor)"
+      Minor="$(VersionMinor)"
+      StartDate="$(SolutionRootLastRevision)">
+      <Output TaskParameter="Major" PropertyName="Major" />
+      <Output TaskParameter="Minor" PropertyName="Minor" />
+      <Output TaskParameter="Build" PropertyName="Build" />
+      <Output TaskParameter="Revision" PropertyName="Revision" />
+    </Version>
+
+    <PropertyGroup>
+      <FileVersion>$(Major).$(Minor).$(Build).$(Revision)</FileVersion>
+    </PropertyGroup>
+
+    <Message Text="FileVersion = $(FileVersion)" />
+  </Target>
+
+
+  <Target Name="UpdateCommonAssemblyInfoCore"
+          Condition="'$(FileVersion)' != ''"
+          AfterTargets="UpdateCommonAssemblyInfo">
 
     <PropertyGroup>
       <AssemblyInfoFile>$(ModuleBuildDirectory)CommonAssemblyInfo.cs</AssemblyInfoFile>
       <AssemblyInfoFileExists Condition="Exists('$(AssemblyInfoFile)')">true</AssemblyInfoFileExists>
-      <LocalAssemblyInfoFile>$(AssemblyInfoFile).local</LocalAssemblyInfoFile>
     </PropertyGroup>
 
     <FileUpdate
@@ -227,23 +275,19 @@
       Regex="(?&lt;section1&gt;AssemblyFileVersion\(\&quot;)(?&lt;version&gt;[0-9]*.[0-9]*.[0-9]*.[0-9]*)(?&lt;section2&gt;\&quot;\))"
       ReplacementText="${section1}$(FileVersion)${section2}" />
 
-    <PropertyGroup>
-      <AssemblyInfoFileUpdated>tue</AssemblyInfoFileUpdated>
-    </PropertyGroup>
-
   </Target>
 
+  <Target Name="UpdateCommonAssemblyInfo" />
 
   <Target Name="UpdateContext">
     <PropertyGroup>
       <FileVersion Condition="'$(FileVersion)' == ''">99.99.99.99</FileVersion>
-      <AssemblyVersion Condition="'$(AssemblyVersion)' == ''">1.8.0.0</AssemblyVersion>
     </PropertyGroup>
 
     <GetOrPutContextVariable
       ContextEndpoint="$(ContextEndpoint)"
       Scope="$(VariableScopeId)"
-      Properties="FileVersion=$(FileVersion);AssemblyVersion=$(AssemblyVersion);ModuleName=$(ModuleName)" />
+      Properties="FileVersion=$(FileVersion);ModuleName=$(ModuleName)" />
 
   </Target>
 

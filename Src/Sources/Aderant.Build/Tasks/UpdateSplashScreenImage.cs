@@ -5,23 +5,15 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Microsoft.Build.Framework;
+using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
 
-    public sealed class UpdateSplashScreenImage : TrackedSourcesBuildTask {
+    public sealed class UpdateSplashScreenImage : Task {
         private string year;
 
-        protected override string WriteTLogFilename {
-            get { return "UpdateSplashScreenImage.write.TLog"; }
-        }
-
-        protected override string[] ReadTLogFilenames {
-            get {
-                return new[] {
-                    "UpdateSplashScreenImage.read.TLog"
-                };
-            }
-        }
+        [Required]
+        public ITaskItem[] Sources { get; set; }
 
         [Required]
         public string Text { get; set; }
@@ -30,6 +22,8 @@ namespace Aderant.Build.Tasks {
         public string Version { get; set; }
 
         public string Style { get; set; }
+
+        public string OutputFile { get; set; }
 
         /// <summary>
         /// Sets the year to appear on the splash screen. Defaults to the current year.
@@ -44,7 +38,7 @@ namespace Aderant.Build.Tasks {
             set { year = value; }
         }
 
-        protected override bool ExecuteInternal() {
+        public override bool Execute() {
             var splashScreen = Sources[0];
             string splashScreenPath = splashScreen.GetMetadata("FullPath");
 

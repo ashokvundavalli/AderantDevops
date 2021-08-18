@@ -37,8 +37,8 @@
   </PropertyGroup>
   <Import Project="..\References.props" />
   <ItemGroup>
-    <Reference Include="LibGit2Sharp, Version=0.26.0.0, Culture=neutral, PublicKeyToken=7cbde695407f0333, processorArchitecture=MSIL">
-      <HintPath>..\..\..\packages\LibGit2Sharp\lib\net46\LibGit2Sharp.dll</HintPath>
+    <Reference Include="LibGit2Sharp, Version=0.27.0.0, Culture=neutral, PublicKeyToken=7cbde695407f0333, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\LibGit2Sharp\lib\netstandard2.0\LibGit2Sharp.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="paket, Version=5.257.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -431,7 +431,6 @@
     <Compile Include="Tasks\Legacy\FilterModules.cs" />
     <Compile Include="Tasks\GetDependencies.cs" />
     <Compile Include="Tasks\MakeSymlink.cs" />
-    <Compile Include="Tasks\TrackedSourcesBuildTask.cs" />
     <Compile Include="Tasks\UpdateSplashScreenImage.cs" />
     <Compile Include="Tasks\GetAssemblyPlatform.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

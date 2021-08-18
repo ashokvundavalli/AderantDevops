@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Globalization;
-using System.Security.Cryptography;
-using System.Text;
-using System.Web.Hosting;
-using Aderant.Build.Utilities;
+using System.IO;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
@@ -16,29 +12,22 @@ namespace Aderant.Build.Tasks {
     /// </summary>
     public class HashItems : Microsoft.Build.Tasks.Hash {
 
-        private static readonly int processId;
-
-        static HashItems() {
-            processId = NativeMethods.GetCurrentProcessId();
-        }
-
-        public bool IncludeProcessId { get; set; }
-
-
-        [Output]
-        public int ProcessId {
-            get { return processId; }
-        }
+        /// <summary>
+        /// Adds the current directory of the worker node to the items to hash
+        /// to produce a deterministic yet some what unique value to minimize but not eliminate generating a hash
+        /// in used by another worker.
+        /// </summary>
+        public bool IncludeCurrentDirectory { get; set; }
 
         /// <summary>
         /// Execute the task.
         /// </summary>
         public override bool Execute() {
-            if (IncludeProcessId && ItemsToHash != null && ItemsToHash.Length > 0) {
+            if (IncludeCurrentDirectory && ItemsToHash != null && ItemsToHash.Length > 0) {
                 var newItems = new ITaskItem[ItemsToHash.Length + 1];
 
                 Array.Copy(ItemsToHash, newItems, ItemsToHash.Length);
-                newItems[newItems.Length - 1] = new TaskItem(processId.ToString(CultureInfo.InvariantCulture));
+                newItems[newItems.Length - 1] = new TaskItem(Directory.GetCurrentDirectory());
 
                 ItemsToHash = newItems;
             }

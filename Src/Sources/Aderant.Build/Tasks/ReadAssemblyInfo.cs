@@ -7,9 +7,6 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using Aderant.Build.Utilities;
-using Microsoft.Build.BuildEngine;
-using Microsoft.Build.Evaluation;
-using Microsoft.Build.Execution;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
@@ -26,6 +23,12 @@ namespace Aderant.Build.Tasks {
         private object assemblyVersionAttribute;
         private object assemblyInformationalVersionAttribute;
         private string assemblyInfoFile;
+        private bool fileParsed;
+
+        /// <summary>
+        /// Controls if the inputs and outputs should be cached. Set this to false if it is unlikely the input will be seen again.
+        /// </summary>
+        public bool UseResultsCache { get; set; } = true;
 
         public ReadAssemblyInfo() {
             if (parseTextMethod == null) {
@@ -39,32 +42,52 @@ namespace Aderant.Build.Tasks {
 
         [Output]
         public ITaskItem AssemblyVersion {
-            get {
-                return ParseAttributeArgumentList(assemblyVersionAttribute, 1);
-            }
+            get { return ParseAttributeArgumentList(assemblyVersionAttribute, 1); }
         }
 
         [Output]
         public ITaskItem AssemblyInformationalVersion {
-            get {
-                return ParseAttributeArgumentList(assemblyInformationalVersionAttribute, 2);
-            }
+            get { return ParseAttributeArgumentList(assemblyInformationalVersionAttribute, 2); }
         }
 
         [Output]
         public ITaskItem AssemblyFileVersion {
-            get {
-                return ParseAttributeArgumentList(assemblyFileVersionAttribute, 3);
-            }
+            get { return ParseAttributeArgumentList(assemblyFileVersionAttribute, 3); }
+        }
+
+        [Output]
+        public ITaskItem AssemblyProduct {
+            get { return ParseAttributeArgumentList(assemblyProductAttribute, 4, false); }
+        }
+
+        [Output]
+        public ITaskItem AssemblyProductTitle {
+            get { return ParseAttributeArgumentList(assemblyProductTitle, 5, false); }
         }
 
         [Output]
         public ITaskItem ProductName {
             get {
-                if (assemblyProductAttribute != null) {
-                    return ParseAttributeArgumentList(assemblyProductAttribute, 4, false);
+                foreach (var version in new[] { AssemblyProduct, AssemblyProductTitle }) {
+                    if (version != null) {
+                        return version;
+                    }
                 }
-                return ParseAttributeArgumentList(assemblyProductTitle, 4, false);
+
+                return null;
+            }
+        }
+
+        [Output]
+        public ITaskItem ProductVersion {
+            get {
+                foreach (var version in new[] { AssemblyInformationalVersion, AssemblyFileVersion }) {
+                    if (version != null && !string.IsNullOrEmpty(version.ItemSpec)) {
+                        return version;
+                    }
+                }
+
+                return null;
             }
         }
 
@@ -103,6 +126,8 @@ namespace Aderant.Build.Tasks {
                     ParseCSharpCode(text);
                 }
             }
+
+            fileParsed = true;
         }
 
         internal void ParseCSharpCode(string text) {
@@ -133,28 +158,28 @@ namespace Aderant.Build.Tasks {
             var attributeName = (string)identifier.Identifier.Text;
 
             switch (attributeName) {
-                case "AssemblyInformationalAttribute":
+                case nameof(AssemblyInformationalVersionAttribute):
                 case "AssemblyInformationalVersion": {
                     assemblyInformationalVersionAttribute = attribute;
                     break;
                 }
-                case "AssemblyVersionAttribute":
+                case nameof(AssemblyVersionAttribute):
                 case "AssemblyVersion": {
                     assemblyVersionAttribute = attribute;
                     break;
                 }
-                case "AssemblyFileVersionAttribute":
+                case nameof(AssemblyFileVersionAttribute):
                 case "AssemblyFileVersion": {
                     assemblyFileVersionAttribute = attribute;
                     break;
                 }
-                case "AssemblyProduct":
-                case "AssemblyProductAttribute": {
+                case nameof(AssemblyProductAttribute):
+                case "AssemblyProduct": {
                     assemblyProductAttribute = attribute;
                     break;
                 }
-                case "AssemblyTitle":
-                case "AssemblyTitleAttribute": {
+                case nameof(AssemblyTitleAttribute):
+                case "AssemblyTitle": {
                     assemblyProductTitle = attribute;
                     break;
                 }
@@ -209,12 +234,16 @@ namespace Aderant.Build.Tasks {
         }
 
         private ITaskItem ParseAttributeArgumentList(dynamic attribute, int i, bool parseVersion = true) {
-            if (attribute == null) {
+            if (fileParsed && attribute == null) {
                 return null;
             }
 
             if (infoCache.TryGetValue((assemblyInfoFile, i), out var result)) {
                 return result;
+            }
+
+            if (!fileParsed) {
+                ReadFile(assemblyInfoFile);
             }
 
             return ReadAttributeArgumentList(attribute, i, parseVersion);
@@ -238,7 +267,10 @@ namespace Aderant.Build.Tasks {
                     result = new TaskItem(rawText);
                 }
 
-                infoCache.TryAdd((assemblyInfoFile, i), result);
+                if (UseResultsCache) {
+                    infoCache.TryAdd((assemblyInfoFile, i), result);
+                }
+
                 return result;
             }
 
