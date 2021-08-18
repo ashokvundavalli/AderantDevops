@@ -4,7 +4,7 @@
   <!--
   There are at least 3 AssemblyInfo.cs files involved.
   1) \<Temp>\CommonAssemblyInfoFile.cs    = A clone of CommonAssemblyInfoFile.cs with the copyright date modified (subject to race condition)
-  2) \<Temp>\CommonAssemblyInfoFile.g.cs  = Repository metadata file (git version etc) (subject to race condition)
+  2) \<Temp>\CommonAssemblyInfoFile.g.cs  = Repository metadata file (git version etc)
   3) \obj\AssemblyInfo.gs.cs              = A settings that apply to an individual project
   -->
 
@@ -152,6 +152,7 @@
   <Target Name="CloneCommonAssemblyInfoFile"
           BeforeTargets="UpdateAssemblyInfoFile"
           DependsOnTargets="$(CreateGeneratedAssemblyInfoInputsDependsOn)">
+
     <!-- Find CommonAssemblyInfo.cs in the "Compile" Items. Remove it from "Compile" Items because we will use a modified version instead. -->
     <ItemGroup>
       <CommonAssemblyInfoFile Include="@(Compile)" Condition="%(Filename) == 'CommonAssemblyInfo' And %(Extension) == '.cs'" />
@@ -159,19 +160,26 @@
       <Compile Remove="@(CommonAssemblyInfoFile)" />
     </ItemGroup>
 
-    <PropertyGroup>
-      <BasePath>$([System.IO.Path]::GetTempPath())</BasePath>
-    </PropertyGroup>
 
     <Aderant.Build.Tasks.HashItems ItemsToHash="%(CommonAssemblyInfoFile.FullPath)"
                                    IncludeProcessId="true">
       <Output TaskParameter="HashResult" PropertyName="_CommonAssemblyInfoFilePathHash" />
+      <Output TaskParameter="ProcessId" PropertyName="_ProcessId" />
     </Aderant.Build.Tasks.HashItems>
 
     <Aderant.Build.Tasks.HashItems ItemsToHash="@(_AssemblyAttributes->'%(Identity)%(_Parameter2)')"
                                    IncludeProcessId="true">
       <Output TaskParameter="HashResult" PropertyName="_CommonAssemblyAttributesPathHash" />
     </Aderant.Build.Tasks.HashItems>
+
+
+    <PropertyGroup>
+      <BasePath>$([System.IO.Path]::GetTempPath())MSBuild\$(_ProcessId)</BasePath>
+    </PropertyGroup>
+
+
+    <MakeDir Directories="$(BasePath)" />
+
 
     <CombinePath BasePath="$(BasePath)"
                  Paths="$(_CommonAssemblyInfoFilePathHash)" >

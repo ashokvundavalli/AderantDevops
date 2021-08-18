@@ -10,7 +10,6 @@ using Aderant.Build.ProjectSystem;
 namespace Aderant.Build.Services {
     internal class ServiceContainer : IServiceProvider, IContextualServiceProvider {
 
-        public static ServiceContainer Default = new ServiceContainer(null, new[] { typeof(ServiceContainer).Assembly });
         private CompositionContainer container;
         private MethodInfo svcMethod = typeof(ServiceContainer).GetMethod("GetService", new Type[] { typeof(BuildOperationContext), typeof(string), typeof(string) });
 
@@ -44,43 +43,6 @@ namespace Aderant.Build.Services {
 
         public object GetService(Type serviceType) {
             return svcMethod.MakeGenericMethod(serviceType).Invoke(this, new object[] { null, null, null });
-        }
-
-        public T GetService<T>(BuildOperationContext context, string contractName = null, string scope = null) {
-            var batch = new CompositionBatch();
-
-            var currentContext = container.GetExportedValueOrDefault<BuildOperationContext>();
-            if (currentContext == null) {
-                AttributedModelServices.AddExportedValue(batch, context);
-            }
-
-            container.Compose(batch);
-
-            if (scope != null) {
-                // Try bind to an instance with a specific export context (e.g a scope, or key with a particular value)
-                var export = container.GetExports<T, IDictionary<string, object>>()
-                    .FirstOrDefault(
-                        e => {
-                            object value;
-                            if (e.Metadata.TryGetValue(CompositionProperties.AppliesTo, out value)) {
-                                if (Equals(value, scope)) {
-                                    return true;
-                                }
-                            }
-
-                            return false;
-                        });
-
-                if (export != null) {
-                    return export.Value;
-                }
-            }
-
-            if (contractName != null && typeof(T) == typeof(object)) {
-                return container.GetExportedValue<T>(contractName);
-            }
-
-            return container.GetExportedValue<T>();
         }
 
         public T GetExportedValue<T>() {

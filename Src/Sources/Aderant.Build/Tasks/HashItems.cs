@@ -16,14 +16,19 @@ namespace Aderant.Build.Tasks {
     /// </summary>
     public class HashItems : Microsoft.Build.Tasks.Hash {
 
-        private static readonly TaskItem processId;
+        private static readonly int processId;
 
         static HashItems() {
-            processId = new TaskItem(NativeMethods.GetCurrentProcessId().ToString(CultureInfo.InvariantCulture));
+            processId = NativeMethods.GetCurrentProcessId();
         }
 
-        [Output]
         public bool IncludeProcessId { get; set; }
+
+
+        [Output]
+        public int ProcessId {
+            get { return processId; }
+        }
 
         /// <summary>
         /// Execute the task.
@@ -33,12 +38,13 @@ namespace Aderant.Build.Tasks {
                 var newItems = new ITaskItem[ItemsToHash.Length + 1];
 
                 Array.Copy(ItemsToHash, newItems, ItemsToHash.Length);
-                newItems[newItems.Length-1] = processId;
+                newItems[newItems.Length - 1] = new TaskItem(processId.ToString(CultureInfo.InvariantCulture));
 
                 ItemsToHash = newItems;
             }
 
             return base.Execute();
         }
+
     }
 }
