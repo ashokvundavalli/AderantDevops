@@ -287,14 +287,14 @@ namespace Aderant.Build.Packaging {
 
                         ReadLicenseText(fs, nupkgDir, packageName, licenseText);
 
-                        string relativeDirectory;
-                        if (module != null) {
-                            relativeDirectory = context.ResolvePackageRelativeDirectory(module);
-                        } else {
-                            relativeDirectory = Path.Combine(context.ProductDirectory, group ?? string.Empty);
-                        }
+                        if (module == null || module.ExcludeFromPackaging != true && module?.PostProcess == null) {
+                            string relativeDirectory;
+                            if (module != null) {
+                                relativeDirectory = context.ResolvePackageRelativeDirectory(module);
+                            } else {
+                                relativeDirectory = Path.Combine(context.ProductDirectory, group ?? string.Empty);
+                            }
 
-                        if (module == null || module.ExcludeFromPackaging != true) {
                             ProcessDirectoryCopy(fs, nupkgDir, relativeDirectory, packageName.StartsWith("ThirdParty", StringComparison.OrdinalIgnoreCase));
                         }
                     }
