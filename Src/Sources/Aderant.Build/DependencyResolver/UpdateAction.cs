@@ -26,12 +26,12 @@ namespace Aderant.Build.DependencyResolver {
                             alternativeProjectRoot: FSharpOption<string>.None,
                             cleanBindingRedirects: false,
                             createNewBindingFiles: false,
-                            onlyReferenced: false,
+                            onlyReferenced: true,
                             generateLoadScripts: false,
                             providedScriptTypes: FSharpList<string>.Empty,
                             providedFrameworks: FSharpList<string>.Empty,
                             touchAffectedRefs: false),
-                        noInstall: false));
+                        noInstall: true));
             });
         }
     }
