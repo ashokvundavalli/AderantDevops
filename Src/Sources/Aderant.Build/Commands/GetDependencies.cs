@@ -51,7 +51,7 @@ namespace Aderant.Build.Commands {
             if (string.IsNullOrWhiteSpace(repository)) {
                 ThrowTerminatingError(new ErrorRecord(new LibGit2SharpException("Please use the Get-Dependencies command in a git repository."), string.Empty, ErrorCategory.InvalidArgument, nameof(repository)));
             }
-            
+
             string root = Directory.GetParent(repository)?.Parent?.FullName;
 
             if (string.IsNullOrWhiteSpace(root)) {

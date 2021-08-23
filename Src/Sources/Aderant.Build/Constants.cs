@@ -16,7 +16,7 @@ namespace Aderant.Build {
         /// </summary>
         public static readonly string BuildInfrastructureDirectory = "Build.Infrastructure";
 
-        // Do not change this to reference paket.exe as there is a complex interplay between paket.exe and this assembly
+        // Do not change this to a compile reference as there is a complex interplay between paket.exe and this assembly
         public static readonly string PaketDependencies = "paket.dependencies";
 
         public static readonly string PaketLock = "paket.lock";
@@ -47,8 +47,5 @@ namespace Aderant.Build {
         /// Defines the directory segment that marks a directory as a build contributor.
         /// </summary>
         public static readonly string EntryPointFilePath = string.Concat(BuildDirectory, Path.DirectorySeparatorChar,  EntryPointFileName);
-
-        internal static string ProfileHome { get; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Aderant", "ContinuousDelivery");
-
     }
 }

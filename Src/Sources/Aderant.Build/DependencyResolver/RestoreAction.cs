@@ -20,7 +20,7 @@ namespace Aderant.Build.DependencyResolver {
 
             foreach (string group in groups) {
                 cancellationToken.ThrowIfCancellationRequested();
-                
+
                 paketPackageManager.DoOperationWithCorruptPackageHandling(() => {
                     dependencies.Restore(force: force,
                         @group: new FSharpOption<string>(group),
