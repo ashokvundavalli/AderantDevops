@@ -231,7 +231,6 @@ doc.Save(File);
     <CallTarget Targets="CleanBin" />
     <CallTarget Targets="PrepareZipCustomSource" />
     <CallTarget Targets="ZipCustomSource" />
-    <CallTarget Targets="SetBuildNumbers" />
     <CallTarget Targets="UpdateModuleFileVersion"/>
     <CallTarget Targets="SeedPackagePacking" Condition="'$(IsCustomBuild)' != 'true'" />
     <CallTarget Targets="PreBuild" />
@@ -267,7 +266,7 @@ doc.Save(File);
   ==========================================================================================
   -->
   <Target Name="BuildNumberOverrideTarget"
-          DependsOnTargets="SetBuildNumbers" AfterTargets="PrepareBuildEnvironment" Condition="'$(IsCustomBuild)' != 'true'">
+          AfterTargets="PrepareBuildEnvironment" Condition="'$(IsCustomBuild)' != 'true'">
 
     <!--<PropertyGroup>
       -->

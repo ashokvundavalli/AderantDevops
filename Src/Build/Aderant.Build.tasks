@@ -93,7 +93,7 @@
     <UsingTask TaskName="Aderant.Build.Tasks.SourceTransformationTask"                            AssemblyFile="$(BuildAssembly)" />
 
     <!-- Code to handle project references in Customization build. -->
-    <UsingTask TaskName="SmartReference" Condition="'$(IsCustomBuild)' == 'true'"                 AssemblyFile="$(BuildAssembly" />
+    <UsingTask TaskName="SmartReference" Condition="'$(IsCustomBuild)' == 'true'"                 AssemblyFile="$(BuildAssembly)" />
 
     <PropertyGroup>
       <TargetTaskFactory Condition="'$(TargetTaskFactory)' == ''">RoslynCodeTaskFactory</TargetTaskFactory>
