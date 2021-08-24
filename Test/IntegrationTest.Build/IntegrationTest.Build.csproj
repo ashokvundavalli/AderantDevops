@@ -96,6 +96,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="EndToEnd\Expected_run_settings.xml" />
+    <Content Include="PackageRetrieval\paket.dependencies">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Packaging\Web\Web.Site1\Scripts\Web.Site1\my.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -131,6 +134,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="EndToEnd\TestBuildServiceHost.cs" />
+    <Compile Include="PackageRetrieval\PaketPackageManagerTests.cs" />
     <Compile Include="Packaging\ArtifactServiceTests.cs" />
     <Compile Include="Packaging\Web\WebPackagingTests.cs" />
     <Compile Include="PhysicalFileSystemTests.cs" />

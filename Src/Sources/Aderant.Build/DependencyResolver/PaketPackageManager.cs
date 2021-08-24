@@ -72,10 +72,16 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         public IFileSystem FileSystem { get; }
+
+        /// <summary>
+        /// The default file name of the dependencies file
+        /// </summary>
         public static string DependenciesFile { get; } = Constants.PaketDependencies;
 
+        /// <summary>
+        /// The textual representation of the dependencies file.
+        /// </summary>
         public string[] Lines { get; private set; }
-
 
         public void Dispose() {
             void RemoveReference(WeakReference<ILogger> loggerReference) {
@@ -425,6 +431,8 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         public void Update(bool force, CancellationToken cancellationToken = default(CancellationToken)) {
+            Initialize();
+
             DoOperationAndHandleCredentialFailure(
                 () => { new UpdateAction(dependencies, force).Run(this, cancellationToken); });
         }

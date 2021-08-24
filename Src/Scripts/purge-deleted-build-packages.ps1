@@ -3,7 +3,7 @@
 param (
     [string]$packageUrl,
     [string]$packageKey,
-    [bool]$debug
+    [bool]$debug = 1
 )
 
 Set-StrictMode -Version 'Latest'
@@ -19,24 +19,62 @@ $script:packageTag = 'PublishedPackages'
 function GetAllBuilds {
     [string]$buildsUrl  = 'https://tfs.aderant.com/tfs/ADERANT/ExpertSuite/_apis/build/builds'
 
-    $minDate = (Get-Date).AddDays(-31).ToUniversalTime().ToString('O')
-    [string]$url = "$($buildsUrl)?deletedFilter=onlyDeleted&tagFilters=$($script:packageTag)&queryOrder=finishTimeAscending&minTime=$($minDate)&`$top=5000"
-    $result = @()
+    $top = 100
 
-    try {
-        $result = (Invoke-RestMethod -Method Get -UseDefaultCredentials -Uri $url).value
-    } catch {
-        Write-Warning "Failed to retrive deleted builds: $($_.ToString())"
+    $currentProgressPreference = $ProgressPreference
+    $ProgressPreference = 'SilentlyContinue'
+
+    $allResults = @()
+
+    $continuationToken = ""
+
+    $minDate = (Get-Date).AddDays(-365).ToUniversalTime().ToString('O')
+    $i = 0
+    while ($true) {
+        $url = "$($buildsUrl)?deletedFilter=onlyDeleted&queryOrder=finishTimeAscending&`$top=$top&continuationToken=$continuationToken&minTime=$($minDate)"
+
+        $request = [System.Net.WebRequest]::Create($url)
+        $request.Method = "Get"
+        $request.UseDefaultCredentials = $true
+        $request.PreAuthenticate = $true
+        $request.UnsafeAuthenticatedConnectionSharing = $true
+        $request.ContentType =  "application/json"
+
+        $response = $request.GetResponse()
+        $responseStream = $response.GetResponseStream()
+        $readStream = [System.IO.StreamReader]::new($responseStream)
+
+        $data = $readStream.ReadToEnd()
+
+        $buildData = ($data | ConvertFrom-Json).value
+
+        $allResults += $buildData
+
+        #Get the continuation token
+        $continuationToken = $response.Headers['x-ms-continuationtoken']
+
+        $response.Dispose()
+        $readStream.Dispose()
+        $responseStream.Dispose()
+
+        if ([string]::IsNullOrWhiteSpace($continuationToken)) {
+            break
+        }
+
+        $i = $i + 1
+        Write-Information ("Iteration: " + $i)
     }
 
-    return $result
+    $ProgressPreference = $currentProgressPreference
+
+    return $allResults
 }
 
 function GetPackageTags($build) {
     # Unicode snowman ☃︎.
     $tagDelimiter = [char]0x00002603
     $tags = @()
-    
+
     foreach ($tag in $build.tags) {
         if (-not $tag.Contains($tagDelimiter)) {
             Write-Debug 'No tag delimiter found.'
@@ -78,35 +116,24 @@ function DeleteNugetPackages {
             "X-NuGet-ApiKey" = $packageKey
         }
 
-        try {
-            $store = [System.Security.Cryptography.X509Certificates.X509Store]::new('My', 'CurrentUser')
-            $store.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadOnly)
-            $certificates = $store.Certificates.Find([System.Security.Cryptography.X509Certificates.X509FindType]::FindByApplicationPolicy, "1.3.6.1.5.5.7.3.2", $true)
-    
-            if ($certificates.Count -eq 0) {
-                Write-Error 'No certificates for client authentication are available.'
-                exit 1
-            }
+        foreach ($buildToDelete in $buildsToDelete.GetEnumerator()) {
+            foreach ($packageToDelete in $buildToDelete.Value) {
+                $package = $packageToDelete.package
+                $version = $packageToDelete.version
+                $url = "$($packageUrl)/api/v2/package/$($package)/$($version)"
 
-            $certificate = $certificates[0]
-
-            foreach ($buildToDelete in $buildsToDelete.GetEnumerator()) {
-                foreach ($packageToDelete in $buildToDelete.Value) {
-                    $package = $packageToDelete.package
-                    $version = $packageToDelete.version
-                    $url = "$($packageUrl)/api/v2/package/$($package)/$($version)"
-    
-                    try {
-                        Write-Information "Deleting package: $package$version"
-                        Invoke-WebRequest -Method Delete $url -Headers $headers -Certificate $certificate
-                    } catch {
-                        # We expect this to fail when it tries to delete a package that has already been deleted.
+                try {
+                    Write-Information "Deleting package: $package$version"
+                    Invoke-WebRequest -Method Delete $url -Headers $headers
+                } catch [System.Net.WebException] {
+                    if ($PSItem.Exception.Response.StatusCode -eq 404) {
+                    # We expect this to fail when it tries to delete a package that has already been deleted.
                         Write-Warning "Failed to delete package: $($packageToDelete.package)$($packageToDelete.version) => $($_.ToString())"
+                    } else {
+                        Write-Error $PSItem.Exception.ToString()
                     }
                 }
             }
-        } finally {
-            $store.Dispose()
         }
     }
 }
@@ -133,7 +160,7 @@ foreach ($build in $builds) {
         foreach ($tag in $build.tags) {
             Write-Debug $tag
         }
-        
+
         continue
     }
 

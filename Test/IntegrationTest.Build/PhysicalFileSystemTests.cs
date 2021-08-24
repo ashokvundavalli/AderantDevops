@@ -23,5 +23,4 @@ namespace IntegrationTest.Build {
             fs.IsSymlink(linkPath);
         }
     }
-
 }
