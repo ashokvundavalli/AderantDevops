@@ -231,7 +231,6 @@ doc.Save(File);
     <CallTarget Targets="CleanBin" />
     <CallTarget Targets="PrepareZipCustomSource" />
     <CallTarget Targets="ZipCustomSource" />
-    <CallTarget Targets="UpdateModuleFileVersion"/>
     <CallTarget Targets="SeedPackagePacking" Condition="'$(IsCustomBuild)' != 'true'" />
     <CallTarget Targets="PreBuild" />
     <CallTarget Targets="Build" />
@@ -447,27 +446,6 @@ doc.Save(File);
     <Message Text="AderantBuildClientTasksV100Lib-1_0_0_0: $(AderantBuildClientTasksV100Lib-1_0_0_0)" />
     <Message Text="rmT4AssemblyReferencePaths: $(rmT4AssemblyReferencePaths)" />
     <Message Text="rmT4TextTemplates: @(rmT4TextTemplates)" />
-  </Target>
-
-  <!--
-    ==========================================================================================
-        Versioning
-    ==========================================================================================
-  -->
-  <Target Name="UpdateModuleFileVersion"
-    Condition="'$(BUILD_BUILDURI)' != ''">
-
-    <PropertyGroup>
-      <AssemblyInfoFile>$(ModuleBuildDirectory)CommonAssemblyInfo.cs</AssemblyInfoFile>
-    </PropertyGroup>
-
-    <FileUpdate Files="$(AssemblyInfoFile)"
-      IgnoreCase="true"
-      Multiline="true"
-      Singleline="false"
-      Regex="(?&lt;section1&gt;AssemblyFileVersion\(\&quot;)(?&lt;version&gt;[0-9]*.[0-9]*.[0-9]*.[0-9]*)(?&lt;section2&gt;\&quot;\))"
-      ReplacementText="${section1}$(FileVersion)${section2}" />
-
   </Target>
 
   <!--
