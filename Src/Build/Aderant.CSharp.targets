@@ -4,8 +4,6 @@
          TreatAsLocalProperty="UseCommonOutputDirectory">
 
   <Import Project="Aderant.Build.Common.targets" Condition="'$(PrepareBuildEnvironmentTargetImported)' == ''" />
-  <Import Project="Aderant.CodeSigning.targets" Condition="'$(SignApplications)' == 'true'" />
-
 
   <PropertyGroup>
     <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
@@ -22,6 +20,7 @@
     <WarningsNotAsErrors Condition="'$(DocumentationFile)' == ''">$(WarningsNotAsErrors);1591;1570;1572;1573;1574</WarningsNotAsErrors>
   </PropertyGroup>
 
+  <Import Project="Aderant.CodeSigning.targets" Condition="'$(SignApplications)' == 'true'" />
 
   <Target Name="FindSplashScreenFile"
           Condition="'$(IsCustomBuild)' != 'true' And '$(OutputType)' == 'WinExe' And $(PackageId.EndsWith('.Api', StringComparison.OrdinalIgnoreCase)) != 'true'">
