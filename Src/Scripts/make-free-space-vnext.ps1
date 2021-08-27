@@ -66,14 +66,14 @@ begin {
             $limit = (Get-Date).AddHours($hours)
             $folder = $drive + ":\b\"
             if ((Test-Path -Path $folder) -and -not $PSCmdlet.ShouldProcess("Result")) {
-                Get-ChildItem $folder -Recurse -Depth 0 -ErrorAction SilentlyContinue | Where-Object { $_.Name -Match "^\d{1,4}$"} | Where-Object {$_.LastWriteTime -lt $limit } | Remove-Item -Recurse -WhatIf -Force
                 Write-Information "Deleting files under $folder"
+                Get-ChildItem $folder -Recurse -Depth 0 -ErrorAction SilentlyContinue | Where-Object { $_.Name -Match "^\d{1,4}$"} | Where-Object {$_.LastWriteTime -lt $limit } | Remove-Item -Recurse -WhatIf -Force -Verbose
             } else {
                 $agentDirectories = Get-ChildItem -Path $folder -Directory | Where-Object { $_.Name -Match "^\d{1,4}$" }
 
                 foreach ($directory in $agentDirectories) {
-                    Get-ChildItem $directory.FullName -Directory | Where-Object { $_.Name -Match "^\d{1,4}$" } | Where-Object {$_.LastWriteTime -lt $limit } | ForEach-Object { cmd.exe /c rmdir /q /s $_.FullName }
                     Write-Information "Deleting files under $($directory.FullName)"
+                    Get-ChildItem $directory.FullName -Directory | Where-Object { $_.Name -Match "^\d{1,4}$" } | Where-Object {$_.LastWriteTime -lt $limit } | ForEach-Object { cmd.exe /c rmdir /q /s $_.FullName }
                 }
             }
 
@@ -100,25 +100,25 @@ begin {
 
         if (-not $PSCmdlet.ShouldProcess("Result")) {
             [string]$root = "$Env:USERPROFILE\.nuget\packages\"
-            Get-ChildItem $root | Where-Object { $_.CreationTime -lt $limit } | Remove-Item -Recurse -Force -WhatIf
             Write-Information "Deleting files under $root"
+            Get-ChildItem $root | Where-Object { $_.CreationTime -lt $limit } | Remove-Item -Recurse -Force -WhatIf -Verbose
 
             $root = "$Env:LOCALAPPDATA\NuGet\Cache"
-            Get-ChildItem $root | Where-Object { $_.CreationTime -lt $limit } | Remove-Item -Recurse -Force -WhatIf
             Write-Information "Deleting files under $root"
+            Get-ChildItem $root | Where-Object { $_.CreationTime -lt $limit } | Remove-Item -Recurse -Force -WhatIf -Verbose
         } else {
             [string]$root = "$Env:USERPROFILE\.nuget\packages\"
 
             if (Test-Path $root) {
-                Get-ChildItem $root | Where-Object { $_.CreationTime -lt $limit } | Remove-Item -Recurse -Force
                 Write-Information "Deleting files under $root"
+                Get-ChildItem $root | Where-Object { $_.CreationTime -lt $limit } | Remove-Item -Recurse -Force -Verbose
             }
 
             $root = "$Env:LOCALAPPDATA\NuGet\Cache"
 
             if (Test-Path $root) {
-                Get-ChildItem $root | Where-Object { $_.CreationTime -lt $limit } | Remove-Item -Recurse -Force
                 Write-Information "Deleting files under $root"
+                Get-ChildItem $root | Where-Object { $_.CreationTime -lt $limit } | Remove-Item -Recurse -Force -Verbose
             }
         }
     }

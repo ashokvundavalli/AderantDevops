@@ -45,7 +45,7 @@ begin {
             [string]
             $Body,
 
-            # The transcript to upload as an attatchment.
+            # The transcript to upload as an attachment.
             [Parameter()]
             [ValidateNotNullOrEmpty()]
             [string]
@@ -97,38 +97,38 @@ process {
             }
 
             [string]$name = $TranscriptName
-            
+
             break
         }
     }
-    
+
     [string]$transcript = Join-Path -Path $workingDirectory -ChildPath "${name}Log.txt"
 
     try {
         Start-Transcript -Path $transcript -Force
-        
+
         switch ($PSCmdlet.ParameterSetName) {
             'Script' {
                 Write-Information -MessageData "Invoking PowerShell script: '$Script'."
 
-				if (-not [string]::IsNullOrWhiteSpace($Parameters)) {
-					Write-Information -MessageData "Parameters: $Parameters"
-					Invoke-Expression -Command "$Script $Parameters"
-				} else {
-					& $Script
-				}
+                if (-not [string]::IsNullOrWhiteSpace($Parameters)) {
+                    Write-Information -MessageData "Parameters: $Parameters"
+                    Invoke-Expression -Command "$Script $Parameters"
+                } else {
+                    . $Script
+                }
 
                 break
             }
             'Command' {
                 Invoke-Expression -Command $Command
-                
+
                 break
             }
         }
     } catch [System.Exception] {
         if ($PSCmdlet.ShouldProcess('Stop Transcript, Email')) {
-            Stop-TranscriptSafe        
+            Stop-TranscriptSafe
             Send-Alert -Subject "FAILURE: $name" -Body ([string]::Concat($Env:COMPUTERNAME, [System.Environment]::NewLine, [System.Environment]::NewLine, $_.Exception.ToString())) -Transcript $transcript -WarningAction 'SilentlyContinue'
         }
 
