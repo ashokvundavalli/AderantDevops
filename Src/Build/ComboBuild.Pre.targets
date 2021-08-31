@@ -277,7 +277,8 @@
 
   </Target>
 
-  <Target Name="UpdateCommonAssemblyInfo" />
+  <Target Name="UpdateCommonAssemblyInfo"
+          DependsOnTargets="SetBuildNumbers"/>
 
   <Target Name="UpdateContext">
     <PropertyGroup>
