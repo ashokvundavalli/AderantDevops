@@ -13,5 +13,13 @@ namespace UnitTest.Build.Tasks.ReadAssemblyInfo {
             Assert.IsNotNull(readInfo.AssemblyFileVersion);
             Assert.IsNotNull(readInfo.AssemblyVersion);
         }
+
+        [TestMethod]
+        public void ProductName_Prefers_AssemblyTitle_Attribute() {
+            var readInfo = new Aderant.Build.Tasks.ReadAssemblyInfo();
+            readInfo.ParseCSharpCode(Resources.AssemblyInfo);
+
+            Assert.AreEqual(readInfo.AssemblyProductTitle, readInfo.ProductName);
+        }
     }
 }

@@ -1,7 +1,8 @@
 ﻿using System.Reflection;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyTitle("UnitTest.Build")]
+[assembly: AssemblyTitle("UnitTest.Build Title")]
+[assembly: AssemblyProduct("UnitTest.Build Product")]
 [assembly: AssemblyDescription("Unit Tests for the Aderant DevOps process")]
 [assembly: AssemblyCompany("Aderant")]
 [assembly: AssemblyCopyright("Copyright © Aderant 2010-2021")]

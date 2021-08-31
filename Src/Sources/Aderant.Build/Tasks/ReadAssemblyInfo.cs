@@ -68,7 +68,7 @@ namespace Aderant.Build.Tasks {
         [Output]
         public ITaskItem ProductName {
             get {
-                foreach (var version in new[] { AssemblyProduct, AssemblyProductTitle }) {
+                foreach (var version in new[] { AssemblyProductTitle, AssemblyProduct }) {
                     if (version != null) {
                         return version;
                     }
