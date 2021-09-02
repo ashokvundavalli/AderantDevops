@@ -49,13 +49,15 @@ namespace Aderant.Build.Commands {
             string repository = Repository.Discover(currentDirectory);
 
             if (string.IsNullOrWhiteSpace(repository)) {
-                ThrowTerminatingError(new ErrorRecord(new LibGit2SharpException("Please use the Get-Dependencies command in a git repository."), string.Empty, ErrorCategory.InvalidArgument, nameof(repository)));
+                WriteError(new ErrorRecord(new ArgumentException("Please use the Get-Dependencies command in a git repository."), string.Empty, ErrorCategory.InvalidArgument, nameof(repository)));
+                return;
             }
-            
+
             string root = Directory.GetParent(repository)?.Parent?.FullName;
 
             if (string.IsNullOrWhiteSpace(root)) {
-                ThrowTerminatingError(new ErrorRecord(new LibGit2SharpException($"Unable to determine root for repository: '{repository}'."), string.Empty, ErrorCategory.InvalidArgument, nameof(root)));
+                WriteError(new ErrorRecord(new ArgumentException($"Unable to determine root for repository: '{repository}'."), string.Empty, ErrorCategory.InvalidArgument, nameof(root)));
+                return;
             }
 
             (string branchConfigFile, string productManifestFile) = RunGetBuildConfigFilePaths(currentDirectory, root);
