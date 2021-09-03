@@ -110,7 +110,9 @@ namespace Aderant.Build.DependencyResolver {
                     moduleResolver = new ExpertModuleResolver(resolverFileSystem);
                 }
 
-                moduleResolver.AddDependencySource(DropPath, ExpertModuleResolver.DropLocation);
+                if (!string.IsNullOrWhiteSpace(DropPath)) {
+                    moduleResolver.AddDependencySource(DropPath, ExpertModuleResolver.DropLocation);
+                }
                 resolvers.Add(moduleResolver);
             }
 

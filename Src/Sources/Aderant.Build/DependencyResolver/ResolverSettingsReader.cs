@@ -82,10 +82,10 @@ namespace Aderant.Build.DependencyResolver {
                     if (validationElement != null && bool.TryParse(validationElement.Value, out bool validatePackageConstraints)) {
                         workflow.GetCurrentRequest().ValidatePackageConstraints = validatePackageConstraints;
                     }
+                }
 
-                    if (element.Name.LocalName == nameof(ExpertModuleResolver)) {
-                        resolvers.Add(element.Name.LocalName);
-                    }
+                if (element.Name.LocalName == nameof(ExpertModuleResolver)) {
+                    resolvers.Add(element.Name.LocalName);
                 }
             }
 

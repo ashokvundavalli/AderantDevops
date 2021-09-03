@@ -16,6 +16,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         private IGlobalAttributesProvider globalAttributesProvider;
 
         private List<IDependencyRequirement> dependencies = new List<IDependencyRequirement>();
+        private string defaultSource;
 
         public bool IsEnabled { get; set; }
 
@@ -41,17 +42,28 @@ namespace Aderant.Build.DependencyAnalyzer {
         private void Initialize() {
             IsEnabled = true;
 
-            if (manifest.Root != null) {
+            var manifestRoot = manifest.Root;
+
+            if (manifestRoot != null) {
                 bool isEnabled;
-                if (manifest.Root.TryGetValueFromAttribute("IsEnabled", out isEnabled, true)) {
+                if (manifestRoot.TryGetValueFromAttribute("IsEnabled", out isEnabled, true)) {
                     IsEnabled = isEnabled;
                 }
 
                 bool? dependencyReplicationEnabled;
-                if (manifest.Root.TryGetValueFromAttribute("DependencyReplication", out dependencyReplicationEnabled, null)) {
+                if (manifestRoot.TryGetValueFromAttribute("DependencyReplication", out dependencyReplicationEnabled, null)) {
                     DependencyReplicationEnabled = dependencyReplicationEnabled;
                 }
+
+                manifestRoot.TryGetValueFromAttribute("DefaultSource", out defaultSource, null);
             }
+        }
+
+        /// <summary>
+        /// The default download source for dependencies.
+        /// </summary>
+        public string DefaultSource {
+            get { return defaultSource; }
         }
 
         /// <summary>

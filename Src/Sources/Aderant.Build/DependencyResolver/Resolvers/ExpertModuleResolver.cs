@@ -64,6 +64,10 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
                     manifest = new DependencyManifest(module.Name, stream);
                 }
 
+                if (sources.Count == 0 && !string.IsNullOrWhiteSpace(manifest.DefaultSource)) {
+                    AddDependencySource(manifest.DefaultSource, DropLocation);
+                }
+
                 manifest.GlobalAttributesProvider = ModuleFactory as IGlobalAttributesProvider;
 
                 bool? dependencyReplicationEnabled = manifest.DependencyReplicationEnabled;
@@ -111,6 +115,8 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
 
                 bool resolved = false;
                 foreach (DependencySource source in sources) {
+                    ErrorUtilities.IsNotNull(source.Path, nameof(source.Path));
+
                     string path = TryGetBinariesPath(source.Path, requirement);
 
                     if (path != null) {
@@ -157,10 +163,16 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
             return FolderDependencySystem.GetBinariesPath(resolverRequestDropPath, requirement);
         }
 
+        /// <summary>
+        /// Adds a location (URI) to query for dependencies
+        /// </summary>
         public void AddDependencySource(string dropPath, string type) {
+            ErrorUtilities.IsNotNull(dropPath, nameof(dropPath));
+
             sources.Add(new DependencySource(dropPath, type));
         }
 
         public bool? ReplicationExplicitlyDisabled { get; set; }
+
     }
 }

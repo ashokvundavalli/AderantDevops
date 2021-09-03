@@ -27,8 +27,9 @@ namespace Aderant.Build.DependencyResolver {
         /// <param name="resolverRequestDropPath">The resolver request drop path.</param>
         /// <param name="requirement">The requirement.</param>
         internal virtual string GetBinariesPath(string resolverRequestDropPath, IDependencyRequirement requirement) {
+            ErrorUtilities.IsNotNull(resolverRequestDropPath, nameof(resolverRequestDropPath));
+
             string newRequirementPath = AdjustDropPathToBranch(resolverRequestDropPath, requirement);
-            bool notRelative = !newRequirementPath.Contains(fileSystem.Root);
             string requirementPath = HandleRequirementType(newRequirementPath, requirement);
 
             if (!HasDropPath(requirementPath)) {

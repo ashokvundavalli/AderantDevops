@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading;
 using Aderant.Build.DependencyResolver.Model;
@@ -29,6 +30,7 @@ namespace Aderant.Build.DependencyResolver {
         private Dependencies dependencies;
         private DependenciesFile dependenciesFile;
 
+        private Dictionary<string, DependenciesGroup> originalGroups = new Dictionary<string, DependenciesGroup>(StringComparer.OrdinalIgnoreCase);
 
         static PaketPackageManager() {
             PaketHttpMessageHandlerFactory.Configure();
@@ -225,6 +227,9 @@ namespace Aderant.Build.DependencyResolver {
                 }
             }
 
+            // Clear the captured groups - we don't need them anymore
+            originalGroups.Clear();
+
             var fileWriter = new DependenciesFileWriter();
             var result = fileWriter.Write(groupList, resolverRequest?.GetFrameworkRestrictions());
 
@@ -246,9 +251,15 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         private FSharpList<PackageSources.PackageSource> CreateSources(DependenciesGroup group, bool isMainGroup, bool isUsingMultipleInputFiles) {
-            IReadOnlyList<PackageSource> packageSources = wellKnownSources.GetSources();
+            var packageSources = wellKnownSources.GetSources().ToList();
 
+            // Grab any unique sources from the original captured group
+            if (originalGroups.TryGetValue(group.Name.Name, out var originalGroup)) {
+                packageSources.AddRange(originalGroup.Sources.Select(s => new PackageSource(s.Url, s.Url)));
+            }
+            
             FSharpList<PackageSources.PackageSource> sources = group.Sources;
+
 
             // We created this file so remove the default NuGet sources
             if (createdNew && isMainGroup) {
@@ -314,7 +325,7 @@ namespace Aderant.Build.DependencyResolver {
             return sources;
         }
 
-        private static void AddModules(IEnumerable<IDependencyRequirement> requirements, bool validatePackageConstraints, ref DependenciesFile file) {
+        private void AddModules(IEnumerable<IDependencyRequirement> requirements, bool validatePackageConstraints, ref DependenciesFile file) {
             var installSettings = Requirements.InstallSettings.Default;
 
             foreach (var requirement in requirements.OrderBy(m => m.Name, StringComparer.OrdinalIgnoreCase)) {
@@ -376,10 +387,15 @@ namespace Aderant.Build.DependencyResolver {
                     // If a group has only one package then Remove() will remove the group and
                     // we loose the group settings so we need to take a copy first
                     var packageGroup = file.GetGroup(groupName);
-                    InstallOptions options = packageGroup.Options;
+
+                    // There is no way to add a source, adding a package to a group drops the sources
+                    // so we need to copy them
+                    if (!originalGroups.ContainsKey(packageGroup.Name.Name)) {
+                        originalGroups[packageGroup.Name.Name] = packageGroup;
+                    }
 
                     file = file.Remove(groupName, packageName);
-                    file = file.Add(groupName, packageName, version, options.Settings);
+                    file = file.Add(groupName, packageName, version, originalGroups[groupName.Name].Options.Settings);
                 }
             }
         }
