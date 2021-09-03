@@ -104,6 +104,7 @@
   <ItemGroup>
     <Compile Include="AssemblyInitializer.cs" />
     <Compile Include="IO\DirectoryScannerTests.cs" />
+    <Compile Include="Tasks\GatherProjectsToBuildTests.cs" />
     <Compile Include="Utilities\StringExtensionsTests.cs" />
     <Compile Include="VisualStudioLocationHelperTests.cs" />
     <Compile Include="Model\BucketTests.cs" />

@@ -112,7 +112,8 @@ namespace Aderant.Build.ProjectSystem {
 
                         // Construct a path that represents a possible directory that also needs to be built.
                         // We will check if it actually exists, or is needed later in the processing
-                        string contributorRoot = Path.Combine(Directory.GetParent(directory.TrimTrailingSlashes()).FullName, moduleName);
+                        var parent = Directory.GetParent(directory.TrimTrailingSlashes());
+                        string contributorRoot = Path.Combine(parent.FullName, moduleName);
                         var buildDirectory = Path.Combine(contributorRoot, "Build");
 
                         if (!contributorsAdded.Contains(buildDirectory)) {

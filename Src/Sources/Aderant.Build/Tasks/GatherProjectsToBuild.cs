@@ -54,7 +54,9 @@ namespace Aderant.Build.Tasks {
                 Log.LogMessage("Excluding paths: " + Environment.NewLine + string.Join(Environment.NewLine + Constants.LoggingArrow, ExcludedPaths));
             }
 
-            groveler = new DirectoryGroveler(new PhysicalFileSystem()) {
+            IFileSystem fileSystem = new PhysicalFileSystem();
+
+            groveler = new DirectoryGroveler(fileSystem) {
                 Logger = new BuildTaskLogger(Log)
             };
 
@@ -67,7 +69,7 @@ namespace Aderant.Build.Tasks {
 
             groveler.AddDirectoryInBuild(inputDirectories);
 
-            if (!Context.Switches.RestrictToProvidedPaths) {
+            if (ExpandTree(inputDirectories, fileSystem)) {
                 groveler.ExpandBuildTree(PipelineService, inputDirectories);
             }
 
@@ -76,6 +78,40 @@ namespace Aderant.Build.Tasks {
             ValidatePaths();
 
             return !Log.HasLoggedErrors;
+        }
+
+        internal bool ExpandTree(HashSet<string> inputDirectories, IFileSystem fileSystem) {
+            if (Context.Switches.RestrictToProvidedPaths) {
+                return false;
+            }
+
+            var ceiling = GetCeilingDirectory(inputDirectories, fileSystem);
+
+            // If the input directory is the ceiling then do not auto-expand the tree
+            // as we won't find any additional contributors
+            if (inputDirectories.Count == 1 && ceiling != null) {
+                if (PathUtility.PathComparer.Equals(ceiling, inputDirectories.First())) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static string GetCeilingDirectory(HashSet<string> inputDirectories, IFileSystem fileSystem) {
+            // Get a logical stopping point, if there is a single directory to build
+            // try to not escape the repository
+            string ceiling = null;
+            if (inputDirectories.Count == 1) {
+                ceiling = Path.Combine(inputDirectories.First(), ".git");
+                if (fileSystem.DirectoryExists(ceiling)) {
+                    ceiling = inputDirectories.First();
+                } else {
+                    ceiling = null;
+                }
+            }
+
+            return ceiling;
         }
 
         private void ValidatePaths() {
