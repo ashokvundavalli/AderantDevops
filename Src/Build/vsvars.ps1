@@ -11,7 +11,7 @@ param(
 )
 
 begin {
-    . Resolve-MSBuild
+    . "$PSScriptRoot\Functions\Resolve-MSBuild.ps1" | Out-Null
     CompileVisualStudioLocationHelper
 
     ##

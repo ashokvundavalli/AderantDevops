@@ -68,8 +68,5 @@ namespace Aderant.Build {
             SYMBOLIC_LINK_FLAG_FILE = 0,
             SYMBOLIC_LINK_FLAG_DIRECTORY = 1
         }
-
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
-        internal static extern int GetCurrentProcessId();
     }
 }

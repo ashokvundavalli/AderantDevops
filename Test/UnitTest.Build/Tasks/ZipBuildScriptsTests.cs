@@ -7,7 +7,7 @@ namespace UnitTest.Build.Tasks {
     [TestClass]
     public class ZipBuildScriptsTests {
         public TestContext TestContext { get; set; }
-        
+
         [DeploymentItem("Aderant.Build.dll")]
         [TestMethod]
         public void ZipBuildScriptsCreatesOutput() {

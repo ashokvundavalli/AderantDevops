@@ -263,11 +263,9 @@ ModelManifest.xml
 /Src/Build/Tasks/MSBuild.Community.Tasks/*
 /.vscode
 /CommonBuild
-/Test/Test.Build/DependencyAnalysis/Resources/Source/ModuleB/Flob/TextTemplate1.cs
 /Src/Build/paket.exe
 /.paket
-/Src/Build/Functions/InProcessJobs.dll
+
 **/*/ps_modules/VstsTaskSdk/*
-/UnitTestProject1
-/Src/Build/Functions/Microsoft.VisualStudio.Setup.Configuration.Interop.dll
 /paket-files/www.7-zip.org
+/Test/Build/Tasks/*

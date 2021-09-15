@@ -4,7 +4,6 @@ param(
         return [System.IO.Path]::GetFullPath("$PSScriptRoot\..\")
     }.Invoke()
 )
-
 $script:currentCommit = $null
 $script:isUsingProfile = $null
 
@@ -70,10 +69,18 @@ function BuildProjects {
 
     [string]$msbuildPath = . "$PSScriptRoot\Resolve-MSBuild.ps1" -Version '*' -Bitness 'x64'
 
-    [void][System.Reflection.Assembly]::LoadFrom([System.IO.Path]::Combine($msbuildPath, "Microsoft.Build.dll"))
-    [void][System.Reflection.Assembly]::LoadFrom([System.IO.Path]::Combine($msbuildPath, "Microsoft.Build.Engine.dll"))
-    [void][System.Reflection.Assembly]::LoadFrom([System.IO.Path]::Combine($msbuildPath, "Microsoft.Build.Tasks.Core.dll"))
-    [void][System.Reflection.Assembly]::LoadFrom([System.IO.Path]::Combine($msbuildPath, "Microsoft.Build.Utilities.Core.dll"))
+    $dependencies = @("Microsoft.Build.dll",
+        "Microsoft.Build.Engine.dll",
+        "Microsoft.Build.Tasks.Core.dll",
+        "Microsoft.Build.Utilities.Core.dll",
+        "System.Runtime.CompilerServices.Unsafe.dll")
+
+    foreach ($dep in $dependencies) {
+        $fullPath = [System.IO.Path]::Combine($msbuildPath, $dep)
+        if (Test-Path $fullPath) {
+            [void][System.Reflection.Assembly]::LoadFrom($fullPath)
+        }
+    }
 
     $info = [System.IO.FileInfo]::new($mainAssembly)
 
@@ -107,7 +114,6 @@ function BuildProjects {
 
     & "$msbuildPath\MSBuild.exe" $projectPath "/t:$target" "/p:project-set=minimal" "/p:BuildScriptsDirectory=$BuildScriptsDirectory" "/nr:false"
     SetAlternativeStreamValue $info.FullName $buildCommitStreamName $commit
-
 }
 
 function LoadAssembly {
@@ -181,10 +187,8 @@ function RunActionExclusive {
     }
 
     if ($runTool) {
-        if ($DebugPreference -ne "SilentlyContinue") {
-            Write-Debug "Running action in exclusive lock $MutexName"
-            Write-Debug $Action.Ast
-        }
+        Write-Debug "Running action in exclusive lock $MutexName"
+        Write-Debug $Action.Ast
 
         [void]$Action.Invoke()
     }
@@ -234,21 +238,7 @@ function UpdateSubmodules {
             }
 
             Write-Information -MessageData "Updating submodule: $submoduleName with path: './$submodulePath'."
-            $job = Start-JobInProcess -Name "submodule_update_$submoduleName" -ScriptBlock $submoduleUpdate -ArgumentList $root, $submodulePath
-
-            $null = Register-ObjectEvent $job -MessageData $submoduleName -EventName StateChanged -Action {
-                if ($EventArgs.JobStateInfo.State -ne [System.Management.Automation.JobState]::Completed) {
-                    Write-Host ("Task has failed: " + $sender.ChildJobs[0].JobStateInfo.Reason.Message) -ForegroundColor red
-                } else {
-                    $millisecondsTaken = [int]($Sender.PSEndTime - $Sender.PSBeginTime).TotalMilliseconds
-                    $Host.UI.RawUI.WindowTitle = "Submodule update complete ($millisecondsTaken ms)"
-                }
-
-                $Sender | Remove-Job -Force
-
-                $EventSubscriber | Unregister-Event -Force
-                $EventSubscriber.Action | Remove-Job -Force
-            }
+            Start-JobInProcess -Name "submodule_update_$submoduleName" -ScriptBlock $submoduleUpdate -ArgumentList @($root, $submodulePath) -CompleteAction { Write-Information "Submodule update complete" }
         }
     }
 
@@ -448,9 +438,6 @@ try {
         return
     }
 
-    # Without this git will look on H:\ for .gitconfig
-    $Env:HOME = $Env:USERPROFILE
-
     # Redirect ERROR to OUTPUT
     [System.Environment]::SetEnvironmentVariable("GIT_REDIRECT_STDERR", "2>&1", [System.EnvironmentVariableTarget]::Process)
 
@@ -497,8 +484,7 @@ try {
     LoadAssembly -assemblyPath ([System.IO.Path]::Combine($assemblyPathRoot, "protobuf-net.dll"))
 
     # Required for Get-BuildDependencyTree
-    LoadAssembly -assemblyPath ([System.IO.Path]::Combine($assemblyPathRoot, "System.Runtime.CompilerServices.Unsafe.dll"))
-    #LoadAssembly -assemblyPath ([System.IO.Path]::Combine($assemblyPathRoot, "paket.exe"))
+    #LoadAssembly -assemblyPath ([System.IO.Path]::Combine($assemblyPathRoot, "System.Runtime.CompilerServices.Unsafe.dll"))
 
     EnsureModuleLoaded
     LoadLibGit2Sharp $assemblyPathRoot
@@ -520,4 +506,3 @@ try {
     $ErrorActionPreference = $originalErrorActionPreference
     $Error.Clear()
 }
-

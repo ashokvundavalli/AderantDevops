@@ -19,6 +19,5 @@ namespace IntegrationTest.Build.EndToEnd {
         protected void AddFilesToNewGitRepository() {
             powerShellHelper.RunCommand(Resources.CreateRepo, TestContext, DeploymentItemsDirectory);
         }
-
     }
 }

@@ -499,7 +499,6 @@ function Set-Environment {
     process {
         if ($Initialize.IsPresent) {
             Set-DefaultPaths
-            Add-GitCommandIntercept
         }
 
         $global:ShellContext.PackageScriptsDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($global:ShellContext.BuildScriptsDirectory, '..\Package'))
@@ -508,35 +507,26 @@ function Set-Environment {
         Set-ExpertSourcePath
         Set-ExpertVariables
         Set-VisualStudioVersion
+
+        if ($Initialize.IsPresent) {
+         #   Add-GitCommandIntercept
+        }
     }
 }
 
 function Set-VisualStudioVersion {
-    $job = Start-JobInProcess -Name "SetVisualStudioVersion" -ScriptBlock {
+    Start-JobInProcess -Name "SetVisualStudioVersion" -ScriptBlock {
         Param($path)
             $file = [System.IO.Path]::Combine($path, "vsvars.ps1")
             . $file
-    } -ArgumentList $global:ShellContext.BuildScriptsDirectory
+    } -ArgumentList $global:ShellContext.BuildScriptsDirectory -CompleteAction {
+        Param($Event, $PipelineResult)
+            foreach ($item in $PipelineResult[0].GetEnumerator()) {
+                [System.Environment]::SetEnvironmentVariable($item.Key, $item.Value, [System.EnvironmentVariableTarget]::Process)
+            }
 
-   $null = Register-ObjectEvent $job -EventName StateChanged -Action {
-       if ($EventArgs.JobStateInfo.State -ne [System.Management.Automation.JobState]::Completed) {
-           Write-Host ("Task has failed: " + $sender.ChildJobs[0].JobStateInfo.Reason.Message) -ForegroundColor Red
-       }
-
-       $data = Receive-Job $Sender.Id
-
-       foreach ($item in $data.GetEnumerator()) {
-           [System.Environment]::SetEnvironmentVariable($item.Key, $item.Value, [System.EnvironmentVariableTarget]::Process)
-       }
-
-       $millisecondsTaken = [int]($Sender.PSEndTime - $Sender.PSBeginTime).TotalMilliseconds
-       $Host.UI.RawUI.WindowTitle = "Visual Studio environment ready ($millisecondsTaken ms) $($Env:DevEnvDir)"
-
-       $Sender | Remove-Job -Force
-
-       $EventSubscriber | Unregister-Event -Force
-       $EventSubscriber.Action | Remove-Job -Force
-   }
+            $Host.UI.RawUI.WindowTitle = "Visual Studio environment ready: $($Env:DevEnvDir)"
+    }
 }
 
 # sets a value in the global defaults storage

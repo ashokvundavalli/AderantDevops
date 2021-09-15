@@ -23,7 +23,7 @@ namespace IntegrationTest.Build {
                 if (Directory.Exists(directory)) {
                     LibGit2Sharp.GlobalSettings.NativeLibraryPath = directory;
 
-                    var nativeLibrary = Path.Combine(directory, Environment.Is64BitProcess ? "x64" : "x86", "git2-6777db8.dll");
+                    var nativeLibrary = Path.Combine(directory, Environment.Is64BitProcess ? "x64" : "x86", "git2-8a0dc67.dll");
                     if (!File.Exists(nativeLibrary)) {
                         throw new FileNotFoundException("Native library not found: " + nativeLibrary, nativeLibrary);
                     }

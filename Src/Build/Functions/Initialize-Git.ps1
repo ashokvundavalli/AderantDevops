@@ -28,7 +28,10 @@ function Add-GitCommandIntercept {
         )
 
         # not executed internally by PowerShell
-        if ($command -eq 'git' -and $eventArgs.CommandOrigin -eq 'Runspace') {
+        if ($eventArgs.CommandOrigin -eq [System.Management.Automation.CommandOrigin]::Runspace) {
+            if ($command -ne 'git') {
+                return
+            }
             # tell PowerShell what to do instead of
             # running the original command
             $eventArgs.CommandScriptBlock = {

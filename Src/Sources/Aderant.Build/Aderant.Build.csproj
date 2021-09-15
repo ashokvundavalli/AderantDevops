@@ -41,7 +41,7 @@
       <HintPath>..\..\..\packages\LibGit2Sharp\lib\netstandard2.0\LibGit2Sharp.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="paket, Version=5.257.0.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="paket, Version=6.0.13.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\Build\paket.exe</HintPath>
       <Private>True</Private>
     </Reference>
@@ -74,14 +74,10 @@
       <HintPath>$(MSBuildProgramFiles32)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\System.Net.Http.dll</HintPath>
     </Reference>
     <Reference Include="System.Runtime.Caching" />
-    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\packages\System.Runtime.CompilerServices.Unsafe\lib\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
-    </Reference>
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.ServiceModel" />
-    <Reference Include="System.Threading.Tasks.Dataflow, Version=4.6.5.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\..\..\packages\System.Threading.Tasks.Dataflow\lib\net461\System.Threading.Tasks.Dataflow.dll</HintPath>
+    <Reference Include="System.Threading.Tasks.Dataflow, Version=4.6.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\System.Threading.Tasks.Dataflow\lib\netstandard2.0\System.Threading.Tasks.Dataflow.dll</HintPath>
     </Reference>
     <Reference Include="System.Web" />
     <Reference Include="System.Xaml">
@@ -98,9 +94,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\..\Build\Functions\InProcessJobs.cs">
-      <Link>InProcessJobs.cs</Link>
-    </Compile>
     <Compile Include="..\..\Build\Functions\VisualStudioConfiguration.cs">
       <Link>VisualStudioConfiguration.cs</Link>
     </Compile>
@@ -335,7 +328,7 @@
     <Compile Include="SeedPackageValidation\FirmRuleVersionError.cs" />
     <Compile Include="Tasks\ReadAssemblyInfo.cs" />
     <Compile Include="Tasks\GitVersion.cs" />
-    <Compile Include="Tasks\HashItems.cs" />
+    <Compile Include="Tasks\GetNodeId.cs" />
     <Compile Include="SeedPackageValidation\SmartFormDeltaError.cs" />
     <Compile Include="SeedPackageValidation\SmartFormModelError.cs" />
     <Compile Include="Tasks\SmartReference.cs" />

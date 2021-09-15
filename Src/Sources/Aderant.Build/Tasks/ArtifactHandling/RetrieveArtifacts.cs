@@ -6,6 +6,11 @@ using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks.ArtifactHandling {
 
+    /// <summary>
+    /// Interprets the build cache state files to produce a restore plan.
+    /// A restore plan is a set of instructions to copy a file from one location (the cache)
+    /// to the location that the project wrote the output to originally.
+    /// </summary>
     public sealed class RetrieveArtifacts : BuildOperationContextTask {
 
         [Required]

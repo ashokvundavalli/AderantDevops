@@ -17,7 +17,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\Bin\Test\</OutputPath>
+    <OutputPath>..\Bin\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -60,14 +60,14 @@
       <HintPath>..\..\packages\DevTools\Moq\lib\net45\Moq.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
-    <Reference Include="paket, Version=5.257.0.0, Culture=neutral, processorArchitecture=MSIL" />
+    <Reference Include="paket, Version=6.0.13.0, Culture=neutral, processorArchitecture=MSIL" />
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Data" />
     <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
-    <Reference Include="System.Threading.Tasks.Dataflow, Version=4.6.5.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\System.Threading.Tasks.Dataflow\lib\net461\System.Threading.Tasks.Dataflow.dll</HintPath>
+    <Reference Include="System.Threading.Tasks.Dataflow, Version=4.6.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\System.Threading.Tasks.Dataflow\lib\netstandard2.0\System.Threading.Tasks.Dataflow.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
@@ -141,9 +141,9 @@
     <Compile Include="ProjectTreeTests.cs" />
     <Compile Include="Tasks\CheckForDoubleWrites\CheckForDoubleWritesTests.cs" />
     <Compile Include="Tasks\CopyFiles\CopyFilesTests.cs" />
+    <Compile Include="Tasks\GetNodeId\GetNodeIdTest.cs" />
     <Compile Include="Tasks\PowerShellScript\PowerShellScriptTests.cs" />
     <Compile Include="Tasks\MakeSymlink\MakeSymlinkTests.cs" />
-    <Compile Include="Tasks\RetrieveArtifacts\RetrieveArtifactsTests.cs" />
     <Compile Include="Tasks\GenerateArchivesTest.cs" />
     <Compile Include="Tasks\CopyRelatedFilesTests.cs" />
     <Compile Include="SlowTestReporterTests.cs" />
@@ -213,6 +213,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <None Include="EndToEnd\Resources\[0]\Source\ModuleA\dir.props" />
+    <Content Include="Tasks\GetNodeId\test.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <None Include="VersionControl\Resources\CommitGraphWalking.ps1" />
     <Compile Include="VersionControl\ShaTests.cs" />
     <Compile Include="WarningRatchetTests.cs" />
@@ -238,12 +241,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Tasks\ReadAssemblyInfo\test.targets">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Tasks\RetrieveArtifacts\DependencyManifest.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Tasks\RetrieveArtifacts\test.targets">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <None Include="VersionControl\Resources\CreateSubfoldersRepo.ps1" />

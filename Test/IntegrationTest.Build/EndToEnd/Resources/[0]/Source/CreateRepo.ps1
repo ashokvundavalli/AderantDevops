@@ -11,12 +11,12 @@ $gitattributesFile = $cwd + '\.gitattributes'
 & git add '.gitattributes'
 & git commit -m 'Added git attributes'
 
-$file = $cwd + '\.gitignore'
-
-[System.IO.File]::WriteAllLines($file, @'
-[Bb]in/
-[Oo]bj/
-'@)
+#$gitignoreFile = $cwd + '\.gitignore'
+#
+#[System.IO.File]::WriteAllLines($gitignoreFile, @'
+#[Bb]in/
+#[Oo]bj/
+#'@)
 
 & git add '-A' '-f'
 & git add 'ModuleA\Build\TFSBuild.rsp' '-f'

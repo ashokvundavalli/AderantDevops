@@ -15,7 +15,8 @@ using Aderant.Build.VersionControl;
 
 namespace Aderant.Build.ProjectSystem {
     internal class StateFileService {
-        private static MemoryCache metadataCache = MemoryCache.Default;
+
+        private static readonly MemoryCache metadataCache = MemoryCache.Default;
 
         private readonly ILogger logger;
         private readonly IFileSystem fileSystem;
@@ -63,7 +64,7 @@ namespace Aderant.Build.ProjectSystem {
             var result = GetBuildStateMetadataInternal(bucketIds, dropLocation, options, token);
 
             metadataCache.Remove(key);
-            metadataCache.Add(key, result, DateTimeOffset.UtcNow.AddMinutes(15));
+            metadataCache.Add(key, result, DateTimeOffset.UtcNow.AddMinutes(20));
 
             return result;
         }
@@ -92,70 +93,64 @@ namespace Aderant.Build.ProjectSystem {
 
                         // Limit scanning to an arbitrary number of builds so we don't spend too
                         // long thrashing the network.
-                        Parallel.ForEach(folders.Take(5), () => (BuildStateFile) null, (folder, state, stateFile) => {
-                                if (state.ShouldExitCurrentIteration) {
-                                    state.Stop();
+                        Parallel.ForEach(folders.Take(5), () => (BuildStateFile)null, (folder, state, stateFile) => {
+                            if (state.ShouldExitCurrentIteration) {
+                                state.Stop();
+                                return null;
+                            }
+
+                            // We have to nest the state file directory as TFS won't allow duplicate artifact names
+                            // For a single build we may produce 1 or more state files and so each one needs a unique artifact name
+                            var stateFilePath = Path.Combine(folder, BuildStateWriter.CreateContainerName(bucketId), BuildStateWriter.DefaultFileName);
+
+                            if (fileSystem.FileExists(stateFilePath)) {
+                                if (!fileSystem.GetDirectories(folder, false).Any()) {
+                                    // If there are no directories then the state file could be
+                                    // a garbage collected build in which case we should ignore it.
                                     return null;
                                 }
 
-                                // We have to nest the state file directory as TFS won't allow duplicate artifact names
-                                // For a single build we may produce 1 or more state files and so each one needs a unique artifact name
-                                var stateFilePath = Path.Combine(folder, BuildStateWriter.CreateContainerName(bucketId), BuildStateWriter.DefaultFileName);
-
-                                if (fileSystem.FileExists(stateFilePath)) {
-                                    if (!fileSystem.GetDirectories(folder, false).Any()) {
-                                        // If there are no directories then the state file could be
-                                        // a garbage collected build in which case we should ignore it.
-                                        return null;
-                                    }
-
-                                    BuildStateFile file;
-                                    using (Stream stream = fileSystem.OpenFile(stateFilePath)) {
-                                        file = StateFileBase.DeserializeCache<BuildStateFile>(stream);
-                                    }
-
-                                    if (file == null) {
-                                        logger.Info($"Unable to deserialize file: '{stateFilePath}'.");
-                                        return null;
-                                    }
-
-                                    file.Location = folder;
-
-                                    if (IsFileTrustworthy(file, options, out var reason, out _)) {
-                                        logger.Info($"Candidate-> {stateFilePath}:{reason}");
-                                        return file;
-                                    } else {
-                                        logger.Info($"Rejected-> {stateFilePath}:{reason}");
-                                    }
+                                BuildStateFile file;
+                                using (Stream stream = fileSystem.OpenFile(stateFilePath)) {
+                                    file = StateFileBase.DeserializeCache<BuildStateFile>(stream);
                                 }
 
-                                return null;
-                            }, file => {
-                                if (file != null) {
-                                    files.Enqueue(file);
+                                if (file == null) {
+                                    logger.Info($"Unable to deserialize file: '{stateFilePath}'.");
+                                    return null;
                                 }
-                            });
+
+                                file.Location = folder;
+
+                                if (IsFileTrustworthy(file, options, out var reason, out _)) {
+                                    logger.Info($"Candidate-> {stateFilePath}:{file.BucketId.Tag}:{reason}");
+                                    return file;
+                                } else {
+                                    logger.Info($"Rejected-> {stateFilePath}:{reason}");
+                                }
+                            }
+
+                            return null;
+                        }, file => {
+                            if (file != null) {
+                                files.Enqueue(file);
+                            }
+                        });
                     } else {
                         logger.Info("No prebuilt artifacts at: " + bucketPath);
                     }
                 }
 
-                metadata.BuildStateFiles = files.OrderByDescending(s => {
-                    if (int.TryParse(s.BuildId, out var result)) {
-                        return result;
-                    }
-
-                    return 0;
-                }).ToList();
+                metadata.BuildStateFiles = files.ToList();
 
                 return metadata;
             }
         }
 
-        internal static string GetReasonMessage(ArtifactCacheValidationReason reason) {
+        internal string GetReasonMessage(ArtifactCacheValidationReason reason) {
             switch (reason) {
                 case ArtifactCacheValidationReason.Candidate:
-                    return "Viable candidate.";
+                    return "Valid.";
                 case ArtifactCacheValidationReason.Corrupt:
                     return "Corrupt.";
                 case ArtifactCacheValidationReason.NoOutputs:
@@ -243,9 +238,11 @@ namespace Aderant.Build.ProjectSystem {
 
             return numbers.OrderByDescending(d => d.Key).Select(s => s.Value).ToArray();
         }
+
     }
 
     internal class CacheKeyBuilder {
+
         private StringBuilder sb;
 
         public CacheKeyBuilder() {
@@ -264,5 +261,6 @@ namespace Aderant.Build.ProjectSystem {
         public override string ToString() {
             return sb.ToString();
         }
+
     }
 }

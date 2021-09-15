@@ -1,0 +1,10 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <Target Name="RunGetNodeId" Returns="NodeId">
+    <GetNodeId>
+      <!-- Return the NodeId back to the test-->
+      <Output TaskParameter="NodeId" PropertyName="NodeId" />
+    </GetNodeId>
+  </Target>
+
+</Project>

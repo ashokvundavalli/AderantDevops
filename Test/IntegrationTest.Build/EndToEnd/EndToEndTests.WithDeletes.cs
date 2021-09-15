@@ -3,16 +3,27 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build.EndToEnd {
     [TestClass]
-    [DeploymentItem("EndToEnd\\Resources\\", "EndToEndDeleteResources\\")]
+    [DeploymentItem("EndToEnd\\Resources\\", TargetDeploymentItemsDirectory + "\\")]
     public class EndToEndTestsDelete : EndToEndTestsBase {
-        protected override string DeploymentItemsDirectory =>
-            // Square brackets bring gMSA parity to the desktop builds
-            // PowerShell has many quirks with square brackets in paths so lets cause more issues locally to
-            // avoid difficult to troubleshoot path issues.
-            Path.Combine(TestContext.DeploymentDirectory, "EndToEndDeleteResources", "[0]", "Source");
+
+        const string TargetDeploymentItemsDirectory = "EndToEndDeleteResources";
+        private string flobDirectory;
+
+
+        protected override string DeploymentItemsDirectory {
+            get {
+                // Square brackets bring gMSA parity to the desktop builds
+                // PowerShell has many quirks with square brackets in paths so lets cause more issues locally to
+                // avoid difficult to troubleshoot path issues.
+
+                return Path.Combine(TestContext.DeploymentDirectory, TargetDeploymentItemsDirectory, "[0]", "Source");
+            }
+        }
 
         [TestInitialize]
         public void TestInit() {
+            flobDirectory = Path.Combine(DeploymentItemsDirectory, "ModuleB", "Flob");
+
             AddFilesToNewGitRepository();
         }
 
@@ -24,7 +35,7 @@ namespace IntegrationTest.Build.EndToEnd {
             using (var buildService = new TestBuildServiceHost(DisableInProcNode, TestContext, DeploymentItemsDirectory)) {
                 RunTarget("EndToEnd", buildService.Properties);
 
-                Directory.Delete(Path.Combine(DeploymentItemsDirectory, "ModuleB", "Flob"), true);
+                Directory.Delete(flobDirectory, true);
 
                 CleanWorkingDirectory();
                 CommitChanges();

@@ -36,7 +36,7 @@ namespace Aderant.Build.DependencyResolver {
             }
 
             // Monkey patch the built in HttpClient so we can control the headers. I need a shower.
-            var member = typeof(NetUtils).Assembly.GetType("<StartupCode$Paket-Core>.$Paket.NetUtils").GetField("createHttpHandler@409", BindingFlags.Static | BindingFlags.NonPublic);
+            var member = typeof(NetUtils).Assembly.GetType("<StartupCode$Paket-Core>.$Paket.NetUtils").GetField("createHttpHandler@403", BindingFlags.Static | BindingFlags.NonPublic);
             var defaultHandler = (FSharpFunc<Tuple<string, FSharpOption<NetUtils.Auth>>, HttpMessageHandler>)member.GetValue(null);
             member.SetValue(null, new PaketHttpMessageHandlerFactory(defaultHandler));
 

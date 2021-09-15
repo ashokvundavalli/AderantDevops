@@ -65,15 +65,15 @@ begin {
         # Based on https://github.com/docker/docker/blob/master/pkg/namesgenerator/names-generator.go
         [string]$agentPrefixes = "$PSScriptRoot\Agents\Prefixes.txt"
         [string]$agentSuffixes = "$PSScriptRoot\Agents\Suffixes.txt"
-    
+
         if (-not (Test-Path -Path $agentPrefixes)) {
             Write-Error "Failed to generate agent name. Could not find agent prefixes at: '$agentPrefixes'."
         }
-        
+
         if (-not (Test-Path -Path $agentSuffixes)) {
             Write-Error "Failed to generate agent name. Could not find agent prefixes at: '$agentSuffixes'."
         }
-    
+
         Write-Verbose -Message 'Reading from suffix and prefix lists.'
         [string[]]$prefixes = [System.IO.File]::ReadAllLines($agentPrefixes)
         [string[]]$suffixes = [System.IO.File]::ReadAllLines($agentSuffixes)
@@ -135,7 +135,7 @@ begin {
             try {
                 # Clear build agent working directory
                 [string]$workingDirectory = [System.IO.Path]::Combine("$Env:SystemDrive\", 'B')
-    
+
                 # If the path doesn't exist Get-ChildItem will happily pick the working directory instead which could delete C:\Windows\ ...
                 # https://github.com/PowerShell/PowerShell/issues/5699
                 if (Test-Path $workingDirectory) {
@@ -144,7 +144,7 @@ begin {
                 } else {
                     Write-Verbose -Message "Unable to find $workingDirectory. Nothing to remove."
                 }
-    
+
                 & $PSScriptRoot\iis-cleanup.ps1
             } finally {
                 # Start IIS after removing files
@@ -378,22 +378,26 @@ process {
         if ([string]::IsNullOrWhiteSpace($agentArchive)) {
             [string]$agentArchive = "$Env:SystemDrive\Scripts\vsts-agent.zip"
             [string]$vsTestAgentUrl = "https://vstsagentpackage.azureedge.net/agent/2.141.2/vsts-agent-win-x64-2.141.2.zip"
-    
+
             [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
             Write-Verbose -Message "Downloading test agent from: '$vsTestAgentUrl' to: '$agentArchive'."
             Invoke-WebRequest $vsTestAgentUrl -OutFile $agentArchive
         }
-    
+
         # Agent Setup
         if ($removeAllAgents) {
             RemoveAllAgents
         }
-    
+
         SetupScheduledTasks
-    
+
         for ($i = 0; $i -lt $agentsToProvision; $i++) {
             ProvisionAgent
         }
+
+        . $PSScriptRoot\configure-disk-device-parameters.ps1
+        . $PSScriptRoot\optimize-drives.ps1
+        . $PSScriptRoot\Disable-InternetExplorerESC.ps1
     } finally {
         Stop-Transcript
     }

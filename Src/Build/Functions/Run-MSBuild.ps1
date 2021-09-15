@@ -74,7 +74,7 @@ public static class DteHelper {
 }
 "@
 
-function Exec-CommandCore([string]$command, [string]$commandArgs, [switch]$useConsole = $true, [HashTable]$variables, [System.Diagnostics.Process]$parentProcess) {
+function Exec-CommandCore([string]$command, [string]$commandArgs, [HashTable]$variables, [System.Diagnostics.Process]$parentProcess, [switch]$useConsole = $true) {
     if (-not (Test-Path $command)) {
         throw "Tool not found $command"
     }
@@ -153,7 +153,7 @@ function AttachDebuger([System.Diagnostics.Process]$parentProcess, [int]$id) {
 # Lets the process re-use the current console.
 # This means items like colored output will function correctly.
 function Exec-Console([string]$command, [string]$commandArgs, [HashTable]$variables, [System.Diagnostics.Process]$parentProcess) {
-    Exec-CommandCore -command $command -commandArgs $commandArgs -useConsole:$true -variables:$variables -parentProcess:$parentProcess
+    Exec-CommandCore -command $command -commandArgs $commandArgs -variables:$variables -parentProcess:$parentProcess -useConsole:$true
 }
 
 function Run-MSBuild([string]$projectFilePath, [string]$buildArgs = "", [string]$logFileName = "", [bool]$isDesktopBuild = $true, [string]$msBuildVersion) {

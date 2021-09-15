@@ -323,6 +323,25 @@ function SetupInternetExplorerLegacy() {
     Set-ItemProperty -Path "$lockDownPath\Settings" -Name "LOCALMACHINE_CD_UNLOCK" -Value 0 -Force | Out-Null
 }
 
+function EnsureFusionLogViewerDisabled() {
+    if ($PSCmdlet.MyInvocation.BoundParameters.ContainsKey('Force')) {
+        return
+    }
+
+    $path = "HKLM:\SOFTWARE\Microsoft\Fusion"
+    $keys = @("LogFailures", "EnableLog", "ForceLog")
+
+    foreach ($regkey in $keys) {
+        if ((Get-ItemProperty $path).PSObject.Properties.Name -Contains $regkey) {
+
+            $value = Get-ItemPropertyValue $path -Name $regkey
+            if ($null -ne $value -and $value -gt 0) {
+                Write-Error "Fusion Logging is enabled. Disable logging in Fuslogvw.exe"
+            }
+        }
+    }
+}
+
 
 function PrepareEnvironment($BuildScriptsDirectory, $isBuildAgent) {
     if ($environmentConfigured) {
@@ -334,6 +353,7 @@ function PrepareEnvironment($BuildScriptsDirectory, $isBuildAgent) {
     }
 
     try {
+        EnsureFusionLogViewerDisabled
         SetupInternetExplorerLegacy
 
         # To avoid runtime problems by binding to interesting assemblies, we delete this so MSBuild will always try to bind to our versions and not one found on the computer somewhere
