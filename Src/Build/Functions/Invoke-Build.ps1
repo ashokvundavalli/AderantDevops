@@ -331,8 +331,14 @@ function EnsureFusionLogViewerDisabled() {
     $path = "HKLM:\SOFTWARE\Microsoft\Fusion"
     $keys = @("LogFailures", "EnableLog", "ForceLog")
 
+    $fusion = Get-ItemProperty $path
+
+    if ($null -eq $fusion) {
+        return
+    }
+
     foreach ($regkey in $keys) {
-        if ((Get-ItemProperty $path).PSObject.Properties.Name -Contains $regkey) {
+        if ($fusion.PSObject.Properties.Name -Contains $regkey) {
 
             $value = Get-ItemPropertyValue $path -Name $regkey
             if ($null -ne $value -and $value -gt 0) {
