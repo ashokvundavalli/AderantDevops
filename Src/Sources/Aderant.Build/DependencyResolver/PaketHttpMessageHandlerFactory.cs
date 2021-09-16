@@ -270,9 +270,8 @@ namespace Aderant.Build.DependencyResolver {
 
         public static void EnableTls(HttpClientHandler handler) {
             if (!handler.SslProtocols.HasFlag(SslProtocols.Tls12)) {
-                handler.SslProtocols = handler.SslProtocols & SslProtocols.Tls12;
+                handler.SslProtocols |= SslProtocols.Tls12;
             }
         }
-
     }
 }
