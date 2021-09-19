@@ -2,9 +2,8 @@
 
 Set-StrictMode -Version Latest
 
-$InformationPreference = Continue
-$ErrorActionPreference = Continue
-$ProgressPreference = SilentlyContinue
+$InformationPreference = "Continue"
+$ProgressPreference = "SilentlyContinue"
 
 $root = $PSScriptRoot
 if (-not $root) {
@@ -15,7 +14,7 @@ if (-not $root) {
 $isDesktop = $Env:COMPUTERNAME.StartsWith("WS") -or [System.Environment]::UserInteractive
 
 $appDataFolders = @(
-    # Some unit tests aren't very unitty
+    # Some unit tests aren't very unit-y
     "Aderant",
 
     # NuGet junk drawer
@@ -60,7 +59,11 @@ function RemoveFolder([string]$removeTarget) {
     }
 }
 
-Start-Transcript -Path "$Env:SystemDrive\Scripts\CleanupAgentHostLog.txt" -Force
+
+# Bug fix for when the transcript went to the wrong folder
+Remove-Item "$PSScriptRoot\CleanupAgentHostLog.txt" -Verbose
+Remove-Item "C:\Scripts\Build.Infrastructure\Src\Scripts\CleanupAgentHostLog.txt" -Verbose
+
 
 try {
     Set-Location $root
@@ -122,5 +125,4 @@ try {
     }
 } finally {
     Set-Location -Path $root
-    Stop-Transcript
 }

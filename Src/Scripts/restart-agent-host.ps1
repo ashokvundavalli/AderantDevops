@@ -42,6 +42,6 @@ Retry-Command -Command {
         Write-Host "Can restart!"
         Restart-Computer -Force
     } else {
-        throw "Something build-related is running."
+        throw "Something build related is running."
     }
 }

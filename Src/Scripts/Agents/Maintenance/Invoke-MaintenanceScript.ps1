@@ -6,7 +6,7 @@ param (
     [string]
     $Script,
 
-    # Paramaters to pass to the script.
+    # Parameters to pass to the script.
     [Parameter(Mandatory=$false, Position=1, ParameterSetName='Script')]
     [ValidateNotNullOrEmpty()]
     [string]
@@ -26,9 +26,10 @@ param (
 )
 
 begin {
-    Set-StrictMode -Version 'Latest'
-    $InformationPreference = 'Continue'
-    $ErrorActionPreference = 'Stop'
+    Set-StrictMode -Version "Latest"
+    $InformationPreference = "Continue"
+    $VerbosePreferemce = "Continue"
+    $ErrorActionPreference = "Stop"
 
     function Send-Alert {
         [CmdletBinding()]
@@ -71,8 +72,6 @@ begin {
     }
 
     [string]$workingDirectory = Join-Path -Path ([System.IO.Path]::GetPathRoot([System.Environment]::SystemDirectory)) -ChildPath 'Scripts'
-
-    Stop-TranscriptSafe
 }
 
 process {
@@ -84,9 +83,9 @@ process {
             }
 
             if (-not [string]::IsNullOrWhiteSpace($TranscriptName)) {
-                [string]$name = $TranscriptName
+                $name = $TranscriptName
             } else {
-                [string]$name = [System.IO.Path]::GetFileNameWithoutExtension($Script)
+                $name = [System.IO.Path]::GetFileNameWithoutExtension($Script)
             }
             break
         }
@@ -96,13 +95,12 @@ process {
                 exit -1
             }
 
-            [string]$name = $TranscriptName
-
+            $name = $TranscriptName
             break
         }
     }
 
-    [string]$transcript = Join-Path -Path $workingDirectory -ChildPath "${name}Log.txt"
+    [string]$transcript = [System.IO.Path]::Combine($workingDirectory, $name + ".log.txt")
 
     try {
         Start-Transcript -Path $transcript -Force
@@ -113,15 +111,15 @@ process {
 
                 if (-not [string]::IsNullOrWhiteSpace($Parameters)) {
                     Write-Information -MessageData "Parameters: $Parameters"
-                    Invoke-Expression -Command "$Script $Parameters"
+                    & $Script $Parameters
                 } else {
-                    . $Script
+                    & $Script
                 }
 
                 break
             }
             'Command' {
-                Invoke-Expression -Command $Command
+                & $Command
 
                 break
             }

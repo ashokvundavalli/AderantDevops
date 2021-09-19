@@ -346,8 +346,9 @@ namespace Willys.LsaSecurity
 
         #Action to run as
         $STAction = New-ScheduledTaskAction -Execute "$Env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument $command -WorkingDirectory $scriptsDirectory
+
         #Configure when to stop the task and how long it can run for. In this example it does not stop on idle and uses the maximum possible duration by setting a timelimit of 0
-        $STSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -Compatibility Win8
+        $STSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -Compatibility Win8 -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1)
 
         #Register the new scheduled task
         Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger -User $credentials.UserName -Password $credentials.GetNetworkCredential().Password -Settings $STSettings -RunLevel Highest -Force
@@ -500,7 +501,7 @@ git.exe clone "http://tfs:8080/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure
         } -ArgumentList $installationDir
     }
 
-    
+
     # Restart the build agent
     if ($restart.IsPresent) {
         Write-Host "Restarting build agent: $server"

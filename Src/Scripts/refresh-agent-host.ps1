@@ -1,18 +1,18 @@
 <#
 Performs any jobs needed to update/refresh or fix drift on a agent host
 #>
-
 $InformationPreference = 'Continue'
 $VerbosePreference = 'Continue'
 
-Start-Transcript -Path ".\RefreshAgentHostLog.txt" -Force
+Start-Transcript -Path "$Env:SystemDrive\Scripts\refresh-agent-host.log.txt" -Force
+try {
+    Push-Location $PSScriptRoot
 
-Push-Location $PSScriptRoot
+    . $PSScriptRoot\configure-git-for-agent-host.ps1
 
-. $PSScriptRoot\configure-git-for-agent-host.ps1
+    & git pull --progress --verbose
 
-& git pull
-
-Pop-Location
-
-Stop-Transcript
+    Pop-Location
+} finally {
+    Stop-Transcript
+}

@@ -369,15 +369,18 @@ begin {
 }
 
 process {
+    $LASTEXITCODE = 1
+
     try {
-        Start-Transcript -Path "$Env:SystemDrive\Scripts\SetupAgentHostLog.txt" -Force
+        Start-Transcript -Path "$Env:SystemDrive\Scripts\setup-agent-host.log.txt" -Force
+
         # Defaulting
         Set-AgentsToProvision
         Set-AgentPool
 
         if ([string]::IsNullOrWhiteSpace($agentArchive)) {
-            [string]$agentArchive = "$Env:SystemDrive\Scripts\vsts-agent.zip"
-            [string]$vsTestAgentUrl = "https://vstsagentpackage.azureedge.net/agent/2.141.2/vsts-agent-win-x64-2.141.2.zip"
+            $agentArchive = "$Env:SystemDrive\Scripts\vsts-agent.zip"
+            $vsTestAgentUrl = "https://vstsagentpackage.azureedge.net/agent/2.141.2/vsts-agent-win-x64-2.141.2.zip"
 
             [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
             Write-Verbose -Message "Downloading test agent from: '$vsTestAgentUrl' to: '$agentArchive'."
@@ -398,6 +401,9 @@ process {
         . $PSScriptRoot\configure-disk-device-parameters.ps1
         . $PSScriptRoot\optimize-drives.ps1
         . $PSScriptRoot\Disable-InternetExplorerESC.ps1
+        . $PSScriptRoot\remove-expert-servces.ps1
+
+        $LASTEXITCODE = 0
     } finally {
         Stop-Transcript
     }

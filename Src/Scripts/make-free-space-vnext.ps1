@@ -65,15 +65,18 @@ begin {
             $hours = Get-HoursAgoToDelete $drive
             $limit = (Get-Date).AddHours($hours)
             $folder = $drive + ":\b\"
-            if ((Test-Path -Path $folder) -and -not $PSCmdlet.ShouldProcess("Result")) {
-                Write-Information "Deleting files under $folder"
-                Get-ChildItem $folder -Recurse -Depth 0 -ErrorAction SilentlyContinue | Where-Object { $_.Name -Match "^\d{1,4}$"} | Where-Object {$_.LastWriteTime -lt $limit } | Remove-Item -Recurse -WhatIf -Force -Verbose
-            } else {
-                $agentDirectories = Get-ChildItem -Path $folder -Directory | Where-Object { $_.Name -Match "^\d{1,4}$" }
 
-                foreach ($directory in $agentDirectories) {
-                    Write-Information "Deleting files under $($directory.FullName)"
-                    Get-ChildItem $directory.FullName -Directory | Where-Object { $_.Name -Match "^\d{1,4}$" } | Where-Object {$_.LastWriteTime -lt $limit } | ForEach-Object { cmd.exe /c rmdir /q /s $_.FullName }
+            if (Test-Path -Path $folder)  {
+                if (-not $PSCmdlet.ShouldProcess("Result")) {
+                    Write-Information "Deleting files under $folder"
+                    Get-ChildItem $folder -Recurse -Depth 0 -ErrorAction SilentlyContinue | Where-Object { $_.Name -Match "^\d{1,4}$"} | Where-Object {$_.LastWriteTime -lt $limit } | Remove-Item -Recurse -WhatIf -Force -Verbose
+                } else {
+                    $agentDirectories = Get-ChildItem -Path $folder -Directory | Where-Object { $_.Name -Match "^\d{1,4}$" }
+
+                    foreach ($directory in $agentDirectories) {
+                        Write-Information "Deleting files under $($directory.FullName)"
+                        Get-ChildItem $directory.FullName -Directory | Where-Object { $_.Name -Match "^\d{1,4}$" } | Where-Object {$_.LastWriteTime -lt $limit } | ForEach-Object { cmd.exe /c rmdir /q /s $_.FullName }
+                    }
                 }
             }
 

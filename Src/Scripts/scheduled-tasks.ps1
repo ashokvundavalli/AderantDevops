@@ -68,13 +68,13 @@ function New-ScheduledMaintenanceTask {
         # The credentials to set up the scheduled task with.
         [Parameter(Mandatory=$false)]
         [string]
-        $User = 'ADERANT_AP\tfsbuildservice$'
+        $User
     )
 
     # Remove any existing version of the scheduled task.
     Unregister-ScheduledTask -TaskName $Name -Confirm:$false -ErrorAction 'SilentlyContinue'
 
-    [string]$defaultParameters = "-NoLogo -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -File `"$PSScriptRoot\Agents\Maintenance\Invoke-MaintenanceScript.ps1`""
+    $defaultParameters = "-NoLogo -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -File `"$PSScriptRoot\Agents\Maintenance\Invoke-MaintenanceScript.ps1`""
 
     $scheduledTaskAction = New-ScheduledTaskAction -Execute "$PSHOME\powershell.exe" -Argument "$defaultParameters $Parameters" -WorkingDirectory (Join-Path -Path $Env:SystemDrive -ChildPath 'Scripts')
     $scheduledTaskSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -Compatibility 'Win8'
@@ -84,28 +84,45 @@ function New-ScheduledMaintenanceTask {
     Register-ScheduledTask -TaskName $Name -Action $scheduledTaskAction -Settings $scheduledTaskSettings -Trigger $Trigger -Principal $scheduledTaskPrincipal -Force
 }
 
-#region CreateScheduledTasks
-[string]$userName = 'ADERANT_AP\tfsbuildservice$'
+function RefreshSetupTask($taskName, $userName) {
+    $task = Get-ScheduledTask $taskName
+    if ($null -eq $task) {
+        throw "Task $taskName not found"
+    }
+
+    $task.Settings.RestartCount = 3
+    $task.Settings.RestartInterval = "PT1M" # 1 minute in TaskXml language https://docs.microsoft.com/en-us/windows/win32/taskschd/tasksettings-restartinterval
+
+    $scheduledTaskPrincipal = New-ScheduledTaskPrincipal -UserId $userName -LogonType 'Password' -RunLevel 'Highest'
+
+    Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction 'SilentlyContinue'
+
+    #Re-register the scheduled task, this is needed as Set-ScheduledTask unticks the 'Run if not logged in' option
+    Register-ScheduledTask -TaskName $taskName -Action $task.Actions[0] -Settings $task.Settings -Trigger $task.Triggers[0] -Principal $scheduledTaskPrincipal -Force
+}
+
+$userName = "ADERANT_AP\tfsbuildservice$"
+RefreshSetupTask "Setup Agent Host" $userName
+
 # Scheduled tasks running as a gMSA account at startup require a delay, otherwise they will not execute.
 $trigger = New-ScheduledTaskTrigger -AtStartup -RandomDelay ([TimeSpan]::FromMinutes(1))
 
-[string]$taskName = 'Reclaim Space'
+$taskName = "Reclaim Space"
 WaitForTaskCompletion -TaskName $taskName
 New-ScheduledMaintenanceTask -Name $taskName -Trigger $trigger -Parameters "-Script `"$PSScriptRoot\make-free-space-vnext.ps1`"" -User $userName
 Start-ScheduledTask -TaskName $taskName
 
-[string]$taskName = 'Remove NuGet Cache'
+$taskName = "Remove NuGet Cache"
 WaitForTaskCompletion -TaskName $taskName
 New-ScheduledMaintenanceTask -Name $taskName -Trigger $trigger -Parameters "-Script `"$PSScriptRoot\make-free-space-vnext.ps1`" -Parameters `"-strategy nuget`" -TranscriptName `"RemoveNuGetCache`"" -User $userName
 Start-ScheduledTask -TaskName $taskName
 
-[string]$taskName = 'Cleanup Agent Host'
+$taskName = "Cleanup Agent Host"
 WaitForTaskCompletion -TaskName $taskName
 New-ScheduledMaintenanceTask -Name $taskName -Trigger $trigger -Parameters "-Script `"$PSScriptRoot\cleanup-agent-host.ps1`"" -User $userName
 Start-ScheduledTask -TaskName $taskName
 
-[string]$taskName = 'Configure Security'
+$taskName = "Configure Security"
 WaitForTaskCompletion -TaskName $taskName
 New-ScheduledMaintenanceTask -Name $taskName -Trigger $trigger -Parameters "-Command `". $PSScriptRoot\Agents\Maintenance\Security.ps1;Set-SecurityPermissions;Revoke-SecurityPermissions;`" -TranscriptName `"ConfigureSecurity`"" -User $userName
 Start-ScheduledTask -TaskName $taskName
-#endregion
