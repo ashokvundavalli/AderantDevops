@@ -4,17 +4,15 @@
     how many hours back to search for folders to delete. Can be run repeatedly and will be more aggressive
     about how far to go back, based on how much space is free.
 #>
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess=$true)]
 param(
     [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$drive = 'C',
     [Parameter(Mandatory=$false)][ValidateSet('agent', 'nuget')][string]$strategy = 'agent',
-    [Parameter(Mandatory=$false)][ValidateNotNull()][int]$olderThan = 3,
-    [switch]$testing
+    [Parameter(Mandatory=$false)][ValidateNotNull()][int]$olderThan = 3
 )
 
 begin {
     Set-StrictMode -Version 'Latest'
-    $ErrorActionPreference = 'Continue'
     $InformationPreference = 'Continue'
 
     # If disk space is less than $percentageAtWhichToPanic, no folders younger than this will be deleted.
@@ -68,7 +66,7 @@ begin {
 
             if (Test-Path -Path $folder)  {
                 if (-not $PSCmdlet.ShouldProcess("Result")) {
-                    Write-Information "Deleting files under $folder"
+                    Write-Information "Would delete files under $folder"
                     Get-ChildItem $folder -Recurse -Depth 0 -ErrorAction SilentlyContinue | Where-Object { $_.Name -Match "^\d{1,4}$"} | Where-Object {$_.LastWriteTime -lt $limit } | Remove-Item -Recurse -WhatIf -Force -Verbose
                 } else {
                     $agentDirectories = Get-ChildItem -Path $folder -Directory | Where-Object { $_.Name -Match "^\d{1,4}$" }
@@ -80,8 +78,13 @@ begin {
                 }
             }
 
-            # Clean up IIS after removing files
-            & "$PSScriptRoot\iis-cleanup.ps1"
+
+            if ($PSCmdlet.ShouldProcess("Clean IIS")) {
+                # Clean up IIS after removing files
+                . "$PSScriptRoot\iis-cleanup.ps1"
+            } else {
+                Write-Information "Not cleaning IIS due to lack of -WhatIf support"
+            }
         }
     }
 
@@ -101,29 +104,13 @@ begin {
 
         [DateTime]$limit = (Get-Date).AddDays($days* - 1)
 
-        if (-not $PSCmdlet.ShouldProcess("Result")) {
-            [string]$root = "$Env:USERPROFILE\.nuget\packages\"
-            Write-Information "Deleting files under $root"
-            Get-ChildItem $root | Where-Object { $_.CreationTime -lt $limit } | Remove-Item -Recurse -Force -WhatIf -Verbose
+        [string]$root = "$Env:USERPROFILE\.nuget\packages\"
+        Write-Information "Deleting files under $root"
+        Get-ChildItem $root | Where-Object { $_.CreationTime -lt $limit } | Remove-Item -Recurse -Force -Verbose -ErrorAction SilentlyContinue
 
-            $root = "$Env:LOCALAPPDATA\NuGet\Cache"
-            Write-Information "Deleting files under $root"
-            Get-ChildItem $root | Where-Object { $_.CreationTime -lt $limit } | Remove-Item -Recurse -Force -WhatIf -Verbose
-        } else {
-            [string]$root = "$Env:USERPROFILE\.nuget\packages\"
-
-            if (Test-Path $root) {
-                Write-Information "Deleting files under $root"
-                Get-ChildItem $root | Where-Object { $_.CreationTime -lt $limit } | Remove-Item -Recurse -Force -Verbose
-            }
-
-            $root = "$Env:LOCALAPPDATA\NuGet\Cache"
-
-            if (Test-Path $root) {
-                Write-Information "Deleting files under $root"
-                Get-ChildItem $root | Where-Object { $_.CreationTime -lt $limit } | Remove-Item -Recurse -Force -Verbose
-            }
-        }
+        $root = "$Env:LOCALAPPDATA\NuGet\Cache"
+        Write-Information "Deleting files under $root"
+        Get-ChildItem $root | Where-Object { $_.CreationTime -lt $limit } | Remove-Item -Recurse -Force -Verbose -ErrorAction SilentlyContinue
     }
 }
 
@@ -131,11 +118,11 @@ process {
     switch ($strategy) {
         'agent' {
             Write-Information -MessageData 'Choosing agent strategy to clean up build agent scratch folders.'
-            CleanBuildAgent -drive $drive -WhatIf:$testing.IsPresent
+            CleanBuildAgent -drive $drive
         }
         'nuget' {
             Write-Information -MessageData 'Choosing NuGet strategy to clean up nuget cache folders.'
-            RemoveNuGetPackages -days $olderThan -WhatIf:$testing.IsPresent
+            RemoveNuGetPackages -days $olderThan
         }
     }
 }
