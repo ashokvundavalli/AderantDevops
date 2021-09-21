@@ -2,127 +2,87 @@
 
 Set-StrictMode -Version 'Latest'
 
-function WaitForTaskCompletion {
-    <#
-        .DESCRIPTION
-        Waits for the specified amount of time for a scheduled task to enter the 'Ready' state.
-        This is to ensure existing scheduled tasks have time to finish running prior to being re-created by this script.
-    #>
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory=$true, HelpMessage='The name of the scheduled task.')][string]$TaskName,
-        [Parameter(Mandatory=$false, HelpMessage="The amount of time to wait for the scheduled task to enter the 'Ready' state.")][TimeSpan]$Timeout = [TimeSpan]::FromMinutes(5)
-    )
+# Remove legacy tasks
+Unregister-ScheduledTask -TaskName "Reclaim Space" -ErrorAction "SilentlyContinue" -Confirm:$false
+Unregister-ScheduledTask -TaskName "Remove NuGet Cache" -ErrorAction "SilentlyContinue" -Confirm:$false
+Unregister-ScheduledTask -TaskName "Configure Security" -ErrorAction "SilentlyContinue" -Confirm:$false
+Unregister-ScheduledTask -TaskName "Cleanup Agent Host" -ErrorAction "SilentlyContinue" -Confirm:$false
 
-    begin {
-        Set-StrictMode -Version 'Latest'
-        $InformationPreference = 'Continue'
-    }
-
-    process {
-        $task = Get-ScheduledTask -TaskName $TaskName -ErrorAction 'SilentlyContinue'
-
-        if ($null -ne $task) {
-            [TimeSpan]$waitInterval = [TimeSpan]::FromSeconds(1)
-
-            while ($task.State -notin 'Ready') {
-                if ($timeout -eq [TimeSpan]::Zero) {
-                    Write-Warning "Timeout waiting for task: $TaskName to enter 'Ready' state."
-                    return
-                }
-
-                $task = Get-ScheduledTask -TaskName $TaskName
-
-                $timeout = $timeout.Subtract($waitInterval)
-            }
-
-            Write-Information -MessageData "Scheduled task: $TaskName is not currently executing."
-        }
-    }
+function GetScheduledTaskPrincipal() {
+    return New-ScheduledTaskPrincipal -UserId "ADERANT_AP\tfsbuildservice$" -LogonType 'Password' -RunLevel 'Highest'
 }
 
-function New-ScheduledMaintenanceTask {
-    <#
-        .DESCRIPTION
-        Creates a scheduled task with built-in logging and alerts.
-    #>
-    [CmdletBinding()]
-    param (
-        # The name of the scheduled task.
-        [Parameter(Mandatory=$true)]
-        [ValidateNotNullOrEmpty()]
-        [string]
-        $Name,
+function RefreshSetupTask($taskName) {
+    $expectedVersion = "2.0"
 
-        # The trigger for the scheduled task.
-        [Parameter(Mandatory=$true)]
-        [System.Object]
-        $Trigger,
-
-        # Parameters to pass to the script.
-        [Parameter(Mandatory=$true)]
-        [ValidateNotNullOrEmpty()]
-        [string]
-        $Parameters,
-
-        # The credentials to set up the scheduled task with.
-        [Parameter(Mandatory=$false)]
-        [string]
-        $User
-    )
-
-    # Remove any existing version of the scheduled task.
-    Unregister-ScheduledTask -TaskName $Name -Confirm:$false -ErrorAction 'SilentlyContinue'
-
-    $defaultParameters = "-NoLogo -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -File `"$PSScriptRoot\Agents\Maintenance\Invoke-MaintenanceScript.ps1`""
-
-    $scheduledTaskAction = New-ScheduledTaskAction -Execute "$PSHOME\powershell.exe" -Argument "$defaultParameters $Parameters" -WorkingDirectory (Join-Path -Path $Env:SystemDrive -ChildPath 'Scripts')
-    $scheduledTaskSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -Compatibility 'Win8'
-    $scheduledTaskPrincipal = New-ScheduledTaskPrincipal -UserId $User -LogonType 'Password' -RunLevel 'Highest'
-
-    #Register the new scheduled task
-    Register-ScheduledTask -TaskName $Name -Action $scheduledTaskAction -Settings $scheduledTaskSettings -Trigger $Trigger -Principal $scheduledTaskPrincipal -Force
-}
-
-function RefreshSetupTask($taskName, $userName) {
     $task = Get-ScheduledTask $taskName
     if ($null -eq $task) {
         throw "Task $taskName not found"
     }
 
+    if ($task.Description -eq $expectedVersion) {
+        return
+    }
+
     $task.Settings.RestartCount = 3
     $task.Settings.RestartInterval = "PT1M" # 1 minute in TaskXml language https://docs.microsoft.com/en-us/windows/win32/taskschd/tasksettings-restartinterval
 
-    $scheduledTaskPrincipal = New-ScheduledTaskPrincipal -UserId $userName -LogonType 'Password' -RunLevel 'Highest'
-
     Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction 'SilentlyContinue'
 
-    #Re-register the scheduled task, this is needed as Set-ScheduledTask unticks the 'Run if not logged in' option
-    Register-ScheduledTask -TaskName $taskName -Action $task.Actions[0] -Settings $task.Settings -Trigger $task.Triggers[0] -Principal $scheduledTaskPrincipal -Force
+    # Scheduled tasks running as a gMSA account at startup require a delay, otherwise they will not execute as they need WinLogon, Kerberos and W32Time to be running.
+    $trigger = $task.Triggers[0]
+    $trigger.Delay = "PT5M"
+
+    $principal = GetScheduledTaskPrincipal
+
+    # Re-register the scheduled task, this is needed as Set-ScheduledTask unticks the 'Run if not logged in' option
+    Register-ScheduledTask -TaskName $taskName -Action $task.Actions[0] -Settings $task.Settings -Trigger $trigger -Principal $principal -Description $expectedVersion -Force
 }
 
-$userName = "ADERANT_AP\tfsbuildservice$"
-RefreshSetupTask "Setup Agent Host" $userName
+function Task_RestartAgentHost() {
+    <#
+    ============================================================
+    Reboot Task
+    ============================================================
+    #>
+    $STTrigger = New-ScheduledTaskTrigger -Daily -At 11pm
+    $STName = "Restart Agent Host"
 
-# Scheduled tasks running as a gMSA account at startup require a delay, otherwise they will not execute.
-$trigger = New-ScheduledTaskTrigger -AtStartup -RandomDelay ([TimeSpan]::FromMinutes(1))
+    Unregister-ScheduledTask -TaskName $STName -Confirm:$false -ErrorAction SilentlyContinue
 
-$taskName = "Reclaim Space"
-WaitForTaskCompletion -TaskName $taskName
-New-ScheduledMaintenanceTask -Name $taskName -Trigger $trigger -Parameters "-Script `"$PSScriptRoot\make-free-space-vnext.ps1`"" -User $userName
-Start-ScheduledTask -TaskName $taskName
+    # Action to run as
+    $STAction = New-ScheduledTaskAction -Execute "$Env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File $PSScriptRoot\restart-agent-host.ps1" -WorkingDirectory $PSScriptRoot
+    $STSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -Compatibility Win8
 
-$taskName = "Remove NuGet Cache"
-WaitForTaskCompletion -TaskName $taskName
-New-ScheduledMaintenanceTask -Name $taskName -Trigger $trigger -Parameters "-Script `"$PSScriptRoot\make-free-space-vnext.ps1`" -Parameters `"-strategy nuget`" -TranscriptName `"RemoveNuGetCache`"" -User $userName
-Start-ScheduledTask -TaskName $taskName
+    $principal = GetScheduledTaskPrincipal
 
-$taskName = "Cleanup Agent Host"
-WaitForTaskCompletion -TaskName $taskName
-New-ScheduledMaintenanceTask -Name $taskName -Trigger $trigger -Parameters "-Script `"$PSScriptRoot\cleanup-agent-host.ps1`"" -User $userName
-Start-ScheduledTask -TaskName $taskName
+    # Register the new scheduled task
+    Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger –Principal $principal -Settings $STSettings -Force
+}
 
-$taskName = "Configure Security"
-WaitForTaskCompletion -TaskName $taskName
-New-ScheduledMaintenanceTask -Name $taskName -Trigger $trigger -Parameters "-Command `". $PSScriptRoot\Agents\Maintenance\Security.ps1;Set-SecurityPermissions;Revoke-SecurityPermissions;`" -TranscriptName `"ConfigureSecurity`"" -User $userName
-Start-ScheduledTask -TaskName $taskName
+
+function Task_RefreshAgentHostsScripts() {
+    <#
+    ============================================================
+    Refresh Task
+    ============================================================
+    #>
+    $interval = New-TimeSpan -Minutes 15
+    $STTrigger = New-ScheduledTaskTrigger -Once -At (Get-Date).Date -RepetitionInterval $interval
+    $STName = "Refresh Agent Host Scripts"
+
+    Unregister-ScheduledTask -TaskName $STName -Confirm:$false -ErrorAction SilentlyContinue
+
+    # Action to run as
+    $STAction = New-ScheduledTaskAction -Execute "$Env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File $PSScriptRoot\refresh-agent-host.ps1" -WorkingDirectory $PSScriptRoot
+    $STSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -Compatibility Win8
+
+    $principal = GetScheduledTaskPrincipal
+
+    # Register the new scheduled task
+    Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger -Principal $principal -Settings $STSettings -Force
+}
+
+RefreshSetupTask "Setup Agent Host"
+Task_RestartAgentHost
+Task_RefreshAgentHostsScripts

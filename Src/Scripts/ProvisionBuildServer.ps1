@@ -333,12 +333,13 @@ namespace Willys.LsaSecurity
             [Environment]::SetEnvironmentVariable('AgentPool', $agentPool, 'Machine')
         }
 
-        $STTrigger = New-ScheduledTaskTrigger -AtStartup -RandomDelay ([TimeSpan]::FromMinutes(1))
+        $STTrigger = New-ScheduledTaskTrigger -AtStartup
+        $STTrigger.Delay = "PT5M"
         [string]$STName = "Setup Agent Host"
 
         Unregister-ScheduledTask -TaskName $STName -Confirm:$false -ErrorAction 'SilentlyContinue'
 
-        [string]$command = "-NoLogo -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -File $scriptsDirectory\Build.Infrastructure\Src\Scripts\setup-agent-host.ps1"
+        [string]$command = "-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File $scriptsDirectory\Build.Infrastructure\Src\Scripts\setup-agent-host.ps1"
 
         if ($testAgent) {
             $command += " -serviceAccount $($credentials.UserName) -serviceAccountPassword $($credentials.GetNetworkCredential().Password) -enableAutoLogon"
@@ -357,49 +358,6 @@ namespace Willys.LsaSecurity
 
     <#
     ============================================================
-    Reboot Task
-    ============================================================
-    #>
-    Invoke-Command -Session $session -ScriptBlock {
-        $STTrigger = New-ScheduledTaskTrigger -Daily -At 11pm
-        [string]$STName = "Restart Agent Host"
-
-        Unregister-ScheduledTask -TaskName $STName -Confirm:$false -ErrorAction SilentlyContinue
-
-        #Action to run as
-        $STAction = New-ScheduledTaskAction -Execute "$Env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoLogo -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -File $scriptsDirectory\Build.Infrastructure\Src\Scripts\restart-agent-host.ps1" -WorkingDirectory $scriptsDirectory
-        $STSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -Compatibility Win8
-
-        $principal = New-ScheduledTaskPrincipal -UserID tfsbuildservice$ -LogonType Password -RunLevel Highest
-        #Register the new scheduled task
-        Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger –Principal $principal -Settings $STSettings -Force
-     } -ArgumentList $scriptsDirectory
-
-
-    <#
-    ============================================================
-    Refresh Task
-    ============================================================
-    #>
-    Invoke-Command -Session $session -ScriptBlock {
-        $interval = New-TimeSpan -Minutes 15
-        $STTrigger = New-ScheduledTaskTrigger -Once -At (Get-Date).Date -RepetitionInterval $interval
-        [string]$STName = "Refresh Agent Host Scripts"
-
-        Unregister-ScheduledTask -TaskName $STName -Confirm:$false -ErrorAction SilentlyContinue
-
-        #Action to run as
-        $STAction = New-ScheduledTaskAction -Execute "$Env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoLogo -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -File $scriptsDirectory\Build.Infrastructure\Src\Scripts\refresh-agent-host.ps1" -WorkingDirectory $scriptsDirectory
-        $STSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -Compatibility Win8
-
-        $principal = New-ScheduledTaskPrincipal -UserID tfsbuildservice$ -LogonType Password -RunLevel Highest
-        #Register the new scheduled task
-        Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger –Principal $principal -Settings $STSettings -Force
-     } -ArgumentList $scriptsDirectory
-
-
-    <#
-    ============================================================
     Docker Task
     ============================================================
     #>
@@ -412,8 +370,8 @@ namespace Willys.LsaSecurity
                 & "$Env:ProgramFiles\Docker\Docker\resources\dockerd.exe" --register-service
             }
 
-            $interval = New-TimeSpan -Minutes 1
-            $STTrigger = New-ScheduledTaskTrigger -AtStartup -RandomDelay ($interval)
+            $STTrigger = New-ScheduledTaskTrigger -AtStartup
+            $STTrigger.Delay = "PT5M"
 
             [string]$STName = "Run Docker for Windows"
             Unregister-ScheduledTask -TaskName $STName -Confirm:$false -ErrorAction SilentlyContinue

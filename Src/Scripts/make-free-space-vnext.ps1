@@ -78,13 +78,6 @@ begin {
                 }
             }
 
-
-            if ($PSCmdlet.ShouldProcess("Clean IIS")) {
-                # Clean up IIS after removing files
-                . "$PSScriptRoot\iis-cleanup.ps1"
-            } else {
-                Write-Information "Not cleaning IIS due to lack of -WhatIf support"
-            }
         }
     }
 

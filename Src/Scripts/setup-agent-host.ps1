@@ -53,7 +53,6 @@ param(
 begin {
     Set-StrictMode -Version 'Latest'
     $InformationPreference = 'Continue'
-    $ErrorActionPreference = 'Stop'
     $VerbosePreference = 'Continue'
     $ProgressPreference = 'SilentlyContinue'
 
@@ -128,29 +127,16 @@ begin {
             }
         }
 
-        if ($null -ne (Get-Module -Name 'WebAdministration' -ListAvailable)) {
-            # Stop IIS while removing build agent directories to prevent file locks
-            Write-Verbose -Message "Stopping IIS while removing build agent directories to prevent file locks."
-            iisreset.exe /STOP
-            try {
-                # Clear build agent working directory
-                [string]$workingDirectory = [System.IO.Path]::Combine("$Env:SystemDrive\", 'B')
+        # Clear build agent working directory
+        [string]$workingDirectory = [System.IO.Path]::Combine("$Env:SystemDrive\", 'B')
 
-                # If the path doesn't exist Get-ChildItem will happily pick the working directory instead which could delete C:\Windows\ ...
-                # https://github.com/PowerShell/PowerShell/issues/5699
-                if (Test-Path $workingDirectory) {
-                    Write-Verbose -Message "Deleting $workingDirectory recursively."
-                    DeleteRecursive $workingDirectory
-                } else {
-                    Write-Verbose -Message "Unable to find $workingDirectory. Nothing to remove."
-                }
-
-                & $PSScriptRoot\iis-cleanup.ps1
-            } finally {
-                # Start IIS after removing files
-                Write-Verbose -Message "The working directory should be removed. Restarting IIS."
-                iisreset.exe /START
-            }
+        # If the path doesn't exist Get-ChildItem will happily pick the working directory instead which could delete C:\Windows\ ...
+        # https://github.com/PowerShell/PowerShell/issues/5699
+        if (Test-Path $workingDirectory) {
+            Write-Verbose -Message "Deleting $workingDirectory recursively."
+            DeleteRecursive $workingDirectory
+        } else {
+            Write-Verbose -Message "Unable to find $workingDirectory. Nothing to remove."
         }
     }
 
@@ -162,7 +148,7 @@ begin {
 
     function SetHighPower() {
         Write-Information -MessageData "Setting power options to high performance."
-        try  {
+        try {
             $powerPlan = Get-WmiObject -Namespace root\cimv2\power -Class Win32_PowerPlan -Filter "ElementName = 'High Performance'"
             $powerPlan.Activate()
         } catch {
@@ -177,7 +163,7 @@ begin {
 
     function SetupScheduledTasks {
         Write-Information -MessageData "Setting up scheduled tasks."
-        & "$PSScriptRoot\scheduled-tasks.ps1"
+        . "$PSScriptRoot\scheduled-tasks.ps1"
     }
 
     function StopUnneededServices() {
@@ -366,7 +352,20 @@ begin {
             Write-Verbose -Message "Defaulted agentPool to $agentPool."
         }
     }
+
+    function RunHostCleanUp() {
+        Stop-Service "AppFabricEventCollectionService" -ErrorAction "Continue"
+        Stop-Service "AppFabricWorkflowManagementService" -ErrorAction "Continue"
+
+        . $PSScriptRoot\remove-expert-servces.ps1
+
+        . $PSScriptRoot\make-free-space-vnext.ps1
+        . $PSScriptRoot\make-free-space-vnext.ps1 -strategy nuget
+
+        . $PSScriptRoot\cleanup-agent-host.ps1
+    }
 }
+
 
 process {
     $LASTEXITCODE = 1
@@ -394,14 +393,20 @@ process {
 
         SetupScheduledTasks
 
-        for ($i = 0; $i -lt $agentsToProvision; $i++) {
-            ProvisionAgent
-        }
+        . $PSScriptRoot\Agents\Maintenance\Security.ps1
+
+        Set-SecurityPermissions
+        Remove-GroupMembers
 
         . $PSScriptRoot\configure-disk-device-parameters.ps1
         . $PSScriptRoot\optimize-drives.ps1
         . $PSScriptRoot\Disable-InternetExplorerESC.ps1
-        . $PSScriptRoot\remove-expert-servces.ps1
+
+        RunHostCleanUp
+
+        for ($i = 0; $i -lt $agentsToProvision; $i++) {
+            ProvisionAgent
+        }
 
         $LASTEXITCODE = 0
     } finally {

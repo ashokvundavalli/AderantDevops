@@ -4,14 +4,13 @@ function Set-SecurityPermissions {
     begin {
         Set-StrictMode -Version 'Latest'
         $InformationPreference = 'Continue'
-        $ErrorActionPreference = 'Stop'
 
         [string[]]$groups = @(
             'ADERANT_AP\SG_AP_Dev_Operations'
             'ADERANT_NA\SG_GB_BuildServices'
         )
     }
-    
+
     process {
         foreach ($group in $groups) {
             try {
@@ -26,7 +25,7 @@ function Set-SecurityPermissions {
     }
 }
 
-function Revoke-SecurityPermissions {
+function Remove-GroupMembers {
     begin {
         Set-StrictMode -Version 'Latest'
         $InformationPreference = 'Continue'

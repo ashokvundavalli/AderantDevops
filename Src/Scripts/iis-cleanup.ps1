@@ -25,29 +25,39 @@ if (-not (Get-Module -Name "IISAdministration")) {
 $iisSite = "Default Web Site"
 $site = Get-IISSite -Name $iisSite
 
-foreach ($webApp in $site.Applications | Where-Object { $_.Path -like "/Expert_*" }) {
-    # The WebConfigurationLocation may not exist for some paths.
-    # The value "Name" should match exactly with the XML element in applicationHost.config (so trim the trailing slash)
-    Remove-WebConfigurationLocation -Name $webApp.VirtualDirectories[0].ToString().TrimEnd("/")
+try {
+   Write-Verbose -Message "Stopping IIS while removing build agent directories to prevent file locks."
+   iisreset.exe /STOP
 
-    Remove-WebApplication -Name $webApp.Path -Site $iisSite -Verbose
+    foreach ($webApp in $site.Applications | Where-Object { $_.Path -like "/Expert_*" }) {
+        # The WebConfigurationLocation may not exist for some paths.
+        # The value "Name" should match exactly with the XML element in applicationHost.config (so trim the trailing slash)
+        Remove-WebConfigurationLocation -Name $webApp.VirtualDirectories[0].ToString().TrimEnd("/")
 
-    foreach ($virtualDirectory in $webApp.VirtualDirectories) {
-        Remove-Item -Path $virtualDirectory.PhysicalPath -Force -Verbose
+        Remove-WebApplication -Name $webApp.Path -Site $iisSite -Verbose
+
+        foreach ($virtualDirectory in $webApp.VirtualDirectories) {
+            Remove-Item -Path $virtualDirectory.PhysicalPath -Force -Verbose
+        }
     }
-}
 
-if ($null -ne $Env:AgentPool -and $Env:AgentPool -eq "Test") {
-    try {
-        # Attempt to start app pools.
-        Start-WebAppPool -Name Expert*
-    } catch {
-        # Ignore any errors - app pools may not exist.
-    }
-} else {
-    $applicationPools = Get-IISAppPool | Where-Object { $_.Name -like "Expert*" }
+    if ($null -ne $Env:AgentPool -and $Env:AgentPool -eq "Test") {
+        try {
+            # Attempt to start app pools.
+            Start-WebAppPool -Name Expert*
+        } catch {
+            # Ignore any errors - app pools may not exist.
+        }
+    } else {
+        $applicationPools = Get-IISAppPool | Where-Object { $_.Name -like "Expert*" }
 
-    foreach ($applicationPool in $applicationPools) {
-        Remove-WebAppPool $applicationPool.Name
+        foreach ($applicationPool in $applicationPools) {
+            Remove-WebAppPool $applicationPool.Name
+        }
     }
+
+} finally {
+   # Start IIS after removing files
+    Write-Verbose -Message "The working directory should be removed. Restarting IIS."
+    iisreset.exe /START
 }
