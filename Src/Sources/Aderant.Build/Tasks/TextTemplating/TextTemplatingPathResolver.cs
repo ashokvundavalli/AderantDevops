@@ -70,12 +70,7 @@ namespace Aderant.Build.Tasks.TextTemplating {
             string vs2015Install = Environment.GetEnvironmentVariable("VSSDK140Install");
 
             if (!string.IsNullOrWhiteSpace(vs2015Install)) {
-                var newInstance = (VisualStudioInstance)Activator.CreateInstance(typeof(VisualStudioInstance), BindingFlags.NonPublic, new object[] {
-                        "Visual Studio 2015",
-                        Path.GetDirectoryName(vs2015Install.TrimEnd(Path.DirectorySeparatorChar)),
-                        new Version(14, 0, 0),
-                        DiscoveryType.VisualStudioSetup
-                    }, null);
+                var newInstance = Create2015Install(vs2015Install);
 
                 visualStudioInstances.Add(newInstance);
             }
@@ -114,6 +109,19 @@ namespace Aderant.Build.Tasks.TextTemplating {
                     Add(visualStudioPathInfo.ReferencePaths, Path.Combine(root, "Roslyn"), false);
                 }
             }
+        }
+
+        internal static VisualStudioInstance Create2015Install(string vs2015Install) {
+            var constructors = typeof(VisualStudioInstance).GetConstructors(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public);
+
+            var newInstance = (VisualStudioInstance)constructors[0].Invoke(
+                new object[] {
+                "Visual Studio 2015",
+                Path.GetDirectoryName(vs2015Install.TrimEnd(Path.DirectorySeparatorChar)),
+                new Version(14, 0, 0),
+                DiscoveryType.VisualStudioSetup
+            });
+            return newInstance;
         }
 
         private void LogInvalidInstanceFound(IList<VisualStudioInstance> invalid) {
