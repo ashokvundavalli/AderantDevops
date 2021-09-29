@@ -203,6 +203,21 @@
       <Output TaskParameter="TargetOutputs" PropertyName="PackageVersion" />
     </MSBuild>
 
+
+    <PropertyGroup>
+      <!-- No PackageVersion in the ExtensibilityFile, fall back to a well known global file -->
+      <ExtensibilityFile Condition="'$(PackageVersion)' == ''">$(SolutionRoot)\..\Build\Parameters.props</ExtensibilityFile>
+    </PropertyGroup>
+
+    <MSBuild Condition="'$(PackageVersion)' == '' And Exists('$(ExtensibilityFile)')"
+             Projects="$(MSBuildThisFileDirectory)Aderant.BuildExtensions.targets"
+             Targets="PaketPack"
+             Properties="SolutionRoot=$(SolutionRoot);ExtensibilityFile=$(ExtensibilityFile)"
+             UnloadProjectsOnCompletion="true"
+             ContinueOnError="true">
+      <Output TaskParameter="TargetOutputs" PropertyName="PackageVersion" />
+    </MSBuild>
+
     <Exec
       Command="$(BuildToolsDirectory)paket.exe pack $(ArtifactStagingDirectory)packages --template %(TemplateFiles.FullPath) --version $(PackageVersion) --verbose"
       YieldDuringToolExecution="true"
