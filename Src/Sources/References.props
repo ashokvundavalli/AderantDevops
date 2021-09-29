@@ -91,13 +91,13 @@
     <Reference Include="Microsoft.Build.Tasks.Core, Version=$(MSBuildTargetAssemblyVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>True</SpecificVersion>
       <HintPath>$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll</HintPath>
-      <Private>False</Private>
+      <Private>$(IsTestProject)</Private>
     </Reference>
 
     <Reference Include="Microsoft.Build.Utilities.Core, Version=$(MSBuildTargetAssemblyVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>True</SpecificVersion>
       <HintPath>$(MSBuildToolsPath)\Microsoft.Build.Utilities.Core.dll</HintPath>
-      <Private>False</Private>
+      <Private>$(IsTestProject)</Private>
     </Reference>
   </ItemGroup>
 
