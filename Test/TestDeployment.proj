@@ -24,7 +24,6 @@
       **\*.so;
       **\*.dylib;
       **\*.pdb;
-      **\InProcessJobs.dll
     </ExcludePattern>
   </PropertyGroup>
 

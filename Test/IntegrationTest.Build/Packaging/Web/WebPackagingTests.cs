@@ -13,7 +13,7 @@ namespace IntegrationTest.Build.Packaging.Web {
         public void CollectSharedProjectItems_returns_all_items_when_not_filtering() {
             RunTarget("PackageWeb", new Dictionary<string, string> { { "UseProjectNameWhenCollectingSharedContent", "false" } });
 
-            TargetResult targetResult = Result.ResultsByTarget["PackageWeb"];
+            TargetResult targetResult = GetResult().ResultsByTarget["PackageWeb"];
 
             var items = targetResult.Items;
 
@@ -25,7 +25,7 @@ namespace IntegrationTest.Build.Packaging.Web {
         public void _Layout_cshtml_is_not_collected() {
             RunTarget("PackageWeb", new Dictionary<string, string> { { "UseProjectNameWhenCollectingSharedContent", "false" } });
 
-            TargetResult targetResult = Result.ResultsByTarget["PackageWeb"];
+            TargetResult targetResult = GetResult().ResultsByTarget["PackageWeb"];
 
             var items = targetResult.Items;
 
@@ -41,7 +41,7 @@ namespace IntegrationTest.Build.Packaging.Web {
                     { "WebProjectName", "Web.Site1" }
                 });
 
-            TargetResult targetResult = Result.ResultsByTarget["PackageWeb"];
+            TargetResult targetResult = GetResult().ResultsByTarget["PackageWeb"];
 
             var items = targetResult.Items;
 
@@ -69,7 +69,7 @@ namespace IntegrationTest.Build.Packaging.Web {
                     { "OutputSharedWebContentFile", "true" }
                 });
 
-            TargetResult targetResult = Result.ResultsByTarget["WriteContentFileXml"];
+            TargetResult targetResult = GetResult().ResultsByTarget["WriteContentFileXml"];
             XElement element = XElement.Parse(targetResult.Items.Last().ItemSpec);
 
             Assert.IsTrue(element.Descendants().Any(s => string.Equals(s.Value, "ManualLogOn\\Web.config")));

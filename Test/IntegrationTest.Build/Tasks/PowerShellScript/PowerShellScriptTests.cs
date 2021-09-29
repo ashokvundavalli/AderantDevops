@@ -10,7 +10,7 @@ namespace IntegrationTest.Build.Tasks.PowerShellScript {
         public void PowerShellScript_runs_without_exception() {
             RunTarget("PowerShellScript");
 
-            Assert.IsFalse(Logger.HasRaisedErrors);
+            Assert.IsFalse(HasRaisedErrors);
 
             CollectionAssert.Contains(LogLines, "    AAAA\r\n", "Write-Host message was not captured");
             CollectionAssert.Contains(LogLines, "    BBBB\r\n", "Write-Output message was not captured");
@@ -31,7 +31,7 @@ namespace IntegrationTest.Build.Tasks.PowerShellScript {
         public void PowerShellScript_accepts_ScriptBlock_arguments() {
             RunTarget("PowerShellScriptBlock_with_args");
 
-            Assert.IsFalse(Logger.HasRaisedErrors);
+            Assert.IsFalse(HasRaisedErrors);
         }
 
         [TestMethod]
@@ -59,7 +59,7 @@ namespace IntegrationTest.Build.Tasks.PowerShellScript {
         }
 
         private ICollection<ProjectItemInstance> GetItems() {
-            return Result.ProjectStateAfterBuild.GetItems("TargetResult");
+            return GetResult().ProjectStateAfterBuild.GetItems("TargetResult");
         }
     }
 }

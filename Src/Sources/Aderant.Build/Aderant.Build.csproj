@@ -40,6 +40,9 @@
     <Reference Include="LibGit2Sharp, Version=0.27.0.0, Culture=neutral, PublicKeyToken=7cbde695407f0333, processorArchitecture=MSIL">
       <HintPath>..\..\..\packages\LibGit2Sharp\lib\netstandard2.0\LibGit2Sharp.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.Build.Locator">
+      <HintPath>..\..\..\packages\Microsoft.Build.Locator\lib\net46\Microsoft.Build.Locator.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="paket, Version=6.0.13.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\Build\paket.exe</HintPath>
@@ -94,9 +97,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\..\Build\Functions\VisualStudioConfiguration.cs">
-      <Link>VisualStudioConfiguration.cs</Link>
-    </Compile>
     <Compile Include="ArtifactStagingPathBuilder.cs" />
     <Compile Include="AutoCompletionParser.cs" />
     <Compile Include="BucketVersion.cs" />

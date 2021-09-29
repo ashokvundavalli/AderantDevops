@@ -59,6 +59,8 @@
     <BuildAnalyzerPackagesDirectory Condition="'$(BuildAnalyzerPackagesDirectory)' == ''">$(SolutionRoot)packages\</BuildAnalyzerPackagesDirectory>
     <BuildAnalyzerDirectory>$(BuildAnalyzerPackagesDirectory)Aderant.Build.Analyzer</BuildAnalyzerDirectory>
     <BuildAnalyzerAssembly>$(BuildAnalyzerDirectory)\analyzers\dotnet\cs\Aderant.Build.Analyzer.dll</BuildAnalyzerAssembly>
+
+    <CodeSigningCertificateThumbprint Condition="'$(CodeSigningCertificateThumbprint)' == ''">6e915bc37303cc4da635089bcee6b448e032531b</CodeSigningCertificateThumbprint>
   </PropertyGroup>
 
   <Import Project="Aderant.CodeSigning.targets" />
@@ -75,6 +77,7 @@
           IgnoreExitCode="false"
           Command="Powershell -NonInteractive -NoProfile &quot;&amp; { try { . &apos;$(BuildScriptsDirectory)Functions\GlobalSuppressions.ps1&apos;; OrganizeSuppressionFiles -buildAnalyzerAssembly &apos;$(BuildAnalyzerAssembly)&apos; -path &apos;$(SolutionRoot)&apos; } catch { $Error[0] | Format-List -Force } }&quot;" />
   </Target>
+
 
   <PropertyGroup>
     <BuildAndPackageDependsOn>
@@ -96,80 +99,6 @@
       CopyToDrop;
     </BuildAndPackageDependsOn>
   </PropertyGroup>
-
-
-  <Target Name="RunTests" DependsOnTargets="CreatePlan" Condition="'$(RunTests)' != 'false' And $(RunUnitTests) != 'false'">
-
-    <PropertyGroup>
-      <ImpactedTestAssemblies>@(ImpactedTestAssemblies)</ImpactedTestAssemblies>
-
-      <TestProperties>
-        ParametersFile=$(ParametersFile);
-        TestPattern=UnitTest;
-        ImpactedTestAssemblies=$(ImpactedTestAssemblies);
-        ArtifactStagingDirectory=$(ArtifactStagingDirectory);
-        RunTestsForSolutionRootInParallel=$(RunTestsForSolutionRootInParallel);
-      </TestProperties>
-
-      <TestProperties Condition="'$(BUILD_SOURCESDIRECTORY)' != ''">
-        $(TestProperties);
-        TestResultFileDrop=$(BUILD_SOURCESDIRECTORY)\TestResults
-      </TestProperties>
-    </PropertyGroup>
-
-    <MSBuild Projects="Aderant.Build.Testing.targets"
-             Targets="RunTestsCore"
-             Properties="$(TestProperties)" />
-
-  </Target>
-
-
-  <Target Name="RunIntegrationTests" DependsOnTargets="CreatePlan" Condition="'$(RunTests)' != 'false'" >
-
-    <PropertyGroup>
-      <IntegrationTestFileNamePattern>IntegrationTest</IntegrationTestFileNamePattern>
-      <HasImpactedIntegrationTests Condition="@(ImpactedTestAssemblies->'%(Filename)'->StartsWith('$(IntegrationTestFileNamePattern)')->Count()) &gt; 0">true</HasImpactedIntegrationTests>
-      <ImpactedTestAssemblies>@(ImpactedTestAssemblies)</ImpactedTestAssemblies>
-
-      <TestProperties>
-        ParametersFile=$(ParametersFile);
-        SolutionRoot=$(SolutionRoot);
-        ArtifactStagingDirectory=$(ArtifactStagingDirectory);
-        SharedDependencyDirectory=$(SharedDependencyDirectory);
-        TestPattern=$(IntegrationTestFileNamePattern);
-        ImpactedTestAssemblies=$(ImpactedTestAssemblies);
-        ExpertSourceDirectory=$(ExpertSourceDirectory);
-        RunTestsInParallel=false;
-        RunTestsForSolutionRootInParallel=false;
-        RunTests=$(RunTests);
-      </TestProperties>
-
-      <TestProperties Condition="'$(BUILD_SOURCESDIRECTORY)' != ''">
-        $(TestProperties);
-        TestResultFileDrop=$(BUILD_SOURCESDIRECTORY)\TestResults
-      </TestProperties>
-
-    </PropertyGroup>
-
-    <MSBuild Condition="'$(HasImpactedIntegrationTests)' == 'true'"
-             Projects="Aderant.Build.IntegrationTesting.targets"
-             Targets="RunIntegrationTestsCore"
-             Properties="$(TestProperties)" />
-
-  </Target>
-
-
-  <Target Name="ProcessTestRunTimes" Condition="'$(RunTests)' == 'true' And '$(BUILD_SOURCESDIRECTORY)' != ''">
-    <PropertyGroup>
-      <MaxTestDuration Condition="'$(MaxTestDuration)' == ''">5</MaxTestDuration>
-      <TestResultFileDrop Condition="'$(TestResultFileDrop)' == ''">$(BUILD_SOURCESDIRECTORY)\TestResults</TestResultFileDrop>
-    </PropertyGroup>
-
-    <PowerShellScript ScriptBlock=". $(MSBuildThisFileDirectory)Testing\SlowTestReporter.ps1 -Path $(TestResultFileDrop) -MaxTestDuration $(MaxTestDuration)" />
-
-    <Message Condition="'$(IsDesktopBuild)' == 'false' And Exists('$(TestResultFileDrop)\SlowTestReport.csv')" Text="##vso[artifact.upload artifactname=SlowTestReport]$(TestResultFileDrop)\SlowTestReport.csv" />
-
-  </Target>
 
 
   <Target Name="RemoveLockedFilesFromLastBuild">
@@ -202,11 +131,11 @@
   </Target>
 
 
-
   <Target Name="MakeStagingDirectory">
     <MakeDir Condition="!Exists('$(UpdateStagingDirectory)')"
       Directories="$(UpdateStagingDirectory)" />
   </Target>
+
 
   <Target Name="GatherProjectsToBuild">
     <Message Text="IsDesktopBuild: $(IsDesktopBuild)" />
@@ -410,8 +339,6 @@
   </Target>
 
 
-
-
   <!--
     ==========================================================================================
     This target will build the projects in the plan
@@ -443,6 +370,7 @@
         CustomBeforeMicrosoftCommonTargets=$(CustomBeforeMicrosoftCommonTargets);
         CustomAfterMicrosoftCommonTargets=$(CustomAfterMicrosoftCommonTargets);
         CompileBuildSystem=false;
+        CodeSigningCertificateThumbprint=$(CodeSigningCertificateThumbprint);
         $(WixProperties)
       </CommonBuildProperties>
     </PropertyGroup>
@@ -460,6 +388,7 @@
 
   <PropertyGroup>
     <PackageProductDependsOn>
+      PrepareBuildEnvironment;
       GetFilesForPackage;
       GetProduct;
       AddCurrentBuildInfo;
@@ -467,9 +396,83 @@
       ArchiveArtifacts;
       CleanBinariesBeforePackaging;
       RunDeploymentCheck;
+      CreateCatalogFiles;
     </PackageProductDependsOn>
   </PropertyGroup>
 
+
+  <Target Name="RunTests" DependsOnTargets="CreatePlan" Condition="'$(RunTests)' != 'false' And $(RunUnitTests) != 'false'">
+
+    <PropertyGroup>
+      <ImpactedTestAssemblies>@(ImpactedTestAssemblies)</ImpactedTestAssemblies>
+
+      <TestProperties>
+        ParametersFile=$(ParametersFile);
+        TestPattern=UnitTest;
+        ImpactedTestAssemblies=$(ImpactedTestAssemblies);
+        ArtifactStagingDirectory=$(ArtifactStagingDirectory);
+        RunTestsForSolutionRootInParallel=$(RunTestsForSolutionRootInParallel);
+      </TestProperties>
+
+      <TestProperties Condition="'$(BUILD_SOURCESDIRECTORY)' != ''">
+        $(TestProperties);
+        TestResultFileDrop=$(BUILD_SOURCESDIRECTORY)\TestResults
+      </TestProperties>
+    </PropertyGroup>
+
+    <MSBuild Projects="Aderant.Build.Testing.targets"
+             Targets="RunTestsCore"
+             Properties="$(TestProperties)" />
+
+  </Target>
+
+
+  <Target Name="RunIntegrationTests" DependsOnTargets="CreatePlan" Condition="'$(RunTests)' != 'false'" >
+
+    <PropertyGroup>
+      <IntegrationTestFileNamePattern>IntegrationTest</IntegrationTestFileNamePattern>
+      <HasImpactedIntegrationTests Condition="@(ImpactedTestAssemblies->'%(Filename)'->StartsWith('$(IntegrationTestFileNamePattern)')->Count()) &gt; 0">true</HasImpactedIntegrationTests>
+      <ImpactedTestAssemblies>@(ImpactedTestAssemblies)</ImpactedTestAssemblies>
+
+      <TestProperties>
+        ParametersFile=$(ParametersFile);
+        SolutionRoot=$(SolutionRoot);
+        ArtifactStagingDirectory=$(ArtifactStagingDirectory);
+        SharedDependencyDirectory=$(SharedDependencyDirectory);
+        TestPattern=$(IntegrationTestFileNamePattern);
+        ImpactedTestAssemblies=$(ImpactedTestAssemblies);
+        ExpertSourceDirectory=$(ExpertSourceDirectory);
+        RunTestsInParallel=false;
+        RunTestsForSolutionRootInParallel=false;
+        RunTests=$(RunTests);
+      </TestProperties>
+
+      <TestProperties Condition="'$(BUILD_SOURCESDIRECTORY)' != ''">
+        $(TestProperties);
+        TestResultFileDrop=$(BUILD_SOURCESDIRECTORY)\TestResults
+      </TestProperties>
+
+    </PropertyGroup>
+
+    <MSBuild Condition="'$(HasImpactedIntegrationTests)' == 'true'"
+             Projects="Aderant.Build.IntegrationTesting.targets"
+             Targets="RunIntegrationTestsCore"
+             Properties="$(TestProperties)" />
+
+  </Target>
+
+
+  <Target Name="ProcessTestRunTimes" Condition="'$(RunTests)' == 'true' And '$(BUILD_SOURCESDIRECTORY)' != ''">
+    <PropertyGroup>
+      <MaxTestDuration Condition="'$(MaxTestDuration)' == ''">5</MaxTestDuration>
+      <TestResultFileDrop Condition="'$(TestResultFileDrop)' == ''">$(BUILD_SOURCESDIRECTORY)\TestResults</TestResultFileDrop>
+    </PropertyGroup>
+
+    <PowerShellScript ScriptBlock=". $(MSBuildThisFileDirectory)Testing\SlowTestReporter.ps1 -Path $(TestResultFileDrop) -MaxTestDuration $(MaxTestDuration)" />
+
+    <Message Condition="'$(IsDesktopBuild)' == 'false' And Exists('$(TestResultFileDrop)\SlowTestReport.csv')" Text="##vso[artifact.upload artifactname=SlowTestReport]$(TestResultFileDrop)\SlowTestReport.csv" />
+
+  </Target>
 
 
   <Target Name="GetFilesForPackage">
@@ -585,6 +588,7 @@ $shortcut.Save()' />
   <Target Name="ArchiveArtifacts" Condition="'$(PackageProduct)' == 'true'">
 
     <GenerateArchives
+      Condition="'@(LocalPackagePaths->Count())' != '0'"
       DirectoriesToArchive="@(LocalPackagePaths)"
       OutputArchives="@(LocalPackagePaths -> '%(FullPath)\%(Filename)%(Extension).zip')"
       ExcludeFilter="~"
@@ -617,6 +621,24 @@ $shortcut.Save()' />
     </Exec>
 
     <OnError ExecuteTargets="PrintErrorMessage" />
+  </Target>
+
+
+  <Target Name="CreateCatalogFiles">
+    <PowerShellScript
+      Condition="Exists('$(ExpertSourceDirectory)')"
+      ScriptBlock="
+$VerbosePreference = 'Continue'
+$InformationPreference = 'Continue'
+
+$certificate = Get-ChildItem -path 'Cert:\*$(CodeSigningCertificateThumbprint)' -Recurse | Select-Object -First 1
+if ($null -eq $certificate) {
+  throw 'Code signing certificate with thumbprint: $(CodeSigningCertificateThumbprint) not found'
+}
+
+New-FileCatalog -CatalogVersion 2 -Path '$(ExpertSourceDirectory)' -CatalogFilePath '$(ExpertSourceDirectory)' -Verbose
+Set-AuthenticodeSignature -TimestampServer 'http://timestamp.digicert.com' -HashAlgorithm SHA256 -LiteralPath '$(ExpertSourceDirectory)\catalog.cat' -Certificate $certificate -Verbose
+" />
   </Target>
 
 

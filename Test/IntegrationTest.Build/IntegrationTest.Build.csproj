@@ -31,6 +31,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.Build.Locator">
+      <HintPath>..\..\packages\Microsoft.Build.Locator\lib\net46\Microsoft.Build.Locator.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.VisualStudio.Services.Common">
       <HintPath>..\..\packages\devtools\Microsoft.VisualStudio.Services.Client\lib\net462\Microsoft.VisualStudio.Services.Common.dll</HintPath>
     </Reference>
@@ -282,4 +285,5 @@
   <Import Project="..\TestDeployment.proj" />
   <Import Project="EndToEnd\Resources.proj" />
   <Import Project="..\..\Src\Sources\References.props" />
+
 </Project>

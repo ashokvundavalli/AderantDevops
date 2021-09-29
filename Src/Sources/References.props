@@ -23,10 +23,14 @@
     </When>
   </Choose>
 
-
   <PropertyGroup Condition="'$(IncludeTeamFoundationReferences)' != 'false'">
     <TeamFoundationReferencePath>$(VS140COMNTOOLS)..\IDE\CommonExtensions\Microsoft\TeamFoundation\Team Explorer</TeamFoundationReferencePath>
     <TeamFoundationReferencePath Condition="!Exists('$(TeamFoundationReferencePath)')">$(DevEnvDir)\CommonExtensions\Microsoft\TeamFoundation\Team Explorer</TeamFoundationReferencePath>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <IsTestProject>False</IsTestProject>
+    <IsTestProject Condition="$(ProjectTypeGuids.Contains('{3AC096D0-A1C2-E12C-1390-A8335801FDAB}'))">True</IsTestProject>
   </PropertyGroup>
 
   <Choose>
@@ -65,11 +69,6 @@
     </When>
   </Choose>
 
-  <PropertyGroup>
-    <IsTestProject>False</IsTestProject>
-    <IsTestProject Condition="$(ProjectTypeGuids.Contains('{3AC096D0-A1C2-E12C-1390-A8335801FDAB}'))">True</IsTestProject>
-  </PropertyGroup>
-
   <ItemGroup>
     <Reference Include="Microsoft.Build, Version=$(MSBuildTargetAssemblyVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>True</SpecificVersion>
@@ -92,13 +91,13 @@
     <Reference Include="Microsoft.Build.Tasks.Core, Version=$(MSBuildTargetAssemblyVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>True</SpecificVersion>
       <HintPath>$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll</HintPath>
-      <Private>$(IsTestProject)</Private>
+      <Private>False</Private>
     </Reference>
 
     <Reference Include="Microsoft.Build.Utilities.Core, Version=$(MSBuildTargetAssemblyVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>True</SpecificVersion>
       <HintPath>$(MSBuildToolsPath)\Microsoft.Build.Utilities.Core.dll</HintPath>
-      <Private>$(IsTestProject)</Private>
+      <Private>False</Private>
     </Reference>
   </ItemGroup>
 

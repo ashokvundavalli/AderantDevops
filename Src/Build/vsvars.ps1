@@ -12,7 +12,6 @@ param(
 
 begin {
     . "$PSScriptRoot\Functions\Resolve-MSBuild.ps1" | Out-Null
-    CompileVisualStudioLocationHelper
 
     ##
     ## Sets environment variables used to interop with the Visual Studio Developer Command Prompt
@@ -21,11 +20,11 @@ begin {
         if ([string]::IsNullOrEmpty($vsPath) -and ![string]::IsNullOrEmpty($environmentVariableName)) {
             $vsPath = [Environment]::GetEnvironmentVariable($environmentVariableName)
         } else {
-            $instance = ([VisualStudioConfiguration.VisualStudioLocationHelper]::GetInstances() | Where-Object { $_.Name.Contains($vsYear) }  | Select-Object -First 1)
+            $instance = ([Microsoft.Build.Locator.MSBuildLocator]::QueryVisualStudioInstances() | Where-Object { $_.Name.Contains($vsYear) }  | Select-Object -First 1)
             if ($null -eq $instance) {
                 return $false
             } else {
-                $vsPath = $instance.Path
+                $vsPath = $instance.VisualStudioRootPath
             }
         }
 

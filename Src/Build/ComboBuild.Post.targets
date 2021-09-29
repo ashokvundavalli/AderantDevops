@@ -6,7 +6,6 @@
   <Import Project="Aderant.Build.Publish.targets" />
   <Import Project="Aderant.CodeSigning.targets" />
   <Import Project="Mobile.targets" />
-  <Import Project="$(SolutionRoot)\..\Build\Parameters.props" Condition="Exists('$(SolutionRoot)\..\Build\Parameters.props')" />
 
   <PropertyGroup>
     <RunTestsDependsOn>
@@ -156,32 +155,64 @@
     <CallTarget Targets="PostBuild;OnAfterBuild" />
   </Target>
 
-  <!-- Pull the entry targets into our context. This lets us call into PostBuild for people who want to customize the workflow -->
-  <Import Project="$(SolutionDirectoryPath)Build\TFSBuild.proj" Condition="'$(RunUserTargets)' != 'false' And Exists('$(SolutionDirectoryPath)Build\TFSBuild.proj')" />
-  <Import Project="$(SolutionDirectoryPath)packaging.targets" Condition="'$(RunUserTargets)' != 'false' And Exists('$(SolutionDirectoryPath)packaging.targets')" />
 
 
-  <Target Name="PaketPack" Condition="'@(InvokePaket)' != '' And '$(PackageVersion)' != '' And '$(BUILD_REASON)' != 'PullRequest'">
+  <!-- This target is looks for any paket template files.
+       If found will cause RunPaketPack to be invoked which looks for any props files that
+       define the NuGet package version to use.
+       If a props file is found it calls the BuildExtensions target which then has access to all
+       three pieces of data
+          - Template Files
+          - Package Version
+          - The SolutionRoot
+   -->
+  <Target Name="PaketPack" Condition="'$(BUILD_REASON)' != 'PullRequest'">
 
     <PropertyGroup>
       <PaketLockFile>$(SolutionRoot)\paket.lock</PaketLockFile>
     </PropertyGroup>
 
     <WriteLinesToFile
-     File="$(paketLockFile)"
-     Lines=""
-     Overwrite="false"
-     Condition="!Exists('$(PaketLockFile)')"/>
+      File="$(PaketLockFile)"
+      Lines=""
+      Overwrite="false"
+      Condition="!Exists('$(PaketLockFile)')"/>
 
     <ItemGroup>
       <TemplateFiles Include="$(SolutionRoot)\*.paket.template" />
     </ItemGroup>
+  </Target>
+
+
+  <Target Name="RunPaketPack" Condition="'@(TemplateFiles->Count())' != '0'"
+          AfterTargets="PaketPack">
+
+    <PropertyGroup>
+      <TemplateFilesAsScalarPropertyList>@(TemplateFiles)</TemplateFilesAsScalarPropertyList>
+      <ExtensibilityFile>$(SolutionRoot)\dir.props</ExtensibilityFile>
+    </PropertyGroup>
+
+    <!-- The system allows for recursive extensibility but the current NuGet packaging
+         does not follow this rule. Here we look for a top level extensibility file and use that -->
+    <MSBuild Condition="Exists('$(ExtensibilityFile)')"
+             Projects="$(MSBuildThisFileDirectory)Aderant.BuildExtensions.targets"
+             Targets="PaketPack"
+             Properties="SolutionRoot=$(SolutionRoot);ExtensibilityFile=$(ExtensibilityFile)"
+             UnloadProjectsOnCompletion="true"
+             ContinueOnError="true">
+      <Output TaskParameter="TargetOutputs" PropertyName="PackageVersion" />
+    </MSBuild>
 
     <Exec
-      Condition="'@(TemplateFiles)' != ''"
       Command="$(BuildToolsDirectory)paket.exe pack $(ArtifactStagingDirectory)packages --template %(TemplateFiles.FullPath) --version $(PackageVersion) --verbose"
+      YieldDuringToolExecution="true"
       WorkingDirectory="$(SolutionRoot)" />
 
   </Target>
+
+
+  <!-- Pull the entry targets into our context. This lets us call into PostBuild for people who want to customize the workflow -->
+  <Import Project="$(SolutionDirectoryPath)Build\TFSBuild.proj" Condition="'$(RunUserTargets)' != 'false' And Exists('$(SolutionDirectoryPath)Build\TFSBuild.proj')" />
+  <Import Project="$(SolutionDirectoryPath)packaging.targets" Condition="'$(RunUserTargets)' != 'false' And Exists('$(SolutionDirectoryPath)packaging.targets')" />
 
 </Project>

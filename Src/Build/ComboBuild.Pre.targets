@@ -110,13 +110,21 @@
   </Target>
 
 
-  <Target Name="CollectExtensibilityFiles">
+  <!--
+    ==========================================================================================
+        CollectExtensibilityFiles
+        Recursively finds all props files
+    ==========================================================================================
+  -->
+  <Target Name="CollectExtensibilityFiles" Returns="@(ExtensibilityFiles)">
+
     <ItemGroup>
       <ExtensibilityFiles Include="$(SolutionRoot)\**\dir.props"
                           Exclude="$(SolutionRoot)\packages\**;
                                    $(DependenciesDirectory)\**" />
     </ItemGroup>
   </Target>
+
 
 
   <Target Name="RunRetrieveArtifacts" Condition="'$(RetrievePrebuilts)' != 'false'" DependsOnTargets="CollectExtensibilityFiles">

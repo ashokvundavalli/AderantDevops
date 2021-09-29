@@ -8,8 +8,6 @@ namespace IntegrationTest.Build.VersionControl {
     [TestClass]
     public class GitVersionControlNestedChangesTests : GitVersionControlTestBase {
 
-        public override TestContext TestContext { get; set; }
-
         public GitVersionControlNestedChangesTests() {
             Script = Resources.CreateSubfoldersRepo;
         }

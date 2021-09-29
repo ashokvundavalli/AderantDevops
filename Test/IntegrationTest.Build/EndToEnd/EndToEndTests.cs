@@ -115,7 +115,7 @@ namespace IntegrationTest.Build.EndToEnd {
 
         private string RunTestTargetAndGetOutputs(TestBuildServiceHost buildService) {
             RunTarget("CollectProjectsInBuild", buildService.Properties);
-            var propertyValue = base.Result.ProjectStateAfterBuild.GetPropertyValue("RunSettingsFileXml");
+            var propertyValue = base.GetResult().ProjectStateAfterBuild.GetPropertyValue("RunSettingsFileXml");
 
             Assert.IsNotNull(propertyValue);
             return propertyValue;

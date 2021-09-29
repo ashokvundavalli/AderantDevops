@@ -1,6 +1,7 @@
 references: strict
 framework: net48
 source https://api.nuget.org/v3/index.json
+nuget Microsoft.Build.Locator
 nuget LibGit2Sharp preview
 nuget MSBuildTasks = 1.5.0.235
 nuget System.Threading.Tasks.Dataflow = 4.9.0

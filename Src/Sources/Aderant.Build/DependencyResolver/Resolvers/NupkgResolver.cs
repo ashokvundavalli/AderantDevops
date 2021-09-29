@@ -14,6 +14,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
     internal class NupkgResolver : IDependencyResolver {
 
         private ILogger logger;
+
         public bool EnableVerboseLogging { get; set; }
 
         static NupkgResolver() {
@@ -23,16 +24,17 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
             if (!string.IsNullOrEmpty(data)) {
                 Assembly.LoadFrom(Path.Combine(data, "paket.exe"));
             }
-
-            // Lifted from Paket.Program.main()
-            // Using runtime resolution causes each group - and thus the packages in that group to be queried at least twice which is extremely slow
-            string disableRunResolution = Environment.GetEnvironmentVariable("PAKET_DISABLE_RUNTIME_RESOLUTION");
-            if (string.IsNullOrEmpty(disableRunResolution)) {
-                Environment.SetEnvironmentVariable("PAKET_DISABLE_RUNTIME_RESOLUTION", "true");
-            }
         }
 
         public NupkgResolver() {
+            // Lifted from Paket.Program.main()
+            // Using runtime resolution causes each group - and thus the packages in that group to be queried at least twice which is extremely slow
+            const string runtimeResolutionVariable = "PAKET_DISABLE_RUNTIME_RESOLUTION";
+
+            string disableRunResolution = Environment.GetEnvironmentVariable(runtimeResolutionVariable);
+            if (string.IsNullOrEmpty(disableRunResolution)) {
+                Environment.SetEnvironmentVariable(runtimeResolutionVariable, "true", EnvironmentVariableTarget.Process);
+            }
         }
 
         public IModuleProvider ModuleFactory { get; set; }

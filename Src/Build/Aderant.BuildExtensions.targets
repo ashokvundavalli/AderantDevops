@@ -7,13 +7,19 @@
   -->
 
   <!--Default implementation-->
-  <Target Name="GetStagingDirectoryWhitelist" Returns="@(StagingDirectoryWhitelist)">    
+  <Target Name="GetStagingDirectoryWhitelist" Returns="@(StagingDirectoryWhitelist)">
     <ItemGroup>
       <StagingDirectoryWhitelist Include="UnitTest.Framework.Helpers.dll" />
     </ItemGroup>
-    
+
     <Message Text="Default @(StagingDirectoryWhitelist)" />
   </Target>
+
+  <!--
+    Default Paket implementation.
+    Returns the value of a well known property.
+  -->
+  <Target Name="PaketPack" Returns="$(PackageVersion)" />
 
   <Import Project="$(ExtensibilityFile)" Condition="'$(ExtensibilityFile)' != ''" />
 

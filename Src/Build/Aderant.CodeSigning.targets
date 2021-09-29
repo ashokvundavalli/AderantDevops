@@ -3,7 +3,6 @@
 
   <PropertyGroup>
     <CodeSigningEnabled Condition="'$(CodeSigningEnabled)' == ''">true</CodeSigningEnabled>
-		<CodeSigningCertificateThumbprint>6e915bc37303cc4da635089bcee6b448e032531b</CodeSigningCertificateThumbprint>
 
 
     <!-- Search 32-bit registry first on 32-bit Windows to ensure we get the 32-bit key if present -->
@@ -81,6 +80,7 @@
     <Error Condition="'$(WindowsKitRoot)' == ''" Text="WindowsKitRoot is undefined" />
     <Error Condition="'$(WindowsSdkDir)' == ''" Text="WindowsSdkDir is undefined" />
     <Error Condition="'$(FxToolsDir)' == ''" Text="FxToolsDir is undefined" />
+    <Error Condition="'$(CodeSigningCertificateThumbprint)' == ''" Text="CodeSigningCertificateThumbprint is undefined" />
 
     <Error Condition="!Exists($(SignToolPath))" Text="SignTool.exe not found at path $(SignToolPath)" />
     <Error Condition="!Exists($(MageToolPath))" Text="mage.exe not found at path $(MageToolPath)" />
@@ -146,7 +146,7 @@
           ContinueOnError="true"
           IgnoreStandardErrorWarningFormat="true"
           YieldDuringToolExecution="true"
-          Command='"$(SignToolPath)" sign /t $(SignServer) /fd sha256 /sha1 $(CodeSigningCertificateThumbprint) /d "%(FilesToSign.ProductName)" "%(FilesToSign.FullPath)"' />
+          Command='"$(SignToolPath)" sign /t $(SignServer) /fd SHA256 /sha1 $(CodeSigningCertificateThumbprint) /d "%(FilesToSign.ProductName)" "%(FilesToSign.FullPath)"' />
 
     <PropertyGroup>
       <SignFileResult Condition="'$(SignFileResult)' == '' And '$(MSBuildLastTaskResult)' == 'true'">$([System.String]::Intern($(AlreadySignedKey)))</SignFileResult>

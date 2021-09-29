@@ -27,6 +27,7 @@ namespace IntegrationTest.Build {
                     if (!File.Exists(nativeLibrary)) {
                         throw new FileNotFoundException("Native library not found: " + nativeLibrary, nativeLibrary);
                     }
+
                     return;
                 } else {
                     context.WriteLine($"Directory {directory} does not exist.");
@@ -38,6 +39,10 @@ namespace IntegrationTest.Build {
             // Dump out the test deployment directory on failure
             context.WriteLine("Could not find the native git binaries. The contents of the deployment directory is...");
             Directory.EnumerateDirectories(context.DeploymentDirectory, "*", SearchOption.AllDirectories).ToList().ForEach(s => context.WriteLine(s));
+
+            if (assemblyInitializeFailed) {
+                throw new SystemException("Unable to find git library!");
+            }
         }
 
         [TestMethod]
@@ -46,5 +51,6 @@ namespace IntegrationTest.Build {
 
             Assert.IsTrue(Directory.Exists(LibGit2Sharp.GlobalSettings.NativeLibraryPath));
         }
+
     }
 }

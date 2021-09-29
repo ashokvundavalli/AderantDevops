@@ -15,9 +15,12 @@ namespace IntegrationTest.Build {
     [DeploymentItem(Tasks, Tasks)]
     [DeploymentItem(EndToEnd, EndToEnd)]
     [DeploymentItem(Packaging, Packaging)]
-    [DeploymentItem(@"..\..\..\Src\Build.Tools\", "Build.Tools")] // Deploy the native libgit binaries
-    [DeploymentItem(@"..\..\..\Src\Build\Tasks\", "Build\\Tasks")]
+    [DeploymentItem(@"..\..\Src\Build.Tools\", "Build.Tools")] // Deploy the native libgit binaries
+    [DeploymentItem(@"..\..\Src\Build\Tasks\", "Build\\Tasks")]
     public abstract class MSBuildIntegrationTestBase {
+
+        private BuildResult result;
+        private InternalBuildLogger logger;
 
         public const string TargetsFile = "IntegrationTest.targets";
         public const string Tasks = "Tasks\\";
@@ -27,9 +30,10 @@ namespace IntegrationTest.Build {
 
         public TestContext TestContext { get; set; }
 
-        public InternalBuildLogger Logger { get; set; }
-
-        public LoggerVerbosity LoggerVerbosity { get; set; } = LoggerVerbosity.Detailed;
+        // String property so it doesn't take a dependency on MSBuild.
+        // If this was typed then MSTest won't be able to reflect this type and no tests will run as it can't find the dependencies
+        // in the output
+        public string LoggerVerbosity { get; set; } = nameof(Microsoft.Build.Framework.LoggerVerbosity.Detailed);
 
         public bool DetailedSummary { get; set; } = true;
 
@@ -53,7 +57,8 @@ namespace IntegrationTest.Build {
                 { "BUILD_REPOSITORY_NAME", "Build.Infrastructure" }
             };
 
-            if (LoggerVerbosity > LoggerVerbosity.Normal) {
+            LoggerVerbosity verbosity = (LoggerVerbosity)Enum.Parse(typeof(LoggerVerbosity), LoggerVerbosity);
+            if (verbosity > Microsoft.Build.Framework.LoggerVerbosity.Normal) {
                 Environment.SetEnvironmentVariable("MSBUILDTARGETOUTPUTLOGGING", "1", EnvironmentVariableTarget.Process);
                 Environment.SetEnvironmentVariable("MSBUILDLOGTASKINPUTS", "1", EnvironmentVariableTarget.Process);
             }
@@ -61,14 +66,14 @@ namespace IntegrationTest.Build {
             using (ProjectCollection collection = new ProjectCollection(globalProperties)) {
                 collection.UnregisterAllLoggers();
 
-                var logger = new InternalBuildLogger(TestContext, LoggerVerbosity);
+                this.logger = new InternalBuildLogger(TestContext, verbosity);
 
-                collection.RegisterLogger(Logger = logger);
+                collection.RegisterLogger(logger);
 
                 string logFile = $"LogFile={Path.Combine(TestContext.TestResultsDirectory, TestContext.TestName + ".binlog")}";
 
                 collection.RegisterLogger(new BinaryLogger() {
-                    Verbosity = LoggerVerbosity,
+                    Verbosity = verbosity,
                     CollectProjectImports = BinaryLogger.ProjectImportsCollectionMode.None,
                     Parameters = logFile
                 });
@@ -84,7 +89,7 @@ namespace IntegrationTest.Build {
                         null,
                         BuildRequestDataFlags.ProvideProjectStateAfterBuild);
 
-                    var result = manager.Build(
+                    this.result = manager.Build(
                         new BuildParameters(collection) {
                             Loggers = collection.Loggers,
                             DetailedSummary = DetailedSummary,
@@ -96,8 +101,6 @@ namespace IntegrationTest.Build {
                     if (result.OverallResult == BuildResultCode.Failure) {
                         LogFile = logFile;
                     }
-
-                    Result = result;
 
                     if (BuildMustSucceed) {
                         Assert.AreNotEqual(BuildResultCode.Failure, result.OverallResult);
@@ -121,11 +124,17 @@ namespace IntegrationTest.Build {
 
         public string LogFile { get; set; }
 
-        public BuildResult Result { get; set; }
+        protected BuildResult GetResult() {
+            return result;
+        }
 
         public bool BuildMustSucceed { get; set; } = true;
 
-
+        public bool HasRaisedErrors {
+            get {
+                return logger.HasRaisedErrors;
+            }
+        }
 
         public class InternalBuildLogger : ConsoleLogger {
 
@@ -133,7 +142,6 @@ namespace IntegrationTest.Build {
 
             public InternalBuildLogger(TestContext context, LoggerVerbosity verbosity)
                 : base(verbosity) {
-
                 WriteHandler = message => {
                     LogLines.Add(message);
                     context.WriteLine(message.Replace("{", "{{").Replace("}", "}}").TrimEnd(newLine));
@@ -148,6 +156,8 @@ namespace IntegrationTest.Build {
                 base.Initialize(eventSource);
                 eventSource.ErrorRaised += (sender, args) => HasRaisedErrors = true;
             }
+
         }
+
     }
 }

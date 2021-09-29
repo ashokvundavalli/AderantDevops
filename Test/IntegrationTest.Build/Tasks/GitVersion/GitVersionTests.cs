@@ -37,7 +37,7 @@ namespace IntegrationTest.Build.Tasks.GitVersion {
         public void GitVersion_runs_without_exception() {
             RunTarget("GitVersion");
 
-            Assert.IsFalse(Logger.HasRaisedErrors);
+            Assert.IsFalse(base.HasRaisedErrors);
         }
     }
 }

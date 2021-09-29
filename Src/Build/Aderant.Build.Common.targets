@@ -163,6 +163,7 @@
 
   </Target>
 
+
   <ItemGroup>
     <NugetPackageFoldersToIgnore Include="MonoAndroid10;MonoTouch10;win8;wp8;wpa81;uap;Xamarin;monoandroid90;xamarinios10;xamarinmac20" />
     <NugetPackageFoldersToIgnore Include="de-DE;es-ES;fr-FR;it-IT;ja-JP;ko-KR;pt-BR;ru-RU;zh-CN;zh-TW;zh-Hans;zh-Hant" />

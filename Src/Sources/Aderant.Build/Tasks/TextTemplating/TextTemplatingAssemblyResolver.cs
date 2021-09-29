@@ -21,11 +21,11 @@ namespace Aderant.Build.Tasks.TextTemplating {
 
         private static Assembly AssemblyResolve(object sender, ResolveEventArgs args) {
             if (string.Equals(args.Name, telemetryAssembly.FullName, StringComparison.Ordinal)) {
-                var visualStudioInstances = VisualStudioConfiguration.VisualStudioLocationHelper.GetInstances();
+                var visualStudioInstances = Microsoft.Build.Locator.MSBuildLocator.QueryVisualStudioInstances();
 
                 foreach (var instance in visualStudioInstances) {
                     if (instance.Version.Major == telemetryAssembly.Version.Major) {
-                        var assemblyFile = Path.Combine(instance.Path, "MSBuild", "Microsoft", "VisualStudio", TextTemplatingPathResolver.CreateDottedMajorVersion(instance), "TextTemplating", $"{telemetryAssembly.Name}.dll");
+                        var assemblyFile = Path.Combine(instance.VisualStudioRootPath, "MSBuild", "Microsoft", "VisualStudio", TextTemplatingPathResolver.CreateDottedMajorVersion(instance), "TextTemplating", $"{telemetryAssembly.Name}.dll");
                         if (File.Exists(assemblyFile)) {
                             var assemblyName = AssemblyName.GetAssemblyName(assemblyFile);
 

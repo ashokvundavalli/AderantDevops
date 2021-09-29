@@ -27,15 +27,6 @@ function Get-MSBuildPath {
     }
 }
 
-function CompileVisualStudioLocationHelper {
-    if (([System.Management.Automation.PSTypeName]'VisualStudioConfiguration.VisualStudioLocationHelper').Type) {
-        # The type is already defined so bail out
-        return
-    }
-
-    Add-Type -Path ([System.IO.Path]::Combine($PSScriptRoot, "VisualStudioConfiguration.cs"))
-}
-
 function FindBuildEnginePath {
     [CmdletBinding()]
     [OutputType([string])]
@@ -44,9 +35,7 @@ function FindBuildEnginePath {
         [string]$Bitness
     )
 
-    CompileVisualStudioLocationHelper
-
-    $studios = [VisualStudioConfiguration.VisualStudioLocationHelper]::GetInstances()
+    $studios = [Microsoft.Build.Locator.MSBuildLocator]::QueryVisualStudioInstances()
 
     if ($Version -ne "*") {
         $studios = $studios | Where-Object { $_.Version.Major.ToString() -eq ([Version]$Version).Major }
@@ -59,8 +48,8 @@ function FindBuildEnginePath {
 
     foreach ($studio in $studios) {
         $items[$studio] = (Get-Item -ErrorAction Ignore @(
-            "$($studio.Path)\$(Get-MSBuildPath Current $Bitness)",
-            "$($studio.Path)\$(Get-MSBuildPath $Version $Bitness)"
+            "$($studio.VisualStudioRootPath)\$(Get-MSBuildPath Current $Bitness)",
+            "$($studio.VisualStudioRootPath)\$(Get-MSBuildPath $Version $Bitness)"
         )) | Sort-Object -Unique
     }
 

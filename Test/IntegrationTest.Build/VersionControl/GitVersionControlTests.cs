@@ -9,9 +9,6 @@ namespace IntegrationTest.Build.VersionControl {
     [TestClass]
     public class GitVersionControlTests : GitVersionControlTestBase {
 
-        public override TestContext TestContext { get; set; }
-
-
         [TestMethod]
         public void GetSourceTreeInfo_returns_without_exception() {
             var vc = new GitVersionControlService();

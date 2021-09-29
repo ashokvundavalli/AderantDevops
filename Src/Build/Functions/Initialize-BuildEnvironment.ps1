@@ -4,8 +4,10 @@ param(
         return [System.IO.Path]::GetFullPath("$PSScriptRoot\..\")
     }.Invoke()
 )
+
 $script:currentCommit = $null
 $script:isUsingProfile = $null
+
 
 if ($PSVersionTable.PSVersion.Major -lt 5 -or ($PSVersionTable.PSVersion.Major -eq 5 -and $PSVersionTable.PSVersion.Minor -lt 1)) {
     Write-Error "PowerShell version is lower than the minimum required version of 5.1. Please update PowerShell."
@@ -19,6 +21,7 @@ if (-Not $NETVersion.Version.StartsWith('4.8')) {
 }
 
 [string]$script:repositoryRoot = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($BuildScriptsDirectory, "..\..\"))
+[string]$script:packageDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($script:repositoryRoot, "packages"))
 
 function GetAlternativeStreamValue {
     [CmdletBinding()]
@@ -69,18 +72,7 @@ function BuildProjects {
 
     [string]$msbuildPath = . "$PSScriptRoot\Resolve-MSBuild.ps1" -Version '*' -Bitness 'x64'
 
-    $dependencies = @("Microsoft.Build.dll",
-        "Microsoft.Build.Engine.dll",
-        "Microsoft.Build.Tasks.Core.dll",
-        "Microsoft.Build.Utilities.Core.dll",
-        "System.Runtime.CompilerServices.Unsafe.dll")
-
-    foreach ($dep in $dependencies) {
-        $fullPath = [System.IO.Path]::Combine($msbuildPath, $dep)
-        if (Test-Path $fullPath) {
-            [void][System.Reflection.Assembly]::LoadFrom($fullPath)
-        }
-    }
+    [Microsoft.Build.Locator.MSBuildLocator]::RegisterMSBuildPath($msbuildPath)
 
     $info = [System.IO.FileInfo]::new($mainAssembly)
 
@@ -119,8 +111,11 @@ function BuildProjects {
 function LoadAssembly {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$assemblyPath,
-        [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$moduleName
+        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()]
+        [string]$assemblyPath,
+
+        [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()]
+        [string]$moduleName
     )
 
     if ([System.IO.File]::Exists($assemblyPath)) {
@@ -289,7 +284,6 @@ function DownloadPaket([string]$commit) {
 
     if (Test-Path -Path $bootstrapper) {
         $paketExecutable = [System.IO.Path]::Combine($BuildScriptsDirectory, "paket.exe")
-        $packageDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($script:repositoryRoot, "packages"))
 
         [bool]$packageDirectoryExists = [System.IO.Directory]::Exists($packageDirectory)
 
@@ -408,6 +402,8 @@ function EnsureModuleLoaded() {
             $aliases.ForEach({ Set-Alias -Name $_ -value $command.Name -Scope Global })
         }
     }
+
+    [System.AppDomain]::CurrentDomain.SetData("BuildScriptsDirectory", $BuildScriptsDirectory)
 }
 
 try {
@@ -479,12 +475,12 @@ try {
 
     SetTimeouts
     DownloadPaket $commit
+    LoadAssembly -assemblyPath ([System.IO.Path]::Combine($packageDirectory, "Microsoft.Build.Locator\lib\net46\Microsoft.Build.Locator.dll"))
     BuildProjects -mainAssembly $mainAssembly -forceCompile $isUsingProfile -commit $commit
     LoadAssembly -assemblyPath ([System.IO.Path]::Combine($assemblyPathRoot, "System.Threading.Tasks.Dataflow.dll"))
     LoadAssembly -assemblyPath ([System.IO.Path]::Combine($assemblyPathRoot, "protobuf-net.dll"))
 
     # Required for Get-BuildDependencyTree
-    #LoadAssembly -assemblyPath ([System.IO.Path]::Combine($assemblyPathRoot, "System.Runtime.CompilerServices.Unsafe.dll"))
 
     EnsureModuleLoaded
     LoadLibGit2Sharp $assemblyPathRoot
@@ -500,8 +496,6 @@ try {
     } else {
         Write-Debug 'Service endpoint check skipped.'
     }
-
-    [System.AppDomain]::CurrentDomain.SetData("BuildScriptsDirectory", $BuildScriptsDirectory)
 } finally {
     $ErrorActionPreference = $originalErrorActionPreference
     $Error.Clear()

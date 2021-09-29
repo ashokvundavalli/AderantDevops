@@ -5,11 +5,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build.VersionControl {
     [TestClass]
-    [DeploymentItem(MSBuildIntegrationTestBase.TestDeployment)]
-    [DeploymentItem(@"..\..\..\Src\Build.Tools\", "Build.Tools")] // Deploy the native libgit binaries
-    public abstract class GitVersionControlTestBase {
-
-        public virtual TestContext TestContext { get; set; }
+    public abstract class GitVersionControlTestBase : MSBuildIntegrationTestBase {
 
         public string RepositoryPath { get; set; }
 

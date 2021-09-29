@@ -7,8 +7,6 @@ namespace IntegrationTest.Build.VersionControl {
     [TestClass]
     public class ShaTests : GitVersionControlTestBase {
 
-        public override TestContext TestContext { get; set; }
-
         [TestMethod]
         public void Tree_sha_is_stable() {
             var repositoryPath = RunPowerShellInIsolatedDirectory(TestContext, Resources.CommitGraphWalking);

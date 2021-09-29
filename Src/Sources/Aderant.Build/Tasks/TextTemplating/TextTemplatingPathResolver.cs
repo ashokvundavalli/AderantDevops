@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Microsoft.Build.Framework;
+using Microsoft.Build.Locator;
 using Microsoft.Build.Utilities;
-using VisualStudioConfiguration;
 
 namespace Aderant.Build.Tasks.TextTemplating {
 
@@ -63,23 +64,28 @@ namespace Aderant.Build.Tasks.TextTemplating {
         private void ResolvePaths() {
             visualStudioPathInfo = new VisualStudioPathInfo();
 
-            IList<VisualStudioInstance> invalid;
-            var visualStudioInstances = VisualStudioLocationHelper.GetInstances(out invalid);
+            //IList<VisualStudioInstance> invalid;
+            var visualStudioInstances = Microsoft.Build.Locator.MSBuildLocator.QueryVisualStudioInstances().ToList();
 
             string vs2015Install = Environment.GetEnvironmentVariable("VSSDK140Install");
 
             if (!string.IsNullOrWhiteSpace(vs2015Install)) {
-                visualStudioInstances.Add(new VisualStudioInstance("Visual Studio 2015", Path.GetDirectoryName(vs2015Install.TrimEnd(Path.DirectorySeparatorChar)), string.Empty, new Version(14, 0)));
-            }
+                var newInstance = (VisualStudioInstance)Activator.CreateInstance(typeof(VisualStudioInstance), BindingFlags.NonPublic, new object[] {
+                        "Visual Studio 2015",
+                        Path.GetDirectoryName(vs2015Install.TrimEnd(Path.DirectorySeparatorChar)),
+                        new Version(14, 0, 0),
+                        DiscoveryType.VisualStudioSetup
+                    }, null);
 
-            LogInvalidInstanceFound(invalid);
+                visualStudioInstances.Add(newInstance);
+            }
 
             var pathToVisualStudioIntegration = Path.Combine("VSSDK", "VisualStudioIntegration", "Common", "Assemblies", "v4.0");
 
             foreach (var instance in visualStudioInstances) {
-                Log.LogMessage(MessageImportance.Normal, "Processing {0}", instance.Path);
+                Log.LogMessage(MessageImportance.Normal, "Processing {0}", instance.MSBuildPath);
 
-                var taskAssembly = Path.Combine(instance.Path, "MSBuild", "Microsoft", "VisualStudio", CreateDottedMajorVersion(instance), "TextTemplating", "Microsoft.TextTemplating.Build.Tasks.dll");
+                var taskAssembly = Path.Combine(instance.VisualStudioRootPath, "MSBuild", "Microsoft", "VisualStudio", CreateDottedMajorVersion(instance), "TextTemplating", "Microsoft.TextTemplating.Build.Tasks.dll");
 
                 if (Add(visualStudioPathInfo.TextTemplatingBuildTaskPath, taskAssembly, true)) {
                     Log.LogMessage(MessageImportance.Normal, "Loading {0}", taskAssembly);
@@ -87,7 +93,7 @@ namespace Aderant.Build.Tasks.TextTemplating {
                     System.Reflection.Assembly.LoadFrom(taskAssembly);
                 }
 
-                var fullPathToVisualStudioIntegration = Path.Combine(instance.Path, pathToVisualStudioIntegration);
+                var fullPathToVisualStudioIntegration = Path.Combine(instance.VisualStudioRootPath, pathToVisualStudioIntegration);
                 Add(visualStudioPathInfo.ReferencePaths, fullPathToVisualStudioIntegration, false);
 
                 string[] processors = Directory.GetFileSystemEntries(fullPathToVisualStudioIntegration, "Microsoft.VisualStudio.Modeling.Sdk.DslDefinition.*.dll");
@@ -100,8 +106,8 @@ namespace Aderant.Build.Tasks.TextTemplating {
                     Add(visualStudioPathInfo.AssemblyReferences, sdkFile, true);
                 }
 
-                Add(visualStudioPathInfo.ReferencePaths, Path.Combine(instance.Path, "Common7", "IDE", "PublicAssemblies"), false);
-                Add(visualStudioPathInfo.ReferencePaths, Path.Combine(instance.Path, "Common7", "IDE", "PrivateAssemblies"), false);
+                Add(visualStudioPathInfo.ReferencePaths, Path.Combine(instance.VisualStudioRootPath, "Common7", "IDE", "PublicAssemblies"), false);
+                Add(visualStudioPathInfo.ReferencePaths, Path.Combine(instance.VisualStudioRootPath, "Common7", "IDE", "PrivateAssemblies"), false);
 
                 var root = ToolLocationHelper.GetPathToBuildTools(instance.Version.Major.ToString(CultureInfo.InvariantCulture));
                 if (!string.IsNullOrEmpty(root)) {
@@ -115,12 +121,12 @@ namespace Aderant.Build.Tasks.TextTemplating {
                 Log.LogWarning("The following VisualStudio installations are invalid. Check the installation state from the Visual Studio Installer.");
 
                 foreach (var instance in invalid) {
-                    Log.LogWarning(instance.Path);
+                    Log.LogWarning(instance.VisualStudioRootPath);
                 }
             }
         }
 
-        internal static string CreateDottedMajorVersion(VisualStudioInstance instance) {
+        internal static string CreateDottedMajorVersion(Microsoft.Build.Locator.VisualStudioInstance instance) {
             return "v" + instance.Version.Major.ToString(CultureInfo.InvariantCulture) + ".0";
         }
 
