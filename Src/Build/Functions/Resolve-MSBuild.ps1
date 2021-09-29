@@ -10,6 +10,11 @@ param(
     [string]$Bitness
 )
 
+if ($null -eq ([System.Management.Automation.PSTypeName]'Microsoft.Build.Locator.MSBuildLocator').Type) {
+    # The type is not defined so bail out
+    return
+}
+
 Set-Alias Resolve-MSBuild (Join-Path $PSScriptRoot Resolve-MSBuild.ps1) -Scope Global
 
 function Get-MSBuildPath {
