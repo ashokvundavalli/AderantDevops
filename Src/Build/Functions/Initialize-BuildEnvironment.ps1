@@ -70,7 +70,7 @@ function BuildProjects {
         [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$commit
     )
 
-    [string]$msbuildPath = . "$PSScriptRoot\Resolve-MSBuild.ps1" -Version '*' -Bitness 'x64'
+    [string]$msbuildPath = . "$PSScriptRoot\Resolve-MSBuild.ps1" -Version '16.0' -Bitness 'x64'
 
     [Microsoft.Build.Locator.MSBuildLocator]::RegisterMSBuildPath($msbuildPath)
 
@@ -368,7 +368,7 @@ function LoadVstsTaskLibrary {
     }
 }
 
-function SetTimeouts {
+function SetPaketOptions {
     $timeoutMillseconds = [TimeSpan]::FromMinutes(5).TotalMilliseconds
 
     $Env:PAKET_SKIP_RESTORE_TARGETS = "true"
@@ -381,6 +381,9 @@ function SetTimeouts {
 
     # Timeout for streaming the read and write operations
     $Env:PAKET_STREAMREADWRITE_TIMEOUT = $timeoutMillseconds
+
+    # Using runtime resolution causes each group - and thus the packages in that group to be queried at least twice which is extremely slow
+    $Env:PAKET_DISABLE_RUNTIME_RESOLUTION = "true"
 }
 
 [string]$assemblyPathRoot = [System.IO.Path]::GetFullPath("$BuildScriptsDirectory..\Build.Tools")
@@ -473,7 +476,7 @@ try {
 
     UpdateSubmodules ($updateInfo.Updated) $commit
 
-    SetTimeouts
+    SetPaketOptions
     DownloadPaket $commit
     LoadAssembly -assemblyPath ([System.IO.Path]::Combine($packageDirectory, "Microsoft.Build.Locator\lib\net46\Microsoft.Build.Locator.dll"))
     BuildProjects -mainAssembly $mainAssembly -forceCompile $isUsingProfile -commit $commit
