@@ -218,6 +218,7 @@
     </MSBuild>
 
     <Exec
+      Condition="'$(PackageVersion)' != ''"
       Command="$(BuildToolsDirectory)paket.exe pack $(ArtifactStagingDirectory)packages --template %(PaketTemplateFiles.FullPath) --version $(PackageVersion) --verbose"
       YieldDuringToolExecution="true"
       WorkingDirectory="$(SolutionRoot)" />
