@@ -179,16 +179,15 @@
       Condition="!Exists('$(PaketLockFile)')"/>
 
     <ItemGroup>
-      <TemplateFiles Include="$(SolutionRoot)\*.paket.template" />
+      <PaketTemplateFiles Include="$(SolutionRoot)\*.paket.template" />
     </ItemGroup>
   </Target>
 
 
-  <Target Name="RunPaketPack" Condition="'@(TemplateFiles->Count())' != '0'"
+  <Target Name="RunPaketPack" Condition="'@(PaketTemplateFiles->Count())' != '0'"
           AfterTargets="PaketPack">
 
     <PropertyGroup>
-      <TemplateFilesAsScalarPropertyList>@(TemplateFiles)</TemplateFilesAsScalarPropertyList>
       <ExtensibilityFile>$(SolutionRoot)\dir.props</ExtensibilityFile>
     </PropertyGroup>
 
@@ -219,7 +218,7 @@
     </MSBuild>
 
     <Exec
-      Command="$(BuildToolsDirectory)paket.exe pack $(ArtifactStagingDirectory)packages --template %(TemplateFiles.FullPath) --version $(PackageVersion) --verbose"
+      Command="$(BuildToolsDirectory)paket.exe pack $(ArtifactStagingDirectory)packages --template %(PaketTemplateFiles.FullPath) --version $(PackageVersion) --verbose"
       YieldDuringToolExecution="true"
       WorkingDirectory="$(SolutionRoot)" />
 
