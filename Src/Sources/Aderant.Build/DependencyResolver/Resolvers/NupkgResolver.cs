@@ -27,6 +27,14 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
         }
 
         public NupkgResolver() {
+            DisableRuntimeResolution();
+        }
+
+        /// <summary>
+        /// Runtime resolution is also disabled in Initialize-BuildEnvironment
+        /// This is primarily a fall back for tests.
+        /// </summary>
+        private static void DisableRuntimeResolution() {
             // Lifted from Paket.Program.main()
             // Using runtime resolution causes each group - and thus the packages in that group to be queried at least twice which is extremely slow
             const string runtimeResolutionVariable = "PAKET_DISABLE_RUNTIME_RESOLUTION";
