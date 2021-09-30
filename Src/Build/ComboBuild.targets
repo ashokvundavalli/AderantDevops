@@ -396,7 +396,7 @@
       ArchiveArtifacts;
       CleanBinariesBeforePackaging;
       RunDeploymentCheck;
-      CreateCatalogFiles;
+      <!--CreateCatalogFiles;-->
     </PackageProductDependsOn>
   </PropertyGroup>
 
