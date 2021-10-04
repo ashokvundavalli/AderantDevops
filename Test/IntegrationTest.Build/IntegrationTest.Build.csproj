@@ -138,7 +138,6 @@
     </Compile>
     <Compile Include="EndToEnd\TestBuildServiceHost.cs" />
     <Compile Include="PackageRetrieval\PaketPackageManagerTests.cs" />
-    <Compile Include="Packaging\ArtifactServiceTests.cs" />
     <Compile Include="Packaging\Web\WebPackagingTests.cs" />
     <Compile Include="PhysicalFileSystemTests.cs" />
     <Compile Include="ProjectTreeTests.cs" />
@@ -285,5 +284,4 @@
   <Import Project="..\TestDeployment.proj" />
   <Import Project="EndToEnd\Resources.proj" />
   <Import Project="..\..\Src\Sources\References.props" />
-
 </Project>

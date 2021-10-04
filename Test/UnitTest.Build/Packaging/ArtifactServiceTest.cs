@@ -200,5 +200,30 @@ namespace UnitTest.Build.Packaging {
             Assert.AreEqual(1, result.Count);
             Assert.AreEqual("file://foo/files.zip", result[0].Item2);
         }
+
+        [TestMethod]
+        public void CachedFilesAreDateStampedBasedOnBuildTime() {
+            var startedDate = DateTime.Now;
+            var file1 = Path.Combine(TestContext.DeploymentDirectory, "test1.txt");
+            
+            File.WriteAllText(file1, "test");
+            Assert.AreNotEqual(startedDate.AddHours(-1), File.GetCreationTime(file1));
+
+            var files = new[] {
+                new PathSpec(@"ABC\Z.dll", file1)
+            };
+
+            var fsMock = new Mock<IFileSystem>();
+            fsMock.Setup(f => f.FileExists(file1)).Returns(true);
+
+            var pipelineServiceMock = new Mock<IBuildPipelineService>();
+            var context = new BuildOperationContext {StartedAt = startedDate};
+            pipelineServiceMock.Setup(p => p.GetContext()).Returns(context);
+            
+            var artifactService = new ArtifactService(pipelineServiceMock.Object, fsMock.Object, NullLogger.Default);
+            artifactService.UpdateWriteTimes(files);
+
+            Assert.AreEqual(startedDate.AddHours(-1), File.GetCreationTime(file1));
+        }
     }
 }

@@ -16,7 +16,7 @@ namespace Aderant.Build.Packaging {
     internal class ArtifactService {
         private readonly IFileSystem fileSystem;
         private readonly ILogger logger;
-        private readonly IBuildPipelineService pipelineService;
+        private static IBuildPipelineService pipelineService;
         private List<ArtifactPackageDefinition> autoPackages;
         private ArtifactStagingPathBuilder pathBuilder;
 
@@ -24,7 +24,11 @@ namespace Aderant.Build.Packaging {
         }
 
         public ArtifactService(IBuildPipelineService pipelineService, IFileSystem fileSystem, ILogger logger) {
-            this.pipelineService = pipelineService;
+            ArtifactService.pipelineService = pipelineService;
+            if (pipelineService?.GetContext() != null) {
+                // Default to now - 1 if context doesn't give us a time, this is to satisfy integration tests that don't create a context
+                WriteTime = pipelineService.GetContext().StartedAt != DateTime.MinValue ? pipelineService.GetContext().StartedAt.AddHours(-1) : DateTime.Now.AddHours(-1);
+            }
             this.logger = logger;
             this.fileSystem = fileSystem;
         }
@@ -325,7 +329,7 @@ namespace Aderant.Build.Packaging {
             return validatedPaths;
         }
 
-        internal readonly DateTime WriteTime = DateTime.UtcNow.AddYears(-1);
+        internal static DateTime WriteTime { get; set; }
 
         internal void UpdateWriteTimes(IList<PathSpec> fileWrites) {
             StringBuilder sb = new StringBuilder();
