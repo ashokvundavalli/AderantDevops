@@ -164,7 +164,6 @@
     <Compile Include="Tasks\RoleManifestPackageIdentifierTests.cs" />
     <Compile Include="Tasks\GetAssemblyPlatformTests.cs" />
     <Compile Include="Tasks\GeneratePaketDependenciesFileTests.cs" />
-    <Compile Include="Tasks\ZipBuildScriptsTests.cs" />
     <Compile Include="FilterDirectoryTests.cs" />
     <Compile Include="Utilities\MemoizerTests.cs" />
     <Compile Include="DependencyAnalyzer\ProjectSequencerTests.cs" />

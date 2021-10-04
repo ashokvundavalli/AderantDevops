@@ -330,7 +330,7 @@
         aware of what it's building but there is a frustrating interplay here. By deleting the msg file from
         dependency directory it prevents the TextTranslator loading a message file while unit tests are running and then having those tests fail
         as the tests are generally written to assume no message file is available and so don't expect to find translated strings.
-     -->
+    -->
     <ItemGroup>
       <MessageFiles Include="$(SharedDependencyDirectory)\cmsmsg*.msg;" />
     </ItemGroup>
@@ -633,7 +633,7 @@ $InformationPreference = 'Continue'
 
 $certificate = Get-ChildItem -path 'Cert:\*$(CodeSigningCertificateThumbprint)' -Recurse | Select-Object -First 1
 if ($null -eq $certificate) {
-  throw 'Code signing certificate with thumbprint: $(CodeSigningCertificateThumbprint) not found'
+    throw 'Code signing certificate with thumbprint: $(CodeSigningCertificateThumbprint) not found'
 }
 
 New-FileCatalog -CatalogVersion 2 -Path '$(ExpertSourceDirectory)' -CatalogFilePath '$(ExpertSourceDirectory)' -Verbose

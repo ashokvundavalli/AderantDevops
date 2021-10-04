@@ -20,8 +20,6 @@ param(
 
 begin {
     Set-StrictMode -Version 'Latest'
-    $ErrorActionPreference = 'Stop'
-    $InformationPreference = 'Continue'
 
     Write-Information -MessageData "Running '$($MyInvocation.MyCommand.Name.Replace(`".ps1`", `"`"))' with the following parameters:"
     Write-Information ($PSBoundParameters | Format-Table | Out-String)

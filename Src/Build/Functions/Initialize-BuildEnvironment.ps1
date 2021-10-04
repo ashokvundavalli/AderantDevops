@@ -386,8 +386,8 @@ function SetPaketOptions {
     $Env:PAKET_DISABLE_RUNTIME_RESOLUTION = "true"
 }
 
-[string]$assemblyPathRoot = [System.IO.Path]::GetFullPath("$BuildScriptsDirectory..\Build.Tools")
-[string]$mainAssembly = "$assemblyPathRoot\Aderant.Build.dll"
+[string]$assemblyPathRoot = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($BuildScriptsDirectory, "..\Build.Tools"))
+[string]$mainAssembly = [System.IO.Path]::Combine($assemblyPathRoot, "Aderant.Build.dll")
 
 function EnsureModuleLoaded() {
     $moduleName = "Aderant.ContinuousDelivery.PowerShell"

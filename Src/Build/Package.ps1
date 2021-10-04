@@ -46,7 +46,7 @@ process {
 
     [string] $tags = ''
 
-    # Try to get version number from the current git branch infomation.
+    # Try to get version number from the current git branch information.
     try {
         $text = (& $gitVersion $repository /output json | Out-String )
 

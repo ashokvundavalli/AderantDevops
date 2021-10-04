@@ -166,7 +166,6 @@
     <Compile Include="Tasks\StringCache.cs" />
     <Compile Include="Tasks\GatherProjectsToBuild.cs" />
     <Compile Include="ProjectSystem\DirectoryGroveler.cs" />
-    <Compile Include="Tasks\ZipBuildScripts.cs" />
     <Compile Include="Utilities\MultigraphExtensions.cs" />
     <Compile Include="Utilities\RoslynLocator.cs" />
     <Compile Include="Utilities\ParallelismHelper.cs" />
