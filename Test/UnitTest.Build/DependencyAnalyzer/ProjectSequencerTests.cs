@@ -222,6 +222,30 @@ namespace UnitTest.Build.DependencyAnalyzer {
         }
 
         [TestMethod]
+        public void ApplyStateFile_orders_state_files() {
+            var tree = new Mock<IProjectTree>();
+
+            var p1 = new TestConfiguredProject(tree.Object)  {
+                outputAssembly = "A",
+                IsDirty = false,
+                IncludeInBuild = false,
+                IsWebProject = true,
+                SolutionFile = "MyFile.sln"
+            };
+
+            BuildStateFile file1 = new BuildStateFile { BuildId = "1", BucketId = new BucketId("A", "A", BucketVersion.CurrentTree)};
+            BuildStateFile file2 = new BuildStateFile { BuildId = "3", BucketId = new BucketId("A", "A", BucketVersion.CurrentTree) };
+            BuildStateFile file3 = new BuildStateFile { BuildId = "11", BucketId = new BucketId("A", "A", BucketVersion.CurrentTree) };
+
+            var sequencer = new ProjectSequencer(NullLogger.Default, null);
+            sequencer.StateFiles = new List<BuildStateFile> { file1, file3, file2 };
+
+            var applyStateFile = sequencer.SelectStateFiles("A");
+
+            Assert.AreEqual("11", applyStateFile[0].BuildId);
+        }
+
+        [TestMethod]
         public void Build_with_no_state_file_and_tracked_files_marks_project_with_InputsChanged() {
             var tree = new Mock<IProjectTree>();
 

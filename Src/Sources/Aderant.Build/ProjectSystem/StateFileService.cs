@@ -89,7 +89,7 @@ namespace Aderant.Build.ProjectSystem {
                     if (fileSystem.DirectoryExists(bucketPath)) {
                         IEnumerable<string> directories = fileSystem.GetDirectories(bucketPath);
 
-                        string[] folders = OrderBuildsByBuildNumber(directories.ToArray());
+                        string[] folders = OrderBuildsByBuildNumber(directories.ToArray(), AllowZeroBuildId);
 
                         // Limit scanning to an arbitrary number of builds so we don't spend too
                         // long thrashing the network.
@@ -222,7 +222,7 @@ namespace Aderant.Build.ProjectSystem {
             return false;
         }
 
-        internal string[] OrderBuildsByBuildNumber(string[] entries) {
+        internal static string[] OrderBuildsByBuildNumber(string[] entries, bool allowZeroBuildId) {
             var numbers = new List<KeyValuePair<int, string>>(entries.Length);
 
             foreach (var entry in entries) {
@@ -230,7 +230,7 @@ namespace Aderant.Build.ProjectSystem {
 
                 int version;
                 if (Int32.TryParse(directoryName, NumberStyles.Any, CultureInfo.InvariantCulture, out version)) {
-                    if (version > 0 || AllowZeroBuildId) {
+                    if (version > 0 || allowZeroBuildId) {
                         numbers.Add(new KeyValuePair<int, string>(version, entry));
                     }
                 }

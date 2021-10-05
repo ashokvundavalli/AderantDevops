@@ -173,13 +173,21 @@ namespace UnitTest.Build.Packaging {
 
         [TestMethod]
         public void ZeroId_is_allowed_for_tests() {
-            var artifactService = new StateFileService(NullLogger.Default);
-            artifactService.AllowZeroBuildId = true;
-
-            var result = artifactService.OrderBuildsByBuildNumber(new[] { "0", "5", "8" });
+            var result = StateFileService.OrderBuildsByBuildNumber(new[] { "0", "5", "8" }, true);
 
             CollectionAssert.AreEquivalent(new[] { "8", "5", "0" }, result);
         }
 
+        [TestMethod]
+        public void Build_number_ordering() {
+            var result = StateFileService.OrderBuildsByBuildNumber(new[] {
+                @"\\aderant.com\expert-ci\prebuilts\v1\7b\4afd2ed6560319e6cb7631c07e783fff8fa865\1159766",
+                @"\\aderant.com\expert-ci\prebuilts\v1\7b\4afd2ed6560319e6cb7631c07e783fff8fa865\1159767",
+                @"\\aderant.com\expert-ci\prebuilts\v1\7b\4afd2ed6560319e6cb7631c07e783fff8fa865\1159775",
+                @"\\aderant.com\expert-ci\prebuilts\v1\7b\4afd2ed6560319e6cb7631c07e783fff8fa865\1159777",
+            }, true);
+
+            Assert.AreEqual(@"\\aderant.com\expert-ci\prebuilts\v1\7b\4afd2ed6560319e6cb7631c07e783fff8fa865\1159777", result[0]);
+        }
     }
 }

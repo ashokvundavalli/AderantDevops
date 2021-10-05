@@ -129,6 +129,11 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// </summary>
         internal static bool GiveTimeToReviewTree { get; set; } = true;
 
+        internal List<BuildStateFile> StateFiles {
+            get { return stateFiles; }
+            set { stateFiles = value; }
+        }
+
         private void LogPrebuiltStatus(IReadOnlyList<IDependable> filteredProjects) {
             foreach (var project in filteredProjects.OfType<DirectoryNode>()) {
                 if (!project.IsPostTargets) {
@@ -726,8 +731,11 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
 
-        private BuildStateFile[] SelectStateFiles(string stateFileKey) {
-            BuildStateFile[] selectedStateFiles = stateFiles.Where(x => string.Equals(x.BucketId.Tag, stateFileKey, StringComparison.OrdinalIgnoreCase)).ToArray();
+        internal BuildStateFile[] SelectStateFiles(string stateFileKey) {
+            BuildStateFile[] selectedStateFiles = stateFiles
+                .Where(x => !string.IsNullOrWhiteSpace(x.BuildId) && string.Equals(x.BucketId.Tag, stateFileKey, StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(s => int.Parse(s.BuildId))
+                .ToArray();
 
             if (selectedStateFiles.Length == 0) {
                 logger.Info($"No state files available for {stateFileKey}. Build will not be able to use prebuilt objects.", null);
