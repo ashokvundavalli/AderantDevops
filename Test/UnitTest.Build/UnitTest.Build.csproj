@@ -105,12 +105,16 @@
   <ItemGroup>
     <Compile Include="AssemblyInitializer.cs" />
     <Compile Include="IO\DirectoryScannerTests.cs" />
+    <Compile Include="Resources\BuildLogs\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="Tasks\TextTemplatingPathResolverTests.cs" />
     <Compile Include="Tasks\GatherProjectsToBuildTests.cs" />
     <Compile Include="Utilities\StringExtensionsTests.cs" />
     <Compile Include="VisualStudioLocationHelperTests.cs" />
     <Compile Include="Model\BucketTests.cs" />
-    <Compile Include="BuildLogProcessorTests.cs" />
     <Compile Include="BuildMetadataTests.cs" />
     <Compile Include="Model\SourceTreeMetadataTests.cs" />
     <Compile Include="UriQuirksFixTests.cs" />
@@ -209,11 +213,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Resources\BuildLogs\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
     <Compile Include="Tasks\BuildStateFileTests.cs" />
     <Compile Include="Tasks\ReadAssemblyInfo\ReadAssemblyInfo.cs" />
     <Compile Include="Tasks\DoubleWriteTests.cs" />
@@ -300,8 +299,6 @@
     <Content Include="TextTemplateAnalysis\Resources\TextTemplateWithCustomProcessor.tt" />
     <Content Include="TextTemplateAnalysis\Resources\TextTemplateWithInclude.tt" />
     <Content Include="TextTemplateAnalysis\Resources\SimpleTextTemplate.tt" />
-    <None Include="Resources\BuildLogs\buildlog-1.json" />
-    <None Include="Resources\BuildLogs\buildlog-2.json" />
     <Content Include="Resources\BuildLogs\plain-text-build-log.txt" />
     <Content Include="Resources\ExpertManifest.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -342,6 +339,7 @@
     <EmbeddedResource Include="Resources\BuildLogs\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <CustomToolNamespace>UnitTest.Build.BuildLogProcessor</CustomToolNamespace>
+      <SubType>Designer</SubType>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Include="Tasks\ReadAssemblyInfo\Resources.resx">

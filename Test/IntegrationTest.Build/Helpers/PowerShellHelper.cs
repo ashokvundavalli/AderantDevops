@@ -6,12 +6,11 @@ using System.Management.Automation;
 using System.Text;
 using System.Threading;
 using Aderant.Build;
-using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build.Helpers {
+    internal class MessageLocator {
 
-    internal class MessageLocator{
         public MessageLocator(string searchText, Type logLevel) {
             SearchText = searchText;
             LogLevel = logLevel;
@@ -20,9 +19,11 @@ namespace IntegrationTest.Build.Helpers {
         internal string SearchText;
         internal Type LogLevel;
         internal bool FoundResult;
+
     }
 
     internal class PowerShellHelper {
+
         private readonly IList<MessageLocator> messagesToSearchLogFor;
 
         internal PowerShellHelper() : this(new List<MessageLocator>(0)) {
@@ -89,7 +90,7 @@ namespace IntegrationTest.Build.Helpers {
             var cmd = new PSCommand();
             cmd.AddScript(sb.ToString());
 
-            executor.RunScript(cmd,  null, CancellationToken.None);
+            executor.RunScript(cmd, null, CancellationToken.None);
 
             executor.DataReady -= dataReady;
             executor.ErrorReady -= errorReady;
@@ -121,13 +122,12 @@ namespace IntegrationTest.Build.Helpers {
 
             // Filters the logs for messages that have not been found of this log level
             // and sets their FoundResult property as true when found.
-            messagesToSearchLogFor
-                .Where(m => m.LogLevel == logLine.GetType() && !m.FoundResult)
-                .ForEach(m => {
-                    if (currentLogLine.IndexOf(m.SearchText, StringComparison.OrdinalIgnoreCase) != -1) {
-                        m.FoundResult = true;
-                    }
-                });
+            foreach (MessageLocator m in messagesToSearchLogFor
+                .Where(m => m.LogLevel == logLine.GetType() && !m.FoundResult)) {
+                if (currentLogLine.IndexOf(m.SearchText, StringComparison.OrdinalIgnoreCase) != -1) {
+                    m.FoundResult = true;
+                }
+            }
 
             return currentLogLine;
         }

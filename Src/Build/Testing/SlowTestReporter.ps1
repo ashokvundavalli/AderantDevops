@@ -5,7 +5,7 @@
     Recursively investigates folders for test result (trx) files
     and determines if any of them are running slowly.
 
-    Maximum test duration defines the maximum number of seconds a test may run 
+    Maximum test duration defines the maximum number of seconds a test may run
     for before being flagged as slow.
 .PARAMETER path
     The location where the test result files are stored.
@@ -55,7 +55,7 @@
 .EXAMPLE
     .\SlowTestReporter.ps1 -path 'C:\TestResultsDirectory' -maxTestDuration 2
 
-    Would search the given path recusively for all trx files. Would process
+    Would search the given path recursively for all trx files. Would process
     those and report all tests that exceed the given max test duration of 2
     seconds.
 #>
@@ -84,7 +84,7 @@ begin {
         param (
             [string]
             $path,
-            
+
             [UInt32]
             $searchDepth
         )
@@ -94,21 +94,21 @@ begin {
             if (-not (Test-Path $path)) {
                 Write-Error -Message "The directory or file '$path' does not exist."
             }
-        
+
             # Determine the strategy for finding test result files.
             if (Test-Path -path $path -PathType Leaf) {
                 $trxFiles = Get-ChildItem $path
             } else {
                 $trxFiles = Get-ChildItem -Filter *.trx -Path $path -Depth $depth
             }
-        
+
             # Exit script if no trx files found.
             if ($null -eq $trxFiles) {
                 Write-Error "No .trx files found at path: '$path'."
             }
-        
+
             $trxFileNames = $trxFiles.FullName
-        
+
             Write-Information -MessageData 'The following test result files were found:'
             Write-Information -MessageData "$([string]::new('-', 36))"
             $trxFileNames | ForEach-Object { Write-Information -MessageData $_ }
@@ -116,7 +116,7 @@ begin {
             return $trxFileNames
         }
     }
-   
+
     function GenerateTrxResult{
         [CmdletBinding()]
         [OutputType([System.Collections.Generic.List[PSCustomObject]])]
@@ -154,7 +154,7 @@ begin {
             return $slowTests
         }
     }
-    
+
     function GetSlowTests {
         [CmdletBinding()]
         param (
@@ -172,14 +172,14 @@ begin {
             # Select all the test results that exceed the max duration
             $hasResults = ($xmlTrx.TestRun.PSObject.Properties.Name -contains 'Results' -and $xmlTrx.TestRun.Results.PSObject.Properties.Name -contains 'UnitTestResult')
             if ($hasResults) {
-                return $xmlTrx.TestRun.Results.UnitTestResult | 
+                return $xmlTrx.TestRun.Results.UnitTestResult |
                     Where-Object {
                         if (-not ('duration' -in $_.PSObject.Properties.Name)) {
                             $duration = [TimeSpan]::Zero
                         } else {
                             $duration = ($_.duration -as [TimeSpan])
                         }
-                
+
                         if ($null -ne $duration) {
                             $myDuration = New-TimeSpan -Seconds $maxTestDuration
                             $duration.TotalSeconds -gt $myDuration.TotalSeconds
@@ -188,7 +188,7 @@ begin {
             }
         }
     }
-    
+
     function GetOutputDir {
         param (
             [string]
@@ -197,24 +197,24 @@ begin {
 
         process {
             Write-Debug $MyInvocation.MyCommand
-            
+
             if (Test-Path -path $trxFilePath -PathType Leaf) {
                 $trxFilePath = Split-Path -Path $trxFilePath -Parent
             }
-        
+
             # Generate our file path to output to.
             return Join-Path -Path $trxFilePath -ChildPath 'SlowTestReport.csv'
         }
     }
-    
+
     function ReportResults {
         param (
             [System.Collections.Generic.List[PSCustomObject]]
             $slowTests,
-    
+
             [string]
             $outFile,
-    
+
             [int]
             $maxTestDuration
         )
@@ -234,12 +234,12 @@ begin {
             PrintMessages -slowTests $slowTests.Count -maxTestDuration $maxTestDuration
         }
     }
-    
+
     function PrintMessages {
         param (
             [int]
             $slowTests,
-            
+
             [int]
             $maxTestDuration
         )

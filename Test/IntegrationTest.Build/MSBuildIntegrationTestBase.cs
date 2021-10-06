@@ -15,8 +15,10 @@ namespace IntegrationTest.Build {
     [DeploymentItem(Tasks, Tasks)]
     [DeploymentItem(EndToEnd, EndToEnd)]
     [DeploymentItem(Packaging, Packaging)]
+#if INTEGRATION_TEST_CORE
     [DeploymentItem(@"..\..\Src\Build.Tools\", "Build.Tools")] // Deploy the native libgit binaries
     [DeploymentItem(@"..\..\Src\Build\Tasks\", "Build\\Tasks")]
+#endif
     public abstract class MSBuildIntegrationTestBase {
 
         private BuildResult result;

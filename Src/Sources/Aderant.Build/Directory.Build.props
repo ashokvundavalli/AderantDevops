@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ContentWithTargetPath Include="$(MSBuildThisFileDirectory)\packages\MSBuildTasks\tools\*"
+    <ContentWithTargetPath Include="$(MSBuildThisFileDirectory)\..\..\..\packages\MSBuildTasks\tools\*"
                            TargetPath="..\Build\Tasks\MSBuild.Community.Tasks\%(Filename)%(Extension)"
                            CopyToOutputDirectory="PreserveNewest" />
-
   </ItemGroup>
 </Project>
