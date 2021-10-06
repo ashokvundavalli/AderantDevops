@@ -6,7 +6,10 @@
     )
 
     Set-StrictMode -Version 'Latest'
-    Start-Transcript -Path ".\RestartAgentHostLog.txt" -Force
+    Start-Transcript -Path "$Env:SystemDrive\Scripts\restart-agent-host.task.txt" -Force
+
+    # Remove cruft left behind by old script version
+    Remove-Item ".\RestartAgentHostLog.txt" -ErrorAction "SilentlyContinue" -Verbose
 
     [int]$retrycount = 0
     [bool]$completed = $false

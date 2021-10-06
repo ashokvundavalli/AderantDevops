@@ -10,9 +10,6 @@ Unregister-ScheduledTask -TaskName "Remove NuGet Cache" -ErrorAction "SilentlyCo
 Unregister-ScheduledTask -TaskName "Configure Security" -ErrorAction "SilentlyContinue" -Confirm:$false
 Unregister-ScheduledTask -TaskName "Cleanup Agent Host" -ErrorAction "SilentlyContinue" -Confirm:$false
 
-# Remove cruft left behind by old scripts
-Remove-Item "$script:WorkingDirectory\RestartAgentHostLog.txt" -ErrorAction "SilentlyContinue" -Verbose
-
 function GetScheduledTaskPrincipal() {
     return New-ScheduledTaskPrincipal -UserId "ADERANT_AP\tfsbuildservice$" -LogonType 'Password' -RunLevel 'Highest'
 }
