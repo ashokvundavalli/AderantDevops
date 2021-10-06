@@ -56,6 +56,37 @@ try {
         }
     }
 
+
+    # Result of bug 257338
+    # This probably does what the above does but 500% faster and more reliably
+    $manager = Get-IISServerManager
+
+    $sites = $manager.Sites
+    foreach ($site in $sites) {
+        foreach ($app in $site.Applications) {
+            foreach ($virtualDir in $app.VirtualDirectories) {
+
+                if ($virtualDir.Path.StartsWith("/Expert")) {
+                    Write-Information "Found Expert virtual directory $($virtualDir.Path)"
+                    $virtualDir.Delete()
+                }
+            }
+        }
+    }
+
+    $cfg = $manager.GetApplicationHostConfiguration()
+    # Returns a collection of paths like Default Web Site/Expert_Local_1127986
+
+    $paths = $cfg.GetLocationPaths()
+
+    foreach ($path in $paths) {
+        if ($path.StartsWith("Default Web Site/Expert")) {
+            Write-Information "Found IIS7 location entry $path"
+            $cfg.RemoveLocationPath($path)
+        }
+    }
+
+    $manager.CommitChanges()
 } finally {
    # Start IIS after removing files
     Write-Verbose -Message "The working directory should be removed. Restarting IIS."
