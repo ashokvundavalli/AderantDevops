@@ -65,8 +65,13 @@ try {
 
     $sites = $manager.Sites
     foreach ($site in $sites) {
+        Write-Information "processing site $site"
+
         foreach ($app in $site.Applications) {
+            Write-Information "processing site $app"
+
             foreach ($virtualDir in $app.VirtualDirectories) {
+                Write-Information "processing site $virtualDir"
 
                 if ($virtualDir.Path.StartsWith("/Expert")) {
                     Write-Information "Found Expert virtual directory $($virtualDir.Path)"
