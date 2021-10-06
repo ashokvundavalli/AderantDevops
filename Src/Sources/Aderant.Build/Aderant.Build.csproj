@@ -103,6 +103,7 @@
     <Compile Include="Build.cs" />
     <Compile Include="Annotations\ReSharperAttributes.cs" />
     <Compile Include="DependencyAnalyzer\ListHelper.cs" />
+    <Compile Include="ProjectSystem\BuildStateFileComparer.cs" />
     <Compile Include="ProjectSystem\ProjectToSolutionMap.cs" />
     <Compile Include="ProjectSystem\StateFileService.cs" />
     <Compile Include="Packaging\BuildStateQueryOptions.cs" />
@@ -132,7 +133,7 @@
     <Compile Include="DependencyResolver\WellKnownSources.cs" />
     <Compile Include="ProjectSystem\References\Wix\UnresolvedWixReference.cs" />
     <Compile Include="ProjectSystem\References\Wix\WixReferenceService.cs" />
-    <Compile Include="ProjectSystem\StateTracking\StateFileManager.cs" />
+    <Compile Include="ProjectSystem\StateTracking\StateFileController.cs" />
     <Compile Include="DependencyResolver\IDependencyGroup.cs" />
     <Compile Include="DependencyResolver\ResolverWorkflow.cs" />
     <Compile Include="DependencyAnalyzer\ProjectDependencyGraph.cs" />

@@ -32,7 +32,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         /// The build id that produced this state file.
         /// </summary>
         [DataMember(EmitDefaultValue = false)]
-        public string BuildId { get; set; }
+        public int BuildId { get; set; }
 
         [DataMember(EmitDefaultValue = false)]
         public string TreeSha { get; set; }
@@ -64,7 +64,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         }
 
         [DataMember(EmitDefaultValue = false)]
-        public string ParentBuildId { get; set; }
+        public int ParentBuildId { get; set; }
 
         [DataMember(EmitDefaultValue = false)]
         public string ParentTreeSha { get; set; }

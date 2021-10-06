@@ -90,7 +90,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                     {nameof(BuildMetadata.Flavor), buildMetadata.Flavor}
                 };
 
-                stateFile.BuildId = buildMetadata.BuildId.ToString(CultureInfo.InvariantCulture);
+                stateFile.BuildId = buildMetadata.BuildId;
 
                 if (buildMetadata.IsPullRequest) {
                     stateFile.PullRequestInfo = buildMetadata.PullRequest;

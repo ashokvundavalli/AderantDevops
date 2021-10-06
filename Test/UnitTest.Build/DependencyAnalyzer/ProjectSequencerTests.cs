@@ -233,16 +233,16 @@ namespace UnitTest.Build.DependencyAnalyzer {
                 SolutionFile = "MyFile.sln"
             };
 
-            BuildStateFile file1 = new BuildStateFile { BuildId = "1", BucketId = new BucketId("A", "A", BucketVersion.CurrentTree)};
-            BuildStateFile file2 = new BuildStateFile { BuildId = "3", BucketId = new BucketId("A", "A", BucketVersion.CurrentTree) };
-            BuildStateFile file3 = new BuildStateFile { BuildId = "11", BucketId = new BucketId("A", "A", BucketVersion.CurrentTree) };
+            BuildStateFile file1 = new BuildStateFile { BuildId = 1, BucketId = new BucketId("A", "A", BucketVersion.CurrentTree)};
+            BuildStateFile file2 = new BuildStateFile { BuildId = 3, BucketId = new BucketId("A", "A", BucketVersion.CurrentTree) };
+            BuildStateFile file3 = new BuildStateFile { BuildId = 11, BucketId = new BucketId("A", "A", BucketVersion.CurrentTree) };
 
             var sequencer = new ProjectSequencer(NullLogger.Default, null);
             sequencer.StateFiles = new List<BuildStateFile> { file1, file3, file2 };
 
             var applyStateFile = sequencer.SelectStateFiles("A");
 
-            Assert.AreEqual("11", applyStateFile[0].BuildId);
+            Assert.AreEqual(11, applyStateFile[0].BuildId);
         }
 
         [TestMethod]

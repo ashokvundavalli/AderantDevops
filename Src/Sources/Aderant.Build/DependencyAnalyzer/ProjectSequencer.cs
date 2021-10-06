@@ -673,7 +673,10 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             // Prefer artifacts where the package hash matches.
-            var result = selectedStateFiles?.Where(x => string.Equals(x.PackageHash, packageHash, StringComparison.OrdinalIgnoreCase)).ToArray();
+            var result = selectedStateFiles?
+                .Where(x => string.Equals(x.PackageHash, packageHash, StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(s => s, BuildStateFileComparer.Default)
+                .ToArray();
 
             if (result != null && result.Any()) {
                 logger.Info("Filtered out build state files which do not match package hash: '{0}'.", packageHash);
@@ -690,7 +693,6 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 List<TrackedMetadataFile> trackedMetadataFiles = new List<TrackedMetadataFile>();
                 BuildStateFile[] buildStateFiles = selectedStateFiles;
-
 
                 if (!skipNugetPackageHashCheck) {
                     TrackedMetadataFile paketLockMetadata = AcquirePaketLockMetadata(solutionRoot, buildMetadata?.PackageHashVersionExclusions);
@@ -733,8 +735,8 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         internal BuildStateFile[] SelectStateFiles(string stateFileKey) {
             BuildStateFile[] selectedStateFiles = stateFiles
-                .Where(x => !string.IsNullOrWhiteSpace(x.BuildId) && string.Equals(x.BucketId.Tag, stateFileKey, StringComparison.OrdinalIgnoreCase))
-                .OrderByDescending(s => int.Parse(s.BuildId))
+                .Where(x => string.Equals(x.BucketId.Tag, stateFileKey, StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(s => s, BuildStateFileComparer.Default)
                 .ToArray();
 
             if (selectedStateFiles.Length == 0) {
@@ -753,7 +755,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <summary>
         /// According to options, find out which projects are selected to build.
         /// </summary>
-        /// <param name="studioProjects"></param>
+        /// <param name="graph">The dependency graph.</param>
         /// <param name="buildableProjects">All the projects list.</param>
         /// <param name="orchestrationFiles">File metadata for the target files that will orchestrate the build</param>
         /// <param name="excludeTestProjects">Specifies if test projects be removed from the build tree.</param>
@@ -763,7 +765,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// downstream projects, or none?
         /// </param>
         internal IReadOnlyList<IDependable> GetProjectsBuildList(
-            ProjectDependencyGraph studioProjects,
+            ProjectDependencyGraph graph,
             IReadOnlyList<IDependable> buildableProjects,
             OrchestrationFiles orchestrationFiles,
             bool excludeTestProjects,
@@ -788,7 +790,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             var dirtyProjects = buildableProjects.Where(p => IncludeProject(excludeTestProjects, p)).Select(x => x.Id).ToList();
 
             if (alwaysBuildWebProjects) {
-                MarkWebProjectsDirty(studioProjects);
+                MarkWebProjectsDirty(graph);
             }
 
             HashSet<string> h = new HashSet<string>(dirtyProjects, StringComparer.OrdinalIgnoreCase);

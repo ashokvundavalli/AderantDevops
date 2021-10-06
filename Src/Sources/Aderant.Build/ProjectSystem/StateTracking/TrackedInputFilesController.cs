@@ -59,6 +59,8 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             result.TrackedFiles = filesToTrack?.AsReadOnly();
 
             if (buildStateFiles != null && buildStateFiles.Length > 0) {
+                Array.Sort(buildStateFiles, BuildStateFileComparer.Default);
+
                 foreach (BuildStateFile buildStateFile in buildStateFiles) {
                     logger.Info("Assessing state file: '{0}'.", buildStateFile.Id);
 

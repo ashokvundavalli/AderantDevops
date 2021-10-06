@@ -28,13 +28,13 @@ namespace UnitTest.Build {
         [TestMethod]
         public void BuildStateMetadataSerialization() {
             var metadata = new BuildStateMetadata();
-            metadata.BuildStateFiles = new List<BuildStateFile> { new BuildStateFile { BuildId = "1" } };
+            metadata.BuildStateFiles = new List<BuildStateFile> { new BuildStateFile { BuildId = 1 } };
 
             var instance = RoundTrip(metadata);
 
             Assert.IsNotNull(instance.BuildStateFiles);
             Assert.AreEqual(1, instance.BuildStateFiles.Count);
-            Assert.AreEqual("1", instance.BuildStateFiles.First().BuildId);
+            Assert.AreEqual(1, instance.BuildStateFiles.First().BuildId);
         }
 
         [TestMethod]

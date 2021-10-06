@@ -9,7 +9,7 @@ using ProtoBuf;
 namespace Aderant.Build.ProjectSystem {
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     [DataContract]
-    public class BuildStateMetadata {
+    public sealed class BuildStateMetadata {
 
         [DataMember]
         public IReadOnlyCollection<BuildStateFile> BuildStateFiles { get; set; }
@@ -35,13 +35,19 @@ namespace Aderant.Build.ProjectSystem {
                 }
             }
 
-            return assignedBuckets;
+            return assignedBuckets.OrderBy(s => s.BucketId.Tag).ThenByDescending(s => s, BuildStateFileComparer.Default).ToList();
         }
 
         public void RemoveStateFilesForRoots(IEnumerable<string> roots) {
             var stateFiles = BuildStateFiles?.ToList();
-            stateFiles?.RemoveAll(stateFile => roots.Contains(stateFile.BucketId.Tag, StringComparer.OrdinalIgnoreCase));
-            BuildStateFiles = stateFiles;
+
+            if (stateFiles != null) {
+                stateFiles.RemoveAll(stateFile => roots.Contains(stateFile.BucketId.Tag, StringComparer.OrdinalIgnoreCase));
+
+                stateFiles.Sort(BuildStateFileComparer.Default);
+
+                BuildStateFiles = stateFiles;
+            }
         }
     }
 }

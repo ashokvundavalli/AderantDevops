@@ -76,11 +76,13 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         }
 
         public static bool SetIsBuildCacheEnabled(List<BuildStateFile> stateFiles, BuildOperationContext context) {
+            const string variableName = "IsBuildCacheEnabled";
+
             if (stateFiles != null && stateFiles.Count > 0) {
-                context.Variables["IsBuildCacheEnabled"] = true.ToString();
+                context.Variables[variableName] = true.ToString();
                 return true;
             }
-            context.Variables["IsBuildCacheEnabled"] = false.ToString();
+            context.Variables[variableName] = false.ToString();
             return false;
         }
     }
