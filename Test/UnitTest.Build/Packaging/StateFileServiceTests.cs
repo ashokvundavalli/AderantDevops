@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Aderant.Build;
 using Aderant.Build.Commands;
 using Aderant.Build.Logging;
@@ -188,6 +189,20 @@ namespace UnitTest.Build.Packaging {
             }, true);
 
             Assert.AreEqual(@"\\aderant.com\expert-ci\prebuilts\v1\7b\4afd2ed6560319e6cb7631c07e783fff8fa865\1159777", result[0]);
+        }
+
+        [TestMethod]
+        public void Comparer_sorts_id_descending() {
+            var ids = new[] {
+                new BuildStateFile { BuildId = 1159766 },
+                new BuildStateFile { BuildId = 1159767 },
+                new BuildStateFile { BuildId = 1159775 },
+                new BuildStateFile { BuildId = 1159777 }
+            };
+
+            Array.Sort(ids, BuildStateFileComparer.Default);
+
+            Assert.AreEqual(1159777, ids[0].BuildId);
         }
     }
 }

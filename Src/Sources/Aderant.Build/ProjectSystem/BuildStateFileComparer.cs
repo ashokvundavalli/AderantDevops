@@ -23,7 +23,8 @@ namespace Aderant.Build.ProjectSystem {
                 return -1;
             }
 
-            return x.BuildId.CompareTo(y.BuildId);
+            // y -> x so to ensure descending sort order
+            return y.BuildId.CompareTo(x.BuildId);
         }
 
         public static IComparer<BuildStateFile> Default { get; } = new BuildStateFileComparer();
