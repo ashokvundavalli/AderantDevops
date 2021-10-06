@@ -6,7 +6,7 @@
     )
 
     Set-StrictMode -Version 'Latest'
-    Start-Transcript -Path "$Env:SystemDrive\Scripts\restart-agent-host.task.txt" -Force
+    Start-Transcript -Path "$Env:SystemDrive\Scripts\restart-agent-host.task.log" -Force
 
     # Remove cruft left behind by old script version
     Remove-Item ".\RestartAgentHostLog.txt" -ErrorAction "SilentlyContinue" -Verbose
@@ -42,7 +42,7 @@ Retry-Command -Command {
     $processCount += @(Get-Process Git -ErrorAction SilentlyContinue).Count
 
     if ($processCount -eq 0) {
-        Write-Host "Can restart!"
+        Write-Information "Can restart!"
         Restart-Computer -Force
     } else {
         throw "Something build related is running."

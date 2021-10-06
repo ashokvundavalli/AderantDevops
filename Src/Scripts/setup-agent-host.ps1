@@ -371,7 +371,7 @@ process {
     $LASTEXITCODE = 1
 
     try {
-        Start-Transcript -Path "$Env:SystemDrive\Scripts\setup-agent-host.log.txt" -Force
+        Start-Transcript -Path "$Env:SystemDrive\Scripts\setup-agent-host.log" -Force
 
         # Defaulting
         Set-AgentsToProvision

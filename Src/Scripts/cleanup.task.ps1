@@ -8,7 +8,7 @@
 #>
 Set-StrictMode -Version "Latest"
 
-Start-Transcript -Path "$Env:SystemDrive\Scripts\cleanup.task.txt" -Force
+Start-Transcript -Path "$Env:SystemDrive\Scripts\cleanup.task.log" -Force
 
 try {
     # This is not good practice as it changes global state by our execution

@@ -4,7 +4,7 @@ Performs any jobs needed to update/refresh or fix drift on a agent host
 $InformationPreference = 'Continue'
 $VerbosePreference = 'Continue'
 
-Start-Transcript -Path "$Env:SystemDrive\Scripts\refresh-agent-host.log.txt" -Force
+Start-Transcript -Path "$Env:SystemDrive\Scripts\refresh-agent-host.log" -Force
 try {
     Push-Location $PSScriptRoot
 
