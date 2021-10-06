@@ -141,7 +141,7 @@ namespace Aderant.Build.ProjectSystem {
                     }
                 }
 
-                metadata.BuildStateFiles = files.OrderBy(s => s.BucketId.Tag).ThenByDescending(s => s, BuildStateFileComparer.Default).ToList();
+                metadata.BuildStateFiles = files.OrderBy(s => s.BucketId.Tag).SortStateFiles().ToList();
                 return metadata;
             }
         }

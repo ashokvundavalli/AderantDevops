@@ -119,6 +119,7 @@
     <Compile Include="DependencyResolver\Model\RemoteFile.cs" />
     <Compile Include="IFileSystemLinkOps.cs" />
     <Compile Include="Packaging\ProductAssembler.cs" />
+    <Compile Include="ProjectSystem\StateTracking\SortStateFileExtensions.cs" />
     <Compile Include="ProjectSystem\StateTracking\TrackedMetadataFile.cs" />
     <Compile Include="DependencyResolver\ResolverSettingsReader.cs" />
     <Compile Include="PipelineService\QueryOptions.cs" />

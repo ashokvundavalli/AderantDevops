@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.Serialization;
 using Aderant.Build.DependencyResolver.Model;
 using Aderant.Build.VersionControl;
+using Microsoft.Build.Framework;
 using ProtoBuf;
 
 namespace Aderant.Build.ProjectSystem.StateTracking {

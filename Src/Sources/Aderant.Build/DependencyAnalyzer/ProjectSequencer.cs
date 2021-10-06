@@ -675,7 +675,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             // Prefer artifacts where the package hash matches.
             var result = selectedStateFiles?
                 .Where(x => string.Equals(x.PackageHash, packageHash, StringComparison.OrdinalIgnoreCase))
-                .OrderByDescending(s => s, BuildStateFileComparer.Default)
+                .SortStateFiles()
                 .ToArray();
 
             if (result != null && result.Any()) {
@@ -736,7 +736,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         internal BuildStateFile[] SelectStateFiles(string stateFileKey) {
             BuildStateFile[] selectedStateFiles = stateFiles
                 .Where(x => string.Equals(x.BucketId.Tag, stateFileKey, StringComparison.OrdinalIgnoreCase))
-                .OrderByDescending(s => s, BuildStateFileComparer.Default)
+                .SortStateFiles()
                 .ToArray();
 
             if (selectedStateFiles.Length == 0) {

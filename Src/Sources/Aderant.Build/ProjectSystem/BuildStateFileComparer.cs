@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Windows.Navigation;
 using Aderant.Build.ProjectSystem.StateTracking;
 
 namespace Aderant.Build.ProjectSystem {
@@ -28,5 +29,9 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         public static IComparer<BuildStateFile> Default { get; } = new BuildStateFileComparer();
+
+        public static int S(BuildStateFile arg) {
+            return arg.BuildId;
+        }
     }
 }

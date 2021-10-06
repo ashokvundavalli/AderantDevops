@@ -35,7 +35,7 @@ namespace Aderant.Build.ProjectSystem {
                 }
             }
 
-            return assignedBuckets.OrderBy(s => s.BucketId.Tag).ThenByDescending(s => s, BuildStateFileComparer.Default).ToList();
+            return assignedBuckets.OrderBy(s => s.BucketId.Tag).SortStateFiles().ToList();
         }
 
         public void RemoveStateFilesForRoots(IEnumerable<string> roots) {
