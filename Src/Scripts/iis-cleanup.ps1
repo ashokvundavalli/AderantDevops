@@ -1,4 +1,6 @@
 Set-StrictMode -Version "Latest"
+$InformationPreference = "Continue"
+$VerbosePreference = "Continue"
 
 if ((Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -Name "ProductName").ProductName -match "Windows Server") {
     # Windows Server OS
