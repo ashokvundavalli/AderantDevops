@@ -123,6 +123,15 @@ try {
             }
         }
     }
+
+    try {
+        # Clear the CCM cache
+        $resman = new-object -com "UIResource.UIResourceMgr"
+        $cacheInfo= $resman.GetCacheInfo()
+        $cacheinfo.GetCacheElements() | foreach-object {$cacheInfo.DeleteCacheElement($_.CacheElementID)}
+    } catch {
+        # The COM object may not exist
+    }
 } finally {
     Set-Location -Path $root
 }
