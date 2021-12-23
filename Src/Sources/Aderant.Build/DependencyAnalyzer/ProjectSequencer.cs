@@ -679,7 +679,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 .ToArray();
 
             if (result != null && result.Any()) {
-                logger.Info("Filtered out build state files which do not match package hash: '{0}'.", packageHash);
+                logger.Info("Selected {0}/{1} files state files which match package hash: {0}.", result.Length, selectedStateFiles.Length, packageHash);
 
                 return result;
             }
@@ -694,6 +694,8 @@ namespace Aderant.Build.DependencyAnalyzer {
                 List<TrackedMetadataFile> trackedMetadataFiles = new List<TrackedMetadataFile>();
                 BuildStateFile[] buildStateFiles = selectedStateFiles;
 
+                logger.Info("Assessing state files for directory: '{0}'.", solutionRoot);
+
                 if (!skipNugetPackageHashCheck) {
                     TrackedMetadataFile paketLockMetadata = AcquirePaketLockMetadata(solutionRoot, buildMetadata?.PackageHashVersionExclusions);
                     if (paketLockMetadata != null) {
@@ -702,8 +704,6 @@ namespace Aderant.Build.DependencyAnalyzer {
                         buildStateFiles = FilterStateFiles(selectedStateFiles, paketLockMetadata.PackageHash);
                     }
                 }
-
-                logger.Info("Assessing state files for directory: '{0}'.", solutionRoot);
 
                 List<TrackedInputFile> filesToTrack = trackedInputFilesCheck.GetFilesToTrack(solutionRoot);
 
