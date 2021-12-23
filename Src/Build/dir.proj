@@ -40,7 +40,9 @@
       <ItemGroup />
     </When>
     <Otherwise>
-      <Analyzer Include="$(PackagesDirectory)Aderant.Build.Analyzer\analyzers\dotnet\cs\*.dll" />
+      <ItemGroup>
+        <Analyzer Include="$(PackagesDirectory)Aderant.Build.Analyzer\analyzers\dotnet\cs\*.dll" />
+      </ItemGroup>
     </Otherwise>
   </Choose>
 
