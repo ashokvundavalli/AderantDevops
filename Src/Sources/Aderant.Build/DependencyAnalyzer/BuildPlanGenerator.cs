@@ -25,6 +25,11 @@ namespace Aderant.Build.DependencyAnalyzer {
         private readonly Dictionary<string, PropertyList> solutionPropertyLists = new Dictionary<string, PropertyList>(StringComparer.OrdinalIgnoreCase);
         private string[] commandLineArgs;
 
+        /// <summary>
+        /// The target that restores assets for SDK/DotNetCore projects
+        /// </summary>
+        const string dotNetRestoreTarget = "dotnet_restore";
+
         public BuildPlanGenerator(IFileSystem fileSystem) {
             this.fileSystem = fileSystem;
         }
@@ -58,18 +63,12 @@ namespace Aderant.Build.DependencyAnalyzer {
                 // Once this stops scaling this will need to move this to a higher level to perform a single restore for all SDK projects in the graph.
                 var configuredProjects = projectTree.LoadedConfiguredProjects.Where(s => s.IsSdkStyeProject).ToList();
 
-                project.Add(new ItemGroup("SdkProjects", configuredProjects.Select(s => s.FullPath)));
-
-                var target = new Target("PackageRestore");
-                target.Condition = "'@(SdkProjects->Count())' != '0'";
-                target.Add(new ExecElement { Command = "dotnet restore %(SdkProjects.Identity)" });
-
-                project.Add(target);
+                AddRestoreForSdkProjects(configuredProjects, project);
             }
 
             // Create a list of call targets for each build
             Target afterCompile = new Target("AfterCompile");
-            afterCompile.DependsOnTargets.Add(new Target("PackageRestore"));
+            afterCompile.DependsOnTargets.Add(new Target(dotNetRestoreTarget));
 
             bool buildFromHere = string.IsNullOrEmpty(buildFrom);
 
@@ -166,6 +165,28 @@ namespace Aderant.Build.DependencyAnalyzer {
             project.DefaultTarget = afterCompile;
 
             return project;
+        }
+
+        private static void AddRestoreForSdkProjects(List<ConfiguredProject> configuredProjects, Project project) {
+            const string sdkProjects = "SdkProjects";
+
+            List<ItemGroupItem> items = new List<ItemGroupItem>();
+            foreach (var p in configuredProjects) {
+                var sdkProject = new ItemGroupItem(p.FullPath);
+                sdkProject["OutputFile"] = Path.Combine(Path.GetDirectoryName(p.FullPath), "obj", "project.assets.json");
+                items.Add(sdkProject);
+            }
+
+            var sdkProjectItemGroup = new ItemGroup(sdkProjects, items);
+            project.Add(sdkProjectItemGroup);
+
+            var target = new Target(dotNetRestoreTarget) {
+                Inputs = $"@({sdkProjects})",
+                Outputs = $"@({sdkProjects}->'%(OutputFile)')"
+            };
+            target.Condition = $"'@({sdkProjects}->Count())' != '0'";
+            target.Add(new ExecElement { Command = $"dotnet restore %({sdkProjects}.Identity)" });
+            project.Add(target);
         }
 
         private void CaptureCommandLine() {

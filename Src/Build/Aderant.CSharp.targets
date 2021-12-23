@@ -130,7 +130,7 @@
 
 
   <Target Name="CollectNugetPackagePaths"
-          Condition="'$(IsCustomBuild)' != 'true'">
+          Condition="'$(IsCustomBuild)' != 'true' And '$(AddNuGetDirectoryToAssemblySearchPaths)' != 'false'">
     <Error Condition="'$(RootFolder)' == ''" Text="RootFolder is undefined" />
 
     <PropertyGroup>
@@ -164,28 +164,24 @@
 
 
   <Target Name="AssignPropertiesForCustomSearchPaths">
-    <PropertyGroup>
+    <PropertyGroup Condition="'$(AddNuGetDirectoryToAssemblySearchPaths)' != 'false'">
       <!-- Walk up and find the solution root -->
       <RootFolder>$(SolutionPath)</RootFolder>
       <RootFolder Condition="'$(RootFolder)' == ''">$(SolutionRoot)</RootFolder>
       <RootFolder Condition="'$(RootFolder)' == ''">$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', 'dir.proj'))</RootFolder>
       <RootFolder Condition="'$(RootFolder)' == ''">$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', 'paket.dependencies'))</RootFolder>
+    </PropertyGroup>
 
+    <PropertyGroup>
       <CopyLocalDependenciesWhenParentReferenceInGac>false</CopyLocalDependenciesWhenParentReferenceInGac>
       <DoNotCopyLocalIfInGac>true</DoNotCopyLocalIfInGac>
-
       <ResolveAssemblyReferencesSilent>false</ResolveAssemblyReferencesSilent>
-
-      <!-- This defaults to true within RAR and causes RAR to go off and find dependencies of dependencies which I feel is unnecessary. -->
-      <!-- <_FindDependencies>false</_FindDependencies>  -->
     </PropertyGroup>
   </Target>
 
 
   <PropertyGroup>
-    <!--PERF: Avoid looking for winmd files.
-          Put the most likely extensions first for reference resolution speed.
-      -->
+    <!--PERF: Avoid looking for winmd files. Put the most likely extensions first for reference resolution speed.-->
     <AllowedReferenceAssemblyFileExtensions>
       .dll;
       .exe
@@ -219,7 +215,7 @@
         (9) Look in the application's output folder (like bin\debug)
     -->
 
-    <ItemGroup Condition="'$(UsePackagesDirectorySearchPath)' != 'false'">
+    <ItemGroup Condition="'$(AddNuGetDirectoryToAssemblySearchPaths)' != 'false'">
       <AssemblySearchDirectories Include="$([MSBuild]::Unescape($(_PackageDirectoriesAsSingleItem)))" />
     </ItemGroup>
 
@@ -230,6 +226,8 @@
       <_VS2017InstallDirectory>$(ProgramFiles32)\Microsoft Visual Studio\2017\</_VS2017InstallDirectory>
       <_WIXLib>$(ProgramFiles32)\WiX Toolset v3.11\bin</_WIXLib>
       <_Pia2010>$(ProgramFiles32)\Microsoft Visual Studio 14.0\Visual Studio Tools for Office\PIA\Office14\</_Pia2010>
+
+      <AdditionalSearchPaths Condition="'$(AddNuGetDirectoryToAssemblySearchPaths)' != 'false'">$(RootFolder)\Dependencies\;@(AssemblySearchDirectories);</AdditionalSearchPaths>
     </PropertyGroup>
 
     <ItemGroup>
@@ -247,8 +245,7 @@
         $(AlternativeOutputDirectory);
         $(AlternativeOutputDirectory)StoredProcedures;
         $(AssemblySearchPaths);
-        $(RootFolder)\Dependencies\;
-        @(AssemblySearchDirectories);
+        $(AdditionalSearchPaths);
         $(_WIXLib);
         $(_Pia2010);
         $(_VS2017InstallDirectory)Enterprise\$(_VSSDKSuffix);
@@ -417,7 +414,7 @@
 
     <PropertyGroup>
       <IsTestProject>$([System.IO.Path]::GetFileName('$(MSBuildProjectFullPath)').Contains('Test'))</IsTestProject>
-			<IsDatabaseProject>$(MSBuildProjectName.StartsWith('Database'))</IsDatabaseProject>
+      <IsDatabaseProject>$(MSBuildProjectName.StartsWith('Database'))</IsDatabaseProject>
     </PropertyGroup>
 
     <!-- Send all outputs of the project to the update staging area for later collection. -->
@@ -452,7 +449,7 @@
     </PropertyGroup>
 
     <Aderant.Build.Tasks.RecordProjectOutputs
-	    Condition="'$(IsCustomBuild)' != 'true'"
+      Condition="'$(IsCustomBuild)' != 'true'"
       ContextEndpoint="$(ContextEndpoint)"
       SolutionRoot="$(SolutionRoot)"
       ProjectTypeGuids="$(ProjectTypeGuids)"

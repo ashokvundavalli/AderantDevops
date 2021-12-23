@@ -29,7 +29,7 @@
   <Import Project="$(ParametersFile)" Condition="Exists($(ParametersFile))" />
 
   <PropertyGroup>
-    <BuildInParallel Condition="'$(BuildInParallel)' != 'false' And '$(MSBuildNodeCount)' &gt; '1'">true</BuildInParallel>
+    <BuildInParallel Condition="'$(BuildInParallel)' == '' And '$(MSBuildNodeCount)' &gt; '1'">true</BuildInParallel>
 
     <!--Test configuration-->
     <RunTests Condition="'$(RunTests)' == ''">$([MSBuild]::ValueOrDefault('$(RunTests)', 'true'))</RunTests>
@@ -356,7 +356,7 @@
       </WixProperties>
 
       <CommonBuildProperties>
-        BuildInParallel=true;
+        BuildInParallel=$(BuildInParallel);
         BuildNumber=$(BuildNumber);
         BuildScriptsDirectory=$(BuildScriptsDirectory);
         ProductManifestPath=$(ProductManifestPath);
@@ -371,6 +371,7 @@
         CustomAfterMicrosoftCommonTargets=$(CustomAfterMicrosoftCommonTargets);
         CompileBuildSystem=false;
         CodeSigningCertificateThumbprint=$(CodeSigningCertificateThumbprint);
+        AddNuGetDirectoryToAssemblySearchPaths=$(AddNuGetDirectoryToAssemblySearchPaths);
         $(WixProperties)
       </CommonBuildProperties>
     </PropertyGroup>
@@ -391,6 +392,7 @@
       PrepareBuildEnvironment;
       GetFilesForPackage;
       GetProduct;
+      CreatePackage;
       AddCurrentBuildInfo;
       GenerateFactory;
       ArchiveArtifacts;
@@ -531,6 +533,11 @@
     <PowerShellScript ScriptFile="$(PackageScriptsDirectory)AssembleProduct.ps1"
                       ScriptArguments="@(ScriptArguments)" />
 
+    <OnError ExecuteTargets="HandleGetProductError" />
+  </Target>
+
+
+  <Target Name="CreatePackage">
     <Message Text="Updating product with outputs from this build..." />
 
     <!--TODO: Should we teach GetProduct how to do this? What if we have crazy assembly rules we want to fire-->
@@ -543,8 +550,6 @@
     <CheckForDoubleWrites
       FileList="@(FileWrites)"
       CheckFileSize="true" />
-
-    <OnError ExecuteTargets="HandleGetProductError" />
   </Target>
 
 

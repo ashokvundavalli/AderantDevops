@@ -1,14 +1,10 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using Aderant.Build.ProjectSystem.StateTracking;
+﻿using Aderant.Build.ProjectSystem.StateTracking;
 using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks {
-
     /// <summary>
     /// Records outputs from an MSBuild project.
-    /// Used to drive the the build cache resolution algorithm
+    /// Used to drive the build cache resolution algorithm
     /// </summary>
     public class RecordProjectOutputs : BuildOperationContextTask {
 

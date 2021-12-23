@@ -156,6 +156,8 @@ namespace Aderant.Build.MSBuild {
                     Xmlns + "Target",
                     new XAttribute("Name", target.Name),
                     target.Condition != null ? new XAttribute("Condition", target.Condition) : null,
+                    target.Inputs != null ? new XAttribute("Inputs", target.Inputs) : null,
+                    target.Outputs != null ? new XAttribute("Outputs", target.Outputs) : null,
                     target.Returns != null ? new XAttribute("Returns", string.Join(PropertyList.Separator, target.Returns.Select(name => $"@({name})"))) : null,
                     target.DependsOnTargets.Count > 0 ? new XAttribute("DependsOnTargets", PropertyList.CreatePropertyListString(target.DependsOnTargets.Select(d => d.Name))) : null,
                     target.BeforeTargets.Count > 0 ? new XAttribute("BeforeTargets", PropertyList.CreatePropertyListString(target.BeforeTargets.Select(d => d.Name))) : null,

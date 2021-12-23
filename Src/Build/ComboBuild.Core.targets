@@ -64,7 +64,7 @@
         GIT_REDIRECT_STDERR;
         PAKET_REQUEST_TIMEOUT;
         PAKET_RESPONSE_STREAM_TIMEOUT;
-        PAKET_SKIP_RESTORE_TARGETS ;
+        PAKET_SKIP_RESTORE_TARGETS;
         PAKET_STREAMREADWRITE_TIMEOUT;
         SKIP_BUILD_SYSTEM_COMPILE;
       </PropertiesToRemove>
@@ -90,7 +90,7 @@
   </Target>
 
 
-  <Target Name="GetContextVariables">
+  <Target Name="GetContextVariables" Condition="'$(NoBuildService)' != 'true'">
     <GetOrPutContextVariable
       AllowInProcLookup="true"
       VariableName="_GitDir">

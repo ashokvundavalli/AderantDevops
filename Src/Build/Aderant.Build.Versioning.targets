@@ -158,8 +158,11 @@
       <Compile Remove="@(CommonAssemblyInfoFile)" />
     </ItemGroup>
 
-    <!-- Hash the file so it can be shared by multiple projects-->
-    <Hash ItemsToHash="%(CommonAssemblyInfoFile.FullPath)">
+    <PropertyGroup>
+      <CommonAssemblyInfoText Condition="@(CommonAssemblyInfoFile->Count()) != 0">$([System.IO.File]::ReadAllText('%(CommonAssemblyInfoFile.FullPath)'))</CommonAssemblyInfoText>
+    </PropertyGroup>
+
+    <Hash ItemsToHash="$(CommonAssemblyInfoText)">
       <Output TaskParameter="HashResult" PropertyName="_InputCommonAssemblyInfoFilePathHash" />
     </Hash>
 
@@ -174,17 +177,11 @@
     <MakeDir Directories="$(BasePath)" />
 
     <CombinePath BasePath="$(BasePath)"
-                 Paths="$(_InputCommonAssemblyInfoFilePathHash)" >
-      <Output TaskParameter="CombinedPaths" PropertyName="CommonAssemblyInfoCloneFile" />
-    </CombinePath>
-
-    <CombinePath BasePath="$(BasePath)"
                  Paths="$(_CommonAssemblyAttributesPathHash)" >
       <Output TaskParameter="CombinedPaths" PropertyName="CommonAssemblyInfoAttributesFile" />
     </CombinePath>
 
     <PropertyGroup>
-      <CommonAssemblyInfoCloneFile>$(CommonAssemblyInfoCloneFile).cs</CommonAssemblyInfoCloneFile>
       <CommonAssemblyInfoAttributesFile>$(CommonAssemblyInfoAttributesFile).g.cs</CommonAssemblyInfoAttributesFile>
     </PropertyGroup>
   </Target>
@@ -195,46 +192,63 @@
 
   <!-- The files generated or updated are shared between projects so we have to take care to handle simultaneous writes (by ContinueOnError) -->
   <Target Name="WriteCommonAssemblyInfoAttributesFile"
-          AfterTargets="CloneCommonAssemblyInfoFile">
+          AfterTargets="CloneCommonAssemblyInfoFile" Condition="'$(_CommonAssemblyAttributesPathHash)' != ''"
+          Inputs="$(MSBuildProjectFullPath)"
+          Outputs="$(CommonAssemblyInfoAttributesFile)">
 
-    <WriteCodeFragment Condition="!Exists('$(CommonAssemblyInfoAttributesFile)')"
-                       AssemblyAttributes="@(_AssemblyAttributes)"
+    <WriteCodeFragment AssemblyAttributes="@(_AssemblyAttributes)"
                        Language="CS"
                        OutputFile="$(CommonAssemblyInfoAttributesFile)"
                        ContinueOnError="true" />
+
+    <Touch Condition="'$(MSBuildLastTaskResult)' == 'true'"
+           Files="$(CommonAssemblyInfoAttributesFile)"
+           Time="$([System.IO.File]::GetCreationTime('$(MSBuildProjectFullPath)').ToString('o'))"
+           ContinueOnError="true" />
   </Target>
 
 
   <Target Name="UpdateCopyright"
           AfterTargets="CloneCommonAssemblyInfoFile"
-          Condition="'@(CommonAssemblyInfoFile->Count())' != '0'"
-          Inputs="$(MSBuildThisFileFullPath);@(CommonAssemblyInfoFile)"
-          Outputs="$(CommonAssemblyInfoCloneFile)">
+          Condition="'@(CommonAssemblyInfoFile->Count())' != '0'">
 
-    <Copy SourceFiles="@(CommonAssemblyInfoFile)"
-          DestinationFiles="$(CommonAssemblyInfoCloneFile)"
-          OverwriteReadOnlyFiles="true"
-          Retries="$(CopyRetryCount)"
-          RetryDelayMilliseconds="$(CopyRetryDelayMilliseconds)"
-          SkipUnchangedFiles="true" />
+    <CombinePath BasePath="$(BasePath)"
+                 Paths="$(_InputCommonAssemblyInfoFilePathHash)" >
+      <Output TaskParameter="CombinedPaths" PropertyName="CommonAssemblyInfoCloneHash" />
+    </CombinePath>
 
-    <!-- Update copyright, $1, $2 and $4 are capture groups -->
-    <MSBuild.Community.Tasks.FileUpdate
-      Encoding="utf-8-without-bom"
-      Files="$(CommonAssemblyInfoCloneFile)"
-      IgnoreCase="true"
-      Multiline="true"
-      Singleline="false"
-      Regex="(.*?AssemblyCopyright)(.*?\d{4})(\s*-\s*\d{4})?(.*)"
-      ReplacementText="$1$2-$([System.DateTime]::Now.Year)$4"
-      ContinueOnError="true" />
-
-    <ItemGroup>
-      <CommonAssemblyInfoCloneFiles Include="$(CommonAssemblyInfoCloneFile)" />
-    </ItemGroup>
+    <PropertyGroup>
+      <CommonAssemblyInfoCloneFile>$(CommonAssemblyInfoCloneHash).cs</CommonAssemblyInfoCloneFile>
+    </PropertyGroup>
 
   </Target>
 
+  <Target Name="UpdateCopyrightCore"
+          AfterTargets="UpdateCopyright"
+          Inputs="$(MSBuildProjectFullPath)"
+          Outputs="$(CommonAssemblyInfoCloneFile)">
+
+    <PropertyGroup>
+      <!-- Update copyright, $1, $2 and $4 are capture groups -->
+      <ReplacementText>$1$2-$([System.DateTime]::Now.Year)$4</ReplacementText>
+      <CommonAssemblyInfoText>$([System.Text.RegularExpressions.Regex]::Replace($(CommonAssemblyInfoText), "(.*?AssemblyCopyright)(.*?\d{4})(\s*-\s*\d{4})?(.*)", $(ReplacementText), System.Text.RegularExpressions.RegexOptions.IgnoreCase))</CommonAssemblyInfoText>
+    </PropertyGroup>
+
+    <WriteLinesToFile File="$(CommonAssemblyInfoCloneFile)"
+                      Lines="$(CommonAssemblyInfoText)"
+                      Overwrite="true"
+                      ContinueOnError="true" />
+
+    <Touch Condition="'$(MSBuildLastTaskResult)' == 'true'"
+           Files="$(CommonAssemblyInfoCloneFile)"
+           Time="$([System.IO.File]::GetCreationTime('$(MSBuildProjectFullPath)').ToString('o'))"
+           ContinueOnError="true"  />
+
+    <ItemGroup>
+      <CommonAssemblyInfoCloneFiles Include="$(CommonAssemblyInfoCloneFile)"  />
+    </ItemGroup>
+
+  </Target>
 
   <!--
       Clones CommonAssemblyInfo.cs so we don't upset incremental builds

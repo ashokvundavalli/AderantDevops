@@ -204,11 +204,17 @@ begin {
 
                 $destinationFolder = Join-Path -Path $binariesDirectory -ChildPath $target
 
-                Start-Process -FilePath $zipExe -ArgumentList "x `"$($build.FullName)`" -o`"$destinationFolder`" $filter -x!*.pdb -r -y" -NoNewWindow -Wait
+                $tempFile = [System.IO.Path]::GetRandomFileName()
+                try {
+                    Copy-Item $build.FullName $tempFile
+                    Start-Process -FilePath $zipExe -ArgumentList "x `"$tempFile`" -o`"$destinationFolder`" $filter -x!*.pdb -r -y" -NoNewWindow -Wait
 
-                [string]$classicBuildNumbersFile = "$($binariesDirectory)\ClassicBuildNumbers.txt"
-                Add-Content -LiteralPath $classicBuildNumbersFile -Value "$($moduleName) $($build.BaseName.split('_')[1])" -Force
-                Write-Information -MessageData "Successfully acquired Expert Classic binaries $($build.Directory.Name)"
+                    [string]$classicBuildNumbersFile = "$($binariesDirectory)\ClassicBuildNumbers.txt"
+                    Add-Content -LiteralPath $classicBuildNumbersFile -Value "$($moduleName) $($build.BaseName.split('_')[1])" -Force
+                    Write-Information -MessageData "Successfully acquired Expert Classic binaries $($build.Directory.Name)"
+                } finally {
+                    Remove-Item $tempFile
+                }
             } else {
                 Write-Error "Unable to locate tool: '$zipExe'."
             }

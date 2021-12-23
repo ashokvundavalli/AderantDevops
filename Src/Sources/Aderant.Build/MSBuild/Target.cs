@@ -4,6 +4,7 @@ using System.Linq;
 
 namespace Aderant.Build.MSBuild {
     public class CallTarget : MSBuildProjectElement {
+
         public CallTarget(IEnumerable<string> targets) {
             Targets = targets.ToArray();
         }
@@ -13,6 +14,7 @@ namespace Aderant.Build.MSBuild {
         public override void Accept(BuildElementVisitor visitor) {
             visitor.Visit(this);
         }
+
     }
 
     /// <summary>
@@ -20,7 +22,10 @@ namespace Aderant.Build.MSBuild {
     /// </summary>
     [DebuggerDisplay("{Name}")]
     public class Target : MSBuildProjectElement {
+
         private IList<MSBuildProjectElement> elements = new List<MSBuildProjectElement>();
+        private string inputs;
+        private string outputs;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Target" /> class.
@@ -88,6 +93,34 @@ namespace Aderant.Build.MSBuild {
         public string Condition { get; set; }
 
         /// <summary>
+        /// The target input files expression.
+        /// </summary>
+        public string Inputs {
+            get { return inputs; }
+            set {
+                if (string.IsNullOrWhiteSpace(value)) {
+                    inputs = null;
+                }
+
+                inputs = value;
+            }
+        }
+
+        /// <summary>
+        /// The target output expression.
+        /// </summary>
+        public string Outputs {
+            get { return outputs; }
+            set {
+                if (string.IsNullOrWhiteSpace(value)) {
+                    inputs = null;
+                }
+
+                outputs = value;
+            }
+        }
+
+        /// <summary>
         /// Adds the specified element to this target.
         /// </summary>
         /// <param name="element">The project.</param>
@@ -102,5 +135,6 @@ namespace Aderant.Build.MSBuild {
         public override void Accept(BuildElementVisitor visitor) {
             visitor.Visit(this);
         }
+
     }
 }
