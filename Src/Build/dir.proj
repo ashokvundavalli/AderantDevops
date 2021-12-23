@@ -32,9 +32,17 @@
     <AssemblySearchPaths>$(AssemblySearchPaths);$(ReferencePath)</AssemblySearchPaths>
   </PropertyGroup>
 
-  <ItemGroup>
-      <Analyzer Condition="'$(EXCLUDE_BUILD_ANALYZER)' != 'true'" Include="$(PackagesDirectory)Aderant.Build.Analyzer\analyzers\dotnet\cs\*.dll" />
-  </ItemGroup>
+  <Choose>
+    <When Condition="'$(DISABLE_BUILD_ANALYZER)' == 'true'">
+      <ItemGroup />
+    </When>
+    <When Condition="'$(BUILD_SOURCEBRANCH)' == 'refs/heads/master'">
+      <ItemGroup />
+    </When>
+    <Otherwise>
+      <Analyzer Include="$(PackagesDirectory)Aderant.Build.Analyzer\analyzers\dotnet\cs\*.dll" />
+    </Otherwise>
+  </Choose>
 
   <Import Project="$(MSBuildThisFileDirectory)Build\wpp\Aderant.wpp.common.targets" Condition="'$(IsWebOrMobile)' == 'true'" />
 
