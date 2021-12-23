@@ -62,27 +62,29 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                 Array.Sort(buildStateFiles, BuildStateFileComparer.Default);
 
                 foreach (BuildStateFile buildStateFile in buildStateFiles) {
-                    logger.Info("Assessing state file: '{0}'.", buildStateFile.Id);
+                    logger.Info("Assessing state file: '{0}'", buildStateFile.Id);
 
                     ICollection<TrackedInputFile> cachedTrackedInputFiles = buildStateFile.TrackedFiles != null ? new List<TrackedInputFile>(buildStateFile.TrackedFiles) : new List<TrackedInputFile>(1);
 
                     if (buildStateFile.PackageHash != null && !SkipNuGetPackageHashCheck) {
-                        logger.Info("Adding package hash metadata: '{0}' to tracked files.", buildStateFile.PackageHash);
-
-                        cachedTrackedInputFiles.Add(new TrackedMetadataFile(Constants.PaketLock) {
+                        var syntheticFile = new TrackedMetadataFile(Constants.PaketLock) {
                             Sha1 = buildStateFile.PackageHash
-                        });
+                        };
+
+                        cachedTrackedInputFiles.Add(syntheticFile);
+
+                        logger.Info("Synthesizing tracked file {0} with hash {1}", syntheticFile.FileName, syntheticFile.Sha1);
                     }
 
                     if (filesToTrack?.Count != cachedTrackedInputFiles.Count) {
-                        logger.Info("Tracked file count does not match.");
+                        logger.Info("Tracked file count does not match");
                         continue;
                     }
 
                     bool skipNuGetPackageHashCheck = SkipNuGetPackageHashCheck || !trackPackageHash && !buildStateFile.TrackPackageHash;
 
-                    if (filesToTrack.Count == 0 || CorrelateInputs(buildStateFile.Id.ToString(), filesToTrack.AsReadOnly(), cachedTrackedInputFiles, skipNuGetPackageHashCheck)) {
-                        logger.Info("Found acceptable match.");
+                    if (filesToTrack.Count == 0 || CorrelateInputs(filesToTrack.AsReadOnly(), cachedTrackedInputFiles, skipNuGetPackageHashCheck)) {
+                        logger.Info("Using state file");
 
                         result.IsUpToDate = true;
                         result.BuildStateFile = buildStateFile;
@@ -93,21 +95,16 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             }
 
             if (filesToTrack == null || filesToTrack.Count == 0) {
-                logger.Info("No tracked files.");
+                logger.Warning("No tracked files in state file.");
 
                 result.IsUpToDate = true;
                 return result;
             }
 
-            logger.Info("No acceptable state files available for use.");
+            logger.Info("No state files available.");
 
             result.IsUpToDate = false;
             return result;
-        }
-
-        private bool CorrelateInputs(string buildStateFileId, ICollection<TrackedInputFile> trackedInputFiles, ICollection<TrackedInputFile> cachedTrackedInputFiles, bool skipNugetPackageHashCheck) {
-            logger.Info("Correlating inputs for build state file: '{0}'.", buildStateFileId);
-            return CorrelateInputs(trackedInputFiles, cachedTrackedInputFiles, skipNugetPackageHashCheck);
         }
 
         internal bool CorrelateInputs(ICollection<TrackedInputFile> trackedInputFiles, ICollection<TrackedInputFile> cachedTrackedInputFiles, bool skipNugetPackageHashCheck) {
@@ -173,11 +170,13 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         private static List<TrackedInputFile> RemoveFilesFromPackagesFolder(Dictionary<string, TrackedInputFile> table) {
             List<TrackedInputFile> removedTrackedFiles = new List<TrackedInputFile>();
 
+            char[] separator = new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
+
             foreach (var file in table.Keys.ToList()) {
                 var item = table[file];
 
                 if (item != null) {
-                    var parts  = item.FullPath.Split(new[] {Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar});
+                    var parts  = item.FullPath.Split(separator);
 
                     foreach (string part in parts) {
                         if (string.Equals(part, "packages", StringComparison.OrdinalIgnoreCase)) {
