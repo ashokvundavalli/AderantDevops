@@ -33,7 +33,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Analyzer Include="$(PackagesDirectory)Aderant.Build.Analyzer\analyzers\dotnet\cs\*.dll" />
+      <Analyzer Condition="'$(EXCLUDE_BUILD_ANALYZER)' != 'true'" Include="$(PackagesDirectory)Aderant.Build.Analyzer\analyzers\dotnet\cs\*.dll" />
   </ItemGroup>
 
   <Import Project="$(MSBuildThisFileDirectory)Build\wpp\Aderant.wpp.common.targets" Condition="'$(IsWebOrMobile)' == 'true'" />
