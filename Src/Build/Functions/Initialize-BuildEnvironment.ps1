@@ -312,7 +312,7 @@ function DownloadPaket([string]$commit) {
                 # Download the paket dependency tool
                 Start-Process -FilePath $bootstrapper -ArgumentList $paketVersion -NoNewWindow -PassThru -Wait
                 [void](New-Item -Path $packageDirectory -ItemType 'Directory' -Force)
-                Start-Process -FilePath $paketExecutable -ArgumentList @("restore", "--group", "main") -NoNewWindow -PassThru -Wait -WorkingDirectory $script:repositoryRoot
+                Start-Process -FilePath $paketExecutable -ArgumentList @("restore", "--group", "main", "--verbose") -NoNewWindow -PassThru -Wait -WorkingDirectory $script:repositoryRoot
             }
 
             [void](RunActionExclusive $action ("PAKET_UPDATE_LOCK_" + $BuildScriptsDirectory))
@@ -482,6 +482,10 @@ try {
     BuildProjects -mainAssembly $mainAssembly -forceCompile $isUsingProfile -commit $commit
     LoadAssembly -assemblyPath ([System.IO.Path]::Combine($assemblyPathRoot, "System.Threading.Tasks.Dataflow.dll"))
     LoadAssembly -assemblyPath ([System.IO.Path]::Combine($assemblyPathRoot, "protobuf-net.dll"))
+
+    # Adds a backwards compat shim for VS2017 which fails due to: https://stackoverflow.com/questions/44318777/system-missingmethodexception-when-trying-to-read-zipfile-from-ziparchive-c-shar
+    LoadAssembly -assemblyPath ([System.IO.Path]::Combine($assemblyPathRoot, "System.IO.Compression.dll"))
+    LoadAssembly -assemblyPath ([System.IO.Path]::Combine($assemblyPathRoot, "System.IO.Compression.FileSystem.dll"))
 
     # Required for Get-BuildDependencyTree
 
