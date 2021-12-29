@@ -256,7 +256,7 @@ namespace Aderant.Build.DependencyResolver {
             if (originalGroups.TryGetValue(group.Name.Name, out var originalGroup)) {
                 packageSources.AddRange(originalGroup.Sources.Select(s => new PackageSource(s.Url, s.Url)));
             }
-            
+
             FSharpList<PackageSources.PackageSource> sources = group.Sources;
 
 
@@ -603,6 +603,10 @@ namespace Aderant.Build.DependencyResolver {
                         action();
                     }
                 }
+            } catch (Exception ex) {
+                var e = ex;
+                System.Diagnostics.Debugger.Launch();
+                throw;
             }
         }
     }
