@@ -407,6 +407,10 @@ function EnsureModuleLoaded() {
     }
 
     [System.AppDomain]::CurrentDomain.SetData("BuildScriptsDirectory", $BuildScriptsDirectory)
+
+    # Adds a backwards compat shim for VS2017 which fails due to: https://stackoverflow.com/questions/44318777/system-missingmethodexception-when-trying-to-read-zipfile-from-ziparchive-c-shar
+    LoadAssembly -assemblyPath ([System.IO.Path]::Combine($assemblyPathRoot, "System.IO.Compression.dll"))
+    LoadAssembly -assemblyPath ([System.IO.Path]::Combine($assemblyPathRoot, "System.IO.Compression.FileSystem.dll"))
 }
 
 try {
@@ -482,12 +486,6 @@ try {
     BuildProjects -mainAssembly $mainAssembly -forceCompile $isUsingProfile -commit $commit
     LoadAssembly -assemblyPath ([System.IO.Path]::Combine($assemblyPathRoot, "System.Threading.Tasks.Dataflow.dll"))
     LoadAssembly -assemblyPath ([System.IO.Path]::Combine($assemblyPathRoot, "protobuf-net.dll"))
-
-    # Adds a backwards compat shim for VS2017 which fails due to: https://stackoverflow.com/questions/44318777/system-missingmethodexception-when-trying-to-read-zipfile-from-ziparchive-c-shar
-    LoadAssembly -assemblyPath ([System.IO.Path]::Combine($assemblyPathRoot, "System.IO.Compression.dll"))
-    LoadAssembly -assemblyPath ([System.IO.Path]::Combine($assemblyPathRoot, "System.IO.Compression.FileSystem.dll"))
-
-    # Required for Get-BuildDependencyTree
 
     EnsureModuleLoaded
     LoadLibGit2Sharp $assemblyPathRoot
