@@ -69,6 +69,13 @@ namespace Aderant.Build.Packaging {
             }
 
             try {
+                System.Diagnostics.Debugger.Launch();
+
+                var data = System.AppDomain.CurrentDomain.GetData("APP_CONFIG_FILE");
+                System.AppDomain.CurrentDomain.SetData("APP_CONFIG_FILE", null);
+
+
+
                 IProductAssembler assembler;
 
                 ExpertManifest manifest = ExpertManifest.Parse(ProductManifestXml);

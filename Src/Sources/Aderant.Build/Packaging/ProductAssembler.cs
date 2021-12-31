@@ -87,12 +87,6 @@ namespace Aderant.Build.Packaging {
         }
 
         private IEnumerable<string> RetrievePackages(ProductAssemblyContext context) {
-            IEnumerable<Assembly> assemblies = AppDomain.CurrentDomain.GetAssemblies().Where(s => !s.GlobalAssemblyCache && s.GetName().FullName.Contains("Compression"));
-
-            if (assemblies.Any()) {
-                System.Diagnostics.Debugger.Launch();
-            }
-
             var workingDirectory = Path.Combine(context.ProductDirectory, "package." + Path.GetRandomFileName());
 
             var fs = new RetryingPhysicalFileSystem();
