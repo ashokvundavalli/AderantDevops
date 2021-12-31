@@ -17,7 +17,7 @@ namespace Aderant.Build.Packaging {
         public string ProductManifestXml { get; set; }
 
         [Parameter(Mandatory = false, Position = 2)]
-        public PSObject[] Modules { get; set; }
+        public PSObject[] Modules { get; set; } = Array.Empty<PSObject>();
 
         [Parameter(Mandatory = false, Position = 3)]
         public IEnumerable<string> Folders { get; set; }
@@ -69,13 +69,6 @@ namespace Aderant.Build.Packaging {
             }
 
             try {
-                System.Diagnostics.Debugger.Launch();
-
-                var data = System.AppDomain.CurrentDomain.GetData("APP_CONFIG_FILE");
-                System.AppDomain.CurrentDomain.SetData("APP_CONFIG_FILE", null);
-
-
-
                 IProductAssembler assembler;
 
                 ExpertManifest manifest = ExpertManifest.Parse(ProductManifestXml);
