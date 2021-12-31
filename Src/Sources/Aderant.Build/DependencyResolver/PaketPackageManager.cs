@@ -604,6 +604,7 @@ namespace Aderant.Build.DependencyResolver {
                     }
                 }
             } catch (Exception ex) {
+                System.Diagnostics.Debugger.Launch();
                 string error = LoggerExtensions.FormatErrorMessageFromException(ex, true, true);
                 logger.Error(error);
                 throw;
