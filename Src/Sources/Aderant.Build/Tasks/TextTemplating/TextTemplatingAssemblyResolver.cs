@@ -11,13 +11,6 @@ namespace Aderant.Build.Tasks.TextTemplating {
     public sealed class TextTemplatingAssemblyResolver : Task {
         static TextTemplatingAssemblyResolver() {
             AppDomain.CurrentDomain.AssemblyResolve += AssemblyResolve;
-            AppDomain.CurrentDomain.AssemblyLoad += AssemblyLoad;
-        }
-
-        private static void AssemblyLoad(object sender, AssemblyLoadEventArgs args) {
-            if (args.LoadedAssembly.FullName.Contains("Compression") && !args.LoadedAssembly.GlobalAssemblyCache) {
-                System.Diagnostics.Debugger.Launch();
-            }
         }
 
         public override bool Execute() {

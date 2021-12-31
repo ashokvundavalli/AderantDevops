@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -86,6 +87,12 @@ namespace Aderant.Build.Packaging {
         }
 
         private IEnumerable<string> RetrievePackages(ProductAssemblyContext context) {
+            IEnumerable<Assembly> assemblies = AppDomain.CurrentDomain.GetAssemblies().Where(s => !s.GlobalAssemblyCache && s.GetName().FullName.Contains("Compression"));
+
+            if (assemblies.Any()) {
+                System.Diagnostics.Debugger.Launch();
+            }
+
             var workingDirectory = Path.Combine(context.ProductDirectory, "package." + Path.GetRandomFileName());
 
             var fs = new RetryingPhysicalFileSystem();
