@@ -679,7 +679,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 .ToArray();
 
             if (result != null && result.Any()) {
-                logger.Info("Selected {0}/{1} files state files which match package hash: {0}.", result.Length, selectedStateFiles.Length, packageHash);
+                logger.Info("Selected {0}/{1} files state files which match package hash: {2}.", result.Length, selectedStateFiles.Length, packageHash);
 
                 return result;
             }
