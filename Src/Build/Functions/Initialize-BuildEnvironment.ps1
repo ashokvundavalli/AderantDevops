@@ -146,7 +146,7 @@ function LoadAssembly {
             Import-Module $module -Global -DisableNameChecking -ErrorAction Stop
         }
     } else {
-        throw "Fatal error. Assembly: '$assemblyPath' not found."
+        throw "FATAL: Assembly: '$assemblyPath' not found."
     }
 }
 
@@ -229,47 +229,53 @@ function LoadLibGit2Sharp([string]$buildToolsDirectory) {
     [void][System.Reflection.Assembly]::LoadFrom([System.IO.Path]::Combine($buildToolsDirectory, "LibGit2Sharp.dll"))
 }
 
-function DownloadPaket([string]$commit) {
-    $bootstrapper = "$assemblyPathRoot\paket.bootstrapper.exe"
+function DownloadPaket([string]$commit) {    
+    $bootstrapperDirs = @($assemblyPathRoot, $BuildScriptsDirectory)
 
-    if (Test-Path -Path $bootstrapper) {
-        $paketExecutable = [System.IO.Path]::Combine($assemblyPathRoot, "paket.exe")
+    $bootstrapper = ""
+    foreach ($bootstrapperDir in $bootstrapperDirs) {
+        $bootstrapper = [System.IO.Path]::Combine($bootstrapperDir, "paket.bootstrapper.exe")
 
-        [bool]$packageDirectoryExists = [System.IO.Directory]::Exists($packageDirectory)
+        if (Test-Path -Path $bootstrapper) {
+            $paketExecutable = [System.IO.Path]::Combine($assemblyPathRoot, "paket.exe")
 
-        if (-not $packageDirectoryExists) {
-            $value = [string]::Empty
-        }
+            [bool]$packageDirectoryExists = [System.IO.Directory]::Exists($packageDirectory)
 
-        $upToDateFiles = @(
-            [System.IO.Path]::Combine($script:repositoryRoot, "Build", "paket.version"),
-            [System.IO.Path]::Combine($script:repositoryRoot, "paket.lock")
-        )
-
-        $outOfDate = $false
-
-        foreach ($file in $upToDateFiles) {
-            $value = GetAlternativeStreamValue $file $buildCommitStreamName
-            if ($value -ne $commit -and $outOfDate -ne $true) {
-                $outOfDate = $true
-            }
-            SetAlternativeStreamValue $file $buildCommitStreamName $commit
-        }
-
-        if ($outOfDate -or -not $packageDirectoryExists) {
-            [string]$paketVersion = Get-Content -Path $upToDateFiles[0]
-            $action = {
-                # Download the paket dependency tool
-                Start-Process -FilePath $bootstrapper -ArgumentList $paketVersion -NoNewWindow -PassThru -Wait
-                [void](New-Item -Path $packageDirectory -ItemType 'Directory' -Force)
-                Start-Process -FilePath $paketExecutable -ArgumentList @("restore", "--group", "main", "--verbose") -NoNewWindow -PassThru -Wait -WorkingDirectory $script:repositoryRoot
+            if (-not $packageDirectoryExists) {
+                $value = [string]::Empty
             }
 
-            [void](RunActionExclusive $action ("PAKET_UPDATE_LOCK_" + $BuildScriptsDirectory))
+            $upToDateFiles = @(
+                [System.IO.Path]::Combine($script:repositoryRoot, "Build", "paket.version"),
+                [System.IO.Path]::Combine($script:repositoryRoot, "paket.lock")
+            )
+
+            $outOfDate = $false
+
+            foreach ($file in $upToDateFiles) {
+                $value = GetAlternativeStreamValue $file $buildCommitStreamName
+                if ($value -ne $commit -and $outOfDate -ne $true) {
+                    $outOfDate = $true
+                }
+                SetAlternativeStreamValue $file $buildCommitStreamName $commit
+            }
+
+            if ($outOfDate -or -not $packageDirectoryExists) {
+                [string]$paketVersion = Get-Content -Path $upToDateFiles[0]
+                $action = {
+                    # Download the paket dependency tool
+                    Start-Process -FilePath $bootstrapper -ArgumentList $paketVersion -NoNewWindow -PassThru -Wait
+                    [void](New-Item -Path $packageDirectory -ItemType 'Directory' -Force)
+                    Start-Process -FilePath $paketExecutable -ArgumentList @("restore", "--group", "main", "--verbose") -NoNewWindow -PassThru -Wait -WorkingDirectory $script:repositoryRoot
+                }
+
+                [void](RunActionExclusive $action ("PAKET_UPDATE_LOCK_" + $BuildScriptsDirectory))
+            }
+            return
         }
-    } else {
-        throw "FATAL: $bootstrapper does not exist."
     }
+
+    throw "FATAL: $bootstrapper does not exist."
 }
 
 function EnsureClientCertificateAvailable() {
