@@ -20,29 +20,15 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
         static NupkgResolver() {
             // Paket used to support being loaded as byte array but current versions have a hard dependency on Assembly.Location which is
             // null when dynamically loaded from a byte array.
-            var data = AppDomain.CurrentDomain.GetData("BuildScriptsDirectory") as string;
-            if (!string.IsNullOrEmpty(data)) {
-                Assembly.LoadFrom(Path.Combine(data, "paket.exe"));
+            var path = AppDomain.CurrentDomain.GetData("BuildScriptsDirectory") as string;
+            if (!string.IsNullOrEmpty(path)) {
+                string buildToolsDirectory = Path.Combine(path, "..\\Build.Tools");
+
+                Assembly.LoadFrom(Path.Combine(buildToolsDirectory, "paket.exe"));
             }
         }
 
         public NupkgResolver() {
-            DisableRuntimeResolution();
-        }
-
-        /// <summary>
-        /// Runtime resolution is also disabled in Initialize-BuildEnvironment
-        /// This is primarily a fall back for tests.
-        /// </summary>
-        private static void DisableRuntimeResolution() {
-            // Lifted from Paket.Program.main()
-            // Using runtime resolution causes each group - and thus the packages in that group to be queried at least twice which is extremely slow
-            const string runtimeResolutionVariable = "PAKET_DISABLE_RUNTIME_RESOLUTION";
-
-            string disableRunResolution = Environment.GetEnvironmentVariable(runtimeResolutionVariable);
-            if (string.IsNullOrEmpty(disableRunResolution)) {
-                Environment.SetEnvironmentVariable(runtimeResolutionVariable, "true", EnvironmentVariableTarget.Process);
-            }
         }
 
         public IModuleProvider ModuleFactory { get; set; }

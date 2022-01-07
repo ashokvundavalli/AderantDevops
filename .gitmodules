@@ -1,8 +1,0 @@
-[submodule "Chutzpah"]
-	path = Src/Build.Tools/Chutzpah
-	url = https://tfs.aderant.com/tfs/ADERANT/ExpertSuite/_git/ThirdParty.Chutzpah
-	branch = master
-[submodule "GitLink"]
-	path = Src/Build.Tools/GitLink
-	url = https://tfs.aderant.com/tfs/ADERANT/ExpertSuite/_git/ThirdParty.GitLink
-	branch = master

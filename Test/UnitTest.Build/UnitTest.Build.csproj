@@ -117,7 +117,6 @@
     <Compile Include="Model\BucketTests.cs" />
     <Compile Include="BuildMetadataTests.cs" />
     <Compile Include="Model\SourceTreeMetadataTests.cs" />
-    <Compile Include="UriQuirksFixTests.cs" />
     <Compile Include="Commands\GetDependenciesTests.cs" />
     <Compile Include="DependencyAnalyzer\BuildPlanGeneratorTests.cs" />
     <Compile Include="DependencyAnalyzer\DirectoryNodeFactoryTests.cs" />

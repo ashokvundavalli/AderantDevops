@@ -1,14 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-  <PropertyGroup>
-    <MicrosoftCodeAnalysisTargets Condition="'$(CodeAnalysisTargets)' !=''">$(CodeAnalysisTargets)</MicrosoftCodeAnalysisTargets>
-    <AderantCodeAnalysisTargets Condition="'$(IsCustomBuild)' != 'true'">$(MSBuildThisFileDirectory)Aderant.CodeAnalysis.targets</AderantCodeAnalysisTargets>
-  </PropertyGroup>
-
-  <!-- Import the Aderant Code Analysis targets. This will add in our desired Code Analysis behaviour  -->
-  <Import Project="$(AderantCodeAnalysisTargets)" Condition="Exists('$(AderantCodeAnalysisTargets)')" />
-
   <Target Name="EnableXamlDeterminism" BeforeTargets="XamlMarkupCompilePass1">
     <!-- To allow for deterministic workflow builds we need to prevent the build engine
          from updating the debug symbol element as the element value does not respect path map -->

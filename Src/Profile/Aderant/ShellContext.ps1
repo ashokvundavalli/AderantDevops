@@ -53,7 +53,7 @@ $this.autoProperties | ConvertTo-Json | Out-File {1}
 
     [string] $BuildScriptsDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, "..\..\Build"))
     [string] $BuildToolsDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, "..\..\Build.Tools"))
-    [string] $PackagingTool = [System.IO.Path]::Combine($this.BuildScriptsDirectory, "paket.exe")
+    [string] $PackagingTool = [System.IO.Path]::Combine($this.BuildToolsDirectory, "paket.exe")
     [string] $ProfileHome
     [string] $RegistryHome
 

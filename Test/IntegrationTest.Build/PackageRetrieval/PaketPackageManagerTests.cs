@@ -1,23 +1,18 @@
-﻿using System.Diagnostics;
-using System.IO;
+﻿using System.IO;
 using Aderant.Build;
 using Aderant.Build.DependencyResolver;
 using Aderant.Build.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Paket;
 
 namespace IntegrationTest.Build.PackageRetrieval {
     [TestClass]
     [DeploymentItem("PackageRetrieval\\paket.dependencies", "PackageRetrieval")]
-    public class PaketPackageManagerTests {
+    public class PaketPackageManagerTests : IntegrationTestBase {
 
         public TestContext TestContext { get; set; }
 
         public string WorkingDirectory {
             get { return Path.Combine(TestContext.DeploymentDirectory, "PackageRetrieval"); }
-        }
-
-        public PaketPackageManagerTests() {
         }
 
         [TestMethod]
@@ -36,7 +31,8 @@ namespace IntegrationTest.Build.PackageRetrieval {
                 WorkingDirectory,
                 new PhysicalFileSystem(),
                 new WellKnownPackageSources(),
-                new TextContextLogger(TestContext));
+                new TextContextLogger(TestContext),
+                true);
         }
 
     }

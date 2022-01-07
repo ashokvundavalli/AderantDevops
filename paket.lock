@@ -2,9 +2,9 @@ REFERENCES: STRICT
 RESTRICTION: == net48
 NUGET
   remote: https://api.nuget.org/v3/index.json
-    LibGit2Sharp (0.27.0-preview-0119)
-      LibGit2Sharp.NativeBinaries (2.0.315-alpha.0.1)
-    LibGit2Sharp.NativeBinaries (2.0.315-alpha.0.1)
+    LibGit2Sharp (0.27.0-preview-0175)
+      LibGit2Sharp.NativeBinaries (2.0.315-alpha.0.9)
+    LibGit2Sharp.NativeBinaries (2.0.315-alpha.0.9)
     Microsoft.Build.Locator (1.4.1)
     MSBuildTasks (1.5.0.235)
     Newtonsoft.Json (10.0.3)
@@ -14,6 +14,10 @@ HTTP
   remote: https://www.7-zip.org
     7z1900-extra.7z (/a/7z1900-extra.7z)
     7zr.exe (/a/7zr.exe)
+  remote: https://tfs.aderant.com
+    NuGet.CredentialProvider.zip (/tfs/ADERANT/f0b10666-5819-4e8e-8708-7d5272a14e07/_api/_versioncontrol/itemContentZipped?repositoryId=1a645b16-cfbc-402c-a8a1-badfc035618e&path=%2F&version=GBmaster&__v=5)
+    ThirdParty.Chutzpah.zip (/tfs/ADERANT/44f228f7-b636-4bd3-99ee-eb2f1570d768/_api/_versioncontrol/itemContentZipped?repositoryId=0df1ae58-f11a-4a00-bde5-2b46e541b722&path=%2F&version=GBmaster&__v=5)
+    ThirdParty.GitLink.zip (/tfs/ADERANT/44f228f7-b636-4bd3-99ee-eb2f1570d768/_api/_versioncontrol/itemContentZipped?repositoryId=0cf20bf8-e655-4fd5-b030-3492c4755da2&path=%2F&version=GBmaster&__v=5)
 GROUP Analyzer
 REFERENCES: STRICT
 RESTRICTION: == net48

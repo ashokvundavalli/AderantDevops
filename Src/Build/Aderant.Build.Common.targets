@@ -91,12 +91,10 @@
     <ItemGroup>
       <!-- Desktop/Common projects -->
       <Projects Include="$(BuildSourcesDirectory)Aderant.Build\Aderant.Build.csproj" />
-      <Projects Include="$(BuildSourcesDirectory)FxCopCmd\FxCopCmd.csproj"  />
       <Projects Include="$(BuildSourcesDirectory)TrxerConsole\TrxerConsole.csproj" Condition="'$(IsDesktopBuild)' == 'true'" />
 
       <!-- Server/CI projects -->
       <Projects Include="$(BuildSourcesDirectory)Aderant.Build.Tasks\Aderant.Build.Tasks.csproj" Condition="'$(IsDesktopBuild)' == 'false'" />
-      <Projects Include="$(BuildSourcesDirectory)WarningRatchet\WarningRatchet.csproj" Condition="'$(IsDesktopBuild)' == 'false'" />
     </ItemGroup>
 
     <PropertyGroup>

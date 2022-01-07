@@ -269,3 +269,4 @@ ModelManifest.xml
 **/*/ps_modules/VstsTaskSdk/*
 /paket-files/www.7-zip.org
 /Test/Build/Tasks/*
+/paket-files/tfs.aderant.com

@@ -61,7 +61,6 @@
     </Reference>
     <Reference Include="Moq, Version=4.10.0.0, Culture=neutral, PublicKeyToken=69f491c39445e920, processorArchitecture=MSIL">
       <HintPath>..\..\packages\DevTools\Moq\lib\net45\Moq.dll</HintPath>
-      <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="paket, Version=6.2.1.0, Culture=neutral, processorArchitecture=MSIL" />
     <Reference Include="System" />
@@ -74,7 +73,6 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\packages\devtools\System.Threading.Tasks.Extensions\lib\portable-net45+win8+wp8+wpa81\System.Threading.Tasks.Extensions.dll</HintPath>
     </Reference>
     <Reference Include="System.Xml" />
@@ -137,6 +135,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="EndToEnd\TestBuildServiceHost.cs" />
+    <Compile Include="IntegrationTestBase.cs" />
     <Compile Include="PackageRetrieval\PaketPackageManagerTests.cs" />
     <Compile Include="Packaging\Web\WebPackagingTests.cs" />
     <Compile Include="PhysicalFileSystemTests.cs" />

@@ -72,7 +72,9 @@ namespace Aderant.Build.DependencyResolver {
 
             string dependenciesDirectory = null;
             try {
-                dependenciesDirectory = Path.Combine(resolverRequest.GetDependenciesDirectory(requirements[0]), Constants.PaketLock);
+                if (requirements.Count > 0) {
+                    dependenciesDirectory = Path.Combine(resolverRequest.GetDependenciesDirectory(requirements[0]), Constants.PaketLock);
+                }
             } catch (InvalidOperationException) {
                 // No assigned dependencies directory.
             }
@@ -83,7 +85,7 @@ namespace Aderant.Build.DependencyResolver {
             }
         }
 
-        private void AddAlwaysRequired(ResolverRequest resolverRequest, List<IDependencyRequirement> requirements) {
+        private static void AddAlwaysRequired(ResolverRequest resolverRequest, List<IDependencyRequirement> requirements) {
             const string buildAnalyzer = "Aderant.Build.Analyzer";
 
             if (resolverRequest.Modules.All(m => string.Equals(m.Name, "Build.Infrastructure"))) {

@@ -6,8 +6,8 @@ Set-StrictMode -Version Latest
 $workingDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, "..\"))
 Set-Location -Path $workingDirectory
 
-[string]$buildScriptsDirectory = [System.IO.Path]::GetFullPath("$PSScriptRoot\..\Src\Build\")
-[string]$paketBootstrapper = [System.IO.Path]::Combine($buildScriptsDirectory, 'paket.bootstrapper.exe')
+[string]$buildToolsDirectory = [System.IO.Path]::GetFullPath("$PSScriptRoot\..\Src\Build.Tools\")
+[string]$paketBootstrapper = [System.IO.Path]::Combine($buildToolsDirectory, 'paket.bootstrapper.exe')
 
 # Update Paket bootstrapper.
 [void](Start-Process -FilePath $paketBootstrapper -ArgumentList @('--self') -NoNewWindow -PassThru -Wait)
@@ -23,7 +23,7 @@ $psi.CreateNoWindow = $true
 $psi.UseShellExecute = $false
 $psi.RedirectStandardOutput = $true
 $psi.RedirectStandardError = $true
-$psi.FileName = "$buildScriptsDirectory\paket.exe"
+$psi.FileName = "$buildToolsDirectory\paket.exe"
 $psi.Arguments = @("restore", "--verbose")
 $psi.WorkingDirectory = $workingDirectory
 $process = [System.Diagnostics.Process]::new()

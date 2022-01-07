@@ -191,56 +191,6 @@ function RunActionExclusive {
     return $runTool
 }
 
-function UpdateSubmodules {
-    param(
-       [bool]$Updated,
-       [string]$Commit
-    )
-
-    $action = {
-        # Only update submodules if we tried to update since we may have a new commit
-        # This is quite slow
-        Write-Information "Updating submodules..."
-
-        [string]$root = git.exe -C $PSScriptRoot rev-parse --show-toplevel
-        [string[]]$submodules = git.exe -C $root submodule status
-        if ($LASTEXITCODE -ne 0) {
-            throw $submodules
-        }
-
-        Write-Information "Submodules to be updated: $submodules"
-
-        foreach ($submodule in $submodules) {
-            [string]$submodulePath = $submodule.Split(' ', [System.StringSplitOptions]::RemoveEmptyEntries)[1]
-            [string]$submoduleName = $submodulePath.Substring($submodulePath.LastIndexOf('/') + 1)
-
-            if ($submoduleName -eq 'DevTools' -and -not $script:isUsingProfile) {
-                continue
-            }
-
-            [ScriptBlock]$submoduleUpdate = {
-                param(
-                    [string]$root,
-                    [string]$submodulePath
-                )
-
-                $result = (& git.exe -C $root submodule update --init --recursive --remote "./$submodulePath")
-                if ($LASTEXITCODE -ne 0) {
-                    throw $result
-                }
-
-                return $result
-            }
-
-            Write-Information -MessageData "Updating submodule: $submoduleName with path: './$submodulePath'."
-            Start-JobInProcess -Name "submodule_update_$submoduleName" -ScriptBlock $submoduleUpdate -ArgumentList @($root, $submodulePath) -CompleteAction { Write-Information "Submodule update complete" }
-        }
-    }
-
-    $markerFile = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), "Submodule_" + $commit)
-    DoActionIfNeeded $action $markerFile
-}
-
 function RefreshSource {
     param(
        [bool]$Pull,
@@ -280,10 +230,10 @@ function LoadLibGit2Sharp([string]$buildToolsDirectory) {
 }
 
 function DownloadPaket([string]$commit) {
-    $bootstrapper = "$BuildScriptsDirectory\paket.bootstrapper.exe"
+    $bootstrapper = "$assemblyPathRoot\paket.bootstrapper.exe"
 
     if (Test-Path -Path $bootstrapper) {
-        $paketExecutable = [System.IO.Path]::Combine($BuildScriptsDirectory, "paket.exe")
+        $paketExecutable = [System.IO.Path]::Combine($assemblyPathRoot, "paket.exe")
 
         [bool]$packageDirectoryExists = [System.IO.Directory]::Exists($packageDirectory)
 
@@ -381,9 +331,6 @@ function SetPaketOptions {
 
     # Timeout for streaming the read and write operations
     $Env:PAKET_STREAMREADWRITE_TIMEOUT = $timeoutMillseconds
-
-    # Using runtime resolution causes each group - and thus the packages in that group to be queried at least twice which is extremely slow
-    $Env:PAKET_DISABLE_RUNTIME_RESOLUTION = "true"
 }
 
 [string]$assemblyPathRoot = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($BuildScriptsDirectory, "..\Build.Tools"))
@@ -407,10 +354,6 @@ function EnsureModuleLoaded() {
     }
 
     [System.AppDomain]::CurrentDomain.SetData("BuildScriptsDirectory", $BuildScriptsDirectory)
-
-    # Adds a backwards compat shim for VS2017 which fails due to: https://stackoverflow.com/questions/44318777/system-missingmethodexception-when-trying-to-read-zipfile-from-ziparchive-c-shar
-    LoadAssembly -assemblyPath ([System.IO.Path]::Combine($assemblyPathRoot, "System.IO.Compression.dll"))
-    LoadAssembly -assemblyPath ([System.IO.Path]::Combine($assemblyPathRoot, "System.IO.Compression.FileSystem.dll"))
 }
 
 try {
@@ -477,8 +420,6 @@ try {
     }
 
     . "$PSScriptRoot\InProcessJobs.ps1" -Version $commit
-
-    UpdateSubmodules ($updateInfo.Updated) $commit
 
     SetPaketOptions
     DownloadPaket $commit

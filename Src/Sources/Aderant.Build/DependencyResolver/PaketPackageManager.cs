@@ -13,6 +13,7 @@ using Paket;
 
 namespace Aderant.Build.DependencyResolver {
     internal class PaketPackageManager : IDisposable {
+
         private static readonly Regex invalidVersionPattern = new Regex("^0[.]0[.]0-\\w*");
 
         private static readonly InstallOptions defaultInstallOptions = InstallOptions.Default;
@@ -31,15 +32,13 @@ namespace Aderant.Build.DependencyResolver {
 
         private Dictionary<string, DependenciesGroup> originalGroups = new Dictionary<string, DependenciesGroup>(StringComparer.OrdinalIgnoreCase);
 
-        static PaketPackageManager() {
-            PaketHttpMessageHandlerFactory.Configure();
-        }
-
         public PaketPackageManager(string root, IFileSystem fileSystem, IWellKnownSources wellKnownSources, ILogger logger, bool enableVerboseLogging = false) {
             this.root = root;
             this.wellKnownSources = wellKnownSources;
             this.logger = logger;
             FileSystem = fileSystem;
+
+            EnableVerboseLogging = enableVerboseLogging;
 
             Paket.Logging.verbose = enableVerboseLogging;
 
@@ -73,6 +72,7 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         public IFileSystem FileSystem { get; }
+        public bool EnableVerboseLogging { get; }
 
         /// <summary>
         /// The default file name of the dependencies file
@@ -424,32 +424,19 @@ namespace Aderant.Build.DependencyResolver {
         public void Restore(bool force = false, CancellationToken cancellationToken = default(CancellationToken)) {
             Initialize();
 
-            DoOperationAndHandleCredentialFailure(
-                () => {
-                    if (!HasLockFile()) {
-                        new UpdateAction(dependencies, force).Run(this, cancellationToken);
-                        return;
-                    }
-
-                    new RestoreAction(dependencies, force).Run(this, cancellationToken);
-                });
-        }
-
-        private void DoOperationAndHandleCredentialFailure(Action action) {
-            try {
-                action();
-            } catch (CredentialProviderUnknownStatusException ex) {
-                logger.Error("A failure relating to credentials occurred.");
-                logger.LogErrorFromException(ex, false, false);
-                throw;
+            if (!HasLockFile()) {
+                new UpdateAction(dependencies, force).Run(this, cancellationToken);
+                return;
             }
+
+            new RestoreAction(dependencies, force).Run(this, cancellationToken);
         }
+
 
         public void Update(bool force, CancellationToken cancellationToken = default(CancellationToken)) {
             Initialize();
 
-            DoOperationAndHandleCredentialFailure(
-                () => { new UpdateAction(dependencies, force).Run(this, cancellationToken); });
+            new UpdateAction(dependencies, force).Run(this, cancellationToken);
         }
 
         public DependencyGroup GetDependencies() {
@@ -553,6 +540,7 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         internal class RemoteFileMapper {
+
             public static RemoteFile Map(ModuleResolver.UnresolvedSource remoteFile, string groupName) {
                 return Map(new[] {
                     remoteFile
@@ -580,34 +568,54 @@ namespace Aderant.Build.DependencyResolver {
 
                 return uri;
             }
+
         }
 
         /// <summary>
-        /// Attempts the action attempting to handle corrupt packages
+        /// Executes the dependency tool with the given arguments.
         /// </summary>
-        internal void DoOperationWithCorruptPackageHandling(Action action) {
-            try {
-                action();
-            } catch (Exception ex) when (ex.InnerException is InvalidDataException) {
-                if (ex.InnerException.Source == "System.IO.Compression") {
-                    if (ex.InnerException.TargetSite.Name == "ReadEndOfCentralDirectory") {
+        public void RunTool(string dependenciesRootPath, string args) {
+            var assemblyLocation = typeof(PaketEnv).Assembly.Location;
 
-                        logger.Warning("Package corruption detected: {0}", ex.Message);
+            var startInfo = new ProcessStartInfo(assemblyLocation, args) {
+                CreateNoWindow = true,
+                UseShellExecute = false,
+                RedirectStandardError = true,
+                RedirectStandardOutput = true
+            };
 
-                        logger.Info("Clearing NuGet cache.");
+            string credentialProviderVariable = "NUGET_CREDENTIALPROVIDERS_PATH";
+            if (!startInfo.Environment.ContainsKey(credentialProviderVariable)) {
+                string directoryName = Path.GetDirectoryName(assemblyLocation);
+                string provider = Path.Combine(directoryName, "NuGet.CredentialProvider");
+                startInfo.Environment.Add(credentialProviderVariable, provider);
+            }
 
-                        Paket.Dependencies.ClearCache(clearLocalCache: true);
+            startInfo.WorkingDirectory = dependenciesRootPath;
 
-                        logger.Warning("Retrying dependency fetch...");
-                        // And try again
-                        action();
-                    }
+            using (var process = new Process()) {
+                process.StartInfo = startInfo;
+                process.OutputDataReceived += (sender, a) => {
+                    if (a.Data != null)
+                        Console.WriteLine(a.Data);
+                };
+                process.ErrorDataReceived += (sender, a) => {
+                    if (a.Data != null)
+                        Console.WriteLine(a.Data);
+                };
+
+                process.Start();
+
+                process.BeginErrorReadLine();
+                process.BeginOutputReadLine();
+
+                process.WaitForExit();
+
+                if (process.ExitCode > 0) {
+                    throw new ApplicationException(string.Format("Tool {0} failed with exit code: {1}", startInfo.FileName, process.ExitCode));
                 }
-            } catch (Exception ex) {
-                string error = LoggerExtensions.FormatErrorMessageFromException(ex, true, true);
-                logger.Error(error);
-                throw;
             }
         }
+
     }
 }

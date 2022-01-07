@@ -1,8 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <Import Project="..\References.props" />
+  <Import Project="..\..\..\libgit2.props" />
+
   <ItemGroup>
     <ContentWithTargetPath Include="$(MSBuildThisFileDirectory)\..\..\..\packages\MSBuildTasks\tools\*"
                            TargetPath="..\Build\Tasks\MSBuild.Community.Tasks\%(Filename)%(Extension)"
+                           CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ContentWithTargetPath Include="$(MSBuildThisFileDirectory)\..\..\..\paket-files\tfs.aderant.com\ThirdParty.Chutzpah\**\*"
+                           TargetPath="Chutzpah\%(RecursiveDir)\%(Filename)%(Extension)"
+                           CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ContentWithTargetPath Include="$(MSBuildThisFileDirectory)\..\..\..\paket-files\tfs.aderant.com\NuGet.CredentialProvider\**\*"
+                           TargetPath="NuGet.CredentialProvider\%(RecursiveDir)\%(Filename)%(Extension)"
                            CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

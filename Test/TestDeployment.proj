@@ -3,6 +3,7 @@
 
   <PropertyGroup>
     <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <PathToBuildTools>$(MSBuildProjectDirectory)\..\..\Src\Build.Tools\</PathToBuildTools>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -15,7 +16,7 @@
     </IncludePattern>
 
     <BuildToolsIncludePattern>
-      $(MSBuildProjectDirectory)\..\..\Src\Build.Tools\7*;
+      $(PathToBuildTools)7*;
     </BuildToolsIncludePattern>
 
     <ExcludePattern>
@@ -39,6 +40,21 @@
       <Link>TestDeployment\Build.Tools\%(RecursiveDir)%(Filename)%(Extension)</Link>
       <Visible>true</Visible>
     </Content>
+
+    <Content Include="$(PathToBuildTools)lib\**\*.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>TestDeployment\Build.Tools\lib\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <Visible>true</Visible>
+    </Content>
+
+    <Content Include="$(PathToBuildTools)NuGet.CredentialProvider\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>TestDeployment\Build.Tools\NuGet.CredentialProvider\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <Visible>true</Visible>
+    </Content>
+
+
+
   </ItemGroup>
 
 </Project>
