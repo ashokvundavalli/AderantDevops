@@ -219,6 +219,13 @@
       <AssemblySearchDirectories Include="$([MSBuild]::Unescape($(_PackageDirectoriesAsSingleItem)))" />
     </ItemGroup>
 
+    <ItemGroup>
+      <AssemblySearchDirectories Condition="'$(ReferencePath)' != ''" Include="$(ReferencePath)" />
+      <!--Adding additional dependencies searching locations. -->
+      <AssemblySearchDirectories Condition="'$(ExpertSourceDirectory)' != ''" Include="$(ExpertSourceDirectory)" />
+      <AssemblySearchDirectories Condition="'$(ExpertSourceDirectory)' != ''" Include="$(ExpertSourceDirectory)StoredProcedures" />
+    </ItemGroup>
+
     <PropertyGroup>
       <ProgramFiles32>$(MSBuildProgramFiles32)</ProgramFiles32>
       <_VSSDKSuffix>VSSDK\VisualStudioIntegration\Common\Assemblies\v4.0</_VSSDKSuffix>
@@ -229,13 +236,6 @@
 
       <AdditionalSearchPaths Condition="'$(AddNuGetDirectoryToAssemblySearchPaths)' != 'false'">$(RootFolder)\Dependencies\;@(AssemblySearchDirectories);</AdditionalSearchPaths>
     </PropertyGroup>
-
-    <ItemGroup>
-      <AssemblySearchDirectories Condition="'$(ReferencePath)' != ''" Include="$(ReferencePath)" />
-      <!--Adding additional dependencies searching locations. -->
-      <AssemblySearchDirectories Condition="'$(ExpertSourceDirectory)' != ''" Include="$(ExpertSourceDirectory)" />
-      <AssemblySearchDirectories Condition="'$(ExpertSourceDirectory)' != ''" Include="$(ExpertSourceDirectory)StoredProcedures" />
-    </ItemGroup>
 
     <PropertyGroup>
       <!-- Create the assembly search paths property. This defines where\how references are resolved.
