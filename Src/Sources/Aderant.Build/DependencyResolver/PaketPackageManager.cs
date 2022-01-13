@@ -593,15 +593,22 @@ namespace Aderant.Build.DependencyResolver {
 
             startInfo.WorkingDirectory = dependenciesRootPath;
 
+            List<string> output = new List<string>();
+            List<string> error = new List<string>();
+
             using (var process = new Process()) {
                 process.StartInfo = startInfo;
                 process.OutputDataReceived += (sender, a) => {
-                    if (a.Data != null)
+                    if (a.Data != null) {
+                        output.Add(a.Data);
                         Console.WriteLine(a.Data);
+                    }
                 };
                 process.ErrorDataReceived += (sender, a) => {
-                    if (a.Data != null)
+                    if (a.Data != null) {
+                        error.Add(a.Data);
                         Console.WriteLine(a.Data);
+                    }
                 };
 
                 process.Start();
@@ -612,6 +619,16 @@ namespace Aderant.Build.DependencyResolver {
                 process.WaitForExit();
 
                 if (process.ExitCode > 0) {
+                    Console.WriteLine("Waiting for debugger to attach");
+                    SpinWait.SpinUntil(() => {
+                        Thread.Sleep(100);
+                        return Debugger.IsAttached;
+                    }, TimeSpan.FromMinutes(10));
+
+                    if (Debugger.IsAttached) {
+                        Debugger.Break();
+                    }
+
                     throw new ApplicationException(string.Format("Tool {0} failed with exit code: {1}", startInfo.FileName, process.ExitCode));
                 }
             }
