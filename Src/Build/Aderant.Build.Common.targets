@@ -61,18 +61,6 @@
   <Import Project="$(MSBuildCommunityTasksPath)MSBuild.Community.Tasks.Targets" Condition="Exists('$(MSBuildCommunityTasksPath)MSBuild.Community.Tasks.Targets')" />
   <Import Project="Aderant.Build.Versioning.targets" />
 
-
-  <Target Name="RestorePackages">
-    <Error Condition="'$(BuildScriptsDirectory)' == ''" Text="No value specified for BuildScriptsDirectory" />
-
-    <Message Text="Setting up build environment from: $(BuildScriptsDirectory) in project $(MSBuildThisFileFullPath)" />
-
-    <Exec Condition="'$(BUILD_BUILDID)' != ''"
-          Command="powershell.exe -NoProfile $(MSBuildThisFileDirectory)..\..\Build\build.ps1"
-          WorkingDirectory="$(BuildScriptsDirectory)..\..\" />
-
-  </Target>
-
   <!--
     ==========================================================================================
       Prepare Build Environment
@@ -83,7 +71,7 @@
     <!-- This is just a stub -->
   </Target>
 
-  <Target Name="PrepareBuildEnvironment" Condition="'$(IsCustomBuild)' != 'true' And '$(CompileBuildSystem)' != 'false'" DependsOnTargets="RestorePackages">
+  <Target Name="PrepareBuildEnvironment" Condition="'$(IsCustomBuild)' != 'true' And '$(CompileBuildSystem)' != 'false'">
     <Error Condition="'$(BuildScriptsDirectory)' == ''" Text="No value specified for BuildScriptsDirectory" />
 
     <Message Text="Setting up build environment from: $(BuildScriptsDirectory) in project $(MSBuildThisFileFullPath)" />
