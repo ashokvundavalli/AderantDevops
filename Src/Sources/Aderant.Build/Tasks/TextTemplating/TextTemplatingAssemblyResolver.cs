@@ -14,6 +14,31 @@ namespace Aderant.Build.Tasks.TextTemplating {
         }
 
         public override bool Execute() {
+            try {
+                // Bit of fun here, Tracker.exe leaves rubbish behind which affects stdout of
+                // other tools. Paket is very sensitive to the output of a NuGet credential provider being correct
+                // so if Tracker.exe barfs one of its many "cannot find RSP" errors into the console
+                // Paket will fail.
+                Microsoft.Build.Utilities.FileTracker.EndTrackingContext();
+                Microsoft.Build.Utilities.FileTracker.StopTrackingAndCleanup();
+
+                foreach (var variable in new[] {
+                             "TRACKER_ROOTFILES",
+                             "TRACKER_TOOLCHAIN",
+                             "TRACKER_ATTACHED",
+                             "TRACKER_TOOL",
+                             "TRACKER_ADDPIDTOTOOLCHAIN",
+                             "TRACKER_INTERMEDIATE",
+                             "TRACKER_RESPONSEFILE",
+                             "TRACKER_ENABLED"
+                         }) {
+
+                    Environment.SetEnvironmentVariable(variable, null, EnvironmentVariableTarget.Process);
+                }
+            } catch (Exception ex) {
+                Log.LogWarning("Unable to stop FileTracker.exe. Exception: {0}", ex.Message);
+            }
+
             return true;
         }
 
