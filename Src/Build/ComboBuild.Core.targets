@@ -132,7 +132,8 @@
     <PropertyGroup>
       <PropertiesCommonToAllProjects Condition="'$(AGENT_BUILDDIRECTORY)' != ''">
         $(PropertiesCommonToAllProjects);
-        PathMap=$(AGENT_BUILDDIRECTORY)=D:\
+        PathMap=$(AGENT_BUILDDIRECTORY)=D:\;
+        TrackFileAccess=false
       </PropertiesCommonToAllProjects>
     </PropertyGroup>
 
