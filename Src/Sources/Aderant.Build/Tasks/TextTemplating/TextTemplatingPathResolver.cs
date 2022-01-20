@@ -89,7 +89,9 @@ namespace Aderant.Build.Tasks.TextTemplating {
                 }
 
                 var fullPathToVisualStudioIntegration = Path.Combine(instance.VisualStudioRootPath, pathToVisualStudioIntegration);
-                Add(visualStudioPathInfo.ReferencePaths, fullPathToVisualStudioIntegration, false);
+                if (!Add(visualStudioPathInfo.ReferencePaths, fullPathToVisualStudioIntegration, false)) {
+                    continue;
+                }
 
                 string[] processors = Directory.GetFileSystemEntries(fullPathToVisualStudioIntegration, "Microsoft.VisualStudio.Modeling.Sdk.DslDefinition.*.dll");
                 foreach (var dsl in processors) {
