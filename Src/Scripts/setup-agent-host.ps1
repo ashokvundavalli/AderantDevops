@@ -401,6 +401,7 @@ process {
         . $PSScriptRoot\configure-disk-device-parameters.ps1
         . $PSScriptRoot\optimize-drives.ps1
         . $PSScriptRoot\Disable-InternetExplorerESC.ps1
+        . $PSScriptRoot\..\Build\Functions\Optimize-BuildEnvironment.ps1 -DisableDefender $true
 
         RunHostCleanUp
 

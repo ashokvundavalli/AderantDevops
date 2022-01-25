@@ -1,4 +1,8 @@
 function Optimize-BuildEnvironment {
+    param(
+        [Parameter(Mandatory=$false)][bool]$DisableDefender = $false
+    )
+
     begin {
         Import-Module 'Defender'
 
@@ -87,7 +91,7 @@ function Optimize-BuildEnvironment {
         }
 
         # When on a server stop defender from scanning as CrowdStrike already provides protection
-        if ($null -ne $Env:AGENT_NAME) {
+        if ($null -ne $Env:AGENT_NAME -or $DisableDefender) {
             Set-MpPreference -DisableRealtimeMonitoring $true
         }
     }

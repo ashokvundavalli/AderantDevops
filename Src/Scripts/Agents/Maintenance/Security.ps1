@@ -43,6 +43,10 @@ function Remove-GroupMembers {
 
             Write-Information -MessageData "Removing user: '$($user.Name)' from group: 'Administrators'."
             Remove-LocalGroupMember -Group 'Administrators' -Member $user.Name
+
+            # Clean up rubbish left behind by nasty Expert tests
+            Get-LocalGroupMember -Group Administrators | Where-Object -FilterScript { $_.Name.Contains("\AUTO_") } | % { Remove-LocalGroupMember -Group Administrators -Member $_ }
+            Get-LocalUser | Where-Object -FilterScript { $_.Name.Contains("AUTO_") } | Remove-LocalUser
         }
     }
 }
