@@ -229,7 +229,7 @@ function LoadLibGit2Sharp([string]$buildToolsDirectory) {
     [void][System.Reflection.Assembly]::LoadFrom([System.IO.Path]::Combine($buildToolsDirectory, "LibGit2Sharp.dll"))
 }
 
-function DownloadPaket([string]$commit) {    
+function DownloadPaket([string]$commit) {
     $bootstrapperDirs = @($assemblyPathRoot, $BuildScriptsDirectory)
 
     $bootstrapper = ""
@@ -263,6 +263,8 @@ function DownloadPaket([string]$commit) {
             if ($outOfDate -or -not $packageDirectoryExists) {
                 [string]$paketVersion = Get-Content -Path $upToDateFiles[0]
                 $action = {
+                    . $PSScriptRoot\Optimize-BuildEnvironment.ps1
+
                     # Download the paket dependency tool
                     Start-Process -FilePath $bootstrapper -ArgumentList $paketVersion -NoNewWindow -PassThru -Wait
                     [void](New-Item -Path $packageDirectory -ItemType 'Directory' -Force)
