@@ -19,6 +19,7 @@ function Optimize-BuildEnvironment {
             "Microsoft.Alm.Shared.RemoteContainer.dll",
             "MSBuild.exe",
             "PowerShell.exe",
+            "paket.exe",
             "ServiceHub.Host.CLR.x86.exe",
             "ServiceHub.Host.Node.x86.exe",
             "ServiceHub.RoslynCodeAnalysisService32.exe",
