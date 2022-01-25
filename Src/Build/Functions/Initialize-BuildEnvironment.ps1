@@ -263,8 +263,6 @@ function DownloadPaket([string]$commit) {
             if ($outOfDate -or -not $packageDirectoryExists) {
                 [string]$paketVersion = Get-Content -Path $upToDateFiles[0]
                 $action = {
-                    . $PSScriptRoot\Optimize-BuildEnvironment.ps1
-
                     # Download the paket dependency tool
                     Start-Process -FilePath $bootstrapper -ArgumentList $paketVersion -NoNewWindow -PassThru -Wait
                     [void](New-Item -Path $packageDirectory -ItemType 'Directory' -Force)
