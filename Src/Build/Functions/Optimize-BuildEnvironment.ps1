@@ -61,20 +61,22 @@ function Optimize-BuildEnvironment {
             return
         }
 
+        $mutextName = "DefenderOptimizationMutex"
+
         # Put a mutex around pokingDefender since it is a machine scope tool
         [System.Threading.Mutex]$mutex = $null
-        $mutexOpened = [System.Threading.Mutex]::TryOpenExisting("DefenderOptimizationMutex", [ref]$mutex)
+        $mutexOpened = [System.Threading.Mutex]::TryOpenExisting($mutextName, [ref]$mutex)
 
         if ($mutexOpened) {
             return
         }
 
-        $startedMutex = [System.Threading.Mutex]::new($false, "DefenderOptimizationMutex")
+        $startedMutex = [System.Threading.Mutex]::new($false, $mutextName)
         # Take ownership of mutex
-        $mutex = [System.Threading.Mutex]::OpenExisting("DefenderOptimizationMutex")
+        $mutex = [System.Threading.Mutex]::OpenExisting($mutextName)
 
         # Prevent GC
-        [System.AppDomain]::CurrentDomain.SetData("DefenderOptimizationMutex", $mutex)
+        [System.AppDomain]::CurrentDomain.SetData($mutextName, $mutex)
 
         if (-not $mutex.WaitOne(100)) {
             return
@@ -82,6 +84,11 @@ function Optimize-BuildEnvironment {
 
         foreach ($proc in $processes) {
             Add-MpPreference -ExclusionProcess $proc -ErrorAction SilentlyContinue
+        }
+
+        # When on a server stop defender from scanning as CrowdStrike already provides protection
+        if ($null -ne $Env:AGENT_NAME) {
+            Set-MpPreference -DisableRealtimeMonitoring $true
         }
     }
 
