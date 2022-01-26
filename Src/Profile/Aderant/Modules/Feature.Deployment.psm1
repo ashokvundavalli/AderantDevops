@@ -8,10 +8,13 @@ function global:Start-DeploymentManager {
         Starts DeploymentManager.exe.
     .PARAMETER deploymentManager
         The full path for DeploymentManager.exe.
+    .PARAMETER AccountsReceivable
+        Will turn on the (feature flagged) AccountsReceivable role to add it to the deployment
     #>
     [CmdletBinding()]
     [Alias('dm')]
     param (
+        [switch]$AccountsReceivable,
         [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$deploymentManager = $global:ShellContext.DeploymentManager
     )
 
@@ -23,6 +26,10 @@ function global:Start-DeploymentManager {
     process {
         if (-not (Test-Path -Path $deploymentManager)) {
             Write-Error "DeploymentManager.exe not located at: '$deploymentManager'."
+        }
+
+        if ($AccountsReceivable.IsPresent) {
+            ((Get-Content -path C:\AderantExpert\Binaries\ExpertSource\accountsreceivable.role.xml) -replace 'mandatory="false"','mandatory="true"') | Set-Content -path C:\AderantExpert\Binaries\ExpertSource\accountsreceivable.role.xml
         }
 
         Write-Information -MessageData 'Starting Deployment Manager...'
