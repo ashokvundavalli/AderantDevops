@@ -89,13 +89,6 @@
     <Message Condition="'$(_IsWorkflowProject)' != 'true'" Importance="high" Text="Skipping web pipeline customizations as this is a workflow project" />
   </Target>
 
-
-  <Target Name="RemoveReferenceBaggageFromWebPackage" AfterTargets="PipelineCollectFilesPhase">
-    <ItemGroup>
-      <FilesForPackagingFromProject Remove="@(FilesForPackagingFromProject)" Condition="%(FilesForPackagingFromProject.FromTarget) == 'CollectFilesFromReference'" />
-    </ItemGroup>
-  </Target>
-
   <!-- Exclude all environment specific files from packaging -->
   <ItemGroup>
     <WebPublishFilesToExcludeItem Include="instance.config" />
@@ -207,5 +200,60 @@
           SkipUnchangedFiles="true" />
 
   </Target>
+
+
+  <Target Name="CopyFilesForPrecompile"
+          AfterTargets="CopyAllFilesToSingleFolderForAspNetCompileMerge"
+          Condition="'$(Configuration)' == 'Release' And '$(PrecompileBeforePublish)' == 'true'">
+
+    <ItemGroup>
+      <RoslynFiles Include="$(OutputPath)\roslyn\*.*" />
+    </ItemGroup>
+
+    <Copy
+        SourceFiles="@(RoslynFiles)"
+        DestinationFolder="$(_PreAspnetCompileMergeSingleTargetFolder)\bin\roslyn" />
+
+  </Target>
+
+
+  <Target Name="CleanUpCopyAllFilesToSingleFolderForMsdeploy" BeforeTargets="CopyAllFilesToSingleFolderForMsdeploy">
+
+    <ItemGroup>
+			<FilesForPackagingFromProject Remove="@(FilesForPackagingFromProject)"
+                                    Condition="'%(FilesForPackagingFromProject.FromTarget)' == 'CollectFilesFromReference' " />
+    </ItemGroup>
+		
+  </Target>
+
+  
+	<!--Clears AspnetCompileMergeIntermediateAssemblyInfo and AssemblyInfoDll so that CleanAspNetCompileMergeTempDirectories does not remove any directories
+	or files, then restores AssemblyInfoDll to be used in AspNetMerge-->
+	<Target Name="ClearAssemblyInfoDllProperty"
+					BeforeTargets="CleanAspNetCompileMergeTempDirectories"
+		      Condition="'$(Configuration)' == 'Release' And '$(PrecompileBeforePublish)' == 'true'">
+		
+		<PropertyGroup>
+			<TempAssemblyInfoDll>$(AssemblyInfoDll)</TempAssemblyInfoDll>
+		  <AspnetCompileMergeIntermediateAssemblyInfo></AspnetCompileMergeIntermediateAssemblyInfo>
+		  <AssemblyInfoDll></AssemblyInfoDll>	
+		</PropertyGroup>
+	
+	  <Message Text="AspnetCompileMergeIntermediateAssemblyInfo has been set to $(AspnetCompileMergeIntermediateAssemblyInfo)" />
+	  <Message Text="AssemblyInfoDll has been set to $(AssemblyInfoDll)" />
+	
+  </Target>
+	
+	<Target Name="RestoreAssemblyInfoDllProperty"
+					AfterTargets="CleanAspNetCompileMergeTempDirectories"
+		      Condition="'$(Configuration)' == 'Release' And '$(PrecompileBeforePublish)' == 'true'">
+		
+	  <PropertyGroup>
+		  <AssemblyInfoDll>$(TempAssemblyInfoDll)</AssemblyInfoDll>	
+	  </PropertyGroup>
+	
+	  <Message Text="AssemblyInfoDll has been reverted to $(AssemblyInfoDll)" />
+	
+	</Target>
 
 </Project>
