@@ -49,9 +49,10 @@
                                         $(MSBuildProjectDirectory)\Scripts\Web.Foundation\**\*;
                                         $(MSBuildProjectDirectory)\Scripts\Web.Presentation\**\" />
     </ItemGroup>
-
-    <ItemGroup>
-      <ExcludeFromPackageFiles Include="$(MSBuildProjectDirectory)\**\ThirdParty.*\**\*.dll;
+		
+		<ItemGroup>
+			<ExcludeFromPackageFiles Include="$(MSBuildProjectDirectory)\bin\roslyn\*.*;
+                                        $(MSBuildProjectDirectory)\**\ThirdParty.*\**\*.dll;
                                         $(MSBuildProjectDirectory)\**\ThirdParty.*\**\*.exe;
                                         $(MSBuildProjectDirectory)\**\ThirdParty.*\**\*.pdb;
                                         $(MSBuildProjectDirectory)\**\ThirdParty.*\**\*license.txt;
@@ -201,9 +202,9 @@
 
   </Target>
 
-
+	
   <Target Name="CopyFilesForPrecompile"
-          AfterTargets="CopyAllFilesToSingleFolderForAspNetCompileMerge"
+          BeforeTargets="AspNetPreCompile"
           Condition="'$(Configuration)' == 'Release' And '$(PrecompileBeforePublish)' == 'true'">
 
     <ItemGroup>
@@ -215,12 +216,12 @@
         DestinationFolder="$(_PreAspnetCompileMergeSingleTargetFolder)\bin\roslyn" />
 
   </Target>
-
-
+	
+	
   <Target Name="CleanUpCopyAllFilesToSingleFolderForMsdeploy" BeforeTargets="CopyAllFilesToSingleFolderForMsdeploy">
 
     <ItemGroup>
-			<FilesForPackagingFromProject Remove="@(FilesForPackagingFromProject)"
+      <FilesForPackagingFromProject Remove="@(FilesForPackagingFromProject)"
                                     Condition="'%(FilesForPackagingFromProject.FromTarget)' == 'CollectFilesFromReference' " />
     </ItemGroup>
 		
@@ -229,31 +230,31 @@
   
 	<!--Clears AspnetCompileMergeIntermediateAssemblyInfo and AssemblyInfoDll so that CleanAspNetCompileMergeTempDirectories does not remove any directories
 	or files, then restores AssemblyInfoDll to be used in AspNetMerge-->
-	<Target Name="ClearAssemblyInfoDllProperty"
-					BeforeTargets="CleanAspNetCompileMergeTempDirectories"
-		      Condition="'$(Configuration)' == 'Release' And '$(PrecompileBeforePublish)' == 'true'">
+  <Target Name="ClearAssemblyInfoDllProperty"
+          BeforeTargets="CleanAspNetCompileMergeTempDirectories"
+          Condition="'$(Configuration)' == 'Release' And '$(PrecompileBeforePublish)' == 'true'">
 		
-		<PropertyGroup>
-			<TempAssemblyInfoDll>$(AssemblyInfoDll)</TempAssemblyInfoDll>
-		  <AspnetCompileMergeIntermediateAssemblyInfo></AspnetCompileMergeIntermediateAssemblyInfo>
-		  <AssemblyInfoDll></AssemblyInfoDll>	
-		</PropertyGroup>
+    <PropertyGroup>
+      <TempAssemblyInfoDll>$(AssemblyInfoDll)</TempAssemblyInfoDll>
+      <AspnetCompileMergeIntermediateAssemblyInfo></AspnetCompileMergeIntermediateAssemblyInfo>
+      <AssemblyInfoDll></AssemblyInfoDll>	
+    </PropertyGroup>
 	
-	  <Message Text="AspnetCompileMergeIntermediateAssemblyInfo has been set to $(AspnetCompileMergeIntermediateAssemblyInfo)" />
-	  <Message Text="AssemblyInfoDll has been set to $(AssemblyInfoDll)" />
+    <Message Text="AspnetCompileMergeIntermediateAssemblyInfo has been set to $(AspnetCompileMergeIntermediateAssemblyInfo)" />
+    <Message Text="AssemblyInfoDll has been set to $(AssemblyInfoDll)" />
 	
   </Target>
 	
-	<Target Name="RestoreAssemblyInfoDllProperty"
-					AfterTargets="CleanAspNetCompileMergeTempDirectories"
-		      Condition="'$(Configuration)' == 'Release' And '$(PrecompileBeforePublish)' == 'true'">
+  <Target Name="RestoreAssemblyInfoDllProperty"
+          AfterTargets="CleanAspNetCompileMergeTempDirectories"
+          Condition="'$(Configuration)' == 'Release' And '$(PrecompileBeforePublish)' == 'true'">
 		
-	  <PropertyGroup>
-		  <AssemblyInfoDll>$(TempAssemblyInfoDll)</AssemblyInfoDll>	
-	  </PropertyGroup>
+    <PropertyGroup>
+      <AssemblyInfoDll>$(TempAssemblyInfoDll)</AssemblyInfoDll>	
+    </PropertyGroup>
 	
-	  <Message Text="AssemblyInfoDll has been reverted to $(AssemblyInfoDll)" />
+    <Message Text="AssemblyInfoDll has been reverted to $(AssemblyInfoDll)" />
 	
-	</Target>
+  </Target>
 
 </Project>
