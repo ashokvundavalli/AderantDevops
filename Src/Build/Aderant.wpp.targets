@@ -207,8 +207,8 @@
           BeforeTargets="AspNetPreCompile"
           Condition="'$(Configuration)' == 'Release' And '$(PrecompileBeforePublish)' == 'true'">
 
-    <ItemGroup>
-      <RoslynFiles Include="$(OutputPath)\roslyn\*.*" />
+    <ItemGroup> 
+      <RoslynFiles Include="..\..\packages\development\Microsoft.CodeDom.Providers.DotNetCompilerPlatform\tools\Roslyn472\*.*" />
     </ItemGroup>
 
     <Copy
