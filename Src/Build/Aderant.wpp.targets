@@ -208,7 +208,7 @@
           Condition="'$(Configuration)' == 'Release' And '$(PrecompileBeforePublish)' == 'true'">
 
     <ItemGroup> 
-      <RoslynFiles Include="..\..\packages\development\Microsoft.CodeDom.Providers.DotNetCompilerPlatform\tools\Roslyn472\*.*" />
+      <RoslynFiles Include="..\..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform\tools\Roslyn472\*.*" />
     </ItemGroup>
 
     <Copy
