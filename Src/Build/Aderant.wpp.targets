@@ -1,260 +1,261 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-  <Import Project="$(MSBuildThisFileDirectory)Aderant.wpp.common.targets" Condition="'$(WppCommonTargetsImported)' != 'true'" />
-  <Import Project="$(MSBuildThisFileDirectory)Tasks\MSBuild.Community.Tasks\MSBuild.Community.Tasks.Targets" Condition="'$(MSBuildCommunityTasksLib)' == '' And '$(BuildingInsideVisualStudio)' != 'true'" />
+	<Import Project="$(MSBuildThisFileDirectory)Aderant.wpp.common.targets" Condition="'$(WppCommonTargetsImported)' != 'true'" />
+	<Import Project="$(MSBuildThisFileDirectory)Tasks\MSBuild.Community.Tasks\MSBuild.Community.Tasks.Targets" Condition="'$(MSBuildCommunityTasksLib)' == '' And '$(BuildingInsideVisualStudio)' != 'true'" />
 
-  <PropertyGroup>
-    <WppTargetsImported>true</WppTargetsImported>
+	<PropertyGroup>
+		<WppTargetsImported>true</WppTargetsImported>
 
-    <!-- This is the target file to customize how we deploy the files, here we customize the standard MSDeploy packaging -->
-    <DeployTargetFile>$(MSBuildThisFileDirectory)Aderant.wpp.deploy.targets</DeployTargetFile>
+		<!-- This is the target file to customize how we deploy the files, here we customize the standard MSDeploy packaging -->
+		<DeployTargetFile>$(MSBuildThisFileDirectory)Aderant.wpp.deploy.targets</DeployTargetFile>
 
-    <!-- EnableExcludeFilesByExtension prevents Microsoft.Web.Publishing.targets from excluding .tt files-->
-    <EnableExcludeFilesByExtension Condition="'$(EnableExcludeFilesByExtension)' == ''">true</EnableExcludeFilesByExtension>
-    <FilesToIncludeForPublish>OnlyFilesToRunTheApp</FilesToIncludeForPublish>
-    <GenerateSampleDeployScript>false</GenerateSampleDeployScript>
-    <PublishParametersFile>false</PublishParametersFile>
-    <PackageParametersFile>false</PackageParametersFile>
-    <DeployOnBuild>true</DeployOnBuild>
-    <DefaultPackageOutputDir>$(BinModuleDirectory)</DefaultPackageOutputDir>
-    <DesktopBuildPackageLocation>$(BinModuleDirectory)</DesktopBuildPackageLocation>
+		<!-- EnableExcludeFilesByExtension prevents Microsoft.Web.Publishing.targets from excluding .tt files-->
+		<EnableExcludeFilesByExtension Condition="'$(EnableExcludeFilesByExtension)' == ''">true</EnableExcludeFilesByExtension>
+		<FilesToIncludeForPublish>OnlyFilesToRunTheApp</FilesToIncludeForPublish>
+		<GenerateSampleDeployScript>false</GenerateSampleDeployScript>
+		<PublishParametersFile>false</PublishParametersFile>
+		<PackageParametersFile>false</PackageParametersFile>
+		<DeployOnBuild>true</DeployOnBuild>
+		<DefaultPackageOutputDir>$(BinModuleDirectory)</DefaultPackageOutputDir>
+		<DesktopBuildPackageLocation>$(BinModuleDirectory)</DesktopBuildPackageLocation>
 
-    <AutoParameterizationWebConfigConnectionStrings>false</AutoParameterizationWebConfigConnectionStrings>
-    <InsertAdditionalWebCofigConnectionStrings>false</InsertAdditionalWebCofigConnectionStrings>
-  </PropertyGroup>
-
-
-  <PropertyGroup>
-    <ExcludeFilesByExtensionDependsOn>
-      $(ExcludeFilesByExtensionDependsOn);
-      GenerateWebPublishExtnsionsToExcludeItem
-    </ExcludeFilesByExtensionDependsOn>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <ExcludeFilesFromPackageDependsOn>
-      $(ExcludeFilesFromPackageDependsOn);
-      GenerateExcludeFromPackageFiles;
-      ExcludeFilesByName;
-      ExcludeTestFiles;
-    </ExcludeFilesFromPackageDependsOn>
-  </PropertyGroup>
+		<AutoParameterizationWebConfigConnectionStrings>false</AutoParameterizationWebConfigConnectionStrings>
+		<InsertAdditionalWebCofigConnectionStrings>false</InsertAdditionalWebCofigConnectionStrings>
+	</PropertyGroup>
 
 
-  <Target Name="GenerateExcludeFromPackageFiles">
-    <ItemGroup>
-      <ExcludeFromPackageFiles Condition="'$(EnableDefaultPackagingExclusions)' == 'true'"
+	<PropertyGroup>
+		<ExcludeFilesByExtensionDependsOn>
+			$(ExcludeFilesByExtensionDependsOn);
+			GenerateWebPublishExtnsionsToExcludeItem
+		</ExcludeFilesByExtensionDependsOn>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<ExcludeFilesFromPackageDependsOn>
+			$(ExcludeFilesFromPackageDependsOn);
+			GenerateExcludeFromPackageFiles;
+			ExcludeFilesByName;
+			ExcludeTestFiles;
+		</ExcludeFilesFromPackageDependsOn>
+	</PropertyGroup>
+
+
+	<Target Name="GenerateExcludeFromPackageFiles">
+		<ItemGroup>
+			<ExcludeFromPackageFiles Condition="'$(EnableDefaultPackagingExclusions)' == 'true'"
                                Include="$(MSBuildProjectDirectory)\Scripts\ThirdParty.*\**\*;
                                         $(MSBuildProjectDirectory)\Scripts\Web.Foundation\**\*;
                                         $(MSBuildProjectDirectory)\Scripts\Web.Presentation\**\" />
-    </ItemGroup>
-		
+		</ItemGroup>
+
 		<ItemGroup>
-			<ExcludeFromPackageFiles Include="$(MSBuildProjectDirectory)\bin\roslyn\*.*;
-                                        $(MSBuildProjectDirectory)\**\ThirdParty.*\**\*.dll;
+			<ExcludeFromPackageFiles Include="$(MSBuildProjectDirectory)\**\ThirdParty.*\**\*.dll;
                                         $(MSBuildProjectDirectory)\**\ThirdParty.*\**\*.exe;
                                         $(MSBuildProjectDirectory)\**\ThirdParty.*\**\*.pdb;
                                         $(MSBuildProjectDirectory)\**\ThirdParty.*\**\*license.txt;
                                         $(MSBuildProjectDirectory)\**\ThirdParty.*\**\*licenses.txt;
                                         $(MSBuildProjectDirectory)\**\ThirdParty.*\**\acknowledgements.txt;
                                         $(MSBuildProjectDirectory)\**\ThirdParty.*\**\EULA.*" />
-    </ItemGroup>
-  </Target>
+		</ItemGroup>
+	</Target>
 
 
-  <Target Name="GenerateWebPublishExtnsionsToExcludeItem">
-    <ItemGroup>
-      <!--The standard item group contains .tt which we want to preserve -->
-      <WebPublishExtnsionsToExcludeItem Remove="@(WebPublishExtensionsToExclude)" />
-    </ItemGroup>
+	<Target Name="GenerateWebPublishExtnsionsToExcludeItem">
+		<ItemGroup>
+			<!--The standard item group contains .tt which we want to preserve -->
+			<WebPublishExtnsionsToExcludeItem Remove="@(WebPublishExtensionsToExclude)" />
+		</ItemGroup>
 
-    <ItemGroup>
-      <!-- Yes this group is actually misspelt in the Microsoft targets file -->
-      <WebPublishExtnsionsToExcludeItem Include=".exe" />
-      <WebPublishExtnsionsToExcludeItem Include=".gitignore" />
-      <WebPublishExtnsionsToExcludeItem Include=".less" />
-      <WebPublishExtnsionsToExcludeItem Include=".d.ts" />
-      <WebPublishExtnsionsToExcludeItem Include=".map" />
-    </ItemGroup>
-  </Target>
-
-
-  <Target Name="IsWorkflowProject" BeforeTargets="AfterCollectFilesFromReference">
-    <PropertyGroup>
-      <_IsWorkflowProject>false</_IsWorkflowProject>
-      <_IsWorkflowProject Condition="$(AssemblyName.Contains('Workflow'))">true</_IsWorkflowProject>
-      <OnAfterCollectFilesFromReference Condition="'$(_IsWorkflowProject)' != 'true'">$(OnAfterCollectFilesFromReference);CustomAfterCollectFilesFromReference</OnAfterCollectFilesFromReference>
-    </PropertyGroup>
-
-    <Message Condition="'$(_IsWorkflowProject)' != 'true'" Importance="high" Text="Skipping web pipeline customizations as this is a workflow project" />
-  </Target>
-
-  <!-- Exclude all environment specific files from packaging -->
-  <ItemGroup>
-    <WebPublishFilesToExcludeItem Include="instance.config" />
-    <WebPublishFilesToExcludeItem Include="bindings.config" />
-    <WebPublishFilesToExcludeItem Include="clients.config" />
-    <WebPublishFilesToExcludeItem Include="extensions.config" />
-    <WebPublishFilesToExcludeItem Include="packages.config" />
-    <WebPublishFilesToExcludeItem Include="BuildInfo.config" />
-    <WebPublishFilesToExcludeItem Include="FrameworkKey.snk" />
-    <WebPublishFilesToExcludeItem Include="tsconfig.json" />
-    <WebPublishFilesToExcludeItem Include="tslint.json" />
-    <WebPublishFilesToExcludeItem Include="bundle.custom.tsconfig.json" />
-  </ItemGroup>
+		<ItemGroup>
+			<!-- Yes this group is actually misspelt in the Microsoft targets file -->
+			<WebPublishExtnsionsToExcludeItem Include=".exe" />
+			<WebPublishExtnsionsToExcludeItem Include=".gitignore" />
+			<WebPublishExtnsionsToExcludeItem Include=".less" />
+			<WebPublishExtnsionsToExcludeItem Include=".d.ts" />
+			<WebPublishExtnsionsToExcludeItem Include=".map" />
+		</ItemGroup>
+	</Target>
 
 
-  <Target Name="ExcludeFilesByName"
+	<Target Name="IsWorkflowProject" BeforeTargets="AfterCollectFilesFromReference">
+		<PropertyGroup>
+			<_IsWorkflowProject>false</_IsWorkflowProject>
+			<_IsWorkflowProject Condition="$(AssemblyName.Contains('Workflow'))">true</_IsWorkflowProject>
+			<OnAfterCollectFilesFromReference Condition="'$(_IsWorkflowProject)' != 'true'">$(OnAfterCollectFilesFromReference);CustomAfterCollectFilesFromReference</OnAfterCollectFilesFromReference>
+		</PropertyGroup>
+
+		<Message Condition="'$(_IsWorkflowProject)' != 'true'" Importance="high" Text="Skipping web pipeline customizations as this is a workflow project" />
+	</Target>
+
+	<!-- Exclude all environment specific files from packaging -->
+	<ItemGroup>
+		<WebPublishFilesToExcludeItem Include="instance.config" />
+		<WebPublishFilesToExcludeItem Include="bindings.config" />
+		<WebPublishFilesToExcludeItem Include="clients.config" />
+		<WebPublishFilesToExcludeItem Include="extensions.config" />
+		<WebPublishFilesToExcludeItem Include="packages.config" />
+		<WebPublishFilesToExcludeItem Include="BuildInfo.config" />
+		<WebPublishFilesToExcludeItem Include="FrameworkKey.snk" />
+		<WebPublishFilesToExcludeItem Include="tsconfig.json" />
+		<WebPublishFilesToExcludeItem Include="tslint.json" />
+		<WebPublishFilesToExcludeItem Include="bundle.custom.tsconfig.json" />
+	</ItemGroup>
+
+
+	<Target Name="ExcludeFilesByName"
           Outputs="%(WebPublishFilesToExcludeItem.Identity)">
 
-    <!-- this target will execute once per value in @(WebPublishFilesToExcludeItem) -->
-    <PropertyGroup>
-      <_FileToExclude>%(WebPublishFilesToExcludeItem.Identity)</_FileToExclude>
-    </PropertyGroup>
+		<!-- this target will execute once per value in @(WebPublishFilesToExcludeItem) -->
+		<PropertyGroup>
+			<_FileToExclude>%(WebPublishFilesToExcludeItem.Identity)</_FileToExclude>
+		</PropertyGroup>
 
-    <FindInList CaseSensitive="false"
+		<FindInList CaseSensitive="false"
                 ItemSpecToFind="$(_FileToExclude)"
                 MatchFileNameOnly="true"
                 List="@(FilesForPackagingFromProject)">
-      <Output TaskParameter="ItemFound" ItemName="_PackageFileToExcludeItem" />
-    </FindInList>
+			<Output TaskParameter="ItemFound" ItemName="_PackageFileToExcludeItem" />
+		</FindInList>
 
-    <ItemGroup>
-      <FilesForPackagingFromProject Remove="@(_PackageFileToExcludeItem)" />
-    </ItemGroup>
+		<ItemGroup>
+			<FilesForPackagingFromProject Remove="@(_PackageFileToExcludeItem)" />
+		</ItemGroup>
 
-  </Target>
+	</Target>
 
 
-  <Target Name="ExcludeTestFiles">
+	<Target Name="ExcludeTestFiles">
 
-    <FindUnderPath Files="@(FilesForPackagingFromProject)"
+		<FindUnderPath Files="@(FilesForPackagingFromProject)"
                    Path="$(MSBuildProjectDirectory)\Tests">
-      <Output TaskParameter="InPath" ItemName="FilesFoundInPath" />
-    </FindUnderPath>
+			<Output TaskParameter="InPath" ItemName="FilesFoundInPath" />
+		</FindUnderPath>
 
-    <ItemGroup>
-      <!--Keep JS files as these are usually generated -->
-      <_Filtered Include="@(FilesFoundInPath)" Condition="'%(Extension)' != '.js'" />
-    </ItemGroup>
+		<ItemGroup>
+			<!--Keep JS files as these are usually generated -->
+			<_Filtered Include="@(FilesFoundInPath)" Condition="'%(Extension)' != '.js'" />
+		</ItemGroup>
 
-    <Message Text="Excluding test files from web package $(MSBuildProjectDirectory) -> @(FilesFoundInPath)" />
+		<Message Text="Excluding test files from web package $(MSBuildProjectDirectory) -> @(FilesFoundInPath)" />
 
-    <ItemGroup>
-      <FilesForPackagingFromProject Remove="@(_Filtered)" />
-    </ItemGroup>
+		<ItemGroup>
+			<FilesForPackagingFromProject Remove="@(_Filtered)" />
+		</ItemGroup>
 
-  </Target>
-
-
-  <!-- This target replaces the full path to source that MSDeploy typically uses -->
-  <PropertyGroup>
-    <PackagePath Condition=" '$(PackagePath)'=='' ">PackageTmp</PackagePath>
-    <EnableAddReplaceToUpdatePackagePath Condition=" '$(EnableAddReplaceToUpdatePackagePath)'=='' ">true</EnableAddReplaceToUpdatePackagePath>
-
-    <PackageDependsOn>
-      $(PackageDependsOn);
-      AddReplaceRuleForAppPath;
-    </PackageDependsOn>
-  </PropertyGroup>
+	</Target>
 
 
-  <Target Name="AddReplaceRuleForAppPath" Condition="'$(EnableAddReplaceToUpdatePackagePath)'=='true'">
+	<!-- This target replaces the full path to source that MSDeploy typically uses -->
+	<PropertyGroup>
+		<PackagePath Condition=" '$(PackagePath)'=='' ">PackageTmp</PackagePath>
+		<EnableAddReplaceToUpdatePackagePath Condition=" '$(EnableAddReplaceToUpdatePackagePath)'=='' ">true</EnableAddReplaceToUpdatePackagePath>
 
-    <PropertyGroup>
-      <_PkgPathFull>$([System.IO.Path]::GetFullPath($(WPPAllFilesInSingleFolder)))</_PkgPathFull>
-    </PropertyGroup>
-
-    <!-- escape the text into a regex -->
-    <EscapeTextForRegularExpressions Text="$(_PkgPathFull)">
-      <Output TaskParameter="Result" PropertyName="_PkgPathRegex" />
-    </EscapeTextForRegularExpressions>
-
-    <!-- add the replace rule to update the path -->
-    <ItemGroup>
-      <MsDeployReplaceRules Include="replaceFullPath">
-        <Match>$(_PkgPathRegex)</Match>
-        <Replace>$(PackagePath)</Replace>
-      </MsDeployReplaceRules>
-    </ItemGroup>
-
-  </Target>
+		<PackageDependsOn>
+			$(PackageDependsOn);
+			AddReplaceRuleForAppPath;
+		</PackageDependsOn>
+	</PropertyGroup>
 
 
-  <Target Name="DeleteManifest" AfterTargets="PackageUsingManifest">
-    <!-- Remove Web.xyz.SourceManifest.xml from the output directory as we don't need it -->
-    <Delete Files="$(PackageSourceManifest)"
+	<Target Name="AddReplaceRuleForAppPath" Condition="'$(EnableAddReplaceToUpdatePackagePath)'=='true'">
+
+		<PropertyGroup>
+			<_PkgPathFull>$([System.IO.Path]::GetFullPath($(WPPAllFilesInSingleFolder)))</_PkgPathFull>
+		</PropertyGroup>
+
+		<!-- escape the text into a regex -->
+		<EscapeTextForRegularExpressions Text="$(_PkgPathFull)">
+			<Output TaskParameter="Result" PropertyName="_PkgPathRegex" />
+		</EscapeTextForRegularExpressions>
+
+		<!-- add the replace rule to update the path -->
+		<ItemGroup>
+			<MsDeployReplaceRules Include="replaceFullPath">
+				<Match>$(_PkgPathRegex)</Match>
+				<Replace>$(PackagePath)</Replace>
+			</MsDeployReplaceRules>
+		</ItemGroup>
+
+	</Target>
+
+
+	<Target Name="DeleteManifest" AfterTargets="PackageUsingManifest">
+		<!-- Remove Web.xyz.SourceManifest.xml from the output directory as we don't need it -->
+		<Delete Files="$(PackageSourceManifest)"
             Condition="'$(PackageSourceManifest)' != ''"
             ContinueOnError="true" />
-  </Target>
+	</Target>
 
 
-  <Target Name="ReplicateWebModuleAssemblies"
+	<Target Name="ReplicateWebModuleAssemblies"
           AfterTargets="CopyFilesToOutputDirectory"
           Condition="'$(SharedDependencyDirectory)' != ''">
 
-    <Message Text="Replicating web assemblies to shared directories" />
+		<Message Text="Replicating web assemblies to shared directories" />
 
-    <Copy SourceFiles="@(IntermediateAssembly)"
+		<Copy SourceFiles="@(IntermediateAssembly)"
           DestinationFolder="$(SharedDependencyDirectory)"
           SkipUnchangedFiles="true" />
 
-  </Target>
+	</Target>
 
-	
-  <Target Name="CopyFilesForPrecompile"
+
+	<Target Name="CopyFilesForPrecompile"
           BeforeTargets="AspNetPreCompile"
           Condition="'$(Configuration)' == 'Release' And '$(PrecompileBeforePublish)' == 'true'">
 
-    <ItemGroup> 
-      <RoslynFiles Include="..\..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform\tools\Roslyn472\*.*" />
-    </ItemGroup>
+		<ItemGroup>
+			<RoslynFiles Include="..\..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform\tools\Roslyn472\*.*" />
+		</ItemGroup>
 
-    <Copy
+		<Copy
         SourceFiles="@(RoslynFiles)"
         DestinationFolder="$(_PreAspnetCompileMergeSingleTargetFolder)\bin\roslyn" />
 
-  </Target>
-	
-	
-  <Target Name="CleanUpCopyAllFilesToSingleFolderForMsdeploy" BeforeTargets="CopyAllFilesToSingleFolderForMsdeploy">
+	</Target>
 
-    <ItemGroup>
-      <FilesForPackagingFromProject Remove="@(FilesForPackagingFromProject)"
+
+	<Target Name="CleanUpCopyAllFilesToSingleFolderForMsdeploy" BeforeTargets="CopyAllFilesToSingleFolderForMsdeploy">
+
+		<ItemGroup>
+			<FilesForPackagingFromProject Remove="@(FilesForPackagingFromProject)"
                                     Condition="'%(FilesForPackagingFromProject.FromTarget)' == 'CollectFilesFromReference' " />
-    </ItemGroup>
-		
-  </Target>
+			<FilesForPackagingFromProject Remove="@(FilesForPackagingFromProject)"
+                                    Condition="'%(FilesForPackagingFromProject.FromTarget)' == 'IncludeRoslynCompilerFilesToFilesForPackagingFromProject' " />
+		</ItemGroup>
 
-  
+	</Target>
+
+
 	<!--Clears AspnetCompileMergeIntermediateAssemblyInfo and AssemblyInfoDll so that CleanAspNetCompileMergeTempDirectories does not remove any directories
 	or files, then restores AssemblyInfoDll to be used in AspNetMerge-->
-  <Target Name="ClearAssemblyInfoDllProperty"
+	<Target Name="ClearAssemblyInfoDllProperty"
           BeforeTargets="CleanAspNetCompileMergeTempDirectories"
           Condition="'$(Configuration)' == 'Release' And '$(PrecompileBeforePublish)' == 'true'">
-		
-    <PropertyGroup>
-      <TempAssemblyInfoDll>$(AssemblyInfoDll)</TempAssemblyInfoDll>
-      <AspnetCompileMergeIntermediateAssemblyInfo></AspnetCompileMergeIntermediateAssemblyInfo>
-      <AssemblyInfoDll></AssemblyInfoDll>	
-    </PropertyGroup>
-	
-    <Message Text="AspnetCompileMergeIntermediateAssemblyInfo has been set to $(AspnetCompileMergeIntermediateAssemblyInfo)" />
-    <Message Text="AssemblyInfoDll has been set to $(AssemblyInfoDll)" />
-	
-  </Target>
-	
-  <Target Name="RestoreAssemblyInfoDllProperty"
+
+		<PropertyGroup>
+			<TempAssemblyInfoDll>$(AssemblyInfoDll)</TempAssemblyInfoDll>
+			<AspnetCompileMergeIntermediateAssemblyInfo></AspnetCompileMergeIntermediateAssemblyInfo>
+			<AssemblyInfoDll></AssemblyInfoDll>
+		</PropertyGroup>
+
+		<Message Text="AspnetCompileMergeIntermediateAssemblyInfo has been set to $(AspnetCompileMergeIntermediateAssemblyInfo)" />
+		<Message Text="AssemblyInfoDll has been set to $(AssemblyInfoDll)" />
+
+	</Target>
+
+	<Target Name="RestoreAssemblyInfoDllProperty"
           AfterTargets="CleanAspNetCompileMergeTempDirectories"
           Condition="'$(Configuration)' == 'Release' And '$(PrecompileBeforePublish)' == 'true'">
-		
-    <PropertyGroup>
-      <AssemblyInfoDll>$(TempAssemblyInfoDll)</AssemblyInfoDll>	
-    </PropertyGroup>
-	
-    <Message Text="AssemblyInfoDll has been reverted to $(AssemblyInfoDll)" />
-	
-  </Target>
+
+		<PropertyGroup>
+			<AssemblyInfoDll>$(TempAssemblyInfoDll)</AssemblyInfoDll>
+		</PropertyGroup>
+
+		<Message Text="AssemblyInfoDll has been reverted to $(AssemblyInfoDll)" />
+
+	</Target>
 
 </Project>
