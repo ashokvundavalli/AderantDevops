@@ -5,7 +5,6 @@ using UnitTest.Aderant.Build.Analyzer.Verifiers;
 namespace UnitTest.Aderant.Build.Analyzer.Tests {
     [TestClass]
     public class SqlInjectionErrorTests : AderantCodeFixVerifier {
-        #region Constructors
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SqlInjectionErrorTests" /> class.
@@ -22,15 +21,7 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests {
             : base(injectedRules) {
         }
 
-        #endregion Constructors
-
-        #region Properties
-
         protected override RuleBase Rule => new SqlInjectionErrorRule();
-
-        #endregion Properties
-
-        #region Tests: Command Text
 
         [TestMethod]
         public void SqlInjectionError_CommandText_MethodParameter_Diagnostic_MutableData() {
@@ -222,10 +213,6 @@ namespace Test {
             VerifyCSharpDiagnostic(test);
         }
 
-        #endregion Tests: Command Text
-
-        #region Tests: System.Data
-
         [TestMethod]
         public void SqlInjectionError_System_Data_Common_DbCommand() {
             const string test = @"
@@ -332,10 +319,6 @@ namespace System.Data {
             VerifyCSharpDiagnostic(test, GetDiagnostic(13, 21));
         }
 
-        #endregion Tests: System.Data
-
-        #region Tests: System.SqlClient
-
         [TestMethod]
         public void SqlInjectionError_System_SqlClient_SqlCommand() {
             const string test = @"
@@ -388,10 +371,6 @@ namespace System.Data.SqlClient {
 
             VerifyCSharpDiagnostic(test, GetDiagnostic(13, 21));
         }
-
-        #endregion Tests: System.SqlClient
-
-        #region Tests: String Literals
 
         [TestMethod]
         public void SqlInjectionError_StringLiteral_And_NonConstLocalVariable() {
@@ -495,10 +474,6 @@ namespace System.Data {
             VerifyCSharpDiagnostic(test, GetDiagnostic(11, 21));
         }
 
-        #endregion Tests: String Literals
-
-        #region Tests: No Diagnostic
-
         [TestMethod]
         public void SqlInjectionError_NoDiagnostic() {
             const string test = @"
@@ -575,13 +550,98 @@ namespace Test {
     }
 }
 ";
-
             VerifyCSharpDiagnostic(test);
         }
 
-        #endregion Tests: No Diagnostic
+        [TestMethod]
+        public void SqlInjectionError_new_object_no_diagnostic()
+        {
+            const string test = @"
+using System.Data;
+using System.Data.SqlClient;
 
-        #region Tests: New SQL Command
+namespace Test {
+    internal sealed class SqlDbCommand : DbCommand {
+        private readonly SqlCommand command = new SqlCommand();
+    }
+}
+";
+            VerifyCSharpDiagnostic(test);
+        }
+
+        [TestMethod]
+        public void Literal_string_passed_to_function()
+        {
+            VerifyCSharpDiagnostic(SqlResources.Literal_string_passed_to_function);
+        }
+
+        [TestMethod]
+        public void Mutable_string_passed_to_function()
+        {
+            VerifyCSharpDiagnostic(SqlResources.Mutable_string_passed_to_function, GetDiagnostic(25, 38));
+        }
+
+        [TestMethod]
+        public void Mutable_string_passed_to_function_with_parameters_reports_no_diagnostic()
+        {
+            VerifyCSharpDiagnostic(SqlResources.Mutable_string_passed_to_function_with_parameters);
+        }
+
+        [TestMethod]
+        public void SqlCommand_using_sp_executesql_parameter_insert_reports_no_diagnostic()
+        {
+            VerifyCSharpDiagnostic(SqlResources.SqlCommand_using_sp_executesql_parameter_insert_reports_no_diagnostic);
+        }
+
+        [TestMethod]
+        public void SqlCommand_using_ctor_and_sp_executesql_reports_no_diagnostic()
+        {
+            VerifyCSharpDiagnostic(SqlResources.SqlCommand_using_ctor_and_sp_executesql_reports_no_diagnostic);
+        }
+
+        [TestMethod]
+        public void SqlCommand_using_sp_executesql_reports_no_diagnostic()
+        {
+            VerifyCSharpDiagnostic(SqlResources.SqlCommand_using_sp_executesql_reports_no_diagnostic);
+        }
+
+
+        [TestMethod]
+        public void SqlCommand_using_sp_executesql_parameter_add_reports_no_diagnostic()
+        {
+            VerifyCSharpDiagnostic(SqlResources.SqlCommand_using_sp_executesql_parameter_add_reports_no_diagnostic);
+        }
+
+        [TestMethod]
+        public void SqlCommand_using_sp_executesql_parameter_add_on_different_reference_reports_diagnostic()
+        {
+            const string test = @"
+using System.Data;
+using System.Data.SqlClient;
+
+namespace Test {
+    public class Program {
+        
+        private string myVariable = null;
+
+        public void Foo() {
+                    var commandText = ""abc"" + myVariable;
+                    using (var connection = new SqlConnection(""SomeConnectionString"")) {
+                        using (var command = connection.CreateCommand()) {
+                            command.CommandText = commandText;
+                            var parameter = command.CreateParameter();
+                            command1.Parameters.Add(parameter);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(test, GetDiagnostic(14, 29));
+        }
 
         [TestMethod]
         public void SqlInjectionError_NewSqlCommand_Diagnostic() {
@@ -858,7 +918,7 @@ namespace Test {
 }
 ";
 
-            VerifyCSharpDiagnostic(test, GetDiagnostic(16, 23));
+            VerifyCSharpDiagnostic(test);
         }
 
         [TestMethod]
@@ -894,10 +954,6 @@ namespace Test {
 
             VerifyCSharpDiagnostic(test);
         }
-
-        #endregion Tests: New SQL Command
-
-        #region Tests: SQL Query
 
         [TestMethod]
         public void SqlInjectionError_SqlQuery_Error() {
@@ -954,10 +1010,6 @@ namespace System.Data.Entity {
             VerifyCSharpDiagnostic(test);
         }
 
-        #endregion Tests: SQL Query
-
-        #region Tests: Conditional Expression
-
         [TestMethod]
         public void SqlInjectionError_ConditionalExpression_Diagnostic() {
             const string test = @"
@@ -1004,10 +1056,6 @@ namespace Test {
 
             VerifyCSharpDiagnostic(test);
         }
-
-        #endregion Tests: Conditional Expression
-
-        #region Tests: Properties
 
         [TestMethod]
         public void SqlInjectionError_Property_NoDiagnostic() {
@@ -1230,10 +1278,6 @@ namespace TestApp.Properties {
 
             VerifyCSharpDiagnostic(test);
         }
-
-        #endregion Tests: Properties
-
-        #region Tests: Non-Constant Assignment
 
         [TestMethod]
         public void SqlInjectionError_NonConstantAssignment_DataImmutable() {
@@ -1493,7 +1537,7 @@ namespace Test {
 
         public static void Foo(string input, bool testBool) {
             string test = ""Value1"";
-            
+
             if(testBool){
                 test = test + "" Value2"";
             }
@@ -1515,6 +1559,5 @@ namespace System.Data.Entity {
 
         }
 
-        #endregion Tests: Non-Constant Assignment
     }
 }

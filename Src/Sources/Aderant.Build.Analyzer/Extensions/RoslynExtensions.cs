@@ -8,13 +8,15 @@ namespace Aderant.Build.Analyzer.Extensions {
     /// Extension methods for Roslyn types.
     /// </summary>
     public static class RoslynExtensions {
+
         #region Types
 
         /// <summary>
-        /// Data bucket containing pertinent information about an Analysis Context.
+        /// Information about a syntax object that exists within an MSBuild project
         /// </summary>
-        public struct NodeData {
-            public NodeData(SyntaxNode node, string projectName, string projectPath) {
+        internal readonly struct SyntaxTreeProject {
+
+            public SyntaxTreeProject(SyntaxNode node, string projectName, string projectPath) {
                 if (node == null ||
                     string.IsNullOrWhiteSpace(projectName) ||
                     string.IsNullOrWhiteSpace(projectPath)) {
@@ -39,6 +41,7 @@ namespace Aderant.Build.Analyzer.Extensions {
             public string ProjectPath { get; }
 
             public string SuppressionFilePath { get; }
+
         }
 
         #endregion Types
@@ -46,14 +49,14 @@ namespace Aderant.Build.Analyzer.Extensions {
         #region Methods: Auto Suppression
 
         /// <summary>
-        /// Gets the <seealso cref="NodeData" /> for the current <seealso cref="SyntaxNode" />.
+        /// Gets the <seealso cref="SyntaxTreeProject" /> for the current <seealso cref="SyntaxNode" />.
         /// </summary>
         /// <param name="node">The node.</param>
-        public static NodeData GetNodeData(this SyntaxNode node) {
+        internal static SyntaxTreeProject GetProjectInfo(this SyntaxNode node) {
             string path, name;
             GetProjectData(node.SyntaxTree.FilePath, out path, out name);
 
-            return new NodeData(node, name, path);
+            return new SyntaxTreeProject(node, name, path);
         }
 
         /// <summary>
@@ -79,9 +82,8 @@ namespace Aderant.Build.Analyzer.Extensions {
                 return;
             }
 
-            // Create a dicretory object to represent the parent directory of the node's file.
+            // Create a directory object to represent the parent directory of the node's file.
             var directory = new DirectoryInfo(directoryName);
-
             // Iterate through the directory hierarchy.
             while (directory != null) {
                 // Get all 'csproj' files in the directory.
@@ -109,7 +111,7 @@ namespace Aderant.Build.Analyzer.Extensions {
                         //      strings[2] =  />
                         var strings = line.Split('"');
 
-                        // If the number of 'chunks' is not 3, the current line can be immediatly ignored.
+                        // If the number of 'chunks' is not 3, the current line can be immediately ignored.
                         // Any 'Compile' element will have exactly 3 chunks.
                         if (strings.Length != 3) {
                             continue;
@@ -156,5 +158,6 @@ namespace Aderant.Build.Analyzer.Extensions {
         }
 
         #endregion Methods: Syntax Nodes
+
     }
 }

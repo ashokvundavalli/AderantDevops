@@ -1,15 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using Aderant.Build.Analyzer.Extensions;
 using Aderant.Build.Analyzer.Lists.SQLInjection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.FindSymbols;
 
 namespace Aderant.Build.Analyzer.Rules {
     internal class SqlInjectionErrorRule : RuleBase {
+
         internal const string DiagnosticId = "Aderant_SqlInjectionError";
 
         internal override DiagnosticSeverity Severity => DiagnosticSeverity.Error;
@@ -19,9 +23,9 @@ namespace Aderant.Build.Analyzer.Rules {
         internal override string Title => "SQL Injection Error";
 
         internal override string MessageFormat => "Database command is vulnerable to SQL injection. " +
-                                                  "Consider parameterizing the command or using the Stored Procedure DSL.";
+                                                  "Consider parameterizing the command, using an ORM or the Stored Procedure DSL.";
 
-        internal override string Description => "Use Stored Procedure DSL.";
+        internal override string Description => "Review code for SQL injection vulnerabilities.";
 
         public override DiagnosticDescriptor Descriptor => new DiagnosticDescriptor(
             Id,
@@ -34,35 +38,70 @@ namespace Aderant.Build.Analyzer.Rules {
             "http://ttwiki/wiki/index.php?title=Stored_Procedure_DSL");
 
         public override void Initialize(AnalysisContext context) {
-            context.RegisterSyntaxNodeAction(AnalyzeNodeCommandText, SyntaxKind.ExpressionStatement);
             context.RegisterSyntaxNodeAction(AnalyzeNodeDatabaseSqlQuery, SyntaxKind.InvocationExpression);
-            context.RegisterSyntaxNodeAction(AnalyzeNodeNewSqlCommand, SyntaxKind.ObjectCreationExpression);
+
+            context.RegisterCodeBlockStartAction<SyntaxKind>(cb => {
+                if (cb.OwningSymbol.Kind != SymbolKind.Method) {
+                    return;
+                }
+
+                cb.RegisterSyntaxNodeAction(ctx => {
+                    var result = AnalyzeNodeNewSqlCommand(ctx, out var location);
+                    string identifier = null;
+
+                    // Try and get the variable name (assignment) of the object allocated
+                    var objectCreation = ctx.Node as ObjectCreationExpressionSyntax;
+
+                    if (objectCreation != null) {
+                        var typeInfo = ctx.SemanticModel.GetTypeInfo(objectCreation, ctx.CancellationToken);
+                        if (typeInfo.ConvertedType?.TypeKind != TypeKind.Error &&
+                            typeInfo.ConvertedType?.IsReferenceType == true &&
+                            objectCreation.Parent?.IsKind(SyntaxKind.EqualsValueClause) == true &&
+                            objectCreation.Parent?.Parent?.IsKind(SyntaxKind.VariableDeclarator) == true) {
+                            var newObject = (VariableDeclaratorSyntax)objectCreation.Parent.Parent;
+                            identifier = newObject.Identifier.Text;
+                        }
+                    }
+
+                    if (result == RuleViolationSeverityEnum.Error) {
+                        SqlCommandAnalysisResult.ReportDiagnostic(cb, ctx, Descriptor, identifier, ctx.Node, location);
+                    }
+                }, SyntaxKind.ObjectCreationExpression);
+
+                cb.RegisterSyntaxNodeAction(ctx => {
+                    var result = AnalyzeNodeCommandText(ctx, out var location);
+                    if (result == RuleViolationSeverityEnum.Error) {
+                        var expressionStatementSyntax = ctx.Node as ExpressionStatementSyntax;
+                        if (expressionStatementSyntax != null) {
+                            // Crude check to find the variable that the command is (e.g. decompose command.CommandText = "123" to find "command"
+                            var identifiers = expressionStatementSyntax.DescendantNodes().OfType<IdentifierNameSyntax>();
+                            SqlCommandAnalysisResult.ReportDiagnostic(cb, ctx, Descriptor, identifiers.FirstOrDefault()?.Identifier.Text, ctx.Node, location);
+                        }
+                    }
+                }, SyntaxKind.ExpressionStatement);
+            });
         }
 
         /// <summary>
         /// Analyzes the 'command text' node.
         /// </summary>
-        /// <param name="context">The context.</param>
-        private void AnalyzeNodeCommandText(SyntaxNodeAnalysisContext context) {
+        private RuleViolationSeverityEnum AnalyzeNodeCommandText(SyntaxNodeAnalysisContext context, out Location location) {
             var expression = context.Node as ExpressionStatementSyntax;
+            location = null;
 
             if (expression == null ||
                 IsAnalysisSuppressed(expression, DiagnosticId) ||
                 IsAnalysisSuppressed(expression, "CA2100")) {
-                return;
+                return RuleViolationSeverityEnum.None;
             }
 
-            Location location = null;
-
-            if (EvaluateNodeCommandTextExpressionStatement(ref location, context.SemanticModel, expression) != RuleViolationSeverityEnum.Error) {
-                return;
-            }
+            var result = EvaluateNodeCommandTextExpressionStatement(ref location, context.SemanticModel, expression);
 
             if (location == null) {
                 location = context.Node.GetLocation();
             }
 
-            ReportDiagnostic(context, Descriptor, location, expression);
+            return result;
         }
 
         /// <summary>
@@ -71,14 +110,13 @@ namespace Aderant.Build.Analyzer.Rules {
         /// <param name="context">The context.</param>
         private void AnalyzeNodeDatabaseSqlQuery(SyntaxNodeAnalysisContext context) {
             var expression = context.Node as InvocationExpressionSyntax;
+            Location location = null;
 
             if (expression == null ||
                 IsAnalysisSuppressed(expression, DiagnosticId) ||
                 IsAnalysisSuppressed(expression, "CA2100")) {
                 return;
             }
-
-            Location location = null;
 
             if (EvaluateNodeDatabaseSqlQuery(ref location, context.SemanticModel, expression) != RuleViolationSeverityEnum.Error) {
                 return;
@@ -94,27 +132,24 @@ namespace Aderant.Build.Analyzer.Rules {
         /// <summary>
         /// Analyzes the 'new SQL command' node.
         /// </summary>
-        /// <param name="context">The context.</param>
-        private void AnalyzeNodeNewSqlCommand(SyntaxNodeAnalysisContext context) {
+        private RuleViolationSeverityEnum AnalyzeNodeNewSqlCommand(SyntaxNodeAnalysisContext context, out Location location) {
             var expression = context.Node as ObjectCreationExpressionSyntax;
 
             if (expression == null ||
                 IsAnalysisSuppressed(expression, DiagnosticId) ||
                 IsAnalysisSuppressed(expression, "CA2100")) {
-                return;
+                location = null;
+                return RuleViolationSeverityEnum.None;
             }
 
-            Location location = null;
-
-            if (EvaluateNodeNewSqlCommandObjectCreationExpression(ref location, context.SemanticModel, expression) != RuleViolationSeverityEnum.Error) {
-                return;
-            }
+            location = null;
+            var result = EvaluateNodeNewSqlCommandObjectCreationExpression(ref location, context.SemanticModel, expression);
 
             if (location == null) {
                 location = context.Node.GetLocation();
             }
 
-            ReportDiagnostic(context, Descriptor, location, expression);
+            return result;
         }
 
         /// <summary>
@@ -143,7 +178,7 @@ namespace Aderant.Build.Analyzer.Rules {
 
             // Get detailed information regarding the property being accessed.
             var propertySymbol = semanticModel.GetSymbolInfo(memberAccessExpression).Symbol as IPropertySymbol;
-                      
+
             if (propertySymbol == null) {
                 return RuleViolationSeverityEnum.None;
             }
@@ -174,7 +209,7 @@ namespace Aderant.Build.Analyzer.Rules {
         /// <param name="node">The node.</param>
         /// Note:
         ///     It is assumed that methods invoking SQL commands follow the existing guidelines
-        ///     and have the command to be executed as their first paramter.
+        ///     and have the command to be executed as their first parameter.
         protected RuleViolationSeverityEnum EvaluateNodeDatabaseSqlQuery(
             ref Location location,
             SemanticModel semanticModel,
@@ -222,7 +257,6 @@ namespace Aderant.Build.Analyzer.Rules {
             ref Location location,
             SemanticModel semanticModel,
             ObjectCreationExpressionSyntax node) {
-
             string symbolName;
 
             // Exit early if the node is not creating a new SqlCommand.
@@ -230,26 +264,22 @@ namespace Aderant.Build.Analyzer.Rules {
                 return RuleViolationSeverityEnum.None;
             }
 
-            // If there were no arguments passed to the creation of the object...
-            if (node.ArgumentList == null || node.ArgumentList.Arguments.Count == 0) {
-                // ...determine if the object was created using the object initializer syntax.
-                var initializationExpression = node.ChildNodes().OfType<InitializerExpressionSyntax>().FirstOrDefault();
+            // ...determine if the object was created using the object initializer syntax.
+            var initializationExpression = node.ChildNodes().OfType<InitializerExpressionSyntax>().FirstOrDefault();
 
-                // If no, objected was created using a parameterless constructor and is not vulnerable to injection at this code point.
-                if (initializationExpression == null) {
-                    return RuleViolationSeverityEnum.None;
-                }
-
-
-                // Iterate through all child nodes that are assignment exressions.
+            if (initializationExpression != null) {
+                // Iterate through all child nodes that are assignment expressions.
                 // Expressions can be in any order. If we find a non-Text CommandType, exit early
                 AssignmentExpressionSyntax commandTextAssignmentChildNode = null;
                 foreach (var assignmentChildNode in initializationExpression.ChildNodes().OfType<AssignmentExpressionSyntax>()) {
-                    if (string.Equals(((IdentifierNameSyntax)(assignmentChildNode.Left)).Identifier.Text, "CommandText")) {
+                    string identifierText = ((IdentifierNameSyntax)assignmentChildNode.Left).Identifier.Text;
+
+                    if (string.Equals(identifierText, "CommandText")) {
                         commandTextAssignmentChildNode = assignmentChildNode;
                         continue;
-                    } else if (string.Equals(((IdentifierNameSyntax)(assignmentChildNode.Left)).Identifier.Text, "CommandType") &&
-                        IsCommandTypeAssignmentExpressionNotText(assignmentChildNode)) {
+                    }
+
+                    if (string.Equals(identifierText, "CommandType") && IsCommandTypeAssignmentExpressionNotText(assignmentChildNode)) {
                         return RuleViolationSeverityEnum.None;
                     }
                 }
@@ -257,8 +287,9 @@ namespace Aderant.Build.Analyzer.Rules {
                 // Determine if the data being assigned to the 'CommandText' property is immutable.
                 return commandTextAssignmentChildNode == null || IsDataImmutable(ref location, semanticModel, commandTextAssignmentChildNode.Right)
                     ? RuleViolationSeverityEnum.None
-                    : RuleViolationSeverityEnum.Error;                
+                    : RuleViolationSeverityEnum.Error;
             }
+
 
             // If CommandType != "Text" (the default), we can ignore
             symbolName = (UnwrapParenthesizedExpressionDescending(node.GetAncestorOfType<VariableDeclaratorSyntax>()) as VariableDeclaratorSyntax)?.Identifier.Text;
@@ -267,9 +298,17 @@ namespace Aderant.Build.Analyzer.Rules {
             }
 
             // Determine if the first argument is immutable.
-            return IsDataImmutable(ref location, semanticModel, node.ArgumentList.Arguments.First().Expression)
-                ? RuleViolationSeverityEnum.None
-                : RuleViolationSeverityEnum.Error;
+            if (node.ArgumentList != null) {
+                var expression = node.ArgumentList.Arguments.FirstOrDefault();
+                if (expression == null) {
+                    return RuleViolationSeverityEnum.None;
+                }
+
+                var isImmutable = IsDataImmutable(ref location, semanticModel, expression);
+                return isImmutable ? RuleViolationSeverityEnum.None : RuleViolationSeverityEnum.Error;
+            }
+
+            return RuleViolationSeverityEnum.None;
         }
 
         /// <summary>
@@ -296,11 +335,7 @@ namespace Aderant.Build.Analyzer.Rules {
                 var unwrappedNode = UnwrapParenthesizedExpressionDescending(memberAccessExpressions[i]) as MemberAccessExpressionSyntax;
 
                 // Only interested in assignments to the CommandType property of the commandSymbol object in question, eg. command.CommandType[ = X]
-                if (unwrappedNode?.Expression == null ||
-                    !(unwrappedNode.Expression is IdentifierNameSyntax) ||
-                    unwrappedNode.Name == null ||
-                    ((IdentifierNameSyntax)unwrappedNode.Expression).Identifier.Text != symbolName ||
-                    !string.Equals(unwrappedNode.Name.Identifier.Text, "CommandType")) {
+                if (unwrappedNode?.Expression == null || !(unwrappedNode.Expression is IdentifierNameSyntax) || ((IdentifierNameSyntax)unwrappedNode.Expression).Identifier.Text != symbolName || !string.Equals(unwrappedNode.Name.Identifier.Text, "CommandType")) {
                     continue;
                 }
 
@@ -314,6 +349,7 @@ namespace Aderant.Build.Analyzer.Rules {
                     return true; // Exit early
                 }
             }
+
             return false;
         }
 
@@ -321,7 +357,7 @@ namespace Aderant.Build.Analyzer.Rules {
             var expression = UnwrapParenthesizedExpressionDescending(assignmentExpression.Right) as MemberAccessExpressionSyntax;
             // Nullcheck and such
             return (expression != null &&
-                !string.Equals(expression.GetLastToken().Text, "Text"));
+                    !string.Equals(expression.GetLastToken().Text, "Text"));
         }
 
         /// <summary>
@@ -474,20 +510,25 @@ namespace Aderant.Build.Analyzer.Rules {
 
             // Iterate through all method invocations within the class, where the type of the method matches the declared method's type.
             foreach (var methodInvocation in methodInvocations.Where(
-                invocationExpression => Equals(methodDeclarationType, semanticModel.GetSymbolInfo(invocationExpression).Symbol as IMethodSymbol))) {
+                         invocationExpression => Equals(methodDeclarationType, semanticModel.GetSymbolInfo(invocationExpression).Symbol as IMethodSymbol))) {
                 // If the discovered method does not have any arguments, ignore it.
-                if (methodInvocation.ArgumentList == null || !methodInvocation.ArgumentList.Arguments.Any()) {
+                if (!methodInvocation.ArgumentList.Arguments.Any()) {
                     continue;
                 }
 
                 // Evaluate the method's arguments.
                 foreach (var argument in methodInvocation.ArgumentList.Arguments) {
                     // If the argument type is not a System.String, ignore it.
-                    if (!semanticModel.GetTypeInfo(argument.Expression).Type
-                            .ContainingNamespace
+                    var typeSymbol = semanticModel.GetTypeInfo(argument.Expression).Type;
+
+                    if (typeSymbol == null) {
+                        continue;
+                    }
+
+                    if (!typeSymbol.ContainingNamespace
                             .ToDisplayString()
                             .Equals("System", StringComparison.OrdinalIgnoreCase) ||
-                        !semanticModel.GetTypeInfo(argument.Expression).Type
+                        !typeSymbol
                             .Name
                             .Equals("String", StringComparison.OrdinalIgnoreCase)) {
                         continue;
@@ -814,7 +855,7 @@ namespace Aderant.Build.Analyzer.Rules {
             // Attempts to retrieve additional type data relating to the specified node.
             var typeSymbol = semanticModel.GetSymbolInfo(memberAccessExpression).Symbol as INamedTypeSymbol;
 
-            // If no additional data was found, determine if the current node is referenceing the Properties.Resources member.
+            // If no additional data was found, determine if the current node is referencing the Properties.Resources member.
             // Otherwise evaluate the specified node against the whitelists.
             return typeSymbol == null
                 ? IsImmutableFieldOrProperty(semanticModel, memberAccessExpression)
@@ -852,5 +893,6 @@ namespace Aderant.Build.Analyzer.Rules {
             return fieldSymbol != null &&
                    (fieldSymbol.IsConst || fieldSymbol.IsReadOnly && fieldSymbol.IsStatic);
         }
+
     }
 }

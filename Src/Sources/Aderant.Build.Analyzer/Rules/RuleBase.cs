@@ -6,21 +6,57 @@ using System.Text;
 using Aderant.Build.Analyzer.Extensions;
 using Aderant.Build.Analyzer.GlobalSuppressions;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
-using NodeData = Aderant.Build.Analyzer.Extensions.RoslynExtensions.NodeData;
+using Microsoft.CodeAnalysis.Text;
 
 namespace Aderant.Build.Analyzer.Rules {
     public abstract class RuleBase {
+
         #region Type Definitions
 
+        protected class SqlCommandAnalysisResult {
+
+            public static void ReportDiagnostic(CodeBlockStartAnalysisContext<SyntaxKind> context, SyntaxNodeAnalysisContext syntaxNodeAnalysisContext, DiagnosticDescriptor diagnosticDescriptor, string identifier, SyntaxNode node, Location location) {
+                IEnumerable<MemberAccessExpressionSyntax> memberAccess = context.CodeBlock.DescendantNodes().OfType<MemberAccessExpressionSyntax>();
+
+                // SQL parameters are being used
+                bool areParametersAddedToCommand = false;
+
+                foreach (var expressionSyntax in memberAccess) {
+                    var syntax = expressionSyntax.ToString();
+
+                    // The expression appears to reference the object being created
+                    if (identifier != null && syntax.StartsWith(identifier)) {
+                        var symbol = ModelExtensions.GetSymbolInfo(context.SemanticModel, expressionSyntax);
+
+                        var symbolName = symbol.Symbol?.Name;
+                        if ("Add" == symbolName || "AddWithValue" == symbolName || "Insert" == symbolName) {
+                            areParametersAddedToCommand = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!areParametersAddedToCommand) {
+                    if (ProcessAutoSuppression(node, diagnosticDescriptor.Id, context.SemanticModel)) {
+                        var diag = Diagnostic.Create(diagnosticDescriptor, location);
+                        syntaxNodeAnalysisContext.ReportDiagnostic(diag);
+                    }
+                }
+            }
+        }
+
         protected enum RuleViolationSeverityEnum {
+
             Invalid = -1,
             None,
             Info,
             Warning,
             Error,
             Max
+
         }
 
         #endregion Type Definitions
@@ -251,7 +287,7 @@ namespace Aderant.Build.Analyzer.Rules {
                     // Retrieve the value of the attribute's SuppressionId.
                     string messageId = (UnwrapParenthesizedExpressionDescending(attribute.ArgumentList.Arguments[1].Expression) as LiteralExpressionSyntax)?.Token.Value as string;
 
-                    if (string.Equals(suppressionId, messageId)) {
+                    if (string.Equals(suppressionId, messageId, StringComparison.OrdinalIgnoreCase)) {
                         return true;
                     }
                 }
@@ -335,7 +371,7 @@ namespace Aderant.Build.Analyzer.Rules {
             Location location,
             SyntaxNode node,
             params object[] messageArgs) {
-            if (ProcessAutoSuppression(node.GetNodeData(), descriptor.Id, context.SemanticModel)) {
+            if (ProcessAutoSuppression(node, descriptor.Id, context.SemanticModel)) {
                 context.ReportDiagnostic(Diagnostic.Create(descriptor, location, messageArgs));
             }
         }
@@ -349,111 +385,69 @@ namespace Aderant.Build.Analyzer.Rules {
         /// <returns>
         /// A value indicating whether a diagnostic should be raised.
         /// </returns>
-        private static bool ProcessAutoSuppression(
-            NodeData data,
+        internal static bool ProcessAutoSuppression(
+            SyntaxNode data,
             string diagnosticId,
             SemanticModel semanticModel) {
-            string[] contents;
+            SyntaxTree suppressionSyntaxTree = semanticModel.Compilation.SyntaxTrees.FirstOrDefault(s => s.FilePath.EndsWith("GlobalSuppressions.cs", StringComparison.OrdinalIgnoreCase));
 
-            // Attempt to retrieve suppressions file path and contents.
-            bool? tryResult = TryGetGlobalSuppressionsFileContents(data, out contents);
+            string message = GenerateSuppressionMessage(data, diagnosticId, semanticModel);
 
-            // Suppressions file contents could not be read.
-            if (tryResult == false) {
-                // Raise diagnostic.
+            if (!GlobalSuppressionsController.IsAutomaticSuppressionEnabled) {
+                if (suppressionSyntaxTree != null) {
+                    // Generate suppression message.
+                    // Raise a diagnostic if the contents of the suppressions file
+                    // does not include the generated suppression message.
+                    return !SyntaxTreeContainsText(message, suppressionSyntaxTree);
+                }
+
                 return true;
             }
 
-            string message;
-            if (!GlobalSuppressionsController.IsAutomaticSuppressionEnabled) {
-                // Suppressions file does not exist.
-                if (tryResult == null) {
-                    // Raise diagnostic.
-                    return true;
+            // If the suppressions file does not exist...
+            if (suppressionSyntaxTree == null) {
+                var projectInfo = data.GetProjectInfo();
+
+                // If there is no node data...
+                if (data == null) {
+                    // ...ignore the node.
+                    return false;
                 }
 
-                // Generate suppression message.
-                message = GenerateSuppressionMessage(data.Node, diagnosticId, semanticModel);
-
-                // Raise a diagnostic if the contents of the suppressions file
-                // does not include the generated suppression message.
-                return !contents.Contains(message);
-            }
-
-            // Generate suppression message.
-            message = GenerateSuppressionMessage(data.Node, diagnosticId, semanticModel);
-
-            // If there is no node data...
-            if (data.Node == null) {
-                // ...ignore the node.
-                return false;
-            }
-
-            // If the suppressions file does not exist...
-            if (tryResult == null) {
                 // ...create it and suppress this node.
-                SetFileContents(data.SuppressionFilePath, new[] { message }, Encoding.UTF8);
+                SetFileContents(projectInfo.SuppressionFilePath, new[] { message }, Encoding.UTF8);
 
                 // Add the suppressions file to the project file.
-                AddSuppressionsFileToProject(data);
+                AddSuppressionsFileToProject(projectInfo);
 
                 // Do not raise a diagnostic.
                 return false;
             }
 
             // If the suppression message is already contained within the suppressions file...
-            if (contents.Contains(message)) {
+            if (SyntaxTreeContainsText(message, suppressionSyntaxTree)) {
                 // ...do not raise a diagnostic.
                 return false;
             }
 
-            // Create a new file contents container, one element larger than the existing contents container.
-            var newContents = new string[contents.Length + 1];
-
-            // Iterate through the existing contents container, copying each element into the new container.
-            for (int i = 0; i < contents.Length; ++i) {
-                newContents[i] = contents[i];
-            }
-
-            // Set the single additional element of the new contents container, to be the new suppression message.
-            newContents[contents.Length] = message;
+            var textLines = suppressionSyntaxTree.GetText().Lines.ToList();
+            textLines.Add(TextLine.FromSpan(SourceText.From(message), TextSpan.FromBounds(0, message.Length)));
 
             // Write the new contents to the GlobalSuppressions.cs file.
-            SetFileContents(data.SuppressionFilePath, newContents, Encoding.UTF8);
+            SetFileContents(suppressionSyntaxTree.FilePath, textLines.ConvertAll(input => input.ToString()), Encoding.UTF8);
 
             // Do not raise a diagnostic.
             return false;
         }
 
-        /// <summary>
-        /// Tries the get the current <seealso cref="Project" />'s GlobalSuppressions.cs file's contents.
-        /// </summary>
-        /// <param name="data">The data.</param>
-        /// <param name="contents">The contents.</param>
-        /// <returns>
-        /// true  - File exists, and contents were retrieved without error.
-        /// false - File does not exist (standard), or an errored occurred while retrieving contents.
-        /// null  - File does not exist (auto-suppression).
-        /// </returns>
-        private static bool? TryGetGlobalSuppressionsFileContents(
-            NodeData data,
-            out string[] contents) {
-            contents = null;
-            if (!File.Exists(data.SuppressionFilePath)) {
-                if (GlobalSuppressionsController.IsAutomaticSuppressionEnabled) {
-                    return null;
+        private static bool SyntaxTreeContainsText(string message, SyntaxTree syntaxTree) {
+            foreach (var line in syntaxTree.GetText().Lines) {
+                if (line.ToString().Equals(message)) {
+                    return true;
                 }
-
-                return false;
             }
 
-            try {
-                contents = File.ReadAllLines(data.SuppressionFilePath);
-            } catch (Exception) {
-                return false;
-            }
-
-            return true;
+            return false;
         }
 
         /// <summary>
@@ -516,7 +510,7 @@ namespace Aderant.Build.Analyzer.Rules {
         private static string GenerateSuppressionMessageIdentifier(
             SyntaxNode node,
             string diagnosticId) {
-            // Handling for objects that lack a common base class with an Indentifier.
+            // Handling for objects that lack a common base class with an Identifier.
             var property = node as PropertyDeclarationSyntax;
             if (property != null) {
                 return BuildSuppressionMessage(node, diagnosticId, property.Identifier.Text);
@@ -572,7 +566,7 @@ namespace Aderant.Build.Analyzer.Rules {
                 name = "AssignmentExpression";
             } else if (node is EqualsValueClauseSyntax) {
                 name = "EqualsValueClause";
-            } else if (node is ExpressionSyntax){
+            } else if (node is ExpressionSyntax) {
                 name = "Expression";
             } else if (node is ExpressionStatementSyntax) {
                 name = "ExpressionStatement";
@@ -724,7 +718,7 @@ namespace Aderant.Build.Analyzer.Rules {
         /// Adds the suppressions file to the project.
         /// </summary>
         /// <param name="data">The date.</param>
-        private static void AddSuppressionsFileToProject(NodeData data) {
+        private static void AddSuppressionsFileToProject(RoslynExtensions.SyntaxTreeProject data) {
             const string suppressionsWhitespace = "    ";
             const string suppressionsContent = "<Compile Include=\"GlobalSuppressions.cs\" />";
 
@@ -795,5 +789,6 @@ namespace Aderant.Build.Analyzer.Rules {
         }
 
         #endregion Methods: Auto Suppression
+
     }
 }

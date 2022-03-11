@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("Aderant.Build.Tasks")]
-[assembly: AssemblyCompany("Aderant")]
+[assembly: AssemblyCompany("Aderant Holdings, Inc.")]
 [assembly: AssemblyProduct("Aderant.Build.Tasks")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

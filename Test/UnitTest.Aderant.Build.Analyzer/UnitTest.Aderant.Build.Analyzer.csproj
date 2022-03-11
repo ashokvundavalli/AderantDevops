@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -10,7 +10,8 @@
     <AssemblyName>UnitTest.Aderant.Build.Analyzer</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
-    <FileAlignment>512</FileAlignment>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -33,11 +34,24 @@
   </PropertyGroup>
   <PropertyGroup>
     <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
+    <TargetFramework>net48</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.CodeAnalysis.CSharp.Workspaces, Version=2.10.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\packages\analyzer\Microsoft.CodeAnalysis.CSharp.Workspaces\lib\netstandard1.3\Microsoft.CodeAnalysis.CSharp.Workspaces.dll</HintPath>
+    <Reference Include="Microsoft.CodeAnalysis">
+      <HintPath>..\..\packages\analyzer\Microsoft.CodeAnalysis.Common\lib\netstandard2.0\Microsoft.CodeAnalysis.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.CSharp">
+      <HintPath>..\..\packages\analyzer\Microsoft.CodeAnalysis.CSharp\lib\netstandard2.0\Microsoft.CodeAnalysis.CSharp.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.CSharp.Workspaces">
+      <HintPath>..\..\packages\analyzer\Microsoft.CodeAnalysis.CSharp.Workspaces\lib\netstandard2.0\Microsoft.CodeAnalysis.CSharp.Workspaces.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.Workspaces">
+      <HintPath>..\..\packages\analyzer\Microsoft.CodeAnalysis.Workspaces.Common\lib\netstandard2.0\Microsoft.CodeAnalysis.Workspaces.dll</HintPath>
+      <Private>true</Private>
     </Reference>
     <Reference Include="Microsoft.VisualStudio.TestPlatform.MSTest.TestAdapter">
       <HintPath>..\..\packages\devtools\MSTest.TestAdapter\build\_common\Microsoft.VisualStudio.TestPlatform.MSTest.TestAdapter.dll</HintPath>
@@ -51,52 +65,51 @@
     <Reference Include="Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions">
       <HintPath>..\..\packages\devtools\MSTest.TestFramework\lib\netstandard1.0\Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.CodeAnalysis, Version=2.10.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\packages\analyzer\Microsoft.CodeAnalysis.Common\lib\netstandard1.3\Microsoft.CodeAnalysis.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.CodeAnalysis.CSharp, Version=2.10.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\packages\analyzer\Microsoft.CodeAnalysis.CSharp\lib\netstandard1.3\Microsoft.CodeAnalysis.CSharp.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.CodeAnalysis.Workspaces, Version=2.10.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\packages\analyzer\Microsoft.CodeAnalysis.Workspaces.Common\lib\net46\Microsoft.CodeAnalysis.Workspaces.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
-    <Reference Include="System.Collections.Immutable, Version=1.2.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\packages\analyzer\System.Collections.Immutable\lib\portable-net45+win8+wp8+wpa81\System.Collections.Immutable.dll</HintPath>
+    <Reference Include="System.Collections.Immutable">
+      <HintPath>..\..\packages\analyzer\System.Collections.Immutable\lib\netstandard2.0\System.Collections.Immutable.dll</HintPath>
+      <Private>true</Private>
     </Reference>
-    <Reference Include="System.Composition.AttributedModel, Version=1.0.31.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\packages\analyzer\System.Composition.AttributedModel\lib\portable-net45+win8+wp8+wpa81\System.Composition.AttributedModel.dll</HintPath>
+    <Reference Include="System.Composition.AttributedModel">
+      <HintPath>..\..\packages\analyzer\System.Composition.AttributedModel\lib\netstandard2.0\System.Composition.AttributedModel.dll</HintPath>
+      <Private>true</Private>
     </Reference>
     <Reference Include="System.Composition.Convention">
-      <HintPath>..\..\packages\analyzer\System.Composition.Convention\lib\portable-net45+win8+wp8+wpa81\System.Composition.Convention.dll</HintPath>
+      <HintPath>..\..\packages\analyzer\System.Composition.Convention\lib\netstandard2.0\System.Composition.Convention.dll</HintPath>
+      <Private>true</Private>
     </Reference>
     <Reference Include="System.Composition.Hosting">
-      <HintPath>..\..\packages\analyzer\System.Composition.Hosting\lib\portable-net45+win8+wp8+wpa81\System.Composition.Hosting.dll</HintPath>
+      <HintPath>..\..\packages\analyzer\System.Composition.Hosting\lib\netstandard2.0\System.Composition.Hosting.dll</HintPath>
+      <Private>true</Private>
     </Reference>
     <Reference Include="System.Composition.Runtime">
-      <HintPath>..\..\packages\analyzer\System.Composition.Runtime\lib\portable-net45+win8+wp8+wpa81\System.Composition.Runtime.dll</HintPath>
+      <HintPath>..\..\packages\analyzer\System.Composition.Runtime\lib\netstandard2.0\System.Composition.Runtime.dll</HintPath>
+      <Private>true</Private>
     </Reference>
     <Reference Include="System.Composition.TypedParts">
-      <HintPath>..\..\packages\analyzer\System.Composition.TypedParts\lib\portable-net45+win8+wp8+wpa81\System.Composition.TypedParts.dll</HintPath>
+      <HintPath>..\..\packages\analyzer\System.Composition.TypedParts\lib\netstandard2.0\System.Composition.TypedParts.dll</HintPath>
+      <Private>true</Private>
     </Reference>
-    <Reference Include="System.Core" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
+    <Reference Include="System.Numerics.Vectors">
+      <HintPath>..\..\packages\analyzer\System.Numerics.Vectors\lib\netstandard2.0\System.Numerics.Vectors.dll</HintPath>
+    </Reference>
     <Reference Include="System.Reflection.Metadata">
-      <HintPath>..\..\packages\analyzer\System.Reflection.Metadata\lib\portable-net45+win8\System.Reflection.Metadata.dll</HintPath>
+      <HintPath>..\..\packages\analyzer\System.Reflection.Metadata\lib\netstandard2.0\System.Reflection.Metadata.dll</HintPath>
     </Reference>
-    <Reference Include="System.Threading.Tasks.Extensions">
-      <HintPath>..\..\packages\analyzer\System.Threading.Tasks.Extensions\lib\portable-net45+win8+wp8+wpa81\System.Threading.Tasks.Extensions.dll</HintPath>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe">
+      <HintPath>..\..\packages\analyzer\System.Runtime.CompilerServices.Unsafe\lib\netstandard2.0\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+      <Private>true</Private>
     </Reference>
-    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Tests\Unused\AderantQueryServiceMigrationTests.cs" />
+    <Compile Include="SqlTestCases\Mutable_string_passed_to_function_with_parameters.cs" />
+    <Compile Include="SqlTestCases\Mutable_string_passed_to_function.cs" />
+    <Compile Include="SqlTestCases\SqlCommand_using_sp_executesql_parameter_add_reports_no_diagnostic.cs" />
+    <Compile Include="SqlTestCases\SqlCommand_using_sp_executesql_parameter_insert_reports_no_diagnostic.cs" />
+    <Compile Include="SqlTestCases\SqlCommand_using_sp_executesql_reports_no_diagnostic.cs" />
+    <Compile Include="SqlTestCases\SqlCommand_using_ctor_and_sp_executesql_reports_no_diagnostic.cs" />
+    <Compile Include="SqlTestCases\Literal_string_passed_to_function.cs" />
     <Compile Include="Tests\AutomatedTest.cs" />
     <Compile Include="Tests\CodeQuality\CodeQualityApprovalsReporterTests.cs" />
     <Compile Include="Tests\CodeQuality\CodeQualityDataProviderIllegalPublicPropertiesTests.cs" />
@@ -131,6 +144,11 @@
     <Compile Include="Tests\InvalidRegexTests.cs" />
     <Compile Include="Tests\SqlCommandWithParameters.cs" />
     <Compile Include="Tests\SqlInjectionErrorTests.cs" />
+    <Compile Include="Tests\SqlResources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>SqlResources.resx</DependentUpon>
+    </Compile>
     <Compile Include="Tests\SuppressionAttributeTests.cs" />
     <Compile Include="Verifiers\AderantCodeFixVerifier.cs" />
     <Compile Include="Verifiers\CodeFixVerifier.cs" />
@@ -152,12 +170,10 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+  <ItemGroup>
+    <EmbeddedResource Update="Tests\SqlResources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>SqlResources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
 </Project>
