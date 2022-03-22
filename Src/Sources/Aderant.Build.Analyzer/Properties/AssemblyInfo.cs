@@ -10,8 +10,8 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTrademark("Aderant Expert is a trademark of Aderant Holdings, Inc.")]
 
 [assembly: ComVisible(false)]
-[assembly: AssemblyVersion("3.3.0.0")]
-[assembly: AssemblyFileVersion("3.3.0.0")]
+[assembly: AssemblyVersion("3.3.1.0")]
+[assembly: AssemblyFileVersion("3.3.1.0")]
 [assembly: InternalsVisibleTo("UnitTest.Aderant.Build.Analyzer")]
 [assembly: InternalsVisibleTo("IntegrationTest.Build")]
 [assembly: InternalsVisibleTo("IntegrationTest.Analyzer")]

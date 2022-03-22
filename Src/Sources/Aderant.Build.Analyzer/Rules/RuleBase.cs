@@ -40,7 +40,7 @@ namespace Aderant.Build.Analyzer.Rules {
                 }
 
                 if (!areParametersAddedToCommand) {
-                    if (ProcessAutoSuppression(node, diagnosticDescriptor.Id, context.SemanticModel)) {
+                    if (!DiagnosticHasGlobalSuppression(node, diagnosticDescriptor.Id, context.SemanticModel)) {
                         var diag = Diagnostic.Create(diagnosticDescriptor, location);
                         syntaxNodeAnalysisContext.ReportDiagnostic(diag);
                     }
@@ -346,23 +346,6 @@ namespace Aderant.Build.Analyzer.Rules {
         /// <param name="context">The context.</param>
         /// <param name="descriptor">The descriptor.</param>
         /// <param name="location">The location.</param>
-        /// <param name="messageArgs">The message arguments.</param>
-        /// Note:
-        ///     Automatic suppression for SymbolAnalysisContext diagnostics is not currently supported.
-        protected static void ReportDiagnostic(
-            SymbolAnalysisContext context,
-            DiagnosticDescriptor descriptor,
-            Location location,
-            params object[] messageArgs) {
-            context.ReportDiagnostic(Diagnostic.Create(descriptor, location, messageArgs));
-        }
-
-        /// <summary>
-        /// Reports the diagnostic.
-        /// </summary>
-        /// <param name="context">The context.</param>
-        /// <param name="descriptor">The descriptor.</param>
-        /// <param name="location">The location.</param>
         /// <param name="node">The node.</param>
         /// <param name="messageArgs">The message arguments.</param>
         protected static void ReportDiagnostic(
@@ -371,7 +354,7 @@ namespace Aderant.Build.Analyzer.Rules {
             Location location,
             SyntaxNode node,
             params object[] messageArgs) {
-            if (ProcessAutoSuppression(node, descriptor.Id, context.SemanticModel)) {
+            if (!DiagnosticHasGlobalSuppression(node, descriptor.Id, context.SemanticModel)) {
                 context.ReportDiagnostic(Diagnostic.Create(descriptor, location, messageArgs));
             }
         }
@@ -385,27 +368,31 @@ namespace Aderant.Build.Analyzer.Rules {
         /// <returns>
         /// A value indicating whether a diagnostic should be raised.
         /// </returns>
-        internal static bool ProcessAutoSuppression(
+        internal static bool DiagnosticHasGlobalSuppression(
             SyntaxNode data,
             string diagnosticId,
             SemanticModel semanticModel) {
-            SyntaxTree suppressionSyntaxTree = semanticModel.Compilation.SyntaxTrees.FirstOrDefault(s => s.FilePath.EndsWith("GlobalSuppressions.cs", StringComparison.OrdinalIgnoreCase));
+
+            var syntaxTrees = semanticModel.Compilation.SyntaxTrees.Where(s => s.FilePath.EndsWith("GlobalSuppressions.cs", StringComparison.OrdinalIgnoreCase)).ToList();
 
             string message = GenerateSuppressionMessage(data, diagnosticId, semanticModel);
 
             if (!GlobalSuppressionsController.IsAutomaticSuppressionEnabled) {
-                if (suppressionSyntaxTree != null) {
+                foreach (var tree in syntaxTrees) {
                     // Generate suppression message.
                     // Raise a diagnostic if the contents of the suppressions file
                     // does not include the generated suppression message.
-                    return !SyntaxTreeContainsText(message, suppressionSyntaxTree);
+                    bool syntaxTreeHasDiagnosticSuppression = SyntaxTreeContainsText(message, tree);
+                    if (syntaxTreeHasDiagnosticSuppression) {
+                        return true;
+                    }
                 }
 
-                return true;
+                return false;
             }
 
             // If the suppressions file does not exist...
-            if (suppressionSyntaxTree == null) {
+            if (!syntaxTrees.Any()) {
                 var projectInfo = data.GetProjectInfo();
 
                 // If there is no node data...
@@ -424,17 +411,21 @@ namespace Aderant.Build.Analyzer.Rules {
                 return false;
             }
 
-            // If the suppression message is already contained within the suppressions file...
-            if (SyntaxTreeContainsText(message, suppressionSyntaxTree)) {
-                // ...do not raise a diagnostic.
-                return false;
+            foreach (var tree in syntaxTrees) {
+                // If the suppression message is already contained within the suppressions file...
+                if (SyntaxTreeContainsText(message, tree)) {
+                    // ...do not raise a diagnostic.
+                    return false;
+                }
             }
 
-            var textLines = suppressionSyntaxTree.GetText().Lines.ToList();
+            SyntaxTree syntaxTree = syntaxTrees.OrderBy(st => st.FilePath.Length).First();
+
+            var textLines = syntaxTree.GetText().Lines.ToList();
             textLines.Add(TextLine.FromSpan(SourceText.From(message), TextSpan.FromBounds(0, message.Length)));
 
             // Write the new contents to the GlobalSuppressions.cs file.
-            SetFileContents(suppressionSyntaxTree.FilePath, textLines.ConvertAll(input => input.ToString()), Encoding.UTF8);
+            SetFileContents(syntaxTree.FilePath, textLines.ConvertAll(input => input.ToString()), Encoding.UTF8);
 
             // Do not raise a diagnostic.
             return false;

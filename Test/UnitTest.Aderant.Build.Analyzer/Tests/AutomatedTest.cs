@@ -59,8 +59,6 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests {
 
         #endregion Types
 
-        #region Methods: Test
-
         /// <summary>
         /// This single test will dynamically load each Roslyn Rule class,
         /// and then run every rule against every test of every other rule.
@@ -84,10 +82,6 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests {
                 throw new InternalTestFailureException(output);
             }
         }
-
-        #endregion Methods: Test
-
-        #region Methods: Private
 
         /// <summary>
         /// Executes all of the tests for the specified test data.
@@ -392,6 +386,5 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests {
             return new Tuple<MethodInfo, MethodInfo, MethodInfo[]>(initialize, cleanup, tests.ToArray());
         }
 
-        #endregion Methods: Private
     }
 }

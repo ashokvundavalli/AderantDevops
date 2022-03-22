@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Threading;
 using Aderant.Build.Analyzer.Extensions;
 using Aderant.Build.Analyzer.Lists.SQLInjection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
-using Microsoft.CodeAnalysis.FindSymbols;
 
 namespace Aderant.Build.Analyzer.Rules {
     internal class SqlInjectionErrorRule : RuleBase {

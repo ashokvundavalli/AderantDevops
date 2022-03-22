@@ -561,6 +561,7 @@ using System.Data;
 using System.Data.SqlClient;
 
 namespace Test {
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(""Aderant.GeneratedSuppression"", ""Aderant_IDisposableDiagnostic"")]
     internal sealed class SqlDbCommand : DbCommand {
         private readonly SqlCommand command = new SqlCommand();
     }
