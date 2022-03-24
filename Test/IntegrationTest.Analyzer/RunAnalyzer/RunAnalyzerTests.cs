@@ -9,7 +9,7 @@ namespace IntegrationTest.Analyzer.RunAnalyzer {
     public class RunAnalyzerTests : MSBuildIntegrationTestBase {
 
         [ClassInitialize]
-        public static void ClasInitialize(TestContext context) {
+        public static void ClassInitialize(TestContext context) {
             var unused = typeof(CodeQualitySystemDiagnosticsRule).FullName;
         }
 

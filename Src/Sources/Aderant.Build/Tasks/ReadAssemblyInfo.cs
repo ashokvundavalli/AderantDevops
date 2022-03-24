@@ -68,7 +68,10 @@ namespace Aderant.Build.Tasks {
         [Output]
         public ITaskItem ProductName {
             get {
-                foreach (var version in new[] { AssemblyProductTitle, AssemblyProduct }) {
+                var productTitle = AssemblyProductTitle;
+                var assemblyProduct = AssemblyProduct;
+
+                foreach (var version in new[] { productTitle, assemblyProduct }) {
                     if (version != null) {
                         return version;
                     }
@@ -102,9 +105,9 @@ namespace Aderant.Build.Tasks {
                 return false;
             }
 
-            assemblyInfoFile = AssemblyInfoFiles[0].GetMetadata("FullPath");
+            assemblyInfoFile = AssemblyInfoFiles[0].GetMetadata("FullPath").ToUpperInvariant();
 
-            var sentinel = (assemblyInfoFile, 0);
+            var sentinel = (assemblyInfoFile, -1);
 
             if (infoCache.TryGetValue(sentinel, out _)) {
                 // Sentinel found - parsing will happen when properties are accessed
@@ -141,14 +144,16 @@ namespace Aderant.Build.Tasks {
                 }
 
                 foreach (var attribute in p.Attributes) {
-                    if (attribute.Name.GetType().Name != "IdentifierNameSyntax") {
-                        continue;
-                    }
+                    if (attribute != null) {
+                        if (attribute.Name.GetType().Name != "IdentifierNameSyntax") {
+                            continue;
+                        }
 
-                    var identifier = attribute.Name;
+                        var identifier = attribute.Name;
 
-                    if (identifier != null) {
-                        HandleAttribute(identifier, attribute);
+                        if (identifier != null) {
+                            HandleAttribute(identifier, attribute);
+                        }
                     }
                 }
             }
@@ -160,29 +165,35 @@ namespace Aderant.Build.Tasks {
             switch (attributeName) {
                 case nameof(AssemblyInformationalVersionAttribute):
                 case "AssemblyInformationalVersion": {
-                    assemblyInformationalVersionAttribute = attribute;
+                    ConditionalAssign(ref assemblyInformationalVersionAttribute, attribute);
                     break;
                 }
                 case nameof(AssemblyVersionAttribute):
                 case "AssemblyVersion": {
-                    assemblyVersionAttribute = attribute;
+                    ConditionalAssign(ref assemblyVersionAttribute, attribute);
                     break;
                 }
                 case nameof(AssemblyFileVersionAttribute):
                 case "AssemblyFileVersion": {
-                    assemblyFileVersionAttribute = attribute;
+                    ConditionalAssign(ref assemblyFileVersionAttribute, attribute);
                     break;
                 }
                 case nameof(AssemblyProductAttribute):
                 case "AssemblyProduct": {
-                    assemblyProductAttribute = attribute;
+                    ConditionalAssign(ref assemblyProductAttribute, attribute);
                     break;
                 }
                 case nameof(AssemblyTitleAttribute):
                 case "AssemblyTitle": {
-                    assemblyProductTitle = attribute;
+                    ConditionalAssign(ref assemblyProductTitle, attribute);
                     break;
                 }
+            }
+        }
+
+        private static void ConditionalAssign(ref object target, object attribute) {
+            if (target == null) {
+                target = attribute;
             }
         }
 

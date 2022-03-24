@@ -59,6 +59,7 @@ namespace Aderant.Build.ProjectSystem {
         private Memoizer<ConfiguredProject, bool> skipCopyBuildProduct;
         private Memoizer<ConfiguredProject, string> id;
         private string fullPath;
+        private bool? isSdkStyeProject;
 
         [ImportingConstructor]
         public ConfiguredProject(IProjectTree tree) {
@@ -429,7 +430,18 @@ namespace Aderant.Build.ProjectSystem {
         /// <summary>
         /// Gets or sets a value indicating if this is an SDK style project
         /// </summary>
-        public bool IsSdkStyeProject { get; set; }
+        public bool IsSdkStyeProject {
+            get {
+                if (isSdkStyeProject == null) {
+                    return IsSdkStyleProject(this);
+                }
+
+                return isSdkStyeProject.GetValueOrDefault();
+            }
+            set {
+                isSdkStyeProject = value;
+            }
+        }
 
         protected virtual Lazy<Project> InitializeProject(Lazy<ProjectRootElement> projectElement) {
             var properties = new Dictionary<string, string>(globalProperties);
