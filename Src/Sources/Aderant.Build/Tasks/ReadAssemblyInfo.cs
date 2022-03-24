@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
@@ -42,27 +43,27 @@ namespace Aderant.Build.Tasks {
 
         [Output]
         public ITaskItem AssemblyVersion {
-            get { return ParseAttributeArgumentList(assemblyVersionAttribute, 1); }
+            get { return ParseAttributeArgumentList(ref assemblyVersionAttribute, 1); }
         }
 
         [Output]
         public ITaskItem AssemblyInformationalVersion {
-            get { return ParseAttributeArgumentList(assemblyInformationalVersionAttribute, 2); }
+            get { return ParseAttributeArgumentList(ref assemblyInformationalVersionAttribute, 2); }
         }
 
         [Output]
         public ITaskItem AssemblyFileVersion {
-            get { return ParseAttributeArgumentList(assemblyFileVersionAttribute, 3); }
+            get { return ParseAttributeArgumentList(ref assemblyFileVersionAttribute, 3); }
         }
 
         [Output]
         public ITaskItem AssemblyProduct {
-            get { return ParseAttributeArgumentList(assemblyProductAttribute, 4, false); }
+            get { return ParseAttributeArgumentList(ref assemblyProductAttribute, 4, false); }
         }
 
         [Output]
         public ITaskItem AssemblyProductTitle {
-            get { return ParseAttributeArgumentList(assemblyProductTitle, 5, false); }
+            get { return ParseAttributeArgumentList(ref assemblyProductTitle, 5, false); }
         }
 
         [Output]
@@ -244,7 +245,7 @@ namespace Aderant.Build.Tasks {
             taskItem.SetMetadata(nameof(version.Revision), version.Revision.ToString());
         }
 
-        private ITaskItem ParseAttributeArgumentList(dynamic attribute, int i, bool parseVersion = true) {
+        private ITaskItem ParseAttributeArgumentList(ref dynamic attribute, int i, bool parseVersion = true) {
             if (fileParsed && attribute == null) {
                 return null;
             }
