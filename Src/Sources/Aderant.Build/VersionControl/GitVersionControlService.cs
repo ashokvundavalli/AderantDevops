@@ -13,6 +13,12 @@ namespace Aderant.Build.VersionControl {
     [PartCreationPolicy(CreationPolicy.NonShared)]
     internal class GitVersionControlService : IVersionControlService {
 
+        /// <summary>
+        /// Controls how many iterations are used for finding a common ancestor.
+        /// Searching can be quite slow (10+ seconds) for 100 local commits which will never be reachable from anywhere else.
+        /// </summary>
+        public int? SearchDepth { get; set; }
+
         private static readonly string[] globs = new[] {
             // Common release vehicle naming
             "update/*",
@@ -188,7 +194,7 @@ namespace Aderant.Build.VersionControl {
         /// The joint point where the commit is also reachable from somewhere else. The first branch name is returned in
         /// the out parameter branchCanonicalName.
         /// </returns>
-        private static Commit FindMostLikelyReusableBucket(Repository repository, Commit currentTree, out string commonBranch, CancellationToken cancellationToken) {
+        private Commit FindMostLikelyReusableBucket(Repository repository, Commit currentTree, out string commonBranch, CancellationToken cancellationToken) {
             var refs = GetRefsToSearchForCommit(repository);
 
             // Which is the "first" and which is the "second" parent of a merge?
@@ -219,7 +225,7 @@ namespace Aderant.Build.VersionControl {
                 // Else, go to its parent.
                 commit = commit.Parents.LastOrDefault();
 
-                if (i > 128) {
+                if (i > SearchDepth.GetValueOrDefault(128)) {
                     break;
                 }
             }
@@ -227,6 +233,8 @@ namespace Aderant.Build.VersionControl {
             commonBranch = null;
             return null;
         }
+
+
 
         private static List<Reference> GetRefsToSearchForCommit(Repository repository) {
             var patterns = new List<string>();
