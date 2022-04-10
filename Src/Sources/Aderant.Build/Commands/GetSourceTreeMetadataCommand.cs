@@ -29,6 +29,10 @@ namespace Aderant.Build.Commands {
         [Parameter(HelpMessage = "Indicates if uncommitted changes should be considered")]
         public SwitchParameter IncludeLocalChanges { get; set; }
 
+
+        [Parameter(HelpMessage = "Indicates if uncommitted changes should be considered")]
+        public bool NoBuildCache { get; set; } = true;
+
         protected override void ProcessRecord() {
             if (SourceDirectory == null) {
                 SourceDirectory = this.SessionState.Path.CurrentFileSystemLocation.Path;
@@ -37,7 +41,9 @@ namespace Aderant.Build.Commands {
             WriteDebug(LibGit2Sharp.GlobalSettings.NativeLibraryPath);
 
             cts = new CancellationTokenSource();
+
             var gvc = new GitVersionControlService();
+            gvc.SearchDepth = NoBuildCache ? -1 : (int?)null;
 
             SourceTreeMetadata sourceInfo;
             if (string.Equals("PatchBuilder", ParameterSetName)) {
