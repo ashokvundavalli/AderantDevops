@@ -221,7 +221,7 @@ function GetSourceTreeMetadata {
     if (-not [string]::IsNullOrWhiteSpace($sourceCommit)) {
         $context.SourceTreeMetadata = Get-SourceTreeMetadata -SourceDirectory $repositoryPath -SourceCommit $sourceCommit
     } else {
-        $context.SourceTreeMetadata = Get-SourceTreeMetadata -SourceDirectory $repositoryPath -SourceBranch $sourceBranch -TargetBranch $targetBranch -IncludeLocalChanges:$context.IsDesktopBuild
+        $context.SourceTreeMetadata = Get-SourceTreeMetadata -SourceDirectory $repositoryPath -SourceBranch $sourceBranch -TargetBranch $targetBranch -IncludeLocalChanges:$context.IsDesktopBuild -NoBuildCache:$NoBuildCache.ToBool()
     }
 
     Write-Information "$indent1 Build caching info:"
