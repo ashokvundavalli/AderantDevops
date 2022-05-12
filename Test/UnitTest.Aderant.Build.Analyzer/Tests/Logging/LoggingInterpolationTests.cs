@@ -5,35 +5,7 @@ using UnitTest.Aderant.Build.Analyzer.Verifiers;
 
 namespace UnitTest.Aderant.Build.Analyzer.Tests.Logging {
     [TestClass]
-    public class LoggingInterpolationTests : AderantCodeFixVerifier {
-        #region Constructors
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="LoggingInterpolationTests"/> class.
-        /// </summary>
-        public LoggingInterpolationTests()
-            : base(null) {
-
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="LoggingInterpolationTests"/> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        public LoggingInterpolationTests(RuleBase[] injectedRules)
-            : base(injectedRules) {
-
-        }
-
-        #endregion Constructors
-
-        #region Properties
-
-        protected override RuleBase Rule => new LoggingInterpolationRule();
-
-        #endregion Properties
-
-        #region Tests
+    public class LoggingInterpolationTests : AderantCodeFixVerifier<LoggingInterpolationRule> {
 
         [TestMethod]
         public void LoggingInterpolation_Exception_DollarFormat() {
@@ -391,6 +363,5 @@ namespace Aderant.Framework.Logging {
             VerifyCSharpDiagnostic(code);
         }
 
-        #endregion Tests
     }
 }

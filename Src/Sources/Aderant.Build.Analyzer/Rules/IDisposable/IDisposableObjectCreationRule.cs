@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Aderant.Build.Analyzer.Rules.IDisposable {
-    internal class IDisposableObjectCreationRule : IDisposableRuleBase {
+    public class IDisposableObjectCreationRule : IDisposableRuleBase {
         #region Properties
 
         internal override string Title => "Aderant IDisposable Invocation Diagnostic";

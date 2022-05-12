@@ -12,7 +12,7 @@ namespace Aderant.Build.Analyzer.Rules {
     /// This rule makes sure that the type parameters in IQuery.Lynq<> and IQuery.Get<> are classes instead of interfaces.
     /// The bug that prompted me to develop this rule has since been fixed so it is here mostly as an example.
     /// </summary>
-    internal class NHibernateRetrieveTypeNotInterfaceRule : RuleBase {
+    public class NHibernateRetrieveTypeNotInterfaceRule : RuleBase {
         internal const string DiagnosticId = "Aderant_NHibernateDoesNotSupportInterface";
 
         internal override DiagnosticSeverity Severity => DiagnosticSeverity.Error;

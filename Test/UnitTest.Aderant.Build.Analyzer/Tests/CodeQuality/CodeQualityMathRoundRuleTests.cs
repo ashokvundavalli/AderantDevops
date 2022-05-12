@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Aderant.Build.Analyzer.Rules;
 using Aderant.Build.Analyzer.Rules.CodeQuality;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -6,17 +7,10 @@ using UnitTest.Aderant.Build.Analyzer.Verifiers;
 
 namespace UnitTest.Aderant.Build.Analyzer.Tests.CodeQuality {
     [TestClass]
-    public class CodeQualityMathRoundRuleTests : AderantCodeFixVerifier {
-        #region Properties
-
-        protected override RuleBase Rule => new CodeQualityMathRoundRule();
-
-        #endregion Properties
-
-        #region Tests
+    public class CodeQualityMathRoundRuleTests : AderantCodeFixVerifier<CodeQualityMathRoundRule> {
 
         [TestMethod]
-        public void MathRoundRule_InvalidMathRoundSingleNodeExpression() {
+        public async Task MathRoundRule_InvalidMathRoundSingleNodeExpression() {
             const string code = @"
 using System;
 
@@ -28,33 +22,33 @@ namespace Test {
     }
 }
 ";
-            VerifyCSharpDiagnostic(
+            await VerifyCSharpDiagnostic(
                 code,
                 GetDiagnostic(7, 21));
 
         }
 
         [TestMethod]
-        public void MathRoundRule_InvalidDecimalRoundSingleNodeExpression() {
+        public async Task MathRoundRule_InvalidDecimalRoundSingleNodeExpression() {
             const string code = @"
 using System;
 
 namespace Test {
     public class TestClass {
         private void Method() {
-            var x = decimal.Round(1.09);
+            var x = decimal.Round(1.09m);
         }
     }
 }
 ";
-            VerifyCSharpDiagnostic(
+            await VerifyCSharpDiagnostic(
                 code,
                 GetDiagnostic(7, 21));
 
         }
 
         [TestMethod]
-        public void MathRoundRule_InvalidMathRoundTwoNodesExpression() {
+        public async Task MathRoundRule_InvalidMathRoundTwoNodesExpression() {
             const string code = @"
 using System;
 
@@ -66,7 +60,7 @@ namespace Test {
     }
 }
 ";
-            VerifyCSharpDiagnostic(
+            await VerifyCSharpDiagnostic(
                 code,
                 GetDiagnostic(7, 21));
 
@@ -74,65 +68,63 @@ namespace Test {
 
 
         [TestMethod]
-        public void MathRoundRule_InvalidMathRoundThreeNodesExpression() {
+        public async Task MathRoundRule_InvalidMathRoundThreeNodesExpression() {
             const string code = @"
 using System;
 
 namespace Test {
     public class TestClass {
         private void Method() {
-            int min = Math.Round(((100 - 20) / 60), MidpointRounding.AwayFromZero);
+            var min = Math.Round((decimal)((100 - 20) / 60), MidpointRounding.AwayFromZero);
         }
     }
 }
 ";
-            VerifyCSharpDiagnostic(
+            await VerifyCSharpDiagnostic(
                 code,
                 GetDiagnostic(7, 23));
 
         }
 
         [TestMethod]
-        public void MathRoundRule_InvalidDecimalRoundExpression() {
+        public async Task MathRoundRule_InvalidDecimalRoundExpression() {
             const string code = @"
 using System;
 
 namespace Test {
     public class TestClass {
         private void Method() {
-            int min = Decimal.Round(((100 - 20) / 60), MidpointRounding.AwayFromZero);
+            var min = Decimal.Round(((100 - 20) / 60), MidpointRounding.AwayFromZero);
         }
     }
 }
 ";
-            VerifyCSharpDiagnostic(
+            await VerifyCSharpDiagnostic(
                 code,
                 GetDiagnostic(7, 23));
         }
 
         [TestMethod]
-        public void MathRoundRule_ValidExpression() {
+        public async Task MathRoundRule_ValidExpression() {
             const string code = @"
 using System;
-using Aderant.Framework.Extensions;
 namespace Test {
+    public static class MathRounding {
+        public static object RoundCurrencyAmount(object input1, object input2) {
+            return null;
+        }
+    }
+
     public class TestClass {
         private void Method() {
-            int min = MathRounding.RoundCurrencyAmount(((100 - 20) / 60), 2);
+            var min = MathRounding.RoundCurrencyAmount(((100 - 20) / 60), 2);
         }
     }
 }
 ";
-            VerifyCSharpDiagnostic(
+            await VerifyCSharpDiagnostic(
                 code);
         }
 
-        #endregion Tests
-
-        public CodeQualityMathRoundRuleTests() : base(null) {
-        }
-
-        public CodeQualityMathRoundRuleTests(RuleBase[] injectedRules) : base(injectedRules) {
-        }
     }
 }

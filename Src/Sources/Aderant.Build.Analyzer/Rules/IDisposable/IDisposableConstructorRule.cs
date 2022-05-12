@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Aderant.Build.Analyzer.Rules.IDisposable {
-    internal class IDisposableConstructorRule : IDisposableRuleBase {
+    public class IDisposableConstructorRule : IDisposableRuleBase {
         #region Types
 
         private class ConstructorData {

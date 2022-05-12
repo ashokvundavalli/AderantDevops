@@ -5,31 +5,7 @@ using UnitTest.Aderant.Build.Analyzer.Verifiers;
 
 namespace UnitTest.Aderant.Build.Analyzer.Tests.Logging {
     [TestClass]
-    public class LoggingInvalidTemplateTests : AderantCodeFixVerifier {
-        #region Constructors
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="LoggingInvalidTemplateTests"/> class.
-        /// </summary>
-        public LoggingInvalidTemplateTests()
-            : base(null) {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="LoggingInvalidTemplateTests"/> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        public LoggingInvalidTemplateTests(RuleBase[] injectedRules)
-            : base(injectedRules) {
-        }
-
-        #endregion Constructors
-
-        #region Properties
-
-        protected override RuleBase Rule => new LoggingInvalidTemplateRule();
-
-        #endregion Properties
+    public class LoggingInvalidTemplateTests : AderantCodeFixVerifier<LoggingInvalidTemplateRule> {
 
         #region Tests
 

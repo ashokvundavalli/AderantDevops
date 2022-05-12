@@ -1,40 +1,17 @@
-﻿using Aderant.Build.Analyzer.Rules;
+﻿using System.Threading.Tasks;
+using Aderant.Build.Analyzer.Rules;
 using Aderant.Build.Analyzer.Rules.CodeQuality;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UnitTest.Aderant.Build.Analyzer.Verifiers;
 
 namespace UnitTest.Aderant.Build.Analyzer.Tests.CodeQuality {
     [TestClass]
-    public class CodeQualityDbConnectionStringTests : AderantCodeFixVerifier {
-        #region Constructors
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="CodeQualityDbConnectionStringTests" /> class.
-        /// </summary>
-        public CodeQualityDbConnectionStringTests()
-            : base(null) {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="CodeQualityDbConnectionStringTests" /> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        public CodeQualityDbConnectionStringTests(RuleBase[] injectedRules)
-            : base(injectedRules) {
-        }
-
-        #endregion Constructors
-
-        #region Properties
-
-        protected override RuleBase Rule => new CodeQualityDbConnectionStringRule();
-
-        #endregion Properties
+    public class CodeQualityDbConnectionStringTests : AderantCodeFixVerifier<CodeQualityDbConnectionStringRule> {
 
         #region Tests
 
         [TestMethod]
-        public void CodeQualityDbConnectionString_All() {
+        public async Task CodeQualityDbConnectionString_All() {
             const string code = @"
 using System.Data.Common;
 using Aderant.Framework.Persistence;
@@ -64,7 +41,7 @@ namespace System.Data.Common {
 }
 ";
 
-            VerifyCSharpDiagnostic(
+            await VerifyCSharpDiagnostic(
                 code,
                 // Error: string connectionString = FrameworkDb
                 //            .CreateConnection()

@@ -1,41 +1,15 @@
-﻿using Aderant.Build.Analyzer.CodeFixes;
+﻿using System.Threading.Tasks;
+using Aderant.Build.Analyzer.CodeFixes;
 using Aderant.Build.Analyzer.Rules;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UnitTest.Aderant.Build.Analyzer.Verifiers;
+using VerifyCS = TestHelper.CSharpCodeFixVerifier<Aderant.Build.Analyzer.AderantAnalyzer<Aderant.Build.Analyzer.Rules.SetPropertyValueNoStringRule>,
+    Aderant.Build.Analyzer.CodeFixes.SetPropertyValueNoStringFix>;
 
 namespace UnitTest.Aderant.Build.Analyzer.Tests {
     [TestClass]
-    public class SetPropertyValueNoStringTests : AderantCodeFixVerifier {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SetPropertyValueNoStringTests" /> class.
-        /// </summary>
-        public SetPropertyValueNoStringTests()
-            : base(null) {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SetPropertyValueNoStringTests" /> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        public SetPropertyValueNoStringTests(RuleBase[] injectedRules)
-            : base(injectedRules) {
-        }
-
-        /// <summary>
-        /// Returns the codefix being tested (C#) - to be implemented in non-abstract class
-        /// </summary>
-        /// <returns>
-        /// The CodeFixProvider to be used for CSharp code
-        /// </returns>
-        protected override CodeFixProvider GetCSharpCodeFixProvider() {
-            return new SetPropertyValueNoStringFix();
-        }
-
-        /// <summary>
-        /// Gets the rule to be verified.
-        /// </summary>
-        protected override RuleBase Rule => new SetPropertyValueNoStringRule();
+    public class SetPropertyValueNoStringTests : AderantCodeFixVerifier<SetPropertyValueNoStringRule, SetPropertyValueNoStringFix> {
 
         internal static string SharedPreCode => @"
     using System;
@@ -64,25 +38,34 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests {
         protected override string PreCode => SharedPreCode;
 
         [TestMethod]
-        public void SetPropertyValue_string_refers_to_class_member() {
+        public async Task SetPropertyValue_string_refers_to_class_member() {
             var test = InsertCode(@"SetPropertyValue(""Test"", 0, 0);");
 
             var expected = GetDefaultDiagnostic("Test");
-            VerifyCSharpDiagnostic(test, expected);
 
             var fixtest = InsertCode(@"SetPropertyValue(nameof(Test), 0, 0);");
-            VerifyCSharpFix(test, fixtest);
+
+            await new VerifyCS.Test {
+                TestCode = test,
+                FixedCode = fixtest,
+                ExpectedDiagnostics = { expected },
+            }.RunAsync();
         }
 
         [TestMethod]
-        public void SetPropertyValue_string_refers_to_baseclass_member() {
+        public async Task SetPropertyValue_string_refers_to_baseclass_member() {
             var test = InsertCode(@"SetPropertyValue(""Test2"", 0, 0);");
 
             var expected = GetDefaultDiagnostic("Test2");
-            VerifyCSharpDiagnostic(test, expected);
 
             var fixtest = InsertCode(@"SetPropertyValue(nameof(Test2), 0, 0);");
-            VerifyCSharpFix(test, fixtest);
+
+            await new VerifyCS.Test {
+                TestCode = test,
+                FixedCode = fixtest,
+                ExpectedDiagnostics = { expected },
+            }.RunAsync();
         }
+
     }
 }

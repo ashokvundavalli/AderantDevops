@@ -37,57 +37,120 @@
     <TargetFramework>net48</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="DiffPlex">
+      <HintPath>..\..\packages\analyzer\DiffPlex\lib\net40\DiffPlex.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
     <Reference Include="Microsoft.CodeAnalysis">
       <HintPath>..\..\packages\analyzer\Microsoft.CodeAnalysis.Common\lib\netstandard2.0\Microsoft.CodeAnalysis.dll</HintPath>
       <Private>true</Private>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.Analyzer.Testing">
+      <HintPath>..\..\packages\analyzer\Microsoft.CodeAnalysis.Analyzer.Testing\lib\net472\Microsoft.CodeAnalysis.Analyzer.Testing.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.CodeFix.Testing">
+      <HintPath>..\..\packages\analyzer\Microsoft.CodeAnalysis.CodeFix.Testing\lib\net472\Microsoft.CodeAnalysis.CodeFix.Testing.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CodeAnalysis.CSharp">
       <HintPath>..\..\packages\analyzer\Microsoft.CodeAnalysis.CSharp\lib\netstandard2.0\Microsoft.CodeAnalysis.CSharp.dll</HintPath>
       <Private>true</Private>
     </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing">
+      <HintPath>..\..\packages\analyzer\Microsoft.CodeAnalysis.CSharp.Analyzer.Testing\lib\net472\Microsoft.CodeAnalysis.CSharp.Analyzer.Testing.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing.MSTest">
+      <HintPath>..\..\packages\analyzer\Microsoft.CodeAnalysis.CSharp.Analyzer.Testing.MSTest\lib\net472\Microsoft.CodeAnalysis.CSharp.Analyzer.Testing.MSTest.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.CSharp.CodeFix.Testing">
+      <HintPath>..\..\packages\analyzer\Microsoft.CodeAnalysis.CSharp.CodeFix.Testing\lib\net472\Microsoft.CodeAnalysis.CSharp.CodeFix.Testing.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.CSharp.CodeFix.Testing.MSTest">
+      <HintPath>..\..\packages\analyzer\Microsoft.CodeAnalysis.CSharp.CodeFix.Testing.MSTest\lib\net472\Microsoft.CodeAnalysis.CSharp.CodeFix.Testing.MSTest.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.CodeAnalysis.CSharp.Workspaces">
       <HintPath>..\..\packages\analyzer\Microsoft.CodeAnalysis.CSharp.Workspaces\lib\netstandard2.0\Microsoft.CodeAnalysis.CSharp.Workspaces.dll</HintPath>
       <Private>true</Private>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.Testing.Verifiers.MSTest">
+      <HintPath>..\..\packages\analyzer\Microsoft.CodeAnalysis.Testing.Verifiers.MSTest\lib\net472\Microsoft.CodeAnalysis.Testing.Verifiers.MSTest.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CodeAnalysis.Workspaces">
       <HintPath>..\..\packages\analyzer\Microsoft.CodeAnalysis.Workspaces.Common\lib\netstandard2.0\Microsoft.CodeAnalysis.Workspaces.dll</HintPath>
       <Private>true</Private>
     </Reference>
+    <Reference Include="Microsoft.VisualStudio.Composition">
+      <HintPath>..\..\packages\analyzer\Microsoft.VisualStudio.Composition\lib\net46\Microsoft.VisualStudio.Composition.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.VisualStudio.TestPlatform.MSTest.TestAdapter">
       <HintPath>..\..\packages\devtools\MSTest.TestAdapter\build\_common\Microsoft.VisualStudio.TestPlatform.MSTest.TestAdapter.dll</HintPath>
+      <Private>true</Private>
     </Reference>
     <Reference Include="Microsoft.VisualStudio.TestPlatform.MSTestAdapter.PlatformServices">
       <HintPath>..\..\packages\devtools\MSTest.TestAdapter\build\_common\Microsoft.VisualStudio.TestPlatform.MSTestAdapter.PlatformServices.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.VisualStudio.TestPlatform.TestFramework">
       <HintPath>..\..\packages\devtools\MSTest.TestFramework\lib\netstandard1.0\Microsoft.VisualStudio.TestPlatform.TestFramework.dll</HintPath>
+      <Private>true</Private>
     </Reference>
     <Reference Include="Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions">
       <HintPath>..\..\packages\devtools\MSTest.TestFramework\lib\netstandard1.0\Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.Validation">
+      <HintPath>..\..\packages\analyzer\Microsoft.VisualStudio.Validation\lib\net45\Microsoft.VisualStudio.Validation.dll</HintPath>
+    </Reference>
+    <Reference Include="NuGet.Common">
+      <HintPath>..\..\packages\analyzer\NuGet.Common\lib\net472\NuGet.Common.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="NuGet.Configuration">
+      <HintPath>..\..\packages\analyzer\NuGet.Configuration\lib\net472\NuGet.Configuration.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="NuGet.Frameworks">
+      <HintPath>..\..\packages\analyzer\NuGet.Frameworks\lib\net472\NuGet.Frameworks.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="NuGet.Protocol">
+      <HintPath>..\..\packages\analyzer\NuGet.Protocol\lib\net472\NuGet.Protocol.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="NuGet.Resolver">
+      <HintPath>..\..\packages\analyzer\NuGet.Resolver\lib\net472\NuGet.Resolver.dll</HintPath>
     </Reference>
     <Reference Include="System" />
-    <Reference Include="System.Collections.Immutable">
-      <HintPath>..\..\packages\analyzer\System.Collections.Immutable\lib\netstandard2.0\System.Collections.Immutable.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
     <Reference Include="System.Composition.AttributedModel">
-      <HintPath>..\..\packages\analyzer\System.Composition.AttributedModel\lib\netstandard2.0\System.Composition.AttributedModel.dll</HintPath>
-      <Private>true</Private>
+      <HintPath>..\..\packages\analyzer\System.Composition.AttributedModel\lib\portable-net45+win8+wp8+wpa81\System.Composition.AttributedModel.dll</HintPath>
     </Reference>
     <Reference Include="System.Composition.Convention">
-      <HintPath>..\..\packages\analyzer\System.Composition.Convention\lib\netstandard2.0\System.Composition.Convention.dll</HintPath>
+      <HintPath>..\..\packages\analyzer\System.Composition.Convention\lib\portable-net45+win8+wp8+wpa81\System.Composition.Convention.dll</HintPath>
+    
       <Private>true</Private>
+
     </Reference>
     <Reference Include="System.Composition.Hosting">
-      <HintPath>..\..\packages\analyzer\System.Composition.Hosting\lib\netstandard2.0\System.Composition.Hosting.dll</HintPath>
+      <HintPath>..\..\packages\analyzer\System.Composition.Hosting\lib\portable-net45+win8+wp8+wpa81\System.Composition.Hosting.dll</HintPath>
+    
       <Private>true</Private>
+
     </Reference>
     <Reference Include="System.Composition.Runtime">
-      <HintPath>..\..\packages\analyzer\System.Composition.Runtime\lib\netstandard2.0\System.Composition.Runtime.dll</HintPath>
+      <HintPath>..\..\packages\analyzer\System.Composition.Runtime\lib\portable-net45+win8+wp8+wpa81\System.Composition.Runtime.dll</HintPath>
+   
       <Private>true</Private>
+
     </Reference>
     <Reference Include="System.Composition.TypedParts">
-      <HintPath>..\..\packages\analyzer\System.Composition.TypedParts\lib\netstandard2.0\System.Composition.TypedParts.dll</HintPath>
+      <HintPath>..\..\packages\analyzer\System.Composition.TypedParts\lib\portable-net45+win8+wp8+wpa81\System.Composition.TypedParts.dll</HintPath>
+   
+      <Private>true</Private>
+
+    </Reference>
+    <Reference Include="System.Collections.Immutable">
+      <HintPath>..\..\packages\analyzer\System.Collections.Immutable\lib\netstandard2.0\System.Collections.Immutable.dll</HintPath>
       <Private>true</Private>
     </Reference>
     <Reference Include="System.Numerics.Vectors">
@@ -100,9 +163,16 @@
       <HintPath>..\..\packages\analyzer\System.Runtime.CompilerServices.Unsafe\lib\netstandard2.0\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
       <Private>true</Private>
     </Reference>
+    <Reference Include="System.Threading.Tasks.Dataflow">
+      <HintPath>..\..\packages\analyzer\System.Threading.Tasks.Dataflow\lib\portable-net45+win8+wpa81\System.Threading.Tasks.Dataflow.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Content Include="Tests\Unused\AderantQueryServiceMigrationTests.cs" />
+    <Compile Include="Helpers\CSharpAnalyzerVerifier.cs" />
+    <Compile Include="Helpers\CSharpCodeFixVerifier.cs" />
+    <Compile Include="Helpers\MSTestDotNet471Test.cs" />
     <Compile Include="SqlTestCases\Mutable_string_passed_to_function_with_parameters.cs" />
     <Compile Include="SqlTestCases\Mutable_string_passed_to_function.cs" />
     <Compile Include="SqlTestCases\SqlCommand_using_sp_executesql_parameter_add_reports_no_diagnostic.cs" />
@@ -110,7 +180,7 @@
     <Compile Include="SqlTestCases\SqlCommand_using_sp_executesql_reports_no_diagnostic.cs" />
     <Compile Include="SqlTestCases\SqlCommand_using_ctor_and_sp_executesql_reports_no_diagnostic.cs" />
     <Compile Include="SqlTestCases\Literal_string_passed_to_function.cs" />
-    <Compile Include="Tests\AutomatedTest.cs" />
+    <Compile Include="Tests\MemberInitialization\MemberInitializationRuleTests.cs" />
     <Compile Include="Tests\CodeQuality\CodeQualityApprovalsReporterTests.cs" />
     <Compile Include="Tests\CodeQuality\CodeQualityDataProviderIllegalPublicPropertiesTests.cs" />
     <Compile Include="Tests\CodeQuality\CodeQualityDbConnectionStringTests.cs" />
@@ -133,6 +203,17 @@
     <Compile Include="Tests\Logging\LoggingArgumentCountTests.cs" />
     <Compile Include="Tests\Logging\LoggingInterpolationTests.cs" />
     <Compile Include="Tests\Logging\LoggingInvalidTemplateTests.cs" />
+    <Compile Include="Tests\MemberInitialization\FieldWrittenFromConstructorTests.cs" />
+    <Compile Include="Tests\MemberInitialization\TestCases\TestCode.DelegateTypeFieldFromInstanceConstructor.cs" />
+    <Compile Include="Tests\MemberInitialization\TestCases\TestCode.StaticFieldFromInstanceConstructor.cs" />
+    <Compile Include="Tests\MemberInitialization\TestCases\TestCode.FieldFromInstanceConstructor.cs" />
+    <Compile Include="Tests\MemberInitialization\TestCases\TestCode.InStaticConstructor.cs" />
+    <Compile Include="Tests\MemberInitialization\TestCases\TestCode.cs" />
+    <Compile Include="Tests\MemberInitialization\TestCases\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="Tests\NHibernateRetrieveTypeNotInterfaceRuleTest.cs" />
     <Compile Include="Tests\PropertyChangedNoStringNonFixableTests.cs" />
     <Compile Include="Tests\QueryServiceQueryAllTests.cs" />
@@ -151,11 +232,6 @@
     </Compile>
     <Compile Include="Tests\SuppressionAttributeTests.cs" />
     <Compile Include="Verifiers\AderantCodeFixVerifier.cs" />
-    <Compile Include="Verifiers\CodeFixVerifier.cs" />
-    <Compile Include="Verifiers\DiagnosticVerifier.cs" />
-    <Compile Include="Helpers\CodeFixVerifier.Helper.cs" />
-    <Compile Include="Helpers\DiagnosticResult.cs" />
-    <Compile Include="Helpers\DiagnosticVerifier.Helper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -171,6 +247,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Update="Tests\MemberInitialization\TestCases\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
     <EmbeddedResource Update="Tests\SqlResources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>SqlResources.Designer.cs</LastGenOutput>

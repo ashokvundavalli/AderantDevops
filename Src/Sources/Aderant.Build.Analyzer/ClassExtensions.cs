@@ -11,7 +11,6 @@ namespace Aderant.Build.Analyzer {
         /// </summary>
         /// <param name="context">The context.</param>
         /// <param name="propertyName">Name of the property.</param>
-        /// <returns></returns>
         public static bool IsMemberOnClassParentNode(this SyntaxNodeAnalysisContext context, string propertyName) {
             var node = context.Node;
             while (node != null && !(node is ClassDeclarationSyntax)) {
@@ -37,23 +36,6 @@ namespace Aderant.Build.Analyzer {
                 return false;
             }
             return true;
-        }
-
-        /// <summary>
-        /// Gets the next child node after me.
-        /// </summary>
-        /// <param name="me">Me.</param>
-        /// <returns></returns>
-        public static SyntaxNode GetNodeAfterMe(this SyntaxNode me) {
-            SyntaxNode peerNode = null;
-            var peerNodes = me.Parent?.ChildNodes().ToArray();
-            for (int i = 0; i < peerNodes.Length; i++) {
-                if (peerNodes[i].IsEquivalentTo(me) && i < peerNodes.Length - 1) {
-                    peerNode = peerNodes[i + 1];
-                    break;
-                }
-            }
-            return peerNode;
         }
 
         public static SyntaxNode GetParentIgnoringParentheses(this SyntaxNode me) {

@@ -40,7 +40,7 @@ namespace Aderant.Build.Analyzer.Rules {
                 }
 
                 if (!areParametersAddedToCommand) {
-                    if (!DiagnosticHasGlobalSuppression(node, diagnosticDescriptor.Id, context.SemanticModel)) {
+                    if (!DiagnosticHasGlobalSuppression(node, diagnosticDescriptor.Id, syntaxNodeAnalysisContext.Compilation)) {
                         var diag = Diagnostic.Create(diagnosticDescriptor, location);
                         syntaxNodeAnalysisContext.ReportDiagnostic(diag);
                     }
@@ -92,7 +92,18 @@ namespace Aderant.Build.Analyzer.Rules {
 
         internal abstract string Description { get; }
 
-        public abstract DiagnosticDescriptor Descriptor { get; }
+        public virtual DiagnosticDescriptor Descriptor {
+            get {
+                return new DiagnosticDescriptor(
+                    Id,
+                    Title,
+                    MessageFormat,
+                    AnalyzerCategory.Syntax,
+                    Severity,
+                    true,
+                    Description);
+            }
+        }
 
         #endregion Properties
 
@@ -354,7 +365,20 @@ namespace Aderant.Build.Analyzer.Rules {
             Location location,
             SyntaxNode node,
             params object[] messageArgs) {
-            if (!DiagnosticHasGlobalSuppression(node, descriptor.Id, context.SemanticModel)) {
+            if (!DiagnosticHasGlobalSuppression(node, descriptor.Id, context.SemanticModel.Compilation)) {
+                context.ReportDiagnostic(Diagnostic.Create(descriptor, location, messageArgs));
+            }
+        }
+
+        protected static void ReportDiagnostic(
+            CompilationAnalysisContext context,
+            DiagnosticDescriptor descriptor,
+            Location location,
+            SyntaxNode node,
+            params object[] messageArgs)
+        {
+            if (!DiagnosticHasGlobalSuppression(node, descriptor.Id, context.Compilation))
+            {
                 context.ReportDiagnostic(Diagnostic.Create(descriptor, location, messageArgs));
             }
         }
@@ -364,18 +388,18 @@ namespace Aderant.Build.Analyzer.Rules {
         /// </summary>
         /// <param name="data">The data.</param>
         /// <param name="diagnosticId">The diagnostic identifier.</param>
-        /// <param name="semanticModel">The semantic model.</param>
+        /// <param name="compilation">The compilation model.</param>
         /// <returns>
         /// A value indicating whether a diagnostic should be raised.
         /// </returns>
         internal static bool DiagnosticHasGlobalSuppression(
             SyntaxNode data,
             string diagnosticId,
-            SemanticModel semanticModel) {
+            Compilation compilation) {
 
-            var syntaxTrees = semanticModel.Compilation.SyntaxTrees.Where(s => s.FilePath.EndsWith("GlobalSuppressions.cs", StringComparison.OrdinalIgnoreCase)).ToList();
+            var syntaxTrees = compilation.SyntaxTrees.Where(s => s.FilePath.EndsWith("GlobalSuppressions.cs", StringComparison.OrdinalIgnoreCase)).ToList();
 
-            string message = GenerateSuppressionMessage(data, diagnosticId, semanticModel);
+            string message = GenerateSuppressionMessage(data, diagnosticId, compilation.GetSemanticModel(data.SyntaxTree));
 
             if (!GlobalSuppressionsController.IsAutomaticSuppressionEnabled) {
                 foreach (var tree in syntaxTrees) {

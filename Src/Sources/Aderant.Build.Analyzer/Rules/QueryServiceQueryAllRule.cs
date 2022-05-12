@@ -8,7 +8,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Aderant.Build.Analyzer.Rules {
-    internal class QueryServiceQueryAllRule : RuleBase {
+    public class QueryServiceQueryAllRule : RuleBase {
         internal const string DiagnosticId = "Aderant_QueryAllError";
 
         internal override DiagnosticSeverity Severity => DiagnosticSeverity.Error;
@@ -190,7 +190,7 @@ namespace Aderant.Build.Analyzer.Rules {
             SyntaxNode parentNode = null;
 
             // Each possible use case uses a different expression syntax.
-            // Instead of individually handling each use case, traverse 
+            // Instead of individually handling each use case, traverse
             // the tree of ancestor nodes and retrieve the first node that
             // is not an invocation or member access expression.
             // This node is only required for its children,

@@ -1,40 +1,17 @@
-﻿using Aderant.Build.Analyzer.Rules;
+﻿using System.Threading.Tasks;
+using Aderant.Build.Analyzer.Rules;
 using Aderant.Build.Analyzer.Rules.CodeQuality;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UnitTest.Aderant.Build.Analyzer.Verifiers;
 
 namespace UnitTest.Aderant.Build.Analyzer.Tests.CodeQuality {
     [TestClass]
-    public class CodeQualityNewExceptionTests : AderantCodeFixVerifier {
-        #region Constructors
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="CodeQualityNewExceptionTests" /> class.
-        /// </summary>
-        public CodeQualityNewExceptionTests()
-            : base(null) {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="CodeQualityNewExceptionTests" /> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        public CodeQualityNewExceptionTests(RuleBase[] injectedRules)
-            : base(injectedRules) {
-        }
-
-        #endregion Constructors
-
-        #region Properties
-
-        protected override RuleBase Rule => new CodeQualityNewExceptionRule();
-
-        #endregion Properties
+    public class CodeQualityNewExceptionTests : AderantCodeFixVerifier<CodeQualityNewExceptionRule> {
 
         #region Tests
 
         [TestMethod]
-        public void CodeQualityNewException() {
+        public async Task CodeQualityNewException() {
             const string code = @"
 using System;
 
@@ -47,14 +24,14 @@ namespace Test {
 }
 ";
 
-            VerifyCSharpDiagnostic(
+            await VerifyCSharpDiagnostic(
                 code,
                 // Error: new Exception()
                 GetDiagnostic(7, 19));
         }
 
         [TestMethod]
-        public void CodeQualityNewException_SneakyException() {
+        public async Task CodeQualityNewException_SneakyException() {
             const string code = @"
 using SneakyException = System.Exception;
 
@@ -67,14 +44,14 @@ namespace Test {
 }
 ";
 
-            VerifyCSharpDiagnostic(
+            await VerifyCSharpDiagnostic(
                 code,
                 // Error: new SneakyException()
                 GetDiagnostic(7, 19));
         }
 
         [TestMethod]
-        public void CodeQualityNewException_Message() {
+        public async Task CodeQualityNewException_Message() {
             const string code = @"
 using System;
 
@@ -87,14 +64,14 @@ namespace Test {
 }
 ";
 
-            VerifyCSharpDiagnostic(
+            await VerifyCSharpDiagnostic(
                 code,
                 // Error: new Exception("Test")
                 GetDiagnostic(7, 19));
         }
 
         [TestMethod]
-        public void CodeQualityNewException_Variable() {
+        public async Task CodeQualityNewException_Variable() {
             const string code = @"
 using System;
 
@@ -108,7 +85,7 @@ namespace Test {
 }
 ";
 
-            VerifyCSharpDiagnostic(
+            await VerifyCSharpDiagnostic(
                 code,
                 // Error: new Exception()
                 GetDiagnostic(7, 23),
@@ -117,7 +94,7 @@ namespace Test {
         }
 
         [TestMethod]
-        public void CodeQualityNewException_DerivedException() {
+        public async Task CodeQualityNewException_DerivedException() {
             const string code = @"
 using System;
 
@@ -130,7 +107,7 @@ namespace Test {
 }
 ";
 
-            VerifyCSharpDiagnostic(code);
+            await VerifyCSharpDiagnostic(code);
         }
 
         #endregion Tests

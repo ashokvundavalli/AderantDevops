@@ -1,40 +1,15 @@
-﻿using Aderant.Build.Analyzer.Rules;
+﻿using System.Threading.Tasks;
+using Aderant.Build.Analyzer.Rules;
 using Aderant.Build.Analyzer.Rules.CodeQuality;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UnitTest.Aderant.Build.Analyzer.Verifiers;
 
 namespace UnitTest.Aderant.Build.Analyzer.Tests.CodeQuality {
     [TestClass]
-    public class CodeQualityDataProviderIllegalPublicPropertiesTests : AderantCodeFixVerifier {
-        #region Constructors
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="CodeQualityDataProviderIllegalPublicPropertiesTests" /> class.
-        /// </summary>
-        public CodeQualityDataProviderIllegalPublicPropertiesTests()
-            : base(null) {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="CodeQualityDataProviderIllegalPublicPropertiesTests"/> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        public CodeQualityDataProviderIllegalPublicPropertiesTests(RuleBase[] injectedRules)
-            : base(injectedRules) {
-        }
-
-        #endregion Constructors
-
-        #region Properties
-
-        protected override RuleBase Rule => new CodeQualityDataProviderIllegalPublicPropertiesRule();
-
-        #endregion Properties
-
-        #region Tests
+    public class CodeQualityDataProviderIllegalPublicPropertiesTests : AderantCodeFixVerifier<CodeQualityDataProviderIllegalPublicPropertiesRule> {
 
         [TestMethod]
-        public void CodeQualityDataProviderIllegalPublicProperties_EmptyMethod() {
+        public async Task CodeQualityDataProviderIllegalPublicProperties_EmptyMethod() {
             const string code = @"
 using System;
 using Aderant.PresentationFramework.Windows.Data;
@@ -62,11 +37,11 @@ namespace Aderant.PresentationFramework.Windows.Data {
 }
 ";
 
-            VerifyCSharpDiagnostic(code);
+            await VerifyCSharpDiagnostic(code);
         }
 
         [TestMethod]
-        public void CodeQualityDataProviderIllegalPublicProperties_Mixed() {
+        public async Task CodeQualityDataProviderIllegalPublicProperties_Mixed() {
             const string code = @"
 using System;
 using Aderant.PresentationFramework.Windows.Data;
@@ -96,14 +71,14 @@ namespace Aderant.PresentationFramework.Windows.Data {
 }
 ";
 
-            VerifyCSharpDiagnostic(
+            await VerifyCSharpDiagnostic(
                 code,
                 // Error: [...] TestPropertySetter2;
                 GetDiagnostic(16, 48));
         }
 
         [TestMethod]
-        public void CodeQualityDataProviderIllegalPublicProperties_Mixed_Parenthesized() {
+        public async Task CodeQualityDataProviderIllegalPublicProperties_Mixed_Parenthesized() {
             const string code = @"
 using System;
 using Aderant.PresentationFramework.Windows.Data;
@@ -133,14 +108,14 @@ namespace Aderant.PresentationFramework.Windows.Data {
 }
 ";
 
-            VerifyCSharpDiagnostic(
+            await VerifyCSharpDiagnostic(
                 code,
                 // Error: [...] ((TestPropertySetter2));
                 GetDiagnostic(16, 60));
         }
 
         [TestMethod]
-        public void CodeQualityDataProviderIllegalPublicProperties_Mixed_Private() {
+        public async Task CodeQualityDataProviderIllegalPublicProperties_Mixed_Private() {
             const string code = @"
 using System;
 using Aderant.PresentationFramework.Windows.Data;
@@ -170,11 +145,11 @@ namespace Aderant.PresentationFramework.Windows.Data {
 }
 ";
 
-            VerifyCSharpDiagnostic(code);
+            await VerifyCSharpDiagnostic(code);
         }
 
         [TestMethod]
-        public void CodeQualityDataProviderIllegalPublicProperties_Mixed_PrivateSetter() {
+        public async Task CodeQualityDataProviderIllegalPublicProperties_Mixed_PrivateSetter() {
             const string code = @"
 using System;
 using Aderant.PresentationFramework.Windows.Data;
@@ -204,11 +179,11 @@ namespace Aderant.PresentationFramework.Windows.Data {
 }
 ";
 
-            VerifyCSharpDiagnostic(code);
+            await VerifyCSharpDiagnostic(code);
         }
 
         [TestMethod]
-        public void CodeQualityDataProviderIllegalPublicProperties_MultiMethod_MultiProperty() {
+        public async Task CodeQualityDataProviderIllegalPublicProperties_MultiMethod_MultiProperty() {
             const string code = @"
 using System;
 using Aderant.PresentationFramework.Windows.Data;
@@ -239,7 +214,7 @@ namespace Aderant.PresentationFramework.Windows.Data {
 }
 ";
 
-            VerifyCSharpDiagnostic(
+            await VerifyCSharpDiagnostic(
                 code,
                 // Error: return TestPropertySetter1;
                 GetDiagnostic(13, 20),
@@ -252,7 +227,7 @@ namespace Aderant.PresentationFramework.Windows.Data {
         }
 
         [TestMethod]
-        public void CodeQualityDataProviderIllegalPublicProperties_MultiMethod_MultiProperty_WithValidMethod() {
+        public async Task CodeQualityDataProviderIllegalPublicProperties_MultiMethod_MultiProperty_WithValidMethod() {
             const string code = @"
 using System;
 using Aderant.PresentationFramework.Windows.Data;
@@ -287,7 +262,7 @@ namespace Aderant.PresentationFramework.Windows.Data {
 }
 ";
 
-            VerifyCSharpDiagnostic(
+            await VerifyCSharpDiagnostic(
                 code,
                 // Error: return TestPropertySetter1;
                 GetDiagnostic(13, 20),
@@ -300,7 +275,7 @@ namespace Aderant.PresentationFramework.Windows.Data {
         }
 
         [TestMethod]
-        public void CodeQualityDataProviderIllegalPublicProperties_MultiMethod_MultiProperty_WithValidMethodAndProperty() {
+        public async Task CodeQualityDataProviderIllegalPublicProperties_MultiMethod_MultiProperty_WithValidMethodAndProperty() {
             const string code = @"
 using System;
 using Aderant.PresentationFramework.Windows.Data;
@@ -337,7 +312,7 @@ namespace Aderant.PresentationFramework.Windows.Data {
 }
 ";
 
-            VerifyCSharpDiagnostic(
+            await VerifyCSharpDiagnostic(
                 code,
                 // Error: return TestPropertySetter1;
                 GetDiagnostic(15, 20),
@@ -350,7 +325,7 @@ namespace Aderant.PresentationFramework.Windows.Data {
         }
 
         [TestMethod]
-        public void CodeQualityDataProviderIllegalPublicProperties_MultiMethod_SingleProperty() {
+        public async Task CodeQualityDataProviderIllegalPublicProperties_MultiMethod_SingleProperty() {
             const string code = @"
 using System;
 using Aderant.PresentationFramework.Windows.Data;
@@ -379,7 +354,7 @@ namespace Aderant.PresentationFramework.Windows.Data {
 }
 ";
 
-            VerifyCSharpDiagnostic(
+            await VerifyCSharpDiagnostic(
                 code,
                 // Error: return TestPropertySetter;
                 GetDiagnostic(11, 20),
@@ -388,7 +363,7 @@ namespace Aderant.PresentationFramework.Windows.Data {
         }
 
         [TestMethod]
-        public void CodeQualityDataProviderIllegalPublicProperties_NotDataProvider() {
+        public async Task CodeQualityDataProviderIllegalPublicProperties_NotDataProvider() {
             const string code = @"
 using System;
 
@@ -403,11 +378,11 @@ namespace Test {
 }
 ";
 
-            VerifyCSharpDiagnostic(code);
+            await VerifyCSharpDiagnostic(code);
         }
 
         [TestMethod]
-        public void CodeQualityDataProviderIllegalPublicProperties_NotDataProvider_WithAdditionalAttribute() {
+        public async Task CodeQualityDataProviderIllegalPublicProperties_NotDataProvider_WithAdditionalAttribute() {
             const string code = @"
 using System;
 
@@ -426,11 +401,11 @@ namespace Test {
 }
 ";
 
-            VerifyCSharpDiagnostic(code);
+            await VerifyCSharpDiagnostic(code);
         }
 
         [TestMethod]
-        public void CodeQualityDataProviderIllegalPublicProperties_NoMethods() {
+        public async Task CodeQualityDataProviderIllegalPublicProperties_NoMethods() {
             const string code = @"
 using System;
 using Aderant.PresentationFramework.Windows.Data;
@@ -453,11 +428,11 @@ namespace Aderant.PresentationFramework.Windows.Data {
 }
 ";
 
-            VerifyCSharpDiagnostic(code);
+            await VerifyCSharpDiagnostic(code);
         }
 
         [TestMethod]
-        public void CodeQualityDataProviderIllegalPublicProperties_NoProperties() {
+        public async Task CodeQualityDataProviderIllegalPublicProperties_NoProperties() {
             const string code = @"
 using System;
 using Aderant.PresentationFramework.Windows.Data;
@@ -480,11 +455,11 @@ namespace Aderant.PresentationFramework.Windows.Data {
 }
 ";
 
-            VerifyCSharpDiagnostic(code);
+            await VerifyCSharpDiagnostic(code);
         }
 
         [TestMethod]
-        public void CodeQualityDataProviderIllegalPublicProperties_SingleMethod_MultiProperty() {
+        public async Task CodeQualityDataProviderIllegalPublicProperties_SingleMethod_MultiProperty() {
             const string code = @"
 using System;
 using Aderant.PresentationFramework.Windows.Data;
@@ -511,7 +486,7 @@ namespace Aderant.PresentationFramework.Windows.Data {
 }
 ";
 
-            VerifyCSharpDiagnostic(
+            await VerifyCSharpDiagnostic(
                 code,
                 // Error: return TestPropertySetter1;
                 GetDiagnostic(13, 20),
@@ -520,7 +495,7 @@ namespace Aderant.PresentationFramework.Windows.Data {
         }
 
         [TestMethod]
-        public void CodeQualityDataProviderIllegalPublicProperties_SingleMethod_SingleProperty() {
+        public async Task CodeQualityDataProviderIllegalPublicProperties_SingleMethod_SingleProperty() {
             const string code = @"
 using System;
 using Aderant.PresentationFramework.Windows.Data;
@@ -545,12 +520,11 @@ namespace Aderant.PresentationFramework.Windows.Data {
 }
 ";
 
-            VerifyCSharpDiagnostic(
+            await VerifyCSharpDiagnostic(
                 code,
                 // Error: return TestPropertySetter;
                 GetDiagnostic(11, 20));
         }
 
-        #endregion Tests
     }
 }

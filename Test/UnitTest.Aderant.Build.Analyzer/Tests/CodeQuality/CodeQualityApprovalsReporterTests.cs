@@ -1,33 +1,14 @@
-﻿using Aderant.Build.Analyzer.Rules;
+﻿using System.Threading.Tasks;
+using Aderant.Build.Analyzer.Rules;
 using Aderant.Build.Analyzer.Rules.CodeQuality;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UnitTest.Aderant.Build.Analyzer.Verifiers;
 
 namespace UnitTest.Aderant.Build.Analyzer.Tests.CodeQuality {
     [TestClass]
-    public class CodeQualityApprovalsReporterTests : AderantCodeFixVerifier {
-        #region Constructors
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="CodeQualityApprovalsReporterTests"/> class.
-        /// </summary>
-        public CodeQualityApprovalsReporterTests()
-            : base(null) {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="CodeQualityApprovalsReporterTests"/> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        public CodeQualityApprovalsReporterTests(RuleBase[] injectedRules)
-            : base(injectedRules) {
-        }
-
-        #endregion Constructors
+    public class CodeQualityApprovalsReporterTests : AderantCodeFixVerifier<CodeQualityApprovalsReporterRule> {
 
         #region Properties
-
-        protected override RuleBase Rule => new CodeQualityApprovalsReporterRule();
 
         protected override string PreCode => "using System;";
 
@@ -61,7 +42,7 @@ namespace Random.Attributes {
         #region Tests
 
         [TestMethod]
-        public void CodeQualityApprovalsReporter_AttributelessClassThrowsNoErrors() {
+        public async Task CodeQualityApprovalsReporter_AttributelessClassThrowsNoErrors() {
             const string code = @"
 namespace Test.Namespace {
     public class AttributelessClass {
@@ -69,11 +50,11 @@ namespace Test.Namespace {
     }
 }
 ";
-            VerifyCSharpDiagnostic(InsertCode(code));
+            await VerifyCSharpDiagnostic(InsertCode(code));
         }
 
         [TestMethod]
-        public void CodeQualityApprovalsReporter_OnlyErrorsForUseReporterAttribute() {
+        public async Task CodeQualityApprovalsReporter_OnlyErrorsForUseReporterAttribute() {
             const string code = @"using Random.Attributes;
 namespace Test.Namespace {
     [Random]
@@ -83,14 +64,12 @@ namespace Test.Namespace {
     }
 }
 ";
-            VerifyCSharpDiagnostic(InsertCode(code));
+            await VerifyCSharpDiagnostic(InsertCode(code));
         }
 
         [TestMethod]
-        public void CodeQualityApprovalsReporter_WhitelistedReportersAreIgnored_SingleArgumentAttributeConstructor() {
+        public async Task CodeQualityApprovalsReporter_WhitelistedReportersAreIgnored_SingleArgumentAttributeConstructor() {
             const string code = @"using ApprovalTests.Reporters;
-using ApprovalTests.Reporters.ContinuousIntegration;
-using ApprovalTests.Reporters.TestFrameworks;
 
 namespace Test.Namespace {
     [UseReporter(typeof(MsTestReporter))]
@@ -103,28 +82,24 @@ namespace Test.Namespace {
     }
 }
 ";
-            VerifyCSharpDiagnostic(InsertCode(code));
+            await VerifyCSharpDiagnostic(InsertCode(code));
         }
-        
+
         [TestMethod]
-        public void CodeQualityApprovalsReporter_WhitelistedReportersAreIgnored_ParamAttributeConstructor() {
+        public async Task CodeQualityApprovalsReporter_WhitelistedReportersAreIgnored_ParamAttributeConstructor() {
             const string code = @"using ApprovalTests.Reporters;
-using ApprovalTests.Reporters.ContinuousIntegration;
-using ApprovalTests.Reporters.TestFrameworks;
 
 namespace Test.Namespace {
     [UseReporter(typeof(MsTestReporter), typeof(TfsVnextReporter), typeof(QuietReporter))]
     public class DummyTestClass { }
 }
 ";
-            VerifyCSharpDiagnostic(InsertCode(code));
+            await VerifyCSharpDiagnostic(InsertCode(code));
         }
 
         [TestMethod]
-        public void CodeQualityApprovalsReporter_WhitelistedReportersAreIgnored_InlineAttributeDeclaration() {
+        public async Task CodeQualityApprovalsReporter_WhitelistedReportersAreIgnored_InlineAttributeDeclaration() {
             const string code = @"using ApprovalTests.Reporters;
-using ApprovalTests.Reporters.ContinuousIntegration;
-using ApprovalTests.Reporters.TestFrameworks;
 using Random.Attributes;
 
 namespace Test.Namespace {
@@ -132,14 +107,12 @@ namespace Test.Namespace {
     public class DummyTestClass { }
 }
 ";
-            VerifyCSharpDiagnostic(InsertCode(code));
+            await VerifyCSharpDiagnostic(InsertCode(code));
         }
 
-        [TestMethod] 
-        public void CodeQualityApprovalsReporter_InvalidAttributeUsage_InlineAttributeDeclaration() {
+        [TestMethod]
+        public async Task CodeQualityApprovalsReporter_InvalidAttributeUsage_InlineAttributeDeclaration() {
             const string code = @"using ApprovalTests.Reporters;
-using ApprovalTests.Reporters.ContinuousIntegration;
-using ApprovalTests.Reporters.TestFrameworks;
 using Random.Attributes;
 
 namespace Test.Namespace {
@@ -150,13 +123,13 @@ namespace Test.Namespace {
     }
 }
 ";
-            VerifyCSharpDiagnostic(InsertCode(code), 
-                GetDiagnostic(7, 14),
-                GetDiagnostic(9, 10));
+            await VerifyCSharpDiagnostic(InsertCode(code),
+                GetDiagnostic().WithSpan(5, 14, 5, 94),
+                GetDiagnostic().WithSpan(7, 10, 7, 51));
         }
-        
+
         [TestMethod]
-        public void CodeQualityApprovalsReporter_InvalidAttributeUsageOnClass_SingleArgumentAttributeConstructor() {
+        public async Task CodeQualityApprovalsReporter_InvalidAttributeUsageOnClass_SingleArgumentAttributeConstructor() {
             const string code = @"using ApprovalTests.Reporters;
 using Random.Attributes;
 
@@ -166,11 +139,11 @@ namespace Test.Namespace {
     public class DummyTestClass { }
 }
 ";
-            VerifyCSharpDiagnostic(InsertCode(code), GetDiagnostic(6, 6));
+            await VerifyCSharpDiagnostic(InsertCode(code), GetDiagnostic(6, 6));
         }
-        
+
         [TestMethod]
-        public void CodeQualityApprovalsReporter_InvalidAttributeUsageOnClass_ParamAttributeConstructor() {
+        public async Task CodeQualityApprovalsReporter_InvalidAttributeUsageOnClass_ParamAttributeConstructor() {
             const string code = @"using ApprovalTests.Reporters;
 using Random.Attributes;
 
@@ -180,11 +153,11 @@ namespace Test.Namespace {
     public class DummyTestClass { }
 }
 ";
-            VerifyCSharpDiagnostic(InsertCode(code), GetDiagnostic(6, 6));
+            await VerifyCSharpDiagnostic(InsertCode(code), GetDiagnostic(6, 6));
         }
 
         [TestMethod]
-        public void CodeQualityApprovalsReporter_InvalidAttributeUsageOnMethod_SingleArgumentAttributeConstructor() {
+        public async Task CodeQualityApprovalsReporter_InvalidAttributeUsageOnMethod_SingleArgumentAttributeConstructor() {
             const string code = @"using ApprovalTests.Reporters;
 
 namespace Test.Namespace {
@@ -194,11 +167,11 @@ namespace Test.Namespace {
     }
 }
 ";
-            VerifyCSharpDiagnostic(InsertCode(code), GetDiagnostic(5, 10));
+            await VerifyCSharpDiagnostic(InsertCode(code), GetDiagnostic(5, 10));
         }
 
         [TestMethod]
-        public void CodeQualityApprovalsReporter_InvalidAttributeUsageOnMethod_ParamAttributeConstructor() {
+        public async Task CodeQualityApprovalsReporter_InvalidAttributeUsageOnMethod_ParamAttributeConstructor() {
             const string code = @"using ApprovalTests.Reporters;
 
 namespace Test.Namespace {
@@ -208,13 +181,12 @@ namespace Test.Namespace {
     }
 }
 ";
-            VerifyCSharpDiagnostic(InsertCode(code), GetDiagnostic(5, 10));
+            await VerifyCSharpDiagnostic(InsertCode(code), GetDiagnostic(5, 10));
         }
 
         [TestMethod]
-        public void CodeQualityApprovalsReporter_MixedValidityAttributeArguments() {
+        public async Task CodeQualityApprovalsReporter_MixedValidityAttributeArguments() {
             const string code = @"using ApprovalTests.Reporters;
-using ApprovalTests.Reporters.ContinuousIntegration;
 
 namespace Test.Namespace {
     [UseReporter(typeof(DiffReporter), typeof(TfsVnextReporter))]
@@ -223,7 +195,7 @@ namespace Test.Namespace {
     }
 }
 ";
-            VerifyCSharpDiagnostic(InsertCode(code), GetDiagnostic(5, 6));
+            await VerifyCSharpDiagnostic(InsertCode(code), GetDiagnostic().WithSpan(4, 6, 4, 65));
         }
 
         #endregion Tests

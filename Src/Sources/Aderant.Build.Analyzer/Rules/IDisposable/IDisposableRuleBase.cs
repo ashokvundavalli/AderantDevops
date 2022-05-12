@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Aderant.Build.Analyzer.Rules.IDisposable {
-    internal abstract class IDisposableRuleBase : RuleBase {
+    public abstract class IDisposableRuleBase : RuleBase {
         #region Fields
 
         protected const string DiagnosticId = "Aderant_IDisposableDiagnostic";

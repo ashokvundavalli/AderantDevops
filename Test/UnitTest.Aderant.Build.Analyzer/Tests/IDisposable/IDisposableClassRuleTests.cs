@@ -4,32 +4,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTest.Aderant.Build.Analyzer.Tests.IDisposable {
     [TestClass]
-    public class IDisposableClassRuleTests : IDisposableRuleBaseTests {
-        #region Constructors
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="IDisposableClassRuleTests"/> class.
-        /// </summary>
-        public IDisposableClassRuleTests() :
-            base(null) {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="IDisposableClassRuleTests" /> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        public IDisposableClassRuleTests(RuleBase[] injectedRules)
-            : base(injectedRules) {
-        }
-
-        #endregion Constructors
-
-        #region Properties
-
-        protected override RuleBase Rule => new IDisposableClassRule();
-
-        #endregion Properties
-
+    public class IDisposableClassRuleTests : IDisposableRuleBaseTests<IDisposableClassRule> {
         #region Tests
 
         [TestMethod]

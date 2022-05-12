@@ -1,88 +1,59 @@
-﻿using Aderant.Build.Analyzer.CodeFixes;
-using Aderant.Build.Analyzer.Rules;
-using Microsoft.CodeAnalysis.CodeFixes;
+﻿using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using UnitTest.Aderant.Build.Analyzer.Verifiers;
+using VerifyCS = TestHelper.CSharpCodeFixVerifier<Aderant.Build.Analyzer.AderantAnalyzer<Aderant.Build.Analyzer.Rules.PropertyChangedNoStringRule>, Aderant.Build.Analyzer.CodeFixes.PropertyChangedNoStringFix>;
+
 
 namespace UnitTest.Aderant.Build.Analyzer.Tests {
     [TestClass]
-    public class PropertyChangedNoStringTests : AderantCodeFixVerifier {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PropertyChangedNoStringTests" /> class.
-        /// </summary>
-        public PropertyChangedNoStringTests()
-            : base(null) {
-        }
+    public class PropertyChangedNoStringTests {
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PropertyChangedNoStringTests" /> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        public PropertyChangedNoStringTests(RuleBase[] injectedRules)
-            : base(injectedRules) {
-        }
+        internal static string Code(string value) {
 
-        /// <summary>
-        /// Returns the codefix being tested (C#) - to be implemented in non-abstract class
-        /// </summary>
-        /// <returns>
-        /// The CodeFixProvider to be used for CSharp code
-        /// </returns>
-        protected override CodeFixProvider GetCSharpCodeFixProvider() {
-            return new PropertyChangedNoStringFix();
-        }
-
-        /// <summary>
-        /// Gets the rule to be verified.
-        /// </summary>
-        protected override RuleBase Rule => new PropertyChangedNoStringRule();
-
-        internal static string SharedPreCode => @"
+                return $@"
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
     using System.Diagnostics;
 
-    namespace ConsoleApplication1 {
+    namespace ConsoleApplication1 {{
 
-        class Base { 
-            protected static string Test2 { get; set; }
-        }
+        class Base {{ 
+            protected static string Test2 {{ get; set; }}
+        }}
 
-        class Program : Base {
+        class Program : Base {{
 
-            static string Test { get; set; }
+            static string Test {{ get; set; }}
 
-            static void OnPropertyChanged(string str) { 
+            static void OnPropertyChanged(string str) {{ 
                 // do something
+            }}
+
+            static void Main(string[] args) {{
+{value}
+            }}
+        }}
+    }};
+";
             }
 
-            static void Main(string[] args) {
-";
-
-        protected override string PreCode => SharedPreCode;
 
         [TestMethod]
-        public void PropertyChange_string_refers_to_class_member() {
-            var test = InsertCode(@"OnPropertyChanged(""Test"");");
+        public async Task PropertyChange_string_refers_to_class_member() {
+            var test = Code(@"OnPropertyChanged(""Test"");");
+            var fixtest = Code("OnPropertyChanged(nameof(Test));");
 
-            var expected = GetDefaultDiagnostic("Test");
-            VerifyCSharpDiagnostic(test, expected);
-
-            var fixtest = InsertCode(@"OnPropertyChanged(nameof(Test));");
-            VerifyCSharpFix(test, fixtest);
+            await VerifyCS.VerifyCodeFixAsync(test, VerifyCS.Diagnostic().WithLocation(23, 1).WithArguments("Test"), fixtest);
         }
 
         [TestMethod]
-        public void PropertyChange_string_refers_to_baseclass_member() {
-            var test = InsertCode(@"OnPropertyChanged(""Test2"");");
+        public async Task PropertyChange_string_refers_to_baseclass_member() {
+            var test = Code(@"OnPropertyChanged(""Test2"");");
+            var fixtest = Code("OnPropertyChanged(nameof(Test2));");
 
-            var expected = GetDefaultDiagnostic("Test2");
-            VerifyCSharpDiagnostic(test, expected);
-
-            var fixtest = InsertCode(@"OnPropertyChanged(nameof(Test2));");
-            VerifyCSharpFix(test, fixtest);
+            await VerifyCS.VerifyCodeFixAsync(test, VerifyCS.Diagnostic().WithLocation(23, 1).WithArguments("Test2"), fixtest);
         }
     }
 }
+

@@ -9,7 +9,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Aderant.Build.Analyzer.Rules {
-    internal class SqlInjectionErrorRule : RuleBase {
+    public class SqlInjectionErrorRule : RuleBase {
 
         internal const string DiagnosticId = "Aderant_SqlInjectionError";
 
@@ -87,8 +87,7 @@ namespace Aderant.Build.Analyzer.Rules {
             location = null;
 
             if (expression == null ||
-                IsAnalysisSuppressed(expression, DiagnosticId) ||
-                IsAnalysisSuppressed(expression, "CA2100")) {
+                IsAnalysisSuppressed(expression, DiagnosticId) || IsAnalysisSuppressed(expression, "CA2100")) {
                 return RuleViolationSeverityEnum.None;
             }
 

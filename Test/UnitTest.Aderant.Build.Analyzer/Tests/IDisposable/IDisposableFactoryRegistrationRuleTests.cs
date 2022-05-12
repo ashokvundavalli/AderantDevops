@@ -4,35 +4,14 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTest.Aderant.Build.Analyzer.Tests.IDisposable {
     [TestClass]
-    public class IDisposableFactoryRegistrationRuleTests : IDisposableRuleBaseTests {
+    public class IDisposableFactoryRegistrationRuleTests : IDisposableRuleBaseTests<IDisposableFactoryRegistrationRule> {
         #region Fields
 
         public static bool VerifiedMockedClasses;
 
         #endregion Fields
 
-        #region Constructors
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="IDisposableFactoryRegistrationRuleTests" /> class.
-        /// </summary>
-        public IDisposableFactoryRegistrationRuleTests()
-            : base(null) {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="IDisposableFactoryRegistrationRuleTests" /> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        public IDisposableFactoryRegistrationRuleTests(RuleBase[] injectedRules)
-            : base(injectedRules) {
-        }
-
-        #endregion Constructors
-
         #region Properties
-
-        protected override RuleBase Rule => new IDisposableFactoryRegistrationRule();
         protected override string PreCode => FactoryRegistrationClass;
 
         #endregion Properties

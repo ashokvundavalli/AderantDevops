@@ -5,7 +5,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Aderant.Build.Analyzer.Rules.CodeQuality {
-    internal class CodeQualitySystemDiagnosticsRule : RuleBase {
+    public class CodeQualitySystemDiagnosticsRule : RuleBase {
         #region Fields
 
         internal const string DiagnosticId = "Aderant_CodeQuality_SystemDiagnostics";

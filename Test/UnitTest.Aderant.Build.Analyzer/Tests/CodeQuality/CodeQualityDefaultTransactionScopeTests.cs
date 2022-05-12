@@ -1,40 +1,17 @@
-﻿using Aderant.Build.Analyzer.Rules;
+﻿using System.Threading.Tasks;
+using Aderant.Build.Analyzer.Rules;
 using Aderant.Build.Analyzer.Rules.CodeQuality;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UnitTest.Aderant.Build.Analyzer.Verifiers;
 
 namespace UnitTest.Aderant.Build.Analyzer.Tests.CodeQuality {
     [TestClass]
-    public class CodeQualityDefaultTransactionScopeTests : AderantCodeFixVerifier {
-        #region Constructors
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="CodeQualityDefaultTransactionScopeTests" /> class.
-        /// </summary>
-        public CodeQualityDefaultTransactionScopeTests()
-            : base(null) {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="CodeQualityDefaultTransactionScopeTests" /> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        public CodeQualityDefaultTransactionScopeTests(RuleBase[] injectedRules)
-            : base(injectedRules) {
-        }
-
-        #endregion Constructors
-
-        #region Properties
-
-        protected override RuleBase Rule => new CodeQualityDefaultTransactionScopeRule();
-
-        #endregion Properties
+    public class CodeQualityDefaultTransactionScopeTests : AderantCodeFixVerifier<CodeQualityDefaultTransactionScopeRule> {
 
         #region Tests
 
         [TestMethod]
-        public void CodeQualityDefaultTransactionScope_Invalid() {
+        public async Task CodeQualityDefaultTransactionScope_Invalid() {
             const string code = @"
 using System.Transactions;
 
@@ -143,7 +120,7 @@ namespace System.Transactions {
 }
 ";
 
-            VerifyCSharpDiagnostic(
+            await VerifyCSharpDiagnostic(
                 code,
                 // Error: var errorA = new TransactionScope();
                 GetDiagnostic(7, 26),
@@ -174,7 +151,7 @@ namespace System.Transactions {
         }
 
         [TestMethod]
-        public void CodeQualityDefaultTransactionScope_Valid() {
+        public async Task CodeQualityDefaultTransactionScope_Valid() {
             const string code = @"
 using System.Transactions;
 
@@ -271,7 +248,7 @@ namespace System.Transactions {
 }
 ";
 
-            VerifyCSharpDiagnostic(code);
+            await VerifyCSharpDiagnostic(code);
         }
 
         #endregion Tests

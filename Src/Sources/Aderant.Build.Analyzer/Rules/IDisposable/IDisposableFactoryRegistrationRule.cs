@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Aderant.Build.Analyzer.Rules.IDisposable {
-    internal class IDisposableFactoryRegistrationRule : IDisposableRuleBase {
+    public class IDisposableFactoryRegistrationRule : IDisposableRuleBase {
         #region Properties
 
         internal override string Title => "Aderant IDisposable Factory Registration Diagnostic";

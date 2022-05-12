@@ -9,10 +9,11 @@ using Aderant.Build.Analyzer.Rules.Logging;
 using Aderant.Build.Analyzer.Rules.Security;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
+using SonarAnalyzer.Rules.CSharp;
 
 namespace Aderant.Build.Analyzer {
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
-    internal class AderantAnalyzer : DiagnosticAnalyzer {
+    public class AderantAnalyzer : DiagnosticAnalyzer {
         #region Fields
 
         private readonly List<RuleBase> rules;
@@ -41,6 +42,10 @@ namespace Aderant.Build.Analyzer {
                     new PropertyChangedNoStringNonFixableRule(),
                     new SetPropertyValueNoStringRule(),
                     new SetPropertyValueNoStringNonFixableRule(),
+
+                    new MemberInitializationRule(),
+                    new FieldWrittenFromConstructor(),
+                    new WpfApplicationDefinition(),
 
                     // Security
                     new SecurityBanModifyingDtdProcessingRule(),

@@ -1,40 +1,17 @@
-﻿using Aderant.Build.Analyzer.Rules;
+﻿using System.Threading.Tasks;
+using Aderant.Build.Analyzer.Rules;
 using Aderant.Build.Analyzer.Rules.CodeQuality;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UnitTest.Aderant.Build.Analyzer.Verifiers;
 
 namespace UnitTest.Aderant.Build.Analyzer.Tests.CodeQuality {
     [TestClass]
-    public class CodeQualitySessionTransactionTests : AderantCodeFixVerifier {
-        #region Constructors
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="CodeQualitySessionTransactionTests" /> class.
-        /// </summary>
-        public CodeQualitySessionTransactionTests()
-            : base(null) {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="CodeQualitySessionTransactionTests" /> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        public CodeQualitySessionTransactionTests(RuleBase[] injectedRules)
-            : base(injectedRules) {
-        }
-
-        #endregion Constructors
-
-        #region Properties
-
-        protected override RuleBase Rule => new CodeQualitySessionTransactionRule();
-
-        #endregion Properties
+    public class CodeQualitySessionTransactionTests : AderantCodeFixVerifier<CodeQualitySessionTransactionRule> {
 
         #region Tests
 
         [TestMethod]
-        public void CodeQualitySessionTransaction_Diagnostic_NoVariable() {
+        public async Task CodeQualitySessionTransaction_Diagnostic_NoVariable() {
             const string code = @"
 namespace Test {
     public class TestClass {
@@ -68,14 +45,14 @@ namespace Aderant.Framework.Persistence {
 }
 ";
 
-            VerifyCSharpDiagnostic(
+            await VerifyCSharpDiagnostic(
                 code,
                 // Error: context.Repository.GetSession().BeginTransaction()
                 GetDiagnostic(6, 57));
         }
 
         [TestMethod]
-        public void CodeQualitySessionTransaction_Diagnostic_Variable() {
+        public async Task CodeQualitySessionTransaction_Diagnostic_Variable() {
             const string code = @"
 namespace Test {
     public class TestClass {
@@ -109,14 +86,14 @@ namespace Aderant.Framework.Persistence {
 }
 ";
 
-            VerifyCSharpDiagnostic(
+            await VerifyCSharpDiagnostic(
                 code,
                 // Error: context.Repository.GetSession().BeginTransaction()
                 GetDiagnostic(6, 57));
         }
 
         [TestMethod]
-        public void CodeQualitySessionTransaction_NoDiagnostic() {
+        public async Task CodeQualitySessionTransaction_NoDiagnostic() {
             const string code = @"
 namespace Test {
     public class TestClass {
@@ -159,7 +136,7 @@ namespace Aderant.Framework.Persistence {
 }
 ";
 
-            VerifyCSharpDiagnostic(code);
+            await VerifyCSharpDiagnostic(code);
         }
 
         #endregion Tests

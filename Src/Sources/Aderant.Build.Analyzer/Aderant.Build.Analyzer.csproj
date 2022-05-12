@@ -38,31 +38,44 @@
   <ItemGroup>
     <Reference Include="Microsoft.CodeAnalysis">
       <HintPath>..\..\..\packages\analyzer\Microsoft.CodeAnalysis.Common\lib\netstandard2.0\Microsoft.CodeAnalysis.dll</HintPath>
+     
     </Reference>
     <Reference Include="Microsoft.CodeAnalysis.CSharp">
       <HintPath>..\..\..\packages\analyzer\Microsoft.CodeAnalysis.CSharp\lib\netstandard2.0\Microsoft.CodeAnalysis.CSharp.dll</HintPath>
+     
     </Reference>
     <Reference Include="Microsoft.CodeAnalysis.CSharp.Workspaces">
       <HintPath>..\..\..\packages\analyzer\Microsoft.CodeAnalysis.CSharp.Workspaces\lib\netstandard2.0\Microsoft.CodeAnalysis.CSharp.Workspaces.dll</HintPath>
+ 
     </Reference>
     <Reference Include="Microsoft.CodeAnalysis.Workspaces">
       <HintPath>..\..\..\packages\analyzer\Microsoft.CodeAnalysis.Workspaces.Common\lib\netstandard2.0\Microsoft.CodeAnalysis.Workspaces.dll</HintPath>
+    
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Collections.Immutable">
       <HintPath>..\..\..\packages\analyzer\System.Collections.Immutable\lib\netstandard2.0\System.Collections.Immutable.dll</HintPath>
+
     </Reference>
     <Reference Include="System.Composition.AttributedModel">
-      <HintPath>..\..\..\packages\analyzer\System.Composition.AttributedModel\lib\netstandard2.0\System.Composition.AttributedModel.dll</HintPath>
+      <HintPath>..\..\..\packages\analyzer\System.Composition.AttributedModel\lib\portable-net45+win8+wp8+wpa81\System.Composition.AttributedModel.dll</HintPath>
+    
     </Reference>
     <Reference Include="System.Composition.Convention">
-      <HintPath>..\..\..\packages\analyzer\System.Composition.Convention\lib\netstandard2.0\System.Composition.Convention.dll</HintPath>
+      <HintPath>..\..\..\packages\analyzer\System.Composition.Convention\lib\portable-net45+win8+wp8+wpa81\System.Composition.Convention.dll</HintPath>
+    
     </Reference>
     <Reference Include="System.Composition.Hosting">
-      <HintPath>..\..\..\packages\analyzer\System.Composition.Hosting\lib\netstandard2.0\System.Composition.Hosting.dll</HintPath>
+      <HintPath>..\..\..\packages\analyzer\System.Composition.Hosting\lib\portable-net45+win8+wp8+wpa81\System.Composition.Hosting.dll</HintPath>
+   
+    </Reference>
+    <Reference Include="System.Composition.Runtime">
+      <HintPath>..\..\..\packages\analyzer\System.Composition.Runtime\lib\portable-net45+win8+wp8+wpa81\System.Composition.Runtime.dll</HintPath>
+   
     </Reference>
     <Reference Include="System.Composition.TypedParts">
-      <HintPath>..\..\..\packages\analyzer\System.Composition.TypedParts\lib\netstandard2.0\System.Composition.TypedParts.dll</HintPath>
+      <HintPath>..\..\..\packages\analyzer\System.Composition.TypedParts\lib\portable-net45+win8+wp8+wpa81\System.Composition.TypedParts.dll</HintPath>
+   
     </Reference>
     <Reference Include="System.Reflection.Metadata">
       <HintPath>..\..\..\packages\analyzer\System.Reflection.Metadata\lib\netstandard2.0\System.Reflection.Metadata.dll</HintPath>
@@ -70,7 +83,16 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AnalyzerCategory.cs" />
+    <Compile Include="AnalyzerOptionsExtensions.cs" />
+    <Compile Include="AderantAnalyzer`.cs" />
     <Compile Include="ClassExtensions.cs" />
+    <Compile Include="INamedTypeSymbolExtensions.cs" />
+    <Compile Include="EditorConfigAppliesToType.cs" />
+    <Compile Include="Rules\WpfApplicationDefinition.cs" />
+    <Compile Include="Rules\FieldWrittenFromConstructor.cs" />
+    <Compile Include="Rules\MemberInitializationRule.cs" />
+    <Compile Include="Rules\ThirdParty\LocationHelper.cs" />
+    <Compile Include="Rules\ThirdParty\FieldWrittenFrom.cs" />
     <Content Include="CodeFixes\AderantQueryServiceMigrationCodeFix.cs" />
     <Compile Include="CodeFixes\SessionTransactionFix.cs" />
     <Compile Include="CodeFixes\SetPropertyValueNoStringFix.cs" />

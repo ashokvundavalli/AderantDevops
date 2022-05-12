@@ -1,33 +1,12 @@
-﻿using Aderant.Build.Analyzer.Rules;
+﻿using System.Threading.Tasks;
+using Aderant.Build.Analyzer.Rules;
 using Aderant.Build.Analyzer.Rules.CodeQuality;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UnitTest.Aderant.Build.Analyzer.Verifiers;
 
 namespace UnitTest.Aderant.Build.Analyzer.Tests.CodeQuality {
     [TestClass]
-    public class CodeQualitySystemDiagnosticsTests : AderantCodeFixVerifier {
-        #region Constructors
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="CodeQualitySystemDiagnosticsTests" /> class.
-        /// </summary>
-        public CodeQualitySystemDiagnosticsTests()
-            : base(null) {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="CodeQualitySystemDiagnosticsTests" /> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        public CodeQualitySystemDiagnosticsTests(RuleBase[] injectedRules)
-            : base(injectedRules) {
-        }
-
-        #endregion Constructors
-
-        #region Properties
-
-        protected override RuleBase Rule => new CodeQualitySystemDiagnosticsRule();
+    public class CodeQualitySystemDiagnosticsTests : AderantCodeFixVerifier<CodeQualitySystemDiagnosticsRule> {
 
         protected override string PreCode => @"
 namespace Test {
@@ -41,38 +20,39 @@ namespace Test {
 }
 ";
 
-        #endregion Properties
-
         #region Tests
 
         [TestMethod]
-        public void CodeQualitySystemDiagnostics_Break() {
+        public async Task CodeQualitySystemDiagnostics_Break() {
             const string code = @"
             System.Diagnostics.Debugger.Break();
 ";
 
-            VerifyCSharpDiagnostic(
+            await VerifyCSharpDiagnostic(
                 InsertCode(code),
                 // Error: System.Diagnostics.Debugger.Break();
                 GetDiagnostic(6, 13, "System.Diagnostics.Debugger.Break()"));
         }
 
         [TestMethod]
-        public void CodeQualitySystemDiagnostics_Launch() {
+        public async Task CodeQualitySystemDiagnostics_Launch() {
             const string code = @"
             System.Diagnostics.Debugger.Launch();
 ";
 
-            VerifyCSharpDiagnostic(
+            await VerifyCSharpDiagnostic(
                 InsertCode(code),
                 // Error: System.Diagnostics.Debugger.Launch();
                 GetDiagnostic(6, 13, "System.Diagnostics.Debugger.Launch()"));
         }
 
         [TestMethod]
-        public void CodeQualitySystemDiagnostics_TestClass() {
+        public async Task CodeQualitySystemDiagnostics_TestClass() {
             const string code = @"
 namespace Test {
+
+    public class TestClass : System.Attribute {}
+
     [TestClass]
     public class Program {
         public static void TestMethod() {
@@ -82,10 +62,9 @@ namespace Test {
 }
 ";
 
-            VerifyCSharpDiagnostic(
+            await VerifyCSharpDiagnostic(
                 code,
-                // Error: System.Diagnostics.Debugger.Launch();
-                GetDiagnostic(6, 13, "System.Diagnostics.Debugger.Launch()"));
+                GetDiagnostic().WithSpan(9, 13, 9, 47).WithArguments("System.Diagnostics.Debugger.Launch()"));
         }
 
         #endregion Tests

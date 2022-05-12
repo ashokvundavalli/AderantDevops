@@ -1,38 +1,48 @@
-﻿using Aderant.Build.Analyzer.Rules;
+﻿using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using UnitTest.Aderant.Build.Analyzer.Verifiers;
+using VerifyCS = TestHelper.CSharpAnalyzerVerifier<Aderant.Build.Analyzer.AderantAnalyzer<Aderant.Build.Analyzer.Rules.PropertyChangedNoStringNonFixableRule>>;
+
 
 namespace UnitTest.Aderant.Build.Analyzer.Tests {
     [TestClass]
-    public class PropertyChangedNoStringNonFixableTests : AderantCodeFixVerifier {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PropertyChangedNoStringNonFixableTests" /> class.
-        /// </summary>
-        public PropertyChangedNoStringNonFixableTests()
-            : base(null) {
+    public class PropertyChangedNoStringNonFixableTests {
+
+        internal static string Code(string value) {
+            return $@"
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Threading.Tasks;
+    using System.Diagnostics;
+
+    namespace ConsoleApplication1 {{
+
+        class Base {{ 
+            protected static string Test2 {{ get; set; }}
+        }}
+
+        class Program : Base {{
+
+            static string Test {{ get; set; }}
+
+            static void OnPropertyChanged(string str) {{ 
+                // do something
+            }}
+
+            static void Main(string[] args) {{
+{value}
+            }}
+        }}
+    }};
+";
         }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PropertyChangedNoStringNonFixableTests" /> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        public PropertyChangedNoStringNonFixableTests(RuleBase[] injectedRules)
-            : base(injectedRules) {
-        }
-
-        /// <summary>
-        /// Gets the rule to be verified.
-        /// </summary>
-        protected override RuleBase Rule => new PropertyChangedNoStringNonFixableRule();
-
-        protected override string PreCode => PropertyChangedNoStringTests.SharedPreCode;
 
         [TestMethod]
-        public void PropertyChange_string_refers_to_non_member() {
-            var test = InsertCode(@"OnPropertyChanged(""Test3"");");
-            var _ = typeof(Microsoft.CodeAnalysis.CSharp.Formatting.CSharpFormattingOptions);
-            var expected = GetDefaultDiagnostic("Test3");
-            VerifyCSharpDiagnostic(test, expected);
+        public async Task PropertyChange_string_refers_to_non_member() {
+            var test = Code(@"OnPropertyChanged(""Test3"");");
+
+            var diagnosticResult = VerifyCS.Diagnostic().WithLocation(23, 1).WithArguments("Test3");
+            await VerifyCS.VerifyAnalyzerAsync(test, diagnosticResult);
         }
     }
 }

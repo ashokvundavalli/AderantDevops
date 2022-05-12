@@ -91,3 +91,9 @@ csharp_new_line_before_members_in_anonymous_types = false
 indent_style = space
 indent_size = 2
 tab_width = 2
+
+# Analyzer
+[*]
+dotnet_code_quality.aderant.field_written_from_constructor.applies_to = derived:Aderant.Framework.Presentation.AppShell.AppShellApplication
+dotnet_code_quality.aderant.member_initialization.applies_to = derived:Aderant.Framework.Presentation.AppShell.AppShellApplication
+dotnet_code_quality.aderant.wpf_application_definition.applies_to = derived:Aderant.Framework.Presentation.AppShell.AppShellApplication

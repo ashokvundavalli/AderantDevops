@@ -4,26 +4,7 @@ using UnitTest.Aderant.Build.Analyzer.Verifiers;
 
 namespace UnitTest.Aderant.Build.Analyzer.Tests {
     [TestClass]
-    public class SetPropertyValueNoStringNonFixableTests : AderantCodeFixVerifier {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SetPropertyValueNoStringNonFixableTests" /> class.
-        /// </summary>
-        public SetPropertyValueNoStringNonFixableTests()
-            : base(null) {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SetPropertyValueNoStringNonFixableTests" /> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        public SetPropertyValueNoStringNonFixableTests(RuleBase[] injectedRules)
-            : base(injectedRules) {
-        }
-
-        /// <summary>
-        /// Gets the rule to be verified.
-        /// </summary>
-        protected override RuleBase Rule => new SetPropertyValueNoStringNonFixableRule();
+    public class SetPropertyValueNoStringNonFixableTests : AderantCodeFixVerifier<SetPropertyValueNoStringNonFixableRule> {
 
         protected override string PreCode => SetPropertyValueNoStringTests.SharedPreCode;
 

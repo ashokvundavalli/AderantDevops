@@ -4,24 +4,7 @@ using UnitTest.Aderant.Build.Analyzer.Verifiers;
 
 namespace UnitTest.Aderant.Build.Analyzer.Tests {
     [TestClass]
-    public class SqlInjectionErrorTests : AderantCodeFixVerifier {
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SqlInjectionErrorTests" /> class.
-        /// </summary>
-        public SqlInjectionErrorTests()
-            : base(null) {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SqlInjectionErrorTests" /> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        public SqlInjectionErrorTests(RuleBase[] injectedRules)
-            : base(injectedRules) {
-        }
-
-        protected override RuleBase Rule => new SqlInjectionErrorRule();
+    public class SqlInjectionErrorTests : AderantCodeFixVerifier<SqlInjectionErrorRule> {
 
         [TestMethod]
         public void SqlInjectionError_CommandText_MethodParameter_Diagnostic_MutableData() {

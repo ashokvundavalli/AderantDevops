@@ -1,30 +1,12 @@
-﻿using Aderant.Build.Analyzer.Rules;
+﻿using System.Threading.Tasks;
+using Aderant.Build.Analyzer.Rules;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UnitTest.Aderant.Build.Analyzer.Verifiers;
 
 namespace UnitTest.Aderant.Build.Analyzer.Tests {
     [TestClass]
-    public class InvalidQueryServiceProxyExtensionTests : AderantCodeFixVerifier {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="InvalidQueryServiceProxyExtensionTests"/> class.
-        /// </summary>
-        public InvalidQueryServiceProxyExtensionTests()
-            : base(null) {
-        }
+    public class InvalidQueryServiceProxyExtensionTests : AderantCodeFixVerifier<InvalidQueryServiceProxyExtensionRule> {
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="InvalidQueryServiceProxyExtensionTests"/> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        public InvalidQueryServiceProxyExtensionTests(RuleBase[] injectedRules)
-            : base(injectedRules) {
-        }
-
-        /// <summary>
-        /// Gets the rule to be verified.
-        /// </summary>
-        protected override RuleBase Rule => new InvalidQueryServiceProxyExtensionRule();
-        
         protected override string PreCode => @"
     using System;
     using System.Collections.Generic;
@@ -64,47 +46,47 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests {
 ";
 
         [TestMethod]
-        public void Count_WithArguments_ShouldFail() {
+        public async Task Count_WithArguments_ShouldFail() {
             var test = InsertCode(@"queryServiceProxy.ExpansionCodes.Count(e => e.Id == 0);");
 
             var expected = GetDefaultDiagnostic("Count");
-            VerifyCSharpDiagnostic(test, expected);
+            await VerifyCSharpDiagnostic(test, expected);
         }
 
         [TestMethod]
-        public void Count_WithoutArguments_ShouldPass() {
+        public async Task Count_WithoutArguments_ShouldPass() {
             var test = InsertCode(@"queryServiceProxy.ExpansionCodes.Count();");
 
-            VerifyCSharpDiagnostic(test);
+            await VerifyCSharpDiagnostic(test);
         }
 
         [TestMethod]
-        public void Count_AfterWherewithArguments_ShouldPass() {
+        public async Task Count_AfterWherewithArguments_ShouldPass() {
             var test = InsertCode(@"queryServiceProxy.ExpansionCodes.Where(e => e.Id == 0).Count();");
 
-            VerifyCSharpDiagnostic(test);
+            await VerifyCSharpDiagnostic(test);
         }
 
         [TestMethod]
-        public void Count_WithArguments_ShouldFail_UsingInterface() {
+        public async Task Count_WithArguments_ShouldFail_UsingInterface() {
             var test = InsertCode(@"queryServiceProxyAsInterface.ExpansionCodes.Count(e => e.Id == 0);");
 
             var expected = GetDefaultDiagnostic("Count");
-            VerifyCSharpDiagnostic(test, expected);
+            await VerifyCSharpDiagnostic(test, expected);
         }
 
         [TestMethod]
-        public void Count_WithoutArguments_ShouldPass_UsingInterface() {
+        public async Task Count_WithoutArguments_ShouldPass_UsingInterface() {
             var test = InsertCode(@"queryServiceProxyAsInterface.ExpansionCodes.Count();");
 
-            VerifyCSharpDiagnostic(test);
+            await VerifyCSharpDiagnostic(test);
         }
 
         [TestMethod]
-        public void Count_AfterWherewithArguments_ShouldPass_UsingInterface() {
+        public async Task Count_AfterWherewithArguments_ShouldPass_UsingInterface() {
             var test = InsertCode(@"queryServiceProxyAsInterface.ExpansionCodes.Where(e => e.Id == 0).Count();");
 
-            VerifyCSharpDiagnostic(test);
+            await VerifyCSharpDiagnostic(test);
         }
     }
 }

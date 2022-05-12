@@ -5,31 +5,7 @@ using UnitTest.Aderant.Build.Analyzer.Verifiers;
 
 namespace UnitTest.Aderant.Build.Analyzer.Tests.Security {
     [TestClass]
-    public class SecurityBanModifyingDtdProcessingTests : AderantCodeFixVerifier {
-        #region Constructors
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SecurityBanModifyingDtdProcessingTests"/> class.
-        /// </summary>
-        public SecurityBanModifyingDtdProcessingTests()
-            : base(null) {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SecurityBanModifyingDtdProcessingTests"/> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        public SecurityBanModifyingDtdProcessingTests(RuleBase[] injectedRules)
-            : base(injectedRules) {
-        }
-
-        #endregion Constructors
-
-        #region Properties
-
-        protected override RuleBase Rule => new SecurityBanModifyingDtdProcessingRule();
-
-        #endregion Properties
+    public class SecurityBanModifyingDtdProcessingTests : AderantCodeFixVerifier<SecurityBanModifyingDtdProcessingRule> {
 
         #region Tests
 

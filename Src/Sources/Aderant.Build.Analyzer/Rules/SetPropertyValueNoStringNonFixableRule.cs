@@ -4,9 +4,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Aderant.Build.Analyzer.Rules {
-
     public class SetPropertyValueNoStringNonFixableRule : RuleBase {
-        internal const string DiagnosticId = "Aderant_SetPropertyValueNoStringNonFixable";
 
         internal override DiagnosticSeverity Severity => DiagnosticSeverity.Error;
         internal override string Id => "Aderant_SetPropertyValueNoStringNonFixable";

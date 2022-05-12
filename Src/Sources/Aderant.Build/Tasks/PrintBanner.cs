@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using System.Windows.Controls;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 

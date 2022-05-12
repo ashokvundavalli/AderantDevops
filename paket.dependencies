@@ -15,12 +15,14 @@ http https://tfs.aderant.com/tfs/ADERANT/f0b10666-5819-4e8e-8708-7d5272a14e07/_a
 
 
 group Analyzer
-framework:  net48
-references: strict
+framework: net48
+strategy: min
 source https://api.nuget.org/v3/index.json
 nuget Microsoft.CodeAnalysis.Common ~> 3.11.0
 nuget Microsoft.CodeAnalysis.CSharp ~> 3.11.0
 nuget Microsoft.CodeAnalysis.CSharp.Workspaces ~> 3.11.0
+nuget Microsoft.CodeAnalysis.CSharp.Analyzer.Testing.MSTest
+nuget Microsoft.CodeAnalysis.CSharp.CodeFix.Testing.MSTest
 
 # Pinned to the version MSBuild 16.0 uses
 nuget System.Collections.Immutable 5.0.0

@@ -1,38 +1,23 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Linq;
-using System.Threading;
+using System.Threading.Tasks;
 using Aderant.Build.Analyzer;
 using Aderant.Build.Analyzer.Rules;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.CodeFixes;
+using Microsoft.CodeAnalysis.Testing;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TestHelper;
 
 namespace UnitTest.Aderant.Build.Analyzer.Verifiers {
-    public abstract class AderantCodeFixVerifier : CodeFixVerifier {
-        #region Fields
+    public abstract class AderantCodeFixVerifier<TRule> : AderantCodeFixVerifier<TRule, EmptyCodeFixProvider> where TRule : RuleBase, new() {
 
-        private readonly RuleBase[] injectedRules;
+    }
 
-        #endregion Fields
+    public abstract class AderantCodeFixVerifier<TRule, TCodeFix>
+        where TRule : RuleBase, new()
+        where TCodeFix : CodeFixProvider, new() {
 
-        #region Constructors
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="AderantCodeFixVerifier"/> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        protected AderantCodeFixVerifier(RuleBase[] injectedRules) {
-            this.injectedRules = injectedRules;
-        }
-
-        #endregion Constructors
-
-        #region Properties
+        const string DefaultPath = "/Test0.cs";
 
         protected virtual string PreCode => @"
     using System;
@@ -55,28 +40,33 @@ namespace UnitTest.Aderant.Build.Analyzer.Verifiers {
 
         protected int MyCodeStartsAtLine => PreCode.Split('\n').Length;
 
-        #endregion Properties
-
-        #region Methods
-
         [TestMethod]
         public void EmptyCodeWithNoViolationsPasses() {
             VerifyCSharpDiagnostic(string.Empty);
         }
 
         /// <summary>
-        /// Get the CSharp analyzer being tested - to be implemented in non-abstract class.
+        /// Delegates to <see cref="CSharpAnalyzerVerifier{TAnalyzer}"/> as a bridge between the recommended MS analyzer test pattern and the
+        /// AderantCodeFixVerifier test pattern.
         /// </summary>
-        protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer() {
-            return injectedRules != null
-                ? new AderantAnalyzer(injectedRules)
-                : new AderantAnalyzer(Rule);
+        /// <returns></returns>
+        public Task VerifyCSharpDiagnostic(string source, params DiagnosticResult[] diagnosticResult) {
+            return TestHelper.CSharpAnalyzerVerifier<AderantAnalyzer<TRule>>.VerifyAnalyzerAsync(source, diagnosticResult);
+        }
+
+        /// <summary>
+        /// Delegates to <see cref="CSharpAnalyzerVerifier{TAnalyzer}"/> as a bridge between the recommended MS analyzer test pattern and the
+        /// AderantCodeFixVerifier test pattern.
+        /// </summary>
+        public Task VerifyCSharpFix(string source, string fixedSource, params DiagnosticResult[] diagnosticResult) {
+            return TestHelper.CSharpCodeFixVerifier<AderantAnalyzer<TRule>, TCodeFix>.VerifyCodeFixAsync(source, diagnosticResult, fixedSource);
         }
 
         /// <summary>
         /// Gets the rule to be verified.
         /// </summary>
-        protected virtual RuleBase Rule { get; } = null;
+        private RuleBase Rule { get; } = new TRule();
+
 
         /// <summary>
         /// Inserts the code between the pre and post code.
@@ -119,39 +109,43 @@ namespace UnitTest.Aderant.Build.Analyzer.Verifiers {
         /// <param name="lineNumber">The line number.</param>
         /// <param name="column">The column.</param>
         /// <param name="messageParameters">The message parameters.</param>
-        protected DiagnosticResult GenerateDiagnostic(string id, string messageFormat, DiagnosticSeverity severity, int lineNumber, int column, object[] messageParameters) {
-            return new DiagnosticResult {
-                Id = id,
-                Message = string.Format(messageFormat, messageParameters),
-                Severity = severity,
-                Locations = new[] { new DiagnosticResultLocation("Test0.cs", lineNumber, column) }
-            };
+        protected DiagnosticResult GenerateDiagnostic(string id, string messageFormat, DiagnosticSeverity severity, int? lineNumber = null, int? column = null, object[] messageParameters = null) {
+            var result = new DiagnosticResult(id, severity);
+
+            if (messageFormat != null) {
+                var message = CreateMessage(messageFormat, messageParameters);
+                result.WithMessage(message);
+            }
+
+            result.WithDefaultPath(DefaultPath)
+                .WithSeverity(severity);
+
+            if (lineNumber != null && column != null) {
+                return result.WithLocation(lineNumber.Value, column.Value);
+            }
+
+            return result;
         }
 
-        /// <summary>
-        /// Creates a syntax node analysis context.
-        /// </summary>
-        /// <param name="code">The code.</param>
-        /// <param name="reportDiagnosticAction">The report diagnostic action.</param>
-        /// <param name="isSupportedDiagnosticAction">The is supported diagnostic action.</param>
-        protected SyntaxNodeAnalysisContext CreateSyntaxNodeAnalysisContext(
-            string code,
-            Action<Diagnostic> reportDiagnosticAction,
-            Func<Diagnostic, bool> isSupportedDiagnosticAction) {
-            var syntaxTree = CSharpSyntaxTree.ParseText(code);
+        private static string CreateMessage(string messageFormat, object[] messageParameters) {
+            string message;
+            if (messageParameters == null || messageParameters.Length == 0) {
+                message = messageFormat;
+            } else {
+                message = string.Format(messageFormat, messageParameters);
+            }
 
-            var nodes = new List<ObjectCreationExpressionSyntax>(1);
-            RuleBase.GetExpressionsFromChildNodes(ref nodes, syntaxTree.GetRoot());
-
-            return new SyntaxNodeAnalysisContext(
-                nodes.First(),
-                CSharpCompilation.Create("Test").AddSyntaxTrees(syntaxTree).GetSemanticModel(syntaxTree),
-                new AnalyzerOptions(new ImmutableArray<AdditionalText>()),
-                reportDiagnosticAction,
-                isSupportedDiagnosticAction,
-                CancellationToken.None);
+            return message;
         }
 
-        #endregion Methods
+        protected DiagnosticResult GetDiagnostic() {
+            return GenerateDiagnostic(
+                Rule.Id,
+                Rule.MessageFormat,
+                Rule.Severity,
+                null,
+                null,
+                null);
+        }
     }
 }

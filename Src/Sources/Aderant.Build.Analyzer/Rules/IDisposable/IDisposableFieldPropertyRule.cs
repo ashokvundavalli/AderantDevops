@@ -8,7 +8,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Aderant.Build.Analyzer.Rules.IDisposable {
-    internal class IDisposableFieldPropertyRule : IDisposableRuleBase {
+    public class IDisposableFieldPropertyRule : IDisposableRuleBase {
         #region Properties
 
         internal override string Title => "Aderant IDisposable Field Diagnostic";

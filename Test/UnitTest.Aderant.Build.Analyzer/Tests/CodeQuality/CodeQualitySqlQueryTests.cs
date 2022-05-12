@@ -1,41 +1,19 @@
-﻿using Aderant.Build.Analyzer.Rules;
+﻿using System.Threading.Tasks;
+using Aderant.Build.Analyzer.Rules;
 using Aderant.Build.Analyzer.Rules.CodeQuality;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UnitTest.Aderant.Build.Analyzer.Verifiers;
 
 namespace UnitTest.Aderant.Build.Analyzer.Tests.CodeQuality {
     [TestClass]
-    public class CodeQualitySqlQueryTests : AderantCodeFixVerifier {
-        #region Constructors
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="CodeQualitySqlQueryTests" /> class.
-        /// </summary>
-        public CodeQualitySqlQueryTests()
-            : base(null) {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="CodeQualitySqlQueryTests" /> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        public CodeQualitySqlQueryTests(RuleBase[] injectedRules)
-            : base(injectedRules) {
-        }
-
-        #endregion Constructors
-
-        #region Properties
-
-        protected override RuleBase Rule => new CodeQualitySqlQueryRule();
-
-        #endregion Properties
+    public class CodeQualitySqlQueryTests : AderantCodeFixVerifier<CodeQualitySqlQueryRule> {
 
         #region Tests
 
         [TestMethod]
-        public void CodeQualitySqlQuery_Invalid_DerivedExpertDbContext() {
+        public async Task CodeQualitySqlQuery_Invalid_DerivedExpertDbContext() {
             const string code = @"
+using System;
 using System.Data.Entity;
 using Aderant.Query.Services;
 using Aderant.Query.Services.Infrastructure;
@@ -89,21 +67,22 @@ namespace Aderant.Query.Services.Infrastructure {
 }
 ";
 
-            VerifyCSharpDiagnostic(
+            await VerifyCSharpDiagnostic(
                 code,
                 // Error: Database.SqlQuery<object>(null, null);
-                GetDiagnostic(9, 13),
-                // Error: Database.SqlQuery(null, null, null);
                 GetDiagnostic(10, 13),
-                // Error: Database.SuppressEntitySummary().SqlQuery<object>(null, null);
+                // Error: Database.SqlQuery(null, null, null);
                 GetDiagnostic(11, 13),
+                // Error: Database.SuppressEntitySummary().SqlQuery<object>(null, null);
+                GetDiagnostic(12, 13),
                 // Error: Database.SuppressEntitySummary().SqlQuery(null, null, null);
-                GetDiagnostic(12, 13));
+                GetDiagnostic(13, 13));
         }
 
         [TestMethod]
-        public void CodeQualitySqlQuery_Invalid_ExpertDbContext() {
+        public async Task CodeQualitySqlQuery_Invalid_ExpertDbContext() {
             const string code = @"
+using System;
 using System.Data.Entity;
 using Aderant.Query.Services;
 using Aderant.Query.Services.Infrastructure;
@@ -157,21 +136,22 @@ namespace Aderant.Query.Services.Infrastructure {
 }
 ";
 
-            VerifyCSharpDiagnostic(
+            await VerifyCSharpDiagnostic(
                 code,
                 // Error: Database.SqlQuery<object>(null, null);
-                GetDiagnostic(37, 13),
-                // Error: Database.SqlQuery(null, null, null);
                 GetDiagnostic(38, 13),
-                // Error: Database.SuppressEntitySummary().SqlQuery<object>(null, null);
+                // Error: Database.SqlQuery(null, null, null);
                 GetDiagnostic(39, 13),
+                // Error: Database.SuppressEntitySummary().SqlQuery<object>(null, null);
+                GetDiagnostic(40, 13),
                 // Error: Database.SuppressEntitySummary().SqlQuery(null, null, null);
-                GetDiagnostic(40, 13));
+                GetDiagnostic(41, 13));
         }
 
         [TestMethod]
-        public void CodeQualitySqlQuery_Valid() {
+        public async Task CodeQualitySqlQuery_Valid() {
             const string code = @"
+using System;
 using System.Data.Entity;
 using Aderant.Query.Services.Infrastructure;
 
@@ -211,7 +191,7 @@ namespace Aderant.Query.Services.Infrastructure {
 }
 ";
 
-            VerifyCSharpDiagnostic(code);
+            await VerifyCSharpDiagnostic(code);
         }
 
         #endregion Tests

@@ -1,76 +1,22 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
+using System.Threading;
 using Aderant.Build.Analyzer;
 using Aderant.Build.Analyzer.Rules;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UnitTest.Aderant.Build.Analyzer.Verifiers;
 
 namespace UnitTest.Aderant.Build.Analyzer.Tests {
     [TestClass]
-    public class SuppressionAttributeTests : AderantCodeFixVerifier {
-        #region Types
-
-        private class SuppressionTestRule : RuleBase {
-            public bool AnalyzeTests { private get; set; }
-
-            public override DiagnosticDescriptor Descriptor => new DiagnosticDescriptor(
-                Id,
-                Title,
-                MessageFormat,
-                AnalyzerCategory.Syntax,
-                Severity,
-                true,
-                Description);
-
-            internal override DiagnosticSeverity Severity => DiagnosticSeverity.Error;
-
-            internal override string Id => "SuppressionTestRuleId";
-
-            internal override string Title => "Suppression Test Rule Title";
-
-            internal override string MessageFormat => "Suppression Test Rule Message Format";
-
-            internal override string Description => "Suppression Test Rule Description";
-
-            public override void Initialize(AnalysisContext context) {
-                context.RegisterSyntaxNodeAction(EvaluateNode, SyntaxKind.ObjectCreationExpression);
-            }
-
-            internal void EvaluateNode(SyntaxNodeAnalysisContext context) {
-                if (IsAnalysisSuppressed(context.Node, Id, AnalyzeTests)) {
-                    return;
-                }
-
-                context.ReportDiagnostic(Diagnostic.Create(Descriptor, Location.None));
-            }
-        }
-
-        #endregion Types
-
-        #region Constructors
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SuppressionAttributeTests" /> class.
-        /// </summary>
-        public SuppressionAttributeTests()
-            : base(null) {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SuppressionAttributeTests" /> class.
-        /// </summary>
-        /// <param name="injectedRules">The injected rules.</param>
-        public SuppressionAttributeTests(RuleBase[] injectedRules)
-            : base(injectedRules) {
-        }
-
-        #endregion Constructors
+    public class SuppressionAttributeTests : AderantCodeFixVerifier<SuppressionTestRule> {
 
         #region Fields
-
-        protected override RuleBase Rule => testRule;
 
         private const string unexpectedDiagnosticError = "An unexpected diagnostic was reported.";
 
@@ -794,5 +740,67 @@ namespace Test {
         }
 
         #endregion Tests
+
+        /// <summary>
+        /// Creates a syntax node analysis context.
+        /// </summary>
+        /// <param name="code">The code.</param>
+        /// <param name="reportDiagnosticAction">The report diagnostic action.</param>
+        /// <param name="isSupportedDiagnosticAction">The is supported diagnostic action.</param>
+        protected SyntaxNodeAnalysisContext CreateSyntaxNodeAnalysisContext(
+            string code,
+            Action<Diagnostic> reportDiagnosticAction,
+            Func<Diagnostic, bool> isSupportedDiagnosticAction) {
+            var syntaxTree = CSharpSyntaxTree.ParseText(code);
+
+            var nodes = new List<ObjectCreationExpressionSyntax>(1);
+            RuleBase.GetExpressionsFromChildNodes(ref nodes, syntaxTree.GetRoot());
+
+            return new SyntaxNodeAnalysisContext(
+                nodes.First(),
+                CSharpCompilation.Create("Test").AddSyntaxTrees(syntaxTree).GetSemanticModel(syntaxTree),
+                new AnalyzerOptions(ImmutableArray<AdditionalText>.Empty),
+                reportDiagnosticAction,
+                isSupportedDiagnosticAction,
+                CancellationToken.None);
+        }
+
+    }
+
+    public class SuppressionTestRule : RuleBase {
+
+        public bool AnalyzeTests { private get; set; }
+
+        public override DiagnosticDescriptor Descriptor => new DiagnosticDescriptor(
+            Id,
+            Title,
+            MessageFormat,
+            AnalyzerCategory.Syntax,
+            Severity,
+            true,
+            Description);
+
+        internal override DiagnosticSeverity Severity => DiagnosticSeverity.Error;
+
+        internal override string Id => "SuppressionTestRuleId";
+
+        internal override string Title => "Suppression Test Rule Title";
+
+        internal override string MessageFormat => "Suppression Test Rule Message Format";
+
+        internal override string Description => "Suppression Test Rule Description";
+
+        public override void Initialize(AnalysisContext context) {
+            context.RegisterSyntaxNodeAction(EvaluateNode, SyntaxKind.ObjectCreationExpression);
+        }
+
+        internal void EvaluateNode(SyntaxNodeAnalysisContext context) {
+            if (IsAnalysisSuppressed(context.Node, Id, AnalyzeTests)) {
+                return;
+            }
+
+            context.ReportDiagnostic(Microsoft.CodeAnalysis.Diagnostic.Create(Descriptor, Location.None));
+        }
+
     }
 }
