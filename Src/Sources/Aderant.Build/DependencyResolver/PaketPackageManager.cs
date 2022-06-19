@@ -619,11 +619,14 @@ namespace Aderant.Build.DependencyResolver {
                 process.WaitForExit();
 
                 if (process.ExitCode > 0) {
-                    Console.WriteLine("Waiting for debugger to attach");
-                    SpinWait.SpinUntil(() => {
-                        Thread.Sleep(100);
-                        return Debugger.IsAttached;
-                    }, TimeSpan.FromMinutes(10));
+                    if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("PAKET_DEBUG"))) {
+                        Console.WriteLine("Waiting for debugger to attach");
+
+                        SpinWait.SpinUntil(() => {
+                            Thread.Sleep(100);
+                            return Debugger.IsAttached;
+                        }, TimeSpan.FromMinutes(10));
+                    }
 
                     if (Debugger.IsAttached) {
                         Debugger.Break();
