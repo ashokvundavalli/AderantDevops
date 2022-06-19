@@ -31,10 +31,16 @@ if ($myWindowsPrincipal.IsInRole($adminRole)) {
 
 try {
     $ErrorActionPreference = 'Stop'
+    
+    $oneDriveModulePath = $Env:PSModulePath.Split(";") -match "OneDrive" | Select-Object -First 1
 
-    $currentDirectory = pwd
-    $psHomeDirectory = Join-Path $Env:UserProfile "Documents\WindowsPowerShell\"
-    $moduleDirectory = Join-Path $psHomeDirectory "Modules"
+    if ([string]::IsNullOrEmpty($oneDriveModulePath)) {
+        $psHomeDirectory = Join-Path $Env:UserProfile "Documents\WindowsPowerShell\"
+        $moduleDirectory = Join-Path $psHomeDirectory "Modules"
+    } else {
+        $moduleDirectory = $oneDriveModulePath
+        $psHomeDirectory = [System.IO.Directory]::GetParent($oneDriveModulePath).FullName
+    }
 
     if (Test-Path "$moduleDirectory\Aderant") {
         $cmd = "cmd /c rmdir " + $moduleDirectory + "\Aderant /q /s"
