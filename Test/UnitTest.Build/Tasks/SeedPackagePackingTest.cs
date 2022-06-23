@@ -78,5 +78,33 @@ namespace UnitTest.Build.Tasks {
 
             Assert.IsNull(error);
         }
+
+        [TestMethod]
+        public void SmartFormDelta_scope_10_is_forbidden() {
+            Error error = FirmInquiryDeltaError.Validate(
+                null,
+                XDocument.Parse(
+                    @"<inquiryDeltas>
+                      <SmartFormDelta scope=""5"">
+                      </SmartFormDelta>
+                      <SmartFormDelta scope=""10"">
+                      </SmartFormDelta>
+                      </inquiryDeltas>"));
+
+            Assert.IsNotNull(error);
+        }
+
+        [TestMethod]
+        public void SmartFormDelta_scope_5_is_allowed() {
+            Error error = FirmInquiryDeltaError.Validate(
+                null,
+                XDocument.Parse(
+                    @"<inquiryDeltas>
+                      <SmartFormDelta scope=""5"">
+                      </SmartFormDelta>
+                      </inquiryDeltas>"));
+
+            Assert.IsNull(error);
+        }
     }
 }

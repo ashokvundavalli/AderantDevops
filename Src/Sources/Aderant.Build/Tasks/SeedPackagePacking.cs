@@ -121,6 +121,7 @@ namespace Aderant.Build.Tasks {
                 CheckForSmartFormDeltas(document, fileName);
                 RuleVersionCheck(document, fileName);
                 SmartFormVersionCheck(document, fileName);
+                InquiriesDeltasVersionCheck(document, fileName);
             }
         }
 
@@ -144,6 +145,13 @@ namespace Aderant.Build.Tasks {
 
         internal void CheckForSmartFormDeltas(XDocument document, string fileName) {
             var error = SmartFormDeltaError.Validate(fileName, document);
+            if (error != null) {
+                errors.Add(error);
+            }
+        }
+
+        internal void InquiriesDeltasVersionCheck(XDocument document, string fileName) {
+            var error = FirmInquiryDeltaError.Validate(fileName, document);
             if (error != null) {
                 errors.Add(error);
             }
