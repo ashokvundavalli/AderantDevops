@@ -132,6 +132,12 @@ try {
     } catch {
         # The COM object may not exist
     }
+
+    # Trash any Deployment Manager machine wide settings
+    Remove-Item -Path "HKLM:\SOFTWARE\Aderant\Development\AENC2" -Force -Verbose -ErrorAction SilentlyContinue
+    Remove-Item -Path "HKLM:\SOFTWARE\Aderant\Security\AENC1" -Force -Verbose -ErrorAction SilentlyContinue
+    Remove-Item -Path "HKLM:\SOFTWARE\Aderant\Security\AENC2" -Force -Verbose -ErrorAction SilentlyContinue
+    Remove-Item -Path "HKLM:\SOFTWARE\Handshake" -Force -Verbose -ErrorAction SilentlyContinue
 } finally {
     Set-Location -Path $root
 }
