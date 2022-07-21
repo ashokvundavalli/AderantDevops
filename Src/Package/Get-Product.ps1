@@ -130,7 +130,7 @@ begin {
 
                 [string]$actualSha1 = (Get-FileHash -Path $fileToValidate -Algorithm SHA1).Hash.ToUpper()
 
-                if (-not $expectedSha1 -eq $actualSha1) {
+                if (-not ($expectedSha1 -eq $actualSha1)) {
                     Write-Error "Integrity check failed for file: '$fileToValidate'.`r`nExpected SHA1 hash: '$expectedSha1'`r`nActual SHA1 hash: '$actualSha1'" -ErrorAction Continue
                     $errors = $true
                 } else {
